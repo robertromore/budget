@@ -869,6 +869,7 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
     route: "/accounts/demo-checking?tab=transactions",
     chapter: "account-page",
+    childChapterId: "account-page/transactions",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=transactions");
     },
@@ -902,6 +903,7 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
     route: "/accounts/demo-checking?tab=analytics",
     chapter: "account-page",
+    childChapterId: "account-page/analytics",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=analytics");
     },
@@ -920,6 +922,7 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
     route: "/accounts/demo-checking?tab=intelligence",
     chapter: "account-page",
+    childChapterId: "account-page/intelligence",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=intelligence");
     },
@@ -938,6 +941,7 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
     route: "/accounts/demo-checking?tab=schedules",
     chapter: "account-page",
+    childChapterId: "account-page/schedules",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=schedules");
     },
@@ -956,6 +960,7 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
     route: "/accounts/demo-checking?tab=budgets",
     chapter: "account-page",
+    childChapterId: "account-page/budgets",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=budgets");
     },
@@ -974,6 +979,7 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
     route: "/accounts/demo-checking?tab=settings",
     chapter: "account-page",
+    childChapterId: "account-page/settings",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=settings");
     },

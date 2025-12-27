@@ -285,16 +285,32 @@ function pickRandom<T>(arr: T[]): T {
 }
 
 /**
- * Get random account styling (color, icon, description) for an account type
+ * Get account styling for an account type with deterministic icon selection
+ *
+ * Icons are selected sequentially from the pool:
+ * - First account of each type gets the primary (first) icon
+ * - Subsequent accounts get the next icon in the pool
+ *
+ * Colors are randomized for variety.
+ *
+ * @param accountType - The type of account
+ * @param accountIndex - Index of this account within its type (0 = first)
  */
-function getRandomAccountStyling(accountType: AccountToTrack): {
+function getAccountStyling(
+  accountType: AccountToTrack,
+  accountIndex: number = 0
+): {
   accountColor: string;
   accountIcon: string;
   notes: string;
 } {
+  // Get icon sequentially (first account gets first/primary icon)
+  const iconPool = ACCOUNT_ICON_POOLS[accountType];
+  const iconIndex = accountIndex % iconPool.length;
+
   return {
     accountColor: pickRandom(ACCOUNT_COLOR_POOLS[accountType]),
-    accountIcon: pickRandom(ACCOUNT_ICON_POOLS[accountType]),
+    accountIcon: iconPool[iconIndex], // Deterministic: first icon for first account
     notes: pickRandom(ACCOUNT_DESCRIPTIONS[accountType]),
   };
 }
@@ -329,11 +345,17 @@ export class SmartDefaultsGenerator {
   private generateAccounts(formData: OnboardingFormData): AccountConfig[] {
     const accounts: AccountConfig[] = [];
     const usedSlugs = new Set<string>();
+    const typeCounters = new Map<AccountToTrack, number>();
 
     for (const accountType of formData.accountsToTrack) {
       const defaults = ACCOUNT_DEFAULTS[accountType];
       const dbAccountType = ACCOUNT_TYPE_MAP[accountType];
-      const styling = getRandomAccountStyling(accountType);
+
+      // Get current count for this type to select the right icon
+      const accountIndex = typeCounters.get(accountType) || 0;
+      typeCounters.set(accountType, accountIndex + 1);
+
+      const styling = getAccountStyling(accountType, accountIndex);
 
       // Handle multiple accounts of same type
       let slug = defaults.slug || accountType;
@@ -368,7 +390,8 @@ export class SmartDefaultsGenerator {
         if (!usedSlugs.has(slug)) {
           // Use loan styling for most debt, credit-card styling for credit card debt
           const debtStylingType = debt.type === "credit-card" ? "credit-card" : "loan";
-          const debtStyling = getRandomAccountStyling(debtStylingType);
+          // Debt accounts get the first icon in their pool (index 0)
+          const debtStyling = getAccountStyling(debtStylingType, 0);
 
           accounts.push({
             name: this.formatDebtAccountName(debt.type),

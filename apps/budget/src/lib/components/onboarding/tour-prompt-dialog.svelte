@@ -15,13 +15,19 @@ interface Props {
 
 let { open = $bindable(), onClose }: Props = $props();
 
+// Track if we're closing the dialog programmatically (via button click)
+// to avoid double-saving when onOpenChange fires
+let closingProgrammatically = $state(false);
+
 async function handleStartTour() {
+  closingProgrammatically = true;
   open = false;
   onClose();
 
   // Start the tour with completion callback
   await spotlightTour.start(MAIN_TOUR_STEPS, {
     onComplete: async (result) => {
+      closingProgrammatically = false;
       // Persist to backend
       try {
         if (result.completed) {
@@ -39,10 +45,23 @@ async function handleStartTour() {
 }
 
 async function handleSkipTour() {
+  closingProgrammatically = true;
   open = false;
   onClose();
+  await persistSkip();
+}
 
-  // Mark tour as skipped
+async function handleDialogClose() {
+  // When dialog is closed without clicking a button (e.g., escape key, click outside),
+  // treat it as a skip so the modal doesn't reappear
+  if (!closingProgrammatically) {
+    await persistSkip();
+  }
+  closingProgrammatically = false;
+  onClose();
+}
+
+async function persistSkip() {
   try {
     await trpc().onboardingRoutes.skipTour.mutate();
   } catch (error) {
@@ -51,7 +70,7 @@ async function handleSkipTour() {
 }
 </script>
 
-<AlertDialog.Root bind:open>
+<AlertDialog.Root bind:open onOpenChange={(isOpen) => { if (!isOpen) handleDialogClose(); }}>
   <AlertDialog.Content class="max-w-md">
     <AlertDialog.Header>
       <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
