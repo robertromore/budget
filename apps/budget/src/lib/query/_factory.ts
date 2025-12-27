@@ -308,13 +308,49 @@ export function defineMutation<TVariables, TData, TError = Error>(
     },
 
     async execute(variables: TVariables) {
-      const mutation = createMutationWithConfig();
-      return mutation.mutateAsync(variables);
+      // Directly call mutationFn without createMutation to avoid context issues
+      // This allows execute() to be called from event handlers outside component init
+      try {
+        const result = await mutationFn(variables);
+
+        // Call custom onSuccess if provided
+        if (onSuccess) {
+          await onSuccess(result, variables);
+        }
+
+        // Show success toast if message provided
+        if (successMessage) {
+          const message =
+            typeof successMessage === "function" ? successMessage(result, variables) : successMessage;
+          toast.success(message);
+        }
+
+        return result;
+      } catch (error) {
+        const transformedError = transformError(error) as TError;
+
+        // Call custom onError if provided
+        if (onError) {
+          onError(transformedError, variables);
+        }
+
+        // Show error toast
+        const message = errorMessage
+          ? typeof errorMessage === "function"
+            ? errorMessage(transformedError, variables)
+            : errorMessage
+          : transformedError instanceof Error
+            ? transformedError.message
+            : "An error occurred";
+        toast.error(message);
+
+        throw transformedError;
+      }
     },
 
     async mutateAsync(variables: TVariables) {
-      const mutation = createMutationWithConfig();
-      return mutation.mutateAsync(variables);
+      // Alias for execute() for backward compatibility
+      return this.execute(variables);
     },
   };
 }
