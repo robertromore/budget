@@ -200,79 +200,125 @@ function handleColumnOrderChange(updater: any) {
   }
 }
 
-// Create the table instance
-const tableInstance = $derived(
-  createSvelteTable<TData>({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    // Conditionally include row models based on features
+// Create the table instance once; options stay reactive via getters.
+const tableInstance = createSvelteTable<TData>({
+  get data() {
+    return data;
+  },
+  get columns() {
+    return columns;
+  },
+  getCoreRowModel: getCoreRowModel(),
+  // Conditionally include row models based on features
+  ...(features.sorting && {
+    getSortedRowModel: getSortedRowModel(),
+    enableSorting: true,
+    onSortingChange: handleSortingChange,
+  }),
+  ...(features.filtering && {
+    getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getFacetedMinMaxValues: getFacetedMinMaxValues(),
+    enableColumnFilters: true,
+    onColumnFiltersChange: handleColumnFiltersChange,
+    get filterFns() {
+      return filterFns;
+    },
+  }),
+  ...(features.pagination && {
+    getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
+    manualPagination: serverPagination,
+    onPaginationChange: handlePaginationChange,
+  }),
+  ...(features.rowSelection && {
+    enableRowSelection: true,
+    onRowSelectionChange: handleRowSelectionChange,
+  }),
+  ...(features.columnVisibility && {
+    onColumnVisibilityChange: handleColumnVisibilityChange,
+  }),
+  ...(features.columnPinning && {
+    enableColumnPinning: true,
+    onColumnPinningChange: handleColumnPinningChange,
+  }),
+  ...(features.expanding && {
+    onExpandedChange: handleExpandedChange,
+  }),
+  ...(features.grouping && {
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    enableGrouping: true,
+    onGroupingChange: handleGroupingChange,
+  }),
+  ...(getRowId && { getRowId }),
+  ...(features.globalFilter && {
+    onGlobalFilterChange: handleGlobalFilterChange,
+  }),
+  ...(features.columnReordering && {
+    onColumnOrderChange: handleColumnOrderChange,
+  }),
+  // Current state
+  state: {
     ...(features.sorting && {
-      getSortedRowModel: getSortedRowModel(),
-      enableSorting: true,
-      onSortingChange: handleSortingChange,
+      get sorting() {
+        return currentSorting;
+      },
     }),
     ...(features.filtering && {
-      getFilteredRowModel: getFilteredRowModel(),
-      getFacetedRowModel: getFacetedRowModel(),
-      getFacetedUniqueValues: getFacetedUniqueValues(),
-      getFacetedMinMaxValues: getFacetedMinMaxValues(),
-      enableColumnFilters: true,
-      onColumnFiltersChange: handleColumnFiltersChange,
-      filterFns,
+      get columnFilters() {
+        return currentColumnFilters;
+      },
     }),
     ...(features.pagination && {
-      getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
-      manualPagination: serverPagination,
-      onPaginationChange: handlePaginationChange,
+      get pagination() {
+        return currentPagination;
+      },
     }),
     ...(features.rowSelection && {
-      enableRowSelection: true,
-      onRowSelectionChange: handleRowSelectionChange,
+      get rowSelection() {
+        return currentRowSelection;
+      },
     }),
     ...(features.columnVisibility && {
-      onColumnVisibilityChange: handleColumnVisibilityChange,
+      get columnVisibility() {
+        return currentColumnVisibility;
+      },
     }),
     ...(features.columnPinning && {
-      enableColumnPinning: true,
-      onColumnPinningChange: handleColumnPinningChange,
+      get columnPinning() {
+        return currentColumnPinning;
+      },
     }),
     ...(features.expanding && {
-      onExpandedChange: handleExpandedChange,
+      get expanded() {
+        return currentExpanded;
+      },
     }),
     ...(features.grouping && {
-      getGroupedRowModel: getGroupedRowModel(),
-      getExpandedRowModel: getExpandedRowModel(),
-      enableGrouping: true,
-      onGroupingChange: handleGroupingChange,
+      get grouping() {
+        return currentGrouping;
+      },
     }),
-    ...(getRowId && { getRowId }),
     ...(features.globalFilter && {
-      onGlobalFilterChange: handleGlobalFilterChange,
+      get globalFilter() {
+        return currentGlobalFilter;
+      },
     }),
     ...(features.columnReordering && {
-      onColumnOrderChange: handleColumnOrderChange,
+      get columnOrder() {
+        return currentColumnOrder;
+      },
     }),
-    // Current state
-    state: {
-      ...(features.sorting && { sorting: currentSorting }),
-      ...(features.filtering && { columnFilters: currentColumnFilters }),
-      ...(features.pagination && { pagination: currentPagination }),
-      ...(features.rowSelection && { rowSelection: currentRowSelection }),
-      ...(features.columnVisibility && { columnVisibility: currentColumnVisibility }),
-      ...(features.columnPinning && { columnPinning: currentColumnPinning }),
-      ...(features.expanding && { expanded: currentExpanded }),
-      ...(features.grouping && { grouping: currentGrouping }),
-      ...(features.globalFilter && { globalFilter: currentGlobalFilter }),
-      ...(features.columnReordering && { columnOrder: currentColumnOrder }),
-    },
-    // Server-side pagination
-    ...(serverPagination &&
-      rowCount !== undefined && {
-        rowCount,
-      }),
-  })
-);
+  },
+  // Server-side pagination
+  ...(serverPagination &&
+    rowCount !== undefined && {
+      get rowCount() {
+        return rowCount;
+      },
+    }),
+});
 
 // Apply UI settings
 const densityClass = $derived(uiSettings.density === 'dense' ? 'text-xs' : '');
@@ -294,9 +340,7 @@ const tableClasses = $derived(
 );
 
 // Sync the table instance to the bindable prop for external access
-$effect(() => {
-  table = tableInstance;
-});
+table = tableInstance;
 </script>
 
 <div class={tableClasses}>

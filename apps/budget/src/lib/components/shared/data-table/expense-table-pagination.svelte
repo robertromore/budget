@@ -9,14 +9,15 @@ import type { Table } from '@tanstack/table-core';
 
 let { table }: { table: Table<TData> } = $props();
 
-// Page size state
-let pageSizeValue = $state('10');
+// Initialize page size from table state to avoid overwriting view settings
+let pageSizeValue = $state(String(table.getState().pagination.pageSize));
 
-// Sync page size changes
+// Sync page size FROM table state TO local state (for display)
 $effect(() => {
   const currentSize = table.getState().pagination.pageSize;
-  if (pageSizeValue !== String(currentSize)) {
-    table.setPageSize(Number(pageSizeValue));
+  const currentValueStr = String(currentSize);
+  if (pageSizeValue !== currentValueStr) {
+    pageSizeValue = currentValueStr;
   }
 });
 </script>
@@ -29,7 +30,15 @@ $effect(() => {
   <div class="flex items-center space-x-6 lg:space-x-8">
     <div class="flex items-center space-x-2">
       <p class="text-sm font-medium">Rows per page</p>
-      <Select.Root allowDeselect={false} type="single" bind:value={pageSizeValue}>
+      <Select.Root
+        allowDeselect={false}
+        type="single"
+        value={pageSizeValue}
+        onValueChange={(value) => {
+          if (value) {
+            table.setPageSize(Number(value));
+          }
+        }}>
         <Select.Trigger class="h-8 w-[70px]">
           {String(table.getState().pagination.pageSize)}
         </Select.Trigger>
