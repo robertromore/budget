@@ -43,6 +43,8 @@ interface Props {
   pageSizeOptions?: number[];
   /** Custom filter functions registry */
   filterFns?: Record<string, any>;
+  /** Optional row ID getter */
+  getRowId?: (row: TData, index: number, parent?: Row<TData>) => string;
   /** Optional toolbar snippet that receives the table instance */
   toolbar?: Snippet<[TableInstance<TData>]>;
   /** Optional footer snippet for bulk actions, receives the table instance */
@@ -76,6 +78,7 @@ let {
   enableHeaders = true,
   pageSizeOptions = [10, 20, 25, 30, 40, 50, 100],
   filterFns = {},
+  getRowId,
   toolbar,
   footer,
   showBorder = true,
@@ -98,7 +101,9 @@ let {
     {serverPagination}
     {...rowCount !== undefined ? { rowCount } : {}}
     {filterFns}
-    {...className ? { class: className } : {}}>
+    {...getRowId ? { getRowId } : {}}
+    {...className ? { class: className } : {}}
+    bind:table>
     {#snippet children(tableInstance)}
       <div class="space-y-3">
         <!-- Render toolbar if provided -->

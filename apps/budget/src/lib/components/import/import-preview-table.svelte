@@ -1,7 +1,8 @@
 <script lang="ts">
 import { AdvancedDataTable } from "$lib/components/data-table/core";
+import type { DataTableState, DataTableStateHandlers } from "$lib/components/data-table/state/types";
 import type { CleanupState, ImportRow } from "$lib/types/import";
-import type { Table } from "@tanstack/table-core";
+import type { RowSelectionState, Table } from "@tanstack/table-core";
 import {
   createImportPreviewColumns,
   type ImportPreviewColumnActions,
@@ -35,6 +36,8 @@ interface Props {
   loading?: boolean;
   table?: Table<ImportRow> | undefined;
   cleanupSheetOpen?: boolean;
+  /** Bindable row selection state - contains row.rowIndex values of selected rows */
+  selectedRows?: Set<number>;
 }
 
 let {
@@ -53,7 +56,50 @@ let {
   loading = false,
   table = $bindable(),
   cleanupSheetOpen = $bindable(false),
+  selectedRows = $bindable(new Set<number>()),
 }: Props = $props();
+
+// Manage row selection state for the table
+let rowSelection = $state<RowSelectionState>({});
+
+// Initialize selection with only valid rows (matching old ImportDataTable behavior)
+let hasInitialized = $state(false);
+$effect(() => {
+  if (!hasInitialized && data.length > 0) {
+    hasInitialized = true;
+    const initialSelection: RowSelectionState = {};
+    data.forEach((row) => {
+      // Use row.rowIndex as key (matching old component behavior)
+      if (row.validationStatus === 'valid' || row.validationStatus === 'pending') {
+        initialSelection[String(row.rowIndex)] = true;
+      }
+    });
+    rowSelection = initialSelection;
+  }
+});
+
+// Sync rowSelection → selectedRows (key values are rowIndex values)
+$effect(() => {
+  const newSelection = new Set<number>();
+  Object.keys(rowSelection).forEach((key) => {
+    if (rowSelection[key]) {
+      newSelection.add(Number(key));
+    }
+  });
+  selectedRows = newSelection;
+});
+
+// Create state object to pass to the table
+const tableState: DataTableState = $derived({
+  rowSelection,
+});
+
+// Create handlers to update state
+const tableHandlers: DataTableStateHandlers = {
+  onRowSelectionChange: (updater) => {
+    rowSelection = typeof updater === "function" ? updater(rowSelection) : updater;
+  },
+};
 
 // Create column actions object
 const columnActions: ImportPreviewColumnActions = $derived({
@@ -65,10 +111,6 @@ const columnActions: ImportPreviewColumnActions = $derived({
   categorySuggestions: cleanupState?.categorySuggestions,
 });
 
-// Debug: Log when categorySuggestions changes
-$effect(() => {
-  console.log('[PreviewTable] categorySuggestions:', cleanupState?.categorySuggestions?.length ?? 0);
-});
 
 // Create columns with actions
 const columns = $derived(createImportPreviewColumns(columnActions));
@@ -108,6 +150,9 @@ const filterFns = {
   {filterFns}
   {loading}
   bind:table
+  getRowId={(row) => String(row.rowIndex)}
+  state={tableState}
+  handlers={tableHandlers}
   features={{
     sorting: true,
     filtering: true,

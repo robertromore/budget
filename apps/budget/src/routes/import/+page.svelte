@@ -23,9 +23,11 @@ import type {
   ColumnMapping,
   ImportPreviewData,
   ImportResult,
+  ImportRow,
   ParseResult,
   ScheduleMatch,
 } from '$lib/types/import';
+import type { Table } from '@tanstack/table-core';
 import {
   PAYMENT_PROCESSORS,
   countProcessorTransactions,
@@ -75,6 +77,7 @@ let importResult = $state<ImportResult | null>(null);
 let isProcessing = $state(false);
 let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
+let previewTable = $state<Table<ImportRow> | undefined>(undefined);
 let scheduleMatches = $state<ScheduleMatch[]>([]);
 let scheduleMatchThreshold = $state(0.75); // Default to 75% minimum match (array for Slider component)
 
@@ -984,14 +987,16 @@ function proceedToScheduleReview() {
 }
 
 async function proceedToEntityReview() {
-  if (!parseResults || !selectedAccountId || !previewData) return;
+  if (!parseResults || !selectedAccountId || !previewData) {
+    return;
+  }
 
   isProcessing = true;
   error = null;
 
   try {
-    // Filter rows to only include selected ones (with entity overrides applied)
-    const selectedRowsData = previewData.rows.filter((row) => selectedRows.has(row.rowIndex));
+    // selectedRows already contains row.rowIndex values from ImportPreviewTable
+    const selectedRowsData = previewData.rows.filter(row => selectedRows.has(row.rowIndex));
 
     const response = await fetch('/api/import/preview-entities', {
       method: 'POST',
@@ -1066,12 +1071,22 @@ function deselectAllCategories() {
 }
 
 async function processImport() {
+  // Note: previewTable is no longer required here - we use persisted selectedRows
   if (!parseResults || !selectedAccountId || !entityPreview || !previewData) return;
+
+  // Verify we have selected rows (persisted from proceedToEntityReview)
+  if (selectedRows.size === 0) {
+    error = 'No rows selected for import';
+    return;
+  }
 
   isProcessing = true;
   error = null;
 
   try {
+    // Use persisted selectedRows (captured when leaving preview step)
+    // The preview table is no longer mounted at this point
+
     // Filter rows to only include selected ones (with entity overrides applied, but NOT amount reversal)
     // Amount reversal will be applied by the backend based on the reverseAmountSigns flag
     const selectedRowsData = parseResults.rows
@@ -1195,6 +1210,9 @@ function startNewImport() {
   detectedMapping = null;
   csvHeaders = [];
   columnMapping = null;
+  previewTable = undefined;
+  entityOverrides = {};
+  cleanupState = null;
 }
 
 // Save profile dialog helpers
@@ -1275,11 +1293,15 @@ const steps = [
 
 const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
 
+// Derived count of selected rows - uses the bound state from ImportPreviewTable
+const selectedRowCount = $derived(selectedRows.size);
+
 // Scroll to top when step changes
 $effect(() => {
   currentStep;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+
 </script>
 
 <svelte:head>
@@ -1471,6 +1493,8 @@ $effect(() => {
               {temporaryPayees}
               processorCount={processorAnalysis.total}
               onOpenProcessorFilter={openProcessorFilterDialog}
+              bind:table={previewTable}
+              bind:selectedRows
             />
 
             <!-- Navigation Buttons -->
@@ -1480,9 +1504,9 @@ $effect(() => {
               </Button>
               <div class="flex items-center gap-2">
                 <span class="text-muted-foreground text-sm">
-                  {selectedRows.size} of {previewData.rows.length} selected
+                  {selectedRowCount} of {previewData.rows.length} selected
                 </span>
-                <Button onclick={proceedToScheduleReview} disabled={selectedRows.size === 0}>
+                <Button onclick={proceedToScheduleReview} disabled={selectedRowCount === 0}>
                   Continue
                 </Button>
               </div>

@@ -1,6 +1,6 @@
 <script lang="ts" generics="TData">
 import { createSvelteTable } from '$lib/components/ui/data-table';
-import type { ColumnDef, Table } from '@tanstack/table-core';
+import type { ColumnDef, Row, Table } from '@tanstack/table-core';
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -43,6 +43,10 @@ interface Props {
   rowCount?: number;
   /** Custom filter functions registry */
   filterFns?: Record<string, any>;
+  /** Bindable table instance for external access */
+  table?: Table<TData> | undefined;
+  /** Optional row ID getter */
+  getRowId?: (row: TData, index: number, parent?: Row<TData>) => string;
 }
 
 let {
@@ -57,6 +61,8 @@ let {
   serverPagination = false,
   rowCount,
   filterFns = {},
+  table = $bindable(),
+  getRowId,
 }: Props = $props();
 
 const _externalState = (() => externalState)();
@@ -74,6 +80,7 @@ let internalGlobalFilter = $state(_externalState?.globalFilter ?? '');
 let internalColumnOrder = $state(_externalState?.columnOrder ?? []);
 // Determine whether to use external or internal state
 const useExternalState = $derived(!!externalState);
+
 
 // Create reactive getters for current state
 const currentSorting = $derived(
@@ -194,7 +201,7 @@ function handleColumnOrderChange(updater: any) {
 }
 
 // Create the table instance
-const table = $derived(
+const tableInstance = $derived(
   createSvelteTable<TData>({
     data,
     columns,
@@ -239,6 +246,7 @@ const table = $derived(
       enableGrouping: true,
       onGroupingChange: handleGroupingChange,
     }),
+    ...(getRowId && { getRowId }),
     ...(features.globalFilter && {
       onGlobalFilterChange: handleGlobalFilterChange,
     }),
@@ -284,10 +292,15 @@ const tableClasses = $derived(
     .filter(Boolean)
     .join(' ')
 );
+
+// Sync the table instance to the bindable prop for external access
+$effect(() => {
+  table = tableInstance;
+});
 </script>
 
 <div class={tableClasses}>
   {#if children}
-    {@render children(table)}
+    {@render children(tableInstance)}
   {/if}
 </div>
