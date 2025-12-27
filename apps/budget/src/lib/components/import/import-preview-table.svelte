@@ -2,7 +2,14 @@
 import { AdvancedDataTable } from "$lib/components/data-table/core";
 import type { DataTableState, DataTableStateHandlers } from "$lib/components/data-table/state/types";
 import type { CleanupState, ImportRow } from "$lib/types/import";
-import type { RowSelectionState, Table } from "@tanstack/table-core";
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  RowSelectionState,
+  SortingState,
+  Table,
+  VisibilityState,
+} from "@tanstack/table-core";
 import {
   createImportPreviewColumns,
   type ImportPreviewColumnActions,
@@ -59,8 +66,12 @@ let {
   selectedRows = $bindable(new Set<number>()),
 }: Props = $props();
 
-// Manage row selection state for the table
+// Manage table state
 let rowSelection = $state<RowSelectionState>({});
+let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 25 });
+let sorting = $state<SortingState>([]);
+let columnFilters = $state<ColumnFiltersState>([]);
+let columnVisibility = $state<VisibilityState>({});
 
 // Initialize selection with only valid rows (matching old ImportDataTable behavior)
 let hasInitialized = $state(false);
@@ -92,12 +103,28 @@ $effect(() => {
 // Create state object to pass to the table
 const tableState: DataTableState = $derived({
   rowSelection,
+  pagination,
+  sorting,
+  columnFilters,
+  columnVisibility,
 });
 
 // Create handlers to update state
 const tableHandlers: DataTableStateHandlers = {
   onRowSelectionChange: (updater) => {
     rowSelection = typeof updater === "function" ? updater(rowSelection) : updater;
+  },
+  onPaginationChange: (updater) => {
+    pagination = typeof updater === "function" ? updater(pagination) : updater;
+  },
+  onSortingChange: (updater) => {
+    sorting = typeof updater === "function" ? updater(sorting) : updater;
+  },
+  onColumnFiltersChange: (updater) => {
+    columnFilters = typeof updater === "function" ? updater(columnFilters) : updater;
+  },
+  onColumnVisibilityChange: (updater) => {
+    columnVisibility = typeof updater === "function" ? updater(columnVisibility) : updater;
   },
 };
 
