@@ -209,6 +209,21 @@
 			};
 		}
 	});
+
+	// Scroll to selected item when the list opens
+	$effect(() => {
+		if (scrollContainer && selectedId !== null && alphabetGroups.length > 0) {
+			// Use requestAnimationFrame to ensure DOM is ready
+			requestAnimationFrame(() => {
+				const selectedElement = scrollContainer?.querySelector(
+					`[data-payee-id="${selectedId}"]`
+				);
+				if (selectedElement) {
+					selectedElement.scrollIntoView({ behavior: "instant", block: "center" });
+				}
+			});
+		}
+	});
 </script>
 
 <div class="flex h-full flex-col">

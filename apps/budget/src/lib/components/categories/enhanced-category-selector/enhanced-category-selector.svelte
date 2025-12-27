@@ -288,7 +288,7 @@
 			{#if effectiveLayoutMode === "slide-in"}
 				<!-- Slide-in layout -->
 				<div
-					class="relative h-[calc(100vh-12rem)] min-h-[400px] overflow-hidden"
+					class="relative h-[60vh] min-h-[400px] max-h-[calc(100vh-12rem)] overflow-hidden md:h-[calc(100vh-12rem)]"
 				>
 					<!-- List panel -->
 					<div
@@ -313,7 +313,7 @@
 					<!-- Detail panel (slides from right) -->
 					<div
 						class={cn(
-							"absolute inset-0 transition-transform duration-200 ease-out",
+							"absolute inset-0 overflow-auto transition-transform duration-200 ease-out",
 							!showDetailPanel && "translate-x-full",
 						)}
 					>
@@ -335,7 +335,7 @@
 					class="grid h-[calc(100vh-12rem)] min-h-[400px] grid-cols-[40%_60%]"
 				>
 					<!-- List panel -->
-					<div class="overflow-hidden border-r">
+					<div class="h-full overflow-hidden border-r">
 						<CategoryListView
 							categories={allCategories}
 							selectedId={value}
@@ -350,7 +350,7 @@
 					</div>
 
 					<!-- Detail panel -->
-					<div class="overflow-hidden">
+					<div class="h-full overflow-auto">
 						{#if showDetailPanel}
 							<CategoryDetailPanel
 								category={focusedCategory}

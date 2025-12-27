@@ -54,6 +54,7 @@
 	role="option"
 	tabindex="0"
 	aria-selected={isSelected}
+	data-category-id={category.id}
 	class={cn(
 		"group relative flex w-full cursor-pointer items-center rounded-lg border text-left transition-all",
 		displayMode === "compact" ? "gap-2 px-2.5 py-2" : "gap-3 px-3 py-3",
