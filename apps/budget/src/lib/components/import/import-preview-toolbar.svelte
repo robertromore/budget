@@ -255,6 +255,17 @@ function resetAllDecisions() {
           onResetAll={resetAllDecisions}
         />
       {/snippet}
+
+      {#snippet footer()}
+        <div class="flex items-center justify-between">
+          <Button variant="outline" size="sm" onclick={resetAllDecisions}>
+            Reset All
+          </Button>
+          <Button size="sm" onclick={() => (cleanupSheetOpen = false)}>
+            Done
+          </Button>
+        </div>
+      {/snippet}
     </ResponsiveSheet>
 
     <!-- Category Suggestions Stats -->

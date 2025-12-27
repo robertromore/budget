@@ -166,7 +166,7 @@ function getConfidenceBadgeVariant(
     {/if}
 
     <!-- Payee Groups List -->
-    <ScrollArea class="max-h-[50vh]">
+    <ScrollArea class="h-[calc(100vh-350px)]">
       <div class="space-y-2 pr-3">
         {#each cleanupState.payeeGroups as group (group.groupId)}
           {@const isExpanded = expandedGroups.has(group.groupId)}

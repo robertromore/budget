@@ -240,9 +240,6 @@ export function createImportPreviewColumns(
         }),
       cell: ({ row }) => {
         const suggestion = categorySuggestions?.find(s => s.rowIndex === row.original.rowIndex);
-        if (suggestion && suggestion.suggestions.length > 0) {
-          console.log(`[Columns] Passing suggestion to row ${row.original.rowIndex}:`, suggestion.suggestions[0]?.categoryName);
-        }
         return renderComponent(ImportTableCategoryCell, {
           row,
           ...(onCategoryUpdate ? { onUpdate: onCategoryUpdate } : {}),
