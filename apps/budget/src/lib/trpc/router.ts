@@ -14,6 +14,7 @@ import { aiRoutes } from "$lib/trpc/routes/ai";
 import { authRoutes } from "$lib/trpc/routes/auth";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
+import { payeeAliasRoutes } from "$lib/trpc/routes/payee-aliases";
 import { payeeCategoriesRoutes } from "$lib/trpc/routes/payee-categories";
 import { payeeRoutes } from "$lib/trpc/routes/payees";
 import { transactionRoutes } from "$lib/trpc/routes/transactions";
@@ -48,6 +49,7 @@ export const router = t.router({
   aiRoutes,
   categoriesRoutes,
   categoryGroupsRoutes,
+  payeeAliasRoutes,
   payeeCategoriesRoutes,
   payeeRoutes,
   scheduleRoutes,

@@ -10,9 +10,11 @@ import * as budgets from "./budgets";
 import * as categories from "./categories";
 import * as categoryGroups from "./category-groups";
 import * as importProfiles from "./import-profiles";
+import * as llmSettings from "./llm-settings";
 import * as medicalExpenses from "./medical-expenses";
 import * as onboarding from "./onboarding";
 import * as patterns from "./patterns";
+import * as payeeAliases from "./payee-aliases";
 import * as payeeCategories from "./payee-categories";
 import * as payees from "./payees";
 import * as schedules from "./schedules";
@@ -35,9 +37,11 @@ export const rpc = {
   categories,
   categoryGroups,
   importProfiles,
+  llmSettings,
   medicalExpenses,
   onboarding,
   patterns,
+  payeeAliases,
   payeeCategories,
   payees,
   schedules,
@@ -68,9 +72,11 @@ export type BudgetQueries = typeof budgets;
 export type CategoryQueries = typeof categories;
 export type CategoryGroupQueries = typeof categoryGroups;
 export type ImportProfileQueries = typeof importProfiles;
+export type LLMSettingsQueries = typeof llmSettings;
 export type MedicalExpenseQueries = typeof medicalExpenses;
 export type OnboardingQueries = typeof onboarding;
 export type PatternQueries = typeof patterns;
+export type PayeeAliasQueries = typeof payeeAliases;
 export type PayeeCategoryQueries = typeof payeeCategories;
 export type PayeeQueries = typeof payees;
 export type ScheduleQueries = typeof schedules;
@@ -93,6 +99,7 @@ export { importProfileKeys } from "./import-profiles";
 export { medicalExpenseKeys } from "./medical-expenses";
 export { onboardingKeys } from "./onboarding";
 export { patternKeys } from "./patterns";
+export { payeeAliasKeys } from "./payee-aliases";
 export { payeeCategoryKeys } from "./payee-categories";
 export { payeeKeys } from "./payees";
 export { scheduleKeys } from "./schedules";
@@ -101,6 +108,7 @@ export { viewKeys } from "./views";
 export { workspaceInvitationKeys } from "./workspace-invitations";
 export { workspaceMemberKeys } from "./workspace-members";
 export { workspaceKeys } from "./workspaces";
+export { LLMSettings, llmSettingsKeys } from "./llm-settings";
 
 /**
  * Development helpers
