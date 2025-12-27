@@ -175,13 +175,14 @@ export class BudgetRepository {
   ): Promise<BudgetWithRelations[]> {
     const { status } = options;
 
-    const conditions = [eq(budgets.workspaceId, workspaceId)];
-    if (status) {
-      conditions.push(eq(budgets.status, status));
-    }
-
     const result = await db.query.budgets.findMany({
-      where: and(...conditions),
+      where: (budget, { eq, and, isNull }) => {
+        const conditions = [eq(budget.workspaceId, workspaceId), isNull(budget.deletedAt)];
+        if (status) {
+          conditions.push(eq(budget.status, status));
+        }
+        return and(...conditions);
+      },
       with: this.defaultRelations(),
       orderBy: (budget, { asc }) => asc(budget.name),
     });
@@ -198,7 +199,7 @@ export class BudgetRepository {
     client: DbClient = db
   ): Promise<BudgetWithRelations | null> {
     const result = await client.query.budgets.findFirst({
-      where: and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId)),
+      where: and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)),
       with: this.defaultRelations(),
     });
 

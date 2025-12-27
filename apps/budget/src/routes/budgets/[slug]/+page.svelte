@@ -183,20 +183,17 @@ const previousPeriod = $derived.by(() => {
 const mostRecentPeriod = $derived(periods[periods.length - 1]);
 
 // Selected period for filtering envelopes (defaults to current period)
-let selectedPeriodId = $state<number | undefined>(undefined);
+// String is the source of truth (for Select binding)
 let selectedPeriodIdString = $state<string>('');
+
+// Derive the numeric ID from the string (no effect needed, avoids circular dependency)
+const selectedPeriodId = $derived(selectedPeriodIdString ? Number(selectedPeriodIdString) : undefined);
 
 // Auto-select current period when it's available
 $effect(() => {
-  if (currentPeriod && !selectedPeriodId) {
-    selectedPeriodId = currentPeriod.id;
+  if (currentPeriod && !selectedPeriodIdString) {
     selectedPeriodIdString = String(currentPeriod.id);
   }
-});
-
-// Sync string value with numeric value
-$effect(() => {
-  selectedPeriodId = selectedPeriodIdString ? Number(selectedPeriodIdString) : undefined;
 });
 
 // Get the selected period object
@@ -651,7 +648,7 @@ async function toggleBudgetStatus() {
               disabled={!previousToSelectedPeriod}
               onclick={() => {
                 if (previousToSelectedPeriod) {
-                  selectedPeriodId = previousToSelectedPeriod.id;
+                  selectedPeriodIdString = String(previousToSelectedPeriod.id);
                 }
               }}>
               <ChevronLeft class="h-4 w-4" />
@@ -692,7 +689,7 @@ async function toggleBudgetStatus() {
               disabled={!nextToSelectedPeriod}
               onclick={() => {
                 if (nextToSelectedPeriod) {
-                  selectedPeriodId = nextToSelectedPeriod.id;
+                  selectedPeriodIdString = String(nextToSelectedPeriod.id);
                 }
               }}>
               <ChevronRight class="h-4 w-4" />

@@ -11,7 +11,8 @@ import RecommendationActionsCell from "../cells/recommendation-actions-cell.svel
 
 export const columns = (
   onApply: (recommendation: BudgetRecommendationWithRelations) => void,
-  onDismiss: (recommendation: BudgetRecommendationWithRelations) => void
+  onDismiss: (recommendation: BudgetRecommendationWithRelations) => void,
+  onReset?: (recommendation: BudgetRecommendationWithRelations) => void
 ): ColumnDef<BudgetRecommendationWithRelations>[] => {
   return [
     {
@@ -134,6 +135,7 @@ export const columns = (
           recommendation,
           onApply,
           onDismiss,
+          onReset,
         });
       },
       enableColumnFilter: false,

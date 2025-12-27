@@ -324,10 +324,10 @@ export const budgetRoutes = t.router({
           },
         });
 
-        // Filter by workspace and extract budgets
+        // Filter by workspace and exclude soft-deleted budgets
         const budgets = budgetsWithAccount
           .map((ba) => ba.budget)
-          .filter((budget) => budget.workspaceId === ctx.workspaceId);
+          .filter((budget) => budget.workspaceId === ctx.workspaceId && !budget.deletedAt);
 
         return budgets;
       } catch (error) {
@@ -1417,6 +1417,17 @@ export const budgetRoutes = t.router({
       try {
         const budgetService = serviceFactory.getBudgetService();
         return await budgetService.restoreRecommendation(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  resetAppliedRecommendation: publicProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.resetAppliedRecommendation(input.id);
       } catch (error) {
         throw translateDomainError(error);
       }

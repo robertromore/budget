@@ -477,6 +477,48 @@ export class RecommendationService {
   }
 
   /**
+   * Reset an applied recommendation back to pending
+   * This is used when a budget created from a recommendation is deleted
+   * and the user wants to reapply the recommendation
+   */
+  async resetAppliedRecommendation(id: number): Promise<BudgetRecommendationWithRelations> {
+    const now = getCurrentTimestamp();
+
+    // First check if recommendation exists and is applied
+    const existing = await db.query.budgetRecommendations.findFirst({
+      where: eq(budgetRecommendations.id, id),
+    });
+
+    if (!existing) {
+      throw new NotFoundError("Recommendation", id);
+    }
+
+    if (existing.status !== "applied") {
+      throw new ValidationError(
+        `Cannot reset recommendation with status "${existing.status}". Only applied recommendations can be reset.`,
+        "status"
+      );
+    }
+
+    const [updated] = await db
+      .update(budgetRecommendations)
+      .set({
+        status: "pending",
+        appliedAt: null,
+        budgetId: null,
+        updatedAt: now,
+      })
+      .where(eq(budgetRecommendations.id, id))
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundError("Recommendation", id);
+    }
+
+    return await this.getRecommendation(id);
+  }
+
+  /**
    * Apply a recommendation (mark as applied)
    * Note: Actual budget creation/modification should be handled by caller
    * @param id - The recommendation ID

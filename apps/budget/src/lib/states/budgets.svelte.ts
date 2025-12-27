@@ -49,11 +49,27 @@ export class BudgetState {
   }
 
   replaceBudgets(budgets: BudgetWithRelations[]): void {
-    this.budgets = new SvelteMap();
-    this.groups = new SvelteMap();
-    this.templates = new SvelteMap();
+    const nextBudgets = new SvelteMap<number, BudgetWithRelations>();
+    const nextGroups = new SvelteMap<number, BudgetGroup>();
+    const nextTemplates = new SvelteMap<number, TemplateWithPeriods>();
 
-    budgets.forEach((budget) => this.upsertBudget(budget));
+    budgets.forEach((budget) => {
+      nextBudgets.set(budget.id, budget);
+
+      budget.groupMemberships?.forEach((membership) => {
+        if (membership.group) {
+          nextGroups.set(membership.group.id, membership.group);
+        }
+      });
+
+      budget.periodTemplates?.forEach((template) => {
+        nextTemplates.set(template.id, this.normalizedTemplate(template));
+      });
+    });
+
+    this.budgets = nextBudgets;
+    this.groups = nextGroups;
+    this.templates = nextTemplates;
   }
 
   upsertBudget(budget: BudgetWithRelations): void {

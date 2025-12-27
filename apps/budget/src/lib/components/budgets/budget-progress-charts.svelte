@@ -8,9 +8,9 @@ import { currencyFormatter } from '$lib/utils/formatters';
 import { calculateActualSpent } from '$lib/utils/budget-calculations';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 
-// LayerChart imports
-import { Chart, Svg, Area, Spline, Axis, Grid, Highlight } from 'layerchart';
-import ChartContainer from '$lib/components/ui/chart/chart-container.svelte';
+// LayerCake imports
+import { LayerCake, Svg, Html } from 'layercake';
+import { Grid, MultiLine, MultiArea, AxisX, AxisY, MultiTooltip } from '$lib/components/layercake';
 import { colorUtils } from '$lib/utils/colors';
 import { pie, arc as d3arc } from 'd3-shape';
 
@@ -354,46 +354,56 @@ const donutChartConfig = $derived.by(() => {
         </Card.Header>
         <Card.Content>
           {#if aggregateData && aggregateData.combinedTrend.length > 0}
-            <ChartContainer config={progressChartConfig} class="h-[300px] w-full">
-              <Chart
+            {@const chartSeries = [
+              { key: 'allocated', color: colorUtils.getChartColor(0), label: 'Allocated' },
+              { key: 'spent', color: colorUtils.getFinancialColor('negative'), label: 'Spent' }
+            ]}
+            <div class="h-[300px] w-full">
+              <LayerCake
                 data={aggregateData.combinedTrend}
                 x="day"
                 y="allocated"
                 yDomain={[0, null]}
-                padding={{ left: 48, bottom: 24, right: 12, top: 12 }}
-                tooltip={{ mode: 'bisect-x' }}>
+                padding={{ left: 48, bottom: 36, right: 12, top: 12 }}>
                 <Svg>
-                  <Grid class="stroke-muted/20" />
+                  <Grid />
 
-                  <Axis
-                    placement="left"
+                  <AxisY
                     label="Amount ($)"
-                    format={(value: number) => currencyFormatter.format(value).replace('$', '')}
-                    labelProps={{ class: 'text-xs fill-muted-foreground' }} />
-                  <Axis
-                    placement="bottom"
-                    label="Day of Month"
-                    labelProps={{ class: 'text-xs fill-muted-foreground' }} />
+                    format={(value: number) => currencyFormatter.format(value).replace('$', '')} />
+                  <AxisX label="Day of Month" gridlines={false} />
 
                   <!-- Allocated budget line (target) -->
-                  <Spline
+                  <MultiLine
                     y="allocated"
-                    class="stroke-2"
-                    style="stroke: {colorUtils.getChartColor(0)}; fill: none; opacity: 0.5;" />
+                    stroke={colorUtils.getChartColor(0)}
+                    strokeWidth={2}
+                    opacity={0.5} />
 
                   <!-- Actual spending area and line -->
-                  <Area
+                  <MultiArea
                     y="spent"
-                    style="fill: {colorUtils.getFinancialColor('negative')}; opacity: 0.3;" />
-                  <Spline
+                    fill={colorUtils.getFinancialColor('negative')}
+                    opacity={0.3} />
+                  <MultiLine
                     y="spent"
-                    class="stroke-2"
-                    style="stroke: {colorUtils.getFinancialColor('negative')}; fill: none;" />
+                    stroke={colorUtils.getFinancialColor('negative')}
+                    strokeWidth={2} />
 
-                  <Highlight points lines />
+                  <MultiTooltip series={chartSeries}>
+                    {#snippet children({ point })}
+                      <foreignObject x={10} y={10} width="180" height="80">
+                        <div class="bg-popover text-popover-foreground rounded-md border p-2 text-xs shadow-md">
+                          <p class="font-medium">Day {point.day}</p>
+                          <p>Allocated: {currencyFormatter.format(point.allocated)}</p>
+                          <p>Spent: {currencyFormatter.format(point.spent)}</p>
+                        </div>
+                      </foreignObject>
+                    {/snippet}
+                  </MultiTooltip>
                 </Svg>
-              </Chart>
-            </ChartContainer>
+              </LayerCake>
+            </div>
           {:else}
             <div class="text-muted-foreground flex h-[300px] items-center justify-center">
               No data available for spending trends

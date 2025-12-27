@@ -6,9 +6,11 @@ import {
   applyRecommendation,
   dismissRecommendation,
   listRecommendations,
+  resetAppliedRecommendation,
 } from '$lib/query/budgets';
 import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 import Filter from '@lucide/svelte/icons/filter';
+import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Users from '@lucide/svelte/icons/users';
 import AnalyzeSpendingSheet from './analyze-spending-sheet.svelte';
@@ -95,9 +97,15 @@ const budgetRecommendationsCount = $derived(
   ).length
 );
 
+// Count applied recommendations
+const appliedRecommendations = $derived(
+  allRecommendations.filter((rec) => rec.status === 'applied')
+);
+
 // Mutations
 const applyMutation = applyRecommendation.options();
 const dismissMutation = dismissRecommendation.options();
+const resetMutation = resetAppliedRecommendation.options();
 
 function handleApply(recommendation: BudgetRecommendationWithRelations) {
   // Show preview modal for group recommendations
@@ -117,6 +125,16 @@ function handleApply(recommendation: BudgetRecommendationWithRelations) {
 
 function handleDismiss(recommendation: BudgetRecommendationWithRelations) {
   dismissMutation.mutate(recommendation.id);
+}
+
+function handleReset(recommendation: BudgetRecommendationWithRelations) {
+  resetMutation.mutate(recommendation.id);
+}
+
+function handleResetAll() {
+  appliedRecommendations.forEach((rec) => {
+    resetMutation.mutate(rec.id);
+  });
 }
 
 function handleBulkApply(recommendations: BudgetRecommendationWithRelations[]) {
@@ -147,7 +165,7 @@ function handleClosePreviewModal() {
 }
 
 // Create columns with handlers
-const tableColumns = $derived(columns(handleApply, handleDismiss));
+const tableColumns = $derived(columns(handleApply, handleDismiss, handleReset));
 </script>
 
 <div class="space-y-4">
@@ -162,10 +180,18 @@ const tableColumns = $derived(columns(handleApply, handleDismiss));
         </span>
       {/if}
     </div>
-    <Button size="sm" onclick={() => (analyzeDialogOpen = true)}>
-      <Sparkles class="mr-2 h-4 w-4" />
-      Analyze Spending
-    </Button>
+    <div class="flex items-center gap-2">
+      {#if appliedRecommendations.length > 0}
+        <Button size="sm" variant="outline" onclick={handleResetAll}>
+          <RotateCcw class="mr-2 h-4 w-4" />
+          Reset All ({appliedRecommendations.length})
+        </Button>
+      {/if}
+      <Button size="sm" onclick={() => (analyzeDialogOpen = true)}>
+        <Sparkles class="mr-2 h-4 w-4" />
+        Analyze Spending
+      </Button>
+    </div>
   </div>
 
   <!-- Filters -->

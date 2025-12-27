@@ -45,7 +45,6 @@ import BudgetTemplatePicker from './(components)/dialogs/budget-template-picker.
 import BudgetForecastDisplay from './(components)/forecast/budget-forecast-display.svelte';
 import BudgetGroupsSection from './(components)/forecast/budget-groups-section.svelte';
 import BudgetFundTransfer from './(components)/managers/budget-fund-transfer.svelte';
-import BudgetRolloverManager from './(components)/managers/budget-rollover-manager.svelte';
 import BudgetSearchResults from './(components)/search/budget-search-results.svelte';
 
 // Demo mode detection
@@ -123,6 +122,12 @@ let groupDialogOpen = $state(false);
 let selectedGroup = $state<BudgetGroup | undefined>(undefined);
 let activeTab = $state<string>('overview');
 
+function setActiveTab(value: string | null | undefined) {
+  const nextTab = value ? value : 'overview';
+  if (nextTab === activeTab) return;
+  activeTab = nextTab;
+}
+
 // Register tabs for header display
 const pageTabsContext = getPageTabsContext();
 const showTabsOnPage = $derived(headerActionsMode.tabsMode === 'off');
@@ -139,7 +144,7 @@ $effect(() => {
         { id: 'analytics', label: 'Analytics & Insights', icon: ChartBar },
       ],
       activeTab,
-      onTabChange: (value) => (activeTab = value),
+      onTabChange: setActiveTab,
     });
   }
 });
@@ -454,7 +459,7 @@ const summaryMetrics = $derived.by(() => {
   {:else}
     <!-- Show tabs even when there are no budgets so users can access Recommendations -->
     {#if showTabsOnPage}
-      <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v ?? 'overview')} class="space-y-6">
+      <Tabs.Root value={activeTab} onValueChange={setActiveTab} class="space-y-6">
         <Tabs.List class="grid w-full grid-cols-6" data-help-id="budget-tabs" data-help-title="Budget Tabs" data-tour-id="budget-tabs">
           <Tabs.Trigger value="overview" class="flex items-center gap-2" data-tour-id="budget-overview-tab">
             <Grid3x3 class="h-4 w-4" />
@@ -508,7 +513,7 @@ const summaryMetrics = $derived.by(() => {
                   <Plus class="mr-2 h-4 w-4" />
                   Create Your First Budget
                 </Button>
-                <Button variant="outline" onclick={() => (activeTab = 'recommendations')}>
+                <Button variant="outline" onclick={() => setActiveTab('recommendations')}>
                   <Sparkles class="mr-2 h-4 w-4" />
                   View Recommendations
                 </Button>
@@ -551,7 +556,7 @@ const summaryMetrics = $derived.by(() => {
 
       <!-- Rollover Manager Tab -->
       <Tabs.Content value="rollover" class="space-y-6">
-        <BudgetRolloverManager {budgets} />
+        <!-- <BudgetRolloverManager {budgets} /> -->
       </Tabs.Content>
 
       <!-- Analytics & Insights Tab -->
@@ -591,7 +596,7 @@ const summaryMetrics = $derived.by(() => {
                     <Plus class="mr-2 h-4 w-4" />
                     Create Your First Budget
                   </Button>
-                  <Button variant="outline" onclick={() => (activeTab = 'recommendations')}>
+                  <Button variant="outline" onclick={() => setActiveTab('recommendations')}>
                     <Sparkles class="mr-2 h-4 w-4" />
                     View Recommendations
                   </Button>
@@ -622,7 +627,7 @@ const summaryMetrics = $derived.by(() => {
         {:else if activeTab === 'transfer'}
           <BudgetFundTransfer {budgets} onFundTransfer={handleFundTransfer} />
         {:else if activeTab === 'rollover'}
-          <BudgetRolloverManager {budgets} />
+          <!-- <BudgetRolloverManager {budgets} /> -->
         {:else if activeTab === 'analytics'}
           <!-- Forecast Summary for Active Budgets -->
           {#if budgets.filter((b) => b.status === 'active').length > 0}

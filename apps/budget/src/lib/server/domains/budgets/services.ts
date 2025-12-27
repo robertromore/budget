@@ -825,6 +825,13 @@ export class BudgetService {
     return await this.recommendationService.restoreRecommendation(id);
   }
 
+  async resetAppliedRecommendation(id: number) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.resetAppliedRecommendation(id);
+  }
+
   async applyRecommendation(id: number) {
     if (!this.recommendationService) {
       throw new Error("Recommendation service not available");

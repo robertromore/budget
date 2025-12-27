@@ -80,13 +80,6 @@ const isLoadingEstimate = $derived(rolloverEstimateQuery?.isLoading ?? false);
 let rolloverSettingsOpen = $state(false);
 let periodTransitionOpen = $state(false);
 let selectedBudget = $state<BudgetWithRelations | null>(null);
-let rolloverLimit = $state<string>('6');
-const rolloverLimitAccessors = createTransformAccessors(
-  () => rolloverLimit,
-  (value: string) => {
-    rolloverLimit = value;
-  }
-);
 let rolloverType = $state<string>('');
 const rolloverTypeAccessors = createTransformAccessors(
   () => rolloverType,
@@ -97,14 +90,34 @@ const rolloverTypeAccessors = createTransformAccessors(
 let isProcessingTransition = $state(false);
 
 // Rollover configuration state
-let rolloverConfig = $state({
+const defaultRolloverConfig = {
   enabled: true,
   maxRolloverPercentage: 100,
   rolloverLimitMonths: 6,
   deficitRecoveryMode: 'gradual' as 'immediate' | 'gradual' | 'manual',
   autoTransition: true,
   notificationEnabled: true,
-});
+};
+type RolloverConfig = typeof defaultRolloverConfig;
+
+let rolloverConfig = $state<RolloverConfig>({ ...defaultRolloverConfig });
+const rolloverLimitAccessors = createTransformAccessors(
+  () =>
+    rolloverConfig.rolloverLimitMonths === 999
+      ? 'unlimited'
+      : String(rolloverConfig.rolloverLimitMonths),
+  (value: string) => {
+    rolloverConfig.rolloverLimitMonths =
+      value === 'unlimited'
+        ? 999
+        : parseInt(value, 10) || defaultRolloverConfig.rolloverLimitMonths;
+  }
+);
+const rolloverLimitValue = $derived.by(() =>
+  rolloverConfig.rolloverLimitMonths === 999
+    ? 'unlimited'
+    : String(rolloverConfig.rolloverLimitMonths)
+);
 const deficitRecoveryModeAccessors = createTransformAccessors(
   () => rolloverConfig.deficitRecoveryMode,
   (value: 'immediate' | 'gradual' | 'manual') => {
@@ -112,36 +125,27 @@ const deficitRecoveryModeAccessors = createTransformAccessors(
   }
 );
 
+function resolveRolloverConfig(saved?: Partial<RolloverConfig>): RolloverConfig {
+  return {
+    enabled: saved?.enabled ?? defaultRolloverConfig.enabled,
+    maxRolloverPercentage:
+      saved?.maxRolloverPercentage ?? defaultRolloverConfig.maxRolloverPercentage,
+    rolloverLimitMonths:
+      saved?.rolloverLimitMonths ?? defaultRolloverConfig.rolloverLimitMonths,
+    deficitRecoveryMode:
+      saved?.deficitRecoveryMode ?? defaultRolloverConfig.deficitRecoveryMode,
+    autoTransition: saved?.autoTransition ?? defaultRolloverConfig.autoTransition,
+    notificationEnabled:
+      saved?.notificationEnabled ?? defaultRolloverConfig.notificationEnabled,
+  };
+}
+
 // Load settings from budget metadata when budget changes
 $effect(() => {
-  if (primaryBudget?.metadata?.['rolloverSettings']) {
-    const saved = primaryBudget.metadata['rolloverSettings'] as any;
-    rolloverConfig.enabled = saved.enabled ?? rolloverConfig.enabled;
-    rolloverConfig.maxRolloverPercentage =
-      saved.maxRolloverPercentage ?? rolloverConfig.maxRolloverPercentage;
-    rolloverConfig.rolloverLimitMonths =
-      saved.rolloverLimitMonths ?? rolloverConfig.rolloverLimitMonths;
-    rolloverConfig.deficitRecoveryMode =
-      saved.deficitRecoveryMode ?? rolloverConfig.deficitRecoveryMode;
-    rolloverConfig.autoTransition = saved.autoTransition ?? rolloverConfig.autoTransition;
-    rolloverConfig.notificationEnabled =
-      saved.notificationEnabled ?? rolloverConfig.notificationEnabled;
-
-    // Sync UI state with loaded config
-    rolloverLimit =
-      rolloverConfig.rolloverLimitMonths === 999
-        ? 'unlimited'
-        : String(rolloverConfig.rolloverLimitMonths);
-  }
-});
-
-// Sync rolloverLimit changes back to config
-$effect(() => {
-  if (rolloverLimit === 'unlimited') {
-    rolloverConfig.rolloverLimitMonths = 999; // Use 999 as unlimited marker
-  } else {
-    rolloverConfig.rolloverLimitMonths = parseInt(rolloverLimit) || 6;
-  }
+  const saved = primaryBudget?.metadata?.['rolloverSettings'] as
+    | Partial<RolloverConfig>
+    | undefined;
+  rolloverConfig = resolveRolloverConfig(saved);
 });
 
 // Rollover metrics
@@ -655,13 +659,13 @@ async function handleSaveSettings() {
                 type="single"
                 bind:value={rolloverLimitAccessors.get, rolloverLimitAccessors.set}>
                 <Select.Trigger>
-                  {rolloverLimit === '3'
+                  {rolloverLimitValue === '3'
                     ? '3 months'
-                    : rolloverLimit === '6'
+                    : rolloverLimitValue === '6'
                       ? '6 months'
-                      : rolloverLimit === '12'
+                      : rolloverLimitValue === '12'
                         ? '12 months'
-                        : rolloverLimit === 'unlimited'
+                        : rolloverLimitValue === 'unlimited'
                           ? 'Unlimited'
                           : 'Select limit'}
                 </Select.Trigger>
