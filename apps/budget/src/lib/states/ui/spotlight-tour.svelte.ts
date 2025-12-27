@@ -17,6 +17,15 @@ import type {
 } from "$lib/types/spotlight-tour";
 import { DEFAULT_SPOTLIGHT_CONFIG } from "$lib/types/spotlight-tour";
 
+/**
+ * Navigate with tour mode parameter to bypass onboarding redirect
+ */
+async function gotoWithTourParam(path: string): Promise<void> {
+  const url = new URL(path, window.location.origin);
+  url.searchParams.set("tour", "true");
+  await goto(url.pathname + url.search);
+}
+
 // =============================================================================
 // Chapter Node (for hierarchical TOC display)
 // =============================================================================
@@ -540,9 +549,9 @@ class SpotlightTourState {
       this.#isSettingUp = false;
     }
 
-    // Navigate to route if specified
+    // Navigate to route if specified (with tour param to bypass onboarding redirect)
     if (step.route) {
-      await goto(step.route);
+      await gotoWithTourParam(step.route);
       // Wait for navigation and DOM update
       await this.#waitForElement(step.targetSelector);
     }

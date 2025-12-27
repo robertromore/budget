@@ -6,10 +6,22 @@
  */
 
 import { goto } from "$app/navigation";
+import { browser } from "$app/environment";
 import { demoMode } from "$lib/states/ui/demo-mode.svelte";
 import { spotlightTour } from "$lib/states/ui/spotlight-tour.svelte";
 import type { TourStep } from "$lib/types/spotlight-tour";
 import { MAIN_TOUR_STEP_IDS } from "$lib/types/spotlight-tour";
+
+/**
+ * Navigate with tour mode parameter to bypass onboarding redirect.
+ * Use this instead of goto() in tour step setup functions.
+ */
+async function gotoTour(path: string): Promise<void> {
+  if (!browser) return;
+  const url = new URL(path, window.location.origin);
+  url.searchParams.set("tour", "true");
+  await goto(url.pathname + url.search);
+}
 
 // =============================================================================
 // Timing Configuration
@@ -77,7 +89,7 @@ async function ensureDemoAccountSetup(route?: string) {
     demoMode.startTour();
   }
   if (route) {
-    await goto(route);
+    await gotoTour(route);
   }
 }
 
@@ -159,7 +171,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     highlightPadding: 0,
     chapter: "getting-started",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
   {
@@ -172,7 +184,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/",
     chapter: "getting-started",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
   {
@@ -185,7 +197,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/",
     chapter: "getting-started",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
   {
@@ -198,7 +210,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/",
     chapter: "getting-started",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
   // Navigation chapter
@@ -212,7 +224,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/budgets",
     chapter: "navigation",
     setup: async () => {
-      await goto("/budgets");
+      await gotoTour("/budgets");
     },
   },
   {
@@ -225,7 +237,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/schedules",
     chapter: "navigation",
     setup: async () => {
-      await goto("/schedules");
+      await gotoTour("/schedules");
     },
   },
   {
@@ -238,7 +250,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/categories",
     chapter: "navigation",
     setup: async () => {
-      await goto("/categories");
+      await gotoTour("/categories");
     },
   },
   {
@@ -251,7 +263,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/payees",
     chapter: "navigation",
     setup: async () => {
-      await goto("/payees");
+      await gotoTour("/payees");
     },
   },
   {
@@ -264,7 +276,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/import",
     chapter: "navigation",
     setup: async () => {
-      await goto("/import");
+      await gotoTour("/import");
     },
   },
   // Help & Settings chapter
@@ -278,7 +290,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/",
     chapter: "help-and-settings",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
   {
@@ -291,7 +303,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/",
     chapter: "help-and-settings",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
   // Finish chapter
@@ -305,7 +317,7 @@ export const MAIN_TOUR_STEPS: TourStep[] = [
     route: "/",
     chapter: "finish",
     setup: async () => {
-      await goto("/");
+      await gotoTour("/");
     },
   },
 ];
@@ -1443,7 +1455,7 @@ export const UNIFIED_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       // Navigate to home for the finish step display
       // Demo mode cleanup happens in onComplete callback
-      await goto("/");
+      await gotoTour("/");
     },
   },
 ];

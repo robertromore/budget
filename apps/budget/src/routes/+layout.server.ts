@@ -23,6 +23,14 @@ const PUBLIC_ROUTES = [
 ];
 
 /**
+ * Check if the user is in tour mode (bypasses onboarding redirect)
+ * Tour mode is indicated by a ?tour=true query parameter
+ */
+function isInTourMode(url: URL): boolean {
+  return url.searchParams.get("tour") === "true";
+}
+
+/**
  * Check if the current path is a public route
  */
 function isPublicRoute(pathname: string): boolean {
@@ -73,7 +81,8 @@ export const load: LayoutServerLoad = async (event) => {
   }
 
   // Check if authenticated user needs onboarding (but not if already on onboarding page)
-  if (session?.user && !url.pathname.startsWith("/onboarding")) {
+  // Skip redirect if user is in tour mode (tour bypasses onboarding temporarily)
+  if (session?.user && !url.pathname.startsWith("/onboarding") && !isInTourMode(url)) {
     const ctx = await createContext(event);
     const caller = createCaller(ctx);
     const workspace = await caller.workspaceRoutes.getCurrent();
