@@ -16,6 +16,7 @@ import { schedules } from "./schedules";
 import { users } from "./users";
 import { views } from "./views";
 import type { OnboardingFormData, OnboardingStatus } from "$lib/types/onboarding";
+import type { EncryptionLevel, EncryptionKeyType, RiskFactorSettings } from "$lib/types/encryption";
 
 export const workspaces = sqliteTable(
   "workspace",
@@ -192,6 +193,25 @@ export const DEFAULT_INTELLIGENCE_INPUT_PREFERENCES: IntelligenceInputPreference
   fieldModes: {},
 };
 
+// Encryption preferences for workspace
+export interface WorkspaceEncryptionPreferences {
+  /** Encryption level - "inherit" uses user's default, or explicit level 0-4 */
+  level: EncryptionLevel | "inherit";
+  /** Separate workspace key ID if different from user's default */
+  keyId?: string;
+  /** Custom list of fields to encrypt (advanced, only for level 2+) */
+  fieldsEncrypted?: string[];
+  /** Risk-based authentication settings for this workspace */
+  riskFactors?: RiskFactorSettings;
+  /** Challenge threshold (0-100) - higher = more challenges */
+  challengeThreshold?: number;
+}
+
+// Default Encryption preferences
+export const DEFAULT_ENCRYPTION_PREFERENCES: WorkspaceEncryptionPreferences = {
+  level: "inherit", // Use user's default
+};
+
 // Preferences type
 export interface WorkspacePreferences {
   locale?: string; // 'en-US', 'es-ES', etc.
@@ -205,6 +225,7 @@ export interface WorkspacePreferences {
   intelligenceInput?: IntelligenceInputPreferences; // Intelligence input mode settings
   onboarding?: OnboardingStatus; // Onboarding wizard/tour completion status
   onboardingData?: OnboardingFormData; // Financial profile data from onboarding wizard
+  encryption?: WorkspaceEncryptionPreferences; // Encryption settings for this workspace
 }
 
 // Zod schemas

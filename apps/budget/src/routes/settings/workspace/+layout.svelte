@@ -8,6 +8,7 @@
 	const activeTab = $derived.by(() => {
 		const pathname = page.url.pathname;
 		if (pathname.includes('/invitations')) return 'invitations';
+		if (pathname.includes('/security')) return 'security';
 		if (pathname.includes('/general')) return 'general';
 		return 'members';
 	});
@@ -15,6 +16,7 @@
 	const tabs = [
 		{ id: 'members', label: 'Members', href: '/settings/workspace' },
 		{ id: 'invitations', label: 'Invitations', href: '/settings/workspace/invitations' },
+		{ id: 'security', label: 'Security', href: '/settings/workspace/security' },
 		{ id: 'general', label: 'General', href: '/settings/workspace/general' }
 	];
 </script>

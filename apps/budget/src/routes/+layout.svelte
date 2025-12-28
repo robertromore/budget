@@ -8,6 +8,7 @@ import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.sve
 import DeleteCategoryDialog from '$lib/components/dialogs/delete-category-dialog.svelte';
 import DeletePayeeDialog from '$lib/components/dialogs/delete-payee-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
+import EncryptionUnlockDialog from '$lib/components/dialogs/encryption-unlock-dialog.svelte';
 import SkipOccurrenceDialog from '$lib/components/dialogs/skip-occurrence-dialog.svelte';
 import { HelpButton, HelpOverlay } from '$lib/components/help';
 import { IntelligenceInputButton, IntelligenceInputOverlay } from '$lib/components/intelligence-input';
@@ -140,6 +141,7 @@ onMount(() => {
   <DeletePayeeDialog />
   <DeleteCategoryDialog />
   <SkipOccurrenceDialog />
+  <EncryptionUnlockDialog />
 
   <NuqsAdapter>
     <div class="bg-background">

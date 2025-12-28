@@ -1,15 +1,21 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
 import { Separator } from '$lib/components/ui/separator';
 import type { Transaction } from '$lib/schema';
 import { formatCurrency } from '$lib/utils/formatters';
+import {
+  createEncryptedFieldState,
+  isEncryptedValue,
+} from '$lib/utils/use-encryption.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Clock from '@lucide/svelte/icons/clock';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import FileInput from '@lucide/svelte/icons/file-input';
 import FileText from '@lucide/svelte/icons/file-text';
 import Info from '@lucide/svelte/icons/info';
+import Lock from '@lucide/svelte/icons/lock';
 import Tag from '@lucide/svelte/icons/tag';
 import User from '@lucide/svelte/icons/user';
 
@@ -45,6 +51,27 @@ let {
   transaction?: Transaction | null;
   dialogOpen: boolean;
 } = $props();
+
+// Encrypted field states for sensitive data
+const notesState = createEncryptedFieldState(
+  () => transaction?.notes,
+  { operation: 'View transaction notes' }
+);
+
+const payeeNameState = createEncryptedFieldState(
+  () => transaction?.payee?.name,
+  { operation: 'View payee name' }
+);
+
+// Check if any field needs unlock
+const hasEncryptedFields = $derived(notesState.isEncrypted || payeeNameState.isEncrypted);
+const needsUnlock = $derived(notesState.needsUnlock || payeeNameState.needsUnlock);
+
+// Unlock all encrypted fields
+async function handleUnlockAll() {
+  await notesState.unlock();
+  await payeeNameState.unlock();
+}
 
 // Parse import details if available
 const importDetailsObj = $derived.by(() => {
@@ -84,7 +111,15 @@ const hasImportMetadata = $derived(
 <Dialog.Root bind:open={dialogOpen}>
   <Dialog.Content class="max-h-[90vh] max-w-2xl overflow-y-auto">
     <Dialog.Header>
-      <Dialog.Title>Transaction Details</Dialog.Title>
+      <Dialog.Title class="flex items-center justify-between">
+        <span>Transaction Details</span>
+        {#if needsUnlock}
+          <Button variant="outline" size="sm" onclick={handleUnlockAll} class="ml-4">
+            <Lock class="mr-2 h-4 w-4" />
+            Unlock Encrypted Data
+          </Button>
+        {/if}
+      </Dialog.Title>
       <Dialog.Description>
         View complete transaction information including import history and audit trail
       </Dialog.Description>
@@ -122,7 +157,22 @@ const hasImportMetadata = $derived(
               <User class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Payee</div>
-                <div class="text-sm font-medium break-all">{transaction.payee?.name || 'None'}</div>
+                <div class="text-sm font-medium break-all">
+                  {#if payeeNameState.isEncrypted}
+                    {#if payeeNameState.isLoading}
+                      <span class="text-muted-foreground">Decrypting...</span>
+                    {:else if payeeNameState.needsUnlock}
+                      <span class="text-muted-foreground flex items-center gap-1">
+                        <Lock class="h-3 w-3" />
+                        Encrypted
+                      </span>
+                    {:else}
+                      {payeeNameState.value || 'None'}
+                    {/if}
+                  {:else}
+                    {transaction.payee?.name || 'None'}
+                  {/if}
+                </div>
               </div>
             </div>
 
@@ -142,7 +192,22 @@ const hasImportMetadata = $derived(
               <FileText class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Notes</div>
-                <div class="text-sm wrap-break-word">{transaction.notes}</div>
+                <div class="text-sm wrap-break-word">
+                  {#if notesState.isEncrypted}
+                    {#if notesState.isLoading}
+                      <span class="text-muted-foreground">Decrypting...</span>
+                    {:else if notesState.needsUnlock}
+                      <span class="text-muted-foreground flex items-center gap-1">
+                        <Lock class="h-3 w-3" />
+                        Encrypted - click unlock to view
+                      </span>
+                    {:else}
+                      {notesState.value}
+                    {/if}
+                  {:else}
+                    {transaction.notes}
+                  {/if}
+                </div>
               </div>
             </div>
           {/if}

@@ -11,6 +11,7 @@ import { z } from "zod/v4";
 import type { Transaction } from "./transactions";
 import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
+import type { EncryptionLevel } from "$lib/types/encryption";
 
 // Account type enum for type safety
 export const accountTypeEnum = [
@@ -60,6 +61,11 @@ export const accounts = sqliteTable(
 
     // Metric preferences - JSON array of enabled metric IDs
     enabledMetrics: text("enabled_metrics"), // JSON array like ["availableCredit", "utilization", "paymentDue"]
+
+    // Per-account encryption settings (for extra-sensitive accounts like medical HSA)
+    // "inherit" means use workspace encryption level, explicit level can only INCREASE from workspace
+    encryptionLevel: text("encryption_level"), // "inherit" | "0" | "1" | "2" | "3" | "4"
+    encryptionKeyId: text("encryption_key_id"), // Reference to separate account-specific key
 
     dateOpened: text("date_opened")
       .notNull()
@@ -178,6 +184,15 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .pipe(z.number().min(0).max(100, "Interest rate must be between 0 and 100"))
       .optional()
       .nullable(),
+  encryptionLevel: (schema) =>
+    schema
+      .pipe(
+        z.enum(["inherit", "0", "1", "2", "3", "4"], {
+          message: "Invalid encryption level",
+        })
+      )
+      .default("inherit"),
+  encryptionKeyId: (schema) => schema.optional().nullable(),
 });
 
 // Schema for updates (all fields optional, but with validation when provided)
@@ -256,6 +271,8 @@ export const formUpdateAccountSchema = z.object({
     .max(100, "Interest rate must be between 0 and 100")
     .optional()
     .nullable(),
+  encryptionLevel: z.enum(["inherit", "0", "1", "2", "3", "4"]).optional(),
+  encryptionKeyId: z.string().optional().nullable(),
 });
 
 // Combined schema that handles both create and update
@@ -288,4 +305,16 @@ export function isHealthSavingsAccount(accountType: AccountType): boolean {
 
 export function getAccountNature(accountType: AccountType): "asset" | "liability" {
   return isDebtAccount(accountType) ? "liability" : "asset";
+}
+
+/**
+ * Parse account encryption level from database string to typed value
+ */
+export function parseAccountEncryptionLevel(
+  level: string | null | undefined
+): EncryptionLevel | "inherit" {
+  if (!level || level === "inherit") return "inherit";
+  const numLevel = parseInt(level, 10);
+  if (numLevel >= 0 && numLevel <= 4) return numLevel as EncryptionLevel;
+  return "inherit";
 }

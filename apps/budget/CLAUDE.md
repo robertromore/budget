@@ -402,6 +402,77 @@ The accessor object doesn't need to be reactive.
 - Use HTTPS in production environments
 - Implement secure password policies
 
+### Field-Level Encryption System
+
+**Optional encryption for sensitive financial data at workspace and user levels.**
+
+#### Encryption Levels
+
+- **Level 0 (None)**: Data stored in plaintext, all features available
+- **Level 1 (Basic)**: Key fields encrypted, all features available
+- **Level 2 (Enhanced PII)**: Additional PII fields encrypted, text search limited
+- **Level 3 (Maximum)**: All text fields encrypted, search/ML disabled
+- **Level 4 (Zero-Knowledge)**: Client-side encryption, most features disabled
+
+#### Encryption Hierarchy
+
+Settings can be configured at multiple levels with inheritance:
+
+- **User Level**: Default encryption preferences (`/settings/security`)
+- **Workspace Level**: Can inherit or override user level (`/settings/workspace/security`)
+- **Account Level**: Can increase (not decrease) from workspace level
+
+#### Key Architecture
+
+- **User Encryption Key (UEK)**: Generated once, stored only by user (like SSH key)
+- **Data Encryption Key (DEK)**: Random 256-bit AES key, encrypted with UEK
+- **Envelope Encryption**: Server stores encrypted DEK, cannot decrypt without user key
+
+#### Core Files
+
+- **Types**: `src/lib/types/encryption.ts` - EncryptionLevel, field mappings
+- **Client Utils**: `src/lib/utils/field-encryption.ts` - Web Crypto API decryption
+- **Reactive Helpers**: `src/lib/utils/use-encryption.svelte.ts` - Component integration
+- **Unlock State**: `src/lib/states/ui/encryption-unlock.svelte.ts` - Unlock dialog state
+- **Unlock Dialog**: `src/lib/components/dialogs/encryption-unlock-dialog.svelte`
+- **Query Layer**: `src/lib/query/security.ts` - Encryption settings queries/mutations
+- **tRPC Routes**: `src/lib/trpc/routes/security.ts` - Backend encryption endpoints
+
+#### Usage Pattern
+
+```typescript
+import {
+  createEncryptedFieldState,
+  encryptFieldValue,
+  isFieldEncrypted
+} from '$lib/utils/use-encryption.svelte';
+
+// Check if field should be encrypted
+const nameIsEncrypted = $derived(isFieldEncrypted('accounts.name'));
+
+// Create reactive state for encrypted field display
+const nameState = createEncryptedFieldState(
+  () => account.name,
+  { operation: 'View account name' }
+);
+
+// Encrypt before saving
+if (nameIsEncrypted) {
+  saveName = await encryptFieldValue(saveName, { operation: 'Save account' });
+}
+```
+
+#### Unlock Flow
+
+When encrypted data access is attempted without a cached DEK:
+
+1. Check for cached DEK in memory
+2. If not cached, show unlock dialog
+3. User enters encryption key (token/passphrase)
+4. Server verifies key and returns DEK
+5. DEK cached based on user preference (session/device/never)
+6. Data decrypted with DEK
+
 ## Git and Development Workflow
 
 **ALWAYS follow consistent Git practices for clean project history.**

@@ -10,6 +10,7 @@ import { isDebtAccount } from '$lib/schema/accounts';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
+import { clearEncryptionCache } from '$lib/states/ui/encryption-unlock.svelte';
 import {
   calculateDebtMetrics,
   formatAccountBalance,
@@ -54,6 +55,8 @@ function getInitials(name: string | null | undefined, email: string | null | und
 }
 
 async function handleSignOut() {
+  // Clear encryption key cache before signing out
+  clearEncryptionCache();
   await signOut();
   goto('/login');
 }

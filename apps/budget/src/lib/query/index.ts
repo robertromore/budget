@@ -8,6 +8,7 @@ import * as accounts from "./accounts";
 import * as auth from "./auth";
 import * as budgets from "./budgets";
 import * as categories from "./categories";
+import * as categoryAliases from "./category-aliases";
 import * as categoryGroups from "./category-groups";
 import * as importProfiles from "./import-profiles";
 import * as llmSettings from "./llm-settings";
@@ -18,6 +19,7 @@ import * as payeeAliases from "./payee-aliases";
 import * as payeeCategories from "./payee-categories";
 import * as payees from "./payees";
 import * as schedules from "./schedules";
+import * as security from "./security";
 import * as settings from "./settings";
 import * as transactions from "./transactions";
 import * as views from "./views";
@@ -35,6 +37,7 @@ export const rpc = {
   auth,
   budgets,
   categories,
+  categoryAliases,
   categoryGroups,
   importProfiles,
   llmSettings,
@@ -45,6 +48,7 @@ export const rpc = {
   payeeCategories,
   payees,
   schedules,
+  security,
   settings,
   transactions,
   views,
@@ -70,6 +74,7 @@ export type AccountQueries = typeof accounts;
 export type AuthQueries = typeof auth;
 export type BudgetQueries = typeof budgets;
 export type CategoryQueries = typeof categories;
+export type CategoryAliasQueries = typeof categoryAliases;
 export type CategoryGroupQueries = typeof categoryGroups;
 export type ImportProfileQueries = typeof importProfiles;
 export type LLMSettingsQueries = typeof llmSettings;
@@ -80,6 +85,7 @@ export type PayeeAliasQueries = typeof payeeAliases;
 export type PayeeCategoryQueries = typeof payeeCategories;
 export type PayeeQueries = typeof payees;
 export type ScheduleQueries = typeof schedules;
+export type SecurityQueries = typeof security;
 export type SettingsQueries = typeof settings;
 export type TransactionQueries = typeof transactions;
 export type ViewQueries = typeof views;
@@ -94,6 +100,7 @@ export { accountKeys } from "./accounts";
 export { authKeys } from "./auth";
 export { budgetKeys } from "./budgets";
 export { categoryKeys } from "./categories";
+export { categoryAliasKeys } from "./category-aliases";
 export { categoryGroupKeys } from "./category-groups";
 export { importProfileKeys } from "./import-profiles";
 export { medicalExpenseKeys } from "./medical-expenses";
@@ -103,6 +110,7 @@ export { payeeAliasKeys } from "./payee-aliases";
 export { payeeCategoryKeys } from "./payee-categories";
 export { payeeKeys } from "./payees";
 export { scheduleKeys } from "./schedules";
+export { securityKeys } from "./security";
 export { transactionKeys } from "./transactions";
 export { viewKeys } from "./views";
 export { workspaceInvitationKeys } from "./workspace-invitations";

@@ -13,6 +13,7 @@ import { payeeCategoryCorrections } from "./payee-category-corrections";
 import { payees } from "./payees";
 import { schedules } from "./schedules";
 import { views } from "./views";
+import type { EncryptionLevel, EncryptionKeyType, RiskFactorSettings } from "$lib/types/encryption";
 
 export const users = sqliteTable(
   "user",
@@ -51,6 +52,32 @@ export const users = sqliteTable(
   ]
 );
 
+// User encryption preferences (stored in user.preferences)
+export interface UserEncryptionPreferences {
+  /** Default encryption level for new workspaces (0-4) */
+  defaultLevel: EncryptionLevel;
+  /** Type of encryption key used */
+  keyType: EncryptionKeyType;
+  /** Reference to stored encryption key */
+  keyId?: string;
+  /** Whether risk-based authentication is enabled */
+  riskFactorsEnabled: boolean;
+  /** Risk factor settings */
+  riskFactors?: RiskFactorSettings;
+  /** Challenge threshold (0-100) - higher = more challenges */
+  challengeThreshold?: number;
+  /** Client-side key storage preference */
+  keyStoragePreference?: "never" | "session" | "device";
+}
+
+// Default user encryption preferences
+export const DEFAULT_USER_ENCRYPTION_PREFERENCES: UserEncryptionPreferences = {
+  defaultLevel: 0, // No encryption by default
+  keyType: "token",
+  riskFactorsEnabled: false,
+  keyStoragePreference: "session",
+};
+
 // Preferences type - synced to database for cross-device persistence
 export interface UserPreferences {
   // Display preferences
@@ -71,6 +98,9 @@ export interface UserPreferences {
   locale?: string;
   currency?: string;
   timezone?: string;
+
+  // Security/Encryption preferences
+  encryption?: UserEncryptionPreferences;
 }
 
 // Zod schemas

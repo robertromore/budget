@@ -2,6 +2,7 @@ export * from "./accounts";
 export * from "./budget-automation-settings";
 export * from "./budgets";
 export * from "./categories";
+export * from "./category-aliases";
 export * from "./category-groups";
 export * from "./detected-patterns";
 export * from "./import-profiles";
@@ -23,6 +24,9 @@ export * from "./workspaces";
 export * from "./auth";
 export * from "./workspace-members";
 export * from "./workspace-invitations";
+
+// Security schemas (encryption, risk assessment, access logging)
+export * from "./security";
 
 // AI-related schemas
 export * from "./ai-conversations";

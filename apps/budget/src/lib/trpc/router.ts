@@ -13,6 +13,7 @@ import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { aiRoutes } from "$lib/trpc/routes/ai";
 import { authRoutes } from "$lib/trpc/routes/auth";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
+import { categoryAliasRoutes } from "$lib/trpc/routes/category-aliases";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
 import { payeeAliasRoutes } from "$lib/trpc/routes/payee-aliases";
 import { payeeCategoriesRoutes } from "$lib/trpc/routes/payee-categories";
@@ -31,6 +32,7 @@ import { onboardingRoutes } from "./routes/onboarding";
 import { medicalExpensesRouter } from "./routes/medical-expenses";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
+import { securityRoutes } from "./routes/security";
 import { settingsRoutes } from "./routes/settings";
 import { viewsRoutes } from "./routes/views";
 import { workspaceRoutes } from "./routes/workspaces";
@@ -42,12 +44,14 @@ export const router = t.router({
   workspaceMembersRoutes,
   workspaceInvitationsRoutes,
   onboardingRoutes,
+  securityRoutes,
 
   // Core domain routes
   accountRoutes,
   serverAccountsRoutes,
   aiRoutes,
   categoriesRoutes,
+  categoryAliasRoutes,
   categoryGroupsRoutes,
   payeeAliasRoutes,
   payeeCategoriesRoutes,

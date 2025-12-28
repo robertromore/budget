@@ -8,6 +8,7 @@
 	import Link from '@lucide/svelte/icons/link';
 	import Monitor from '@lucide/svelte/icons/monitor';
 	import Palette from '@lucide/svelte/icons/palette';
+	import Shield from '@lucide/svelte/icons/shield';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import User from '@lucide/svelte/icons/user';
@@ -20,7 +21,10 @@
 	const settingsNav = [
 		{
 			title: 'Account',
-			items: [{ href: '/settings/profile', label: 'Profile', icon: User }]
+			items: [
+				{ href: '/settings/profile', label: 'Profile', icon: User },
+				{ href: '/settings/security', label: 'Security', icon: Shield }
+			]
 		},
 		{
 			title: 'General',
