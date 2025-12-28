@@ -143,6 +143,8 @@ function generateDemoAccount(): Account {
     deletedAt: null,
     transactions: [],
     balance: 4250.75,
+    encryptionLevel: null,
+    encryptionKeyId: null,
   };
 }
 

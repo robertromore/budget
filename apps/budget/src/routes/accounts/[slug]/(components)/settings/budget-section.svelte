@@ -3,18 +3,11 @@ import * as Card from '$lib/components/ui/card';
 import { Switch } from '$lib/components/ui/switch';
 import { Label } from '$lib/components/ui/label';
 import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import * as Empty from '$lib/components/ui/empty';
 import { toast } from 'svelte-sonner';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
-import { getByAccount as getBudgetsByAccount } from '$lib/query/budgets';
 import type { Account } from '$lib/schema';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
-import Wallet from '@lucide/svelte/icons/wallet';
 import Info from '@lucide/svelte/icons/info';
-import ExternalLink from '@lucide/svelte/icons/external-link';
-import { goto } from '$app/navigation';
 
 interface Props {
 	account: Account;
@@ -27,11 +20,6 @@ const queryClient = useQueryClient();
 // Form state
 let onBudget = $state(account.onBudget ?? true);
 let isSaving = $state(false);
-
-// Fetch budgets for this account
-const budgetsQuery = $derived(getBudgetsByAccount(account.id).options());
-const budgets = $derived((budgetsQuery?.data ?? []) as BudgetWithRelations[]);
-const isLoadingBudgets = $derived(budgetsQuery?.isLoading ?? false);
 
 async function handleSave() {
 	isSaving = true;
@@ -50,26 +38,13 @@ async function handleSave() {
 		isSaving = false;
 	}
 }
-
-function getBudgetStatusColor(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-	switch (status) {
-		case 'active':
-			return 'default';
-		case 'paused':
-			return 'secondary';
-		case 'archived':
-			return 'outline';
-		default:
-			return 'default';
-	}
-}
 </script>
 
 <div class="space-y-6">
 	<div>
 		<h2 class="text-xl font-semibold">Budget Settings</h2>
 		<p class="text-muted-foreground text-sm">
-			Control whether this account is included in budget calculations and view associated budgets.
+			Control whether this account is included in budget calculations.
 		</p>
 	</div>
 
@@ -113,69 +88,6 @@ function getBudgetStatusColor(status: string): 'default' | 'secondary' | 'destru
 					{isSaving ? 'Saving...' : 'Save'}
 				</Button>
 			</div>
-		</Card.Content>
-	</Card.Root>
-
-	<!-- Associated Budgets -->
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Associated Budgets</Card.Title>
-			<Card.Description>
-				Budgets that are linked to this account for spending tracking.
-			</Card.Description>
-		</Card.Header>
-		<Card.Content>
-			{#if isLoadingBudgets}
-				<div class="space-y-3">
-					{#each Array(3) as _}
-						<div class="bg-muted h-16 animate-pulse rounded-lg"></div>
-					{/each}
-				</div>
-			{:else if budgets.length === 0}
-				<Empty.Empty class="py-8">
-					<Empty.EmptyMedia variant="icon">
-						<Wallet class="size-6" />
-					</Empty.EmptyMedia>
-					<Empty.EmptyHeader>
-						<Empty.EmptyTitle>No Budgets Associated</Empty.EmptyTitle>
-						<Empty.EmptyDescription>
-							This account doesn't have any budgets associated with it yet.
-						</Empty.EmptyDescription>
-					</Empty.EmptyHeader>
-					<Empty.EmptyContent>
-						<Button variant="outline" size="sm" href="/budgets/new?accountId={account.id}">
-							Create Budget
-						</Button>
-					</Empty.EmptyContent>
-				</Empty.Empty>
-			{:else}
-				<div class="space-y-3">
-					{#each budgets as budget}
-						<button
-							type="button"
-							class="hover:bg-muted/50 flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors"
-							onclick={() => goto(`/budgets/${budget.slug}`)}>
-							<div class="min-w-0 flex-1">
-								<div class="flex items-center gap-2">
-									<span class="truncate font-medium">{budget.name}</span>
-									<Badge variant={getBudgetStatusColor(budget.status)}>
-										{budget.status}
-									</Badge>
-								</div>
-								<div class="text-muted-foreground mt-1 text-sm">
-									{budget.type.replace('-', ' ')}
-								</div>
-							</div>
-							<ExternalLink class="text-muted-foreground h-4 w-4 shrink-0" />
-						</button>
-					{/each}
-				</div>
-				<div class="mt-4 flex justify-end">
-					<Button variant="outline" size="sm" href="/budgets/new?accountId={account.id}">
-						Create New Budget
-					</Button>
-				</div>
-			{/if}
 		</Card.Content>
 	</Card.Root>
 </div>

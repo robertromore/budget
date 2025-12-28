@@ -3,6 +3,7 @@ import { Separator } from '$lib/components/ui/separator';
 import Settings2 from '@lucide/svelte/icons/settings-2';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Wallet from '@lucide/svelte/icons/wallet';
+import Shield from '@lucide/svelte/icons/shield';
 import Database from '@lucide/svelte/icons/database';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import type { Account } from '$lib/schema';
@@ -10,6 +11,7 @@ import type { Account } from '$lib/schema';
 import GeneralSection from './settings/general-section.svelte';
 import FinancialSection from './settings/financial-section.svelte';
 import BudgetSection from './settings/budget-section.svelte';
+import SecuritySection from './settings/security-section.svelte';
 import DataSection from './settings/data-section.svelte';
 import DangerSection from './settings/danger-section.svelte';
 
@@ -32,7 +34,10 @@ const settingsNav = [
 	},
 	{
 		title: 'Data',
-		items: [{ id: 'data', label: 'Data Management', icon: Database }]
+		items: [
+			{ id: 'data', label: 'Data Management', icon: Database },
+			{ id: 'security', label: 'Security', icon: Shield }
+		]
 	},
 	{
 		title: 'Advanced',
@@ -101,6 +106,8 @@ function isActive(id: string): boolean {
 			<BudgetSection {account} />
 		{:else if activeSection === 'data'}
 			<DataSection {account} />
+		{:else if activeSection === 'security'}
+			<SecuritySection {account} />
 		{:else if activeSection === 'danger'}
 			<div data-tour-id="settings-danger-zone">
 				<DangerSection {account} />
