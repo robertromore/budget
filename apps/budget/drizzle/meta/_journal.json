@@ -22,6 +22,20 @@
       "when": 1766867230529,
       "tag": "0002_right_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1766877376854,
+      "tag": "0003_sleepy_infant_terrible",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1766883861376,
+      "tag": "0004_hot_gauntlet",
+      "breakpoints": true
     }
   ]
 }
