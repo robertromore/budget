@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
-import type { ImportRow } from '$lib/types/import';
+import type { AliasCandidate, ImportRow } from '$lib/types/import';
 import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
 import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -11,19 +11,6 @@ import User from '@lucide/svelte/icons/user';
 import X from '@lucide/svelte/icons/x';
 import type { Row } from '@tanstack/table-core';
 import Fuse from 'fuse.js';
-
-/**
- * Alias candidate emitted when user confirms a different payee during import.
- * Used to record the mapping for future imports.
- *
- * For existing payees: payeeId is set, payeeName may be set for reference
- * For new payees: payeeId is null, payeeName is set (resolved to ID after import)
- */
-export interface AliasCandidate {
-  rawString: string;
-  payeeId?: number | null;  // For existing payees
-  payeeName?: string;       // For new payees (resolved to ID after import)
-}
 
 interface Props {
   row: Row<ImportRow>;

@@ -2,6 +2,7 @@
  * Smart Category Suggestions Service
  *
  * Provides intelligent category suggestions based on:
+ * - Category aliases (highest priority - user-confirmed mappings)
  * - Payee/merchant name similarity (existing)
  * - Amount patterns (large deposits → Income, small recurring → Subscriptions)
  * - Time/day patterns (weekend spending, payday patterns, seasonal)
@@ -9,6 +10,8 @@
  */
 
 import { accounts, categories, payees, transactions } from "$lib/schema";
+import type { AmountType } from "$lib/schema/category-aliases";
+import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { db } from "$lib/server/db";
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
@@ -30,6 +33,7 @@ export interface SmartCategorySuggestion {
 }
 
 export type SuggestionReasonCode =
+  | "alias_match"
   | "payee_match"
   | "amount_pattern"
   | "time_pattern"
@@ -40,7 +44,7 @@ export type SuggestionReasonCode =
   | "paycheck_pattern";
 
 export interface SuggestionFactor {
-  type: "payee" | "amount" | "time" | "historical" | "pattern";
+  type: "alias" | "payee" | "amount" | "time" | "historical" | "pattern";
   description: string;
   weight: number;
 }
@@ -475,6 +479,61 @@ export function createSmartCategoryService(
       }
       console.log('[SmartCategoryService] Categories:', workspaceCategories.map(c => c.name));
 
+      // =================================================================
+      // 0. Category Alias Check (HIGHEST PRIORITY)
+      // =================================================================
+      // Check for user-confirmed category aliases before any ML scoring.
+      // These are direct mappings from raw strings to categories that users
+      // have confirmed during import, providing highest confidence matches.
+      const aliasResults: SmartCategorySuggestion[] = [];
+      const categoryAliasService = getCategoryAliasService();
+      const rawString = context.description || context.payeeName || "";
+
+      if (rawString) {
+        // Determine amount type for context
+        const amountType: AmountType = context.amount > 0 ? "income" : "expense";
+
+        const aliasMatch = await categoryAliasService.matchWithAlias(
+          rawString,
+          workspaceId,
+          { payeeId: context.payeeId, amountType }
+        );
+
+        if (aliasMatch.found && aliasMatch.categoryId) {
+          console.log('[SmartCategoryService] Category alias match found:', aliasMatch);
+
+          // Look up the category details
+          const matchedCategory = workspaceCategories.find(c => c.id === aliasMatch.categoryId);
+          if (matchedCategory && matchedCategory.name) {
+            // Create high-confidence suggestion from alias
+            const aliasConfidence = Math.max(aliasMatch.confidence, 0.85);
+            const matchType = aliasMatch.matchedOn === "exact" ? "exact" :
+                             aliasMatch.matchedOn === "normalized" ? "normalized" : "payee-context";
+
+            aliasResults.push({
+              categoryId: matchedCategory.id,
+              categoryName: matchedCategory.name,
+              categoryType: matchedCategory.categoryType as "income" | "expense" | "transfer" | "savings",
+              confidence: aliasConfidence,
+              reason: `Previously used for "${rawString.substring(0, 30)}${rawString.length > 30 ? "..." : ""}"`,
+              reasonCode: "alias_match",
+              factors: [{
+                type: "alias",
+                description: `User-confirmed ${matchType} match (${Math.round(aliasConfidence * 100)}% confidence)`,
+                weight: aliasConfidence,
+              }],
+            });
+
+            // If alias confidence is very high (>0.9), just return alias match
+            // without computing other suggestions for performance
+            if (aliasConfidence >= 0.95) {
+              console.log('[SmartCategoryService] High-confidence alias match, returning early');
+              return aliasResults.slice(0, limit);
+            }
+          }
+        }
+      }
+
       // Build a map of category scores
       const categoryScores = new Map<number, {
         category: typeof workspaceCategories[0];
@@ -692,6 +751,10 @@ export function createSmartCategoryService(
       for (const entry of sortedEntries) {
         if (!entry.category.name) continue;
 
+        // Skip if this category is already in alias results (avoid duplicates)
+        const alreadyInAliasResults = aliasResults.some(a => a.categoryId === entry.category.id);
+        if (alreadyInAliasResults) continue;
+
         results.push({
           categoryId: entry.category.id,
           categoryName: entry.category.name,
@@ -703,7 +766,12 @@ export function createSmartCategoryService(
         });
       }
 
-      return results;
+      // Merge alias results (highest priority) with ML results
+      // Alias matches come first, followed by other ML-based suggestions
+      const mergedResults = [...aliasResults, ...results];
+
+      // Return deduplicated results, limited to requested count
+      return mergedResults.slice(0, limit);
     },
 
     analyzeTransactionType(

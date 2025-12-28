@@ -14,6 +14,8 @@ export const correctionTriggers = [
   "bulk_categorization",
   "import_correction",
   "scheduled_transaction",
+  "import_category_override", // User overrode AI suggestion during import
+  "ai_suggestion_accepted",   // User accepted AI suggestion during import (positive reinforcement)
 ] as const;
 
 export const correctionContexts = [

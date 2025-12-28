@@ -21,6 +21,11 @@ import { and, count, desc, eq, gte, inArray, isNull, lte, max, sql } from "drizz
  * Sophisticated machine learning engine that analyzes user category corrections
  * to improve categorization suggestions over time. Uses advanced algorithms for
  * pattern recognition, confidence scoring, and adaptive learning.
+ *
+ * Integration with Category Alias System:
+ * - Category aliases handle raw string → category mappings from imports
+ * - This service handles payee → category learning based on corrections
+ * - recordImportCategoryAssignment() bridges both systems for import flows
  */
 export class CategoryLearningService {
   /**
@@ -90,6 +95,99 @@ export class CategoryLearningService {
       payeePatternContext:
         insertedCorrection.payeePatternContext as CategoryCorrection["payeePatternContext"],
     };
+  }
+
+  /**
+   * Record a category assignment from import flow.
+   * This bridges the category alias system with payee→category learning.
+   *
+   * When wasAiSuggested is true and the user accepted, this boosts confidence.
+   * When wasAiSuggested is true but user changed it, this records a correction.
+   * When wasAiSuggested is false, this is a user's explicit assignment.
+   *
+   * @param assignment - The category assignment details
+   * @param workspaceId - The workspace ID
+   */
+  async recordImportCategoryAssignment(
+    assignment: {
+      payeeId: number;
+      categoryId: number;
+      transactionAmount?: number;
+      transactionDate?: string;
+      wasAiSuggested: boolean;
+      aiSuggestedCategoryId?: number; // The original AI suggestion, if different
+      aiConfidence?: number;
+    },
+    workspaceId: number
+  ): Promise<void> {
+    const { payeeId, categoryId, wasAiSuggested, aiSuggestedCategoryId, aiConfidence } = assignment;
+
+    // If AI suggested a different category and user changed it, record as correction
+    if (wasAiSuggested && aiSuggestedCategoryId && aiSuggestedCategoryId !== categoryId) {
+      await this.learnFromCorrection(
+        {
+          payeeId,
+          fromCategoryId: aiSuggestedCategoryId,
+          toCategoryId: categoryId,
+          correctionTrigger: "import_category_override",
+          transactionAmount: assignment.transactionAmount,
+          transactionDate: assignment.transactionDate,
+          userConfidence: 8, // High confidence - explicit user override
+          notes: "User overrode AI suggestion during import",
+          isOverride: true,
+        },
+        workspaceId
+      );
+    } else if (wasAiSuggested && aiSuggestedCategoryId === categoryId) {
+      // AI was correct and user accepted - record positive reinforcement
+      await this.recordPositiveReinforcement(
+        payeeId,
+        categoryId,
+        aiConfidence ?? 0.7,
+        workspaceId
+      );
+    }
+    // If not AI suggested, it's just a user assignment - no learning needed here
+    // as the category alias system handles this via raw string → category mapping
+  }
+
+  /**
+   * Record positive reinforcement when AI suggestion is accepted.
+   * This boosts confidence in the payee→category relationship.
+   */
+  private async recordPositiveReinforcement(
+    payeeId: number,
+    categoryId: number,
+    aiConfidence: number,
+    workspaceId: number
+  ): Promise<void> {
+    // Record as a "correction" with same from/to category
+    // This creates a positive data point for the payee→category relationship
+    const [record] = await db
+      .insert(payeeCategoryCorrections)
+      .values({
+        workspaceId,
+        payeeId,
+        fromCategoryId: categoryId, // Same as "to" - indicates confirmation
+        toCategoryId: categoryId,
+        correctionTrigger: "ai_suggestion_accepted",
+        correctionContext: "import",
+        systemConfidence: aiConfidence,
+        correctionWeight: 0.5, // Lower weight than corrections
+        userConfidence: 7, // Default confidence for acceptance
+        isProcessed: true, // Mark as processed immediately
+        processedAt: toISOString(currentDate),
+        learningEpoch: await this.getCurrentLearningEpoch(),
+        notes: "AI suggestion accepted during import",
+      })
+      .returning();
+
+    // Log for debugging
+    if (record) {
+      console.log(
+        `[CategoryLearning] Positive reinforcement recorded: payee ${payeeId} → category ${categoryId}`
+      );
+    }
   }
 
   /**

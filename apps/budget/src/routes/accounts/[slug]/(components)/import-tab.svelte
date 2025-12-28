@@ -5,6 +5,7 @@ import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svel
 import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { bulkCreateCategoryAliases } from '$lib/query/category-aliases';
 import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
 import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
@@ -80,6 +81,7 @@ let cleanupSheetOpen = $state(false);
 // Payee alias tracking - records mappings from raw CSV strings to selected payees
 let aliasCandidates = $state<Map<number, AliasCandidate>>(new Map());
 const createAliasesMutation = bulkCreatePayeeAliases.options();
+const createCategoryAliasesMutation = bulkCreateCategoryAliases.options();
 
 // Import profile state
 let matchedProfile = $state<ImportProfile | null>(null);
@@ -1523,6 +1525,24 @@ async function processImport() {
 					}
 				} catch (aliasError) {
 					console.warn('Failed to record payee aliases:', aliasError);
+				}
+			}
+
+			// Record category aliases from import
+			// This records raw string → category mappings for future imports
+			if (result.result.createdCategoryMappings && result.result.createdCategoryMappings.length > 0) {
+				try {
+					const categoryAliasesToCreate = result.result.createdCategoryMappings.map((mapping) => ({
+						rawString: mapping.rawString,
+						categoryId: mapping.categoryId,
+						payeeId: mapping.payeeId,
+						sourceAccountId: accountId,
+						wasAiSuggested: mapping.wasAiSuggested,
+					}));
+
+					await createCategoryAliasesMutation.mutateAsync({ aliases: categoryAliasesToCreate });
+				} catch (categoryAliasError) {
+					console.warn('Failed to record category aliases:', categoryAliasError);
 				}
 			}
 

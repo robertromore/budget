@@ -8,7 +8,7 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { CategorySuggestion, ImportRow } from "$lib/types/import";
+import type { AliasCandidate, CategorySuggestion, ImportRow } from "$lib/types/import";
 import AlertCircle from "@lucide/svelte/icons/alert-circle";
 import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
 import CheckCircle from "@lucide/svelte/icons/check-circle";
@@ -17,7 +17,7 @@ import type { Column, ColumnDef } from "@tanstack/table-core";
 import ImportTableAmountCell from "./import-table-amount-cell.svelte";
 import ImportTableCategoryCell from "./import-table-category-cell.svelte";
 import ImportTableDescriptionCell from "./import-table-description-cell.svelte";
-import ImportTablePayeeCell, { type AliasCandidate } from "./import-table-payee-cell.svelte";
+import ImportTablePayeeCell from "./import-table-payee-cell.svelte";
 import ImportTableStatusCell from "./import-table-status-cell.svelte";
 import { DataTableColumnHeader } from "$lib/components/data-table/core";
 

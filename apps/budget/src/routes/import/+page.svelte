@@ -4,6 +4,7 @@ import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
 import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
+import { bulkCreateCategoryAliases } from '$lib/query/category-aliases';
 import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Badge from '$lib/components/ui/badge';
@@ -170,6 +171,7 @@ let aliasCandidates = $state<Map<number, AliasCandidate>>(new Map());
 
 // Initialize the mutation for bulk creating aliases
 const createAliasesMutation = bulkCreatePayeeAliases.options();
+const createCategoryAliasesMutation = bulkCreateCategoryAliases.options();
 
 function handleImportOptionsChange(options: typeof importOptions) {
   importOptions = options;
@@ -1290,6 +1292,24 @@ async function processImport() {
         } catch (aliasError) {
           // Non-critical - don't fail the import if alias recording fails
           console.warn('Failed to record payee aliases:', aliasError);
+        }
+      }
+
+      // Record category aliases from import
+      // This records raw string → category mappings for future imports
+      if (result.result.createdCategoryMappings && result.result.createdCategoryMappings.length > 0) {
+        try {
+          const categoryAliasesToCreate = result.result.createdCategoryMappings.map((mapping) => ({
+            rawString: mapping.rawString,
+            categoryId: mapping.categoryId,
+            payeeId: mapping.payeeId,
+            sourceAccountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
+            wasAiSuggested: mapping.wasAiSuggested,
+          }));
+
+          await createCategoryAliasesMutation.mutateAsync({ aliases: categoryAliasesToCreate });
+        } catch (categoryAliasError) {
+          console.warn('Failed to record category aliases:', categoryAliasError);
         }
       }
 

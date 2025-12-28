@@ -156,6 +156,13 @@ export interface ImportResult {
     normalizedName: string;  // Cleaned name stored as payee.name (e.g., "Walmart")
     payeeId: number;         // ID of the newly created payee
   }>;
+  /** Mapping of category assignments: raw import string → category (for category alias tracking) */
+  createdCategoryMappings?: Array<{
+    rawString: string;       // The raw payee/description string from import
+    categoryId: number;      // The category that was assigned
+    payeeId?: number;        // The payee ID if known (for payee-context matching)
+    wasAiSuggested?: boolean; // Whether this was an AI/ML suggestion (vs explicit user selection)
+  }>;
 }
 
 // Progress tracking
@@ -166,6 +173,19 @@ export interface ImportProgress {
   percentage: number;
   currentRow?: number;
   errors: Array<{ row: number; message: string }>;
+}
+
+/**
+ * Alias candidate emitted when user confirms a different payee during import.
+ * Used to record the mapping for future imports.
+ *
+ * For existing payees: payeeId is set, payeeName may be set for reference
+ * For new payees: payeeId is null, payeeName is set (resolved to ID after import)
+ */
+export interface AliasCandidate {
+  rawString: string;
+  payeeId?: number | null;  // For existing payees
+  payeeName?: string;       // For new payees (resolved to ID after import)
 }
 
 // File processor interface

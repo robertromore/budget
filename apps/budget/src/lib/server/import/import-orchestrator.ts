@@ -84,6 +84,14 @@ export class ImportOrchestrator {
       payeeId: number;
     }> = [];
 
+    // Track category assignments for category alias creation
+    const createdCategoryMappings: Array<{
+      rawString: string;
+      categoryId: number;
+      payeeId?: number;
+      wasAiSuggested?: boolean;
+    }> = [];
+
     logger.debug("Import orchestrator starting", {
       totalRows: rows.length,
       selectedCategories: selectedEntities?.categories || "ALL",
@@ -159,7 +167,8 @@ export class ImportOrchestrator {
             selectedEntities,
             result.entitiesCreated,
             scheduleId,
-            createdPayeeMappings
+            createdPayeeMappings,
+            createdCategoryMappings
           );
 
           if (transaction) {
@@ -185,6 +194,9 @@ export class ImportOrchestrator {
 
       // Add created payee mappings for alias tracking
       result.createdPayeeMappings = createdPayeeMappings;
+
+      // Add created category mappings for category alias tracking
+      result.createdCategoryMappings = createdCategoryMappings;
 
       if (result.errors.length > 0) {
         result.success = false;
@@ -219,6 +231,12 @@ export class ImportOrchestrator {
       originalName: string;
       normalizedName: string;
       payeeId: number;
+    }>,
+    createdCategoryMappings?: Array<{
+      rawString: string;
+      categoryId: number;
+      payeeId?: number;
+      wasAiSuggested?: boolean;
     }>
   ): Promise<z.infer<typeof selectTransactionSchema> | null> {
     const normalized = row.normalizedData;
@@ -660,6 +678,34 @@ export class ImportOrchestrator {
     }
 
     const [transaction] = await db.insert(transactionTable).values(importMetadata).returning();
+
+    // Track category mapping for alias creation
+    // Only track if we have a category assignment and a raw string to map
+    if (categoryId && createdCategoryMappings) {
+      // Get the raw string to use for the alias
+      // Priority: originalPayee (from CSV before any transformations) > normalized payee > description
+      const rawString = row.originalPayee || normalized["payee"] || normalized["description"];
+
+      if (rawString && rawString.trim()) {
+        // Check if this raw string → category mapping already exists in our batch
+        const existingMapping = createdCategoryMappings.find(
+          (m) => m.rawString === rawString.trim() && m.categoryId === categoryId
+        );
+
+        if (!existingMapping) {
+          // Determine if this was an AI/ML suggestion
+          // If inferredCategory is set, it means the category was auto-suggested
+          const wasAiSuggested = !!normalized["inferredCategory"];
+
+          createdCategoryMappings.push({
+            rawString: rawString.trim(),
+            categoryId,
+            payeeId: payeeId || undefined,
+            wasAiSuggested,
+          });
+        }
+      }
+    }
 
     return transaction || null;
   }
