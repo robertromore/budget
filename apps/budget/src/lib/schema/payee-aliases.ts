@@ -155,7 +155,7 @@ export type UpdatePayeeAliasInput = z.infer<typeof updatePayeeAliasSchema>;
 export interface PayeeAliasWithPayee extends PayeeAlias {
   payee: {
     id: number;
-    name: string;
+    name: string | null;
     slug: string;
   };
 }
@@ -168,7 +168,7 @@ export interface PayeeAliasStats {
   mostUsedAliases: Array<{
     id: number;
     rawString: string;
-    payeeName: string;
+    payeeName: string | null;
     matchCount: number;
   }>;
   recentlyCreated: number; // Last 30 days

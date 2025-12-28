@@ -1,7 +1,6 @@
 import type {
   AliasTrigger,
   AliasMatch,
-  NewPayeeAlias,
   PayeeAlias,
   PayeeAliasStats,
   PayeeAliasWithPayee,

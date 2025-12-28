@@ -1,3 +1,5 @@
+export { CategoryAliasRepository } from "./alias-repository";
+export { CategoryAliasService, getCategoryAliasService } from "./alias-service";
 export { CategoryRepository } from "./repository";
 export { CategoryService } from "./services";
 

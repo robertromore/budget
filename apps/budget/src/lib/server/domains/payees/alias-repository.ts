@@ -1,7 +1,6 @@
 import type {
   AliasTrigger,
   AliasMatch,
-  NewPayeeAlias,
   PayeeAlias,
   PayeeAliasStats,
   PayeeAliasWithPayee,
@@ -11,6 +10,20 @@ import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+
+/**
+ * Input type for creating a payee alias.
+ * Omits workspaceId since it's passed as a separate parameter.
+ */
+type CreatePayeeAliasInput = {
+  rawString: string;
+  payeeId: number;
+  trigger: AliasTrigger;
+  confidence?: number;
+  matchCount?: number;
+  sourceAccountId?: number;
+  lastMatchedAt?: string;
+};
 
 /**
  * Repository for payee alias database operations.
@@ -30,7 +43,7 @@ export class PayeeAliasRepository {
   /**
    * Create a new alias
    */
-  async create(data: NewPayeeAlias, workspaceId: number): Promise<PayeeAlias> {
+  async create(data: CreatePayeeAliasInput, workspaceId: number): Promise<PayeeAlias> {
     const normalizedString = this.normalizeString(data.rawString);
     const now = getCurrentTimestamp();
 
@@ -171,7 +184,7 @@ export class PayeeAliasRepository {
       throw new NotFoundError("PayeeAlias", id);
     }
 
-    const updateData: Partial<NewPayeeAlias> = {
+    const updateData: Partial<PayeeAlias> = {
       ...data,
       updatedAt: getCurrentTimestamp(),
     };
