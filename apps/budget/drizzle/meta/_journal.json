@@ -36,6 +36,13 @@
       "when": 1766883861376,
       "tag": "0004_hot_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1766891001653,
+      "tag": "0005_thick_shape",
+      "breakpoints": true
     }
   ]
 }

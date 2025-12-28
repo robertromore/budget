@@ -12,6 +12,7 @@ import { accountRoutes } from "$lib/trpc/routes/accounts";
 import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { aiRoutes } from "$lib/trpc/routes/ai";
 import { authRoutes } from "$lib/trpc/routes/auth";
+import { automationRoutes } from "$lib/trpc/routes/automation";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
 import { categoryAliasRoutes } from "$lib/trpc/routes/category-aliases";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
@@ -28,8 +29,8 @@ import { forecastingRoutes } from "./routes/forecasting";
 import { importCleanupRoutes } from "./routes/import-cleanup";
 import { importProfileRoutes } from "./routes/import-profiles";
 import { llmSettingsRoutes } from "./routes/llm-settings";
-import { onboardingRoutes } from "./routes/onboarding";
 import { medicalExpensesRouter } from "./routes/medical-expenses";
+import { onboardingRoutes } from "./routes/onboarding";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
 import { securityRoutes } from "./routes/security";
@@ -50,6 +51,7 @@ export const router = t.router({
   accountRoutes,
   serverAccountsRoutes,
   aiRoutes,
+  automationRoutes,
   categoriesRoutes,
   categoryAliasRoutes,
   categoryGroupsRoutes,

@@ -1,4 +1,5 @@
 export * from "./accounts";
+export * from "./automation-rules";
 export * from "./budget-automation-settings";
 export * from "./budgets";
 export * from "./categories";
@@ -22,8 +23,8 @@ export * from "./workspaces";
 
 // Authentication schemas
 export * from "./auth";
-export * from "./workspace-members";
 export * from "./workspace-invitations";
+export * from "./workspace-members";
 
 // Security schemas (encryption, risk assessment, access logging)
 export * from "./security";

@@ -2637,6 +2637,208 @@ Display keyboard shortcuts with consistent styling:
 </Tooltip.Content>
 ```
 
+## Rule-Based Automation System
+
+**Visual and natural language rule builder for automating actions based on entity
+events and conditions.**
+
+### System Overview
+
+The automation system allows users to define rules with:
+
+- **Triggers**: Events that start rule evaluation (e.g., "when a transaction is
+  created")
+- **Conditions**: Criteria that must match (e.g., "amount > 100 AND payee
+  contains 'Amazon'")
+- **Actions**: Operations to perform when conditions match (e.g., "assign
+  category 'Shopping'")
+
+### Dual Interface Design
+
+The rule builder supports two synchronized views:
+
+- **Visual Editor**: SvelteFlow-based node canvas with drag-and-drop nodes
+- **Natural Language Builder**: Structured template interface with inline
+  dropdowns
+
+Both views share a single `RuleConfig` as the source of truth, with bidirectional
+synchronization.
+
+### Component Structure
+
+```text
+src/lib/components/automation/
+├── rule-builder/
+│   ├── rule-builder.svelte           # Main container with tabs
+│   ├── rule-builder-visual.svelte    # SvelteFlow visual editor
+│   ├── rule-builder-nl.svelte        # Natural language interface
+│   ├── nodes/
+│   │   ├── trigger-node.svelte       # Green: entity + event selection
+│   │   ├── condition-node.svelte     # Blue: field + operator + value
+│   │   ├── action-node.svelte        # Orange: action type + parameters
+│   │   └── group-node.svelte         # Purple: AND/OR condition groups
+│   ├── nl/
+│   │   ├── nl-trigger-row.svelte     # "When [entity] [event]"
+│   │   ├── nl-condition-row.svelte   # "[field] [operator] [value]"
+│   │   ├── nl-condition-group.svelte # Nested AND/OR container
+│   │   ├── nl-action-row.svelte      # Action with inline params
+│   │   └── nl-sentence-builder.svelte # Human-readable summary
+│   ├── panels/
+│   │   ├── node-palette.svelte       # Drag nodes from here
+│   │   ├── properties-panel.svelte   # Edit selected node
+│   │   └── auto-layout-control.svelte # Layout direction dropdown
+│   ├── stores/
+│   │   └── index.ts                  # Layout direction store
+│   └── utils/
+│       ├── index.ts                  # Barrel exports
+│       ├── flow-to-rule.ts           # Convert flow → rule config
+│       ├── rule-to-flow.ts           # Convert rule config → flow
+│       └── rule-config-helpers.ts    # RuleConfig manipulation
+├── rule-list.svelte                  # List all rules
+├── rule-card.svelte                  # Rule summary card
+└── rule-logs-table.svelte            # Execution history
+```
+
+### Supported Entity Types
+
+| Entity      | Trigger Events                                              |
+| ----------- | ----------------------------------------------------------- |
+| Transaction | created, updated, deleted, imported, categorized, cleared   |
+| Account     | created, updated, balanceChanged, reconciled                |
+| Payee       | created, updated, merged                                    |
+| Category    | created, updated, spendingThresholdReached                  |
+| Schedule    | created, due, executed, skipped                             |
+| Budget      | created, updated, overspent, threshold, periodReset         |
+
+### Condition Field Types
+
+- **string**: contains, startsWith, endsWith, matches (regex), isEmpty
+- **number**: equals, greaterThan, lessThan, between
+- **date**: equals, before, after, between, dayOfWeek, dayOfMonth
+- **boolean**: equals
+- **enum**: equals, in
+- **reference**: equals, isNull, in (payee, category, account, budget)
+
+### Action Types
+
+Common actions include:
+
+- **setCategory**: Assign a specific category
+- **setPayee**: Assign a specific payee
+- **setStatus**: Change transaction status
+- **appendNotes**: Add text to notes field
+- **assignToBudget**: Allocate to specific budget
+- **sendNotification**: Send alert/notification
+
+### Key Implementation Patterns
+
+#### Node Duplication
+
+When duplicating nodes in SvelteFlow, deep clone all data to avoid shared
+references:
+
+```typescript
+function duplicateNode(nodeId: string) {
+  const node = nodes.find((n) => n.id === nodeId);
+  if (!node) return;
+
+  const newId = `${node.type}-${nanoid(6)}`;
+
+  // Deep clone data to avoid shared references
+  const { onUpdate, ...dataWithoutCallback } = node.data;
+  const clonedData = JSON.parse(JSON.stringify(dataWithoutCallback));
+
+  // Create fresh node with only essential properties
+  // Don't spread ...node as it includes internal SvelteFlow state
+  const newNode: Node = {
+    id: newId,
+    type: node.type,
+    position: { x: node.position.x + 50, y: node.position.y + 50 },
+    data: {
+      ...clonedData,
+      id: newId,
+      onUpdate: (data) => updateNodeData(newId, data),
+    },
+  };
+
+  nodes = [...nodes, newNode];
+}
+```
+
+#### Date Input Loop Prevention
+
+When using DateInput with reactive state, add equality guards to prevent infinite
+loops:
+
+```typescript
+// Sync local values to date states (only when they differ)
+$effect(() => {
+  if (typeof condition.value === 'string' && condition.value) {
+    if (dateValue?.toString() !== condition.value) {
+      try {
+        dateValue = parseDate(condition.value);
+      } catch {
+        dateValue = undefined;
+      }
+    }
+  }
+});
+
+// Handle date value updates - only update if value changed
+function handleDateValueUpdate(value: DateValue | undefined) {
+  const newValue = value?.toString() ?? null;
+  if (newValue !== condition.value) {
+    onUpdate({ ...condition, value: newValue });
+  }
+}
+```
+
+#### Layout Direction Store
+
+The visual editor supports multiple layout directions (vertical, horizontal,
+tree, compact) with a shared store:
+
+```typescript
+// stores/index.ts
+import { writable } from 'svelte/store';
+
+export type LayoutDirection = 'vertical' | 'horizontal' | 'tree' | 'compact';
+export const layoutDirection = writable<LayoutDirection>('vertical');
+
+export function isHorizontalLayout(direction: LayoutDirection): boolean {
+  return direction === 'horizontal';
+}
+```
+
+### Color Coding Convention
+
+- **Trigger**: Green (`bg-green-500`, `border-green-400`)
+- **Condition**: Blue (`bg-blue-500`, `border-blue-400`)
+- **Action**: Orange (`bg-orange-500`, `border-orange-400`)
+- **Group**: Purple (`bg-purple-500`, `border-purple-400`)
+
+### Database Schema
+
+Rules are stored with JSON columns for flexibility:
+
+- `trigger`: TriggerConfig (entityType, event)
+- `conditions`: ConditionGroup (nested AND/OR structure)
+- `actions`: ActionConfig[] (array of action definitions)
+- `flowState`: FlowState (SvelteFlow node positions for visual reconstruction)
+
+### Type Definitions
+
+Core types are defined in `src/lib/types/automation.ts`:
+
+- `EntityType`: 'transaction' | 'account' | 'payee' | 'category' | 'schedule' |
+  'budget'
+- `TriggerConfig`: { entityType, event, debounceMs? }
+- `ConditionGroup`: { operator: 'AND' | 'OR', conditions: (Condition |
+  ConditionGroup)[] }
+- `Condition`: { field, operator, value, value2?, negate? }
+- `ActionConfig`: { id, type, params, continueOnError? }
+- `RuleConfig`: Complete rule configuration (source of truth for both views)
+
 ## Payee Cleanup System
 
 **Duplicate detection and payee normalization for data quality management.**

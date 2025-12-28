@@ -6,6 +6,7 @@
 
 import * as accounts from "./accounts";
 import * as auth from "./auth";
+import * as automation from "./automation";
 import * as budgets from "./budgets";
 import * as categories from "./categories";
 import * as categoryAliases from "./category-aliases";
@@ -35,6 +36,7 @@ import * as workspaces from "./workspaces";
 export const rpc = {
   accounts,
   auth,
+  automation,
   budgets,
   categories,
   categoryAliases,
@@ -72,6 +74,7 @@ import { queryClient } from "./_client";
 export type RPC = typeof rpc;
 export type AccountQueries = typeof accounts;
 export type AuthQueries = typeof auth;
+export type AutomationQueries = typeof automation;
 export type BudgetQueries = typeof budgets;
 export type CategoryQueries = typeof categories;
 export type CategoryAliasQueries = typeof categoryAliases;
@@ -98,11 +101,13 @@ export type WorkspaceQueries = typeof workspaces;
  */
 export { accountKeys } from "./accounts";
 export { authKeys } from "./auth";
+export { automationKeys } from "./automation";
 export { budgetKeys } from "./budgets";
 export { categoryKeys } from "./categories";
 export { categoryAliasKeys } from "./category-aliases";
 export { categoryGroupKeys } from "./category-groups";
 export { importProfileKeys } from "./import-profiles";
+export { LLMSettings, llmSettingsKeys } from "./llm-settings";
 export { medicalExpenseKeys } from "./medical-expenses";
 export { onboardingKeys } from "./onboarding";
 export { patternKeys } from "./patterns";
@@ -116,7 +121,6 @@ export { viewKeys } from "./views";
 export { workspaceInvitationKeys } from "./workspace-invitations";
 export { workspaceMemberKeys } from "./workspace-members";
 export { workspaceKeys } from "./workspaces";
-export { LLMSettings, llmSettingsKeys } from "./llm-settings";
 
 /**
  * Development helpers

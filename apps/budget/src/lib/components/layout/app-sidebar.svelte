@@ -8,9 +8,9 @@ import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { isDebtAccount } from '$lib/schema/accounts';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
-import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { clearEncryptionCache } from '$lib/states/ui/encryption-unlock.svelte';
+import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
 import {
   calculateDebtMetrics,
   formatAccountBalance,
@@ -32,6 +32,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import Tags from '@lucide/svelte/icons/tags';
 import User from '@lucide/svelte/icons/user';
 import Wallet from '@lucide/svelte/icons/wallet';
+import Zap from '@lucide/svelte/icons/zap';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
 
 // Session and user data (useSession returns a nanostores atom)
@@ -152,6 +153,16 @@ const _deleteAccountId = $derived(deleteAccountId);
                 <a href="/intelligence" {...props} class="flex items-center gap-3">
                   <Brain class="h-4 w-4"></Brain>
                   <span class="font-medium">Intelligence</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
+                <a href="/automation" {...props} class="flex items-center gap-3">
+                  <Zap class="h-4 w-4"></Zap>
+                  <span class="font-medium">Automation</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
