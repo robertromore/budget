@@ -2,6 +2,7 @@
 import { MediaQuery } from 'svelte/reactivity';
 import * as Sheet from '$lib/components/ui/sheet/index.js';
 import * as Drawer from '$lib/components/ui/drawer/index.js';
+import { fly } from 'svelte/transition';
 import type { Snippet } from 'svelte';
 
 interface Props {
@@ -25,6 +26,8 @@ interface Props {
   interactOutsideBehavior?: 'close' | 'ignore';
   /** Data tour ID for spotlight tour targeting */
   dataTourId?: string;
+  /** Render as adjacent panel instead of overlay (pushes main content aside) */
+  adjacent?: boolean;
 }
 
 let {
@@ -45,6 +48,7 @@ let {
   hideOverlay = false,
   interactOutsideBehavior,
   dataTourId,
+  adjacent = false,
 }: Props = $props();
 
 const isDesktop = new MediaQuery('(min-width: 768px)');
@@ -96,9 +100,80 @@ $effect(() => {
   }
   return undefined;
 });
+
+// Adjacent mode: add padding to main content when panel is open
+$effect(() => {
+  if (adjacent && open && isDesktop.current) {
+    const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
+    if (mainContent) {
+      const element = mainContent as HTMLElement;
+      const paddingProp = side === 'right' ? 'paddingRight' : 'paddingLeft';
+      element.style.transition = 'padding 200ms ease-out';
+      element.style[paddingProp] = `${sheetWidth}px`;
+
+      return () => {
+        element.style[paddingProp] = '';
+      };
+    }
+  }
+});
 </script>
 
-{#if isDesktop.current}
+{#if isDesktop.current && adjacent}
+  <!-- Adjacent panel mode - no overlay, sits beside main content -->
+  {#if trigger}
+    <button type="button" class={triggerClass} onclick={() => (open = !open)}>
+      {@render trigger()}
+    </button>
+  {/if}
+  {#if open}
+    <aside
+      class="bg-background border-border fixed top-0 z-40 flex h-full flex-col border-l shadow-lg {side === 'right' ? 'right-0' : 'left-0 border-l-0 border-r'} {className || ''}"
+      style="width: {sheetWidth}px;"
+      transition:fly={{ x: side === 'right' ? sheetWidth : -sheetWidth, duration: 200 }}
+      data-tour-id={dataTourId}>
+      {#if resizable}
+        <button
+          type="button"
+          class="absolute top-0 {side === 'right'
+            ? 'left-0 -ml-1'
+            : 'right-0 -mr-1'} group z-50 h-full w-2 cursor-col-resize border-0 bg-transparent p-0"
+          onmousedown={handleMouseDown}
+          aria-label="Resize panel">
+          <div class="hover:bg-primary/10 active:bg-primary/20 absolute inset-0 transition-colors">
+          </div>
+          <div
+            class="absolute top-1/2 {side === 'right'
+              ? 'left-0'
+              : 'right-0'} bg-border group-hover:bg-primary/50 h-16 w-1 -translate-y-1/2 rounded-full transition-colors">
+          </div>
+        </button>
+      {/if}
+      {#if header}
+        <header class="flex h-16 shrink-0 items-center border-b px-6">
+          {@render header()}
+        </header>
+      {/if}
+      <div class="@container flex-1 overflow-auto">
+        {#if content}
+          <div class="px-6 py-6">
+            {@render content()}
+          </div>
+        {:else if children}
+          <div class="px-6 py-6">
+            {@render children()}
+          </div>
+        {/if}
+      </div>
+      {#if footer}
+        <footer class="border-t px-6 py-4">
+          {@render footer()}
+        </footer>
+      {/if}
+    </aside>
+  {/if}
+{:else if isDesktop.current}
+  <!-- Overlay sheet mode -->
   <Sheet.Root bind:open>
     {#if trigger}
       <Sheet.Trigger type="button" class={triggerClass}>

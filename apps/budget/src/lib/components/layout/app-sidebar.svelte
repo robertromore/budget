@@ -32,6 +32,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import Tags from '@lucide/svelte/icons/tags';
 import User from '@lucide/svelte/icons/user';
 import Wallet from '@lucide/svelte/icons/wallet';
+import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Zap from '@lucide/svelte/icons/zap';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
 
@@ -163,6 +164,16 @@ const _deleteAccountId = $derived(deleteAccountId);
                 <a href="/automation" {...props} class="flex items-center gap-3">
                   <Zap class="h-4 w-4"></Zap>
                   <span class="font-medium">Automation</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
+                <a href="/subscriptions" {...props} class="flex items-center gap-3">
+                  <RefreshCw class="h-4 w-4"></RefreshCw>
+                  <span class="font-medium">Subscriptions</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>

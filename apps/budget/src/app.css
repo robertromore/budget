@@ -45,6 +45,9 @@
 
   --widget-active: hsl(217 91% 60%);
 
+  /* Help highlight color */
+  --help-highlight: oklch(0.623 0.214 259.815);
+
   /* Account type colors */
   --account-checking: oklch(0.6 0.118 184.704);
   --account-savings: oklch(0.646 0.222 41.116);
@@ -104,6 +107,9 @@ html {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Help highlight color */
+  --help-highlight: oklch(0.623 0.214 259.815);
 
   /* Account type colors */
   --account-checking: oklch(0.696 0.17 162.48);
