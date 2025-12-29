@@ -21,6 +21,11 @@ interface RuleConfig {
 	actions: ActionConfig[];
 }
 
+interface RuleToFlowOptions {
+	/** Use this ID for the trigger node (to preserve positions from saved flow state) */
+	triggerId?: string;
+}
+
 // Layout constants
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 200;
@@ -30,7 +35,7 @@ const VERTICAL_GAP = 80;
 /**
  * Convert a rule configuration into flow nodes and edges
  */
-export function ruleToFlow(rule: RuleConfig): { nodes: Node[]; edges: Edge[] } {
+export function ruleToFlow(rule: RuleConfig, options?: RuleToFlowOptions): { nodes: Node[]; edges: Edge[] } {
 	const nodes: Node[] = [];
 	const edges: Edge[] = [];
 	let nodeIdCounter = 0;
@@ -38,7 +43,8 @@ export function ruleToFlow(rule: RuleConfig): { nodes: Node[]; edges: Edge[] } {
 	const generateId = () => `node-${++nodeIdCounter}`;
 
 	// Create trigger node at top center
-	const triggerId = generateId();
+	// Use provided triggerId to preserve position mapping from saved flow state
+	const triggerId = options?.triggerId || generateId();
 	nodes.push({
 		id: triggerId,
 		type: 'trigger',

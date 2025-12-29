@@ -9,7 +9,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
-	import type { EntityType } from '$lib/types/automation';
+	import { conditionFields, getActionLabel, operatorInfo, type ConditionOperator, type EntityType } from '$lib/types/automation';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -70,7 +70,7 @@
 	}
 </script>
 
-<Card.Root class="w-72">
+<Card.Root>
 	<Card.Header class="pb-3">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center gap-2">
@@ -82,102 +82,77 @@
 
 	<Card.Content>
 		{#if selectedNode}
-			<!-- Node Type Indicator -->
-			<div class="mb-4">
-				<div class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${headerColor()}`}>
-					{nodeTypeLabel()}
-				</div>
-				<p class="mt-1 text-xs text-muted-foreground">ID: {selectedNode.id}</p>
-			</div>
-
-			<Separator class="my-3" />
-
-			<!-- Node-specific properties -->
-			{#if selectedNode.type === 'trigger'}
-				<div class="space-y-3">
-					<div class="space-y-1.5">
-						<Label class="text-xs">Debounce (ms)</Label>
-						<Input
-							type="number"
-							min="0"
-							step="100"
-							value={String(selectedNode.data.debounceMs || '')}
-							oninput={handleDebounceChange}
-							placeholder="No debounce"
-							class="h-8 text-sm"
-						/>
-						<p class="text-xs text-muted-foreground">
-							Delay before re-triggering (prevents rapid fires)
-						</p>
+			<div class="flex items-start gap-4">
+				<!-- Node Type Indicator -->
+				<div class="shrink-0">
+					<div class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${headerColor()}`}>
+						{nodeTypeLabel()}
 					</div>
+					<p class="mt-1 text-xs text-muted-foreground">ID: {selectedNode.id}</p>
 				</div>
-			{:else if selectedNode.type === 'condition'}
-				<div class="space-y-2">
-					<p class="text-sm text-muted-foreground">
-						Edit condition details directly in the node
-					</p>
-					<div class="rounded-md bg-muted/50 p-2 text-xs">
-						<div class="font-medium">Current:</div>
-						<div class="mt-1 space-y-0.5 text-muted-foreground">
-							<div>Field: {selectedNode.data.field || '(not set)'}</div>
-							<div>Operator: {selectedNode.data.operator || '(not set)'}</div>
-							<div>Value: {String(selectedNode.data.value) || '(not set)'}</div>
+
+				<!-- Node-specific properties -->
+				<div class="flex-1">
+					{#if selectedNode.type === 'trigger'}
+						<div class="flex items-center gap-2">
+							<Label class="text-xs whitespace-nowrap">Debounce (ms)</Label>
+							<Input
+								type="number"
+								min="0"
+								step="100"
+								value={String(selectedNode.data.debounceMs || '')}
+								oninput={handleDebounceChange}
+								placeholder="No debounce"
+								class="h-8 w-24 text-sm"
+							/>
 						</div>
-					</div>
-				</div>
-			{:else if selectedNode.type === 'action'}
-				<div class="space-y-2">
-					<p class="text-sm text-muted-foreground">
-						Edit action details directly in the node
-					</p>
-					<div class="rounded-md bg-muted/50 p-2 text-xs">
-						<div class="font-medium">Current:</div>
-						<div class="mt-1 text-muted-foreground">
-							Type: {selectedNode.data.type || '(not set)'}
+					{:else if selectedNode.type === 'condition'}
+						{@const field = selectedNode.data.field as string | undefined}
+						{@const operator = selectedNode.data.operator as ConditionOperator | undefined}
+						{@const fieldLabel = conditionFields[entityType]?.find(f => f.field === field)?.label || field}
+						{@const opLabel = operator ? (operatorInfo[operator]?.label || operator) : undefined}
+						<div class="flex gap-3 text-xs text-muted-foreground">
+							<span>Field: <strong class="text-foreground">{fieldLabel || '(not set)'}</strong></span>
+							<span>Op: <strong class="text-foreground">{opLabel || '(not set)'}</strong></span>
+							<span>Value: <strong class="text-foreground">{String(selectedNode.data.value) || '(not set)'}</strong></span>
 						</div>
-					</div>
-				</div>
-			{:else if selectedNode.type === 'group'}
-				<div class="space-y-2">
-					<div class="rounded-md bg-muted/50 p-2 text-xs">
-						<div class="font-medium">Logic:</div>
-						<div class="mt-1 text-muted-foreground">
-							{selectedNode.data.operator === 'AND'
-								? 'All conditions must match'
-								: 'Any condition can match'}
+					{:else if selectedNode.type === 'action'}
+						{@const actionType = selectedNode.data.type as string | undefined}
+						<div class="text-xs text-muted-foreground">
+							Type: <strong class="text-foreground">{actionType ? getActionLabel(actionType) : '(not set)'}</strong>
 						</div>
-					</div>
+					{:else if selectedNode.type === 'group'}
+						<div class="text-xs text-muted-foreground">
+							Logic: <strong class="text-foreground">{selectedNode.data.operator === 'AND' ? 'All must match' : 'Any can match'}</strong>
+						</div>
+					{/if}
 				</div>
-			{/if}
 
-			<Separator class="my-3" />
-
-			<!-- Node Actions -->
-			<div class="flex gap-2">
-				{#if selectedNode.type !== 'trigger'}
+				<!-- Node Actions -->
+				<div class="flex shrink-0 gap-2">
+					{#if selectedNode.type !== 'trigger'}
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => onDuplicateNode(selectedNode.id)}
+						>
+							<Copy class="mr-1.5 h-3.5 w-3.5" />
+							Duplicate
+						</Button>
+					{/if}
 					<Button
-						variant="outline"
+						variant="destructive"
 						size="sm"
-						class="flex-1"
-						onclick={() => onDuplicateNode(selectedNode.id)}
+						onclick={() => onDeleteNode(selectedNode.id)}
 					>
-						<Copy class="mr-1.5 h-3.5 w-3.5" />
-						Duplicate
+						<Trash2 class="mr-1.5 h-3.5 w-3.5" />
+						Delete
 					</Button>
-				{/if}
-				<Button
-					variant="destructive"
-					size="sm"
-					class="flex-1"
-					onclick={() => onDeleteNode(selectedNode.id)}
-				>
-					<Trash2 class="mr-1.5 h-3.5 w-3.5" />
-					Delete
-				</Button>
+				</div>
 			</div>
 		{:else}
-			<div class="py-8 text-center">
-				<Settings class="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+			<div class="flex items-center gap-3 py-2">
+				<Settings class="h-5 w-5 text-muted-foreground/50" />
 				<p class="text-sm text-muted-foreground">
 					Select a node to view its properties
 				</p>

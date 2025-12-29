@@ -2817,6 +2817,71 @@ export function isHorizontalLayout(direction: LayoutDirection): boolean {
 - **Action**: Orange (`bg-orange-500`, `border-orange-400`)
 - **Group**: Purple (`bg-purple-500`, `border-purple-400`)
 
+### Rule Engine Architecture
+
+The automation system uses a trigger-based architecture where rules are evaluated
+when entity events occur.
+
+#### File Structure
+
+```text
+src/lib/server/domains/automation/
+├── trigger.ts              # Main entry point for triggering rules
+├── repository.ts           # Database access for rules and logs
+├── condition-evaluator.ts  # Evaluates rule conditions against entities
+├── action-executor.ts      # Executes actions when conditions match
+├── event-emitter.ts        # Pub/sub event bus (optional listeners)
+└── rule-engine.ts          # Alternative subscription-based engine
+```
+
+#### Triggering Rules from Services
+
+Rules are triggered from entity services using `triggerTransactionAutomation()`:
+
+```typescript
+import { triggerTransactionAutomation } from "../automation/trigger";
+
+// In TransactionService.createTransaction():
+return this.triggerAutomationAndRefresh("created", transaction, workspaceId);
+```
+
+The `triggerAutomationAndRefresh()` method:
+
+1. Creates a service adapter for action execution
+2. Calls `triggerTransactionAutomation()` with the entity data
+3. If rules matched and executed, refreshes the transaction from database
+4. Returns the updated transaction to reflect automation changes
+
+#### Synchronous vs Fire-and-Forget
+
+Two patterns are available:
+
+- **Synchronous (recommended for create/update)**: Waits for automation, refreshes
+  data before returning. UI immediately reflects changes.
+
+  ```typescript
+  return this.triggerAutomationAndRefresh("created", transaction, workspaceId);
+  ```
+
+- **Fire-and-forget (for delete)**: Triggers automation without waiting. Used when
+  the entity is being removed.
+
+  ```typescript
+  this.triggerAutomationFireAndForget("deleted", transaction, workspaceId);
+  ```
+
+#### ESM Import Requirements
+
+The action executor uses ESM imports only. Never use CommonJS `require()`:
+
+```typescript
+// ✅ Correct - ESM import
+import { actionDefinitions } from "$lib/types/automation";
+
+// ❌ Wrong - CommonJS require causes "require is not defined" error
+const { actionDefinitions } = require("$lib/types/automation");
+```
+
 ### Database Schema
 
 Rules are stored with JSON columns for flexibility:

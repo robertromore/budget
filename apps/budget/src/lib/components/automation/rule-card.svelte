@@ -11,7 +11,7 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import type { AutomationRule } from '$lib/schema/automation-rules';
 	import type { EntityType } from '$lib/types/automation';
-	import { entityTypes, triggerEvents } from '$lib/types/automation';
+	import { entityTypes, getActionLabel, triggerEvents } from '$lib/types/automation';
 	import { cn } from '$lib/utils';
 	import Copy from '@lucide/svelte/icons/copy';
 	import History from '@lucide/svelte/icons/history';
@@ -151,10 +151,10 @@
 		</div>
 
 		<!-- Actions Summary -->
-		<div class="mt-2 flex items-center gap-1">
+		<div class="mt-2 flex flex-wrap items-center gap-1">
 			{#each rule.actions.slice(0, 3) as action, i (action.id || i)}
 				<Badge variant="outline" class="text-xs">
-					{action.type}
+					{getActionLabel(action.type)}
 				</Badge>
 			{/each}
 			{#if rule.actions.length > 3}

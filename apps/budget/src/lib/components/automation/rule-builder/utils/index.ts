@@ -22,6 +22,7 @@ export {
   // Types
   type RuleConfig,
   // Factory functions
+  createAccountScopedRuleConfig,
   createDefaultRuleConfig,
   createEmptyAction,
   createEmptyCondition,

@@ -17,6 +17,7 @@ import { PayeeService } from "../payees/services";
 import { ScheduleService, type UpcomingScheduledTransaction } from "../schedules/services";
 import type { PaginatedResult, PaginationParams, TransactionFilters } from "./repository";
 import { TransactionRepository } from "./repository";
+import { triggerTransactionAutomation } from "../automation/trigger";
 
 // Service input types
 export interface BudgetAllocationData {
@@ -323,7 +324,90 @@ export class TransactionService {
 
     invalidateAccountCache(transaction.accountId);
 
+    // Trigger automation rules and return updated transaction
+    return this.triggerAutomationAndRefresh("created", transaction, workspaceId);
+  }
+
+  /**
+   * Trigger automation rules and return the refreshed transaction
+   * This ensures any changes made by automation are reflected in the returned data
+   */
+  private async triggerAutomationAndRefresh(
+    event: "created" | "updated" | "deleted" | "categorized" | "cleared",
+    transaction: Transaction,
+    workspaceId: number,
+    previousTransaction?: Transaction
+  ): Promise<Transaction> {
+    // Create a service adapter for action execution
+    const transactionServiceAdapter = {
+      update: async (id: number, data: Record<string, unknown>) => {
+        await this.repository.update(id, data as Partial<NewTransaction>, workspaceId);
+      },
+    };
+
+    try {
+      const result = await triggerTransactionAutomation(
+        db,
+        workspaceId,
+        event,
+        transaction as unknown as Record<string, unknown>,
+        previousTransaction as unknown as Record<string, unknown> | undefined,
+        { transactions: transactionServiceAdapter }
+      );
+
+      // If any rules matched and executed actions, refresh the transaction
+      if (result.rulesMatched > 0 && result.actionsExecuted > 0) {
+        try {
+          const refreshed = await this.repository.findById(transaction.id, workspaceId);
+          if (refreshed) {
+            return refreshed;
+          }
+        } catch {
+          // If refresh fails, return original
+        }
+      }
+    } catch (err) {
+      logger.warn("Failed to trigger automation", {
+        event,
+        transactionId: transaction.id,
+        error: err,
+      });
+    }
+
     return transaction;
+  }
+
+  /**
+   * Trigger automation rules (fire-and-forget for events that don't need refresh)
+   */
+  private triggerAutomationFireAndForget(
+    event: "created" | "updated" | "deleted" | "categorized" | "cleared",
+    transaction: Transaction,
+    workspaceId: number,
+    previousTransaction?: Transaction
+  ): void {
+    // Create a service adapter for action execution
+    const transactionServiceAdapter = {
+      update: async (id: number, data: Record<string, unknown>) => {
+        await this.repository.update(id, data as Partial<NewTransaction>, workspaceId);
+      },
+    };
+
+    // Fire and forget - don't await to avoid blocking
+    triggerTransactionAutomation(
+      db,
+      workspaceId,
+      event,
+      transaction as unknown as Record<string, unknown>,
+      previousTransaction as unknown as Record<string, unknown> | undefined,
+      { transactions: transactionServiceAdapter }
+    ).catch((err) => {
+      logger.warn("Failed to trigger automation", {
+        event,
+        transactionId: transaction.id,
+        error: err,
+      });
+    });
   }
 
   /**
@@ -524,7 +608,24 @@ export class TransactionService {
 
     invalidateAccountCache(updatedTransaction.accountId);
 
-    return updatedTransaction;
+    // Trigger automation rules for transaction update and return refreshed data
+    let result = await this.triggerAutomationAndRefresh("updated", updatedTransaction, workspaceId, existingTransaction);
+
+    // Also trigger specialized events if applicable
+    if (
+      data.categoryId !== undefined &&
+      data.categoryId !== existingTransaction.categoryId
+    ) {
+      result = await this.triggerAutomationAndRefresh("categorized", result, workspaceId, existingTransaction);
+    }
+    if (
+      data.status === "cleared" &&
+      existingTransaction.status !== "cleared"
+    ) {
+      result = await this.triggerAutomationAndRefresh("cleared", result, workspaceId, existingTransaction);
+    }
+
+    return result;
   }
 
   /**
@@ -865,6 +966,9 @@ export class TransactionService {
     }
 
     invalidateAccountCache(transaction.accountId);
+
+    // Trigger automation rules for transaction deletion (fire-and-forget since we don't return anything)
+    this.triggerAutomationFireAndForget("deleted", transaction, workspaceId);
   }
 
   /**

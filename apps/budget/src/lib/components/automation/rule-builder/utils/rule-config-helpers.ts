@@ -68,6 +68,25 @@ export function createDefaultRuleConfig(entityType: EntityType): RuleConfig {
 }
 
 /**
+ * Create a rule configuration scoped to a specific account
+ * Pre-populates with transaction entity type and accountId condition
+ */
+export function createAccountScopedRuleConfig(accountId: number): RuleConfig {
+	const baseConfig = createDefaultRuleConfig('transaction');
+
+	// Add the accountId condition to scope the rule to this account
+	baseConfig.conditions.conditions.push({
+		id: generateId('cond'),
+		field: 'accountId',
+		operator: 'equals' as ConditionOperator,
+		value: accountId,
+		negate: false,
+	});
+
+	return baseConfig;
+}
+
+/**
  * Create a new empty condition
  */
 export function createEmptyCondition(entityType: EntityType): Condition {

@@ -25,6 +25,7 @@ import Sparkles from '@lucide/svelte/icons/sparkles';
 import Upload from '@lucide/svelte/icons/upload';
 import Wallet from '@lucide/svelte/icons/wallet';
 import Wand from '@lucide/svelte/icons/wand';
+import Zap from '@lucide/svelte/icons/zap';
 import type { Table as TanStackTable } from '@tanstack/table-core';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 // Local component imports
@@ -45,6 +46,7 @@ import { useQueryClient } from '@tanstack/svelte-query';
 import { onDestroy } from 'svelte';
 import {
   AddTransactionDialog,
+  AutomationTab,
   ExpenseTableContainer,
   ExpenseWizard,
   HsaDashboard,
@@ -67,6 +69,7 @@ const tabValues = [
   'hsa-dashboard',
   'analytics',
   'intelligence',
+  'automation',
   'schedules',
   'budgets',
   'import',
@@ -132,6 +135,7 @@ $effect(() => {
         { id: 'hsa-dashboard', label: 'HSA Dashboard', condition: isHsaAccount },
         { id: 'analytics', label: 'Analytics', icon: ChartLine },
         { id: 'intelligence', label: 'Intelligence', icon: Brain },
+        { id: 'automation', label: 'Automation', icon: Zap },
         { id: 'schedules', label: 'Schedules', icon: Calendar },
         { id: 'budgets', label: 'Budgets', icon: Wallet },
         { id: 'import', label: 'Import', icon: Upload, condition: !isHsaAccount },
@@ -882,6 +886,10 @@ $effect(() => {
             <Brain class="mr-2 h-4 w-4" />
             Intelligence
           </Tabs.Trigger>
+          <Tabs.Trigger value="automation" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-automation" data-help-title="Automation Tab" data-tour-id="automation-tab">
+            <Zap class="mr-2 h-4 w-4" />
+            Automation
+          </Tabs.Trigger>
           <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-schedules" data-help-title="Schedules Tab" data-tour-id="schedules-tab">
             <Calendar class="mr-2 h-4 w-4" />
             Schedules
@@ -1048,6 +1056,13 @@ $effect(() => {
         {/if}
       </Tabs.Content>
 
+      <!-- Automation Tab Content -->
+      <Tabs.Content value="automation" class="tabs-connected-content" data-help-id="automation-tab" data-help-title="Automation Tab">
+        {#if accountId && accountSlug && activeTab === 'automation'}
+          <AutomationTab accountId={Number(accountId)} {accountSlug} />
+        {/if}
+      </Tabs.Content>
+
       <!-- Settings Tab Content -->
       <Tabs.Content value="settings" class="tabs-connected-content" data-help-id="account-settings-tab" data-help-title="Account Settings">
         {#if accountData && activeTab === 'settings'}
@@ -1168,6 +1183,10 @@ $effect(() => {
         {:else if activeTab === 'intelligence'}
           {#if accountId && accountSlug}
             <IntelligenceTab {accountId} {accountSlug} />
+          {/if}
+        {:else if activeTab === 'automation'}
+          {#if accountId && accountSlug}
+            <AutomationTab accountId={Number(accountId)} {accountSlug} />
           {/if}
         {:else if activeTab === 'settings'}
           {#if accountData}

@@ -47,6 +47,8 @@
 		entityType?: EntityType;
 		/** Whether the editor is read-only */
 		readonly?: boolean;
+		/** Compact mode - hides minimap for use in sheets/dialogs */
+		compact?: boolean;
 		/** Called when flow changes (nodes/edges updated) */
 		onFlowChange?: (flowState: FlowState, ruleConfig: RuleConfig) => void;
 		/** Called on explicit save action */
@@ -60,6 +62,7 @@
 		ruleConfig: initialRuleConfig = null,
 		entityType = 'transaction',
 		readonly = false,
+		compact = false,
 		onFlowChange,
 		onSave,
 		class: className,
@@ -92,18 +95,40 @@
 	$effect(() => {
 		if (isInitialized) return;
 
-		if (initialFlowState) {
+		if (initialRuleConfig) {
+			// Find the trigger node ID from saved flow state to preserve position mapping
+			const savedTriggerId = initialFlowState?.nodes?.find(n => n.type === 'trigger')?.id;
+
+			// Always use ruleConfig as source of truth for conditions/actions
+			// Pass triggerId so the generated node can match saved positions
+			const flow = ruleToFlow(initialRuleConfig, { triggerId: savedTriggerId });
+
+			// If we have a saved flow state, try to preserve node positions
+			if (initialFlowState?.nodes?.length) {
+				const positionMap = new Map(
+					initialFlowState.nodes.map((n) => [n.id, n.position])
+				);
+				// Apply saved positions to matching nodes
+				flow.nodes = flow.nodes.map((node) => {
+					const savedPosition = positionMap.get(node.id);
+					return savedPosition ? { ...node, position: savedPosition } : node;
+				});
+			}
+
+			nodes = attachUpdateCallbacks(flow.nodes);
+			edges = flow.edges;
+
+			if (initialFlowState?.viewport) {
+				viewport = initialFlowState.viewport;
+			}
+		} else if (initialFlowState) {
+			// Fallback: use flow state directly if no rule config
 			const imported = importFlowState(initialFlowState, entityType);
 			nodes = attachUpdateCallbacks(imported.nodes);
 			edges = imported.edges;
 			if (initialFlowState.viewport) {
 				viewport = initialFlowState.viewport;
 			}
-		} else if (initialRuleConfig) {
-			// Convert RuleConfig to FlowState
-			const flow = ruleToFlow(initialRuleConfig);
-			nodes = attachUpdateCallbacks(flow.nodes);
-			edges = flow.edges;
 		} else {
 			const defaultFlow = createDefaultFlow(entityType);
 			nodes = attachUpdateCallbacks(defaultFlow.nodes);
@@ -342,23 +367,44 @@
 
 	// Update flow from external RuleConfig (used when NL builder makes changes)
 	export function updateFromRuleConfig(newRuleConfig: RuleConfig) {
-		const flow = ruleToFlow(newRuleConfig);
+		// Preserve the existing trigger ID to maintain node positions
+		const existingTriggerId = nodes.find(n => n.type === 'trigger')?.id;
+		const flow = ruleToFlow(newRuleConfig, { triggerId: existingTriggerId });
+
+		// Preserve existing positions for matching nodes
+		const positionMap = new Map(nodes.map(n => [n.id, n.position]));
+		flow.nodes = flow.nodes.map(node => {
+			const savedPosition = positionMap.get(node.id);
+			return savedPosition ? { ...node, position: savedPosition } : node;
+		});
+
 		nodes = attachUpdateCallbacks(flow.nodes);
 		edges = flow.edges;
 	}
 </script>
 
-<div class={cn('flex h-150 gap-4', className)}>
-	<!-- Left Panel: Node Palette -->
+<div class={cn('flex flex-col gap-4', className)}>
+	<!-- Top Panel: Node Palette & Properties side by side -->
 	{#if !readonly}
-		<div class="shrink-0">
-			<NodePalette {entityType} onAddNode={addNode} {hasTrigger} />
+		<div class="flex gap-4">
+			<div class="flex-1">
+				<NodePalette {entityType} onAddNode={addNode} {hasTrigger} />
+			</div>
+			<div class="flex-1">
+				<PropertiesPanel
+					{selectedNode}
+					{entityType}
+					onDeleteNode={deleteNode}
+					onDuplicateNode={duplicateNode}
+					onUpdateNodeData={updateNodeData}
+				/>
+			</div>
 		</div>
 	{/if}
 
-	<!-- Center: Flow Canvas -->
+	<!-- Flow Canvas -->
 	<div
-		class="flex-1 overflow-hidden rounded-lg border bg-muted/20"
+		class="h-80 overflow-hidden rounded-lg border bg-muted/20"
 		ondragover={onDragOver}
 		ondrop={onDrop}
 		role="application"
@@ -370,6 +416,7 @@
 			{nodeTypes}
 			onconnect={onConnect}
 			fitView
+			fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
 			snapGrid={[20, 20]}
 			deleteKey={readonly ? null : 'Delete'}
 			nodesDraggable={!readonly}
@@ -382,32 +429,21 @@
 					<AutoLayoutControl />
 				{/if}
 			</Controls>
-			<MiniMap />
+			{#if !compact}
+				<MiniMap position="top-right" />
+			{/if}
 		</SvelteFlow>
 	</div>
 
-	<!-- Right Panel: Properties -->
-	{#if !readonly}
-		<div class="shrink-0">
-			<PropertiesPanel
-				{selectedNode}
-				{entityType}
-				onDeleteNode={deleteNode}
-				onDuplicateNode={duplicateNode}
-				onUpdateNodeData={updateNodeData}
-			/>
-
-			<!-- Validation Errors -->
-			{#if validationErrors.length > 0}
-				<div class="mt-4 rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-					<h4 class="mb-2 text-sm font-medium text-destructive">Validation Errors</h4>
-					<ul class="space-y-1 text-xs text-destructive">
-						{#each validationErrors as error, i (i)}
-							<li>{error}</li>
-						{/each}
-					</ul>
-				</div>
-			{/if}
+	<!-- Validation Errors -->
+	{#if !readonly && validationErrors.length > 0}
+		<div class="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+			<h4 class="mb-2 text-sm font-medium text-destructive">Validation Errors</h4>
+			<ul class="space-y-1 text-xs text-destructive">
+				{#each validationErrors as error, i (i)}
+					<li>{error}</li>
+				{/each}
+			</ul>
 		</div>
 	{/if}
 </div>

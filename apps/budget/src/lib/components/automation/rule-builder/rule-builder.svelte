@@ -30,6 +30,8 @@
 		entityType?: EntityType;
 		/** Whether the editor is read-only */
 		readonly?: boolean;
+		/** Compact mode - hides minimap for use in sheets/dialogs */
+		compact?: boolean;
 		/** Called when the rule changes */
 		onChange?: (ruleConfig: RuleConfig, flowState: FlowState) => void;
 		/** Called on explicit save action */
@@ -43,6 +45,7 @@
 		initialRuleConfig = null,
 		entityType = 'transaction',
 		readonly = false,
+		compact = false,
 		onChange,
 		onSave,
 		class: className,
@@ -90,8 +93,21 @@
 	function handleNLChange(newRuleConfig: RuleConfig) {
 		ruleConfig = newRuleConfig;
 
-		// Update flow state from rule config
-		const flow = ruleToFlow(newRuleConfig);
+		// Preserve the existing trigger ID to maintain node positions
+		const existingTriggerId = flowState?.nodes?.find(n => n.type === 'trigger')?.id;
+
+		// Update flow state from rule config, preserving positions
+		const flow = ruleToFlow(newRuleConfig, { triggerId: existingTriggerId });
+
+		// Preserve existing positions for matching nodes
+		if (flowState?.nodes?.length) {
+			const positionMap = new Map(flowState.nodes.map(n => [n.id, n.position]));
+			flow.nodes = flow.nodes.map(node => {
+				const savedPosition = positionMap.get(node.id);
+				return savedPosition ? { ...node, position: savedPosition } : node;
+			});
+		}
+
 		flowState = {
 			nodes: flow.nodes as any[],
 			edges: flow.edges as any[],
@@ -129,7 +145,7 @@
 	}
 </script>
 
-<div class={cn('flex flex-col gap-4', className)}>
+<div class={cn('flex flex-col', className)}>
 	<Tabs.Root bind:value={activeView}>
 		<Tabs.List class="grid w-80 grid-cols-2">
 			<Tabs.Trigger value="visual">Visual</Tabs.Trigger>
@@ -140,8 +156,10 @@
 			<RuleBuilderVisual
 				bind:this={visualBuilder}
 				initialFlowState={flowState}
+				ruleConfig={ruleConfig}
 				{entityType}
 				{readonly}
+				{compact}
 				onFlowChange={handleVisualChange}
 				onSave={handleSave}
 			/>

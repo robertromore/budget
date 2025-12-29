@@ -28,3 +28,6 @@ export { default as ImportTab } from "./import-tab.svelte";
 
 // Intelligence Tab
 export { default as IntelligenceTab } from "./intelligence-tab.svelte";
+
+// Automation Tab
+export { default as AutomationTab } from "./automation-tab.svelte";

@@ -6,7 +6,7 @@
  */
 
 import type { db } from "$lib/server/db";
-import type { ActionConfig, ActionResult, EntityType } from "$lib/types/automation";
+import { actionDefinitions, type ActionConfig, type ActionResult, type EntityType } from "$lib/types/automation";
 
 // Database connection type derived from the actual db export
 type DatabaseConnection = typeof db;
@@ -627,9 +627,7 @@ function interpolateMessage(template: string, entity: Record<string, unknown>): 
  * Get action definition by type (for validation)
  */
 function getActionDefinition(type: string) {
-  // Import from types to avoid circular dependency
-  const { actionDefinitions } = require("$lib/types/automation");
-  return actionDefinitions.find((d: { type: string }) => d.type === type);
+  return actionDefinitions.find((d) => d.type === type);
 }
 
 // =============================================================================

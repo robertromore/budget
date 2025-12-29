@@ -355,6 +355,14 @@ export function getActionsForEntity(entityType: EntityType): ActionDefinition[] 
 }
 
 /**
+ * Get the label for an action type
+ */
+export function getActionLabel(actionType: string): string {
+  const action = actionDefinitions.find((a) => a.type === actionType);
+  return action?.label || actionType;
+}
+
+/**
  * Action configuration stored in the rule
  */
 export interface ActionConfig {

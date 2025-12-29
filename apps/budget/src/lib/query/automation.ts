@@ -16,6 +16,7 @@ export const automationKeys = createQueryKeys("automation", {
   lists: () => ["automation", "list"] as const,
   list: () => ["automation", "list"] as const,
   byEntityType: (entityType: EntityType) => ["automation", "entity", entityType] as const,
+  byAccountId: (accountId: number) => ["automation", "account", accountId] as const,
   details: () => ["automation", "detail"] as const,
   detail: (id: number) => ["automation", "detail", id] as const,
   logs: (ruleId: number) => ["automation", "logs", ruleId] as const,
@@ -106,6 +107,15 @@ export const getByEntityType = (entityType: EntityType) =>
   });
 
 /**
+ * Get rules that apply to a specific account
+ */
+export const getByAccountId = (accountId: number) =>
+  defineQuery({
+    queryKey: automationKeys.byAccountId(accountId),
+    queryFn: () => trpc().automationRoutes.listByAccountId.query({ accountId }),
+  });
+
+/**
  * Get a single rule by ID
  */
 export const getById = (id: number) =>
@@ -134,6 +144,9 @@ export const createRule = defineMutation({
   mutationFn: (input: CreateRuleInput) => trpc().automationRoutes.create.mutate(input),
   onSuccess: (newRule) => {
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
+    // Invalidate account-specific and entity-type queries
+    queryClient.invalidateQueries({ queryKey: ["automation", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["automation", "entity"] });
     queryClient.setQueryData(automationKeys.detail(newRule.id), newRule);
   },
   successMessage: "Rule created",
@@ -162,6 +175,9 @@ export const updateRule = defineMutation({
   onSuccess: (updatedRule, variables) => {
     queryClient.setQueryData(automationKeys.detail(variables.id), updatedRule);
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
+    // Invalidate account-specific and entity-type queries
+    queryClient.invalidateQueries({ queryKey: ["automation", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["automation", "entity"] });
   },
   successMessage: "Rule updated",
   errorMessage: "Failed to update rule",
@@ -175,6 +191,9 @@ export const deleteRule = defineMutation<number, { success: boolean }>({
   onSuccess: (_data, id) => {
     queryClient.removeQueries({ queryKey: automationKeys.detail(id) });
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
+    // Invalidate account-specific and entity-type queries
+    queryClient.invalidateQueries({ queryKey: ["automation", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["automation", "entity"] });
     // Also invalidate logs for this rule
     queryClient.removeQueries({ queryKey: automationKeys.logs(id) });
     queryClient.removeQueries({ queryKey: automationKeys.logStats(id) });
@@ -191,6 +210,9 @@ export const enableRule = defineMutation({
   onSuccess: (updatedRule, id) => {
     queryClient.setQueryData(automationKeys.detail(id), updatedRule);
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
+    // Invalidate account-specific and entity-type queries
+    queryClient.invalidateQueries({ queryKey: ["automation", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["automation", "entity"] });
   },
   successMessage: "Rule enabled",
   errorMessage: "Failed to enable rule",
@@ -204,6 +226,9 @@ export const disableRule = defineMutation({
   onSuccess: (updatedRule, id) => {
     queryClient.setQueryData(automationKeys.detail(id), updatedRule);
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
+    // Invalidate account-specific and entity-type queries
+    queryClient.invalidateQueries({ queryKey: ["automation", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["automation", "entity"] });
   },
   successMessage: "Rule disabled",
   errorMessage: "Failed to disable rule",
@@ -216,6 +241,9 @@ export const duplicateRule = defineMutation({
   mutationFn: ({ id, newName }: { id: number; newName?: string }) => trpc().automationRoutes.duplicate.mutate({ id, newName }),
   onSuccess: (newRule) => {
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
+    // Invalidate account-specific and entity-type queries
+    queryClient.invalidateQueries({ queryKey: ["automation", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["automation", "entity"] });
     queryClient.setQueryData(automationKeys.detail(newRule.id), newRule);
   },
   successMessage: "Rule duplicated",

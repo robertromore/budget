@@ -16,6 +16,7 @@ import {
   getRuleLogs,
   getRuleLogStats,
   getRules,
+  getRulesByAccountId,
   getRulesByEntityType,
   testRule,
   updateRule,
@@ -181,6 +182,20 @@ export const automationRoutes = t.router({
     .input(z.object({ entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]) }))
     .query(async ({ ctx, input }) => {
       return getRulesByEntityType(input.entityType as EntityType, {
+        db: ctx.db,
+        workspaceId: ctx.workspaceId,
+        userId: ctx.userId,
+      });
+    }),
+
+  /**
+   * Get rules that apply to a specific account
+   * Filters transaction rules that have an accountId condition matching the given account
+   */
+  listByAccountId: publicProcedure
+    .input(z.object({ accountId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      return getRulesByAccountId(input.accountId, {
         db: ctx.db,
         workspaceId: ctx.workspaceId,
         userId: ctx.userId,

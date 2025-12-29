@@ -18,6 +18,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { rpc } from '$lib/query';
 	import type { EntityType, FlowState } from '$lib/types/automation';
+	import type { RuleConfig } from '$lib/components/automation/rule-builder/utils';
 	import { entityTypes } from '$lib/types/automation';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import History from '@lucide/svelte/icons/history';
@@ -38,7 +39,26 @@
 	let stopOnMatch = $state(true);
 	let runOnce = $state(false);
 	let entityType = $state<EntityType>('transaction');
-	let initialFlowState = $state<FlowState | null>(null);
+
+	// Initial rule config for the builder (derived from query data)
+	const initialRuleConfig = $derived.by((): RuleConfig | null => {
+		if (ruleQuery.data) {
+			return {
+				trigger: ruleQuery.data.trigger,
+				conditions: ruleQuery.data.conditions,
+				actions: ruleQuery.data.actions,
+			} as RuleConfig;
+		}
+		return null;
+	});
+
+	// Initial flow state for the builder (derived to stay in sync with query data)
+	const initialFlowState = $derived.by((): FlowState | null => {
+		if (ruleQuery.data?.flowState) {
+			return ruleQuery.data.flowState as FlowState;
+		}
+		return null;
+	});
 
 	// Sync form state when data loads
 	$effect(() => {
@@ -51,7 +71,6 @@
 			stopOnMatch = rule.stopOnMatch ?? true;
 			runOnce = rule.runOnce ?? false;
 			entityType = rule.trigger.entityType as EntityType;
-			initialFlowState = rule.flowState;
 		}
 	});
 
@@ -267,12 +286,14 @@
 				</Card.Description>
 			</Card.Header>
 			<Card.Content>
+				{#key ruleQuery.data?.id}
 				<RuleBuilder
 					bind:this={ruleBuilder}
 					{entityType}
 					{initialFlowState}
-					class="h-[600px]"
+					{initialRuleConfig}
 				/>
+			{/key}
 			</Card.Content>
 		</Card.Root>
 	{/if}

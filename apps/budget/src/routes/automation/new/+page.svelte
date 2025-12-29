@@ -214,7 +214,6 @@
 				bind:this={ruleBuilder}
 				{entityType}
 				onChange={handleFlowChange}
-				class="h-[600px]"
 			/>
 		</Card.Content>
 	</Card.Root>

@@ -141,6 +141,50 @@ export async function getRulesByEntityType(
 }
 
 /**
+ * Get rules that apply to a specific account
+ * Filters transaction rules that have an accountId condition matching the given account
+ */
+export async function getRulesByAccountId(
+  accountId: number,
+  context: AutomationContext
+): Promise<AutomationRule[]> {
+  const repository = new AutomationRepository(context.db, context.workspaceId);
+
+  // Get all transaction rules since accountId is a transaction condition field
+  const transactionRules = await repository.findByEntityType("transaction");
+
+  // Filter to rules that have an accountId condition matching this account
+  return transactionRules.filter((rule) =>
+    hasAccountIdCondition(rule.conditions as ConditionGroup, accountId)
+  );
+}
+
+/**
+ * Check if a condition group contains an accountId condition matching the given account
+ */
+function hasAccountIdCondition(conditions: ConditionGroup, accountId: number): boolean {
+  for (const child of conditions.conditions) {
+    // Check if it's a nested group
+    if ("operator" in child && (child.operator === "AND" || child.operator === "OR")) {
+      if (hasAccountIdCondition(child as ConditionGroup, accountId)) {
+        return true;
+      }
+    } else {
+      // It's a condition - check if it matches accountId
+      const condition = child as { field?: string; operator?: string; value?: unknown };
+      if (
+        condition.field === "accountId" &&
+        condition.operator === "equals" &&
+        Number(condition.value) === accountId
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Delete a rule
  */
 export async function deleteRule(
