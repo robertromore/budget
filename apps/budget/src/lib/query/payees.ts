@@ -303,6 +303,75 @@ export const getSubscriptionAnalysis = (
     },
   });
 
+export const getSubscriptionLifecycle = (payeeId: number) =>
+  defineQuery<Record<string, any>>({
+    queryKey: ["payees", "subscription-lifecycle", payeeId],
+    queryFn: () =>
+      trpc().payeeRoutes.subscriptionLifecycleAnalysis.query({ payeeId }),
+    options: {
+      staleTime: 10 * 60 * 1000, // 10 minutes
+    },
+  });
+
+export const getSubscriptionCostAnalysis = (payeeId: number, timeframeDays = 365) =>
+  defineQuery<Record<string, any>>({
+    queryKey: ["payees", "subscription-cost", payeeId, timeframeDays],
+    queryFn: () =>
+      trpc().payeeRoutes.subscriptionCostAnalysis.query({ payeeId, timeframeDays }),
+    options: {
+      staleTime: 10 * 60 * 1000, // 10 minutes
+    },
+  });
+
+export const getSubscriptionRenewalPredictions = (
+  payeeIds: number[],
+  forecastMonths = 12
+) =>
+  defineQuery<Record<string, any>[]>({
+    queryKey: ["payees", "subscription-renewals", payeeIds, forecastMonths],
+    queryFn: () =>
+      trpc().payeeRoutes.subscriptionRenewalPredictions.query({ payeeIds, forecastMonths }),
+    options: {
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      enabled: payeeIds.length > 0,
+    },
+  });
+
+export const getSubscriptionCancellationAssistance = (payeeId: number) =>
+  defineQuery<Record<string, any>>({
+    queryKey: ["payees", "subscription-cancellation", payeeId],
+    queryFn: () =>
+      trpc().payeeRoutes.subscriptionCancellationAssistance.query({ payeeId }),
+    options: {
+      staleTime: 30 * 60 * 1000, // 30 minutes - doesn't change often
+    },
+  });
+
+export const getSubscriptionOptimizationRecommendations = (
+  payeeIds: number[],
+  optimizationGoals?: {
+    maximizeSavings?: boolean;
+    maintainValueThreshold?: number;
+    riskTolerance?: "low" | "medium" | "high";
+  }
+) =>
+  defineQuery<Record<string, any>[]>({
+    queryKey: ["payees", "subscription-optimization", payeeIds, optimizationGoals],
+    queryFn: () =>
+      trpc().payeeRoutes.subscriptionOptimizationRecommendations.query({
+        payeeIds,
+        optimizationGoals: optimizationGoals ?? {
+          maximizeSavings: true,
+          maintainValueThreshold: 0.7,
+          riskTolerance: "medium",
+        },
+      }),
+    options: {
+      staleTime: 15 * 60 * 1000, // 15 minutes
+      enabled: payeeIds.length > 0,
+    },
+  });
+
 // Budget optimization
 export const getBudgetOptimizationAnalysis = (id: number) =>
   defineQuery<Record<string, any>>({
