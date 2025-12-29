@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { helpMode } from "$lib/states/ui/help.svelte";
   import { demoMode } from "$lib/states/ui/demo-mode.svelte";
+  import { helpMode } from "$lib/states/ui/help.svelte";
   import { onMount } from "svelte";
   import HelpDocumentationSheet from "./help-documentation-sheet.svelte";
   import HelpElementHighlight from "./help-element-highlight.svelte";
@@ -9,8 +9,6 @@
   const isDemoModeActive = $derived(demoMode.isActive);
   const elements = $derived(helpMode.elements);
   const elementCount = $derived(helpMode.elementCount);
-  const isSheetOpen = $derived(helpMode.isSheetOpen);
-  const currentDocId = $derived(helpMode.currentDocId);
   const hasModalContext = $derived(helpMode.hasModalContext());
 
   // Re-scan for elements when help mode is activated or DOM changes
@@ -75,24 +73,17 @@
 <svelte:window onkeydown={helpMode.handleKeydown} />
 
 {#if isActive}
-  <!-- Only show backdrop and darkening when there's no modal context -->
+  <!-- Only show backdrop when there's no modal context -->
   {#if !hasModalContext}
-    <!-- Clickable backdrop to close help mode -->
+    <!-- Clickable backdrop to close help mode (transparent - no darkening) -->
     <button
       type="button"
-      class="fixed inset-0 z-40 cursor-default"
+      class="fixed inset-0 z-40 cursor-default bg-transparent"
       onclick={handleOverlayClick}
       aria-label="Close help mode"
     ></button>
 
-    <!-- Subtle darkening overlay (pointer-events-none so highlights receive clicks) -->
-    <div
-      class="bg-black/10 dark:bg-black/20 pointer-events-none fixed inset-0"
-      style="z-index: 41;"
-      role="presentation"
-    ></div>
-
-    <!-- Element highlights (above the visual overlay) -->
+    <!-- Element highlights -->
     {#each Array.from(elements.entries()) as [helpId, element] (helpId)}
       <HelpElementHighlight {helpId} {element} />
     {/each}
@@ -114,14 +105,14 @@
       <kbd class="bg-white/20 rounded px-1">Esc</kbd> exit
     </span>
   </div>
-
-  <!-- Documentation sheet -->
-  <HelpDocumentationSheet
-    open={isSheetOpen}
-    onOpenChange={handleSheetOpenChange}
-    helpId={currentDocId}
-  />
 {/if}
+
+<!-- Documentation sheet - outside isActive so it stays open after exiting help mode -->
+<HelpDocumentationSheet
+  open={helpMode.isSheetOpen}
+  onOpenChange={handleSheetOpenChange}
+  helpId={helpMode.currentDocId}
+/>
 
 <style>
   /* Screen reader only class */
@@ -135,5 +126,17 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+  }
+
+  /* Subtle highlight for element being documented */
+  :global(.help-topic-highlight) {
+    border-radius: 6px;
+    background-color: oklch(from var(--help-highlight) l c h / 3%);
+    box-shadow:
+      0 0 0 3px var(--background),
+      0 0 0 5px oklch(from var(--help-highlight) l c h / 40%);
+    transition:
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
   }
 </style>

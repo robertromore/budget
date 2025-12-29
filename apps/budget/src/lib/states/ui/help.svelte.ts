@@ -120,13 +120,15 @@ class HelpModeState {
 
   /**
    * Deactivate help mode and reset state
+   * Note: Sheet stays open with current content so user can continue reading
    */
   deactivate() {
     this.#isActive = false;
     this.#highlightedId = null;
     this.#currentIndex = -1;
-    this.#isSheetOpen = false;
-    this.#currentDocId = null;
+    // Keep sheet open and current doc - user can close it manually
+    // this.#isSheetOpen = false;
+    // this.#currentDocId = null;
     // Also clear modal context
     this.#modalContext = null;
     this.#isModalHelpActive = false;

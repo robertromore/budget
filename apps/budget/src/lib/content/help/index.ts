@@ -146,6 +146,16 @@ import accountTabHsaDashboard from "./account-tab-hsa-dashboard.md?raw";
 import transactionTabManual from "./transaction-tab-manual.md?raw";
 import transactionTabTransfer from "./transaction-tab-transfer.md?raw";
 import transactionTabGuided from "./transaction-tab-guided.md?raw";
+// Budget form fields
+import budgetNameField from "./budget-name-field.md?raw";
+import budgetTypeField from "./budget-type-field.md?raw";
+import budgetAmountField from "./budget-amount-field.md?raw";
+import budgetPeriodField from "./budget-period-field.md?raw";
+import budgetAccountField from "./budget-account-field.md?raw";
+import budgetCategoryField from "./budget-category-field.md?raw";
+import budgetGoalTargetField from "./budget-goal-target-field.md?raw";
+import budgetGoalDateField from "./budget-goal-date-field.md?raw";
+import budgetEnforcementField from "./budget-enforcement-field.md?raw";
 
 // Content registry mapping help IDs to markdown content
 export const helpContent: Record<string, string> = {
@@ -289,6 +299,16 @@ export const helpContent: Record<string, string> = {
   "transaction-tab-manual": transactionTabManual,
   "transaction-tab-transfer": transactionTabTransfer,
   "transaction-tab-guided": transactionTabGuided,
+  // Budget form fields
+  "budget-name-field": budgetNameField,
+  "budget-type-field": budgetTypeField,
+  "budget-amount-field": budgetAmountField,
+  "budget-period-field": budgetPeriodField,
+  "budget-account-field": budgetAccountField,
+  "budget-category-field": budgetCategoryField,
+  "budget-goal-target-field": budgetGoalTargetField,
+  "budget-goal-date-field": budgetGoalDateField,
+  "budget-enforcement-field": budgetEnforcementField,
 };
 
 /**
