@@ -167,7 +167,6 @@ function getModeClasses(mode: 'manual' | 'wizard') {
       </Tabs.List>
 
       <!-- Manual Form Mode -->
-      <!-- @ts-ignore - Svelte hydration boundary -->
       <Tabs.Content value="manual" class="mt-6">
         <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
           <p class="text-muted-foreground text-sm">

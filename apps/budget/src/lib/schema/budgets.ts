@@ -42,6 +42,7 @@ export interface BudgetMetadata {
     type?: PeriodTemplateType;
     startDay?: number;
     startMonth?: number;
+    intervalCount?: number;
   };
   allocatedAmount?: number;
   goal?: {

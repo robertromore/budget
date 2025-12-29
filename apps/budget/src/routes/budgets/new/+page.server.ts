@@ -26,6 +26,7 @@ export const load = async (event: ServerLoadEvent) => {
     enforcementLevel: "warning",
     periodType: "monthly",
     startDay: 1,
+    intervalCount: 30,
     accountIds: [],
     categoryIds: [],
   };
@@ -78,6 +79,9 @@ export const actions: Actions = {
         defaultPeriod: {
           type: form.data.periodType || "monthly",
           startDay: form.data.startDay || 1,
+          ...(form.data.periodType === "custom" && form.data.intervalCount && {
+            intervalCount: form.data.intervalCount,
+          }),
         },
       };
 

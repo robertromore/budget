@@ -62,6 +62,12 @@ const categorySelectAccessors = createTransformAccessors(
   }
 );
 
+// Goal-specific fields
+let goalTargetDate = $state('');
+let goalStartDate = $state('');
+let goalContributionFrequency = $state<'weekly' | 'monthly' | 'quarterly' | 'yearly'>('monthly');
+let goalAutoContribute = $state(false);
+
 // Initialize wizard steps
 const steps: WizardStepType[] = [
   {
@@ -92,6 +98,9 @@ const steps: WizardStepType[] = [
 ];
 
 const formData = $derived(budgetWizardStore.formData);
+
+// Check if this is a goal-based budget
+const isGoalBased = $derived(formData['type'] === 'goal-based');
 
 // Set up validation engine
 const validationEngine = createBudgetValidationEngine();
@@ -202,6 +211,36 @@ $effect(() => {
   if (categorySelectValue && categorySelectValue !== '') {
     addCategory(parseInt(categorySelectValue));
     categorySelectValue = ''; // Reset after adding
+  }
+});
+
+// Initialize goal dates when goal-based is selected
+$effect(() => {
+  if (isGoalBased && !goalTargetDate) {
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+    goalTargetDate = sixMonthsFromNow.toISOString().split('T')[0] ?? '';
+    updateField('goalTargetDate', goalTargetDate);
+  }
+  if (isGoalBased && !goalStartDate) {
+    goalStartDate = new Date().toISOString().split('T')[0] ?? '';
+    updateField('goalStartDate', goalStartDate);
+  }
+});
+
+// Sync goal fields with formData
+$effect(() => {
+  if (formData['goalTargetDate'] !== undefined && formData['goalTargetDate'] !== goalTargetDate) {
+    goalTargetDate = formData['goalTargetDate'] || '';
+  }
+  if (formData['goalStartDate'] !== undefined && formData['goalStartDate'] !== goalStartDate) {
+    goalStartDate = formData['goalStartDate'] || '';
+  }
+  if (formData['goalContributionFrequency'] !== undefined && formData['goalContributionFrequency'] !== goalContributionFrequency) {
+    goalContributionFrequency = formData['goalContributionFrequency'] || 'monthly';
+  }
+  if (formData['goalAutoContribute'] !== undefined && formData['goalAutoContribute'] !== goalAutoContribute) {
+    goalAutoContribute = formData['goalAutoContribute'] || false;
   }
 });
 
@@ -595,6 +634,84 @@ const selectedCategories = $derived.by(() => {
         </p>
       </div>
     {/if}
+
+    <!-- Goal-specific fields -->
+    {#if isGoalBased}
+      <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+        <h4 class="mb-4 flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100">
+          <Target class="h-4 w-4" />
+          Goal Settings
+        </h4>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-2">
+            <Label for="goal-start-date" class="text-sm">Start Date</Label>
+            <Input
+              id="goal-start-date"
+              type="date"
+              value={goalStartDate}
+              oninput={(e) => {
+                goalStartDate = e.currentTarget.value;
+                updateField('goalStartDate', goalStartDate);
+              }} />
+          </div>
+
+          <div class="space-y-2">
+            <Label for="goal-target-date" class="text-sm">Target Date *</Label>
+            <Input
+              id="goal-target-date"
+              type="date"
+              value={goalTargetDate}
+              min={goalStartDate || undefined}
+              oninput={(e) => {
+                goalTargetDate = e.currentTarget.value;
+                updateField('goalTargetDate', goalTargetDate);
+              }} />
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <Label for="contribution-frequency" class="text-sm">Contribution Frequency</Label>
+          <Select.Root
+            type="single"
+            value={goalContributionFrequency}
+            onValueChange={(value) => {
+              if (value) {
+                goalContributionFrequency = value as typeof goalContributionFrequency;
+                updateField('goalContributionFrequency', goalContributionFrequency);
+              }
+            }}>
+            <Select.Trigger id="contribution-frequency">
+              {goalContributionFrequency.charAt(0).toUpperCase() + goalContributionFrequency.slice(1)}
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="weekly">Weekly</Select.Item>
+              <Select.Item value="monthly">Monthly</Select.Item>
+              <Select.Item value="quarterly">Quarterly</Select.Item>
+              <Select.Item value="yearly">Yearly</Select.Item>
+            </Select.Content>
+          </Select.Root>
+          <p class="text-muted-foreground text-xs">
+            How often you plan to contribute towards this goal
+          </p>
+        </div>
+
+        <div class="mt-4 flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="auto-contribute"
+            checked={goalAutoContribute}
+            onchange={(e) => {
+              goalAutoContribute = e.currentTarget.checked;
+              updateField('goalAutoContribute', goalAutoContribute);
+            }}
+            class="h-4 w-4 rounded border-gray-300" />
+          <Label for="auto-contribute" class="text-sm font-normal">
+            Enable automatic contributions (requires linked schedule)
+          </Label>
+        </div>
+      </div>
+    {/if}
   </div>
 
   {#snippet helpContent()}
@@ -831,6 +948,37 @@ const selectedCategories = $derived.by(() => {
             <p class="text-muted-foreground text-xs">Starts day {formData['startDay'] || 1}</p>
           </div>
         </div>
+
+        <!-- Goal Settings -->
+        {#if isGoalBased}
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm font-medium">Goal Timeline</p>
+              <p class="text-muted-foreground text-sm">Start to target date</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm">
+                {goalStartDate ? new Date(goalStartDate).toLocaleDateString() : 'Not set'} →
+                {goalTargetDate ? new Date(goalTargetDate).toLocaleDateString() : 'Not set'}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm font-medium">Contributions</p>
+              <p class="text-muted-foreground text-sm">Frequency & automation</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm">
+                {goalContributionFrequency.charAt(0).toUpperCase() + goalContributionFrequency.slice(1)}
+              </p>
+              <p class="text-muted-foreground text-xs">
+                {goalAutoContribute ? 'Auto-contribute enabled' : 'Manual contributions'}
+              </p>
+            </div>
+          </div>
+        {/if}
       </Card.Content>
     </Card.Root>
 
