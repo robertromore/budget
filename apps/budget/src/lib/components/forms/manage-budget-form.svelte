@@ -1,6 +1,14 @@
 <script lang="ts">
 import { ManageCategoryForm } from '$lib/components/forms';
+import { FieldHelpButton } from '$lib/components/help';
 import MultiSelectEntityInput from '$lib/components/input/multi-select-entity-input.svelte';
+import { helpMode } from '$lib/states/ui/help.svelte';
+import { cn } from '$lib/utils';
+import DateRangeScrubberInput from '$lib/components/input/date-range-scrubber-input.svelte';
+import MonthDayScrubberInput from '$lib/components/input/month-day-scrubber-input.svelte';
+import NumberScrubberInput from '$lib/components/input/number-scrubber-input.svelte';
+import PeriodRangeScrubberInput from '$lib/components/input/period-range-scrubber-input.svelte';
+import QuarterDayScrubberInput from '$lib/components/input/quarter-day-scrubber-input.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
@@ -74,6 +82,45 @@ const { form: formStore, enhance, submitting, isUpdate } = form;
 const selectedBudgetType = $derived(($formStore.type || 'account-monthly') as BudgetType);
 const selectedAccountIds = $derived($formStore.accountIds || []);
 const selectedCategoryIds = $derived($formStore.categoryIds || []);
+
+// Helper to convert day-of-year to a formatted date string
+function dayOfYearToDate(dayOfYear: number, year?: number): Date {
+  const y = year ?? new Date().getFullYear();
+  const date = new Date(y, 0, 1); // January 1st
+  date.setDate(dayOfYear);
+  return date;
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Helper to format a number with ordinal suffix (1st, 2nd, 3rd, etc.)
+function formatOrdinal(n: number): string {
+  const suffixes = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+}
+
+// Helper to format day of week (1=Monday, 2=Tuesday, etc.)
+const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+function formatWeekday(day: number): string {
+  return weekdays[day - 1] || String(day);
+}
+
+// Computed date range for custom periods
+const customPeriodDateRange = $derived.by(() => {
+  if ($formStore.periodType !== 'custom') return null;
+  const startDay = $formStore.startDay || 1;
+  const intervalCount = $formStore.intervalCount || 30;
+  const startDate = dayOfYearToDate(startDay);
+  const endDate = dayOfYearToDate(startDay + intervalCount - 1);
+  return {
+    start: formatDate(startDate),
+    end: formatDate(endDate),
+    startFull: startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+  };
+});
 
 const availableAccounts = $derived(accounts.filter((a) => a.deletedAt === null));
 const availableCategories = $derived(categories);
@@ -222,6 +269,10 @@ const scheduleAccessors = createTransformAccessors(
     $formStore.linkedScheduleId = value ? parseInt(value) : null;
   }
 );
+
+// Helper to check if a help ID is currently being documented
+const isHelpHighlighted = (helpId: string) =>
+  helpMode.isSheetOpen && helpMode.currentDocId === helpId;
 </script>
 
 <form method="POST" use:enhance>
@@ -232,47 +283,55 @@ const scheduleAccessors = createTransformAccessors(
         Fill in the details for your new budget. Choose the type that best fits your tracking needs.
       </Card.Description>
     </Card.Header>
-    <Card.Content class="space-y-6">
-      <!-- Budget Type Selection -->
-      <Form.Field {form} name="type">
-        <Form.Control>
-          {#snippet children({ props })}
-            <Form.Label>Budget Type</Form.Label>
-            <Select.Root type="single" bind:value={typeAccessors.get, typeAccessors.set}>
-              <Select.Trigger {...props}>
-                {currentBudgetConfig.label}
-              </Select.Trigger>
-              <Select.Content>
-                {#each budgetTypes as budgetType}
-                  <Select.Item value={budgetType}>
-                    <div class="flex flex-col">
-                      <span class="font-medium">{budgetTypeConfigs[budgetType].label}</span>
-                      <span class="text-muted-foreground text-xs"
-                        >{budgetTypeConfigs[budgetType].description}</span>
-                    </div>
-                  </Select.Item>
-                {/each}
-              </Select.Content>
-            </Select.Root>
-            <Form.FieldErrors />
-            <Form.Description>{currentBudgetConfig.description}</Form.Description>
-          {/snippet}
-        </Form.Control>
-      </Form.Field>
-
-      <!-- Basic Information -->
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Form.Field {form} name="name" class="md:col-span-2">
+    <Card.Content class="@container space-y-6">
+      <!-- Budget Type & Name (side-by-side on larger containers) -->
+      <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+        <Form.Field {form} name="type" data-help-id="budget-type-field" data-help-title="Budget Type" class={cn(isHelpHighlighted('budget-type-field') && 'help-topic-highlight')}>
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label>Budget Name</Form.Label>
+              <div class="flex items-center gap-1.5">
+                <Form.Label>Budget Type</Form.Label>
+                <FieldHelpButton helpId="budget-type-field" />
+              </div>
+              <Select.Root type="single" bind:value={typeAccessors.get, typeAccessors.set}>
+                <Select.Trigger {...props} class="w-full">
+                  {currentBudgetConfig.label}
+                </Select.Trigger>
+                <Select.Content>
+                  {#each budgetTypes as budgetType}
+                    <Select.Item value={budgetType}>
+                      <div class="flex flex-col">
+                        <span class="font-medium">{budgetTypeConfigs[budgetType].label}</span>
+                        <span class="text-muted-foreground text-xs"
+                          >{budgetTypeConfigs[budgetType].description}</span>
+                      </div>
+                    </Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+              <Form.FieldErrors />
+              <Form.Description>{currentBudgetConfig.description}</Form.Description>
+            {/snippet}
+          </Form.Control>
+        </Form.Field>
+
+        <Form.Field {form} name="name" class={cn(isHelpHighlighted('budget-name-field') && 'help-topic-highlight')} data-help-id="budget-name-field" data-help-title="Budget Name">
+          <Form.Control>
+            {#snippet children({ props })}
+              <div class="flex items-center gap-1.5">
+                <Form.Label>Budget Name</Form.Label>
+                <FieldHelpButton helpId="budget-name-field" />
+              </div>
               <Input {...props} bind:value={$formStore.name} placeholder="e.g., Monthly Expenses" />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
         </Form.Field>
+      </div>
 
-        <Form.Field {form} name="description" class="md:col-span-2">
+      <!-- Additional Information -->
+      <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+        <Form.Field {form} name="description" class="@lg:col-span-2">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label>Description (optional)</Form.Label>
@@ -286,12 +345,15 @@ const scheduleAccessors = createTransformAccessors(
           </Form.Control>
         </Form.Field>
 
-        <Form.Field {form} name="enforcementLevel">
+        <Form.Field {form} name="enforcementLevel" data-help-id="budget-enforcement-field" data-help-title="Enforcement Level" class={cn(isHelpHighlighted('budget-enforcement-field') && 'help-topic-highlight')}>
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label>Enforcement Level</Form.Label>
+              <div class="flex items-center gap-1.5">
+                <Form.Label>Enforcement Level</Form.Label>
+                <FieldHelpButton helpId="budget-enforcement-field" />
+              </div>
               <Select.Root type="single" bind:value={$formStore.enforcementLevel}>
-                <Select.Trigger {...props}>
+                <Select.Trigger {...props} class="w-full">
                   {$formStore.enforcementLevel === 'none'
                     ? 'None (Tracking Only)'
                     : $formStore.enforcementLevel === 'warning'
@@ -333,12 +395,15 @@ const scheduleAccessors = createTransformAccessors(
         </Form.Field>
 
         {#if currentBudgetConfig.requiresAmount}
-          <Form.Field {form} name="allocatedAmount">
+          <Form.Field {form} name="allocatedAmount" data-help-id="budget-amount-field" data-help-title="Budget Amount" class={cn(isHelpHighlighted('budget-amount-field') && 'help-topic-highlight')}>
             <Form.Control>
               {#snippet children({ props })}
-                <Form.Label>
-                  {selectedBudgetType === 'goal-based' ? 'Goal Amount' : 'Budget Amount'}
-                </Form.Label>
+                <div class="flex items-center gap-1.5">
+                  <Form.Label>
+                    {selectedBudgetType === 'goal-based' ? 'Goal Amount' : 'Budget Amount'}
+                  </Form.Label>
+                  <FieldHelpButton helpId="budget-amount-field" />
+                </div>
                 <NumericInput bind:value={$formStore.allocatedAmount} buttonClass="w-full" />
                 <Form.FieldErrors />
               {/snippet}
@@ -348,15 +413,18 @@ const scheduleAccessors = createTransformAccessors(
       </div>
 
       <!-- Period Configuration -->
-      <div class="border-border space-y-4 border-t pt-4">
-        <h3 class="text-sm font-medium">Period Configuration</h3>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class={cn('border-border space-y-4 border-t pt-4', isHelpHighlighted('budget-period-field') && 'help-topic-highlight')} data-help-id="budget-period-field" data-help-title="Budget Period">
+        <div class="flex items-center gap-1.5">
+          <h3 class="text-sm font-medium">Period Configuration</h3>
+          <FieldHelpButton helpId="budget-period-field" />
+        </div>
+        <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <Form.Field {form} name="periodType">
             <Form.Control>
               {#snippet children({ props })}
                 <Form.Label>Period Type</Form.Label>
                 <Select.Root type="single" bind:value={$formStore.periodType}>
-                  <Select.Trigger {...props}>
+                  <Select.Trigger {...props} class="w-full">
                     {$formStore.periodType
                       ? $formStore.periodType.charAt(0).toUpperCase() +
                         $formStore.periodType.slice(1)
@@ -391,47 +459,90 @@ const scheduleAccessors = createTransformAccessors(
             </Form.Control>
           </Form.Field>
 
-          <Form.Field {form} name="startDay">
-            <Form.Control>
-              {#snippet children({ props })}
-                <Form.Label>Start Day</Form.Label>
-                <Input
-                  {...props}
-                  type="number"
-                  min="1"
-                  max={$formStore.periodType === 'monthly'
-                    ? '31'
-                    : $formStore.periodType === 'weekly'
-                      ? '7'
-                      : '366'}
-                  bind:value={$formStore.startDay}
-                  placeholder={$formStore.periodType === 'monthly'
-                    ? '1-31'
-                    : $formStore.periodType === 'weekly'
-                      ? '1-7 (1=Monday)'
-                      : '1-366'} />
-                <Form.Description>
-                  {$formStore.periodType === 'monthly'
-                    ? 'Day of the month when budget period starts (1-31)'
-                    : $formStore.periodType === 'weekly'
-                      ? 'Day of the week when budget period starts (1=Monday, 7=Sunday)'
-                      : $formStore.periodType === 'yearly'
-                        ? 'Day of the year when budget period starts (1-366)'
-                        : 'Day when budget period starts'}
-                </Form.Description>
-                <Form.FieldErrors />
-              {/snippet}
-            </Form.Control>
-          </Form.Field>
+          {#if $formStore.periodType === 'custom'}
+            <!-- Custom period: use two-phase range scrubber for start day and duration -->
+            <div>
+              <Label class="mb-2 block">Custom Period Range</Label>
+              <PeriodRangeScrubberInput
+                bind:startDay={$formStore.startDay}
+                bind:duration={$formStore.intervalCount}
+                min={1}
+                max={366}
+              />
+            </div>
+          {:else if $formStore.periodType === 'yearly'}
+            <!-- Yearly period: use month-based scrubber -->
+            <Form.Field {form} name="startDay">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Form.Label>Start Day</Form.Label>
+                  <MonthDayScrubberInput
+                    id={props.id}
+                    bind:value={$formStore.startDay}
+                    min={1}
+                    max={366}
+                  />
+                  <Form.Description>
+                    Day of the year when budget period starts
+                  </Form.Description>
+                  <Form.FieldErrors />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+          {:else if $formStore.periodType === 'quarterly'}
+            <!-- Quarterly period: use quarter-based date scrubber -->
+            <Form.Field {form} name="startDay">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Form.Label>Start Day</Form.Label>
+                  <QuarterDayScrubberInput
+                    id={props.id}
+                    bind:value={$formStore.startDay}
+                    min={1}
+                    max={92}
+                  />
+                  <Form.Description>
+                    Day of the quarter when budget period starts
+                  </Form.Description>
+                  <Form.FieldErrors />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+          {:else}
+            <!-- Other standard periods (weekly, monthly): show start day field -->
+            <Form.Field {form} name="startDay">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Form.Label>Start Day</Form.Label>
+                  <NumberScrubberInput
+                    id={props.id}
+                    bind:value={$formStore.startDay}
+                    min={1}
+                    max={$formStore.periodType === 'monthly' ? 31 : 7}
+                    formatDisplay={$formStore.periodType === 'monthly' ? formatOrdinal : formatWeekday}
+                  />
+                  <Form.Description>
+                    {$formStore.periodType === 'monthly'
+                      ? 'Day of the month when budget period starts'
+                      : 'Day of the week when budget period starts'}
+                  </Form.Description>
+                  <Form.FieldErrors />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+          {/if}
         </div>
       </div>
 
       <!-- Account Selection -->
       {#if currentBudgetConfig.requiresAccounts}
-        <div class="border-border space-y-2 border-t pt-4">
-          <Label>Accounts</Label>
+        <div class={cn('border-border space-y-2 border-t pt-4', isHelpHighlighted('budget-account-field') && 'help-topic-highlight')} data-help-id="budget-account-field" data-help-title="Account Selection">
+          <div class="flex items-center gap-1.5">
+            <Label>Accounts</Label>
+            <FieldHelpButton helpId="budget-account-field" />
+          </div>
           <Select.Root type="single" bind:value={accountAccessors.get, accountAccessors.set}>
-            <Select.Trigger>Select accounts to include</Select.Trigger>
+            <Select.Trigger class="w-full">Select accounts to include</Select.Trigger>
             <Select.Content>
               {#each availableAccounts as account (account.id)}
                 {#if !selectedAccountIds.includes(account.id)}
@@ -469,7 +580,7 @@ const scheduleAccessors = createTransformAccessors(
         <div class="border-border space-y-2 border-t pt-4">
           <Label>Link to Schedule (Optional)</Label>
           <Select.Root type="single" bind:value={scheduleAccessors.get, scheduleAccessors.set}>
-            <Select.Trigger>
+            <Select.Trigger class="w-full">
               {selectedSchedule ? selectedSchedule.name : 'Select a schedule...'}
             </Select.Trigger>
             <Select.Content>
@@ -504,8 +615,11 @@ const scheduleAccessors = createTransformAccessors(
 
       <!-- Category Selection -->
       {#if currentBudgetConfig.requiresCategories}
-        <div class="border-border space-y-2 border-t pt-4">
-          <Label>Categories</Label>
+        <div class={cn('border-border space-y-2 border-t pt-4', isHelpHighlighted('budget-category-field') && 'help-topic-highlight')} data-help-id="budget-category-field" data-help-title="Category Selection">
+          <div class="flex items-center gap-1.5">
+            <Label>Categories</Label>
+            <FieldHelpButton helpId="budget-category-field" />
+          </div>
           <p class="text-muted-foreground mb-2 text-sm">
             Select categories to include in this budget. Click the + button to create a new
             category.
