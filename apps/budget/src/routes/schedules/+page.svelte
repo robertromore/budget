@@ -8,6 +8,7 @@ import { SchedulesState } from '$lib/states/entities';
 import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
 import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
+import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Plus from '@lucide/svelte/icons/plus';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import ScheduleSearchResults from './(components)/search/schedule-search-results.svelte';
@@ -146,6 +147,10 @@ function cancelDelete() {
       <p class="text-muted-foreground">{allSchedules.length} schedules total</p>
     </div>
     <div class="flex items-center gap-2">
+      <Button variant="outline" href="/schedules/calendar" data-tour-id="schedules-calendar-button">
+        <CalendarDays class="mr-2 h-4 w-4" />
+        Calendar
+      </Button>
       <Button variant="outline" href="/patterns" data-tour-id="schedules-patterns-button">
         <Sparkles class="mr-2 h-4 w-4" />
         Patterns
