@@ -16,7 +16,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
-	import { toDateString } from '$lib/utils/date-formatters';
+	import { extractDateString } from '$lib/utils/date-formatters';
 
 	// Toggle states for analysis overlays
 	let showLinearTrend = $state(false);
@@ -50,20 +50,6 @@
 
 		return transactions;
 	});
-
-	// Helper to extract date string from various input types
-	function getDateString(date: unknown): string {
-		if (date instanceof Date) {
-			return toDateString(date);
-		}
-		if (typeof date === 'string') {
-			return date.split('T')[0];
-		}
-		if (date) {
-			return String(date).split('T')[0];
-		}
-		return '';
-	}
 
 	// Enhanced recurring payee detection with confidence scoring
 	interface RecurringPayee {
@@ -191,7 +177,7 @@
 		for (const tx of periodFilteredTransactions) {
 			if (tx.amount >= 0) continue;
 
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 			if (!dateStr) continue;
 
 			const monthKey = dateStr.substring(0, 7);
@@ -321,7 +307,7 @@
 		for (const tx of periodFilteredTransactions) {
 			if (tx.amount >= 0) continue;
 
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 			if (!dateStr) continue;
 
 			const txMonth = dateStr.substring(0, 7);

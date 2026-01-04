@@ -12,7 +12,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ChartType } from '$lib/components/layercake';
-	import { toDateString, formatShortDate } from '$lib/utils/date-formatters';
+	import { extractDateString, formatShortDate } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -33,20 +33,6 @@
 	// Access effective time period for this chart
 	const effectivePeriod = $derived(timePeriodFilter.getEffectivePeriod('cash-flow'));
 
-	// Helper to extract date string from various input types
-	function getDateString(date: unknown): string {
-		if (date instanceof Date) {
-			return toDateString(date);
-		}
-		if (typeof date === 'string') {
-			return date.split('T')[0];
-		}
-		if (date) {
-			return String(date).split('T')[0];
-		}
-		return '';
-	}
-
 	// View mode
 	type ViewMode = 'net' | 'cumulative' | 'stacked';
 	let viewMode = $state<ViewMode>('net');
@@ -60,7 +46,7 @@
 		const dataByDate = new Map<string, { income: number; expenses: number }>();
 
 		for (const tx of transactions) {
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 			if (!dateStr) continue;
 
 			if (!dataByDate.has(dateStr)) {

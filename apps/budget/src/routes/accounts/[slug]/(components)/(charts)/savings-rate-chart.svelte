@@ -16,6 +16,7 @@
 	import Target from '@lucide/svelte/icons/target';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 	import { chartSelection, type SelectedDataPoint } from '$lib/states/ui/chart-selection.svelte';
+	import { extractDateString } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -44,26 +45,12 @@
 		timePeriodFilter.chartOverrides.get('savings-rate') ?? timePeriodFilter.globalPeriod
 	);
 
-	// Helper to extract date string
-	function getDateString(date: unknown): string {
-		if (date instanceof Date) {
-			return date.toISOString().split('T')[0];
-		}
-		if (typeof date === 'string') {
-			return date.split('T')[0];
-		}
-		if (date) {
-			return String(date).split('T')[0];
-		}
-		return '';
-	}
-
 	// Calculate monthly income, expenses, and savings rate from ALL data
 	const allMonthlyData = $derived.by(() => {
 		const dataByMonth = new Map<string, { income: number; expenses: number }>();
 
 		for (const tx of transactions) {
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 
 			if (!dateStr) continue;
 

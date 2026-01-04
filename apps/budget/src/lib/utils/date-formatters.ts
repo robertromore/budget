@@ -183,6 +183,30 @@ export function toDateString(date: Date): string {
 }
 
 /**
+ * Extract date string from various input types (Date, string, or unknown)
+ * Handles DateValue objects from @internationalized/date, plain Date objects,
+ * ISO strings, and other date-like values
+ * @returns YYYY-MM-DD format string, or empty string if input is invalid
+ */
+export function extractDateString(date: unknown): string {
+  if (date instanceof Date) {
+    return date.toISOString().split("T")[0];
+  }
+  if (typeof date === "string") {
+    return date.split("T")[0];
+  }
+  if (date && typeof date === "object" && "toDate" in date && typeof (date as { toDate: unknown }).toDate === "function") {
+    // Handle DateValue from @internationalized/date
+    const dateObj = (date as { toDate: (tz: string) => Date }).toDate("UTC");
+    return dateObj.toISOString().split("T")[0];
+  }
+  if (date) {
+    return String(date).split("T")[0];
+  }
+  return "";
+}
+
+/**
  * Extract month string in YYYY-MM format from a Date object
  * Commonly used for monthly aggregation keys
  */

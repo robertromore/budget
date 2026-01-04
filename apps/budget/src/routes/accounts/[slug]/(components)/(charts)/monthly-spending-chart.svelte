@@ -11,6 +11,7 @@ import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, getTrendValueAtIndex, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
 import { calculateComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+import { toDateString } from '$lib/utils/date-formatters';
 import { LayerCake, Svg } from 'layercake';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -62,7 +63,7 @@ const budgetTarget = $derived.by(() => {
   if (!monthlyTemplate) return null;
 
   // Get the current period instance (most recent or the one containing today's date)
-  const today = new Date().toISOString().split('T')[0];
+  const today = toDateString(new Date());
   const currentPeriod = monthlyTemplate.periods?.find(
     (p) => p.startDate <= today && p.endDate >= today
   );

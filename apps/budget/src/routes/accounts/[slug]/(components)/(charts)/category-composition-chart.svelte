@@ -7,6 +7,7 @@
 	import { LayerCake, Svg, Html } from 'layercake';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { extractDateString } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -72,12 +73,7 @@
 		for (const tx of periodFilteredTransactions) {
 			if (tx.amount >= 0) continue; // Only expenses
 
-			const dateStr =
-				tx.date instanceof Date
-					? tx.date.toISOString().split('T')[0]
-					: typeof tx.date === 'string'
-						? tx.date
-						: tx.date?.toString().split('T')[0];
+			const dateStr = extractDateString(tx.date);
 
 			if (!dateStr) continue;
 

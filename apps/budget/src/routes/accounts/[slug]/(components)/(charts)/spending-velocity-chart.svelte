@@ -13,6 +13,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ChartType } from '$lib/components/layercake';
+	import { extractDateString, toDateString } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -86,20 +87,6 @@
 	// Access effective time period for this chart
 	const effectivePeriod = $derived(timePeriodFilter.getEffectivePeriod('spending-velocity'));
 
-	// Helper to extract date string
-	function getDateString(date: unknown): string {
-		if (date instanceof Date) {
-			return date.toISOString().split('T')[0];
-		}
-		if (typeof date === 'string') {
-			return date.split('T')[0];
-		}
-		if (date) {
-			return String(date).split('T')[0];
-		}
-		return '';
-	}
-
 	// Calculate daily spending totals
 	const dailySpending = $derived.by(() => {
 		const dailyMap = new Map<string, number>();
@@ -107,7 +94,7 @@
 		for (const tx of transactions) {
 			if (tx.amount >= 0) continue; // Only expenses
 
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 			if (!dateStr) continue;
 
 			dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + Math.abs(tx.amount));
@@ -131,7 +118,7 @@
 		const allDates: string[] = [];
 		const current = new Date(startDate);
 		while (current <= endDate) {
-			allDates.push(current.toISOString().split('T')[0]);
+			allDates.push(toDateString(current));
 			current.setDate(current.getDate() + 1);
 		}
 
@@ -347,7 +334,7 @@
 
 			forecast.push({
 				date: nextDate,
-				dateStr: nextDate.toISOString().split('T')[0],
+				dateStr: toDateString(nextDate),
 				rolling: Math.max(0, predictedValue), // Don't allow negative spending
 				index: lastPoint.index + i,
 				isForecast: true
@@ -365,7 +352,7 @@
 		for (const tx of transactions) {
 			if (tx.amount >= 0) continue;
 
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 			const category = tx.category?.name ?? 'Uncategorized';
 
 			if (!breakdown.has(dateStr)) {

@@ -10,6 +10,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { extractDateString } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -33,20 +34,6 @@
 
 	// Access effective time period for this chart
 	const effectivePeriod = $derived(timePeriodFilter.getEffectivePeriod('payee-trends'));
-
-	// Helper to extract date string
-	function getDateString(date: unknown): string {
-		if (date instanceof Date) {
-			return date.toISOString().split('T')[0];
-		}
-		if (typeof date === 'string') {
-			return date.split('T')[0];
-		}
-		if (date) {
-			return String(date).split('T')[0];
-		}
-		return '';
-	}
 
 	// Filter transactions based on time period
 	const filteredTransactions = $derived.by(() => {
@@ -91,7 +78,7 @@
 			const payee = tx.payee?.name || 'Unknown';
 			if (!topPayees.includes(payee)) continue;
 
-			const dateStr = getDateString(tx.date);
+			const dateStr = extractDateString(tx.date);
 			if (!dateStr) continue;
 
 			const monthKey = dateStr.substring(0, 7);
