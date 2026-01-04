@@ -319,7 +319,7 @@ let viewMode = $state<'table' | 'cards'>('cards');
                 (column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter
               )
               .map((column) =>
-                column.columnDef.meta?.facetedFilter(column)
+                column.columnDef.meta!.facetedFilter!(column)
               ) as FilterInputOption[]}
             <GenericToolbar
               {table}

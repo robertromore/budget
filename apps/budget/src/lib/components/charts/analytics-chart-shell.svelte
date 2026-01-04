@@ -51,8 +51,14 @@ let {
 // Tab state
 let activeTab = $state('overview');
 
-// Chart type state
-let selectedChartType = $state<ChartType>(defaultChartType ?? supportedChartTypes?.[0] ?? 'line');
+// Derive the initial/default chart type from props
+const initialChartType = $derived<ChartType>(defaultChartType ?? supportedChartTypes?.[0] ?? 'line');
+
+// Chart type state - starts undefined and gets set by effect
+let selectedChartType = $state<ChartType | undefined>(undefined);
+
+// Effective chart type (use selected if set, otherwise use initial)
+const effectiveChartType = $derived<ChartType>(selectedChartType ?? initialChartType);
 
 // Show toggle if supportedChartTypes is provided (we'll disable unavailable options)
 const showChartTypeToggle = $derived(supportedChartTypes && supportedChartTypes.length > 0);
@@ -66,7 +72,7 @@ const displayChartTypes = $derived.by((): ChartType[] => {
 
 // Reset chart type when supportedChartTypes changes and current selection is no longer valid
 $effect(() => {
-  if (supportedChartTypes && !supportedChartTypes.includes(selectedChartType)) {
+  if (selectedChartType && supportedChartTypes && !supportedChartTypes.includes(selectedChartType)) {
     selectedChartType = supportedChartTypes[0];
   }
 });
@@ -127,7 +133,7 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
                     {@const chartTypeOption = CHART_TYPES[type]}
                     {@const isDisabled = !supportedChartTypes?.includes(type)}
                     <Button
-                      variant={selectedChartType === type ? 'default' : 'ghost'}
+                      variant={effectiveChartType === type ? 'default' : 'ghost'}
                       size="icon"
                       class="h-7 w-7"
                       disabled={isDisabled}
@@ -169,7 +175,7 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
               bind:clientHeight={containerHeight}
             >
               {#if containerReady}
-                {@render chart?.({ data, chartType: selectedChartType })}
+                {@render chart?.({ data, chartType: effectiveChartType })}
               {/if}
             </div>
           {/if}

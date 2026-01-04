@@ -33,7 +33,7 @@
 
 {#each $data as d}
 	{@const x = $xGet(d)}
-	{@const yVal = yKey ? d[yKey] : $y(d)}
+	{@const yVal = yKey ? d[yKey] : typeof $y === 'function' ? $y(d) : d[$y]}
 	{@const yPos = $yScale(yVal) + ($yScale.bandwidth?.() || 0) / 2}
 
 	<text

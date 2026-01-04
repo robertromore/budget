@@ -284,7 +284,7 @@
 		<div class="h-125 w-full pb-20">
 			<LayerCake
 				{data}
-				x={(d) => getValue(d)}
+				x={(d: (typeof payeeData)[0]) => getValue(d)}
 				y="payee"
 				xScale={scaleLinear()}
 				yScale={scaleBand().padding(0.2)}

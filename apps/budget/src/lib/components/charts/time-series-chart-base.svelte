@@ -12,25 +12,7 @@
 	import type { Snippet } from 'svelte';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import type { PeriodPresetGroup } from '$lib/utils/time-period';
-
-	// Standard data point shape for time series charts
-	export interface TimeSeriesDataPoint {
-		date: Date;
-		value: number;
-		month: string; // "YYYY-MM"
-		monthLabel: string;
-		index: number;
-		[key: string]: unknown;
-	}
-
-	// Threshold line configuration
-	export interface ThresholdLine {
-		value: number;
-		label?: string;
-		color?: string;
-		strokeWidth?: number;
-		strokeDasharray?: string;
-	}
+	import type { TimeSeriesDataPoint, ThresholdLine, OverlayData } from './types';
 
 	interface Props {
 		/** Chart data points */
@@ -100,14 +82,6 @@
 		loading?: boolean;
 		/** Error message */
 		error?: string | null;
-	}
-
-	// Overlay data passed to tooltip
-	export interface OverlayData {
-		trendValue: number | null;
-		historicalAvg: number | null;
-		movingAvg: number | null;
-		yoyData: { prevYearValue: number; yoyChange: number } | null;
 	}
 
 	let {

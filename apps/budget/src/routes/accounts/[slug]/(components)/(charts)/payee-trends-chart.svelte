@@ -15,6 +15,14 @@
 		transactions: TransactionsFormat[];
 	}
 
+	// Type for monthly payee data with dynamic payee keys
+	type MonthlyPayeeData = {
+		month: string;
+		date: Date;
+		index: number;
+		[payee: string]: string | number | Date;
+	};
+
 	let { transactions }: Props = $props();
 
 	// Toggle states for analysis overlays
@@ -98,9 +106,9 @@
 
 		return Array.from(dataByMonth.entries())
 			.sort((a, b) => a[0].localeCompare(b[0]))
-			.map(([month, payeeData], idx) => {
+			.map(([month, payeeData], idx): MonthlyPayeeData => {
 				const [year, monthNum] = month.split('-');
-				const result: { month: string; date: Date; index: number; [key: string]: string | number | Date } = {
+				const result: MonthlyPayeeData = {
 					month,
 					date: new Date(Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0)),
 					index: idx
@@ -115,7 +123,7 @@
 	});
 
 	// Filter monthly data based on period
-	const monthlyPayeeData = $derived.by(() => {
+	const monthlyPayeeData = $derived.by((): MonthlyPayeeData[] => {
 		const period = effectivePeriod;
 
 		if (period.preset !== 'all-time') {
@@ -124,13 +132,13 @@
 				const filtered = allMonthlyPayeeData.filter((item) => {
 					return item.date >= range.start && item.date <= range.end;
 				});
-				return filtered.map((item, idx) => ({ ...item, index: idx }));
+				return filtered.map((item, idx): MonthlyPayeeData => ({ ...item, index: idx }));
 			}
 		}
 
 		// Default to last 12 months
 		const last12 = allMonthlyPayeeData.slice(-12);
-		return last12.map((item, idx) => ({ ...item, index: idx }));
+		return last12.map((item, idx): MonthlyPayeeData => ({ ...item, index: idx }));
 	});
 
 	// Colors for each payee
@@ -346,7 +354,7 @@
 			bind:showHistoricalAvg
 			bind:showPercentileBands
 			forecastEnabled={false}
-			percentileEnabled={false}
+			percentileBandsEnabled={false}
 		/>
 	{/snippet}
 
@@ -355,7 +363,7 @@
 			<LayerCake
 				{data}
 				x="index"
-				y={(d) => Math.max(...topPayees.map((p) => (d[p] as number) || 0))}
+				y={(d: MonthlyPayeeData) => Math.max(...topPayees.map((p) => (d[p] as number) || 0))}
 				xScale={scaleLinear()}
 				xDomain={[0, Math.max(data.length - 1, 1)]}
 				yScale={scaleLinear()}

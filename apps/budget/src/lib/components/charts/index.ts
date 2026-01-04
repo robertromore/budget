@@ -8,7 +8,9 @@ export { default as AnalyticsChartShell } from './analytics-chart-shell.svelte';
 
 // Base chart components for consistency
 export { default as TimeSeriesChartBase } from './time-series-chart-base.svelte';
-export type { TimeSeriesDataPoint, ThresholdLine, OverlayData } from './time-series-chart-base.svelte';
+
+// Types
+export type { TimeSeriesDataPoint, ThresholdLine, OverlayData } from './types';
 
 // Re-export action sheets
 export * from './actions';

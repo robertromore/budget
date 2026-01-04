@@ -411,7 +411,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
 
             <Brush
               onbrush={(range) => {
-                if (range) {
+                if (range && range.start instanceof Date && range.end instanceof Date) {
                   chartInteractions.setDateRange(range.start, range.end);
                 } else {
                   chartInteractions.clearDateRange();

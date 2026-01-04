@@ -85,7 +85,8 @@
 		const consecutivePatterns: { start: number; end: number; type: 'high' | 'low' }[] = [];
 		let currentRun: { start: number; type: 'high' | 'low' } | null = null;
 
-		pointsWithStats.forEach((p, i) => {
+		for (let i = 0; i < pointsWithStats.length; i++) {
+			const p = pointsWithStats[i];
 			const isOutlier = Math.abs(p.zScore) > 1.5;
 			const type = p.isAbove ? 'high' : 'low';
 
@@ -102,7 +103,7 @@
 				}
 				currentRun = null;
 			}
-		});
+		}
 
 		if (currentRun && sortedPoints.length - currentRun.start >= 2) {
 			consecutivePatterns.push({
