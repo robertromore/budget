@@ -27,6 +27,10 @@
 		dots?: boolean;
 		dotRadius?: number;
 		class?: string;
+		/** Cursor style to use when hovering */
+		cursor?: 'crosshair' | 'pointer' | 'default';
+		/** Double-click handler for drill-down */
+		ondblclick?: (point: any, x: number) => void;
 	}
 
 	let {
@@ -35,7 +39,9 @@
 		crosshair = true,
 		dots = true,
 		dotRadius = 4,
-		class: className = ''
+		class: className = '',
+		cursor = 'crosshair',
+		ondblclick
 	}: Props = $props();
 
 	let hoveredPoint = $state<any>(null);
@@ -70,41 +76,51 @@
 <g class="multi-tooltip-layer {className}" role="presentation">
 	<!-- Invisible rect to capture mouse events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<rect
-		x={0}
-		y={0}
-		width={$width}
-		height={$height}
-		fill="transparent"
-		onmousemove={handleMouseMove}
-		onmouseleave={handleMouseLeave}
-		style="cursor: crosshair;" />
+	{#if $width > 0 && $height > 0}
+		<rect
+			x={0}
+			y={0}
+			width={$width}
+			height={$height}
+			fill="transparent"
+			onmousemove={handleMouseMove}
+			onmouseleave={handleMouseLeave}
+			ondblclick={() => {
+				if (hoveredPoint && ondblclick) {
+					ondblclick(hoveredPoint, hoveredX);
+				}
+			}}
+			style="cursor: {cursor};" />
+	{/if}
 
 	{#if hoveredPoint}
-		{#if crosshair}
-			<!-- Vertical crosshair line -->
-			<line
-				x1={hoveredX}
-				x2={hoveredX}
-				y1={0}
-				y2={$height}
-				class="stroke-muted-foreground/50"
-				stroke-dasharray="4" />
-		{/if}
+		<!-- All hover elements need pointer-events: none to prevent flickering -->
+		<g style="pointer-events: none;">
+			{#if crosshair}
+				<!-- Vertical crosshair line -->
+				<line
+					x1={hoveredX}
+					x2={hoveredX}
+					y1={0}
+					y2={$height}
+					class="stroke-muted-foreground/50"
+					stroke-dasharray="4" />
+			{/if}
 
-		{#if dots}
-			<!-- Highlight dots for each series -->
-			{#each series as s}
-				{@const yValue = hoveredPoint[s.key]}
-				{#if yValue !== undefined}
-					{@const y = $yScale(yValue)}
-					<circle cx={hoveredX} cy={y} r={dotRadius} fill={s.color} class="stroke-background" stroke-width={2} />
-				{/if}
-			{/each}
-		{/if}
+			{#if dots}
+				<!-- Highlight dots for each series -->
+				{#each series as s}
+					{@const yValue = hoveredPoint[s.key]}
+					{#if yValue !== undefined}
+						{@const y = $yScale(yValue)}
+						<circle cx={hoveredX} cy={y} r={dotRadius} fill={s.color} class="stroke-background" stroke-width={2} />
+					{/if}
+				{/each}
+			{/if}
 
-		{#if children}
-			{@render children({ point: hoveredPoint, x: hoveredX, series })}
-		{/if}
+			{#if children}
+				{@render children({ point: hoveredPoint, x: hoveredX, series })}
+			{/if}
+		</g>
 	{/if}
 </g>

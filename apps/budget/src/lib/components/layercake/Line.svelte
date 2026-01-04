@@ -14,6 +14,7 @@
 	interface Props {
 		stroke?: string;
 		strokeWidth?: number;
+		strokeDasharray?: string;
 		curved?: boolean;
 		curve?: CurveFactory;
 		class?: string;
@@ -22,6 +23,7 @@
 	let {
 		stroke = 'currentColor',
 		strokeWidth = 2,
+		strokeDasharray = '',
 		curved = true,
 		curve = curveMonotoneX,
 		class: className = ''
@@ -40,4 +42,4 @@
 	});
 </script>
 
-<path d={path} fill="none" {stroke} stroke-width={strokeWidth} class={className} />
+<path d={path} fill="none" {stroke} stroke-width={strokeWidth} stroke-dasharray={strokeDasharray} class={className} />
