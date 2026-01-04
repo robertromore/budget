@@ -12,6 +12,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ChartType } from '$lib/components/layercake';
+	import { toDateString, formatShortDate } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -32,10 +33,10 @@
 	// Access effective time period for this chart
 	const effectivePeriod = $derived(timePeriodFilter.getEffectivePeriod('cash-flow'));
 
-	// Helper to extract date string
+	// Helper to extract date string from various input types
 	function getDateString(date: unknown): string {
 		if (date instanceof Date) {
-			return date.toISOString().split('T')[0];
+			return toDateString(date);
 		}
 		if (typeof date === 'string') {
 			return date.split('T')[0];
@@ -136,7 +137,7 @@
 	// Convert to spending format for trend calculations
 	const netAsSpending = $derived(dailyCashFlow.map(d => ({
 		month: d.dateStr,
-		monthLabel: d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+		monthLabel: formatShortDate(d.date),
 		spending: d.net,
 		date: d.date,
 		index: d.index,
@@ -144,7 +145,7 @@
 
 	const cumulativeAsSpending = $derived(dailyCashFlow.map(d => ({
 		month: d.dateStr,
-		monthLabel: d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+		monthLabel: formatShortDate(d.date),
 		spending: d.cumulative,
 		date: d.date,
 		index: d.index,
@@ -214,14 +215,14 @@
 		// Transform to monthly format for comprehensive stats
 		const monthlyData = dailyCashFlow.map(d => ({
 			month: d.dateStr,
-			monthLabel: d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+			monthLabel: formatShortDate(d.date),
 			spending: viewMode === 'cumulative' ? d.cumulative : d.net,
 			date: d.date,
 		}));
 
 		const allTimeData = allDailyCashFlow.map(d => ({
 			month: d.dateStr,
-			monthLabel: d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+			monthLabel: formatShortDate(d.date),
 			spending: viewMode === 'cumulative' ? d.cumulative : d.net,
 			date: d.date,
 		}));
@@ -359,7 +360,7 @@
 							const idx = typeof d === 'number' ? Math.round(d) : 0;
 							const point = data[idx];
 							if (!point) return '';
-							return point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+							return formatShortDate(point.date);
 						}}
 					/>
 

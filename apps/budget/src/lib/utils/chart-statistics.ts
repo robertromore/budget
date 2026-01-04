@@ -2,7 +2,7 @@
  * Statistical utility functions for chart analysis overlays
  */
 
-import { linearRegression, linearRegressionLine, mean, quantile } from 'simple-statistics';
+import { linearRegression, linearRegressionLine, mean, quantile, standardDeviation, median } from 'simple-statistics';
 
 export interface TrendLineData {
 	/** Two points defining the trend line (start and end) - uses index-based x values */
@@ -136,4 +136,112 @@ export function identifyOutliers(data: Array<{ spending: number }>): number[] {
 	return data
 		.map((d, i) => (d.spending < lowerBound || d.spending > upperBound ? i : -1))
 		.filter((i) => i >= 0);
+}
+
+// ===== Basic Statistics Functions =====
+// Re-export from simple-statistics for convenience
+
+export { mean, median, standardDeviation, quantile };
+
+/**
+ * Basic statistics result
+ */
+export interface BasicStats {
+	mean: number;
+	median: number;
+	stdDev: number;
+	min: number;
+	max: number;
+	range: number;
+	count: number;
+	total: number;
+}
+
+/**
+ * Calculate basic statistics for an array of numbers
+ * Consolidates common calculations done across many chart components
+ */
+export function calculateBasicStats(values: number[]): BasicStats | null {
+	if (values.length === 0) return null;
+
+	const n = values.length;
+	const sorted = [...values].sort((a, b) => a - b);
+	const total = values.reduce((sum, v) => sum + v, 0);
+	const avg = total / n;
+	const med = median(sorted);
+	const stdDev = n >= 2 ? standardDeviation(values) : 0;
+
+	return {
+		mean: avg,
+		median: med,
+		stdDev,
+		min: sorted[0],
+		max: sorted[n - 1],
+		range: sorted[n - 1] - sorted[0],
+		count: n,
+		total
+	};
+}
+
+/**
+ * Calculate coefficient of variation (CV)
+ * CV = (stdDev / mean) * 100
+ * Useful for comparing variability across different scales
+ */
+export function calculateCoefficientOfVariation(values: number[]): number {
+	if (values.length < 2) return 0;
+	const avg = mean(values);
+	if (avg === 0) return 0;
+	const stdDev = standardDeviation(values);
+	return (stdDev / avg) * 100;
+}
+
+/**
+ * Calculate moving average for a series of values
+ * @param values - Array of numeric values
+ * @param window - Window size for moving average
+ * @returns Array of moving average values (null for positions before window is full)
+ */
+export function calculateMovingAverage(values: number[], window: number): (number | null)[] {
+	if (values.length < window) return values.map(() => null);
+
+	return values.map((_, i) => {
+		if (i < window - 1) return null;
+		let sum = 0;
+		for (let j = 0; j < window; j++) {
+			sum += values[i - j];
+		}
+		return sum / window;
+	});
+}
+
+/**
+ * Extended percentile bands with IQR
+ */
+export interface ExtendedPercentileBands extends PercentileBands {
+	iqr: number;
+	lowerFence: number;
+	upperFence: number;
+}
+
+/**
+ * Calculate extended percentile bands including IQR and fences
+ */
+export function calculateExtendedPercentiles(values: number[]): ExtendedPercentileBands | null {
+	if (values.length < 4) return null;
+
+	const sorted = [...values].sort((a, b) => a - b);
+	const p25 = quantile(sorted, 0.25);
+	const p50 = quantile(sorted, 0.5);
+	const p75 = quantile(sorted, 0.75);
+	const iqr = p75 - p25;
+
+	return {
+		p25,
+		p50,
+		p75,
+		iqr,
+		lowerFence: p25 - 1.5 * iqr,
+		upperFence: p75 + 1.5 * iqr
+	};
 }

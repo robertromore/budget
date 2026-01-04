@@ -10,6 +10,8 @@
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import { getLocalTimeZone } from '@internationalized/date';
+	import { mean, median, standardDeviation, quantile } from '$lib/utils/chart-statistics';
+	import { toDateString, formatWeekdayDate, formatShortDate } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -106,7 +108,7 @@
 			{
 				label: 'Highest Day',
 				value: currencyFormatter.format(highest),
-				description: highestDay?.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+				description: highestDay ? formatShortDate(highestDay.date) : undefined
 			},
 			{ label: 'Average Daily', value: currencyFormatter.format(average) },
 			{ label: 'Total Spending', value: currencyFormatter.format(total) }
@@ -121,25 +123,20 @@
 		const sortedValues = [...values].sort((a, b) => a - b);
 		const n = values.length;
 
+		// Use centralized statistical functions
 		const total = values.reduce((s, v) => s + v, 0);
-		const mean = total / n;
-		const median = sortedValues[Math.floor(n / 2)] || 0;
+		const avgValue = mean(values);
+		const medValue = median(values);
+		const stdDev = standardDeviation(values);
 
-		// Standard deviation
-		const variance = values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
-
-		// Percentiles
-		const p25 = sortedValues[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
-		const p75 = sortedValues[Math.floor(n * 0.75)] || 0;
+		// Percentiles using centralized quantile function
+		const p25 = quantile(sortedValues, 0.25);
+		const p50 = medValue;
+		const p75 = quantile(sortedValues, 0.75);
 
 		// Find highest/lowest days
 		const highestDay = dailySpending.reduce((a, b) => (a.value > b.value ? a : b));
 		const lowestDay = dailySpending.reduce((a, b) => (a.value < b.value ? a : b));
-
-		const formatDayLabel = (d: Date) =>
-			d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 		// Calculate day-of-week patterns
 		const weekdayTotals = new Map<number, { total: number; count: number }>();
@@ -170,8 +167,8 @@
 
 		return {
 			summary: {
-				average: mean,
-				median: median,
+				average: avgValue,
+				median: medValue,
 				total: total,
 				count: n
 			},
@@ -184,13 +181,13 @@
 			distribution: {
 				highest: {
 					value: highestDay.value,
-					month: highestDay.date.toISOString().split('T')[0],
-					monthLabel: formatDayLabel(highestDay.date)
+					month: toDateString(highestDay.date),
+					monthLabel: formatWeekdayDate(highestDay.date)
 				},
 				lowest: {
 					value: lowestDay.value,
-					month: lowestDay.date.toISOString().split('T')[0],
-					monthLabel: formatDayLabel(lowestDay.date)
+					month: toDateString(lowestDay.date),
+					monthLabel: formatWeekdayDate(lowestDay.date)
 				},
 				range: highestDay.value - lowestDay.value,
 				p25,
@@ -198,7 +195,7 @@
 				p75,
 				iqr: p75 - p25,
 				stdDev,
-				coefficientOfVariation: mean !== 0 ? (stdDev / mean) * 100 : 0
+				coefficientOfVariation: avgValue !== 0 ? (stdDev / avgValue) * 100 : 0
 			},
 			outliers: { count: 0, months: [] },
 			comparison: {
@@ -352,10 +349,10 @@
 							onclick={handleCellClick}
 						>
 							{#snippet tooltipContent({ date, value })}
-								{@const dayData = data.find((d) => d.date.toISOString().split('T')[0] === date.toISOString().split('T')[0])}
+								{@const dayData = data.find((d) => toDateString(d.date) === toDateString(date))}
 								<div class="rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 									<p class="font-medium">
-										{date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+										{formatWeekdayDate(date)}
 									</p>
 									{#if value !== null}
 										<p class="text-primary text-lg font-semibold">

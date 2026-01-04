@@ -16,6 +16,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { toDateString } from '$lib/utils/date-formatters';
 
 	// Toggle states for analysis overlays
 	let showLinearTrend = $state(false);
@@ -50,10 +51,10 @@
 		return transactions;
 	});
 
-	// Helper to extract date string
+	// Helper to extract date string from various input types
 	function getDateString(date: unknown): string {
 		if (date instanceof Date) {
-			return date.toISOString().split('T')[0];
+			return toDateString(date);
 		}
 		if (typeof date === 'string') {
 			return date.split('T')[0];

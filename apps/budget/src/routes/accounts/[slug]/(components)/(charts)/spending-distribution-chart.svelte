@@ -9,6 +9,7 @@
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { mean, median, standardDeviation, quantile } from '$lib/utils/chart-statistics';
 
 	// Bin data type for grouped/stacked
 	interface BinData {
@@ -159,14 +160,13 @@
 			};
 		}
 
-		const amounts = filteredTransactions.map((t) => t.amount).sort((a, b) => a - b);
-		const n = amounts.length;
+		const amounts = filteredTransactions.map((t) => t.amount);
+		const sortedAmounts = [...amounts].sort((a, b) => a - b);
 
-		// Mean
-		const mean = amounts.reduce((sum, a) => sum + a, 0) / n;
-
-		// Median
-		const median = n % 2 === 0 ? (amounts[n / 2 - 1] + amounts[n / 2]) / 2 : amounts[Math.floor(n / 2)];
+		// Use centralized statistical functions
+		const avgValue = mean(amounts);
+		const medValue = median(amounts);
+		const stdDevValue = standardDeviation(amounts);
 
 		// Mode (most common range)
 		const binSize = (Math.max(...amounts) - Math.min(...amounts)) / binCount;
@@ -185,19 +185,15 @@
 		}
 		const mode = (modebin + 0.5) * binSize;
 
-		// Standard deviation
-		const variance = amounts.reduce((sum, a) => sum + Math.pow(a - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
-
 		// Skewness indicator
-		const skewness = mean > median ? 'Right-skewed' : mean < median ? 'Left-skewed' : 'Symmetric';
+		const skewness = avgValue > medValue ? 'Right-skewed' : avgValue < medValue ? 'Left-skewed' : 'Symmetric';
 
-		// Percentiles
-		const percentile25 = amounts[Math.floor(n * 0.25)];
-		const percentile75 = amounts[Math.floor(n * 0.75)];
-		const percentile90 = amounts[Math.floor(n * 0.9)];
+		// Percentiles using centralized quantile function
+		const percentile25 = quantile(sortedAmounts, 0.25);
+		const percentile75 = quantile(sortedAmounts, 0.75);
+		const percentile90 = quantile(sortedAmounts, 0.90);
 
-		return { mean, median, mode, stdDev, skewness, percentile25, percentile75, percentile90 };
+		return { mean: avgValue, median: medValue, mode, stdDev: stdDevValue, skewness, percentile25, percentile75, percentile90 };
 	});
 
 	// Summary statistics
