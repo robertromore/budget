@@ -857,6 +857,90 @@ const filteredData = $derived.by(() => {
 });
 ```
 
+### Chart Utility Functions
+
+**ALWAYS use centralized utility functions for statistics and date formatting in
+chart components.**
+
+#### Statistical Utilities (`$lib/utils/chart-statistics.ts`)
+
+```typescript
+import {
+  mean,
+  median,
+  standardDeviation,
+  quantile,
+  calculateBasicStats,
+  calculateCoefficientOfVariation,
+  calculateMovingAverage,
+  calculateExtendedPercentiles,
+} from '$lib/utils/chart-statistics';
+
+// Re-exported from simple-statistics for convenience
+const avg = mean(values);
+const med = median(values);
+const stdDev = standardDeviation(values);
+const p75 = quantile(sortedValues, 0.75);
+
+// Consolidated statistics calculation
+const stats = calculateBasicStats(values);
+// Returns: { mean, median, stdDev, min, max, range, count, total }
+
+// Coefficient of variation (stdDev/mean * 100)
+const cv = calculateCoefficientOfVariation(values);
+
+// Moving average with window size
+const movingAvg = calculateMovingAverage(values, 3);
+
+// Extended percentiles with IQR and fences
+const percentiles = calculateExtendedPercentiles(values);
+// Returns: { p25, p50, p75, iqr, lowerFence, upperFence }
+```
+
+#### Date Formatting Utilities (`$lib/utils/date-formatters.ts`)
+
+```typescript
+import {
+  formatShortDate,
+  formatWeekdayDate,
+  formatMonthYear,
+  formatMonthYearShort,
+  toDateString,
+  toMonthString,
+  extractDateString,
+} from '$lib/utils/date-formatters';
+
+// Format Date objects for display
+formatShortDate(date); // "Jan 15"
+formatWeekdayDate(date); // "Mon, Jan 15"
+formatMonthYear(date); // "Jan 2024"
+formatMonthYear(date, { long: true }); // "January 2024"
+formatMonthYearShort(date); // "Jan '24"
+
+// Extract date strings for data operations
+toDateString(date); // "2024-01-15" (YYYY-MM-DD)
+toMonthString(date); // "2024-01" (YYYY-MM)
+
+// Flexible extraction from various types (Date, string, DateValue, unknown)
+extractDateString(tx.date); // "2024-01-15"
+```
+
+#### Chart Utility Anti-Patterns
+
+**Do not:**
+
+- Define local `getDateString()` helper functions in chart components
+- Use inline `date.toISOString().split('T')[0]` patterns
+- Manually calculate mean, median, or percentiles
+- Create `new Intl.NumberFormat()` instances in chart components
+
+**Instead:**
+
+- Import from centralized utilities
+- Use `extractDateString()` for flexible date handling
+- Use `toDateString()` when input is known to be a Date object
+- Use statistical functions from `chart-statistics.ts`
+
 ### Date Handling Standards
 
 **ALWAYS use @internationalized/date as the primary date library for all date
@@ -2903,6 +2987,86 @@ Core types are defined in `src/lib/types/automation.ts`:
 - `Condition`: { field, operator, value, value2?, negate? }
 - `ActionConfig`: { id, type, params, continueOnError? }
 - `RuleConfig`: Complete rule configuration (source of truth for both views)
+
+## Data Table Component Patterns
+
+**Best practices for using the data table components.**
+
+### Pagination is Always Enabled at the Table Level
+
+The `DataTable` component always includes the pagination row model and state,
+regardless of the `features.pagination` flag. This ensures pagination works
+correctly when needed.
+
+```typescript
+// In DataTable, pagination is always registered:
+getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
+onPaginationChange: handlePaginationChange,
+state: {
+  get pagination() {
+    return currentPagination;
+  },
+  // ... other state
+}
+```
+
+The `showPagination` prop in `AdvancedDataTable` only controls whether the
+pagination UI is rendered, not whether the table has pagination capabilities.
+
+### Using AdvancedDataTable
+
+```svelte
+<!-- Pagination shown by default (showPagination defaults to true) -->
+<AdvancedDataTable {data} {columns}></AdvancedDataTable>
+
+<!-- Hide pagination UI -->
+<AdvancedDataTable {data} {columns} showPagination={false}></AdvancedDataTable>
+```
+
+## Force Component Reset with {#key}
+
+**Use `{#key}` blocks to force component re-initialization when state changes
+should trigger a fresh start.**
+
+### Pattern: Reset Component on State Change
+
+When a component has internal initialization logic (e.g., `$effect` with an
+`initialized` guard), changing props alone won't re-run that logic. Use `{#key}`
+to force a remount:
+
+```svelte
+<script lang="ts">
+  let matchedProfile = $state<Profile | null>(null);
+</script>
+
+<!-- Force ColumnMapper to remount when profile changes -->
+{#key matchedProfile?.id}
+  <ColumnMapper
+    initialMapping={matchedProfile?.mapping ?? undefined}
+    {rawColumns}
+    {sampleData}
+  ></ColumnMapper>
+{/key}
+```
+
+### When to Use This Pattern
+
+- Component has `initialized` flags preventing re-runs of `$effect`
+- Auto-detection or initialization logic should run fresh
+- Undo/reset functionality requires returning to initial state
+- Switching between different data sources that need fresh initialization
+
+### Anti-Pattern: Relying on Prop Changes Alone
+
+```svelte
+<!-- ❌ Won't work if ColumnMapper has initialized guard -->
+<ColumnMapper initialMapping={detectedMapping ?? undefined}></ColumnMapper>
+
+<!-- ✅ Forces fresh initialization -->
+{#key matchedProfile?.id}
+  <ColumnMapper initialMapping={detectedMapping ?? undefined}></ColumnMapper>
+{/key}
+```
 
 ## Payee Cleanup System
 
