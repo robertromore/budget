@@ -86,10 +86,14 @@ export interface UserPreferences {
   numberFormat?: "en-US" | "de-DE" | "fr-FR";
   showCents?: boolean;
   tableDisplayMode?: "popover" | "sheet";
+  borderRadius?: "none" | "sm" | "md" | "lg" | "xl";
 
   // Theme preferences
   theme?: string; // Preset name or 'custom'
   customThemeColor?: string;
+
+  // Chart preferences
+  chartPalette?: string; // Palette preset name
 
   // Font size
   fontSize?: "small" | "normal" | "large";

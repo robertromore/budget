@@ -46,6 +46,7 @@ export interface RecommendationMetadata {
   suggestedScope?: string;
   detectedFrequency?: string;
   payeeIds?: number[];
+  transactionIds?: number[]; // IDs of transactions used for analysis (for linking when applied)
 
   // For increase/decrease_budget
   currentAmount?: number;

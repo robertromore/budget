@@ -11,6 +11,7 @@ import { userBehaviorRoutes } from "$lib/server/domains/ml/user-behavior";
 import { accountRoutes } from "$lib/trpc/routes/accounts";
 import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { aiRoutes } from "$lib/trpc/routes/ai";
+import { annotationRoutes } from "$lib/trpc/routes/annotations";
 import { authRoutes } from "$lib/trpc/routes/auth";
 import { automationRoutes } from "$lib/trpc/routes/automation";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
@@ -32,6 +33,7 @@ import { llmSettingsRoutes } from "./routes/llm-settings";
 import { medicalExpensesRouter } from "./routes/medical-expenses";
 import { onboardingRoutes } from "./routes/onboarding";
 import { patternRoutes } from "./routes/patterns";
+import { reportRoutes } from "./routes/reports";
 import { scheduleRoutes } from "./routes/schedules";
 import { securityRoutes } from "./routes/security";
 import { settingsRoutes } from "./routes/settings";
@@ -51,6 +53,7 @@ export const router = t.router({
   accountRoutes,
   serverAccountsRoutes,
   aiRoutes,
+  annotationRoutes,
   automationRoutes,
   categoriesRoutes,
   categoryAliasRoutes,
@@ -63,6 +66,7 @@ export const router = t.router({
   viewsRoutes,
   budgetRoutes,
   patternRoutes,
+  reportRoutes,
   medicalExpensesRouter,
   importProfileRoutes,
   importCleanupRoutes,

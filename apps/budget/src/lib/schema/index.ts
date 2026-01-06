@@ -7,18 +7,21 @@ export * from "./category-aliases";
 export * from "./category-groups";
 export * from "./detected-patterns";
 export * from "./import-profiles";
+export * from "./month-annotations";
 export * from "./payee-ai-enhancements";
 export * from "./payee-aliases";
 export * from "./payee-categories";
 export * from "./payee-category-corrections";
 export * from "./payees";
 export * from "./recommendations";
+export * from "./report-templates";
 export * from "./schedule-dates";
 export * from "./schedule-skips";
 export * from "./schedules";
 export * from "./transactions";
 export * from "./users";
 export * from "./views";
+export * from "./workspace-counters";
 export * from "./workspaces";
 
 // Authentication schemas

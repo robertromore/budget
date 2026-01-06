@@ -179,5 +179,5 @@ export interface AliasMatch {
   payeeId: number;
   confidence: number;
   aliasId: number;
-  matchedOn: "exact" | "normalized";
+  matchedOn: "exact" | "normalized" | "cleaned";
 }
