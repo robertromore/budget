@@ -25,6 +25,12 @@ export const budgetScopes = ["account", "category", "global", "mixed"] as const;
 export const budgetStatuses = ["active", "inactive", "archived"] as const;
 export const budgetEnforcementLevels = ["none", "warning", "strict"] as const;
 export const periodTemplateTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
+export const budgetAssociationTypes = [
+  "spending",    // Primary spending limit (account-monthly)
+  "savings",     // Savings goal destination account
+  "source",      // Source account for contributions
+  "primary",     // Primary linked account for scheduled expenses
+] as const;
 
 export const budgetHealthStatuses = ["excellent", "good", "warning", "danger"] as const;
 export const budgetProgressStatuses = ["on_track", "approaching", "over", "paused", "setup_needed"] as const;
@@ -34,6 +40,7 @@ export type BudgetScope = (typeof budgetScopes)[number];
 export type BudgetStatus = (typeof budgetStatuses)[number];
 export type BudgetEnforcementLevel = (typeof budgetEnforcementLevels)[number];
 export type PeriodTemplateType = (typeof periodTemplateTypes)[number];
+export type BudgetAssociationType = (typeof budgetAssociationTypes)[number];
 export type BudgetHealthStatus = (typeof budgetHealthStatuses)[number];
 export type BudgetProgressStatus = (typeof budgetProgressStatuses)[number];
 
@@ -67,6 +74,7 @@ export const budgets = sqliteTable(
   "budget",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    seq: integer("seq"), // Per-workspace sequential ID
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
@@ -195,10 +203,14 @@ export const budgetAccounts = sqliteTable(
     accountId: integer("account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
+    associationType: text("association_type", { enum: budgetAssociationTypes })
+      .default("spending")
+      .notNull(),
   },
   (table) => [
     uniqueIndex("budget_account_unique").on(table.budgetId, table.accountId),
     index("budget_account_account_idx").on(table.accountId),
+    index("budget_account_association_type_idx").on(table.associationType),
   ]
 );
 

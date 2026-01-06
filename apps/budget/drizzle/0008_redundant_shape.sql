@@ -1,0 +1,2 @@
+ALTER TABLE `budget_account` ADD `association_type` text DEFAULT 'spending' NOT NULL;--> statement-breakpoint
+CREATE INDEX `budget_account_association_type_idx` ON `budget_account` (`association_type`);

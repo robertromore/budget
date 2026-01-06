@@ -29,6 +29,9 @@ export const load: PageServerLoad = async (event) => {
     const defaultPeriod = metadata["defaultPeriod"] as
       | { type?: string; startDay?: number }
       | undefined;
+    const scheduledExpense = metadata["scheduledExpense"] as
+      | { linkedScheduleId?: number }
+      | undefined;
 
     // Build form data with defaults for optional fields
     const formData: Record<string, any> = {
@@ -42,6 +45,9 @@ export const load: PageServerLoad = async (event) => {
       categoryIds: budget.categories?.map((c) => c.id) || [],
       periodType: defaultPeriod?.type || "monthly",
       startDay: defaultPeriod?.startDay ?? 1,
+      // Include schedule linking fields
+      scheduleMode: "link", // Default to link mode for editing
+      linkedScheduleId: scheduledExpense?.linkedScheduleId ?? null,
     };
 
     // Only include allocatedAmount if it has an actual value
@@ -49,12 +55,22 @@ export const load: PageServerLoad = async (event) => {
       formData["allocatedAmount"] = metadata["allocatedAmount"] as number;
     }
 
+    // Load schedules and payees for the schedule section
+    const [accounts, categories, schedules, payees] = await Promise.all([
+      caller.accountRoutes.all(),
+      caller.categoriesRoutes.all(),
+      caller.scheduleRoutes.all(),
+      caller.payeeRoutes.all(),
+    ]);
+
     return {
       budgetId: budget.id,
       budgetSlug: budget.slug,
       form: await superValidate(formData, zod4(superformInsertBudgetSchema)),
-      accounts: await caller.accountRoutes.all(),
-      categories: await caller.categoriesRoutes.all(),
+      accounts,
+      categories,
+      schedules,
+      payees,
     };
   } catch (err) {
     console.error("Error loading budget for edit:", err);
@@ -72,25 +88,37 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const metadata: Record<string, unknown> = {
-      defaultPeriod: {
-        type: form.data.periodType || "monthly",
-        startDay: form.data.startDay || 1,
-      },
-    };
-
-    if (form.data.allocatedAmount !== undefined) {
-      metadata["allocatedAmount"] = form.data.allocatedAmount;
-    }
-
     try {
       const context = await createContext(event);
       const caller = createCaller(context);
 
-      // Get the budget to retrieve its ID
+      // Get the budget to retrieve its ID and preserve existing metadata
       const budget = await caller.budgetRoutes.getBySlug({ slug: budgetSlug });
       if (!budget) {
         throw new Error("Budget not found");
+      }
+
+      // Preserve existing metadata and update only the fields we're changing
+      const existingMetadata = (budget.metadata || {}) as Record<string, unknown>;
+      const metadata: Record<string, unknown> = {
+        ...existingMetadata, // Preserve existing metadata (including scheduledExpense, goal, etc.)
+        defaultPeriod: {
+          type: form.data.periodType || "monthly",
+          startDay: form.data.startDay || 1,
+        },
+      };
+
+      if (form.data.allocatedAmount !== undefined) {
+        metadata["allocatedAmount"] = form.data.allocatedAmount;
+      }
+
+      // Handle schedule linking for scheduled-expense budgets
+      if (form.data.type === "scheduled-expense" && form.data.linkedScheduleId) {
+        metadata["scheduledExpense"] = {
+          ...(existingMetadata["scheduledExpense"] as Record<string, unknown> || {}),
+          linkedScheduleId: form.data.linkedScheduleId,
+          autoTrack: true,
+        };
       }
 
       await caller.budgetRoutes.update({

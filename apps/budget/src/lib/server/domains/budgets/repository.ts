@@ -1,6 +1,7 @@
-import { accounts, categories, transactions } from "$lib/schema";
+import { accounts, categories, schedules, transactions } from "$lib/schema";
 import {
   budgetAccounts,
+  budgetAssociationTypes,
   budgetCategories,
   budgetGroupMemberships,
   budgetGroups,
@@ -10,6 +11,7 @@ import {
   budgetTransactions,
   type Budget,
   type BudgetAccount,
+  type BudgetAssociationType,
   type BudgetCategory,
   type BudgetGroup,
   type BudgetPeriodInstance,
@@ -26,14 +28,20 @@ import {
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 type TransactionClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type DbClient = typeof db | TransactionClient;
 
+export interface AccountAssociation {
+  accountId: number;
+  associationType: BudgetAssociationType;
+}
+
 export interface CreateBudgetInput {
   budget: Omit<NewBudget, "workspaceId">;
   accountIds?: number[];
+  accountAssociations?: AccountAssociation[];
   categoryIds?: number[];
   groupIds?: number[];
 }
@@ -87,7 +95,15 @@ export class BudgetRepository {
           throw new DatabaseError("Failed to create budget", "createBudget");
         }
 
-        await this.syncBudgetAccounts(tx, created.id, input.accountIds);
+        // Determine default association type based on budget type
+        const defaultAssociationType = this.getDefaultAssociationType(created.type);
+        await this.syncBudgetAccounts(
+          tx,
+          created.id,
+          input.accountIds,
+          defaultAssociationType,
+          input.accountAssociations
+        );
         await this.syncBudgetCategories(tx, created.id, input.categoryIds);
         await this.syncBudgetGroups(tx, created.id, input.groupIds);
 
@@ -551,24 +567,76 @@ export class BudgetRepository {
     } as const;
   }
 
+  /**
+   * Sync budget-account associations. Supports two modes:
+   * 1. Simple accountIds array with uniform associationType
+   * 2. AccountAssociation array with per-account types
+   */
   private async syncBudgetAccounts(
     tx: DbClient,
     budgetId: number,
-    accountIds: number[] | undefined
+    accountIds: number[] | undefined,
+    associationType: BudgetAssociationType = "spending",
+    accountAssociations?: AccountAssociation[]
   ): Promise<void> {
-    if (accountIds === undefined) return;
-
+    // Clear existing associations first
     await tx.delete(budgetAccounts).where(eq(budgetAccounts.budgetId, budgetId));
 
-    if (!accountIds.length) return;
+    // If we have per-account associations, use those
+    if (accountAssociations && accountAssociations.length > 0) {
+      const uniqueAssociations = accountAssociations.reduce(
+        (acc, assoc) => {
+          // Keep the first association type for each account
+          if (!acc.has(assoc.accountId)) {
+            acc.set(assoc.accountId, assoc.associationType);
+          }
+          return acc;
+        },
+        new Map<number, BudgetAssociationType>()
+      );
+
+      const rows: NewBudgetAccount[] = Array.from(uniqueAssociations.entries()).map(
+        ([accountId, type]) => ({
+          budgetId,
+          accountId,
+          associationType: type,
+        })
+      );
+
+      if (rows.length > 0) {
+        await tx.insert(budgetAccounts).values(rows).onConflictDoNothing();
+      }
+      return;
+    }
+
+    // Fall back to simple accountIds with uniform type
+    if (accountIds === undefined || !accountIds.length) return;
 
     const uniqueAccountIds = Array.from(new Set(accountIds));
     const rows: NewBudgetAccount[] = uniqueAccountIds.map((accountId) => ({
       budgetId,
       accountId,
+      associationType,
     }));
 
     await tx.insert(budgetAccounts).values(rows).onConflictDoNothing();
+  }
+
+  /**
+   * Get the default association type based on budget type.
+   */
+  private getDefaultAssociationType(budgetType: Budget["type"]): BudgetAssociationType {
+    switch (budgetType) {
+      case "account-monthly":
+        return "spending";
+      case "goal-based":
+        return "savings";
+      case "scheduled-expense":
+        return "primary";
+      case "category-envelope":
+      default:
+        return "spending";
+    }
   }
 
   private async syncBudgetCategories(
@@ -756,6 +824,87 @@ export class BudgetRepository {
         },
       },
     });
+  }
+
+  /**
+   * Find all budgets related to an account from multiple sources:
+   * 1. Direct association via budgetAccounts junction table
+   * 2. Indirect via schedules (where schedule.accountId matches and schedule.budgetId is set)
+   *
+   * Returns budgets grouped by their relationship type.
+   */
+  async findAllRelatedBudgets(
+    accountId: number,
+    workspaceId: number
+  ): Promise<{
+    direct: Array<BudgetWithRelations & { associationType: BudgetAssociationType }>;
+    viaSchedule: BudgetWithRelations[];
+  }> {
+    // 1. Get budgets directly linked via budgetAccounts
+    const directAssociations = await db
+      .select({
+        budgetId: budgetAccounts.budgetId,
+        associationType: budgetAccounts.associationType,
+      })
+      .from(budgetAccounts)
+      .where(eq(budgetAccounts.accountId, accountId));
+
+    const directBudgetIds = directAssociations.map((a) => a.budgetId);
+    const associationTypeMap = new Map(
+      directAssociations.map((a) => [a.budgetId, a.associationType as BudgetAssociationType])
+    );
+
+    // 2. Get budgets linked via schedules for this account
+    const scheduleBudgetIds = await db
+      .select({ budgetId: schedules.budgetId })
+      .from(schedules)
+      .where(
+        and(
+          eq(schedules.accountId, accountId),
+          isNotNull(schedules.budgetId)
+        )
+      );
+
+    const indirectBudgetIds = scheduleBudgetIds
+      .map((s) => s.budgetId)
+      .filter((id): id is number => id !== null);
+
+    // Combine all budget IDs and deduplicate
+    const allBudgetIds = [...new Set([...directBudgetIds, ...indirectBudgetIds])];
+
+    if (allBudgetIds.length === 0) {
+      return { direct: [], viaSchedule: [] };
+    }
+
+    // Fetch all budgets with relations
+    const allBudgets = await db.query.budgets.findMany({
+      where: and(
+        inArray(budgets.id, allBudgetIds),
+        eq(budgets.workspaceId, workspaceId),
+        isNull(budgets.deletedAt)
+      ),
+      with: this.defaultRelations(),
+    });
+
+    // Separate into direct and viaSchedule, annotating direct ones with association type
+    const directBudgets: Array<BudgetWithRelations & { associationType: BudgetAssociationType }> = [];
+    const viaScheduleBudgets: BudgetWithRelations[] = [];
+
+    for (const budget of allBudgets as BudgetWithRelations[]) {
+      if (directBudgetIds.includes(budget.id)) {
+        directBudgets.push({
+          ...budget,
+          associationType: associationTypeMap.get(budget.id) || "spending",
+        });
+      } else if (indirectBudgetIds.includes(budget.id)) {
+        viaScheduleBudgets.push(budget);
+      }
+    }
+
+    return {
+      direct: directBudgets,
+      viaSchedule: viaScheduleBudgets,
+    };
   }
 
   // Analytics Methods

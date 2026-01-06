@@ -34,6 +34,7 @@ export interface SpendingPattern {
   payeeIds: number[];
   payeeName?: string;
   transactionCount: number;
+  transactionIds: number[]; // IDs of transactions used in this pattern
   monthsCovered: number;
   amounts: number[];
   median: number;
@@ -58,6 +59,7 @@ export interface RecurringExpense {
   accountId: number;
   amounts: number[];
   dates: string[];
+  transactionIds: number[]; // IDs of transactions used in this pattern
   median: number;
   mean: number;
   stdDev: number;
@@ -309,6 +311,7 @@ export class BudgetAnalysisService {
     // Get transactions grouped by category
     const txnsByCategory = await db
       .select({
+        id: transactions.id,
         categoryId: transactions.categoryId,
         categoryName: categories.name,
         payeeId: transactions.payeeId,
@@ -328,6 +331,7 @@ export class BudgetAnalysisService {
         amounts: number[];
         dates: string[];
         payeeIds: Set<number>;
+        transactionIds: number[];
       }
     >();
 
@@ -340,6 +344,7 @@ export class BudgetAnalysisService {
           amounts: [],
           dates: [],
           payeeIds: new Set(),
+          transactionIds: [],
         });
       }
 
@@ -347,6 +352,7 @@ export class BudgetAnalysisService {
       data.amounts.push(Math.abs(txn.amount));
       data.dates.push(txn.date);
       if (txn.payeeId) data.payeeIds.add(txn.payeeId);
+      data.transactionIds.push(txn.id);
     }
 
     // Convert to patterns
@@ -378,6 +384,7 @@ export class BudgetAnalysisService {
         categoryName: data.name,
         payeeIds: Array.from(data.payeeIds),
         transactionCount: data.amounts.length,
+        transactionIds: data.transactionIds,
         monthsCovered,
         amounts: data.amounts,
         median,
@@ -443,6 +450,7 @@ export class BudgetAnalysisService {
         suggestedScope: "category",
         detectedFrequency: pattern.frequency,
         payeeIds: pattern.payeeIds,
+        transactionIds: pattern.transactionIds,
       },
       categoryId: pattern.categoryId,
       expiresAt: expiresAt.toISOString(),
@@ -461,8 +469,9 @@ export class BudgetAnalysisService {
   private generateScheduledExpenseRecommendation(
     expense: RecurringExpense
   ): BudgetRecommendationDraft {
-    // Use median for suggested amount (more stable than mean)
-    const suggestedAmount = Math.round(expense.median / 25) * 25; // Round to nearest $25
+    // Use median for suggested amount (more stable than mean for variable expenses)
+    // Round UP to ensure budget covers the expense
+    const suggestedAmount = Math.ceil(expense.median / 25) * 25;
 
     // Calculate confidence based on predictability and transaction count
     let confidence = Math.round(expense.predictability);
@@ -499,6 +508,7 @@ export class BudgetAnalysisService {
         payeeIds: [expense.payeeId],
         predictability: expense.predictability,
         intervalDays: expense.intervalDays,
+        transactionIds: expense.transactionIds,
       },
       accountId: expense.accountId,
       expiresAt: expiresAt.toISOString(),
@@ -742,6 +752,7 @@ export class BudgetAnalysisService {
     // Get transactions grouped by payee
     const txnsByPayee = await db
       .select({
+        id: transactions.id,
         payeeId: transactions.payeeId,
         payeeName: payees.name,
         categoryId: transactions.categoryId,
@@ -767,6 +778,7 @@ export class BudgetAnalysisService {
         accountId: number;
         amounts: number[];
         dates: string[];
+        transactionIds: number[];
       }
     >();
 
@@ -783,12 +795,14 @@ export class BudgetAnalysisService {
           accountId: txn.accountId,
           amounts: [],
           dates: [],
+          transactionIds: [],
         });
       }
 
       const data = payeeMap.get(key)!;
       data.amounts.push(Math.abs(txn.amount));
       data.dates.push(txn.date);
+      data.transactionIds.push(txn.id);
     }
 
     // Analyze for recurring patterns
@@ -843,6 +857,7 @@ export class BudgetAnalysisService {
         accountId: data.accountId,
         amounts: data.amounts,
         dates: data.dates,
+        transactionIds: data.transactionIds,
         median,
         mean,
         stdDev,

@@ -131,7 +131,6 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
               table.toggleAllRowsSelected(false);
             }
           },
-          controlledChecked: true,
           "aria-label": "Select all on page",
         });
       },
@@ -140,7 +139,6 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
           onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
-          controlledChecked: true,
           "aria-label": "Select row",
         });
       },

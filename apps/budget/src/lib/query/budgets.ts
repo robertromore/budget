@@ -20,11 +20,12 @@ import type {
   CreateBudgetRequest,
   EnsurePeriodInstanceOptions,
   GoalProgress,
+  GroupedAccountBudgets,
   UpdateBudgetRequest,
 } from "$lib/server/domains/budgets/services";
 import { BudgetState } from "$lib/states/budgets.svelte";
 import { trpc } from "$lib/trpc/client";
-import { cachePatterns, queryPresets } from "./_client";
+import { cachePatterns, queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const budgetKeys = createQueryKeys("budgets", {
@@ -32,6 +33,7 @@ export const budgetKeys = createQueryKeys("budgets", {
   list: (status?: Budget["status"]) => ["budgets", "list", status ?? "all"] as const,
   count: () => ["budgets", "count"] as const,
   byAccount: (accountId: number) => ["budgets", "account", accountId] as const,
+  relatedByAccount: (accountId: number) => ["budgets", "related", accountId] as const,
   details: () => ["budgets", "detail"] as const,
   detail: (id: number) => ["budgets", "detail", id] as const,
   detailBySlug: (slug: string) => ["budgets", "detail", "slug", slug] as const,
@@ -127,6 +129,21 @@ export const getByAccount = (accountId: number) =>
     },
   });
 
+/**
+ * Get all budgets related to an account, grouped by purpose:
+ * - spendingLimits: account-monthly budgets
+ * - savingsGoals: goal-based budgets
+ * - recurringExpenses: scheduled-expense budgets
+ */
+export const getRelatedBudgets = (accountId: number) =>
+  defineQuery<GroupedAccountBudgets>({
+    queryKey: budgetKeys["relatedByAccount"](accountId),
+    queryFn: () => trpc().budgetRoutes.getRelatedBudgets.query({ accountId }),
+    options: {
+      staleTime: 60 * 1000,
+    },
+  });
+
 export const listPeriodInstances = (templateId: number) =>
   defineQuery<BudgetPeriodInstance[]>({
     queryKey: budgetKeys["periodInstances"](templateId),
@@ -173,6 +190,11 @@ export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelati
     );
 
     cachePatterns.invalidatePrefix(budgetKeys["lists"]());
+
+    // Invalidate all schedules cache if a scheduled-expense budget was created (creates a schedule)
+    if (variables.type === "scheduled-expense") {
+      cachePatterns.invalidatePrefix(["schedules"]);
+    }
   },
   successMessage: "Budget created",
   errorMessage: "Failed to create budget",
@@ -192,9 +214,13 @@ export const updateBudget = defineMutation<
   errorMessage: "Failed to update budget",
 });
 
-export const deleteBudget = defineMutation<number, { success: boolean }>({
-  mutationFn: (id) => trpc().budgetRoutes.delete.mutate({ id }),
-  onSuccess: (_, id) => {
+export const deleteBudget = defineMutation<
+  { id: number; deleteLinkedSchedule?: boolean },
+  { success: boolean }
+>({
+  mutationFn: ({ id, deleteLinkedSchedule }) =>
+    trpc().budgetRoutes.delete.mutate({ id, deleteLinkedSchedule }),
+  onSuccess: (_, { id, deleteLinkedSchedule }) => {
     getState()?.removeBudget(id);
     cachePatterns.removeQuery(budgetKeys.detail(id));
 
@@ -212,6 +238,11 @@ export const deleteBudget = defineMutation<number, { success: boolean }>({
 
     // Invalidate recommendations since a budget created from a recommendation may have been deleted
     cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+
+    // If we deleted the linked schedule, invalidate schedules cache too
+    if (deleteLinkedSchedule) {
+      cachePatterns.invalidatePrefix(["schedules"]);
+    }
   },
   successMessage: "Budget deleted",
   errorMessage: "Failed to delete budget",
@@ -246,32 +277,30 @@ export const bulkArchiveBudgets = defineMutation<
 });
 
 export const bulkDeleteBudgets = defineMutation<
-  number[],
+  { ids: number[]; deleteLinkedSchedules?: boolean },
   { success: number; failed: number; errors: Array<{ id: number; error: string }> }
 >({
-  mutationFn: (ids) => trpc().budgetRoutes.bulkDelete.mutate({ ids }),
-  onSuccess: (_result, ids) => {
+  mutationFn: ({ ids, deleteLinkedSchedules }) =>
+    trpc().budgetRoutes.bulkDelete.mutate({ ids, deleteLinkedSchedules }),
+  onSuccess: (_result, { ids, deleteLinkedSchedules }) => {
     // Remove deleted budgets from state and cache
     ids.forEach((id) => {
       getState()?.removeBudget(id);
       cachePatterns.removeQuery(budgetKeys.detail(id));
     });
 
-    // Optimistically remove budgets from all budget list queries immediately
-    // This includes both list queries and account-specific queries
-    const idSet = new Set(ids);
-    cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
-      (queryKey) =>
-        queryKey[0] === "budgets" && (queryKey[1] === "list" || queryKey[1] === "account"),
-      (oldData) => oldData.filter((budget) => !idSet.has(budget.id))
-    );
-
-    // Also invalidate to ensure consistency with server
-    cachePatterns.invalidatePrefix(budgetKeys.lists());
-    cachePatterns.invalidatePrefix(["budgets", "account"]);
+    // Invalidate budget list queries to trigger refetch
+    // Use queryClient directly for immediate invalidation
+    queryClient.invalidateQueries({ queryKey: ["budgets", "list"] });
+    queryClient.invalidateQueries({ queryKey: ["budgets", "account"] });
 
     // Invalidate recommendations since budgets created from recommendations may have been deleted
-    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+    queryClient.invalidateQueries({ queryKey: ["budgets", "recommendations"] });
+
+    // If we deleted linked schedules, invalidate schedules cache too
+    if (deleteLinkedSchedules) {
+      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+    }
   },
   successMessage: (result) =>
     `${result.success} budget(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
@@ -1191,6 +1220,11 @@ export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
     cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
     cachePatterns.invalidatePrefix(budgetKeys.lists());
     cachePatterns.invalidatePrefix(["budgets", "account"]);
+
+    // Invalidate all schedules cache if a scheduled-expense budget was created (creates a schedule)
+    if (budget.type === "scheduled-expense") {
+      cachePatterns.invalidatePrefix(["schedules"]);
+    }
   },
   successMessage: "Recommendation applied successfully",
   errorMessage: "Failed to apply recommendation",

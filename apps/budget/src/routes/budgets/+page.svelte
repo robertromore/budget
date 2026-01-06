@@ -5,7 +5,9 @@ import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import * as Empty from '$lib/components/ui/empty';
+import { Label } from '$lib/components/ui/label';
 import * as Tabs from '$lib/components/ui/tabs';
 import {
   bulkArchiveBudgets,
@@ -16,7 +18,7 @@ import {
   listBudgets,
   updateBudget,
 } from '$lib/query/budgets';
-import type { BudgetGroup } from '$lib/schema/budgets';
+import type { BudgetGroup, BudgetMetadata } from '$lib/schema/budgets';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { demoMode, type DemoBudget } from '$lib/states/ui/demo-mode.svelte';
 import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
@@ -160,6 +162,25 @@ let bulkArchiveDialogOpen = $state(false);
 let budgetToDelete = $state<BudgetWithRelations | null>(null);
 let budgetsToDelete = $state<BudgetWithRelations[]>([]);
 let budgetsToArchive = $state<BudgetWithRelations[]>([]);
+let deleteLinkedSchedule = $state(false);
+let deleteLinkedSchedules = $state(false);
+
+// Helper to check if a budget has a linked schedule
+function getLinkedScheduleId(budget: BudgetWithRelations): number | null {
+  const metadata = budget.metadata as BudgetMetadata | null;
+  if (!metadata) return null;
+  return metadata.scheduledExpense?.linkedScheduleId || metadata.goal?.linkedScheduleId || null;
+}
+
+const budgetToDeleteHasSchedule = $derived(
+  budgetToDelete ? getLinkedScheduleId(budgetToDelete) !== null : false
+);
+
+const budgetsToDeleteWithSchedules = $derived(
+  budgetsToDelete.filter((b) => getLinkedScheduleId(b) !== null)
+);
+
+const hasBudgetsWithSchedules = $derived(budgetsToDeleteWithSchedules.length > 0);
 
 function getAllocated(budget: BudgetWithRelations) {
   return calculateAllocated(budget);
@@ -190,14 +211,19 @@ async function handleArchiveBudget(budget: BudgetWithRelations) {
 
 function handleDeleteBudget(budget: BudgetWithRelations) {
   budgetToDelete = budget;
+  deleteLinkedSchedule = false; // Reset checkbox
   deleteDialogOpen = true;
 }
 
 async function confirmDeleteBudget() {
   if (!budgetToDelete) return;
-  await deleteMutation.mutateAsync(budgetToDelete.id);
+  await deleteMutation.mutateAsync({
+    id: budgetToDelete.id,
+    deleteLinkedSchedule: budgetToDeleteHasSchedule && deleteLinkedSchedule,
+  });
   deleteDialogOpen = false;
   budgetToDelete = null;
+  deleteLinkedSchedule = false;
 }
 
 async function handleFundTransfer(_fromId: number, _toId: number, _amount: number) {
@@ -227,14 +253,19 @@ function handleEditBudget(budget: BudgetWithRelations) {
 
 function handleBulkDeleteBudgets(budgets: BudgetWithRelations[]) {
   budgetsToDelete = budgets;
+  deleteLinkedSchedules = false; // Reset checkbox
   bulkDeleteDialogOpen = true;
 }
 
 async function confirmBulkDelete() {
   const ids = budgetsToDelete.map((b) => b.id);
-  await bulkDeleteMutation.mutateAsync(ids);
+  await bulkDeleteMutation.mutateAsync({
+    ids,
+    deleteLinkedSchedules: hasBudgetsWithSchedules && deleteLinkedSchedules,
+  });
   bulkDeleteDialogOpen = false;
   budgetsToDelete = [];
+  deleteLinkedSchedules = false;
 }
 
 function handleBulkArchiveBudgets(budgets: BudgetWithRelations[]) {
@@ -664,6 +695,22 @@ const summaryMetrics = $derived.by(() => {
         Are you sure you want to delete "{budgetToDelete?.name}"? This action cannot be undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
+
+    {#if budgetToDeleteHasSchedule}
+      <div class="flex items-start gap-3 rounded-lg border p-4">
+        <Checkbox id="delete-schedule-single" bind:checked={deleteLinkedSchedule} />
+        <div class="space-y-1">
+          <Label for="delete-schedule-single" class="cursor-pointer font-medium">
+            Also delete the linked schedule
+          </Label>
+          <p class="text-muted-foreground text-xs">
+            This budget has a linked recurring schedule. Check this box to delete the schedule as
+            well, or leave unchecked to keep the schedule.
+          </p>
+        </div>
+      </div>
+    {/if}
+
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
@@ -690,6 +737,23 @@ const summaryMetrics = $derived.by(() => {
         and will remove all associated budget data.
       </AlertDialog.Description>
     </AlertDialog.Header>
+
+    {#if hasBudgetsWithSchedules}
+      <div class="flex items-start gap-3 rounded-lg border p-4">
+        <Checkbox id="delete-schedules-bulk" bind:checked={deleteLinkedSchedules} />
+        <div class="space-y-1">
+          <Label for="delete-schedules-bulk" class="cursor-pointer font-medium">
+            Also delete linked schedules
+          </Label>
+          <p class="text-muted-foreground text-xs">
+            {budgetsToDeleteWithSchedules.length} of the selected budget(s) have linked recurring
+            schedules. Check this box to delete the schedules as well, or leave unchecked to keep
+            them.
+          </p>
+        </div>
+      </div>
+    {/if}
+
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action

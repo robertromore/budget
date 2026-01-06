@@ -74,6 +74,7 @@ const formData = $derived.by(() => {
     formData={formData}
     accounts={data.accounts}
     categories={data.categories}
+    payees={data.payees}
     schedules={data.schedules}
     onCancel={() => goto(returnTo)} />
 </div>

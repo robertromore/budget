@@ -12,6 +12,7 @@ import {
 import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import { cn } from '$lib/utils';
 import DataTablePagination from '$lib/components/ui/data-table/data-table-pagination.svelte';
 import RecommendationBulkActions from './recommendation-bulk-actions.svelte';
 
@@ -21,9 +22,10 @@ interface Props {
   table?: TTable<BudgetRecommendationWithRelations>;
   onBulkApply: (recommendations: BudgetRecommendationWithRelations[]) => void;
   onBulkDismiss: (recommendations: BudgetRecommendationWithRelations[]) => void;
+  onRowClick?: (recommendation: BudgetRecommendationWithRelations) => void;
 }
 
-let { columns, recommendations, table = $bindable(), onBulkApply, onBulkDismiss }: Props = $props();
+let { columns, recommendations, table = $bindable(), onBulkApply, onBulkDismiss, onRowClick }: Props = $props();
 
 // Table state
 let sorting = $state<any[]>([{ id: 'confidence', desc: true }]); // Sort by confidence by default (highest first)
@@ -107,9 +109,16 @@ table = createSvelteTable({
       <Table.Body>
         {#if table.getRowModel().rows?.length}
           {#each table.getRowModel().rows as row}
-            <Table.Row data-state={row.getIsSelected() && 'selected'}>
+            <Table.Row
+              data-state={row.getIsSelected() && 'selected'}
+              class={cn(onRowClick && 'cursor-pointer hover:bg-muted/50')}
+              onclick={() => onRowClick?.(row.original)}
+            >
               {#each row.getVisibleCells() as cell}
-                <Table.Cell>
+                <!-- Stop propagation for interactive cells to prevent row click -->
+                <Table.Cell
+                  onclick={cell.column.id === 'select-col' ? (e) => e.stopPropagation() : undefined}
+                >
                   {#if cell.column.columnDef.cell}
                     <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
                   {/if}

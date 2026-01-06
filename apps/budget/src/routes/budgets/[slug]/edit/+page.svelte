@@ -36,6 +36,8 @@ let { data } = $props();
     formData={data.form}
     accounts={data.accounts}
     categories={data.categories}
+    schedules={data.schedules}
+    payees={data.payees}
     budgetId={data.budgetId}
     onCancel={() => goto(`/budgets/${data.budgetSlug}`)} />
 </div>

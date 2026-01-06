@@ -17,10 +17,10 @@ let { recommendation, onApply, onDismiss, onReset }: Props = $props();
 
 {#if recommendation.status === 'pending'}
   <div class="flex items-center gap-1">
-    <Button size="icon" variant="default" onclick={() => onApply(recommendation)} title="Apply">
+    <Button size="icon" variant="default" onclick={(e) => { e.stopPropagation(); onApply(recommendation); }} title="Apply">
       <Check class="h-3.5 w-3.5" />
     </Button>
-    <Button size="icon" variant="destructive" onclick={() => onDismiss(recommendation)} title="Dismiss">
+    <Button size="icon" variant="destructive" onclick={(e) => { e.stopPropagation(); onDismiss(recommendation); }} title="Dismiss">
       <X class="h-3.5 w-3.5" />
     </Button>
   </div>
@@ -28,7 +28,7 @@ let { recommendation, onApply, onDismiss, onReset }: Props = $props();
   <div class="flex items-center gap-2">
     <span class="text-muted-foreground text-sm">Applied</span>
     {#if onReset}
-      <Button size="icon" variant="ghost" class="h-7 w-7" onclick={() => onReset(recommendation)} title="Reset to reapply">
+      <Button size="icon" variant="ghost" class="h-7 w-7" onclick={(e) => { e.stopPropagation(); onReset(recommendation); }} title="Reset to reapply">
         <RotateCcw class="h-3.5 w-3.5" />
       </Button>
     {/if}

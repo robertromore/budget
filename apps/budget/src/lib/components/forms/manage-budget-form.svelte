@@ -18,16 +18,21 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
+import Calendar from '@lucide/svelte/icons/calendar';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
 import type { Account } from '$lib/schema/accounts';
 import {
+  budgetAssociationTypes,
   budgetEnforcementLevels,
   budgetTypes,
   periodTemplateTypes,
+  type BudgetAssociationType,
   type BudgetScope,
   type BudgetType,
 } from '$lib/schema/budgets';
+import type { AccountAssociation } from '$lib/schema/superforms/budgets';
 import type { Category } from '$lib/schema/categories';
+import type { Payee } from '$lib/schema/payees';
 import type { Schedule } from '$lib/schema/schedules';
 import { superformInsertBudgetSchema } from '$lib/schema/superforms';
 import { BudgetState } from '$lib/states/budgets.svelte';
@@ -41,6 +46,7 @@ let {
   formData,
   accounts,
   categories,
+  payees = [],
   schedules = [],
   budgetId,
   onCancel,
@@ -49,6 +55,7 @@ let {
   formData: any;
   accounts: Account[];
   categories: Category[];
+  payees?: Payee[];
   schedules?: Schedule[];
   budgetId?: number;
   onCancel?: () => void;
@@ -82,6 +89,42 @@ const { form: formStore, enhance, submitting, isUpdate } = form;
 const selectedBudgetType = $derived(($formStore.type || 'account-monthly') as BudgetType);
 const selectedAccountIds = $derived($formStore.accountIds || []);
 const selectedCategoryIds = $derived($formStore.categoryIds || []);
+
+// Account associations for goal-based budgets (maps accountId to associationType)
+let accountAssociationTypes = $state<Map<number, BudgetAssociationType>>(new Map());
+
+// Sync account associations with form store
+$effect(() => {
+  if (selectedBudgetType === 'goal-based') {
+    const associations: AccountAssociation[] = selectedAccountIds.map((accountId: number) => ({
+      accountId,
+      associationType: accountAssociationTypes.get(accountId) || 'savings',
+    }));
+    $formStore.accountAssociations = associations;
+  }
+});
+
+// Helper to get association type for an account
+function getAccountAssociationType(accountId: number): BudgetAssociationType {
+  return accountAssociationTypes.get(accountId) || 'savings';
+}
+
+// Helper to set association type for an account
+function setAccountAssociationType(accountId: number, type: BudgetAssociationType) {
+  const newMap = new Map(accountAssociationTypes);
+  newMap.set(accountId, type);
+  accountAssociationTypes = newMap;
+}
+
+// Association type labels for display
+const associationTypeLabels: Record<BudgetAssociationType, string> = {
+  spending: 'Spending',
+  savings: 'Savings',
+  source: 'Source',
+  primary: 'Primary',
+};
+
+const goalAssociationTypes: BudgetAssociationType[] = ['savings', 'source'];
 
 // Helper to convert day-of-year to a formatted date string
 function dayOfYearToDate(dayOfYear: number, year?: number): Date {
@@ -256,7 +299,12 @@ const accountAccessors = createTransformAccessors(
 );
 
 // Schedule selection for scheduled-expense budgets
-const availableSchedules = $derived(schedules.filter((s) => s.status === 'active' && !s.budgetId));
+// Include schedules that are either unlinked OR linked to the current budget being edited
+const availableSchedules = $derived(
+  schedules.filter(
+    (s) => s.status === 'active' && (!s.budgetId || s.budgetId === _budgetId)
+  )
+);
 
 const selectedSchedule = $derived.by(() => {
   if (!$formStore.linkedScheduleId) return null;
@@ -575,10 +623,74 @@ const isHelpHighlighted = (helpId: string) =>
         </div>
       {/if}
 
+      <!-- Account Associations for Goal-Based Budgets -->
+      {#if selectedBudgetType === 'goal-based'}
+        <div class="border-border space-y-2 border-t pt-4" data-help-id="budget-goal-accounts-field" data-help-title="Goal Account Associations">
+          <div class="flex items-center gap-1.5">
+            <Label>Account Associations (Optional)</Label>
+            <FieldHelpButton helpId="budget-goal-accounts-field" />
+          </div>
+          <p class="text-muted-foreground mb-2 text-sm">
+            Optionally link accounts to this goal. Choose "Savings" for the destination account or "Source" for contribution accounts.
+          </p>
+          <Select.Root type="single" bind:value={accountAccessors.get, accountAccessors.set}>
+            <Select.Trigger class="w-full">Add account association</Select.Trigger>
+            <Select.Content>
+              {#each availableAccounts as account (account.id)}
+                {#if !selectedAccountIds.includes(account.id)}
+                  <Select.Item value={String(account.id)}>
+                    {account.name}
+                  </Select.Item>
+                {/if}
+              {/each}
+            </Select.Content>
+          </Select.Root>
+
+          {#if selectedAccounts.length > 0}
+            <div class="mt-3 space-y-2">
+              {#each selectedAccounts as account (account.id)}
+                <div class="flex items-center justify-between rounded-md border p-2">
+                  <span class="text-sm font-medium">{account.name}</span>
+                  <div class="flex items-center gap-2">
+                    <Select.Root
+                      type="single"
+                      value={getAccountAssociationType(account.id)}
+                      onValueChange={(val) => setAccountAssociationType(account.id, val as BudgetAssociationType)}
+                    >
+                      <Select.Trigger class="h-8 w-25">
+                        {associationTypeLabels[getAccountAssociationType(account.id)]}
+                      </Select.Trigger>
+                      <Select.Content>
+                        {#each goalAssociationTypes as assocType}
+                          <Select.Item value={assocType}>
+                            {associationTypeLabels[assocType]}
+                          </Select.Item>
+                        {/each}
+                      </Select.Content>
+                    </Select.Root>
+                    <button
+                      type="button"
+                      onclick={() => removeAccount(account.id)}
+                      class="text-muted-foreground hover:text-destructive rounded p-1 transition-colors">
+                      <CircleX class="h-4 w-4" />
+                      <span class="sr-only">Remove {account.name}</span>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
       <!-- Schedule Selection (for scheduled-expense budgets) -->
       {#if selectedBudgetType === 'scheduled-expense'}
-        <div class="border-border space-y-2 border-t pt-4">
-          <Label>Link to Schedule (Optional)</Label>
+        <div class="border-border space-y-4 border-t pt-4">
+          <Label>Schedule</Label>
+          <p class="text-muted-foreground text-sm">
+            Link an existing schedule to track recurring expenses for this budget.
+          </p>
+
           <Select.Root type="single" bind:value={scheduleAccessors.get, scheduleAccessors.set}>
             <Select.Trigger class="w-full">
               {selectedSchedule ? selectedSchedule.name : 'Select a schedule...'}
@@ -598,17 +710,24 @@ const isHelpHighlighted = (helpId: string) =>
               {/each}
             </Select.Content>
           </Select.Root>
-          <p class="text-muted-foreground text-sm">
-            Link this budget to a recurring schedule for automatic tracking
-          </p>
+
           {#if selectedSchedule}
             <div class="bg-muted rounded-md p-3">
-              <p class="text-sm font-medium">{selectedSchedule.name}</p>
-              <p class="text-muted-foreground mt-1 text-xs">
-                Amount: ${selectedSchedule.amount.toFixed(2)} •
-                {selectedSchedule.scheduleDate?.frequency || 'One-time'}
-              </p>
+              <div class="flex items-center gap-2">
+                <Calendar class="text-muted-foreground h-4 w-4" />
+                <div>
+                  <p class="text-sm font-medium">{selectedSchedule.name}</p>
+                  <p class="text-muted-foreground text-xs">
+                    Amount: ${selectedSchedule.amount.toFixed(2)} •
+                    {selectedSchedule.scheduleDate?.frequency || 'One-time'}
+                  </p>
+                </div>
+              </div>
             </div>
+          {:else if availableSchedules.length === 0}
+            <p class="text-muted-foreground text-sm italic">
+              No available schedules. Create a schedule first from the Schedules page.
+            </p>
           {/if}
         </div>
       {/if}

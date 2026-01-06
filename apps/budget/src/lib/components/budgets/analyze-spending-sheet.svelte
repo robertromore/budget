@@ -1,9 +1,10 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
-import { generateRecommendations } from '$lib/query/budgets';
+import { clearAllRecommendations, generateRecommendations } from '$lib/query/budgets';
 import { LoaderCircle, Sparkles, TrendingUp } from '@lucide/svelte/icons';
 
 interface Props {
@@ -18,12 +19,27 @@ let selectedAccountIds = $state<number[]>([]);
 let months = $state<string>('6');
 let minTransactions = $state<string>('3');
 let minConfidence = $state<string>('40');
+let forceRegenerate = $state<boolean>(false);
 
-const mutation = generateRecommendations.options();
-const isAnalyzing = $derived(mutation.isPending);
+const generateMutation = generateRecommendations.options();
+const clearMutation = clearAllRecommendations.options();
+const isAnalyzing = $derived(generateMutation.isPending || clearMutation.isPending);
 
-function handleAnalyze() {
-  mutation.mutate(
+async function handleAnalyze() {
+  // If force regenerate is checked, clear first
+  if (forceRegenerate) {
+    clearMutation.mutate(undefined, {
+      onSuccess: () => {
+        runGeneration();
+      },
+    });
+  } else {
+    runGeneration();
+  }
+}
+
+function runGeneration() {
+  generateMutation.mutate(
     {
       ...(selectedAccountIds.length > 0 && { accountIds: selectedAccountIds }),
       months: parseInt(months),
@@ -118,6 +134,20 @@ function handleAnalyze() {
         <p class="text-muted-foreground text-xs">
           Higher values show only the most reliable recommendations
         </p>
+      </div>
+
+      <!-- Force Regenerate Option -->
+      <div class="flex items-start gap-3 rounded-lg border p-4">
+        <Checkbox id="force-regenerate" bind:checked={forceRegenerate} />
+        <div class="space-y-1">
+          <Label for="force-regenerate" class="cursor-pointer font-medium">
+            Clear existing recommendations
+          </Label>
+          <p class="text-muted-foreground text-xs">
+            Remove all current recommendations (including dismissed ones) before generating new
+            ones. Use this to start fresh.
+          </p>
+        </div>
       </div>
 
       <!-- Info Box -->

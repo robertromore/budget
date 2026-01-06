@@ -18,21 +18,30 @@ import {
   type NewBudgetTransaction,
 } from "$lib/schema/budgets";
 import { payees } from "$lib/schema/payees";
+import { scheduleDates } from "$lib/schema/schedule-dates";
+import { schedules } from "$lib/schema/schedules";
 import type { Transaction } from "$lib/schema/transactions";
 import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
+import slugify from "@sindresorhus/slugify";
 import { logger } from "$lib/server/shared/logging";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { currentDate as defaultCurrentDate, timezone as defaultTimezone } from "$lib/utils/dates";
 import { CalendarDate, type DateValue } from "@internationalized/date";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { BudgetAnalysisService, type AnalysisParams } from "./budget-analysis-service";
 import type { DeficitRecoveryPlan } from "./deficit-recovery";
 import { EnvelopeService, type EnvelopeAllocationRequest } from "./envelope-service";
 import { PeriodManager } from "./period-manager";
 import { RecommendationService, type RecommendationFilters } from "./recommendation-service";
-import { BudgetRepository, type BudgetWithRelations, type DbClient } from "./repository";
+import {
+  BudgetRepository,
+  type AccountAssociation,
+  type BudgetWithRelations,
+  type DbClient,
+} from "./repository";
 
 /* ------------------------------------------------------------------ */
 /* Budget Service                                                     */
@@ -47,6 +56,8 @@ export interface CreateBudgetRequest {
   enforcementLevel?: BudgetEnforcementLevel;
   metadata?: BudgetMetadata;
   accountIds?: number[];
+  /** Per-account association types (for goal-based budgets) */
+  accountAssociations?: AccountAssociation[];
   categoryIds?: number[];
   groupIds?: number[];
 }
@@ -60,6 +71,20 @@ export interface UpdateBudgetRequest {
   accountIds?: number[];
   categoryIds?: number[];
   groupIds?: number[];
+}
+
+/**
+ * Grouped budgets related to an account, organized by purpose.
+ */
+export interface GroupedAccountBudgets {
+  /** account-monthly budgets with "spending" association */
+  spendingLimits: BudgetWithRelations[];
+  /** goal-based budgets with "savings" or "source" association */
+  savingsGoals: BudgetWithRelations[];
+  /** scheduled-expense budgets (via schedule.accountId) */
+  recurringExpenses: BudgetWithRelations[];
+  /** Total count of all related budgets */
+  totalCount: number;
 }
 
 /**
@@ -136,6 +161,7 @@ export class BudgetService {
         metadata: typeof metadata;
       };
       accountIds?: number[];
+      accountAssociations?: AccountAssociation[];
       categoryIds?: number[];
       groupIds?: number[];
     } = {
@@ -153,6 +179,9 @@ export class BudgetService {
 
     if (input.accountIds !== undefined) {
       createInput.accountIds = input.accountIds;
+    }
+    if (input.accountAssociations !== undefined) {
+      createInput.accountAssociations = input.accountAssociations;
     }
     if (input.categoryIds !== undefined) {
       createInput.categoryIds = await this.getValidCategoryIds(input.categoryIds);
@@ -260,12 +289,158 @@ export class BudgetService {
     return budget;
   }
 
-  async deleteBudget(id: number, workspaceId: number): Promise<void> {
+  /**
+   * Get all budgets related to an account, grouped by purpose.
+   *
+   * Groups budgets into:
+   * - spendingLimits: account-monthly budgets with "spending" association
+   * - savingsGoals: goal-based budgets with "savings" or "source" association
+   * - recurringExpenses: scheduled-expense budgets (via linked schedule's account)
+   */
+  async getRelatedBudgetsForAccount(
+    accountId: number,
+    workspaceId: number
+  ): Promise<GroupedAccountBudgets> {
+    const { direct, viaSchedule } = await this.repository.findAllRelatedBudgets(
+      accountId,
+      workspaceId
+    );
+
+    const spendingLimits: BudgetWithRelations[] = [];
+    const savingsGoals: BudgetWithRelations[] = [];
+    const recurringExpenses: BudgetWithRelations[] = [];
+
+    // Process direct associations based on budget type and association type
+    for (const budget of direct) {
+      if (budget.type === "account-monthly" && budget.associationType === "spending") {
+        spendingLimits.push(budget);
+      } else if (
+        budget.type === "goal-based" &&
+        (budget.associationType === "savings" || budget.associationType === "source")
+      ) {
+        savingsGoals.push(budget);
+      } else if (budget.type === "scheduled-expense" && budget.associationType === "primary") {
+        recurringExpenses.push(budget);
+      } else {
+        // Default fallback: categorize by type
+        if (budget.type === "account-monthly") {
+          spendingLimits.push(budget);
+        } else if (budget.type === "goal-based") {
+          savingsGoals.push(budget);
+        } else if (budget.type === "scheduled-expense") {
+          recurringExpenses.push(budget);
+        }
+      }
+    }
+
+    // Add budgets linked via schedules to recurring expenses (if not already present)
+    const existingIds = new Set([
+      ...spendingLimits.map((b) => b.id),
+      ...savingsGoals.map((b) => b.id),
+      ...recurringExpenses.map((b) => b.id),
+    ]);
+
+    for (const budget of viaSchedule) {
+      if (!existingIds.has(budget.id)) {
+        recurringExpenses.push(budget);
+      }
+    }
+
+    return {
+      spendingLimits,
+      savingsGoals,
+      recurringExpenses,
+      totalCount: spendingLimits.length + savingsGoals.length + recurringExpenses.length,
+    };
+  }
+
+  async deleteBudget(
+    id: number,
+    workspaceId: number,
+    options?: { deleteLinkedSchedule?: boolean }
+  ): Promise<void> {
+    // Get the budget to check for linked schedule before deleting
+    const budget = await this.getBudget(id, workspaceId);
+
     // Before deleting, check if this budget was created from a recommendation
     // If so, reset the recommendation status to 'pending' so it can be reapplied
     await this.recommendationService.resetRecommendationForBudget(id);
 
+    // Delete the budget first
     await this.repository.deleteBudget(id, workspaceId);
+
+    // If requested, delete the linked schedule
+    if (options?.deleteLinkedSchedule) {
+      const linkedScheduleId = this.getLinkedScheduleId(budget);
+      if (linkedScheduleId) {
+        try {
+          await this.deleteSchedule(linkedScheduleId, workspaceId);
+        } catch (error) {
+          // Log but don't throw - schedule deletion is secondary
+          logger.warn("Failed to delete linked schedule", {
+            budgetId: id,
+            scheduleId: linkedScheduleId,
+            error,
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Extract the linked schedule ID from a budget's metadata
+   */
+  private getLinkedScheduleId(budget: BudgetWithRelations): number | null {
+    const metadata = budget.metadata as BudgetMetadata | null;
+    if (!metadata) return null;
+
+    // Check scheduled expense metadata
+    if (metadata.scheduledExpense?.linkedScheduleId) {
+      return metadata.scheduledExpense.linkedScheduleId;
+    }
+
+    // Check goal metadata
+    if (metadata.goal?.linkedScheduleId) {
+      return metadata.goal.linkedScheduleId;
+    }
+
+    return null;
+  }
+
+  /**
+   * Delete a schedule by ID
+   */
+  private async deleteSchedule(scheduleId: number, workspaceId: number): Promise<void> {
+    // Delete schedule using raw DB operations since we don't have schedule service injected
+    const schedule = await db.query.schedules.findFirst({
+      where: and(eq(schedules.id, scheduleId), eq(schedules.workspaceId, workspaceId)),
+    });
+
+    if (!schedule) {
+      return; // Schedule not found, nothing to delete
+    }
+
+    // Clear scheduleId from transactions
+    await db
+      .update(transactions)
+      .set({ scheduleId: null })
+      .where(eq(transactions.scheduleId, scheduleId));
+
+    // Delete schedule dates
+    const dateIdToDelete = schedule.dateId;
+    if (dateIdToDelete) {
+      await db
+        .update(schedules)
+        .set({ dateId: null })
+        .where(and(eq(schedules.id, scheduleId), eq(schedules.workspaceId, workspaceId)));
+      await db.delete(scheduleDates).where(eq(scheduleDates.id, dateIdToDelete));
+    }
+    await db.delete(scheduleDates).where(eq(scheduleDates.scheduleId, scheduleId));
+
+    // Delete the schedule
+    await db
+      .delete(schedules)
+      .where(and(eq(schedules.id, scheduleId), eq(schedules.workspaceId, workspaceId)));
   }
 
   async duplicateBudget(
@@ -359,7 +534,8 @@ export class BudgetService {
 
   async bulkDelete(
     ids: number[],
-    workspaceId: number
+    workspaceId: number,
+    options?: { deleteLinkedSchedules?: boolean }
   ): Promise<{ success: number; failed: number; errors: Array<{ id: number; error: string }> }> {
     let success = 0;
     let failed = 0;
@@ -367,7 +543,9 @@ export class BudgetService {
 
     for (const id of ids) {
       try {
-        await this.deleteBudget(id, workspaceId);
+        await this.deleteBudget(id, workspaceId, {
+          deleteLinkedSchedule: options?.deleteLinkedSchedules,
+        });
         success++;
       } catch (error) {
         failed++;
@@ -849,12 +1027,18 @@ export class BudgetService {
     let budgetName = "";
 
     // For scheduled expenses, use the payee name
+    let payee: { id: number; name: string; slug: string } | null = null;
     if (suggestedType === "scheduled-expense" && metadata?.payeeIds?.[0]) {
-      const payee = await db.query.payees.findFirst({
+      const payeeResult = await db.query.payees.findFirst({
         where: eq(payees.id, metadata.payeeIds[0]),
       });
-      if (payee?.name) {
-        budgetName = payee.name;
+      if (payeeResult?.name) {
+        budgetName = payeeResult.name;
+        payee = {
+          id: payeeResult.id,
+          name: payeeResult.name,
+          slug: payeeResult.slug,
+        };
       }
     }
 
@@ -871,29 +1055,195 @@ export class BudgetService {
       budgetName = recommendation.title.replace(/^Create (scheduled )?budget for /i, "");
     }
 
-    // Clean up description to remove recommendation-specific language
-    let budgetDescription = recommendation.description || "";
-    // Remove phrases like "We recommend", "Consider setting", "You should", etc.
-    budgetDescription = budgetDescription
-      .replace(/^We recommend (setting|creating|allocating) (a|an) /i, "")
-      .replace(/^Consider (setting|creating|allocating) (a|an) /i, "")
-      .replace(/^You should (set|create|allocate) (a|an) /i, "")
-      .replace(/^Set (a|an) /i, "")
-      .replace(/\s+based on your spending patterns\.?$/i, "")
-      .replace(/\s+to help manage this expense\.?$/i, "")
-      .replace(/\s+to track this category\.?$/i, "")
-      .trim();
-
-    // Capitalize first letter if needed
-    if (budgetDescription.length > 0) {
-      budgetDescription = budgetDescription.charAt(0).toUpperCase() + budgetDescription.slice(1);
-    }
-
     // Get workspaceId from recommendation
     const workspaceId = recommendation.workspaceId;
 
-    // Create the budget
-    // Don't pass description to avoid validation issues - it's optional anyway
+    // Handle scheduled-expense type with schedule creation
+    if (suggestedType === "scheduled-expense" && payee) {
+      // Get the account to use from recommendation
+      const accountId = recommendation.accountId;
+      if (!accountId) {
+        throw new Error("Recommendation must have an accountId for scheduled expenses");
+      }
+
+      // Map detected frequency to schedule date format
+      const detectedFrequency = metadata?.detectedFrequency || "monthly";
+      const frequencyMap: Record<
+        string,
+        { frequency: "daily" | "weekly" | "monthly" | "yearly"; interval: number }
+      > = {
+        daily: { frequency: "daily", interval: 1 },
+        weekly: { frequency: "weekly", interval: 1 },
+        "bi-weekly": { frequency: "weekly", interval: 2 },
+        monthly: { frequency: "monthly", interval: 1 },
+        quarterly: { frequency: "monthly", interval: 3 },
+        yearly: { frequency: "yearly", interval: 1 },
+      };
+
+      const freqConfig = frequencyMap[detectedFrequency] || {
+        frequency: "monthly" as const,
+        interval: 1,
+      };
+
+      // Step 1: Create schedule and schedule_dates in a transaction
+      const createdSchedule = await db.transaction(async (tx) => {
+        const scheduleSlug = await generateUniqueSlugForDB(
+          tx,
+          "schedules",
+          schedules.slug,
+          slugify(budgetName)
+        );
+
+        const scheduleResult = await tx
+          .insert(schedules)
+          .values({
+            workspaceId,
+            name: budgetName,
+            slug: scheduleSlug,
+            amount: suggestedAmount,
+            accountId,
+            payeeId: payee!.id,
+            categoryId: recommendation.categoryId ?? null,
+            status: "active",
+            auto_add: true,
+          })
+          .returning();
+
+        const schedule = scheduleResult[0];
+        if (!schedule) {
+          throw new Error("Failed to create schedule");
+        }
+
+        // Get today's date as the start date (ISO format)
+        const today = new Date().toISOString().split("T")[0];
+
+        // Create schedule date record with scheduleId
+        const scheduleDateResult = await tx
+          .insert(scheduleDates)
+          .values({
+            scheduleId: schedule.id,
+            start: today,
+            end: null,
+            frequency: freqConfig.frequency,
+            interval: freqConfig.interval,
+            limit: 0,
+            move_weekends: "none",
+            move_holidays: "none",
+            specific_dates: [],
+            on: false,
+            on_type: "day",
+            days: [],
+            weeks: [],
+            weeks_days: [],
+            week_days: [],
+          })
+          .returning();
+
+        const scheduleDateId = scheduleDateResult[0]?.id;
+
+        // Update schedule with the dateId
+        if (scheduleDateId) {
+          await tx
+            .update(schedules)
+            .set({ dateId: scheduleDateId })
+            .where(eq(schedules.id, schedule.id));
+        }
+
+        return schedule;
+      });
+
+      // Step 2: Create budget (has its own transaction internally)
+      const newBudget = await this.createBudget(
+        {
+          name: budgetName,
+          type: suggestedType,
+          scope: metadata?.suggestedScope || (recommendation.categoryId ? "category" : "account"),
+          status: "active",
+          enforcementLevel: "warning",
+          categoryIds: recommendation.categoryId ? [recommendation.categoryId] : [],
+          accountIds: accountId ? [accountId] : [],
+          metadata: {
+            allocatedAmount: suggestedAmount,
+            scheduledExpense: {
+              linkedScheduleId: createdSchedule.id,
+              payeeId: payee!.id,
+              expectedAmount: suggestedAmount,
+              frequency: detectedFrequency,
+              autoTrack: true,
+            },
+          },
+        },
+        workspaceId
+      );
+
+      // Step 3: Update schedule with budget reference
+      await db
+        .update(schedules)
+        .set({ budgetId: newBudget.id })
+        .where(and(eq(schedules.id, createdSchedule.id), eq(schedules.workspaceId, workspaceId)));
+
+      // Step 4: Create default monthly period template with the allocated amount
+      await this.createPeriodTemplate(
+        {
+          budgetId: newBudget.id,
+          type: "monthly",
+          startDayOfMonth: 1,
+          allocatedAmount: suggestedAmount,
+        },
+        workspaceId
+      );
+
+      // Step 5: Mark recommendation as applied and link the created budget
+      await this.recommendationService!.applyRecommendation(id, newBudget.id);
+
+      // Step 6: Link related transactions to the schedule and budget
+      const transactionIds = metadata?.transactionIds as number[] | undefined;
+      if (transactionIds?.length) {
+        try {
+          // Update transactions to link to the new schedule
+          // Note: Transaction IDs are already workspace-scoped from recommendation analysis
+          await db
+            .update(transactions)
+            .set({ scheduleId: createdSchedule.id })
+            .where(inArray(transactions.id, transactionIds));
+
+          // Get transaction amounts for budget allocations
+          const txnData = await db
+            .select({ id: transactions.id, amount: transactions.amount })
+            .from(transactions)
+            .where(inArray(transactions.id, transactionIds));
+
+          // Create budget allocations for each transaction
+          if (txnData.length > 0) {
+            await db.insert(budgetTransactions).values(
+              txnData.map((txn) => ({
+                transactionId: txn.id,
+                budgetId: newBudget.id,
+                allocatedAmount: Math.abs(txn.amount),
+                autoAssigned: true,
+                assignedBy: "recommendation",
+              }))
+            );
+          }
+
+          logger.info("Linked transactions to budget and schedule from recommendation", {
+            budgetId: newBudget.id,
+            scheduleId: createdSchedule.id,
+            transactionCount: transactionIds.length,
+          });
+        } catch (error) {
+          // Log but don't fail - the budget was created successfully
+          logger.warn("Failed to link transactions from recommendation", {
+            budgetId: newBudget.id,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      }
+
+      return newBudget;
+    }
+
+    // Non-scheduled-expense budget creation (original logic)
     const newBudget = await this.createBudget(
       {
         name: budgetName,
@@ -905,30 +1255,61 @@ export class BudgetService {
         accountIds: recommendation.accountId ? [recommendation.accountId] : [],
         metadata: {
           allocatedAmount: suggestedAmount,
-          ...(suggestedType === "scheduled-expense" &&
-            metadata?.payeeIds?.[0] && {
-              scheduledExpense: {
-                payeeId: metadata.payeeIds[0],
-                expectedAmount: suggestedAmount,
-                frequency: metadata.detectedFrequency,
-                autoTrack: true,
-              },
-            }),
         },
       },
       workspaceId
     );
 
     // Create default monthly period template with the allocated amount
-    await this.createPeriodTemplate({
-      budgetId: newBudget.id,
-      type: "monthly",
-      startDayOfMonth: 1,
-      allocatedAmount: suggestedAmount,
-    }, workspaceId);
+    await this.createPeriodTemplate(
+      {
+        budgetId: newBudget.id,
+        type: "monthly",
+        startDayOfMonth: 1,
+        allocatedAmount: suggestedAmount,
+      },
+      workspaceId
+    );
 
     // Mark recommendation as applied and link the created budget
     await this.recommendationService.applyRecommendation(id, newBudget.id);
+
+    // Link related transactions to the budget
+    // Note: Transaction IDs are already workspace-scoped from recommendation analysis
+    const transactionIds = metadata?.transactionIds as number[] | undefined;
+    if (transactionIds?.length) {
+      try {
+        // Get transaction amounts for budget allocations
+        const txnData = await db
+          .select({ id: transactions.id, amount: transactions.amount })
+          .from(transactions)
+          .where(inArray(transactions.id, transactionIds));
+
+        // Create budget allocations for each transaction
+        if (txnData.length > 0) {
+          await db.insert(budgetTransactions).values(
+            txnData.map((txn) => ({
+              transactionId: txn.id,
+              budgetId: newBudget.id,
+              allocatedAmount: Math.abs(txn.amount),
+              autoAssigned: true,
+              assignedBy: "recommendation",
+            }))
+          );
+        }
+
+        logger.info("Linked transactions to budget from recommendation", {
+          budgetId: newBudget.id,
+          transactionCount: transactionIds.length,
+        });
+      } catch (error) {
+        // Log but don't fail - the budget was created successfully
+        logger.warn("Failed to link transactions from recommendation", {
+          budgetId: newBudget.id,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
 
     return newBudget;
   }

@@ -1,4 +1,5 @@
 import {
+  budgetAssociationTypes,
   budgetEnforcementLevels,
   budgetPeriodInstances,
   budgetScopes,
@@ -6,17 +7,30 @@ import {
   budgetTypes,
   periodTemplateTypes,
 } from "$lib/schema/budgets";
+import { scheduleDates } from "$lib/schema/schedule-dates";
+import { schedules } from "$lib/schema/schedules";
+import {
+  newScheduleSchema,
+  scheduleCreationModes,
+} from "$lib/schema/superforms/budgets";
 import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import slugify from "@sindresorhus/slugify";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 const budgetIdSchema = z.object({
   id: z.number().int().positive(),
+});
+
+const deleteBudgetSchema = z.object({
+  id: z.number().int().positive(),
+  deleteLinkedSchedule: z.boolean().optional().default(false),
 });
 
 const budgetSlugSchema = z.object({
@@ -24,6 +38,12 @@ const budgetSlugSchema = z.object({
 });
 
 const metadataSchema = z.record(z.string(), z.unknown());
+
+// Schema for account associations with per-account types
+const accountAssociationSchema = z.object({
+  accountId: z.number().int().positive(),
+  associationType: z.enum(budgetAssociationTypes),
+});
 
 const createBudgetSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -34,8 +54,14 @@ const createBudgetSchema = z.object({
   enforcementLevel: z.enum(budgetEnforcementLevels).optional(),
   metadata: metadataSchema.optional(),
   accountIds: z.array(z.number().int().positive()).optional(),
+  // Per-account association types (for goal-based budgets)
+  accountAssociations: z.array(accountAssociationSchema).optional(),
   categoryIds: z.array(z.number().int().positive()).optional(),
   groupIds: z.array(z.number().int().positive()).optional(),
+  // Schedule creation mode for scheduled-expense budgets
+  scheduleMode: z.enum(scheduleCreationModes).default("create"),
+  linkedScheduleId: z.number().int().positive().optional().nullable(),
+  newSchedule: newScheduleSchema.optional().nullable(),
 });
 
 const updateBudgetSchema = z
@@ -335,9 +361,194 @@ export const budgetRoutes = t.router({
         throw translateDomainError(error);
       }
     }),
+  /**
+   * Get all budgets related to an account, grouped by purpose:
+   * - spendingLimits: account-monthly budgets
+   * - savingsGoals: goal-based budgets
+   * - recurringExpenses: scheduled-expense budgets
+   */
+  getRelatedBudgets: publicProcedure
+    .input(z.object({ accountId: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.getRelatedBudgetsForAccount(
+          input.accountId,
+          ctx.workspaceId
+        );
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw translateDomainError(error);
+      }
+    }),
   create: publicProcedure.input(createBudgetSchema).mutation(async ({ input, ctx }) => {
+    const { scheduleMode, linkedScheduleId, newSchedule, ...budgetData } = input;
+
+    // Handle schedule creation mode for scheduled-expense budgets
+    if (input.type === "scheduled-expense" && scheduleMode === "create" && newSchedule) {
+      // Atomic creation: create schedule and budget together in a transaction
+      try {
+        // Validate payeeId is provided (required for schedules)
+        if (!newSchedule.payeeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Payee is required for scheduled expense budgets",
+          });
+        }
+
+        return await db.transaction(async (tx) => {
+          // 1. Create the schedule first
+          const scheduleSlug = await generateUniqueSlugForDB(
+            tx,
+            "schedules",
+            schedules.slug,
+            slugify(newSchedule.name)
+          );
+
+          // Create schedule first (schedule_dates requires scheduleId)
+          // payeeId is validated above, safe to assert non-null
+          const scheduleResult = await tx
+            .insert(schedules)
+            .values({
+              workspaceId: ctx.workspaceId,
+              name: newSchedule.name,
+              slug: scheduleSlug,
+              amount: newSchedule.amount,
+              accountId: newSchedule.accountId,
+              payeeId: newSchedule.payeeId!,
+              categoryId: newSchedule.categoryId ?? null,
+              status: "active",
+              auto_add: true,
+            })
+            .returning();
+
+          const createdSchedule = scheduleResult[0];
+          if (!createdSchedule) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to create schedule",
+            });
+          }
+
+          // Map frequency to schedule date format
+          const frequencyMap: Record<
+            string,
+            { frequency: "daily" | "weekly" | "monthly" | "yearly"; interval: number }
+          > = {
+            weekly: { frequency: "weekly", interval: 1 },
+            "bi-weekly": { frequency: "weekly", interval: 2 },
+            monthly: { frequency: "monthly", interval: 1 },
+            quarterly: { frequency: "monthly", interval: 3 },
+            yearly: { frequency: "yearly", interval: 1 },
+          };
+
+          const freqConfig = frequencyMap[newSchedule.frequency] || {
+            frequency: "monthly" as const,
+            interval: 1,
+          };
+
+          // 2. Create schedule date record with scheduleId
+          const scheduleDateResult = await tx
+            .insert(scheduleDates)
+            .values({
+              scheduleId: createdSchedule.id,
+              start: newSchedule.startDate,
+              end: null,
+              frequency: freqConfig.frequency,
+              interval: freqConfig.interval,
+              limit: 0,
+              move_weekends: "none",
+              move_holidays: "none",
+              specific_dates: [],
+              on: false,
+              on_type: "day",
+              days: [],
+              weeks: [],
+              weeks_days: [],
+              week_days: [],
+            })
+            .returning();
+
+          const scheduleDateId = scheduleDateResult[0]?.id;
+
+          // 3. Update schedule with the dateId
+          if (scheduleDateId) {
+            await tx
+              .update(schedules)
+              .set({ dateId: scheduleDateId })
+              .where(eq(schedules.id, createdSchedule.id));
+          }
+
+          // 2. Create budget with schedule link in metadata
+          const budgetMetadata = {
+            ...((budgetData.metadata as Record<string, unknown>) || {}),
+            scheduledExpense: {
+              linkedScheduleId: createdSchedule.id,
+              autoTrack: true,
+              expectedAmount: newSchedule.amount,
+              frequency: newSchedule.frequency,
+            },
+          };
+
+          const budget = await budgetService.createBudget(
+            {
+              ...budgetData,
+              metadata: budgetMetadata,
+            } as any,
+            ctx.workspaceId
+          );
+
+          // 3. Update schedule with budget reference
+          await tx
+            .update(schedules)
+            .set({ budgetId: budget.id })
+            .where(
+              and(eq(schedules.id, createdSchedule.id), eq(schedules.workspaceId, ctx.workspaceId))
+            );
+
+          return budget;
+        });
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw translateDomainError(error);
+      }
+    }
+
+    // Handle linking existing schedule
+    if (input.type === "scheduled-expense" && scheduleMode === "link" && linkedScheduleId) {
+      try {
+        // Add schedule link to metadata
+        const budgetMetadata = {
+          ...((budgetData.metadata as Record<string, unknown>) || {}),
+          scheduledExpense: {
+            linkedScheduleId: linkedScheduleId,
+            autoTrack: true,
+          },
+        };
+
+        const budget = await budgetService.createBudget(
+          {
+            ...budgetData,
+            metadata: budgetMetadata,
+          } as any,
+          ctx.workspaceId
+        );
+
+        // Update schedule with budget reference
+        await db
+          .update(schedules)
+          .set({ budgetId: budget.id })
+          .where(and(eq(schedules.id, linkedScheduleId), eq(schedules.workspaceId, ctx.workspaceId)));
+
+        return budget;
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }
+
+    // Standard budget creation (no schedule)
     try {
-      return await budgetService.createBudget(input as any, ctx.workspaceId);
+      return await budgetService.createBudget(budgetData as any, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -350,9 +561,11 @@ export const budgetRoutes = t.router({
       throw translateDomainError(error);
     }
   }),
-  delete: publicProcedure.input(budgetIdSchema).mutation(async ({ input, ctx }) => {
+  delete: publicProcedure.input(deleteBudgetSchema).mutation(async ({ input, ctx }) => {
     try {
-      await budgetService.deleteBudget(input.id, ctx.workspaceId);
+      await budgetService.deleteBudget(input.id, ctx.workspaceId, {
+        deleteLinkedSchedule: input.deleteLinkedSchedule,
+      });
       return { success: true };
     } catch (error) {
       throw translateDomainError(error);
@@ -389,11 +602,14 @@ export const budgetRoutes = t.router({
     .input(
       z.object({
         ids: z.array(z.number().int().positive()).min(1),
+        deleteLinkedSchedules: z.boolean().optional().default(false),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await budgetService.bulkDelete(input.ids, ctx.workspaceId);
+        return await budgetService.bulkDelete(input.ids, ctx.workspaceId, {
+          deleteLinkedSchedules: input.deleteLinkedSchedules,
+        });
       } catch (error) {
         throw translateDomainError(error);
       }

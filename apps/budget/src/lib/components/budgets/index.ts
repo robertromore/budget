@@ -12,8 +12,6 @@ export { default as EnvelopeAllocationCard } from "./envelope-allocation-card.sv
 export { default as EnvelopeCreateSheet } from "./envelope-create-sheet.svelte";
 export { default as EnvelopeSettingsSheet } from "./envelope-settings-sheet.svelte";
 export { default as EnvelopeDeficitRecoveryDialog } from "./envelope-deficit-recovery-dialog.svelte";
-export { default as EnvelopeDragDropManager } from "./envelope-drag-drop-manager.svelte";
-export { default as FundAllocationPanel } from "./fund-allocation-panel.svelte";
 
 // Note: Route-specific components have been moved to:
 // - /routes/budgets/(components)/analytics/

@@ -191,7 +191,7 @@ async function handleDelete() {
   if (!budget) return;
 
   try {
-    await deleteBudgetMutation.mutateAsync(budget.id);
+    await deleteBudgetMutation.mutateAsync({ id: budget.id });
 
     deleteDialogOpen = false;
     open = false;
