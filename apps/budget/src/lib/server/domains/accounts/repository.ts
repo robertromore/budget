@@ -17,6 +17,7 @@ import type {
 export interface CreateAccountInput {
   name: string;
   slug: string;
+  seq?: number | undefined;
   notes?: string | undefined;
   onBudget?: boolean | undefined;
   accountType?: AccountType | undefined;

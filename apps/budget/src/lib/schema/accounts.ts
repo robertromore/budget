@@ -31,6 +31,7 @@ export const accounts = sqliteTable(
   "account",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    seq: integer("seq"), // Per-workspace sequential ID
     cuid: text("cuid").$defaultFn(() => createId()),
     workspaceId: integer("workspace_id")
       .notNull()

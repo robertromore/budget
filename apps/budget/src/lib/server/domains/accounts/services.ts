@@ -4,6 +4,7 @@ import { InputSanitizer } from "$lib/server/shared/validation";
 import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
 import { getLocalTimeZone, today } from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
+import { SequenceService } from "../sequences/services";
 import { TransactionService } from "../transactions/services";
 import { AccountRepository } from "./repository";
 import type { AccountWithTransactions } from "./types";
@@ -35,7 +36,8 @@ export interface UpdateAccountData {
 export class AccountService {
   constructor(
     private repository: AccountRepository,
-    private transactionService: TransactionService
+    private transactionService: TransactionService,
+    private sequenceService: SequenceService
   ) {}
 
   /**
@@ -64,11 +66,15 @@ export class AccountService {
     const baseSlug = slugify(sanitizedName);
     const uniqueSlug = await this.generateUniqueSlug(baseSlug);
 
+    // Get next sequence number for this workspace
+    const seq = await this.sequenceService.getNextSeq(workspaceId, "account");
+
     // Create account
     const account = await this.repository.create(
       {
         name: sanitizedName,
         slug: uniqueSlug,
+        seq,
         notes: sanitizedNotes,
         onBudget,
         accountType: data.accountType,

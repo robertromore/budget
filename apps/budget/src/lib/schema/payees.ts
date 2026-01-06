@@ -70,6 +70,7 @@ export const payees = sqliteTable(
   "payee",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    seq: integer("seq"), // Per-workspace sequential ID
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),

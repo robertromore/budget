@@ -673,6 +673,7 @@ export class CategoryRepository extends BaseRepository<
       .select({
         // Category fields
         id: categories.id,
+        seq: categories.seq,
         slug: categories.slug,
         name: categories.name,
         notes: categories.notes,
@@ -708,6 +709,7 @@ export class CategoryRepository extends BaseRepository<
 
     return results.map((row) => ({
       id: row.id,
+      seq: row.seq,
       slug: row.slug,
       name: row.name,
       notes: row.notes,

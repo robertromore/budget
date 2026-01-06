@@ -19,11 +19,14 @@ import { budgetTransactions } from "./budgets";
 import { categories, type Category } from "./categories";
 import { payees, type Payee } from "./payees";
 import { schedules } from "./schedules";
+import { workspaces } from "./workspaces";
 
 export const transactions = sqliteTable(
   "transaction",
   {
     id: integer("id").primaryKey().notNull(),
+    seq: integer("seq"), // Per-workspace sequential ID
+    workspaceId: integer("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
     accountId: integer("account_id")
       .references(() => accounts.id, { onDelete: "cascade" })
       .notNull(),
@@ -71,6 +74,7 @@ export const transactions = sqliteTable(
     index("relations_transaction_payee_idx").on(table.payeeId),
     index("relations_transaction_category_idx").on(table.categoryId),
     index("relations_transaction_schedule_idx").on(table.scheduleId),
+    index("transaction_workspace_idx").on(table.workspaceId),
     index("transaction_account_date_idx").on(table.accountId, table.date, table.id),
     index("transaction_date_idx").on(table.date),
     index("transaction_status_idx").on(table.status),
@@ -83,6 +87,10 @@ export const transactions = sqliteTable(
 );
 
 export const transactionsRelations = relations(transactions, ({ many, one }) => ({
+  workspace: one(workspaces, {
+    fields: [transactions.workspaceId],
+    references: [workspaces.id],
+  }),
   parent: one(transactions, {
     fields: [transactions.parentId],
     references: [transactions.id],

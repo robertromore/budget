@@ -115,6 +115,7 @@ export class CategoryGroupRepository extends BaseRepository<
     const memberCategories = await db
       .select({
         id: categories.id,
+        seq: categories.seq,
         workspaceId: categories.workspaceId,
         name: categories.name,
         slug: categories.slug,
@@ -318,6 +319,7 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
     const results = await db
       .select({
         id: categories.id,
+        seq: categories.seq,
         workspaceId: categories.workspaceId,
         name: categories.name,
         slug: categories.slug,

@@ -164,11 +164,11 @@ export const columns = (
       },
     },
     {
-      accessorKey: "id",
+      accessorKey: "seq",
       cell: (info) => {
         const transaction = info.row.original;
-        // Show dash for upcoming scheduled transactions
-        if (transaction.status === "scheduled" && typeof transaction.id === "string") {
+        // Show dash for upcoming scheduled transactions (no seq assigned)
+        if (transaction.status === "scheduled" || info.getValue() === null) {
           return "—";
         }
         return info.getValue();
@@ -178,13 +178,14 @@ export const columns = (
         renderComponent(DataTableColumnHeader as any, {
           column,
           table,
-          title: "ID",
+          title: "#",
         }),
       sortingFn: "alphanumeric",
       enableColumnFilter: false,
       enableGrouping: false,
       meta: {
-        label: "ID",
+        label: "#",
+        hiddenByDefault: true,
       },
     },
     {

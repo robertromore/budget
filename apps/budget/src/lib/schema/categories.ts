@@ -58,6 +58,7 @@ export const categories = sqliteTable(
   "categories",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    seq: integer("seq"), // Per-workspace sequential ID
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),

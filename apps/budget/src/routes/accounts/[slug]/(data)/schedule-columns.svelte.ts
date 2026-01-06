@@ -1,5 +1,4 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from '$lib/components/data-table';
-import { Checkbox } from '$lib/components/ui/checkbox';
 import { renderComponent } from '$lib/components/ui/data-table';
 import type { Schedule } from '$lib/schema/schedules';
 import type { SchedulesState } from '$lib/states/entities/schedules.svelte';
@@ -15,6 +14,8 @@ import ScheduleNameCell from '../../../schedules/(components)/(cells)/schedule-n
 import SchedulePatternCell from '../../../schedules/(components)/(cells)/schedule-pattern-cell.svelte';
 import ScheduleStatusCell from '../../../schedules/(components)/(cells)/schedule-status-cell.svelte';
 import ScheduleColumnHeader from '../../../schedules/(components)/schedule-column-header.svelte';
+import SelectionCheckboxCell from '../(components)/(cells)/selection-checkbox-cell.svelte';
+import SelectAllCheckboxCell from '../(components)/(cells)/select-all-checkbox-cell.svelte';
 
 // Filter options for schedule status
 const scheduleStatusOptions: FacetedFilterOption[] = [
@@ -74,30 +75,13 @@ export const columns = (
     {
       id: 'select-col',
       header: ({ table }) => {
-        const allPageRowsSelected = table.getIsAllPageRowsSelected();
-        const somePageRowsSelected = table.getIsSomePageRowsSelected();
-
-        return renderComponent(Checkbox, {
-          checked: allPageRowsSelected,
-          indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value: boolean) => {
-            if (value) {
-              table.toggleAllPageRowsSelected(true);
-            } else {
-              table.toggleAllRowsSelected(false);
-            }
-          },
-          controlledChecked: true,
-          'aria-label': 'Select all on page',
-        });
+        return renderComponent(SelectAllCheckboxCell, { table });
       },
-      cell: ({ row }) => {
-        return renderComponent(Checkbox, {
-          checked: row.getIsSelected(),
+      cell: ({ row, table }) => {
+        return renderComponent(SelectionCheckboxCell, {
+          row,
+          table,
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
-          controlledChecked: true,
-          'aria-label': 'Select row',
         });
       },
       enableColumnFilter: false,
@@ -105,17 +89,21 @@ export const columns = (
       enableHiding: false,
     },
     {
-      accessorKey: 'id',
+      accessorKey: 'seq',
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: 'ID',
+          title: '#',
         }),
-      cell: (info) => info.getValue(),
+      cell: (info) => {
+        const value = info.getValue();
+        return value !== null && value !== undefined ? value : '—';
+      },
       sortingFn: 'alphanumeric',
       enableColumnFilter: false,
       meta: {
-        label: 'ID',
+        label: '#',
+        hiddenByDefault: true,
       },
     },
     {

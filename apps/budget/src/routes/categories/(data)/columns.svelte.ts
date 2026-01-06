@@ -117,13 +117,17 @@ export const columns = (
       enableHiding: false,
     },
     {
-      accessorKey: "id",
-      header: "ID",
-      cell: (info) => info.getValue(),
+      accessorKey: "seq",
+      header: "#",
+      cell: (info) => {
+        const value = info.getValue();
+        return value !== null && value !== undefined ? value : "—";
+      },
       sortingFn: "alphanumeric",
       enableColumnFilter: false,
       meta: {
-        label: "ID",
+        label: "#",
+        hiddenByDefault: true,
       },
     },
     {

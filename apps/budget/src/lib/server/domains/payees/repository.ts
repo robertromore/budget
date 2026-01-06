@@ -521,6 +521,8 @@ export class PayeeRepository extends BaseRepository<
     return await db
       .select({
         id: payees.id,
+        seq: payees.seq,
+        workspaceId: payees.workspaceId,
         name: payees.name,
         slug: payees.slug,
         notes: payees.notes,
@@ -549,7 +551,6 @@ export class PayeeRepository extends BaseRepository<
         createdAt: payees.createdAt,
         updatedAt: payees.updatedAt,
         deletedAt: payees.deletedAt,
-        workspaceId: payees.workspaceId,
         defaultCategory: {
           id: categories.id,
           name: categories.name,
