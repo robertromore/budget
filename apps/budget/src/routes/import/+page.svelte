@@ -245,7 +245,8 @@ const previewData = $derived.by(() => {
     rows: parseResults.rows.map((row) => {
       const override = entityOverrides[row.rowIndex];
       // Store the original payee value from the CSV before any overrides
-      const originalPayee = row.normalizedData['payee'] as string | null;
+      // Use 'originalPayee' if set by infer-categories (true raw value), otherwise fall back to 'payee'
+      const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
 
       return {
         ...row,
@@ -860,17 +861,24 @@ async function applySmartCategorization() {
   if (!parseResults) return;
 
   try {
+    // Get workspaceId from layout data for alias lookups
+    const workspaceId = data.currentWorkspace?.id;
+
     const response = await fetch('/api/import/infer-categories', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ rows: parseResults.rows }),
+      body: JSON.stringify({
+        rows: parseResults.rows,
+        workspaceId, // Include workspaceId to enable payee alias matching
+      }),
     });
 
     if (response.ok) {
       const result = await response.json();
       // Update parseResults with normalized payees and inferred categories
+      // This now includes alias-matched payees with their IDs and default categories
       parseResults.rows = result.rows;
     }
   } catch (err) {
@@ -954,10 +962,6 @@ async function handleFileSelected(file: File) {
           if (profile) {
             matchedProfile = profile;
             detectedMapping = profile.mapping;
-            toast.success(`Matched import profile: "${profile.name}"`, {
-              description: 'Column mapping has been auto-filled from your saved profile.',
-              icon: Sparkles,
-            });
 
             // Record usage of this profile
             trpc().importProfileRoutes.recordUsage.mutate({ id: profile.id });
@@ -1174,10 +1178,14 @@ async function processImport() {
             // Apply entity overrides (but NOT amount reversal - backend will handle that)
             payee:
               override?.payeeName !== undefined ? override.payeeName : row.normalizedData['payee'],
+            // Include explicit payeeId if user selected an existing payee
+            payeeId: override?.payeeId ?? row.normalizedData['payeeId'] ?? null,
             category:
               override?.categoryName !== undefined
                 ? override.categoryName
                 : row.normalizedData['category'],
+            // Include explicit categoryId if user selected an existing category
+            categoryId: override?.categoryId ?? row.normalizedData['categoryId'] ?? null,
             description:
               override?.description !== undefined
                 ? override.description
@@ -1332,6 +1340,11 @@ async function processImport() {
         });
         await queryClient.invalidateQueries({
           queryKey: ['transactions', 'summary', accountIdNum],
+          refetchType: 'all',
+        });
+        // Invalidate analytics/chart queries that depend on transaction data
+        await queryClient.invalidateQueries({
+          queryKey: ['transactions', 'analytics'],
           refetchType: 'all',
         });
       }
@@ -1626,19 +1639,32 @@ $effect(() => {
         </div>
       {:else if currentStep === 'map-columns' && parseResults && rawCSVData}
         {#if matchedProfile}
-          <div class="bg-primary/10 border-primary/20 mb-4 flex items-center gap-2 rounded-lg border p-3">
-            <Sparkles class="text-primary h-4 w-4" />
-            <span class="text-sm">
-              Using saved profile: <strong>{matchedProfile.name}</strong>
-            </span>
+          <div class="bg-primary/10 border-primary/20 mb-4 flex items-center justify-between rounded-lg border p-3">
+            <div class="flex items-center gap-2">
+              <Sparkles class="text-primary h-4 w-4" />
+              <span class="text-sm">
+                Using saved profile: <strong>{matchedProfile.name}</strong>
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onclick={() => {
+                matchedProfile = null;
+                detectedMapping = null;
+              }}>
+              Undo
+            </Button>
           </div>
         {/if}
-        <ColumnMapper
-          rawColumns={Object.keys(rawCSVData[0] || {})}
-          initialMapping={detectedMapping ?? undefined}
-          sampleData={rawCSVData}
-          onNext={handleColumnMappingComplete}
-          onBack={goBackToUpload} />
+        {#key matchedProfile?.id}
+          <ColumnMapper
+            rawColumns={Object.keys(rawCSVData[0] || {})}
+            initialMapping={detectedMapping ?? undefined}
+            sampleData={rawCSVData}
+            onNext={handleColumnMappingComplete}
+            onBack={goBackToUpload} />
+        {/key}
       {:else if currentStep === 'preview' && parseResults}
         <div class="space-y-6">
           <!-- Preview Table -->

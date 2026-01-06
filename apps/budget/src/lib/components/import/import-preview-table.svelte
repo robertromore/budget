@@ -76,7 +76,8 @@ let sorting = $state<SortingState>([]);
 let columnFilters = $state<ColumnFiltersState>([]);
 let columnVisibility = $state<VisibilityState>({});
 
-// Initialize selection with only valid rows (matching old ImportDataTable behavior)
+
+// Initialize selection with only valid rows
 let hasInitialized = $state(false);
 $effect(() => {
   if (!hasInitialized && data.length > 0) {

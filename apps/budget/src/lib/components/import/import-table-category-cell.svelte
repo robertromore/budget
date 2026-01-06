@@ -66,6 +66,8 @@ const categoriesArray = $derived(
 
 // Get the current value from the row data (includes entityOverrides applied by parent)
 const externalCategoryName = $derived(row.original.normalizedData['category'] as string | undefined);
+// Explicit categoryId from alias match or user selection
+const externalCategoryId = $derived(row.original.normalizedData['categoryId'] as number | null | undefined);
 
 // Local state for the selected category - using private vars for accessor pattern
 let _selectedCategoryName = $state<string>('');
@@ -74,8 +76,20 @@ let _selectedCategoryId = $state<number | null>(null);
 // Sync from external data on initial load
 let hasInitialized = $state(false);
 $effect(() => {
-  if (!hasInitialized && externalCategoryName !== undefined) {
+  if (!hasInitialized && (externalCategoryName !== undefined || externalCategoryId !== undefined)) {
     hasInitialized = true;
+
+    // First check for explicit categoryId (from alias match or previous selection)
+    if (externalCategoryId && typeof externalCategoryId === 'number') {
+      const matchById = categoriesArray.find((c) => c.id === externalCategoryId);
+      if (matchById) {
+        _selectedCategoryId = matchById.id;
+        _selectedCategoryName = matchById.name || '';
+        return;
+      }
+    }
+
+    // Fall back to name lookup
     const newName = externalCategoryName || '';
     _selectedCategoryName = newName;
 

@@ -42,6 +42,8 @@ const DEFAULT_CONFIG: PayeeGrouperConfig = {
 export interface PayeeGroupInput {
   rowIndex: number;
   payeeName: string;
+  /** Raw CSV payee string for alias tracking. Falls back to payeeName if not provided. */
+  originalPayee?: string;
 }
 
 /**
@@ -74,9 +76,10 @@ export class PayeeGrouper {
     existingPayees: Payee[]
   ): Promise<PayeeGrouperResult> {
     // Step 1: Normalize all payee names
+    // Use input.originalPayee (raw CSV string) if provided, otherwise fall back to payeeName
     const normalizedInputs = inputs.map((input) => ({
       ...input,
-      originalPayee: input.payeeName,
+      originalPayee: input.originalPayee || input.payeeName,
       normalizedPayee: this.normalizeForGrouping(input.payeeName),
       cleanedPayee: this.payeeMatcher.cleanPayeeName(input.payeeName),
     }));

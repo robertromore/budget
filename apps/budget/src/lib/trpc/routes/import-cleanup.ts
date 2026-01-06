@@ -14,6 +14,7 @@ import { z } from "zod/v4";
 const payeeGroupInputSchema = z.object({
   rowIndex: z.number().int(),
   payeeName: z.string(),
+  originalPayee: z.string().optional(), // Raw CSV payee string for alias tracking
 });
 
 const analyzePayeesSchema = z.object({
@@ -91,8 +92,9 @@ export const importCleanupRoutes = t.router({
           z.object({
             rowIndex: z.number().int(),
             payeeName: z.string(),
-            amount: z.number(),
-            date: z.string(),
+            originalPayee: z.string().optional(), // Raw CSV payee string for alias tracking
+            amount: z.number().optional(), // Some rows may not have amounts
+            date: z.string().optional(), // Some rows may not have dates
             memo: z.string().optional(),
           })
         ),
@@ -109,12 +111,22 @@ export const importCleanupRoutes = t.router({
         const grouper = createPayeeGrouper(input.payeeGrouperConfig);
         const suggester = createCategorySuggester(input.categorySuggesterConfig);
 
+        // Filter rows for category suggestions - only include rows with amount and date
+        const rowsForCategorySuggestion = input.rows
+          .filter((r): r is typeof r & { amount: number; date: string } =>
+            r.amount !== undefined && r.date !== undefined
+          );
+
         const [payeeResult, categoryResult] = await Promise.all([
           grouper.analyzePayees(
-            input.rows.map((r) => ({ rowIndex: r.rowIndex, payeeName: r.payeeName })),
+            input.rows.map((r) => ({
+              rowIndex: r.rowIndex,
+              payeeName: r.payeeName,
+              originalPayee: r.originalPayee, // Pass through for alias tracking
+            })),
             existingPayees
           ),
-          suggester.suggestCategories(ctx.workspaceId, input.rows),
+          suggester.suggestCategories(ctx.workspaceId, rowsForCategorySuggestion),
         ]);
 
         return {

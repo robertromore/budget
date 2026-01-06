@@ -90,6 +90,8 @@ async function analyzeData() {
 			.map((row) => ({
 				rowIndex: row.rowIndex,
 				payeeName: row.normalizedData['payee'] as string,
+				// Pass the raw CSV payee string for alias tracking
+				originalPayee: (row.normalizedData['originalPayee'] || row.normalizedData['payee']) as string,
 				amount: row.normalizedData['amount'] as number,
 				date: row.normalizedData['date'] as string,
 				memo: row.normalizedData['description'] || row.normalizedData['notes']

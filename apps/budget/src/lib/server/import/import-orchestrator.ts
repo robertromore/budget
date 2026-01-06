@@ -244,7 +244,19 @@ export class ImportOrchestrator {
     // Match or create payee
     let payeeId: number | null = null;
     let payeeDetails: string | null = null;
-    if (normalized["payee"]) {
+
+    // First check if an explicit payeeId was provided by the user (from import preview selection)
+    if (normalized["payeeId"] && typeof normalized["payeeId"] === "number") {
+      // Verify the payee exists in our list
+      const explicitPayee = existingPayees.find((p) => p.id === normalized["payeeId"]);
+      if (explicitPayee) {
+        payeeId = explicitPayee.id;
+        logger.debug("Using explicit payeeId from user selection", { payeeId, payeeName: explicitPayee.name });
+      }
+    }
+
+    // If no explicit payeeId, try to match by name
+    if (!payeeId && normalized["payee"]) {
       // Normalize the payee name and extract details
       const { name: cleanedPayeeName, details } = this.payeeMatcher.normalizePayeeName(
         normalized["payee"]
@@ -300,7 +312,7 @@ export class ImportOrchestrator {
                 // Track the mapping for alias creation
                 if (createdPayeeMappings) {
                   createdPayeeMappings.push({
-                    originalName: normalized["payee"], // The raw import string
+                    originalName: (normalized["originalPayee"] || normalized["payee"]) as string, // The raw import string
                     normalizedName: cleanedPayeeName,   // What we stored in payee.name
                     payeeId: newPayee.id,
                   });
@@ -331,7 +343,7 @@ export class ImportOrchestrator {
                     // Track the mapping for alias creation
                     if (createdPayeeMappings) {
                       createdPayeeMappings.push({
-                        originalName: normalized["payee"],
+                        originalName: (normalized["originalPayee"] || normalized["payee"]) as string,
                         normalizedName: cleanedPayeeName,
                         payeeId: restored.id,
                       });
@@ -358,8 +370,20 @@ export class ImportOrchestrator {
 
     // Match or create category
     let categoryId: number | null = null;
-    if (normalized["category"] || normalized["payee"] || normalized["description"]) {
-      // If explicit category is provided, try exact match first
+
+    // First check if an explicit categoryId was provided by the user (from import preview selection)
+    if (normalized["categoryId"] && typeof normalized["categoryId"] === "number") {
+      // Verify the category exists in our list
+      const explicitCategory = existingCategories.find((c) => c.id === normalized["categoryId"]);
+      if (explicitCategory) {
+        categoryId = explicitCategory.id;
+        logger.debug("Using explicit categoryId from user selection", { categoryId, categoryName: explicitCategory.name });
+      }
+    }
+
+    // If no explicit categoryId, try to match by name or other methods
+    if (!categoryId && (normalized["category"] || normalized["payee"] || normalized["description"])) {
+      // If explicit category name is provided, try exact match first
       let categoryMatch: any = null;
       if (normalized["category"]) {
         // Check for exact name match only (case-insensitive)
