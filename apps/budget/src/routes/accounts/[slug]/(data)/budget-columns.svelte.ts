@@ -1,4 +1,3 @@
-import { Checkbox } from '$lib/components/ui/checkbox';
 import { renderComponent } from '$lib/components/ui/data-table';
 import type { BudgetEnforcementLevel, BudgetProgressStatus } from '$lib/schema/budgets';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
@@ -11,6 +10,8 @@ import BudgetStatusCell from '../../../budgets/(components)/(cells)/budget-statu
 import BudgetNameCell from '../../../budgets/(components)/(cells)/budget-name-cell.svelte';
 import BudgetRemainingCell from '../../../budgets/(components)/(cells)/budget-remaining-cell.svelte';
 import BudgetActionsCell from '../../../budgets/(components)/(cells)/budget-actions-cell.svelte';
+import BudgetSelectionCheckboxCell from '../(components)/(cells)/budget-selection-checkbox-cell.svelte';
+import SelectAllCheckboxCell from '../(components)/(cells)/select-all-checkbox-cell.svelte';
 
 interface BudgetColumnActions {
   onView: (budget: BudgetWithRelations) => void;
@@ -70,30 +71,13 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
     {
       id: 'select-col',
       header: ({ table }) => {
-        const allPageRowsSelected = table.getIsAllPageRowsSelected();
-        const somePageRowsSelected = table.getIsSomePageRowsSelected();
-
-        return renderComponent(Checkbox, {
-          checked: allPageRowsSelected,
-          indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value: boolean) => {
-            if (value) {
-              table.toggleAllPageRowsSelected(true);
-            } else {
-              table.toggleAllRowsSelected(false);
-            }
-          },
-          controlledChecked: true,
-          'aria-label': 'Select all on page',
-        });
+        return renderComponent(SelectAllCheckboxCell, { table });
       },
-      cell: ({ row }) => {
-        return renderComponent(Checkbox, {
-          checked: row.getIsSelected(),
+      cell: ({ row, table }) => {
+        return renderComponent(BudgetSelectionCheckboxCell, {
+          row,
+          table,
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
-          controlledChecked: true,
-          'aria-label': 'Select row',
         });
       },
       enableColumnFilter: false,

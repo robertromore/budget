@@ -9,7 +9,7 @@ import type { Transaction } from '$lib/schema';
 import type { Schedule } from '$lib/schema/schedules';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
-import { deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
+import { deleteBudgetDialog, deleteBudgetId, deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
 import { parseDate } from '@internationalized/date';
@@ -31,14 +31,12 @@ import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 // Local component imports
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import DebtAccountMetrics from '$lib/components/accounts/debt-account-metrics.svelte';
 import BudgetRecommendationsPanel from '$lib/components/budgets/budget-recommendations-panel.svelte';
 import ScheduleRecommendationsPanel from '$lib/components/schedules/schedule-recommendations-panel.svelte';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import { rpc } from '$lib/query';
-import { getByAccount as getBudgetsByAccount } from '$lib/query/budgets';
-import { getByAccount as getSchedulesByAccount } from '$lib/query/schedules';
-import { isDebtAccount } from '$lib/schema/accounts';
+import { getByAccount as getBudgetsByAccount, getRelatedBudgets } from '$lib/query/budgets';
+import { getByAccount as getSchedulesByAccount, bulkRemove as bulkRemoveSchedules } from '$lib/query/schedules';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { arePayeesSimilar } from '$lib/utils/payee-matching';
@@ -56,6 +54,7 @@ import {
   SettingsTab,
   TransactionTableContainer,
 } from './(components)';
+import AccountBudgetsGrouped from './(components)/account-budgets-grouped.svelte';
 import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
 import AccountSchedulesTable from './(components)/account-schedules-table.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
@@ -194,6 +193,12 @@ const budgetsQuery = $derived(
 );
 const budgets = $derived(budgetsQuery?.data ?? []);
 
+// Grouped budgets query for the new grouped display
+const groupedBudgetsQuery = $derived(
+  accountId && !isDemoView ? getRelatedBudgets(Number(accountId)).options() : undefined
+);
+const groupedBudgets = $derived(groupedBudgetsQuery?.data ?? { spendingLimits: [], savingsGoals: [], recurringExpenses: [], totalCount: 0 });
+
 // Create the mutations once
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
 const saveTransactionMutation = rpc.transactions.saveTransaction.options();
@@ -204,9 +209,11 @@ const bulkUpdateCategoryMutation = rpc.transactions.bulkUpdateCategory.options()
 // Budget mutations
 const duplicateBudgetMutation = rpc.budgets.duplicateBudget.options();
 const updateBudgetMutation = rpc.budgets.updateBudget.options();
-const deleteBudgetMutation = rpc.budgets.deleteBudget.options();
 const bulkDeleteBudgetsMutation = rpc.budgets.bulkDeleteBudgets.options();
 const bulkArchiveBudgetsMutation = rpc.budgets.bulkArchiveBudgets.options();
+
+// Schedule mutations
+const bulkDeleteSchedulesMutation = bulkRemoveSchedules.options();
 
 const queryClient = useQueryClient();
 
@@ -326,6 +333,10 @@ function handleAddExpense() {
 // Schedule preview state
 let schedulePreviewOpen = $state(false);
 let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
+
+// Schedule bulk delete state
+let bulkDeleteSchedulesDialogOpen = $state(false);
+let schedulesToDelete = $state<Schedule[]>([]);
 
 // Recommendations state
 let budgetRecommendationsSheetOpen = $state(false);
@@ -722,13 +733,21 @@ const deleteSchedule = (schedule: Schedule) => {
   deleteScheduleDialog.setTrue();
 };
 
-const bulkDeleteSchedules = async (schedulesList: Schedule[]) => {
-  // For now, handle first schedule using the global delete dialog
-  // Could be enhanced with bulk delete mutation later
-  const firstSchedule = schedulesList[0];
-  if (firstSchedule) {
-    deleteScheduleId.current = firstSchedule.id;
-    deleteScheduleDialog.setTrue();
+const bulkDeleteSchedules = (schedulesList: Schedule[]) => {
+  if (schedulesList.length === 0) return;
+  schedulesToDelete = schedulesList;
+  bulkDeleteSchedulesDialogOpen = true;
+};
+
+const confirmBulkDeleteSchedules = async () => {
+  if (schedulesToDelete.length === 0) return;
+
+  try {
+    await bulkDeleteSchedulesMutation.mutateAsync(schedulesToDelete.map((s) => s.id));
+    bulkDeleteSchedulesDialogOpen = false;
+    schedulesToDelete = [];
+  } catch (error) {
+    console.error('Failed to bulk delete schedules:', error);
   }
 };
 
@@ -757,17 +776,14 @@ const archiveBudget = async (budget: BudgetWithRelations) => {
   }
 };
 
-const handleDeleteBudget = async (budget: BudgetWithRelations) => {
-  try {
-    await deleteBudgetMutation.mutateAsync(budget.id);
-  } catch (error) {
-    console.error('Failed to delete budget:', error);
-  }
+const handleDeleteBudget = (budget: BudgetWithRelations) => {
+  deleteBudgetId.current = budget.id;
+  deleteBudgetDialog.setTrue();
 };
 
 const bulkDeleteBudgets = async (budgetsList: BudgetWithRelations[]) => {
   try {
-    await bulkDeleteBudgetsMutation.mutateAsync(budgetsList.map((b) => b.id));
+    await bulkDeleteBudgetsMutation.mutateAsync({ ids: budgetsList.map((b) => b.id) });
   } catch (error) {
     console.error('Failed to bulk delete budgets:', error);
   }
@@ -958,13 +974,12 @@ $effect(() => {
       <!-- Analytics Tab Content -->
       <Tabs.Content value="analytics" class="tabs-connected-content space-y-4" data-help-id="analytics-tab" data-help-title="Analytics Tab">
         {#if transactions && !isLoading && activeTab === 'analytics'}
-          {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
-            <!-- Credit Card Metrics Dashboard -->
-            <DebtAccountMetrics account={accountData} transactions={formattedTransactions} />
-          {:else}
-            <!-- Standard Analytics Dashboard -->
-            <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
-          {/if}
+          <AnalyticsDashboard
+            transactions={formattedTransactions}
+            accountId={accountId + ''}
+            accountType={accountData?.accountType ?? undefined}
+            account={accountData}
+          />
         {:else if isLoading}
           <div class="space-y-4">
             <div class="flex items-center justify-between">
@@ -1007,7 +1022,7 @@ $effect(() => {
 
       <!-- Budgets Tab Content -->
       <Tabs.Content value="budgets" class="tabs-connected-content space-y-4" data-help-id="budgets-tab" data-help-title="Budgets Tab">
-        {#if budgets && !isLoading && activeTab === 'budgets'}
+        {#if groupedBudgets && !isLoading && activeTab === 'budgets'}
           <div class="flex items-center justify-between" data-tour-id="budgets-progress">
             <div></div>
             <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)} data-tour-id="budgets-allocation">
@@ -1015,8 +1030,8 @@ $effect(() => {
               Recommendations
             </Button>
           </div>
-          <AccountBudgetsTable
-            {budgets}
+          <AccountBudgetsGrouped
+            {groupedBudgets}
             accountId={Number(accountId)}
             accountSlug={accountSlug || ''}
             onView={viewBudget}
@@ -1104,11 +1119,12 @@ $effect(() => {
           <HsaDashboard account={accountData} />
         {:else if activeTab === 'analytics'}
           {#if transactions && !isLoading}
-            {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
-              <DebtAccountMetrics account={accountData} transactions={formattedTransactions} />
-            {:else}
-              <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
-            {/if}
+            <AnalyticsDashboard
+              transactions={formattedTransactions}
+              accountId={accountId + ''}
+              accountType={accountData?.accountType ?? undefined}
+              account={accountData}
+            />
           {:else if isLoading}
             <div class="space-y-4">
               <div class="flex items-center justify-between">
@@ -1145,7 +1161,7 @@ $effect(() => {
             </div>
           {/if}
         {:else if activeTab === 'budgets'}
-          {#if budgets && !isLoading}
+          {#if groupedBudgets && !isLoading}
             <div class="flex items-center justify-between">
               <div></div>
               <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)}>
@@ -1153,8 +1169,8 @@ $effect(() => {
                 Recommendations
               </Button>
             </div>
-            <AccountBudgetsTable
-              {budgets}
+            <AccountBudgetsGrouped
+              {groupedBudgets}
               accountId={Number(accountId)}
               accountSlug={accountSlug || ''}
               onView={viewBudget}
@@ -1196,7 +1212,7 @@ $effect(() => {
       </div>
     {/if}
 
-    <!-- Bulk Delete Confirmation Dialog -->
+    <!-- Bulk Delete Transactions Confirmation Dialog -->
     <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
       <AlertDialog.Content>
         <AlertDialog.Header>
@@ -1218,6 +1234,32 @@ $effect(() => {
             disabled={isDeletingBulk}
             class={buttonVariants({ variant: 'destructive' })}>
             {isDeletingBulk ? 'Deleting...' : 'Delete'}
+          </AlertDialog.Action>
+        </AlertDialog.Footer>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
+
+    <!-- Bulk Delete Schedules Confirmation Dialog -->
+    <AlertDialog.Root bind:open={bulkDeleteSchedulesDialogOpen}>
+      <AlertDialog.Content>
+        <AlertDialog.Header>
+          <AlertDialog.Title>
+            Delete {schedulesToDelete.length} Schedule{schedulesToDelete.length > 1 ? 's' : ''}
+          </AlertDialog.Title>
+          <AlertDialog.Description>
+            Are you sure you want to delete {schedulesToDelete.length} schedule{schedulesToDelete.length > 1
+              ? 's'
+              : ''}? This action cannot be undone. Any transactions linked to these schedules will
+            have their schedule reference removed.
+          </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+          <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+          <AlertDialog.Action
+            onclick={confirmBulkDeleteSchedules}
+            disabled={bulkDeleteSchedulesMutation.isPending}
+            class={buttonVariants({ variant: 'destructive' })}>
+            {bulkDeleteSchedulesMutation.isPending ? 'Deleting...' : 'Delete'}
           </AlertDialog.Action>
         </AlertDialog.Footer>
       </AlertDialog.Content>

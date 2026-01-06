@@ -176,6 +176,14 @@ const columnVisibility = () => {
   const sortingState = sorting();
   const firstSort = sortingState[0];
 
+  // Hide columns marked with hiddenByDefault in meta, unless user has explicitly set visibility
+  for (const col of columns) {
+    const colId = col.id ?? (col as any).accessorKey;
+    if (colId && (col.meta as any)?.hiddenByDefault && !(colId in visibleColumns)) {
+      visibleColumns = Object.assign({}, visibleColumns, { [colId]: false });
+    }
+  }
+
   // Hide balance column when sorting by columns other than id or date
   if (sortingState.length > 0 && firstSort && firstSort.id !== 'id' && firstSort.id !== 'date') {
     visibleColumns = Object.assign({}, visibleColumns, { balance: false });
