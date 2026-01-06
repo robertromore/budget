@@ -36,8 +36,15 @@ const selectedPayeeName = $derived(
   (row.original.normalizedData['payee'] as string | null | undefined) ?? ''
 );
 
-// Find matching payee ID from payee name
+// Get payee ID - prefer explicit ID from alias match, fall back to name lookup
 const selectedPayeeId = $derived.by(() => {
+  // First check if we have an explicit payeeId (from alias match or user selection)
+  const explicitId = row.original.normalizedData['payeeId'] as number | null | undefined;
+  if (explicitId && typeof explicitId === 'number') {
+    return explicitId;
+  }
+
+  // Fall back to name lookup
   const payeeName = selectedPayeeName;
   if (!payeeName) return null;
   const match = payeesArray.find((p) => p.name?.toLowerCase() === payeeName.toLowerCase());
@@ -104,7 +111,7 @@ function handleSelect(payeeId: number, payeeName: string) {
       onAliasCandidate?.(rowIndex, {
         rawString: rawPayeeString.trim(),
         payeeId,
-        payeeName,  // Include name for resolution after import if payee is new
+        payeeName,
       });
     }
   }
@@ -117,6 +124,16 @@ function handleCreateNew() {
   const nameToCreate = searchValue.trim();
   if (nameToCreate) {
     onUpdate?.(rowIndex, null, nameToCreate);
+
+    // Emit alias candidate if the raw string differs from the new payee name
+    if (rawPayeeString && rawPayeeString.trim() !== nameToCreate) {
+      onAliasCandidate?.(rowIndex, {
+        rawString: rawPayeeString.trim(),
+        payeeId: undefined,
+        payeeName: nameToCreate,
+      });
+    }
+
     searchValue = '';
     open = false;
   }
@@ -127,6 +144,15 @@ function handleSelectTemporary(payeeName: string) {
 
   if (hasChanged) {
     onUpdate?.(rowIndex, null, payeeName);
+
+    // Emit alias candidate if the raw string differs from the selected payee name
+    if (rawPayeeString && rawPayeeString.trim() !== payeeName) {
+      onAliasCandidate?.(rowIndex, {
+        rawString: rawPayeeString.trim(),
+        payeeId: undefined,
+        payeeName,
+      });
+    }
   }
 
   searchValue = '';

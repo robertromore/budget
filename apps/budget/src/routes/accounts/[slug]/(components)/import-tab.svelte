@@ -17,6 +17,7 @@ import { Slider } from '$lib/components/ui/slider';
 import type { ImportProfile } from '$lib/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { currentWorkspace } from '$lib/states/current-workspace.svelte';
 import { TOUR_TIMING } from '$lib/constants/tour-steps';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { trpc } from '$lib/trpc/client';
@@ -53,6 +54,9 @@ let {
 } = $props();
 
 const queryClient = useQueryClient();
+
+// Get workspace state at component initialization (getContext must be called during init)
+const workspaceState = currentWorkspace.get();
 
 type Step =
 	| 'upload'
@@ -176,7 +180,8 @@ const previewData = $derived.by(() => {
 		rows: parseResults.rows.map((row) => {
 			const override = entityOverrides[row.rowIndex];
 			// Store the original payee value from the CSV before any overrides
-			const originalPayee = row.normalizedData['payee'] as string | null;
+			// Use 'originalPayee' if set by infer-categories (true raw value), otherwise fall back to 'payee'
+			const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
 
 			return {
 				...row,
@@ -707,13 +712,19 @@ function cancelBulkUpdate() {
 async function applySmartCategorization() {
 	if (!parseResults) return;
 
+	// Use workspaceId from the pre-initialized workspace state
+	const workspaceId = workspaceState?.workspaceId;
+
 	try {
 		const response = await fetch('/api/import/infer-categories', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({ rows: parseResults.rows })
+			body: JSON.stringify({
+				rows: parseResults.rows,
+				workspaceId  // Pass workspaceId explicitly for payee alias matching
+			})
 		});
 
 		if (response.ok) {
@@ -781,10 +792,6 @@ async function handleFileSelected(file: File) {
 					if (profile) {
 						matchedProfile = profile;
 						detectedMapping = profile.mapping;
-						toast.success(`Matched import profile: "${profile.name}"`, {
-							description: 'Column mapping has been auto-filled from your saved profile.',
-							icon: Sparkles
-						});
 
 						trpc().importProfileRoutes.recordUsage.mutate({ id: profile.id });
 					}
@@ -859,6 +866,10 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
 				scheduleMatches = result.scheduleMatches;
 			}
 
+			// Apply smart categorization with the remapped data
+			// This handles payee alias matching and category inference
+			await applySmartCategorization();
+
 			currentStep = 'preview';
 		} else {
 			error = result.error || 'Failed to remap CSV with custom column mapping';
@@ -889,9 +900,12 @@ async function runCleanupAnalysis() {
 			.filter((row) => row.normalizedData['payee'])
 			.map((row) => {
 				const data = row.normalizedData as Record<string, any>;
+				const originalPayee = (row as any).originalPayee || data['originalPayee'] as string | undefined;
 				return {
 					rowIndex: row.rowIndex,
 					payeeName: data['payee'] as string,
+					// Pass the raw CSV payee string for alias tracking
+					originalPayee,
 					amount: data['amount'] as number,
 					date: data['date'] as string,
 					memo: data['description'] || data['notes']
@@ -1532,7 +1546,7 @@ async function processImport() {
 			// This records raw string → category mappings for future imports
 			if (result.result.createdCategoryMappings && result.result.createdCategoryMappings.length > 0) {
 				try {
-					const categoryAliasesToCreate = result.result.createdCategoryMappings.map((mapping) => ({
+					const categoryAliasesToCreate = result.result.createdCategoryMappings.map((mapping: { rawString: string; categoryId: number; payeeId?: number; wasAiSuggested?: boolean }) => ({
 						rawString: mapping.rawString,
 						categoryId: mapping.categoryId,
 						payeeId: mapping.payeeId,
@@ -1563,6 +1577,11 @@ async function processImport() {
 			});
 			await queryClient.invalidateQueries({
 				queryKey: ['transactions', 'summary', accountId],
+				refetchType: 'all'
+			});
+			// Invalidate analytics/chart queries that depend on transaction data
+			await queryClient.invalidateQueries({
+				queryKey: ['transactions', 'analytics'],
 				refetchType: 'all'
 			});
 			// Also invalidate general transaction queries
@@ -1772,19 +1791,32 @@ $effect(() => {
 		<div data-tour-id="import-column-mapping">
 			{#if matchedProfile}
 				<div
-					class="bg-primary/10 border-primary/20 mb-4 flex items-center gap-2 rounded-lg border p-3">
-					<Sparkles class="text-primary h-4 w-4" />
-					<span class="text-sm">
-						Using saved profile: <strong>{matchedProfile.name}</strong>
-					</span>
+					class="bg-primary/10 border-primary/20 mb-4 flex items-center justify-between rounded-lg border p-3">
+					<div class="flex items-center gap-2">
+						<Sparkles class="text-primary h-4 w-4" />
+						<span class="text-sm">
+							Using saved profile: <strong>{matchedProfile.name}</strong>
+						</span>
+					</div>
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={() => {
+							matchedProfile = null;
+							detectedMapping = null;
+						}}>
+						Undo
+					</Button>
 				</div>
 			{/if}
+				{#key matchedProfile?.id}
 				<ColumnMapper
-				rawColumns={Object.keys(rawCSVData[0] || {})}
-				initialMapping={detectedMapping ?? undefined}
-				sampleData={rawCSVData}
-				onNext={handleColumnMappingComplete}
-				onBack={goBackToUpload} />
+					rawColumns={Object.keys(rawCSVData[0] || {})}
+					initialMapping={detectedMapping ?? undefined}
+					sampleData={rawCSVData}
+					onNext={handleColumnMappingComplete}
+					onBack={goBackToUpload} />
+			{/key}
 		</div>
 	{:else if currentStep === 'preview' && parseResults && previewData}
 		<div class="space-y-4" data-tour-id="import-preview-table">
