@@ -119,6 +119,7 @@ function generateDemoAccount(): Account {
   const now = new Date().toISOString();
   return {
     id: -1, // Negative ID to distinguish from real accounts
+    seq: 1, // Demo account gets seq 1
     cuid: "demo-checking-account",
     workspaceId: -1,
     name: "Demo Checking",

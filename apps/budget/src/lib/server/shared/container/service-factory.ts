@@ -14,8 +14,11 @@
  */
 
 import { AccountRepository } from "$lib/server/domains/accounts/repository";
+import { AnnotationRepository } from "$lib/server/domains/annotations/repository";
+import { ReportTemplateRepository } from "$lib/server/domains/reports/repository";
 import { BudgetRepository } from "$lib/server/domains/budgets/repository";
 import { CategoryRepository } from "$lib/server/domains/categories/repository";
+import { SequenceRepository } from "$lib/server/domains/sequences/repository";
 import {
   CategoryGroupMembershipRepository,
   CategoryGroupRecommendationRepository,
@@ -32,6 +35,8 @@ import { ScheduleSkipRepository } from "$lib/server/domains/schedules/skip-repos
 import { TransactionRepository } from "$lib/server/domains/transactions/repository";
 
 import { AccountService } from "$lib/server/domains/accounts/services";
+import { AnnotationService } from "$lib/server/domains/annotations/services";
+import { ReportTemplateService } from "$lib/server/domains/reports/services";
 import { BudgetAnalysisService } from "$lib/server/domains/budgets/budget-analysis-service";
 import { BudgetGroupAutomationService } from "$lib/server/domains/budgets/budget-group-automation-service";
 import { BudgetCalculationService } from "$lib/server/domains/budgets/calculation-service";
@@ -71,6 +76,7 @@ import { PayeeMLCoordinator } from "$lib/server/domains/payees/ml-coordinator";
 import { PayeeService } from "$lib/server/domains/payees/services";
 import { SubscriptionManagementService } from "$lib/server/domains/payees/subscription-management";
 import { ScheduleService } from "$lib/server/domains/schedules/services";
+import { SequenceService } from "$lib/server/domains/sequences/services";
 import { TransactionService } from "$lib/server/domains/transactions/services";
 
 export class ServiceFactory {
@@ -172,6 +178,30 @@ export class ServiceFactory {
       this.instances.set(key, new ImportProfileRepository());
     }
     return this.instances.get(key) as ImportProfileRepository;
+  }
+
+  getAnnotationRepository(): AnnotationRepository {
+    const key = "AnnotationRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new AnnotationRepository());
+    }
+    return this.instances.get(key) as AnnotationRepository;
+  }
+
+  getReportTemplateRepository(): ReportTemplateRepository {
+    const key = "ReportTemplateRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new ReportTemplateRepository());
+    }
+    return this.instances.get(key) as ReportTemplateRepository;
+  }
+
+  getSequenceRepository(): SequenceRepository {
+    const key = "SequenceRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new SequenceRepository());
+    }
+    return this.instances.get(key) as SequenceRepository;
   }
 
   // ==================== Services ====================
@@ -337,7 +367,8 @@ export class ServiceFactory {
           this.getBudgetCalculationService(),
           // Pass ScheduleService getter to avoid circular dependency
           () => this.getScheduleService(),
-          this.getBudgetIntelligenceService()
+          this.getBudgetIntelligenceService(),
+          this.getSequenceService()
         )
       );
     }
@@ -349,7 +380,11 @@ export class ServiceFactory {
     if (!this.instances.has(key)) {
       this.instances.set(
         key,
-        new AccountService(this.getAccountRepository(), this.getTransactionService())
+        new AccountService(
+          this.getAccountRepository(),
+          this.getTransactionService(),
+          this.getSequenceService()
+        )
       );
     }
     return this.instances.get(key) as AccountService;
@@ -617,6 +652,33 @@ export class ServiceFactory {
       this.instances.set(key, new ImportProfileService(this.getImportProfileRepository()));
     }
     return this.instances.get(key) as ImportProfileService;
+  }
+
+  // Annotation Service
+  getAnnotationService(): AnnotationService {
+    const key = "AnnotationService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new AnnotationService(this.getAnnotationRepository()));
+    }
+    return this.instances.get(key) as AnnotationService;
+  }
+
+  // Report Template Service
+  getReportTemplateService(): ReportTemplateService {
+    const key = "ReportTemplateService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new ReportTemplateService(this.getReportTemplateRepository()));
+    }
+    return this.instances.get(key) as ReportTemplateService;
+  }
+
+  // Sequence Service (for per-workspace sequential IDs)
+  getSequenceService(): SequenceService {
+    const key = "SequenceService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new SequenceService(this.getSequenceRepository()));
+    }
+    return this.instances.get(key) as SequenceService;
   }
 
   // ==================== Testing Utilities ====================

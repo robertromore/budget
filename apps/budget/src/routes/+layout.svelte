@@ -30,11 +30,12 @@ import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { autoScheduler } from '$lib/stores/auto-scheduler.svelte';
+import { chartPalette } from '$lib/stores/chart-palette.svelte';
 import { setPageActionsContext } from '$lib/stores/page-actions.svelte';
 import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
 import { setQueryClientContext } from '@tanstack/svelte-query';
-import { ModeWatcher } from 'mode-watcher';
+import { mode, ModeWatcher } from 'mode-watcher';
 import { NuqsAdapter } from 'nuqs-svelte/adapters/svelte-kit';
 import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
@@ -112,6 +113,12 @@ $effect.pre(() => {
   budgetState.replaceBudgets(data.budgets);
 });
 
+// Re-apply chart palette when theme mode changes
+$effect(() => {
+  const _ = mode.current;
+  chartPalette.onThemeModeChange();
+});
+
 // Auto-scheduler: Automatically create scheduled transactions when app loads
 onMount(() => {
   // Small delay to ensure everything is loaded, then run auto-scheduler
@@ -150,7 +157,7 @@ onMount(() => {
           <AppSidebar />
           <Sidebar.Inset>
             <header
-              class="bg-background sticky top-0 z-1 flex h-16 shrink-0 items-center gap-2 border-b p-2"
+              class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b p-2"
             >
               <div class="flex items-center gap-2 px-4">
                 <Tooltip.Root>

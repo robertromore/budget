@@ -7,6 +7,16 @@ const STORAGE_KEY = "display-preferences";
 export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
 export type NumberFormat = "en-US" | "de-DE" | "fr-FR";
 export type TableDisplayMode = "popover" | "sheet";
+export type BorderRadius = "none" | "sm" | "md" | "lg" | "xl";
+
+// Maps radius setting to CSS value
+const radiusValues: Record<BorderRadius, string> = {
+	none: "0",
+	sm: "0.25rem",
+	md: "0.5rem",
+	lg: "0.625rem",
+	xl: "1rem",
+};
 
 interface DisplayPreferencesData {
 	dateFormat: DateFormat;
@@ -14,6 +24,7 @@ interface DisplayPreferencesData {
 	numberFormat: NumberFormat;
 	showCents: boolean;
 	tableDisplayMode: TableDisplayMode;
+	borderRadius: BorderRadius;
 }
 
 const defaults: DisplayPreferencesData = {
@@ -22,6 +33,7 @@ const defaults: DisplayPreferencesData = {
 	numberFormat: "en-US",
 	showCents: true,
 	tableDisplayMode: "popover",
+	borderRadius: "lg",
 };
 
 /**
@@ -63,6 +75,10 @@ class DisplayPreferencesStore {
 		return this.preferences.tableDisplayMode;
 	}
 
+	get borderRadius(): BorderRadius {
+		return this.preferences.borderRadius;
+	}
+
 	setDateFormat(format: DateFormat) {
 		this.preferences.dateFormat = format;
 		this.saveToStorage();
@@ -91,6 +107,21 @@ class DisplayPreferencesStore {
 		this.preferences.tableDisplayMode = mode;
 		this.saveToStorage();
 		this.syncToBackend({ tableDisplayMode: mode });
+	}
+
+	setBorderRadius(radius: BorderRadius) {
+		this.preferences.borderRadius = radius;
+		this.applyBorderRadius(radius);
+		this.saveToStorage();
+		this.syncToBackend({ borderRadius: radius });
+	}
+
+	/**
+	 * Apply the border radius CSS variable to the document
+	 */
+	private applyBorderRadius(radius: BorderRadius) {
+		if (!browser) return;
+		document.documentElement.style.setProperty("--radius", radiusValues[radius]);
 	}
 
 	/**
@@ -139,6 +170,10 @@ class DisplayPreferencesStore {
 	initFromBackend(prefs: Partial<DisplayPreferencesData>) {
 		this.preferences = { ...this.preferences, ...prefs };
 		this.saveToStorage();
+		// Apply border radius if provided
+		if (prefs.borderRadius) {
+			this.applyBorderRadius(prefs.borderRadius);
+		}
 	}
 
 	private loadFromStorage() {
@@ -150,6 +185,8 @@ class DisplayPreferencesStore {
 				const parsed = JSON.parse(stored);
 				this.preferences = { ...defaults, ...parsed };
 			}
+			// Apply border radius on load
+			this.applyBorderRadius(this.preferences.borderRadius);
 		} catch (error) {
 			console.error("Failed to load display preferences:", error);
 		}
@@ -169,10 +206,15 @@ class DisplayPreferencesStore {
 				if (backendPrefs.numberFormat) displayPrefs.numberFormat = backendPrefs.numberFormat;
 				if (backendPrefs.showCents !== undefined) displayPrefs.showCents = backendPrefs.showCents;
 				if (backendPrefs.tableDisplayMode) displayPrefs.tableDisplayMode = backendPrefs.tableDisplayMode;
+				if (backendPrefs.borderRadius) displayPrefs.borderRadius = backendPrefs.borderRadius;
 
 				if (Object.keys(displayPrefs).length > 0) {
 					this.preferences = { ...this.preferences, ...displayPrefs };
 					this.saveToStorage();
+					// Apply border radius if it was updated from backend
+					if (displayPrefs.borderRadius) {
+						this.applyBorderRadius(displayPrefs.borderRadius);
+					}
 				}
 			}
 		} catch (error) {
