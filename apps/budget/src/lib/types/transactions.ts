@@ -7,6 +7,7 @@ import type { DateValue } from "@internationalized/date";
  */
 export type TransactionsFormat = {
   id: number | string; // Can be numeric ID or string for scheduled transactions
+  seq: number | null; // Per-workspace sequential ID (null for scheduled transactions)
   amount: number;
   date: DateValue;
   payeeId: number | null;

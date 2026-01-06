@@ -225,6 +225,21 @@ export const getMonthlySpendingAggregates = (accountId: number) => {
 };
 
 /**
+ * Get monthly spending forecast using ML time series prediction
+ */
+export const getMonthlySpendingForecast = (accountId: number, horizon: number = 3) => {
+  return defineQuery({
+    queryKey: ["transactions", "analytics", "monthlyForecast", accountId, horizon],
+    queryFn: () =>
+      trpc().transactionRoutes.monthlySpendingForecast.query({ accountId, horizon }),
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 minutes cache for forecast data
+      enabled: accountId > 0 && !Number.isNaN(accountId),
+    },
+  });
+};
+
+/**
  * Create new transaction
  */
 export const createTransaction = defineMutation({
@@ -610,4 +625,28 @@ export const getRecentActivity = (accountId: number, days?: number) =>
         accountId,
         days,
       }),
+  });
+
+/**
+ * Get related transactions for budget recommendations
+ * Supports filtering by multiple payee IDs, category, account, and date range
+ */
+export const getRelatedTransactions = (options: {
+  accountId?: number;
+  categoryId?: number;
+  payeeIds?: number[];
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+}) =>
+  defineQuery({
+    queryKey: ["transactions", "related", options] as const,
+    queryFn: () => trpc().transactionRoutes.getRelated.query(options),
+    options: {
+      staleTime: 30 * 1000, // 30 seconds
+      enabled:
+        (options.accountId !== undefined && options.accountId > 0) ||
+        (options.categoryId !== undefined && options.categoryId > 0) ||
+        (options.payeeIds !== undefined && options.payeeIds.length > 0),
+    },
   });

@@ -96,6 +96,40 @@ export const transactionRoutes = t.router({
       )
     ),
 
+  // Get monthly spending forecast for analytics chart overlay
+  monthlySpendingForecast: publicProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        horizon: z.number().min(1).max(12).default(3),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const {
+          createTimeSeriesForecastingService,
+          createMLModelStore,
+          createFeatureEngineeringService,
+        } = await import("$lib/server/domains/ml");
+
+        const modelStore = createMLModelStore();
+        const featureService = createFeatureEngineeringService();
+        const forecastingService = createTimeSeriesForecastingService(modelStore, featureService);
+
+        const prediction = await forecastingService.predictCashFlow(ctx.workspaceId, {
+          horizon: input.horizon,
+          granularity: "monthly",
+          accountId: input.accountId,
+        });
+
+        return {
+          predictions: prediction.expensePredictions,
+          confidence: prediction.confidence,
+          metrics: prediction.metrics,
+        };
+      })
+    ),
+
   // Create new transaction
   create: rateLimitedProcedure
     .input(createTransactionSchema)
@@ -419,5 +453,49 @@ export const transactionRoutes = t.router({
       withErrorHandler(async ({ input, ctx }) =>
         transactionService.getRecentActivity(input.accountId, input.days, ctx.workspaceId)
       )
+    ),
+
+  // Get related transactions for budget recommendations
+  // Supports filtering by multiple payee IDs, category, account, and date range
+  getRelated: publicProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive().optional(),
+        categoryId: z.number().positive().optional(),
+        payeeIds: z.array(z.number().positive()).optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
+        limit: z.number().positive().default(50),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const { payeeIds, limit, ...filters } = input;
+
+        // Use existing list endpoint with filters
+        const result = await transactionService.getTransactions(
+          {
+            ...filters,
+            sortBy: "date",
+            sortOrder: "desc",
+          },
+          { page: 0, pageSize: limit },
+          ctx.workspaceId
+        );
+
+        // If payeeIds filter is provided, filter client-side
+        // This handles the array case not supported by the base filter
+        if (payeeIds && payeeIds.length > 0) {
+          const payeeIdSet = new Set(payeeIds);
+          return {
+            ...result,
+            data: result.data.filter(
+              (tx: { payeeId?: number | null }) => tx.payeeId && payeeIdSet.has(tx.payeeId)
+            ),
+          };
+        }
+
+        return result;
+      })
     ),
 });

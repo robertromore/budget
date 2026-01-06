@@ -15,6 +15,7 @@ import { BudgetTransactionService } from "../budgets/services";
 import { CategoryService } from "../categories/services";
 import { PayeeService } from "../payees/services";
 import { ScheduleService, type UpcomingScheduledTransaction } from "../schedules/services";
+import { SequenceService } from "../sequences/services";
 import type { PaginatedResult, PaginationParams, TransactionFilters } from "./repository";
 import { TransactionRepository } from "./repository";
 import { triggerTransactionAutomation } from "../automation/trigger";
@@ -106,7 +107,8 @@ export class TransactionService {
     private budgetTransactionService: BudgetTransactionService,
     private budgetCalculationService: BudgetCalculationService,
     private scheduleServiceGetter?: () => ScheduleService,
-    private budgetIntelligenceService?: any // BudgetIntelligenceService - using any to avoid circular import
+    private budgetIntelligenceService?: any, // BudgetIntelligenceService - using any to avoid circular import
+    private sequenceService?: SequenceService
   ) {}
 
   /**
@@ -261,10 +263,17 @@ export class TransactionService {
       }
     }
 
+    // Get next sequence number for this workspace (if SequenceService available)
+    const seq = this.sequenceService
+      ? await this.sequenceService.getNextSeq(workspaceId, "transaction")
+      : undefined;
+
     // Create transaction
     const transaction = await this.repository.create(
       {
         accountId: data.accountId,
+        workspaceId, // Store workspace directly on transaction for seq scoping
+        seq,
         amount,
         date: data.date,
         payeeId: data.payeeId || null,
@@ -1032,22 +1041,36 @@ export class TransactionService {
 
   /**
    * Get monthly spending aggregates for analytics (all data, not paginated)
+   * Enhanced with category breakdown, YoY comparison, and trend data
    */
   async getMonthlySpendingAggregates(
     accountId: number,
     workspaceId: number
-  ): Promise<
-    Array<{
+  ): Promise<{
+    months: Array<{
       month: string;
       monthLabel: string;
       spending: number;
       transactionCount: number;
-    }>
-  > {
+      previousYearSpending: number | null;
+      changeFromPrevious: number | null;
+      topCategories: Array<{
+        categoryId: number | null;
+        categoryName: string;
+        amount: number;
+        percentage: number;
+      }>;
+    }>;
+    rollingAverage: Array<{
+      month: string;
+      average: number;
+    }>;
+  }> {
     // Verify account belongs to user (through repository)
     await this.repository.findByAccountId(accountId, workspaceId);
 
-    const result = await db
+    // Query 1: Basic monthly aggregates
+    const monthlyResult = await db
       .select({
         month: sql<string>`strftime('%Y-%m', date)`,
         spending: sql<number>`sum(case when amount < 0 then abs(amount) else 0 end)`,
@@ -1058,22 +1081,108 @@ export class TransactionService {
         and(
           eq(transactions.accountId, accountId),
           isNull(transactions.deletedAt),
-          sql`amount < 0` // Only expenses
+          sql`amount < 0`
         )
       )
       .groupBy(sql`strftime('%Y-%m', date)`)
       .orderBy(sql`strftime('%Y-%m', date)`);
 
-    // Transform the results to include month labels
-    return result.map((row) => ({
-      month: row.month,
-      monthLabel: new Date(row.month + "-01").toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-      }),
-      spending: row.spending,
-      transactionCount: row.transactionCount,
-    }));
+    // Query 2: Category breakdown per month (top categories)
+    const categoryResult = await db
+      .select({
+        month: sql<string>`strftime('%Y-%m', ${transactions.date})`,
+        categoryId: transactions.categoryId,
+        categoryName: sql<string>`coalesce(${categories.name}, 'Uncategorized')`,
+        amount: sql<number>`sum(abs(${transactions.amount}))`,
+      })
+      .from(transactions)
+      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          isNull(transactions.deletedAt),
+          sql`${transactions.amount} < 0`
+        )
+      )
+      .groupBy(sql`strftime('%Y-%m', ${transactions.date})`, transactions.categoryId)
+      .orderBy(sql`strftime('%Y-%m', ${transactions.date})`, sql`sum(abs(${transactions.amount})) DESC`);
+
+    // Build a map of month -> spending for YoY lookup and rolling average
+    const spendingByMonth = new Map<string, number>();
+    for (const row of monthlyResult) {
+      spendingByMonth.set(row.month, row.spending);
+    }
+
+    // Build a map of month -> top categories
+    const categoriesByMonth = new Map<string, Array<{ categoryId: number | null; categoryName: string; amount: number }>>();
+    for (const row of categoryResult) {
+      if (!categoriesByMonth.has(row.month)) {
+        categoriesByMonth.set(row.month, []);
+      }
+      const monthCategories = categoriesByMonth.get(row.month)!;
+      // Keep top 5 categories per month
+      if (monthCategories.length < 5) {
+        monthCategories.push({
+          categoryId: row.categoryId,
+          categoryName: row.categoryName,
+          amount: row.amount,
+        });
+      }
+    }
+
+    // Transform the results with all enhanced data
+    const months = monthlyResult.map((row, index) => {
+      // Calculate previous year's same month spending
+      const [year, monthNum] = row.month.split("-");
+      const prevYearMonth = `${parseInt(year) - 1}-${monthNum}`;
+      const previousYearSpending = spendingByMonth.get(prevYearMonth) ?? null;
+
+      // Calculate change from previous month
+      let changeFromPrevious: number | null = null;
+      if (index > 0) {
+        const prevSpending = monthlyResult[index - 1].spending;
+        if (prevSpending > 0) {
+          changeFromPrevious = ((row.spending - prevSpending) / prevSpending) * 100;
+        }
+      }
+
+      // Get top categories with percentage
+      const monthTotal = row.spending;
+      const topCategories = (categoriesByMonth.get(row.month) ?? []).map((cat) => ({
+        ...cat,
+        percentage: monthTotal > 0 ? (cat.amount / monthTotal) * 100 : 0,
+      }));
+
+      // Parse month string to get proper label (avoid timezone issues)
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+      const monthIndex = parseInt(monthNum) - 1;
+      const monthLabel = `${monthNames[monthIndex]} ${year}`;
+
+      return {
+        month: row.month,
+        monthLabel,
+        spending: row.spending,
+        transactionCount: row.transactionCount,
+        previousYearSpending,
+        changeFromPrevious,
+        topCategories,
+      };
+    });
+
+    // Calculate 3-month rolling average
+    const rollingAverage = months.map((m, index) => {
+      const windowStart = Math.max(0, index - 2);
+      const windowEnd = index + 1;
+      const windowMonths = months.slice(windowStart, windowEnd);
+      const average = windowMonths.reduce((sum, w) => sum + w.spending, 0) / windowMonths.length;
+      return {
+        month: m.month,
+        average,
+      };
+    });
+
+    return { months, rollingAverage };
   }
 
   /**

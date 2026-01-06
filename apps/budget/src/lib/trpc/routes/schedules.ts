@@ -554,4 +554,66 @@ export const scheduleRoutes = t.router({
   removeSkip: rateLimitedProcedure
     .input(z.object({ skipId: z.number().int().positive() }))
     .mutation(withErrorHandler(async ({ input, ctx }) => scheduleService.removeSkip(input.skipId, ctx.workspaceId))),
+
+  bulkRemove: rateLimitedProcedure
+    .input(z.object({ ids: z.array(z.number().int().positive()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const results: { success: number; failed: number; errors: Array<{ id: number; error: string }> } = {
+        success: 0,
+        failed: 0,
+        errors: [],
+      };
+
+      for (const id of input.ids) {
+        try {
+          // Get the schedule to check if it exists and get its dateId
+          const schedule = await ctx.db.query.schedules.findFirst({
+            where: (schedules, { eq, and }) =>
+              and(eq(schedules.id, id), eq(schedules.workspaceId, ctx.workspaceId)),
+          });
+
+          if (!schedule) {
+            results.failed++;
+            results.errors.push({ id, error: "Schedule not found" });
+            continue;
+          }
+
+          // Clear scheduleId from any transactions that reference this schedule
+          await ctx.db
+            .update(transactions)
+            .set({ scheduleId: null })
+            .where(eq(transactions.scheduleId, id));
+
+          // Clear dateId from the schedule first (breaks the circular reference)
+          const dateIdToDelete = schedule.dateId;
+          if (dateIdToDelete) {
+            await ctx.db
+              .update(schedules)
+              .set({ dateId: null })
+              .where(and(eq(schedules.id, id), eq(schedules.workspaceId, ctx.workspaceId)));
+          }
+
+          // Delete schedule_dates records
+          if (dateIdToDelete) {
+            await ctx.db.delete(scheduleDates).where(eq(scheduleDates.id, dateIdToDelete));
+          }
+          await ctx.db.delete(scheduleDates).where(eq(scheduleDates.scheduleId, id));
+
+          // Delete the schedule
+          await ctx.db
+            .delete(schedules)
+            .where(and(eq(schedules.id, id), eq(schedules.workspaceId, ctx.workspaceId)));
+
+          results.success++;
+        } catch (error) {
+          results.failed++;
+          results.errors.push({
+            id,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      }
+
+      return results;
+    }),
 });

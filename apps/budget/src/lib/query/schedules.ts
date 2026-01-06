@@ -152,9 +152,37 @@ export const remove = () =>
       trpc().scheduleRoutes.remove.mutate({ id: scheduleId }),
     onSuccess: (_data, scheduleId) => {
       queryClient.removeQueries({ queryKey: scheduleKeys.detail(scheduleId) });
+      // Invalidate all schedule list queries (both global and account-specific)
       queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["schedules", "account"] });
+      // Also invalidate transactions since scheduleId references are cleared
+      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
     },
   });
+
+/**
+ * Bulk delete schedules
+ */
+export const bulkRemove = defineMutation<
+  number[],
+  { success: number; failed: number; errors: Array<{ id: number; error: string }> }
+>({
+  mutationFn: (ids) => trpc().scheduleRoutes.bulkRemove.mutate({ ids }),
+  onSuccess: (_result, ids) => {
+    // Remove deleted schedules from cache
+    ids.forEach((id) => {
+      queryClient.removeQueries({ queryKey: scheduleKeys.detail(id) });
+    });
+    // Invalidate all schedule list queries (both global and account-specific)
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: ["schedules", "account"] });
+    // Also invalidate transactions since scheduleId references are cleared
+    queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+  },
+  successMessage: (result) =>
+    `${result.success} schedule(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
+  errorMessage: "Failed to delete schedules",
+});
 
 /**
  * Duplicate a schedule
