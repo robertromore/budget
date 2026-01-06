@@ -154,13 +154,13 @@ $effect(() => {
           {@render header()}
         </header>
       {/if}
-      <div class="@container flex-1 overflow-auto">
+      <div class="@container flex flex-1 flex-col overflow-auto">
         {#if content}
-          <div class="px-6 py-6">
+          <div class="flex flex-1 flex-col px-6 py-6">
             {@render content()}
           </div>
         {:else if children}
-          <div class="px-6 py-6">
+          <div class="flex flex-1 flex-col px-6 py-6">
             {@render children()}
           </div>
         {/if}
@@ -209,13 +209,13 @@ $effect(() => {
           {@render header()}
         </Sheet.Header>
       {/if}
-      <div class="@container flex-1 overflow-auto">
+      <div class="@container flex flex-1 flex-col overflow-auto">
         {#if content}
-          <div class="px-6 py-6">
+          <div class="flex flex-1 flex-col px-6 py-6">
             {@render content()}
           </div>
         {:else if children}
-          <div class="px-6 py-6">
+          <div class="flex flex-1 flex-col px-6 py-6">
             {@render children()}
           </div>
         {/if}
@@ -240,13 +240,13 @@ $effect(() => {
           {@render header()}
         </Drawer.Header>
       {/if}
-      <div class="@container flex-1 overflow-auto">
+      <div class="@container flex flex-1 flex-col overflow-auto">
         {#if content}
-          <div class="px-6 py-6">
+          <div class="flex flex-1 flex-col px-6 py-6">
             {@render content()}
           </div>
         {:else if children}
-          <div class="px-6 py-6">
+          <div class="flex flex-1 flex-col px-6 py-6">
             {@render children()}
           </div>
         {/if}

@@ -171,7 +171,7 @@
   adjacent={!hasModalContext}
   hideOverlay={hasModalContext}
   interactOutsideBehavior={hasModalContext ? "ignore" : undefined}
-  class="z-40"
+  class="z-50"
 >
   {#snippet header()}
     {#if isSearchMode}

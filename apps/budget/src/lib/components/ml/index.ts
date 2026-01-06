@@ -1,6 +1,5 @@
 export { default as AnomalyAlertCard } from "./anomaly-alert-card.svelte";
 export { default as BudgetRiskCard } from "./budget-risk-card.svelte";
-export { default as CategorySuggestion } from "./category-suggestion.svelte";
 export { default as ForecastSummaryCard } from "./forecast-summary-card.svelte";
 export { default as IncomeExpenseCard } from "./income-expense-card.svelte";
 export { default as MLFeatureToggle } from "./ml-feature-toggle.svelte";
