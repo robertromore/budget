@@ -41,6 +41,40 @@ export class PayeeAliasRepository {
   }
 
   /**
+   * Create a cleaned version of the string for fuzzy matching.
+   * Strips amounts, transaction IDs, dates, and other variable data.
+   */
+  private cleanString(raw: string): string {
+    let text = raw.toLowerCase().trim();
+
+    // Remove dollar amounts: $1,234.56 or $1234.56 or $1234
+    text = text.replace(/\$[\d,]+(?:\.\d{2})?/g, "");
+
+    // Remove standalone amounts without $ (e.g., "1234.56" at end)
+    text = text.replace(/\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*$/g, "");
+
+    // Remove dates in various formats
+    text = text.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, "");
+    text = text.replace(/\d{2,4}-\d{2}-\d{2}/g, "");
+
+    // Remove transaction IDs: alphanumeric strings containing * or # (8+ chars)
+    // or purely numeric sequences of 8+ digits
+    text = text.replace(/\b[A-Z0-9]*[*#][A-Z0-9*#]+\b/gi, "");
+    text = text.replace(/\b\d{8,}\b/g, "");
+
+    // Remove card number patterns (****1234)
+    text = text.replace(/\*{4}\d{4}/g, "");
+
+    // Remove trailing "I" that might be an identifier
+    text = text.replace(/\s+i\s*$/i, "");
+
+    // Normalize whitespace
+    text = text.replace(/\s+/g, " ").trim();
+
+    return text;
+  }
+
+  /**
    * Create a new alias
    */
   async create(data: CreatePayeeAliasInput, workspaceId: number): Promise<PayeeAlias> {
@@ -294,7 +328,7 @@ export class PayeeAliasRepository {
 
   /**
    * Find best match for a raw string.
-   * First tries exact match, then normalized match.
+   * Tries: exact match → normalized match → cleaned match (strips amounts/IDs).
    */
   async findBestMatch(rawString: string, workspaceId: number): Promise<AliasMatch | null> {
     // First try exact match
@@ -321,6 +355,31 @@ export class PayeeAliasRepository {
         aliasId: bestMatch.id,
         matchedOn: "normalized",
       };
+    }
+
+    // Finally try cleaned match (strips amounts, IDs, etc.)
+    const cleanedInput = this.cleanString(rawString);
+
+    if (cleanedInput.length >= 3) {
+      // Only try if we have a meaningful string left
+      const allAliases = await this.findAll(workspaceId);
+
+      // Find aliases whose cleaned version matches
+      const cleanedMatches = allAliases.filter((alias) => {
+        const cleanedAlias = this.cleanString(alias.rawString);
+        return cleanedAlias === cleanedInput;
+      });
+
+      if (cleanedMatches.length > 0) {
+        // Return the most used alias with matching cleaned string
+        const bestMatch = cleanedMatches.sort((a, b) => b.matchCount - a.matchCount)[0];
+        return {
+          payeeId: bestMatch.payeeId,
+          confidence: bestMatch.confidence * 0.8, // Lower confidence for cleaned match
+          aliasId: bestMatch.id,
+          matchedOn: "cleaned",
+        };
+      }
     }
 
     return null;
