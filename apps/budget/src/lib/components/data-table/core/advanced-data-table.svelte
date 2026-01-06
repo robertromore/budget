@@ -2,14 +2,23 @@
 import { FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import { cn } from '$lib/utils';
-import type { ColumnDef, Row, Table as TableInstance } from '@tanstack/table-core';
-import type { Snippet } from 'svelte';
 import type {
-  DataTableFeatures,
-  DataTableState,
-  DataTableStateHandlers,
-  TableUISettings,
-} from '../state/types';
+  ColumnDef,
+  ColumnFiltersState,
+  ColumnOrderState,
+  ColumnPinningState,
+  ExpandedState,
+  GroupingState,
+  PaginationState,
+  Row,
+  RowSelectionState,
+  SortingState,
+  Table as TableInstance,
+  VisibilityState,
+} from '@tanstack/table-core';
+import type { Snippet } from 'svelte';
+import { createTableState, type TableState } from '../state/create-table-state.svelte';
+import type { DataTableFeatures, TableUISettings } from '../state/types';
 import DataTableColumnHeader from './data-table-column-header.svelte';
 import DataTablePagination from './data-table-pagination.svelte';
 import DataTable from './data-table.svelte';
@@ -21,10 +30,6 @@ interface Props {
   columns: ColumnDef<TData>[];
   /** Feature flags for enabling/disabling features */
   features?: DataTableFeatures;
-  /** External state (optional - will use internal state if not provided) */
-  state?: DataTableState;
-  /** State change handlers (required if using external state) */
-  handlers?: DataTableStateHandlers;
   /** UI settings for table appearance */
   uiSettings?: TableUISettings;
   /** CSS class for the table wrapper */
@@ -61,14 +66,35 @@ interface Props {
   onRowClick?: (row: Row<TData>) => void;
   /** Bindable table instance */
   table?: TableInstance<TData> | undefined;
+  /** Bindable state object for external access */
+  state?: TableState;
+  // Initial state values
+  /** Initial sorting state */
+  initialSorting?: SortingState;
+  /** Initial pagination state */
+  initialPagination?: PaginationState;
+  /** Initial column visibility state */
+  initialColumnVisibility?: VisibilityState;
+  /** Initial column filters state */
+  initialColumnFilters?: ColumnFiltersState;
+  /** Initial row selection state */
+  initialRowSelection?: RowSelectionState;
+  /** Initial column pinning state */
+  initialColumnPinning?: ColumnPinningState;
+  /** Initial expanded state */
+  initialExpanded?: ExpandedState;
+  /** Initial grouping state */
+  initialGrouping?: GroupingState;
+  /** Initial global filter state */
+  initialGlobalFilter?: string;
+  /** Initial column order state */
+  initialColumnOrder?: ColumnOrderState;
 }
 
 let {
   data = [],
   columns = [],
   features = {},
-  state,
-  handlers,
   uiSettings = {},
   class: className,
   serverPagination = false,
@@ -87,22 +113,69 @@ let {
   empty,
   onRowClick,
   table = $bindable(),
+  state = $bindable(),
+  // Initial state values
+  initialSorting,
+  initialPagination,
+  initialColumnVisibility,
+  initialColumnFilters,
+  initialRowSelection,
+  initialColumnPinning,
+  initialExpanded,
+  initialGrouping,
+  initialGlobalFilter,
+  initialColumnOrder,
 }: Props = $props();
+
+// Compute initial visibility from columns with hiddenByDefault meta
+function computeInitialVisibility(): VisibilityState {
+  const hiddenByDefaultCols: VisibilityState = {};
+  for (const col of columns) {
+    const colId = col.id ?? (col as any).accessorKey;
+    if (colId && (col.meta as any)?.hiddenByDefault) {
+      hiddenByDefaultCols[colId] = false;
+    }
+  }
+  // Merge with explicitly provided initialColumnVisibility (explicit takes precedence)
+  return { ...hiddenByDefaultCols, ...initialColumnVisibility };
+}
+
+// Create table state once on mount using the factory
+const tableState = createTableState({
+  initialSorting,
+  initialPagination,
+  initialColumnVisibility: computeInitialVisibility(),
+  initialColumnFilters,
+  initialRowSelection,
+  initialColumnPinning,
+  initialExpanded,
+  initialGrouping,
+  initialGlobalFilter,
+  initialColumnOrder,
+});
+
+// Expose state for external access
+state = tableState;
+
+// Auto-enable pagination feature when showPagination is true
+const effectiveFeatures = $derived<DataTableFeatures>({
+  ...features,
+  ...(showPagination && { pagination: true }),
+});
 </script>
 
 <div class="space-y-4">
   <DataTable
     {data}
     {columns}
-    {features}
-    {...state ? { state } : {}}
-    {...handlers ? { handlers } : {}}
+    state={tableState}
+    features={effectiveFeatures}
     {uiSettings}
     {serverPagination}
-    {...rowCount !== undefined ? { rowCount } : {}}
+    {rowCount}
     {filterFns}
-    {...getRowId ? { getRowId } : {}}
-    {...className ? { class: className } : {}}
+    {getRowId}
+    class={className}
     bind:table>
     {#snippet children(tableInstance)}
       <div class="space-y-3">
@@ -183,7 +256,7 @@ let {
             </Table.Body>
           </Table.Root>
         </div>
-        {#if showPagination && features.pagination}
+        {#if showPagination}
           <DataTablePagination table={tableInstance} {showSelection} {pageSizeOptions} />
         {/if}
       </div>

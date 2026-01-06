@@ -13,24 +13,18 @@ import {
   getSortedRowModel,
 } from '@tanstack/table-core';
 import type { Snippet } from 'svelte';
-import type {
-  DataTableFeatures,
-  DataTableState,
-  DataTableStateHandlers,
-  TableUISettings,
-} from '../state/types';
+import type { TableState } from '../state/create-table-state.svelte';
+import type { DataTableFeatures, TableUISettings } from '../state/types';
 
 interface Props {
   /** The data to display in the table */
   data: TData[];
   /** Column definitions */
   columns: ColumnDef<TData>[];
+  /** Table state object from createTableState() */
+  state: TableState;
   /** Feature flags for enabling/disabling features */
   features?: DataTableFeatures;
-  /** External state (optional - will use internal state if not provided) */
-  state?: DataTableState;
-  /** State change handlers (required if using external state) */
-  handlers?: DataTableStateHandlers;
   /** UI settings for table appearance */
   uiSettings?: TableUISettings;
   /** Custom table snippet for rendering (optional) */
@@ -52,9 +46,8 @@ interface Props {
 let {
   data = [],
   columns = [],
+  state,
   features = {},
-  state: externalState,
-  handlers,
   uiSettings = {},
   children,
   class: className,
@@ -65,142 +58,8 @@ let {
   getRowId,
 }: Props = $props();
 
-const _externalState = (() => externalState)();
-
-// Internal state management (used when no external state is provided)
-let internalSorting = $state(_externalState?.sorting ?? []);
-let internalColumnVisibility = $state(_externalState?.columnVisibility ?? {});
-let internalColumnFilters = $state(_externalState?.columnFilters ?? []);
-let internalPagination = $state(_externalState?.pagination ?? { pageIndex: 0, pageSize: 10 });
-let internalRowSelection = $state(_externalState?.rowSelection ?? {});
-let internalColumnPinning = $state(_externalState?.columnPinning ?? {});
-let internalExpanded = $state(_externalState?.expanded ?? {});
-let internalGrouping = $state(_externalState?.grouping ?? []);
-let internalGlobalFilter = $state(_externalState?.globalFilter ?? '');
-let internalColumnOrder = $state(_externalState?.columnOrder ?? []);
-// Determine whether to use external or internal state
-const useExternalState = $derived(!!externalState);
-
-
-// Create reactive getters for current state
-const currentSorting = $derived(
-  useExternalState ? (externalState!.sorting ?? []) : internalSorting
-);
-const currentColumnVisibility = $derived(
-  useExternalState ? (externalState!.columnVisibility ?? {}) : internalColumnVisibility
-);
-const currentColumnFilters = $derived(
-  useExternalState ? (externalState!.columnFilters ?? []) : internalColumnFilters
-);
-const currentPagination = $derived(
-  useExternalState
-    ? (externalState!.pagination ?? { pageIndex: 0, pageSize: 10 })
-    : internalPagination
-);
-const currentRowSelection = $derived(
-  useExternalState ? (externalState!.rowSelection ?? {}) : internalRowSelection
-);
-const currentColumnPinning = $derived(
-  useExternalState ? (externalState!.columnPinning ?? {}) : internalColumnPinning
-);
-const currentExpanded = $derived(
-  useExternalState ? (externalState!.expanded ?? {}) : internalExpanded
-);
-const currentGrouping = $derived(
-  useExternalState ? (externalState!.grouping ?? []) : internalGrouping
-);
-const currentGlobalFilter = $derived(
-  useExternalState ? (externalState!.globalFilter ?? '') : internalGlobalFilter
-);
-const currentColumnOrder = $derived(
-  useExternalState ? (externalState!.columnOrder ?? []) : internalColumnOrder
-);
-
-// State change handlers
-function handleSortingChange(updater: any) {
-  if (useExternalState && handlers?.onSortingChange) {
-    handlers.onSortingChange(updater);
-  } else {
-    internalSorting = typeof updater === 'function' ? updater(internalSorting) : updater;
-  }
-}
-
-function handleColumnVisibilityChange(updater: any) {
-  if (useExternalState && handlers?.onColumnVisibilityChange) {
-    handlers.onColumnVisibilityChange(updater);
-  } else {
-    internalColumnVisibility =
-      typeof updater === 'function' ? updater(internalColumnVisibility) : updater;
-  }
-}
-
-function handleColumnFiltersChange(updater: any) {
-  if (useExternalState && handlers?.onColumnFiltersChange) {
-    handlers.onColumnFiltersChange(updater);
-  } else {
-    internalColumnFilters =
-      typeof updater === 'function' ? updater(internalColumnFilters) : updater;
-  }
-}
-
-function handlePaginationChange(updater: any) {
-  if (useExternalState && handlers?.onPaginationChange) {
-    handlers.onPaginationChange(updater);
-  } else {
-    internalPagination = typeof updater === 'function' ? updater(internalPagination) : updater;
-  }
-}
-
-function handleRowSelectionChange(updater: any) {
-  if (useExternalState && handlers?.onRowSelectionChange) {
-    handlers.onRowSelectionChange(updater);
-  } else {
-    internalRowSelection = typeof updater === 'function' ? updater(internalRowSelection) : updater;
-  }
-}
-
-function handleColumnPinningChange(updater: any) {
-  if (useExternalState && handlers?.onColumnPinningChange) {
-    handlers.onColumnPinningChange(updater);
-  } else {
-    internalColumnPinning =
-      typeof updater === 'function' ? updater(internalColumnPinning) : updater;
-  }
-}
-
-function handleExpandedChange(updater: any) {
-  if (useExternalState && handlers?.onExpandedChange) {
-    handlers.onExpandedChange(updater);
-  } else {
-    internalExpanded = typeof updater === 'function' ? updater(internalExpanded) : updater;
-  }
-}
-
-function handleGroupingChange(updater: any) {
-  if (useExternalState && handlers?.onGroupingChange) {
-    handlers.onGroupingChange(updater);
-  } else {
-    internalGrouping = typeof updater === 'function' ? updater(internalGrouping) : updater;
-  }
-}
-
-function handleGlobalFilterChange(updater: any) {
-  if (useExternalState && handlers?.onGlobalFilterChange) {
-    handlers.onGlobalFilterChange(updater);
-  } else {
-    internalGlobalFilter = typeof updater === 'function' ? updater(internalGlobalFilter) : updater;
-  }
-}
-
-function handleColumnOrderChange(updater: any) {
-  if (useExternalState && handlers?.onColumnOrderChange) {
-    handlers.onColumnOrderChange(updater);
-  } else {
-    internalColumnOrder = typeof updater === 'function' ? updater(internalColumnOrder) : updater;
-  }
-}
-
-// Create the table instance once; options stay reactive via getters.
+// Create the table instance with state getters - reactive by design
+// Following the transactions table pattern: state is accessed via getter functions
 const tableInstance = createSvelteTable<TData>({
   get data() {
     return data;
@@ -209,11 +68,59 @@ const tableInstance = createSvelteTable<TData>({
     return columns;
   },
   getCoreRowModel: getCoreRowModel(),
-  // Conditionally include row models based on features
+  getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
+  manualPagination: serverPagination,
+
+  // State via getters - naturally reactive
+  state: {
+    get pagination() {
+      return state.pagination();
+    },
+    get sorting() {
+      return state.sorting();
+    },
+    get columnFilters() {
+      return state.columnFilters();
+    },
+    get rowSelection() {
+      return state.rowSelection();
+    },
+    get columnVisibility() {
+      return state.columnVisibility();
+    },
+    get columnPinning() {
+      return state.columnPinning();
+    },
+    get expanded() {
+      return state.expanded();
+    },
+    get grouping() {
+      return state.grouping();
+    },
+    get globalFilter() {
+      return state.globalFilter();
+    },
+    get columnOrder() {
+      return state.columnOrder();
+    },
+  },
+
+  // Handlers - direct to state setters
+  onPaginationChange: state.setPagination,
+  onSortingChange: state.setSorting,
+  onColumnFiltersChange: state.setColumnFilters,
+  onRowSelectionChange: state.setRowSelection,
+  onColumnVisibilityChange: state.setColumnVisibility,
+  onColumnPinningChange: state.setColumnPinning,
+  onExpandedChange: state.setExpanded,
+  onGroupingChange: state.setGrouping,
+  onGlobalFilterChange: state.setGlobalFilter,
+  onColumnOrderChange: state.setColumnOrder,
+
+  // Feature row models - conditionally include based on features
   ...(features.sorting && {
     getSortedRowModel: getSortedRowModel(),
     enableSorting: true,
-    onSortingChange: handleSortingChange,
   }),
   ...(features.filtering && {
     getFilteredRowModel: getFilteredRowModel(),
@@ -221,96 +128,34 @@ const tableInstance = createSvelteTable<TData>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     enableColumnFilters: true,
-    onColumnFiltersChange: handleColumnFiltersChange,
     get filterFns() {
       return filterFns;
     },
   }),
-  ...(features.pagination && {
-    getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
-    manualPagination: serverPagination,
-    onPaginationChange: handlePaginationChange,
-  }),
   ...(features.rowSelection && {
     enableRowSelection: true,
-    onRowSelectionChange: handleRowSelectionChange,
   }),
   ...(features.columnVisibility && {
-    onColumnVisibilityChange: handleColumnVisibilityChange,
+    enableHiding: true,
   }),
   ...(features.columnPinning && {
     enableColumnPinning: true,
-    onColumnPinningChange: handleColumnPinningChange,
   }),
   ...(features.expanding && {
-    onExpandedChange: handleExpandedChange,
+    getExpandedRowModel: getExpandedRowModel(),
   }),
   ...(features.grouping && {
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     enableGrouping: true,
-    onGroupingChange: handleGroupingChange,
   }),
   ...(getRowId && { getRowId }),
   ...(features.globalFilter && {
-    onGlobalFilterChange: handleGlobalFilterChange,
+    enableGlobalFilter: true,
   }),
   ...(features.columnReordering && {
-    onColumnOrderChange: handleColumnOrderChange,
+    enableColumnResizing: true,
   }),
-  // Current state
-  state: {
-    ...(features.sorting && {
-      get sorting() {
-        return currentSorting;
-      },
-    }),
-    ...(features.filtering && {
-      get columnFilters() {
-        return currentColumnFilters;
-      },
-    }),
-    ...(features.pagination && {
-      get pagination() {
-        return currentPagination;
-      },
-    }),
-    ...(features.rowSelection && {
-      get rowSelection() {
-        return currentRowSelection;
-      },
-    }),
-    ...(features.columnVisibility && {
-      get columnVisibility() {
-        return currentColumnVisibility;
-      },
-    }),
-    ...(features.columnPinning && {
-      get columnPinning() {
-        return currentColumnPinning;
-      },
-    }),
-    ...(features.expanding && {
-      get expanded() {
-        return currentExpanded;
-      },
-    }),
-    ...(features.grouping && {
-      get grouping() {
-        return currentGrouping;
-      },
-    }),
-    ...(features.globalFilter && {
-      get globalFilter() {
-        return currentGlobalFilter;
-      },
-    }),
-    ...(features.columnReordering && {
-      get columnOrder() {
-        return currentColumnOrder;
-      },
-    }),
-  },
   // Server-side pagination
   ...(serverPagination &&
     rowCount !== undefined && {
@@ -319,6 +164,9 @@ const tableInstance = createSvelteTable<TData>({
       },
     }),
 });
+
+// Sync the table instance to the bindable prop for external access
+table = tableInstance;
 
 // Apply UI settings
 const densityClass = $derived(uiSettings.density === 'dense' ? 'text-xs' : '');
@@ -338,9 +186,6 @@ const tableClasses = $derived(
     .filter(Boolean)
     .join(' ')
 );
-
-// Sync the table instance to the bindable prop for external access
-table = tableInstance;
 </script>
 
 <div class={tableClasses}>
