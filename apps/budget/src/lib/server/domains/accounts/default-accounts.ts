@@ -1,4 +1,4 @@
-import type { AccountType } from "$lib/schema/accounts";
+import type { AccountType, UtilitySubtype } from "$lib/schema/accounts";
 
 export interface DefaultAccount {
   slug: string;
@@ -9,6 +9,9 @@ export interface DefaultAccount {
   description: string;
   onBudget: boolean;
   sortOrder: number;
+  // Utility account-specific fields
+  utilitySubtype?: UtilitySubtype;
+  utilityProvider?: string;
 }
 
 export const defaultAccounts: DefaultAccount[] = [
@@ -111,5 +114,50 @@ export const defaultAccounts: DefaultAccount[] = [
     description: "Personal loan or line of credit",
     onBudget: true,
     sortOrder: 10,
+  },
+  // Utility accounts
+  {
+    slug: "electric-bill",
+    name: "Electric Bill",
+    accountType: "utility",
+    accountIcon: "zap",
+    accountColor: "#f59e0b",
+    description: "Electric utility bill tracking with usage data",
+    onBudget: false,
+    sortOrder: 11,
+    utilitySubtype: "electric",
+  },
+  {
+    slug: "gas-bill",
+    name: "Gas Bill",
+    accountType: "utility",
+    accountIcon: "flame",
+    accountColor: "#f97316",
+    description: "Natural gas utility bill tracking with usage data",
+    onBudget: false,
+    sortOrder: 12,
+    utilitySubtype: "gas",
+  },
+  {
+    slug: "water-bill",
+    name: "Water Bill",
+    accountType: "utility",
+    accountIcon: "droplets",
+    accountColor: "#06b6d4",
+    description: "Water utility bill tracking with usage data",
+    onBudget: false,
+    sortOrder: 13,
+    utilitySubtype: "water",
+  },
+  {
+    slug: "internet-bill",
+    name: "Internet Bill",
+    accountType: "utility",
+    accountIcon: "wifi",
+    accountColor: "#8b5cf6",
+    description: "Internet service bill tracking",
+    onBudget: false,
+    sortOrder: 14,
+    utilitySubtype: "internet",
   },
 ];

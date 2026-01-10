@@ -364,6 +364,161 @@ export class CategoryAliasService {
 
     return results;
   }
+
+  /**
+   * Record a dismissal for an alias (negative feedback).
+   * Reduces confidence when a user clears an auto-suggested category during import.
+   *
+   * @param rawString - The raw payee/description string from import
+   * @param dismissedCategoryId - The category that was dismissed
+   * @param workspaceId - The workspace ID
+   */
+  async recordDismissalForAlias(
+    rawString: string,
+    dismissedCategoryId: number,
+    workspaceId: number
+  ): Promise<void> {
+    // Find alias matching the raw string and category
+    const alias = await this.repository.findByRawStringAndCategory(
+      rawString,
+      dismissedCategoryId,
+      workspaceId
+    );
+
+    if (alias) {
+      // Set confidence to minimum on dismissal - won't be suggested again until user re-selects
+      const newConfidence = 0.1;
+      await this.repository.updateConfidence(alias.id, newConfidence, workspaceId);
+
+      console.log(
+        `[CategoryAlias] Alias ${alias.id} confidence set to ${newConfidence} after dismissal - won't suggest again`
+      );
+    } else {
+      // No alias exists yet - create one with low confidence to record the dismissal
+      // This ensures future imports won't suggest this category for this payee string
+      await this.repository.create(
+        {
+          rawString,
+          categoryId: dismissedCategoryId,
+          trigger: "import_confirmation",
+          amountType: "any",
+          confidence: 0.1, // Very low confidence = dismissed
+        },
+        workspaceId
+      );
+
+      console.log(
+        `[CategoryAlias] Created dismissed alias for "${rawString}" → category ${dismissedCategoryId} with confidence 0.1`
+      );
+    }
+  }
+
+  /**
+   * Bulk record dismissals for multiple aliases.
+   * Called during import completion when user has dismissed AI-suggested categories.
+   */
+  async bulkRecordDismissals(
+    dismissals: Array<{ rawString: string; categoryId: number }>,
+    workspaceId: number
+  ): Promise<{ processed: number; aliasesUpdated: number; aliasesCreated: number }> {
+    console.log(`[CategoryAlias] bulkRecordDismissals called with ${dismissals.length} dismissals:`,
+      dismissals.map(d => ({ rawString: d.rawString, categoryId: d.categoryId }))
+    );
+
+    let aliasesUpdated = 0;
+    let aliasesCreated = 0;
+
+    for (const dismissal of dismissals) {
+      console.log(`[CategoryAlias] Processing dismissal: rawString="${dismissal.rawString}", categoryId=${dismissal.categoryId}`);
+
+      const alias = await this.repository.findByRawStringAndCategory(
+        dismissal.rawString,
+        dismissal.categoryId,
+        workspaceId
+      );
+
+      if (alias) {
+        // Set confidence to minimum on dismissal - won't be suggested again until user re-selects
+        const newConfidence = 0.1;
+        await this.repository.updateConfidence(alias.id, newConfidence, workspaceId);
+        aliasesUpdated++;
+      } else {
+        // No alias exists yet - create one with low confidence to record the dismissal
+        // This ensures future imports won't suggest this category for this payee string
+        try {
+          await this.repository.create(
+            {
+              rawString: dismissal.rawString,
+              categoryId: dismissal.categoryId,
+              trigger: "import_confirmation",
+              amountType: "any",
+              confidence: 0.1, // Very low confidence = dismissed
+            },
+            workspaceId
+          );
+          aliasesCreated++;
+        } catch (error) {
+          // Ignore creation errors (e.g., duplicate)
+          console.log(
+            `[CategoryAlias] Failed to create dismissed alias for "${dismissal.rawString}":`,
+            error
+          );
+        }
+      }
+    }
+
+    console.log(
+      `[CategoryAlias] Bulk dismissals: updated ${aliasesUpdated}, created ${aliasesCreated} dismissed aliases`
+    );
+
+    return { processed: dismissals.length, aliasesUpdated, aliasesCreated };
+  }
+
+  /**
+   * Check if a specific category was dismissed for a given raw string.
+   * Used to prevent re-suggesting dismissed categories from keyword matching.
+   *
+   * @param rawString - The raw payee/description string
+   * @param categoryId - The category ID to check
+   * @param workspaceId - The workspace ID
+   * @param minConfidenceThreshold - Minimum confidence to consider "not dismissed" (default 0.9)
+   * @returns true if the category was dismissed (alias exists with low confidence)
+   */
+  async isCategoryDismissed(
+    rawString: string,
+    categoryId: number,
+    workspaceId: number,
+    minConfidenceThreshold: number = 0.9
+  ): Promise<boolean> {
+    console.log(`[CategoryAlias] isCategoryDismissed check:`, {
+      rawString,
+      categoryId,
+      workspaceId,
+      minConfidenceThreshold,
+    });
+
+    const alias = await this.repository.findByRawStringAndCategory(
+      rawString,
+      categoryId,
+      workspaceId
+    );
+
+    console.log(`[CategoryAlias] findByRawStringAndCategory result:`, alias ? {
+      id: alias.id,
+      rawString: alias.rawString,
+      categoryId: alias.categoryId,
+      confidence: alias.confidence,
+    } : 'no alias found');
+
+    // If an alias exists with confidence below threshold, it was dismissed
+    if (alias && alias.confidence < minConfidenceThreshold) {
+      console.log(`[CategoryAlias] Category IS dismissed (confidence ${alias.confidence} < ${minConfidenceThreshold})`);
+      return true;
+    }
+
+    console.log(`[CategoryAlias] Category is NOT dismissed`);
+    return false;
+  }
 }
 
 // Singleton instance for easy access

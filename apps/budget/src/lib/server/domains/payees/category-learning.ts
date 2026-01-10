@@ -171,7 +171,7 @@ export class CategoryLearningService {
         fromCategoryId: categoryId, // Same as "to" - indicates confirmation
         toCategoryId: categoryId,
         correctionTrigger: "ai_suggestion_accepted",
-        correctionContext: "import",
+        correctionContext: null, // Context not applicable for import acceptance
         systemConfidence: aiConfidence,
         correctionWeight: 0.5, // Lower weight than corrections
         userConfidence: 7, // Default confidence for acceptance
@@ -326,13 +326,53 @@ export class CategoryLearningService {
     const contextScore = context ? this.calculateContextMatchScore(corrections, context) : 0.5;
 
     // Combined confidence with weighted factors
-    const confidence =
+    let confidence =
       frequencyConfidence * 0.3 +
       userConfidenceScore * 0.25 +
       recencyScore * 0.25 +
       contextScore * 0.2;
 
+    // Apply dismissal penalty (negative feedback from import_dismissal events)
+    const dismissalPenalty = await this.calculateDismissalPenalty(payeeId, categoryId);
+    confidence = confidence * (1 - dismissalPenalty);
+
     return Math.min(1, Math.max(0, confidence));
+  }
+
+  /**
+   * Calculate penalty based on dismissal count for a payee-category combination.
+   * Returns a value between 0 and 0.6 (max 60% penalty).
+   */
+  private async calculateDismissalPenalty(
+    payeeId: number,
+    categoryId: number
+  ): Promise<number> {
+    // Count dismissals where this category was dismissed for this payee
+    // Dismissals are recorded with fromCategoryId = the dismissed category
+    // and toCategoryId = null
+    const dismissals = await db
+      .select({ count: count() })
+      .from(payeeCategoryCorrections)
+      .where(
+        and(
+          eq(payeeCategoryCorrections.payeeId, payeeId),
+          eq(payeeCategoryCorrections.fromCategoryId, categoryId),
+          isNull(payeeCategoryCorrections.toCategoryId),
+          eq(payeeCategoryCorrections.correctionTrigger, "import_dismissal"),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      );
+
+    const dismissalCount = dismissals[0]?.count || 0;
+
+    if (dismissalCount === 0) {
+      return 0;
+    }
+
+    // Apply penalty: 25% per dismissal, capped at 70%
+    // First dismissal drops score below 80% (e.g., 0.9 * 0.75 = 0.675)
+    const penalty = Math.min(dismissalCount * 0.25, 0.7);
+    return penalty;
   }
 
   /**

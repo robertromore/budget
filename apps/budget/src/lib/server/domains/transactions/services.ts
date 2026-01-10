@@ -8,6 +8,7 @@ import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { invalidateAccountCache } from "$lib/utils/cache";
+import { arePayeesSimilar } from "$lib/utils/payee-matching";
 import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { BudgetCalculationService } from "../budgets/calculation-service";
@@ -615,6 +616,61 @@ export class TransactionService {
       });
     }
 
+    // Record category change for smart category learning
+    // This helps improve future category suggestions for similar payees
+    if (
+      data.categoryId !== undefined &&
+      data.categoryId !== null &&
+      data.categoryId !== existingTransaction.categoryId
+    ) {
+      try {
+        // Get the raw payee string for alias matching
+        // Priority: originalPayeeName (from import) > payee name lookup
+        let rawPayeeString = existingTransaction.originalPayeeName;
+
+        if (!rawPayeeString && existingTransaction.payeeId) {
+          // Look up the payee name
+          const payee = await db
+            .select({ name: payees.name })
+            .from(payees)
+            .where(eq(payees.id, existingTransaction.payeeId))
+            .limit(1);
+          if (payee[0]?.name) {
+            rawPayeeString = payee[0].name;
+          }
+        }
+
+        if (rawPayeeString) {
+          const { getCategoryAliasService } = await import(
+            "$lib/server/domains/categories/alias-service"
+          );
+          const categoryAliasService = getCategoryAliasService();
+
+          await categoryAliasService.recordAliasFromTransactionEdit(
+            rawPayeeString,
+            data.categoryId,
+            workspaceId,
+            {
+              payeeId: existingTransaction.payeeId ?? undefined,
+              amountType: existingTransaction.amount < 0 ? "expense" : "income",
+            }
+          );
+
+          logger.debug("Recorded category alias from transaction edit", {
+            rawPayeeString,
+            categoryId: data.categoryId,
+            transactionId: updatedTransaction.id,
+          });
+        }
+      } catch (aliasError) {
+        // Don't fail the transaction update if alias recording fails
+        logger.warn("Failed to record category alias from transaction edit", {
+          error: aliasError,
+          transactionId: updatedTransaction.id,
+        });
+      }
+    }
+
     invalidateAccountCache(updatedTransaction.accountId);
 
     // Trigger automation rules for transaction update and return refreshed data
@@ -787,6 +843,44 @@ export class TransactionService {
     );
 
     await Promise.all(updatePromises);
+
+    // Record category alias for smart category learning
+    // When bulk updating by payee, this trains the system for future imports
+    if (newCategoryId && matchBy === "payee" && transactionsToUpdate.length > 0) {
+      try {
+        const { getCategoryAliasService } = await import(
+          "$lib/server/domains/categories/alias-service"
+        );
+        const categoryAliasService = getCategoryAliasService();
+
+        // Use the payee name as the raw string for the alias
+        const payeeName = originalTransaction.payee?.name;
+        if (payeeName) {
+          await categoryAliasService.recordAliasFromTransactionEdit(
+            payeeName,
+            newCategoryId,
+            workspaceId,
+            {
+              payeeId: originalTransaction.payeeId ?? undefined,
+              // Use the first transaction's amount sign to determine type
+              amountType:
+                transactionsToUpdate[0].amount < 0 ? "expense" : "income",
+            }
+          );
+
+          logger.debug("Recorded category alias from bulk category update", {
+            payeeName,
+            categoryId: newCategoryId,
+            transactionCount: transactionsToUpdate.length,
+          });
+        }
+      } catch (aliasError) {
+        // Don't fail the bulk update if alias recording fails
+        logger.warn("Failed to record category alias from bulk update", {
+          error: aliasError,
+        });
+      }
+    }
 
     invalidateAccountCache(accountId);
 
@@ -1841,5 +1935,317 @@ export class TransactionService {
         totalReceived: 0,
       }
     );
+  }
+
+  /**
+   * Unlink a transfer - converts two linked transfer transactions into independent transactions
+   */
+  async unlinkTransfer(transferId: string, workspaceId: number): Promise<void> {
+    // Find both transactions using shared transferId
+    const transferTransactions = await db
+      .select()
+      .from(transactions)
+      .where(and(eq(transactions.transferId, transferId), isNull(transactions.deletedAt)));
+
+    if (transferTransactions.length !== 2) {
+      throw new ValidationError(
+        `Invalid transfer: expected exactly 2 transactions, found ${transferTransactions.length}`
+      );
+    }
+
+    const accountIds = new Set<number>();
+
+    // Clear transfer fields on both transactions
+    for (const transaction of transferTransactions) {
+      await this.repository.update(
+        transaction.id,
+        {
+          isTransfer: false,
+          transferId: null,
+          transferAccountId: null,
+          transferTransactionId: null,
+        },
+        workspaceId
+      );
+      accountIds.add(transaction.accountId);
+    }
+
+    // Invalidate both account caches
+    accountIds.forEach((accountId) => invalidateAccountCache(accountId));
+  }
+
+  /**
+   * Convert an existing transaction into a transfer by creating a paired transaction
+   */
+  async convertToTransfer(
+    transactionId: number,
+    targetAccountId: number,
+    workspaceId: number
+  ): Promise<{ transferId: string; sourceTransaction: Transaction; targetTransaction: Transaction }> {
+    const { createId } = await import("@paralleldrive/cuid2");
+
+    // Get the existing transaction
+    const existingTransaction = await this.repository.findById(transactionId, workspaceId);
+    if (!existingTransaction) {
+      throw new NotFoundError("Transaction", transactionId);
+    }
+
+    // Ensure it's not already a transfer
+    if ((existingTransaction as any).isTransfer) {
+      throw new ValidationError("Transaction is already part of a transfer");
+    }
+
+    // Validate target account exists
+    const targetAccountExists = await this.verifyAccountExists(targetAccountId);
+    if (!targetAccountExists) {
+      throw new NotFoundError("Account", targetAccountId);
+    }
+
+    // Validate target is different from source
+    if (existingTransaction.accountId === targetAccountId) {
+      throw new ValidationError("Cannot create a transfer to the same account");
+    }
+
+    // Generate shared transfer ID
+    const transferId = createId();
+
+    // Determine direction - if amount is negative, money is going OUT, so target receives positive
+    const sourceAmount = existingTransaction.amount;
+    const targetAmount = -sourceAmount;
+
+    // Fetch account names for notes
+    const [sourceAccount] = await db
+      .select({ name: accounts.name })
+      .from(accounts)
+      .where(eq(accounts.id, existingTransaction.accountId))
+      .limit(1);
+
+    const [targetAccount] = await db
+      .select({ name: accounts.name })
+      .from(accounts)
+      .where(eq(accounts.id, targetAccountId))
+      .limit(1);
+
+    // Update source transaction to be a transfer
+    await this.repository.update(
+      transactionId,
+      {
+        isTransfer: true,
+        transferId,
+        transferAccountId: targetAccountId,
+        notes:
+          existingTransaction.notes ||
+          (sourceAmount < 0
+            ? `Transfer to ${targetAccount?.name || "Unknown Account"}`
+            : `Transfer from ${targetAccount?.name || "Unknown Account"}`),
+      },
+      workspaceId
+    );
+
+    // Create paired transaction in target account
+    const targetTransaction = await this.repository.create(
+      {
+        accountId: targetAccountId,
+        amount: targetAmount,
+        date: existingTransaction.date,
+        notes:
+          existingTransaction.notes ||
+          (targetAmount < 0
+            ? `Transfer to ${sourceAccount?.name || "Unknown Account"}`
+            : `Transfer from ${sourceAccount?.name || "Unknown Account"}`),
+        categoryId: existingTransaction.categoryId,
+        payeeId: existingTransaction.payeeId,
+        transferId,
+        transferAccountId: existingTransaction.accountId,
+        isTransfer: true,
+        status: existingTransaction.status || "cleared",
+      },
+      workspaceId
+    );
+
+    // Link transactions together
+    await this.repository.update(
+      transactionId,
+      {
+        transferTransactionId: targetTransaction.id,
+      },
+      workspaceId
+    );
+
+    await this.repository.update(
+      targetTransaction.id,
+      {
+        transferTransactionId: transactionId,
+      },
+      workspaceId
+    );
+
+    // Invalidate both account caches
+    invalidateAccountCache(existingTransaction.accountId);
+    invalidateAccountCache(targetAccountId);
+
+    const updatedSourceTransaction = await this.repository.findByIdWithRelations(
+      transactionId,
+      workspaceId
+    );
+
+    return {
+      transferId,
+      sourceTransaction: updatedSourceTransaction,
+      targetTransaction: await this.repository.findByIdWithRelations(targetTransaction.id, workspaceId),
+    };
+  }
+
+  /**
+   * Find transactions with similar payees to a given transaction
+   * Used to offer bulk transfer conversion
+   */
+  async findSimilarPayeeTransactions(
+    transactionId: number,
+    workspaceId: number,
+    options?: { accountId?: number; limit?: number }
+  ): Promise<{
+    sourceTransaction: Transaction;
+    similarTransactions: Transaction[];
+    count: number;
+  }> {
+    // Get the source transaction with its payee
+    const sourceTransaction = await this.repository.findByIdWithRelations(transactionId, workspaceId);
+    if (!sourceTransaction) {
+      throw new NotFoundError("Transaction", transactionId);
+    }
+
+    // Get the payee name to match against
+    const payeeName = sourceTransaction.payee?.name || (sourceTransaction as any).originalPayeeName;
+    if (!payeeName) {
+      return {
+        sourceTransaction,
+        similarTransactions: [],
+        count: 0,
+      };
+    }
+
+    // Build query conditions
+    const conditions = [
+      isNull(transactions.deletedAt),
+      // Exclude the source transaction
+      sql`${transactions.id} != ${transactionId}`,
+      // Must not already be a transfer
+      sql`(${transactions.isTransfer} IS NULL OR ${transactions.isTransfer} = 0)`,
+    ];
+
+    // Optionally limit to a specific account
+    if (options?.accountId) {
+      conditions.push(eq(transactions.accountId, options.accountId));
+    }
+
+    // Get all candidate transactions with their payees
+    const candidateTransactions = await db.query.transactions.findMany({
+      where: and(...conditions),
+      with: {
+        payee: true,
+        category: true,
+        account: {
+          columns: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: (transactions, { desc }) => [desc(transactions.date)],
+      limit: 500, // Cap to avoid scanning too many rows
+    });
+
+    // Filter by similar payee names
+    const similarTransactions = candidateTransactions.filter((tx) => {
+      const txPayeeName = tx.payee?.name || (tx as any).originalPayeeName;
+      if (!txPayeeName) return false;
+      return arePayeesSimilar(payeeName, txPayeeName);
+    });
+
+    // Apply limit if specified
+    const limit = options?.limit || 100;
+    const limitedTransactions = similarTransactions.slice(0, limit);
+
+    return {
+      sourceTransaction,
+      similarTransactions: limitedTransactions as unknown as Transaction[],
+      count: similarTransactions.length,
+    };
+  }
+
+  /**
+   * Convert multiple transactions to transfers to the same target account
+   * Used for bulk conversion when similar payees are found
+   */
+  async convertToTransferBulk(
+    params: {
+      transactionIds: number[];
+      targetAccountId: number;
+      rememberMapping?: boolean;
+      rawPayeeString?: string;
+    },
+    workspaceId: number
+  ): Promise<{
+    converted: number;
+    errors: Array<{ transactionId: number; error: string }>;
+    transfers: Array<{
+      transferId: string;
+      sourceTransaction: Transaction;
+      targetTransaction: Transaction;
+    }>;
+  }> {
+    const { transactionIds, targetAccountId, rememberMapping, rawPayeeString } = params;
+
+    const results: Array<{
+      transferId: string;
+      sourceTransaction: Transaction;
+      targetTransaction: Transaction;
+    }> = [];
+    const errors: Array<{ transactionId: number; error: string }> = [];
+
+    // Process each transaction
+    for (const transactionId of transactionIds) {
+      try {
+        const result = await this.convertToTransfer(transactionId, targetAccountId, workspaceId);
+        results.push(result);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        errors.push({ transactionId, error: errorMessage });
+        logger.warn("Failed to convert transaction to transfer", {
+          transactionId,
+          targetAccountId,
+          error: errorMessage,
+        });
+      }
+    }
+
+    // Record mapping if requested (only once, not for each transaction)
+    if (rememberMapping && rawPayeeString && results.length > 0) {
+      try {
+        const { getTransferMappingService } = await import("../transfers/transfer-mapping-service");
+
+        const mappingService = getTransferMappingService();
+        await mappingService.recordMappingFromConversion(
+          rawPayeeString,
+          targetAccountId,
+          workspaceId,
+          results[0]?.sourceTransaction.accountId
+        );
+      } catch (mappingError) {
+        logger.warn("Failed to record transfer mapping during bulk conversion", {
+          error: mappingError,
+          rawPayeeString,
+          targetAccountId,
+        });
+      }
+    }
+
+    return {
+      converted: results.length,
+      errors,
+      transfers: results,
+    };
   }
 }

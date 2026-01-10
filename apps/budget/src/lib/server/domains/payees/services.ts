@@ -2,7 +2,9 @@ import type {
   CategoryCorrection,
   CategoryDrift,
   CategoryRecommendation,
+  CorrectionContext,
   CorrectionPattern,
+  CorrectionTrigger,
   LearningMetrics,
   NewPayee,
   Payee,
@@ -1496,21 +1498,8 @@ export class PayeeService {
       transactionId?: number;
       fromCategoryId?: number;
       toCategoryId: number;
-      correctionTrigger:
-        | "manual_user_correction"
-        | "transaction_creation"
-        | "bulk_categorization"
-        | "import_correction"
-        | "scheduled_transaction";
-      correctionContext?:
-        | "transaction_amount_low"
-        | "transaction_amount_medium"
-        | "transaction_amount_high"
-        | "seasonal_period"
-        | "weekend_transaction"
-        | "weekday_transaction"
-        | "first_time_payee"
-        | "recurring_payee";
+      correctionTrigger: CorrectionTrigger;
+      correctionContext?: CorrectionContext;
       transactionAmount?: number;
       transactionDate?: string;
       userConfidence?: number;
@@ -1528,21 +1517,8 @@ export class PayeeService {
       transactionId?: number;
       fromCategoryId?: number;
       toCategoryId: number;
-      correctionTrigger:
-        | "manual_user_correction"
-        | "transaction_creation"
-        | "bulk_categorization"
-        | "import_correction"
-        | "scheduled_transaction";
-      correctionContext?:
-        | "transaction_amount_low"
-        | "transaction_amount_medium"
-        | "transaction_amount_high"
-        | "seasonal_period"
-        | "weekend_transaction"
-        | "weekday_transaction"
-        | "first_time_payee"
-        | "recurring_payee";
+      correctionTrigger: CorrectionTrigger;
+      correctionContext?: CorrectionContext;
       transactionAmount?: number;
       transactionDate?: string;
       userConfidence?: number;

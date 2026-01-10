@@ -33,6 +33,7 @@ const DEFAULT_CONFIG: CategorySuggesterConfig = {
 export interface CategorySuggestInput {
   rowIndex: number;
   payeeName: string;
+  rawPayeeString?: string;
   amount: number;
   date: string;
   memo?: string;
@@ -114,6 +115,7 @@ export class CategorySuggester {
         date: input.date,
         payeeName: input.payeeName,
         memo: input.memo,
+        rawPayeeString: input.rawPayeeString,
       };
 
       const smartSuggestions = await service.suggestCategories(

@@ -55,6 +55,7 @@ export interface CategoryTransactionContext {
   date: string; // ISO date string
   payeeId?: number;
   payeeName?: string;
+  rawPayeeString?: string;
   memo?: string;
   isRecurring?: boolean;
 }
@@ -93,6 +94,8 @@ const DEFAULT_CONFIG: SmartCategoryConfig = {
   paydayDayOfMonth: [1, 15, 28, 29, 30, 31],
   weekendCategories: ["Dining Out", "Entertainment", "Recreation", "Shopping"],
 };
+
+const CATEGORY_ALIAS_MIN_CONFIDENCE = 0.9;
 
 // Amount-based category hints
 const AMOUNT_CATEGORY_HINTS: Array<{
@@ -487,7 +490,7 @@ export function createSmartCategoryService(
       // have confirmed during import, providing highest confidence matches.
       const aliasResults: SmartCategorySuggestion[] = [];
       const categoryAliasService = getCategoryAliasService();
-      const rawString = context.description || context.payeeName || "";
+      const rawString = context.rawPayeeString || context.description || context.payeeName || "";
 
       if (rawString) {
         // Determine amount type for context
@@ -502,33 +505,40 @@ export function createSmartCategoryService(
         if (aliasMatch.found && aliasMatch.categoryId) {
           console.log('[SmartCategoryService] Category alias match found:', aliasMatch);
 
-          // Look up the category details
-          const matchedCategory = workspaceCategories.find(c => c.id === aliasMatch.categoryId);
-          if (matchedCategory && matchedCategory.name) {
-            // Create high-confidence suggestion from alias
-            const aliasConfidence = Math.max(aliasMatch.confidence, 0.85);
-            const matchType = aliasMatch.matchedOn === "exact" ? "exact" :
-                             aliasMatch.matchedOn === "normalized" ? "normalized" : "payee-context";
-
-            aliasResults.push({
-              categoryId: matchedCategory.id,
-              categoryName: matchedCategory.name,
-              categoryType: matchedCategory.categoryType as "income" | "expense" | "transfer" | "savings",
-              confidence: aliasConfidence,
-              reason: `Previously used for "${rawString.substring(0, 30)}${rawString.length > 30 ? "..." : ""}"`,
-              reasonCode: "alias_match",
-              factors: [{
-                type: "alias",
-                description: `User-confirmed ${matchType} match (${Math.round(aliasConfidence * 100)}% confidence)`,
-                weight: aliasConfidence,
-              }],
+          if (aliasMatch.confidence < CATEGORY_ALIAS_MIN_CONFIDENCE) {
+            console.log('[SmartCategoryService] Skipping low-confidence alias match:', {
+              confidence: aliasMatch.confidence,
+              rawString,
+              categoryId: aliasMatch.categoryId,
             });
+          } else {
+            // Look up the category details
+            const matchedCategory = workspaceCategories.find(c => c.id === aliasMatch.categoryId);
+            if (matchedCategory && matchedCategory.name) {
+              const aliasConfidence = aliasMatch.confidence;
+              const matchType = aliasMatch.matchedOn === "exact" ? "exact" :
+                               aliasMatch.matchedOn === "normalized" ? "normalized" : "payee-context";
 
-            // If alias confidence is very high (>0.9), just return alias match
-            // without computing other suggestions for performance
-            if (aliasConfidence >= 0.95) {
-              console.log('[SmartCategoryService] High-confidence alias match, returning early');
-              return aliasResults.slice(0, limit);
+              aliasResults.push({
+                categoryId: matchedCategory.id,
+                categoryName: matchedCategory.name,
+                categoryType: matchedCategory.categoryType as "income" | "expense" | "transfer" | "savings",
+                confidence: aliasConfidence,
+                reason: `Previously used for "${rawString.substring(0, 30)}${rawString.length > 30 ? "..." : ""}"`,
+                reasonCode: "alias_match",
+                factors: [{
+                  type: "alias",
+                  description: `User-confirmed ${matchType} match (${Math.round(aliasConfidence * 100)}% confidence)`,
+                  weight: aliasConfidence,
+                }],
+              });
+
+              // If alias confidence is very high (>0.9), just return alias match
+              // without computing other suggestions for performance
+              if (aliasConfidence >= 0.95) {
+                console.log('[SmartCategoryService] High-confidence alias match, returning early');
+                return aliasResults.slice(0, limit);
+              }
             }
           }
         }
@@ -748,8 +758,26 @@ export function createSmartCategoryService(
 
       console.log('[SmartCategoryService] After filter (>= 0.3):', sortedEntries.length, 'categories');
 
+      const dismissedCategoryIds = new Set<number>();
+      if (rawString) {
+        for (const entry of sortedEntries) {
+          const isDismissed = await categoryAliasService.isCategoryDismissed(
+            rawString,
+            entry.category.id,
+            workspaceId,
+            CATEGORY_ALIAS_MIN_CONFIDENCE
+          );
+          if (isDismissed) {
+            dismissedCategoryIds.add(entry.category.id);
+          }
+        }
+      }
+
       for (const entry of sortedEntries) {
         if (!entry.category.name) continue;
+        if (dismissedCategoryIds.has(entry.category.id)) {
+          continue;
+        }
 
         // Skip if this category is already in alias results (avoid duplicates)
         const alreadyInAliasResults = aliasResults.some(a => a.categoryId === entry.category.id);

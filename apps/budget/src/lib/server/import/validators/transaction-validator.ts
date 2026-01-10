@@ -370,12 +370,21 @@ export class TransactionValidator {
     normalized: Partial<NormalizedTransaction>,
     existing: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
   ): boolean {
+    // Primary duplicate detection: fitid (Financial Institution Transaction ID)
+    // If both transactions have a fitid and they match, it's definitely a duplicate
+    const normalizedFitid = normalized.fitid;
+    const existingFitid = this.getTransactionFitid(existing);
+
+    if (normalizedFitid && existingFitid && normalizedFitid === existingFitid) {
+      return true;
+    }
+
+    // Secondary duplicate detection: date and amount match
     const normalizedDate = normalized.date;
     const existingDate = this.getTransactionDate(existing);
     const normalizedAmount = normalized.amount;
     const existingAmount = this.getTransactionAmount(existing);
 
-    // Primary duplicate detection: date and amount match
     // If date + amount match (within $0.01), consider it a duplicate
     // This is intentionally loose to catch duplicates even if payee/description differ
     // (users may change these during import)
@@ -389,6 +398,18 @@ export class TransactionValidator {
     }
 
     return true;
+  }
+
+  /**
+   * Extract fitid from transaction
+   */
+  private getTransactionFitid(
+    transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
+  ): string | undefined {
+    if ("fitid" in transaction) {
+      return transaction.fitid as string | undefined;
+    }
+    return undefined;
   }
 
   /**

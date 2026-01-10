@@ -72,6 +72,7 @@ const ACCOUNT_TYPE_MAP: Record<AccountToTrack, AccountType> = {
   hsa: "hsa",
   loan: "loan",
   mortgage: "loan",
+  utility: "utility",
 };
 
 /**
@@ -85,6 +86,7 @@ const ACCOUNT_COLOR_POOLS: Record<AccountToTrack, string[]> = {
   hsa: ["#ec4899", "#db2777", "#be185d", "#f472b6", "#e879f9"],
   loan: ["#ef4444", "#dc2626", "#b91c1c", "#f87171", "#fb7185"],
   mortgage: ["#6366f1", "#4f46e5", "#4338ca", "#818cf8", "#a78bfa"],
+  utility: ["#f59e0b", "#d97706", "#f97316", "#ea580c", "#eab308"],
 };
 
 /**
@@ -98,6 +100,7 @@ const ACCOUNT_ICON_POOLS: Record<AccountToTrack, string[]> = {
   hsa: ["heart-pulse", "stethoscope", "pill", "activity", "cross"],
   loan: ["file-text", "scroll-text", "file-signature", "clipboard-list", "receipt-text"],
   mortgage: ["home", "house", "building", "key-round", "door-open"],
+  utility: ["zap", "droplets", "flame", "wifi", "plug"],
 };
 
 /**
@@ -146,6 +149,12 @@ const ACCOUNT_DESCRIPTIONS: Record<AccountToTrack, string[]> = {
     "Your biggest investment, tracked carefully",
     "Mortgage balance and payment tracking",
   ],
+  utility: [
+    "Track utility usage and billing patterns over time",
+    "Monitor electric, gas, water, or internet usage",
+    "Compare usage year-over-year to identify savings",
+    "Import statements to analyze consumption trends",
+  ],
 };
 
 /**
@@ -185,6 +194,11 @@ const ACCOUNT_DEFAULTS: Record<AccountToTrack, Partial<AccountConfig>> = {
   mortgage: {
     name: "Mortgage",
     slug: "mortgage",
+    onBudget: false,
+  },
+  utility: {
+    name: "Utility Account",
+    slug: "utility",
     onBudget: false,
   },
 };
@@ -550,6 +564,7 @@ export class SmartDefaultsGenerator {
       hsa: "HSA",
       loan: "Loan",
       mortgage: "Mortgage",
+      utility: "Utility Account",
     };
     return names[accountType] || accountType;
   }

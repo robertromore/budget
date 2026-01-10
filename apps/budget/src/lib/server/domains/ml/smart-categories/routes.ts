@@ -29,6 +29,7 @@ const transactionContextSchema = z.object({
   date: z.string(), // ISO date string
   payeeId: z.number().optional(),
   payeeName: z.string().max(200).optional(),
+  rawPayeeString: z.string().max(500).optional(),
   memo: z.string().max(500).optional(),
   isRecurring: z.boolean().optional(),
 });

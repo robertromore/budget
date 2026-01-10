@@ -51,6 +51,8 @@ export class CategoryAliasRepository {
     const normalizedString = this.normalizeString(data.rawString);
     const now = getCurrentTimestamp();
 
+    console.log(`[AliasRepo] Creating alias: rawString="${data.rawString}", normalized="${normalizedString}", categoryId=${data.categoryId}, confidence=${data.confidence}`);
+
     const [alias] = await db
       .insert(categoryAliases)
       .values({
@@ -66,6 +68,7 @@ export class CategoryAliasRepository {
       throw new Error("Failed to create category alias");
     }
 
+    console.log(`[AliasRepo] Created alias id=${alias.id}`);
     return alias;
   }
 
@@ -89,7 +92,9 @@ export class CategoryAliasRepository {
   }
 
   /**
-   * Find an alias by exact raw string match
+   * Find the best alias by exact raw string match.
+   * Returns the highest-confidence alias for this rawString.
+   * Note: With multiple categories per rawString now supported, this returns the best positive match.
    */
   async findByRawString(rawString: string, workspaceId: number): Promise<CategoryAlias | null> {
     const [result] = await db
@@ -102,13 +107,15 @@ export class CategoryAliasRepository {
           isNull(categoryAliases.deletedAt)
         )
       )
+      .orderBy(desc(categoryAliases.confidence)) // Return highest confidence first
       .limit(1);
 
     return result || null;
   }
 
   /**
-   * Find aliases by normalized string (may return multiple)
+   * Find aliases by normalized string (may return multiple).
+   * Returns results ordered by confidence DESC, so highest-confidence aliases come first.
    */
   async findByNormalizedString(normalized: string, workspaceId: number): Promise<CategoryAlias[]> {
     return await db
@@ -120,7 +127,8 @@ export class CategoryAliasRepository {
           eq(categoryAliases.workspaceId, workspaceId),
           isNull(categoryAliases.deletedAt)
         )
-      );
+      )
+      .orderBy(desc(categoryAliases.confidence)); // Highest confidence first
   }
 
   /**
@@ -251,7 +259,9 @@ export class CategoryAliasRepository {
   }
 
   /**
-   * Bulk create aliases, handling duplicates by updating match count
+   * Bulk create aliases, handling duplicates by updating match count.
+   * Uses (rawString, categoryId) as the key for deduplication.
+   * This allows multiple categories per rawString (e.g., one positive, multiple dismissed).
    */
   async bulkCreate(
     aliases: Array<{
@@ -270,16 +280,19 @@ export class CategoryAliasRepository {
     const now = getCurrentTimestamp();
 
     for (const aliasData of aliases) {
-      const existing = await this.findByRawString(aliasData.rawString, workspaceId);
+      // Look for existing alias with SAME rawString AND categoryId
+      const existing = await this.findByRawStringAndCategory(
+        aliasData.rawString,
+        aliasData.categoryId,
+        workspaceId
+      );
 
       if (existing) {
-        // Update existing alias - increment match count
-        // If category changed, update it (user override takes precedence)
+        // Update existing alias for this specific (rawString, categoryId) pair
         await db
           .update(categoryAliases)
           .set({
             matchCount: existing.matchCount + 1,
-            categoryId: aliasData.categoryId, // Update to new category if changed
             payeeId: aliasData.payeeId ?? existing.payeeId,
             amountType: aliasData.amountType ?? existing.amountType,
             lastMatchedAt: now,
@@ -290,28 +303,33 @@ export class CategoryAliasRepository {
           .where(eq(categoryAliases.id, existing.id));
         updated++;
       } else {
-        // Create new alias
+        // Create new alias for this (rawString, categoryId) combination
         // AI-suggested aliases start with slightly lower confidence
         const initialConfidence = aliasData.wasAiSuggested ? 0.85 : 1.0;
         const trigger: CategoryAliasTrigger = aliasData.wasAiSuggested
           ? "ai_accepted"
           : aliasData.trigger || "import_confirmation";
 
-        await db.insert(categoryAliases).values({
-          workspaceId,
-          rawString: aliasData.rawString,
-          normalizedString: this.normalizeString(aliasData.rawString),
-          categoryId: aliasData.categoryId,
-          payeeId: aliasData.payeeId,
-          trigger,
-          sourceAccountId: aliasData.sourceAccountId,
-          amountType: aliasData.amountType || "any",
-          confidence: initialConfidence,
-          matchCount: 1,
-          createdAt: now,
-          updatedAt: now,
-        });
-        created++;
+        try {
+          await db.insert(categoryAliases).values({
+            workspaceId,
+            rawString: aliasData.rawString,
+            normalizedString: this.normalizeString(aliasData.rawString),
+            categoryId: aliasData.categoryId,
+            payeeId: aliasData.payeeId,
+            trigger,
+            sourceAccountId: aliasData.sourceAccountId,
+            amountType: aliasData.amountType || "any",
+            confidence: initialConfidence,
+            matchCount: 1,
+            createdAt: now,
+            updatedAt: now,
+          });
+          created++;
+        } catch (error) {
+          // Handle unique constraint violation (race condition)
+          console.log(`[AliasRepo] Failed to create alias for "${aliasData.rawString}":`, error);
+        }
       }
     }
 
@@ -575,5 +593,82 @@ export class CategoryAliasRepository {
       byTrigger,
       byAmountType,
     };
+  }
+
+  /**
+   * Find an alias by raw string AND category ID.
+   * Used for dismissal tracking to find the specific alias that was dismissed.
+   */
+  async findByRawStringAndCategory(
+    rawString: string,
+    categoryId: number,
+    workspaceId: number
+  ): Promise<CategoryAlias | null> {
+    const normalizedString = this.normalizeString(rawString);
+    console.log(`[AliasRepo] findByRawStringAndCategory: rawString="${rawString}", normalized="${normalizedString}", categoryId=${categoryId}`);
+
+    // Try exact match first
+    const [exactResult] = await db
+      .select()
+      .from(categoryAliases)
+      .where(
+        and(
+          eq(categoryAliases.rawString, rawString),
+          eq(categoryAliases.categoryId, categoryId),
+          eq(categoryAliases.workspaceId, workspaceId),
+          isNull(categoryAliases.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (exactResult) {
+      console.log(`[AliasRepo] Found exact match: id=${exactResult.id}, confidence=${exactResult.confidence}`);
+      return exactResult;
+    }
+
+    // Try normalized match
+    const [normalizedResult] = await db
+      .select()
+      .from(categoryAliases)
+      .where(
+        and(
+          eq(categoryAliases.normalizedString, normalizedString),
+          eq(categoryAliases.categoryId, categoryId),
+          eq(categoryAliases.workspaceId, workspaceId),
+          isNull(categoryAliases.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (normalizedResult) {
+      console.log(`[AliasRepo] Found normalized match: id=${normalizedResult.id}, rawString="${normalizedResult.rawString}", confidence=${normalizedResult.confidence}`);
+    } else {
+      console.log(`[AliasRepo] No match found for rawString="${rawString}" and categoryId=${categoryId}`);
+    }
+
+    return normalizedResult || null;
+  }
+
+  /**
+   * Update the confidence of an alias.
+   * Used for dismissal tracking to reduce confidence on negative feedback.
+   */
+  async updateConfidence(
+    id: number,
+    newConfidence: number,
+    workspaceId: number
+  ): Promise<void> {
+    await db
+      .update(categoryAliases)
+      .set({
+        confidence: Math.max(0.1, Math.min(1.0, newConfidence)),
+        updatedAt: getCurrentTimestamp(),
+      })
+      .where(
+        and(
+          eq(categoryAliases.id, id),
+          eq(categoryAliases.workspaceId, workspaceId)
+        )
+      );
   }
 }

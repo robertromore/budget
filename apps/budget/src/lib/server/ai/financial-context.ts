@@ -158,10 +158,11 @@ async function fetchAccounts(workspaceId: number): Promise<AccountSummary[]> {
 		// Default to 'other' if account type is null
 		const accountType: AccountType = account.type ?? "other";
 
-		// For debt accounts, balance is inverted (positive means you owe)
+		// For debt accounts, only invert the initial balance
+		// Transaction amounts already have correct signs (purchases negative, payments positive)
 		const isDebt = isDebtAccount(accountType);
 		const balance = isDebt
-			? -(initialBalance + transactionSum)
+			? -initialBalance + transactionSum
 			: initialBalance + transactionSum;
 
 		accountsWithBalances.push({
@@ -382,7 +383,11 @@ async function calculateInsights(
 
 	for (const account of accountsData) {
 		if (isDebtAccount(account.type)) {
-			totalLiabilities += Math.abs(account.balance);
+			// Only negative balances are liabilities (debt owed)
+			// Positive balances on debt accounts are credits (overpayment)
+			if (account.balance < 0) {
+				totalLiabilities += Math.abs(account.balance);
+			}
 		} else {
 			totalAssets += account.balance;
 		}

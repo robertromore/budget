@@ -136,6 +136,7 @@ export class TransactionRepository {
         account: true,
         category: true,
         payee: true,
+        transferAccount: true,
         budgetAllocations: {
           with: {
             budget: true,
@@ -166,6 +167,7 @@ export class TransactionRepository {
         account: true,
         category: true,
         payee: true,
+        transferAccount: true,
       },
     });
 
@@ -269,6 +271,7 @@ export class TransactionRepository {
         account: true,
         category: true,
         payee: true,
+        transferAccount: true,
         budgetAllocations: {
           with: {
             budget: true,
@@ -305,6 +308,7 @@ export class TransactionRepository {
       with: {
         category: true,
         payee: true,
+        transferAccount: true,
         budgetAllocations: {
           with: {
             budget: true,
@@ -319,16 +323,25 @@ export class TransactionRepository {
 
   /**
    * Get account balance from transactions
+   * Supports multiple balance management options:
+   * - Option 1: Balance reset date (balanceResetDate + balanceAtResetDate)
+   * - Option 2: Archived transactions are excluded
+   * - Option 3: Reconciled balance checkpoint (reconciledBalance + reconciledDate)
+   * - Option 4: Adjustment transactions are included normally
    */
   async getAccountBalance(accountId: number, workspaceId: number): Promise<number> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 
-    // Get account to check type and initial balance
+    // Get account with balance management fields
     const [account] = await db
       .select({
         accountType: accounts.accountType,
         initialBalance: accounts.initialBalance,
+        balanceResetDate: accounts.balanceResetDate,
+        balanceAtResetDate: accounts.balanceAtResetDate,
+        reconciledBalance: accounts.reconciledBalance,
+        reconciledDate: accounts.reconciledDate,
       })
       .from(accounts)
       .where(eq(accounts.id, accountId))
@@ -338,7 +351,34 @@ export class TransactionRepository {
       return 0;
     }
 
-    // Calculate transaction sum
+    const isDebt = account.accountType && isDebtAccount(account.accountType);
+
+    // Priority 1: Reconciled balance checkpoint (Option 3)
+    if (account.reconciledDate && account.reconciledBalance != null) {
+      const transactionSum = await this.sumTransactionsAfterDate(
+        accountId,
+        account.reconciledDate,
+        { excludeArchived: true }
+      );
+      // Reconciled balance is stored as-is (positive for debt = amount owed)
+      // For debt accounts, we store the amount owed as positive, display as negative
+      const baseBalance = isDebt ? -account.reconciledBalance : account.reconciledBalance;
+      return baseBalance + transactionSum;
+    }
+
+    // Priority 2: Balance reset date (Option 1)
+    if (account.balanceResetDate && account.balanceAtResetDate != null) {
+      const transactionSum = await this.sumTransactionsAfterDate(
+        accountId,
+        account.balanceResetDate,
+        { excludeArchived: true }
+      );
+      // Balance at reset date is stored as-is (positive for debt = amount owed)
+      const baseBalance = isDebt ? -account.balanceAtResetDate : account.balanceAtResetDate;
+      return baseBalance + transactionSum;
+    }
+
+    // Default: Initial balance + all non-archived transactions
     const result = await db
       .select({
         balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
@@ -348,21 +388,55 @@ export class TransactionRepository {
         and(
           eq(transactions.accountId, accountId),
           eq(transactions.status, "cleared"),
-          isNull(transactions.deletedAt)
+          isNull(transactions.deletedAt),
+          // Option 2: Exclude archived transactions
+          sql`(${transactions.isArchived} = 0 OR ${transactions.isArchived} IS NULL)`
         )
       );
 
     const transactionSum = Number(result[0]?.balance ?? 0);
     const initialBalance = Number(account.initialBalance ?? 0);
 
-    // For debt accounts, invert the polarity
-    if (account.accountType && isDebtAccount(account.accountType)) {
-      // Start with negative initial balance (debt), then subtract transaction amounts
-      return -initialBalance - transactionSum;
+    // For debt accounts, invert only the initial balance
+    // Transaction amounts already have correct signs (purchases negative, payments positive)
+    if (isDebt) {
+      // Start with negative initial balance (debt), add transaction amounts as-is
+      // - Purchases (negative) reduce balance (more debt)
+      // - Payments (positive) increase balance (less debt)
+      return -initialBalance + transactionSum;
     }
 
     // For asset accounts, normal calculation
     return initialBalance + transactionSum;
+  }
+
+  /**
+   * Sum transactions after a specific date, optionally excluding archived
+   */
+  private async sumTransactionsAfterDate(
+    accountId: number,
+    afterDate: string,
+    options?: { excludeArchived?: boolean }
+  ): Promise<number> {
+    const conditions = [
+      eq(transactions.accountId, accountId),
+      eq(transactions.status, "cleared"),
+      isNull(transactions.deletedAt),
+      sql`${transactions.date} > ${afterDate}`,
+    ];
+
+    if (options?.excludeArchived) {
+      conditions.push(sql`(${transactions.isArchived} = 0 OR ${transactions.isArchived} IS NULL)`);
+    }
+
+    const result = await db
+      .select({
+        sum: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+      })
+      .from(transactions)
+      .where(and(...conditions));
+
+    return Number(result[0]?.sum ?? 0);
   }
 
   /**
@@ -400,11 +474,8 @@ export class TransactionRepository {
 
     const pendingSum = Number(result[0]?.balance ?? 0);
 
-    // For debt accounts, invert the polarity
-    if (account.accountType && isDebtAccount(account.accountType)) {
-      return -pendingSum;
-    }
-
+    // Transaction amounts already have correct signs for all account types
+    // No need to invert for debt accounts
     return pendingSum;
   }
 
@@ -474,20 +545,29 @@ export class TransactionRepository {
 
   /**
    * Get transactions with running balance
+   * Supports balance management options:
+   * - Shows all transactions (including archived) but marks archived ones
+   * - Excludes archived transactions from running balance calculation
+   * - Uses reconciled/reset date as starting point if set
    */
   async findWithRunningBalance(
     accountId: number,
     workspaceId: number,
-    limit?: number
-  ): Promise<Array<Transaction & { balance: number }>> {
+    limit?: number,
+    options?: { includeArchived?: boolean }
+  ): Promise<Array<Transaction & { balance: number; isExcludedFromBalance?: boolean }>> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 
-    // Get account to check type and initial balance
+    // Get account with balance management fields
     const [account] = await db
       .select({
         accountType: accounts.accountType,
         initialBalance: accounts.initialBalance,
+        balanceResetDate: accounts.balanceResetDate,
+        balanceAtResetDate: accounts.balanceAtResetDate,
+        reconciledBalance: accounts.reconciledBalance,
+        reconciledDate: accounts.reconciledDate,
       })
       .from(accounts)
       .where(eq(accounts.id, accountId))
@@ -498,6 +578,7 @@ export class TransactionRepository {
       with: {
         category: true,
         payee: true,
+        transferAccount: true,
         budgetAllocations: {
           with: {
             budget: true,
@@ -508,27 +589,182 @@ export class TransactionRepository {
       limit: limit,
     });
 
-    // Calculate running balance including ALL transaction statuses (cleared, pending, scheduled)
-    // For debt accounts, invert the polarity to show debt as negative
-    const initialBalance = Number(account?.initialBalance ?? 0);
     const isDebt = account && account.accountType && isDebtAccount(account.accountType);
 
-    // Start with initial balance (inverted for debt accounts)
-    let runningBalance = isDebt ? -initialBalance : initialBalance;
+    // Determine starting balance and cutoff date based on balance management settings
+    let startingBalance: number;
+    let cutoffDate: string | null = null;
+
+    // Priority 1: Reconciled balance checkpoint
+    if (account?.reconciledDate && account.reconciledBalance != null) {
+      startingBalance = isDebt ? -account.reconciledBalance : account.reconciledBalance;
+      cutoffDate = account.reconciledDate;
+    }
+    // Priority 2: Balance reset date
+    else if (account?.balanceResetDate && account.balanceAtResetDate != null) {
+      startingBalance = isDebt ? -account.balanceAtResetDate : account.balanceAtResetDate;
+      cutoffDate = account.balanceResetDate;
+    }
+    // Default: Use initial balance
+    else {
+      const initialBalance = Number(account?.initialBalance ?? 0);
+      startingBalance = isDebt ? -initialBalance : initialBalance;
+    }
+
+    let runningBalance = startingBalance;
 
     const transactionsWithBalance = transactionList
       .reverse()
       .map((t) => {
+        const transaction = toTransaction(t);
         const amount = Number(t.amount);
-        // For debt accounts, invert transaction amounts
-        runningBalance += isDebt ? -amount : amount;
+
+        // Determine if this transaction is excluded from balance calculation
+        const isArchived = t.isArchived === true;
+        const isBeforeCutoff = Boolean(cutoffDate && t.date <= cutoffDate);
+        const isExcludedFromBalance: boolean = isArchived || isBeforeCutoff;
+
+        // Only add to running balance if not excluded
+        if (!isExcludedFromBalance) {
+          runningBalance += amount;
+        }
+
         return {
-          ...toTransaction(t),
+          ...transaction,
           balance: runningBalance,
+          isExcludedFromBalance,
         };
       })
       .reverse();
 
+    // Filter out archived if not requested
+    if (!options?.includeArchived) {
+      return transactionsWithBalance.filter((t) => !t.isArchived);
+    }
+
     return transactionsWithBalance;
+  }
+
+  /**
+   * Archive a transaction (exclude from balance but keep in history)
+   */
+  async archiveTransaction(id: number, workspaceId: number): Promise<Transaction> {
+    const transaction = await this.findById(id, workspaceId);
+    if (!transaction) {
+      throw new NotFoundError("Transaction", id);
+    }
+
+    const [updated] = await db
+      .update(transactions)
+      .set({ isArchived: true, updatedAt: getCurrentTimestamp() })
+      .where(eq(transactions.id, id))
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundError("Transaction", id);
+    }
+
+    return this.findByIdWithRelations(id, workspaceId);
+  }
+
+  /**
+   * Unarchive a transaction (include in balance again)
+   */
+  async unarchiveTransaction(id: number, workspaceId: number): Promise<Transaction> {
+    const transaction = await this.findById(id, workspaceId);
+    if (!transaction) {
+      throw new NotFoundError("Transaction", id);
+    }
+
+    const [updated] = await db
+      .update(transactions)
+      .set({ isArchived: false, updatedAt: getCurrentTimestamp() })
+      .where(eq(transactions.id, id))
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundError("Transaction", id);
+    }
+
+    return this.findByIdWithRelations(id, workspaceId);
+  }
+
+  /**
+   * Archive all transactions before a specific date
+   */
+  async archiveTransactionsBeforeDate(
+    accountId: number,
+    beforeDate: string,
+    workspaceId: number
+  ): Promise<number> {
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
+    const result = await db
+      .update(transactions)
+      .set({ isArchived: true, updatedAt: getCurrentTimestamp() })
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          sql`${transactions.date} < ${beforeDate}`,
+          isNull(transactions.deletedAt),
+          sql`(${transactions.isArchived} = 0 OR ${transactions.isArchived} IS NULL)`
+        )
+      )
+      .returning({ id: transactions.id });
+
+    return result.length;
+  }
+
+  /**
+   * Create a balance adjustment transaction
+   */
+  async createBalanceAdjustment(
+    accountId: number,
+    adjustmentAmount: number,
+    reason: string,
+    date: string,
+    workspaceId: number
+  ): Promise<Transaction> {
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
+    const [transaction] = await db
+      .insert(transactions)
+      .values({
+        accountId,
+        workspaceId,
+        amount: adjustmentAmount,
+        date,
+        status: "cleared",
+        isAdjustment: true,
+        adjustmentReason: reason,
+        notes: `Balance adjustment: ${reason}`,
+      })
+      .returning();
+
+    if (!transaction) {
+      throw new Error("Failed to create balance adjustment");
+    }
+
+    return this.findByIdWithRelations(transaction.id, workspaceId);
+  }
+
+  /**
+   * Count archived transactions for an account
+   */
+  async countArchivedTransactions(accountId: number, workspaceId: number): Promise<number> {
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          eq(transactions.isArchived, true),
+          isNull(transactions.deletedAt)
+        )
+      );
+
+    return Number(result?.count ?? 0);
   }
 }
