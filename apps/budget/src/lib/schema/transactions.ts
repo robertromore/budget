@@ -55,11 +55,19 @@ export const transactions = sqliteTable(
     // Import metadata
     importedFrom: text("imported_from"), // File name or source of import
     importedAt: text("imported_at"), // When the transaction was imported
+    fitid: text("fitid"), // Financial Institution Transaction ID (OFX/bank-provided unique ID for deduplication)
     originalPayeeName: text("original_payee_name"), // Original payee name from import file before normalization
     originalCategoryName: text("original_category_name"), // Original category from import file
     inferredCategory: text("inferred_category"), // Category suggested by smart categorization
     importDetails: text("import_details"), // Additional details extracted during import (e.g., transaction IDs, location)
     rawImportData: text("raw_import_data"), // Complete unmodified raw data from import file (JSON)
+
+    // Balance management fields
+    // Option 2: Archive - keep for history but exclude from balance
+    isArchived: integer("is_archived", { mode: "boolean" }).default(false),
+    // Option 4: Balance adjustment - special transaction to correct balance
+    isAdjustment: integer("is_adjustment", { mode: "boolean" }).default(false),
+    adjustmentReason: text("adjustment_reason"), // Reason for the balance adjustment
 
     createdAt: text("created_at")
       .notNull()
@@ -83,6 +91,9 @@ export const transactions = sqliteTable(
     index("transaction_transfer_id_idx").on(table.transferId),
     index("transaction_transfer_account_idx").on(table.transferAccountId),
     index("transaction_is_transfer_idx").on(table.isTransfer),
+    index("transaction_is_archived_idx").on(table.isArchived),
+    index("transaction_is_adjustment_idx").on(table.isAdjustment),
+    index("transaction_fitid_idx").on(table.fitid),
   ]
 );
 
@@ -98,6 +109,12 @@ export const transactionsRelations = relations(transactions, ({ many, one }) => 
   account: one(accounts, {
     fields: [transactions.accountId],
     references: [accounts.id],
+    relationName: "transactionAccount",
+  }),
+  transferAccount: one(accounts, {
+    fields: [transactions.transferAccountId],
+    references: [accounts.id],
+    relationName: "transactionTransferAccount",
   }),
   category: one(categories, {
     fields: [transactions.categoryId],

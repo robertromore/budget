@@ -19,6 +19,19 @@ export type TransactionsFormat = {
   accountId: number;
   parentId: number | null;
   balance: number | null;
+  // Transfer metadata
+  isTransfer?: boolean;
+  transferId?: string | null;
+  transferAccountId?: number | null;
+  transferTransactionId?: number | null;
+  transferAccountName?: string | null;
+  transferAccountSlug?: string | null;
+  // Import metadata
+  originalPayeeName?: string | null; // Original payee string from import
+  // Balance management metadata
+  isArchived?: boolean; // Transaction is archived (excluded from balance)
+  isAdjustment?: boolean; // Transaction is a balance adjustment
+  adjustmentReason?: string | null; // Reason for balance adjustment
   // Schedule metadata (only present for scheduled transactions)
   scheduleId?: number;
   scheduleName?: string;

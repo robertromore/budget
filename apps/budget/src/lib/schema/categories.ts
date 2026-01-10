@@ -1,4 +1,3 @@
-import { isValidIconName } from "$lib/utils/icon-validation";
 import { relations, sql } from "drizzle-orm";
 import {
   index,
@@ -11,6 +10,7 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
 import { z } from "zod/v4";
+import { isValidIconName } from "../utils/icon-validation";
 import { workspaces } from "./workspaces";
 
 export const categoryTypeEnum = [

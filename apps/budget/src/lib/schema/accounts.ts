@@ -2,7 +2,7 @@
 // resources, with an overall balance, and transactions to and from the account
 // that affect the account's balance.
 
-import { isValidIconName } from "$lib/utils/icon-validation";
+import { isValidIconName } from "../utils/icon-validation";
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -11,7 +11,7 @@ import { z } from "zod/v4";
 import type { Transaction } from "./transactions";
 import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
-import type { EncryptionLevel } from "$lib/types/encryption";
+import type { EncryptionLevel } from "../types/encryption";
 
 // Account type enum for type safety
 export const accountTypeEnum = [
@@ -22,10 +22,24 @@ export const accountTypeEnum = [
   "loan",
   "cash",
   "hsa",
+  "utility",
   "other",
 ] as const;
 
 export type AccountType = (typeof accountTypeEnum)[number];
+
+// Utility subtype enum for utility accounts
+export const utilitySubtypeEnum = [
+  "electric",
+  "gas",
+  "water",
+  "internet",
+  "sewer",
+  "trash",
+  "other",
+] as const;
+
+export type UtilitySubtype = (typeof utilitySubtypeEnum)[number];
 
 export const accounts = sqliteTable(
   "account",
@@ -59,6 +73,20 @@ export const accounts = sqliteTable(
     minimumPayment: real("minimum_payment"), // Minimum monthly payment
     paymentDueDay: integer("payment_due_day"), // Day of month payment is due (1-31)
     interestRate: real("interest_rate"), // APR for credit cards or loan interest rate
+
+    // Utility account-specific fields
+    utilitySubtype: text("utility_subtype", { enum: utilitySubtypeEnum }), // electric, gas, water, internet, etc.
+    utilityProvider: text("utility_provider"), // e.g., "Duke Energy", "AT&T"
+    utilityAccountNumber: text("utility_account_number"), // Service account number
+    utilityServiceAddress: text("utility_service_address"), // Service location address
+
+    // Balance management fields
+    // Option 1: Balance Reset Date - transactions before this date are excluded from balance
+    balanceResetDate: text("balance_reset_date"), // ISO date string
+    balanceAtResetDate: real("balance_at_reset_date"), // Balance as of the reset date
+    // Option 3: Reconciliation - standard accounting checkpoint
+    reconciledBalance: real("reconciled_balance"), // Last reconciled balance
+    reconciledDate: text("reconciled_date"), // Date of last reconciliation
 
     // Metric preferences - JSON array of enabled metric IDs
     enabledMetrics: text("enabled_metrics"), // JSON array like ["availableCredit", "utilization", "paymentDue"]
@@ -96,7 +124,8 @@ export const accountsRelations = relations(accounts, ({ one, many }) => ({
     fields: [accounts.workspaceId],
     references: [workspaces.id],
   }),
-  transactions: many(transactions),
+  transactions: many(transactions, { relationName: "transactionAccount" }),
+  transferTransactions: many(transactions, { relationName: "transactionTransferAccount" }),
 }));
 
 export const selectAccountSchema = createSelectSchema(accounts);
@@ -183,6 +212,34 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
   interestRate: (schema) =>
     schema
       .pipe(z.number().min(0).max(100, "Interest rate must be between 0 and 100"))
+      .optional()
+      .nullable(),
+  // Utility account fields
+  utilitySubtype: (schema) =>
+    schema
+      .pipe(
+        z.enum(utilitySubtypeEnum, {
+          message: "Please select a valid utility type",
+        })
+      )
+      .optional()
+      .nullable(),
+  utilityProvider: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(100, "Provider name must be less than 100 characters"))
+      .optional()
+      .nullable(),
+  utilityAccountNumber: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(50, "Account number must be less than 50 characters"))
+      .optional()
+      .nullable(),
+  utilityServiceAddress: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(200, "Service address must be less than 200 characters"))
       .optional()
       .nullable(),
   encryptionLevel: (schema) =>
@@ -272,6 +329,31 @@ export const formUpdateAccountSchema = z.object({
     .max(100, "Interest rate must be between 0 and 100")
     .optional()
     .nullable(),
+  // Utility account fields
+  utilitySubtype: z.enum(utilitySubtypeEnum).optional().nullable(),
+  utilityProvider: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(100, "Provider name must be less than 100 characters"))
+    .optional()
+    .nullable(),
+  utilityAccountNumber: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(50, "Account number must be less than 50 characters"))
+    .optional()
+    .nullable(),
+  utilityServiceAddress: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(200, "Service address must be less than 200 characters"))
+    .optional()
+    .nullable(),
+  // Balance management fields
+  balanceResetDate: z.string().optional().nullable(), // ISO date string
+  balanceAtResetDate: z.number().optional().nullable(),
+  reconciledBalance: z.number().optional().nullable(),
+  reconciledDate: z.string().optional().nullable(), // ISO date string
   encryptionLevel: z.enum(["inherit", "0", "1", "2", "3", "4"]).optional(),
   encryptionKeyId: z.string().optional().nullable(),
 });
@@ -302,6 +384,10 @@ export function isDebtAccount(accountType: AccountType): boolean {
 
 export function isHealthSavingsAccount(accountType: AccountType): boolean {
   return accountType === "hsa";
+}
+
+export function isUtilityAccount(accountType: AccountType): boolean {
+  return accountType === "utility";
 }
 
 export function getAccountNature(accountType: AccountType): "asset" | "liability" {

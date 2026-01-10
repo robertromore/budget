@@ -89,8 +89,13 @@ export const categoryAliases = sqliteTable(
     // Composite indexes for alias matching
     index("category_aliases_workspace_normalized_idx").on(table.workspaceId, table.normalizedString),
 
-    // Unique constraint: one raw string maps to one category per workspace
-    uniqueIndex("category_aliases_workspace_raw_unique_idx").on(table.workspaceId, table.rawString),
+    // Unique constraint: one raw string + category pair per workspace
+    // This allows multiple categories per rawString (one positive, multiple dismissed)
+    uniqueIndex("category_aliases_workspace_raw_category_unique_idx").on(
+      table.workspaceId,
+      table.rawString,
+      table.categoryId
+    ),
 
     // Soft delete filter
     index("category_aliases_deleted_at_idx").on(table.deletedAt),

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { accountTypeEnum } from "../accounts";
+import { accountTypeEnum, utilitySubtypeEnum } from "../accounts";
 
 // Superform-compatible schemas for accounts (not using drizzle-zod)
 export const superformInsertAccountSchema = z.object({
@@ -57,6 +57,23 @@ export const superformInsertAccountSchema = z.object({
     .max(100, "Interest rate must be between 0 and 100")
     .optional()
     .nullable(),
+  // Utility account fields
+  utilitySubtype: z.enum(utilitySubtypeEnum).optional().nullable(),
+  utilityProvider: z
+    .string()
+    .max(100, "Provider name must be less than 100 characters")
+    .optional()
+    .nullable(),
+  utilityAccountNumber: z
+    .string()
+    .max(50, "Account number must be less than 50 characters")
+    .optional()
+    .nullable(),
+  utilityServiceAddress: z
+    .string()
+    .max(200, "Service address must be less than 200 characters")
+    .optional()
+    .nullable(),
 });
 
 export const superformUpdateAccountSchema = z.object({
@@ -91,6 +108,11 @@ export const superformUpdateAccountSchema = z.object({
     .nullable(),
   closed: z.boolean().optional(),
   onBudget: z.boolean().optional(),
+  // Utility account fields
+  utilitySubtype: z.enum(utilitySubtypeEnum).optional().nullable(),
+  utilityProvider: z.string().max(100).optional().nullable(),
+  utilityAccountNumber: z.string().max(50).optional().nullable(),
+  utilityServiceAddress: z.string().max(200).optional().nullable(),
 });
 
 export type SuperformInsertAccountSchema = typeof superformInsertAccountSchema;

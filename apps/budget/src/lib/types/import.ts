@@ -7,7 +7,7 @@
  */
 
 // Import row states
-export type ImportRowStatus = "pending" | "valid" | "invalid" | "warning" | "duplicate" | "skipped";
+export type ImportRowStatus = "pending" | "valid" | "invalid" | "warning" | "duplicate" | "skipped" | "transfer_match";
 export type ImportPhase =
   | "validation"
   | "entity_matching"
@@ -25,6 +25,12 @@ export interface ImportRow {
   duplicateMatch?: DuplicateMatch;
   /** Original payee value from CSV before any user overrides - used for alias tracking */
   originalPayee?: string | null;
+  /** Match to an existing transfer target transaction (Phase 9) */
+  transferTargetMatch?: TransferTargetMatch;
+  /** Source file ID for multi-file imports (Phase 10) */
+  sourceFileId?: string;
+  /** Source file name for multi-file imports */
+  sourceFileName?: string;
 }
 
 // Normalized transaction data after parsing
@@ -36,6 +42,26 @@ export interface NormalizedTransaction {
   category?: string;
   status?: "pending" | "cleared";
   fitid?: string; // OFX Financial Institution Transaction ID
+  // Transfer support - when specified, this transaction creates a transfer instead of regular transaction
+  transferAccountId?: number;
+  transferAccountName?: string;
+  rememberTransferMapping?: boolean;
+  // Suggested transfer from saved mappings (for UI display)
+  suggestedTransferAccountId?: number;
+  suggestedTransferAccountName?: string;
+  transferMappingConfidence?: "high" | "medium" | "low";
+  // Utility account specific fields
+  periodStart?: string;
+  periodEnd?: string;
+  usageAmount?: number;
+  usageUnit?: string;
+  meterReadingStart?: number;
+  meterReadingEnd?: number;
+  baseCharge?: number;
+  usageCost?: number;
+  taxes?: number;
+  fees?: number;
+  dueDate?: string;
 }
 
 // Validation error structure
@@ -61,6 +87,18 @@ export interface ColumnMapping {
   outflow?: string | null;
   memo?: string | null;
   description?: string | null;
+  // Utility account specific fields
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  usageAmount?: string | null;
+  usageUnit?: string | null;
+  meterReadingStart?: string | null;
+  meterReadingEnd?: string | null;
+  baseCharge?: string | null;
+  usageCost?: string | null;
+  taxes?: string | null;
+  fees?: string | null;
+  dueDate?: string | null;
 }
 
 // Entity matching results
@@ -76,6 +114,24 @@ export interface EntityMatch {
 export interface EntityMatches {
   payee?: EntityMatch;
   category?: EntityMatch;
+}
+
+// Transfer target matching (Phase 9)
+// When importing to an account, detect if a row matches an existing transfer target
+// created from a transfer originating in another account
+export interface TransferTargetMatch {
+  /** ID of the existing transfer target transaction */
+  existingTransactionId: number;
+  /** Shared transfer ID linking both sides of the transfer */
+  existingTransferId: string;
+  /** The account where the transfer originated (the source side) */
+  sourceAccountId: number;
+  /** Display name of the source account */
+  sourceAccountName: string;
+  /** Days difference between import row date and existing transfer date (0-3) */
+  dateDifference: number;
+  /** Confidence level based on date proximity */
+  confidence: "high" | "medium" | "low";
 }
 
 // Duplicate detection
@@ -162,6 +218,29 @@ export interface ImportResult {
     categoryId: number;      // The category that was assigned
     payeeId?: number;        // The payee ID if known (for payee-context matching)
     wasAiSuggested?: boolean; // Whether this was an AI/ML suggestion (vs explicit user selection)
+  }>;
+  /** Transfer pairs created during import */
+  transfersCreated?: number;
+  /** Transfer mappings that were saved for future imports */
+  transferMappingsSaved?: number;
+  /** Utility usage records created (for utility account imports) */
+  utilityRecordsCreated?: number;
+  /** Count of rows reconciled with existing transfer targets (Phase 9) */
+  reconciled?: number;
+  /** Details of reconciled transfer targets */
+  reconciledTransactions?: Array<{
+    rowIndex: number;
+    existingTransactionId: number;
+    sourceAccountName: string;
+  }>;
+  /** Per-file breakdown for multi-file imports */
+  byFile?: Record<string, {
+    fileName: string;
+    imported: number;
+    duplicates: number;
+    errors: number;
+    reconciled: number;
+    transfers: number;
   }>;
 }
 
@@ -445,3 +524,77 @@ export interface CleanupSummary {
   /** Number of rows needing manual category review */
   manualCategoryReview: number;
 }
+
+// ============================================================================
+// Multi-File Import Types (Phase 10)
+// ============================================================================
+
+/**
+ * Supported import file types
+ */
+export type ImportFileType = "csv" | "excel" | "ofx" | "qif" | "qfx" | "iif" | "qbo";
+
+/**
+ * Entity overrides for a single import row
+ */
+export interface EntityOverride {
+  payeeId?: number | null;
+  payeeName?: string | null;
+  categoryId?: number | null;
+  categoryName?: string | null;
+  description?: string | null;
+  // Transfer support
+  transferAccountId?: number | null;
+  transferAccountName?: string | null;
+  rememberTransferMapping?: boolean;
+}
+
+/**
+ * Represents a single file in a multi-file import session
+ */
+export interface ImportFile {
+  /** Unique identifier for this file */
+  id: string;
+  /** The actual file object */
+  file: File;
+  /** Display name of the file */
+  fileName: string;
+  /** Detected file type */
+  fileType: ImportFileType;
+  /** Current processing status */
+  status: "pending" | "uploading" | "mapping" | "preview" | "ready" | "error";
+  /** Error message if status is 'error' */
+  error?: string;
+  /** Parse result from file upload */
+  parseResult?: ParseResult;
+  /** Column mapping (for CSV/Excel files that need mapping) */
+  columnMapping?: ColumnMapping;
+  /** Validated rows after processing */
+  validatedRows?: ImportRow[];
+  /** Entity overrides for this file's rows */
+  entityOverrides?: Record<number, EntityOverride>;
+  /** Schedule matches detected in this file */
+  scheduleMatches?: ScheduleMatch[];
+  /** Whether this file needs column mapping step */
+  needsColumnMapping?: boolean;
+  /** Detected or matched import profile */
+  matchedProfile?: { id: number; name: string } | null;
+}
+
+/**
+ * Global state for multi-file import session
+ */
+export type MultiFileGlobalStep = "upload" | "processing" | "review" | "importing" | "complete";
+
+export interface MultiFileImportState {
+  /** All files in the import session */
+  files: ImportFile[];
+  /** Index of the currently processing file */
+  currentFileIndex: number;
+  /** Global step in the import wizard */
+  globalStep: MultiFileGlobalStep;
+  /** Enforced file type (set after first file is added) */
+  enforceFileType?: ImportFileType;
+}
+
+// Note: Multi-file import results use ImportResult.byFile field for per-file breakdown

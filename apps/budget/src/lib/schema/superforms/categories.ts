@@ -1,11 +1,11 @@
+import validator from "validator";
+import { z } from "zod";
 import {
   categoryTypeEnum,
   incomeReliabilityEnum,
   spendingPriorityEnum,
   taxCategories,
-} from "$lib/schema/categories";
-import validator from "validator";
-import { z } from "zod";
+} from "../categories";
 
 // Superform-compatible schemas for categories (not using drizzle-zod)
 export const superformInsertCategorySchema = z.object({

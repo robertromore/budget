@@ -5,7 +5,7 @@ import {
   budgetStatuses,
   budgetTypes,
   periodTemplateTypes,
-} from "$lib/schema/budgets";
+} from "../budgets";
 import { z } from "zod";
 
 // Schema for account associations with types (for goal-based budgets)

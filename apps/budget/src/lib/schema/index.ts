@@ -19,6 +19,7 @@ export * from "./schedule-dates";
 export * from "./schedule-skips";
 export * from "./schedules";
 export * from "./transactions";
+export * from "./transfer-mappings";
 export * from "./users";
 export * from "./views";
 export * from "./workspace-counters";
@@ -39,6 +40,12 @@ export * from "./ai-conversations";
 export * from "./expense-receipts";
 export * from "./hsa-claims";
 export * from "./medical-expenses";
+
+// Utility-related schemas
+export * from "./utility-usage";
+
+// Bank connection schemas
+export * from "./account-connections";
 
 // ML-related schemas
 export * from "./ml-models";

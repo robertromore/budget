@@ -15,7 +15,8 @@ export const correctionTriggers = [
   "import_correction",
   "scheduled_transaction",
   "import_category_override", // User overrode AI suggestion during import
-  "ai_suggestion_accepted",   // User accepted AI suggestion during import (positive reinforcement)
+  "ai_suggestion_accepted", // User accepted AI suggestion during import (positive reinforcement)
+  "import_dismissal", // User cleared auto-filled category during import (negative feedback)
 ] as const;
 
 export const correctionContexts = [
@@ -54,10 +55,10 @@ export const payeeCategoryCorrections = sqliteTable(
     transactionId: integer("transaction_id").references(() => transactions.id),
 
     // Category change details
+    // fromCategoryId: the category that was assigned (null if no previous category)
+    // toCategoryId: the new category (null for dismissals - user cleared the category)
     fromCategoryId: integer("from_category_id").references(() => categories.id),
-    toCategoryId: integer("to_category_id")
-      .notNull()
-      .references(() => categories.id),
+    toCategoryId: integer("to_category_id").references(() => categories.id),
 
     // Context and trigger information
     correctionTrigger: text("correction_trigger", { enum: correctionTriggers }).notNull(),
@@ -237,7 +238,7 @@ export interface CategoryCorrection {
   payeeId: number;
   transactionId: number | null;
   fromCategoryId: number | null;
-  toCategoryId: number;
+  toCategoryId: number | null; // null for dismissals (user cleared without replacement)
   correctionTrigger: CorrectionTrigger;
   correctionContext: CorrectionContext | null;
   transactionAmount: number | null;

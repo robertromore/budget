@@ -1,8 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import type { EncryptionKeyType, EncryptionLevel, RiskFactorSettings } from "../types/encryption";
 import { accounts } from "./accounts";
 import { budgetAutomationSettings } from "./budget-automation-settings";
 import { budgets } from "./budgets";
@@ -13,7 +14,6 @@ import { payeeCategoryCorrections } from "./payee-category-corrections";
 import { payees } from "./payees";
 import { schedules } from "./schedules";
 import { views } from "./views";
-import type { EncryptionLevel, EncryptionKeyType, RiskFactorSettings } from "$lib/types/encryption";
 
 export const users = sqliteTable(
   "user",

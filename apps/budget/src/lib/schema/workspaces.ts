@@ -3,6 +3,8 @@ import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import type { EncryptionLevel, RiskFactorSettings } from "../types/encryption";
+import type { OnboardingFormData, OnboardingStatus } from "../types/onboarding";
 import { accounts } from "./accounts";
 import { budgetAutomationSettings } from "./budget-automation-settings";
 import { budgets } from "./budgets";
@@ -15,8 +17,6 @@ import { payees } from "./payees";
 import { schedules } from "./schedules";
 import { users } from "./users";
 import { views } from "./views";
-import type { OnboardingFormData, OnboardingStatus } from "$lib/types/onboarding";
-import type { EncryptionLevel, EncryptionKeyType, RiskFactorSettings } from "$lib/types/encryption";
 
 export const workspaces = sqliteTable(
   "workspace",
@@ -212,6 +212,45 @@ export const DEFAULT_ENCRYPTION_PREFERENCES: WorkspaceEncryptionPreferences = {
   level: "inherit", // Use user's default
 };
 
+// Bank Connection Provider Settings
+export interface TellerProviderSettings {
+  enabled: boolean;
+  applicationId?: string;
+  environment: "sandbox" | "development" | "production";
+}
+
+export interface SimplefinProviderSettings {
+  enabled: boolean;
+  // Optional shared access URL (encrypted) - if set, used as default when connecting accounts
+  encryptedAccessUrl?: string;
+  hasAccessUrl?: boolean; // Client-facing flag (don't expose actual URL)
+}
+
+export interface ConnectionProviderPreferences {
+  teller: TellerProviderSettings;
+  simplefin: SimplefinProviderSettings;
+  // Auto-sync settings
+  autoSync: {
+    enabled: boolean;
+    intervalHours: number; // How often to sync (e.g., 6, 12, 24)
+  };
+}
+
+// Default Connection Provider preferences
+export const DEFAULT_CONNECTION_PROVIDER_PREFERENCES: ConnectionProviderPreferences = {
+  teller: {
+    enabled: false,
+    environment: "sandbox",
+  },
+  simplefin: {
+    enabled: true, // SimpleFIN is always "available" since users provide their own credentials
+  },
+  autoSync: {
+    enabled: false,
+    intervalHours: 24,
+  },
+};
+
 // Preferences type
 export interface WorkspacePreferences {
   locale?: string; // 'en-US', 'es-ES', etc.
@@ -226,6 +265,7 @@ export interface WorkspacePreferences {
   onboarding?: OnboardingStatus; // Onboarding wizard/tour completion status
   onboardingData?: OnboardingFormData; // Financial profile data from onboarding wizard
   encryption?: WorkspaceEncryptionPreferences; // Encryption settings for this workspace
+  connectionProviders?: ConnectionProviderPreferences; // Bank connection provider settings
 }
 
 // Zod schemas

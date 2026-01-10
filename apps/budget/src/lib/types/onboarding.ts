@@ -51,7 +51,8 @@ export type AccountToTrack =
   | 'investment'
   | 'hsa'
   | 'loan'
-  | 'mortgage';
+  | 'mortgage'
+  | 'utility';
 
 export type SpendingArea =
   | 'housing'
@@ -207,6 +208,7 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountToTrack, string> = {
   hsa: 'HSA/FSA',
   loan: 'Loan',
   mortgage: 'Mortgage',
+  utility: 'Utility Account',
 };
 
 export const SPENDING_AREA_LABELS: Record<SpendingArea, string> = {

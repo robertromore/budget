@@ -1,4 +1,4 @@
-import { isValidIconName } from "$lib/utils/icon-validation";
+import { isValidIconName } from "../../utils/icon-validation";
 import validator from "validator";
 import { z } from "zod";
 

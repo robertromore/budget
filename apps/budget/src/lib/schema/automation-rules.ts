@@ -6,16 +6,16 @@
  * execute actions when conditions are met.
  */
 
+import { relations, sql } from "drizzle-orm";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type {
   ActionConfig,
   ActionResult,
   ConditionGroup,
   FlowState,
   TriggerConfig,
-} from "$lib/types/automation";
-import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+} from "../types/automation";
 import { workspaces } from "./workspaces";
 
 /**
