@@ -1,3 +1,4 @@
+import { accounts as accountsTable } from "$lib/schema/accounts";
 import { payees as payeeTable } from "$lib/schema/payees";
 import { schedules as scheduleTable } from "$lib/schema/schedules";
 import { transactions as transactionTable } from "$lib/schema/transactions";
@@ -5,6 +6,7 @@ import { db } from "$lib/server/db";
 import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
+import { detectTransferTargetMatches } from "$lib/server/import/utils/transfer-target-detector";
 import { TransactionValidator } from "$lib/server/import/validators/transaction-validator";
 import type { ParseResult, ScheduleMatch } from "$lib/types/import";
 import { json } from "@sveltejs/kit";
@@ -160,6 +162,101 @@ export const POST: RequestHandler = async ({ request }) => {
           });
 
           console.log(`[Schedule Matching] Found ${scheduleMatches.length} schedule matches`);
+        }
+      }
+    }
+
+    // Detect transfer target matches (similar to schedule matching)
+    // This identifies rows that match existing transfer targets from other accounts
+    if (accountId) {
+      const accountIdNum = parseInt(accountId);
+      if (!isNaN(accountIdNum)) {
+        validatedData = await detectTransferTargetMatches(validatedData, accountIdNum);
+        const transferMatchCount = validatedData.filter(
+          (r) => r.validationStatus === "transfer_match"
+        ).length;
+        if (transferMatchCount > 0) {
+          console.log(`[Transfer Target Matching] Found ${transferMatchCount} transfer target matches`);
+        }
+      }
+    }
+
+    // Detect transfer mappings based on payee names
+    // This suggests transfers based on previously saved payee→account mappings
+    if (accountId) {
+      const accountIdNum = parseInt(accountId);
+      if (!isNaN(accountIdNum)) {
+        // Get workspaceId from account
+        const account = await db
+          .select({ workspaceId: accountsTable.workspaceId })
+          .from(accountsTable)
+          .where(eq(accountsTable.id, accountIdNum))
+          .get();
+
+        if (account) {
+          const { getTransferMappingService } = await import("$lib/server/domains/transfers");
+          const transferMappingService = getTransferMappingService();
+
+          // Get all accounts for name lookup (exclude current and closed)
+          const allAccounts = await db
+            .select({ id: accountsTable.id, name: accountsTable.name })
+            .from(accountsTable)
+            .where(
+              and(
+                eq(accountsTable.workspaceId, account.workspaceId),
+                isNull(accountsTable.deletedAt),
+                eq(accountsTable.closed, false)
+              )
+            );
+          const accountMap = new Map(allAccounts.map((a) => [a.id, a.name]));
+
+          let autoAcceptCount = 0;
+          let suggestionCount = 0;
+
+          // Check each row for transfer mappings
+          for (const row of validatedData) {
+            // Skip rows that already have a transfer target match (date/amount)
+            if (row.transferTargetMatch) continue;
+
+            // Use the raw payee string for lookup (before normalization)
+            const payee = row.normalizedData["payee"] as string | undefined;
+            if (!payee) continue;
+
+            console.log("[TransferMapping] Looking up mapping for payee:", payee);
+            const match = await transferMappingService.matchTransferForImport(
+              payee,
+              account.workspaceId
+            );
+            console.log("[TransferMapping] Match result:", match.found ? `Found: ${match.matchedOn}` : "Not found");
+
+            if (match.found && match.targetAccountId) {
+              // Skip if target is current account
+              if (match.targetAccountId === accountIdNum) continue;
+
+              const targetName = accountMap.get(match.targetAccountId);
+              if (!targetName) continue; // Account might be closed/deleted
+
+              // Auto-accept exact matches (confidence 1.0 = exact string match)
+              if (match.matchedOn === "exact") {
+                row.normalizedData["transferAccountId"] = match.targetAccountId;
+                row.normalizedData["transferAccountName"] = targetName;
+                autoAcceptCount++;
+              } else {
+                // Show as suggestion for normalized/cleaned matches
+                row.normalizedData["suggestedTransferAccountId"] = match.targetAccountId;
+                row.normalizedData["suggestedTransferAccountName"] = targetName;
+                row.normalizedData["transferMappingConfidence"] =
+                  match.confidence >= 0.9 ? "high" : match.confidence >= 0.8 ? "medium" : "low";
+                suggestionCount++;
+              }
+            }
+          }
+
+          if (autoAcceptCount > 0 || suggestionCount > 0) {
+            console.log(
+              `[Transfer Mapping] Auto-accepted: ${autoAcceptCount}, Suggestions: ${suggestionCount}`
+            );
+          }
         }
       }
     }

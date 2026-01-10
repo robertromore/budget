@@ -1,12 +1,17 @@
 import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import { PayeeAliasService } from "$lib/server/domains/payees/alias-service";
+import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { db } from "$lib/server/db";
 import { payees, categories } from "$lib/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import type { ImportRow } from "$lib/types/import";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+
+// Minimum confidence threshold for using a category alias
+// A single dismissal (0.25 reduction) drops a 1.0 alias to 0.75, below this threshold
+const CATEGORY_ALIAS_MIN_CONFIDENCE = 0.9;
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
@@ -15,14 +20,21 @@ export const POST: RequestHandler = async ({ request }) => {
       workspaceId?: number;
     };
 
+    console.log(`[CategoryInfer] Received request: ${rows?.length || 0} rows, workspaceId=${workspaceId}`);
+
     if (!rows || !Array.isArray(rows)) {
       return json({ error: "Invalid request: rows array required" }, { status: 400 });
+    }
+
+    if (!workspaceId) {
+      console.warn("[CategoryInfer] No workspaceId provided - category alias checks will be skipped!");
     }
 
     // Initialize matchers and services
     const categoryMatcher = new CategoryMatcher();
     const payeeMatcher = new PayeeMatcher();
     const aliasService = workspaceId ? new PayeeAliasService() : null;
+    const categoryAliasService = workspaceId ? getCategoryAliasService() : null;
 
     // Pre-fetch payees and categories for the workspace if workspaceId is provided
     let payeeMap = new Map<number, { name: string; defaultCategoryId: number | null }>();
@@ -61,13 +73,25 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
+    // Reverse lookup: category name (lowercase) -> category ID
+    const categoryNameToId = new Map<string, number>();
+    for (const [id, name] of categoryMap) {
+      categoryNameToId.set(name.toLowerCase(), id);
+    }
+
     // Track payee-to-category mappings to ensure consistency within this import
-    const payeeCategoryMap = new Map<string, string>();
+    const payeeCategoryMap = new Map<string, { categoryName: string; categoryId?: number; confidence?: number }>();
 
     // Track alias matches to apply consistently (raw string -> payee info)
     const aliasMatchCache = new Map<
       string,
       { payeeId: number; payeeName: string; defaultCategoryId: number | null } | null
+    >();
+
+    // Track category alias matches (raw string -> category info with confidence)
+    const categoryAliasCache = new Map<
+      string,
+      { categoryId: number; categoryName: string; confidence: number } | null
     >();
 
     // Process each row: check aliases, normalize payee names, and infer categories
@@ -125,6 +149,8 @@ export const POST: RequestHandler = async ({ request }) => {
                 updates["category"] = categoryName;
                 updates["categoryId"] = aliasMatch.defaultCategoryId;
                 updates["inferredCategory"] = categoryName;
+                updates["inferredCategoryId"] = aliasMatch.defaultCategoryId;
+                updates["categoryFromPayeeDefault"] = true;
               }
             }
           } else {
@@ -157,26 +183,169 @@ export const POST: RequestHandler = async ({ request }) => {
           (updates["payee"] || data["payee"] || data["notes"] || data["description"])
         ) {
           const normalizedPayee = (updates["payee"] || data["payee"]) as string;
+          const rawPayeeString = (updates["originalPayee"] || data["originalPayee"] || originalPayee || normalizedPayee) as string;
 
           // Check if we've already assigned a category to this payee in this import
           if (normalizedPayee && payeeCategoryMap.has(normalizedPayee)) {
-            const existingCategory = payeeCategoryMap.get(normalizedPayee)!;
-            updates["category"] = existingCategory;
-            updates["inferredCategory"] = existingCategory;
+            const existingMatch = payeeCategoryMap.get(normalizedPayee)!;
+            updates["category"] = existingMatch.categoryName;
+            updates["inferredCategory"] = existingMatch.categoryName;
+            if (existingMatch.categoryId) {
+              updates["inferredCategoryId"] = existingMatch.categoryId;
+            }
+            if (existingMatch.confidence !== undefined) {
+              updates["categoryConfidence"] = existingMatch.confidence;
+            }
           } else {
-            // First time seeing this payee, suggest a category
-            const description = (updates["notes"] || data["notes"] || data["description"]) as string;
-            const suggestedCategoryName = categoryMatcher.suggestCategoryName({
-              ...(normalizedPayee && { payeeName: normalizedPayee }),
-              ...(description && { description }),
-            });
+            // First time seeing this payee - check category aliases first (respects dismissals)
+            let foundCategoryFromAlias = false;
 
-            if (suggestedCategoryName) {
-              updates["category"] = suggestedCategoryName;
-              updates["inferredCategory"] = suggestedCategoryName;
-              // Remember this payee-category mapping
-              if (normalizedPayee) {
-                payeeCategoryMap.set(normalizedPayee, suggestedCategoryName);
+            if (categoryAliasService && workspaceId && rawPayeeString) {
+              // Check cache first
+              let aliasMatch = categoryAliasCache.get(rawPayeeString);
+              if (aliasMatch === undefined) {
+                // Not in cache, look up
+                const match = await categoryAliasService.matchWithAlias(rawPayeeString, workspaceId);
+                if (match.found && match.categoryId) {
+                  if (match.confidence >= CATEGORY_ALIAS_MIN_CONFIDENCE) {
+                    const categoryName = categoryMap.get(match.categoryId);
+                    if (categoryName) {
+                      aliasMatch = {
+                        categoryId: match.categoryId,
+                        categoryName,
+                        confidence: match.confidence,
+                      };
+                    } else {
+                      aliasMatch = null;
+                    }
+                  } else {
+                    // Alias found but confidence too low (user dismissed it)
+                    console.log(
+                      `[CategoryInfer] Skipping low-confidence alias for "${rawPayeeString}": ` +
+                      `confidence ${match.confidence.toFixed(2)} < ${CATEGORY_ALIAS_MIN_CONFIDENCE}`
+                    );
+                    aliasMatch = null;
+                  }
+                } else {
+                  // No alias found
+                  aliasMatch = null;
+                }
+                categoryAliasCache.set(rawPayeeString, aliasMatch);
+              }
+
+              if (aliasMatch) {
+                updates["category"] = aliasMatch.categoryName;
+                updates["inferredCategory"] = aliasMatch.categoryName;
+                updates["inferredCategoryId"] = aliasMatch.categoryId;
+                updates["categoryConfidence"] = aliasMatch.confidence;
+                updates["categoryMatchedByAlias"] = true;
+                foundCategoryFromAlias = true;
+
+                // Remember this payee-category mapping
+                if (normalizedPayee) {
+                  payeeCategoryMap.set(normalizedPayee, {
+                    categoryName: aliasMatch.categoryName,
+                    categoryId: aliasMatch.categoryId,
+                    confidence: aliasMatch.confidence,
+                  });
+                }
+              }
+            }
+
+            // Fall back to keyword matching if no alias found or confidence too low
+            if (!foundCategoryFromAlias) {
+              console.log(`[CategoryInfer] Keyword matching for row, rawPayeeString="${rawPayeeString}", normalizedPayee="${normalizedPayee}"`);
+
+              const description = (updates["notes"] || data["notes"] || data["description"]) as string;
+
+              // Build category array for the matcher
+              const categoriesForMatcher = Array.from(categoryMap.entries()).map(([id, name]) => ({
+                id,
+                name,
+              }));
+
+              // Try to find a matching category using keyword patterns against actual categories
+              const match = categoryMatcher.findBestMatch(
+                {
+                  payeeName: normalizedPayee,
+                  description,
+                },
+                categoriesForMatcher as any
+              );
+
+              let suggestedCategoryId: number | undefined;
+              let suggestedCategoryName: string | null = null;
+
+              if (match.category && match.score >= 0.7) {
+                // Found a direct match with user's categories
+                suggestedCategoryId = match.category.id;
+                suggestedCategoryName = match.category.name;
+                console.log(`[CategoryInfer] Keyword matcher found category: "${suggestedCategoryName}" (ID: ${suggestedCategoryId}) with score ${match.score}`);
+              } else {
+                // Fall back to pattern-based suggestion (returns hardcoded category names)
+                suggestedCategoryName = categoryMatcher.suggestCategoryName({
+                  ...(normalizedPayee && { payeeName: normalizedPayee }),
+                  ...(description && { description }),
+                });
+
+                if (suggestedCategoryName) {
+                  console.log(`[CategoryInfer] Keyword matcher suggested pattern: "${suggestedCategoryName}"`);
+                  // Try to find matching category ID
+                  suggestedCategoryId = categoryNameToId.get(suggestedCategoryName.toLowerCase());
+                  if (!suggestedCategoryId) {
+                    // Try partial matching
+                    const suggestedLower = suggestedCategoryName.toLowerCase();
+                    for (const [name, id] of categoryNameToId) {
+                      // Check if names overlap (e.g., "auto" matches "auto & transport")
+                      const words1 = suggestedLower.split(/[&\s]+/).filter(w => w.length > 2);
+                      const words2 = name.split(/[&\s]+/).filter(w => w.length > 2);
+                      const hasOverlap = words1.some(w1 => words2.some(w2 => w1.includes(w2) || w2.includes(w1)));
+                      if (hasOverlap) {
+                        suggestedCategoryId = id;
+                        // Update name to actual category name
+                        const actualName = categoryMap.get(id);
+                        if (actualName) suggestedCategoryName = actualName;
+                        console.log(`[CategoryInfer] Partial match: pattern "${suggestedCategoryName}" -> category ID ${id}`);
+                        break;
+                      }
+                    }
+                    if (!suggestedCategoryId) {
+                      console.log(`[CategoryInfer] No category ID found for pattern "${suggestedCategoryName}". Available:`,
+                        Array.from(categoryNameToId.keys()).slice(0, 5));
+                    }
+                  }
+                }
+              }
+
+              if (suggestedCategoryName && suggestedCategoryId) {
+                // Check if user has dismissed this category for this payee string
+                let isDismissed = false;
+                if (categoryAliasService && workspaceId && rawPayeeString) {
+                  isDismissed = await categoryAliasService.isCategoryDismissed(
+                    rawPayeeString,
+                    suggestedCategoryId,
+                    workspaceId,
+                    CATEGORY_ALIAS_MIN_CONFIDENCE
+                  );
+                  if (isDismissed) {
+                    console.log(
+                      `[CategoryInfer] Category "${suggestedCategoryName}" was previously dismissed for "${rawPayeeString}"`
+                    );
+                  }
+                }
+
+                if (!isDismissed) {
+                  updates["category"] = suggestedCategoryName;
+                  updates["inferredCategory"] = suggestedCategoryName;
+                  updates["inferredCategoryId"] = suggestedCategoryId;
+                  // Remember this payee-category mapping
+                  if (normalizedPayee) {
+                    payeeCategoryMap.set(normalizedPayee, {
+                      categoryName: suggestedCategoryName,
+                      categoryId: suggestedCategoryId
+                    });
+                  }
+                }
               }
             }
           }

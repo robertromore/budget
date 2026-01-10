@@ -1,11 +1,14 @@
 <script lang="ts">
 import { Separator } from '$lib/components/ui/separator';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Settings2 from '@lucide/svelte/icons/settings-2';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Wallet from '@lucide/svelte/icons/wallet';
 import Shield from '@lucide/svelte/icons/shield';
 import Database from '@lucide/svelte/icons/database';
+import Scale from '@lucide/svelte/icons/scale';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+import Link from '@lucide/svelte/icons/link';
 import type { Account } from '$lib/schema';
 
 import GeneralSection from './settings/general-section.svelte';
@@ -13,7 +16,12 @@ import FinancialSection from './settings/financial-section.svelte';
 import BudgetSection from './settings/budget-section.svelte';
 import SecuritySection from './settings/security-section.svelte';
 import DataSection from './settings/data-section.svelte';
+import BalanceManagementSection from './settings/balance-management-section.svelte';
+import TransferMappingsSection from './settings/transfer-mappings-section.svelte';
+import ConnectionSection from './settings/connection-section.svelte';
+import RateTiersSection from './settings/rate-tiers-section.svelte';
 import DangerSection from './settings/danger-section.svelte';
+import Layers from '@lucide/svelte/icons/layers';
 
 interface Props {
 	account: Account;
@@ -22,8 +30,11 @@ interface Props {
 
 let { account, onAccountUpdated }: Props = $props();
 
+// Check if this is a utility account
+const isUtilityAccount = $derived(account.accountType === 'utility');
+
 // Settings navigation items
-const settingsNav = [
+const settingsNav = $derived([
 	{
 		title: 'Account',
 		items: [
@@ -35,7 +46,11 @@ const settingsNav = [
 	{
 		title: 'Data',
 		items: [
+			{ id: 'connection', label: 'Bank Connection', icon: Link },
 			{ id: 'data', label: 'Data Management', icon: Database },
+			{ id: 'balance', label: 'Balance Management', icon: Scale },
+			{ id: 'transfer-mappings', label: 'Transfer Mappings', icon: ArrowRightLeft },
+			...(isUtilityAccount ? [{ id: 'rate-tiers', label: 'Rate Tiers', icon: Layers }] : []),
 			{ id: 'security', label: 'Security', icon: Shield }
 		]
 	},
@@ -43,7 +58,7 @@ const settingsNav = [
 		title: 'Advanced',
 		items: [{ id: 'danger', label: 'Danger Zone', icon: TriangleAlert }]
 	}
-];
+]);
 
 // Active section state
 let activeSection = $state<string>('general');
@@ -104,8 +119,16 @@ function isActive(id: string): boolean {
 			</div>
 		{:else if activeSection === 'budget'}
 			<BudgetSection {account} />
+		{:else if activeSection === 'connection'}
+			<ConnectionSection {account} />
 		{:else if activeSection === 'data'}
 			<DataSection {account} />
+		{:else if activeSection === 'balance'}
+			<BalanceManagementSection {account} />
+		{:else if activeSection === 'transfer-mappings'}
+			<TransferMappingsSection {account} />
+		{:else if activeSection === 'rate-tiers'}
+			<RateTiersSection {account} />
 		{:else if activeSection === 'security'}
 			<SecuritySection {account} />
 		{:else if activeSection === 'danger'}

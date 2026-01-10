@@ -2,6 +2,7 @@
 import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button, buttonVariants } from '$lib/components/ui/button';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import DateInput from '$lib/components/input/date-input.svelte';
 import { toast } from 'svelte-sonner';
@@ -11,6 +12,7 @@ import { cachePatterns } from '$lib/query/_client';
 import type { Account } from '$lib/schema';
 import { type DateValue } from '@internationalized/date';
 import { timezone } from '$lib/utils/dates';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Calendar from '@lucide/svelte/icons/calendar';
 import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
@@ -30,12 +32,17 @@ const queryClient = useQueryClient();
 // Data counts query
 let dataCounts = $state<{
 	transactions: number;
+	transfers: number;
 	schedules: number;
 	importProfiles: number;
 	detectedPatterns: number;
 	budgets: number;
 } | null>(null);
 let isLoadingCounts = $state(true);
+
+// State for linked transfers option
+let deleteLinkedTransfers = $state(true);
+const hasTransfers = $derived((dataCounts?.transfers || 0) > 0);
 
 // Load data counts
 $effect(() => {
@@ -73,11 +80,17 @@ async function confirmDeleteAllTransactions() {
 	deleteTransactionsDialog.isDeleting = true;
 	try {
 		const result = await trpc().accountRoutes.deleteAllTransactions.mutate({
-			accountId: account.id
+			accountId: account.id,
+			deleteLinkedTransfers: deleteLinkedTransfers && hasTransfers
 		});
 
-		toast.success(`${result.deletedCount} transactions deleted`);
+		let message = `${result.deletedCount} transactions deleted`;
+		if (result.linkedTransfersDeleted > 0) {
+			message += ` (plus ${result.linkedTransfersDeleted} linked transfer${result.linkedTransfersDeleted > 1 ? 's' : ''} in other accounts)`;
+		}
+		toast.success(message);
 		deleteTransactionsDialog.open = false;
+		deleteLinkedTransfers = true; // Reset for next time
 
 		// Refresh data counts and invalidate queries
 		await loadDataCounts();
@@ -430,6 +443,25 @@ async function confirmClearBudgets() {
 				transactions from "{account.name}". This action cannot be undone.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
+
+		{#if hasTransfers}
+			<div class="bg-muted/50 flex items-start gap-3 rounded-lg border p-4">
+				<ArrowRightLeft class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
+				<div class="flex-1 space-y-3">
+					<p class="text-sm">
+						<strong>{dataCounts?.transfers || 0}</strong> of these transactions are transfers linked
+						to transactions in other accounts.
+					</p>
+					<div class="flex items-center gap-2">
+						<Checkbox id="delete-linked-transfers" bind:checked={deleteLinkedTransfers} />
+						<Label for="delete-linked-transfers" class="cursor-pointer text-sm font-medium">
+							Also delete linked transfer transactions in other accounts
+						</Label>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel disabled={deleteTransactionsDialog.isDeleting}>Cancel</AlertDialog.Cancel>
 			<AlertDialog.Action

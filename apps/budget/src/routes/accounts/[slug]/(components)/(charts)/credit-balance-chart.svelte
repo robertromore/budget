@@ -60,9 +60,12 @@
 		timePeriodFilter.chartOverrides.get('credit-balance') ?? timePeriodFilter.globalPeriod
 	);
 
-	// Get credit limit and current balance from account
+	// Get credit limit and current debt balance from account
+	// With corrected balance semantics: negative = debt, positive = credit
 	const creditLimit = $derived(account?.debtLimit || 0);
-	const currentBalance = $derived(Math.abs(account?.balance || 0));
+	const currentBalance = $derived(
+		account?.balance && account.balance < 0 ? Math.abs(account.balance) : 0
+	);
 
 	// Calculate balance history from ALL transactions, working backwards from current balance
 	const allMonthlyData = $derived.by(() => {

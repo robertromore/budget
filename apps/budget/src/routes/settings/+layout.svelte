@@ -3,7 +3,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 	import Brain from '@lucide/svelte/icons/brain';
+	import Building2 from '@lucide/svelte/icons/building-2';
 	import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
 	import Link from '@lucide/svelte/icons/link';
 	import Monitor from '@lucide/svelte/icons/monitor';
@@ -41,7 +43,9 @@
 			title: 'Data',
 			items: [
 				{ href: '/settings/import-profiles', label: 'Import Profiles', icon: FileSpreadsheet },
-				{ href: '/settings/payee-aliases', label: 'Payee Aliases', icon: Link }
+				{ href: '/settings/payee-aliases', label: 'Payee Aliases', icon: Link },
+				{ href: '/settings/transfer-mappings', label: 'Transfer Mappings', icon: ArrowRightLeft },
+				{ href: '/settings/connections', label: 'Bank Connections', icon: Building2 }
 			]
 		},
 		{

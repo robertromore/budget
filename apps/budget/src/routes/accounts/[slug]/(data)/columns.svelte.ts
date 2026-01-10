@@ -40,7 +40,8 @@ import DataTableColumnHeader from "../(components)/data-table-column-header.svel
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 import EditableCategoryCell from "../(components)/(cells)/editable-category-cell.svelte";
 import ReadOnlyCategoryCell from "../(components)/(cells)/read-only-category-cell.svelte";
-import TransferIndicatorCell from "../(components)/(cells)/transfer-indicator-cell.svelte";
+import TransferPayeeCell from "../(components)/(cells)/transfer-payee-cell.svelte";
+import NotesCellWithBadges from "../(components)/(cells)/notes-cell-with-badges.svelte";
 
 export const columns = (
   categories: CategoriesState,
@@ -273,6 +274,13 @@ export const columns = (
         const payee = payees.getById(info.getValue() as number);
         const transaction = info.row.original;
 
+        // If this is a transfer, show the transfer destination instead of payee
+        if (transaction.isTransfer) {
+          return renderComponent(TransferPayeeCell, {
+            transaction,
+          });
+        }
+
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
             value: payee?.name || "—",
@@ -338,24 +346,28 @@ export const columns = (
       id: "notes",
       cell: (info) => {
         const notes = info.getValue() as string;
+        const transaction = info.row.original;
 
-        return renderEditableCell(info, {
-          scheduledRenderer: () => ({
+        // For scheduled transactions, use read-only rendering
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCellWithIcon, {
             value: notes || "—",
-            icon: StickyNote,
-          }),
-          editableRenderer: () => ({
-            component: DataTableEditableCell,
-            props: {
-              value: notes,
-              onUpdateValue: (new_value: string) => {
-                const id = info.row.original.id;
-                if (typeof id === "number") {
-                  return updateData(id, "notes", new_value);
-                }
-              },
-            },
-          }),
+            icon: StickyNote
+          });
+        }
+
+        // For transactions with status badges or normal transactions, use NotesCellWithBadges
+        return renderComponent(NotesCellWithBadges, {
+          value: notes,
+          onUpdateValue: (new_value: string) => {
+            const id = info.row.original.id;
+            if (typeof id === "number") {
+              return updateData(id, "notes", new_value);
+            }
+          },
+          isArchived: transaction.isArchived,
+          isAdjustment: transaction.isAdjustment,
+          adjustmentReason: transaction.adjustmentReason,
         });
       },
       aggregatedCell: () => {},
@@ -369,22 +381,6 @@ export const columns = (
       enableGrouping: false,
       meta: {
         label: "Notes",
-      },
-    },
-    {
-      id: "transfer",
-      cell: (info) => {
-        const transaction = info.row.original;
-        return renderComponent(TransferIndicatorCell, { transaction });
-      },
-      aggregatedCell: () => {},
-      header: () => "",
-      enableSorting: false,
-      enableGrouping: false,
-      enableColumnFilter: false,
-      enableHiding: false,
-      meta: {
-        label: "Transfer",
       },
     },
     {
@@ -610,7 +606,10 @@ export const columns = (
           return "";
         }
 
-        return renderComponent(DataTableActions, { id: info.getValue() as number });
+        return renderComponent(DataTableActions, {
+          id: info.getValue() as number,
+          transaction,
+        });
       },
       enableColumnFilter: false,
       enableSorting: false,

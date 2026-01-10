@@ -1,7 +1,7 @@
 <script lang="ts">
 import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
-import { onMount } from 'svelte';
+import { onMount, tick } from 'svelte';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { TourPromptDialog } from '$lib/components/onboarding';
@@ -32,10 +32,12 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
 let showTourPrompt = $state(false);
 
 // Check for tour=start query param on mount
-onMount(() => {
+onMount(async () => {
   const tourParam = $page.url.searchParams.get('tour');
   if (tourParam === 'start') {
     showTourPrompt = true;
+    // Wait for router to be fully initialized before replacing state
+    await tick();
     // Remove the query param from URL without navigation
     const url = new URL(window.location.href);
     url.searchParams.delete('tour');

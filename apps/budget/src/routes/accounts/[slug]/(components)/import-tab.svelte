@@ -4,6 +4,12 @@ import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
 import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
+import {
+	createMultiFileImportState,
+	MultiFileUpload,
+	FileProgress,
+	CombinedReview
+} from './import';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { bulkCreateCategoryAliases } from '$lib/query/category-aliases';
 import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
@@ -14,6 +20,7 @@ import { Checkbox } from '$lib/components/ui/checkbox';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Slider } from '$lib/components/ui/slider';
+import { Progress } from '$lib/components/ui/progress';
 import type { ImportProfile } from '$lib/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
@@ -57,6 +64,8 @@ const queryClient = useQueryClient();
 
 // Get workspace state at component initialization (getContext must be called during init)
 const workspaceState = currentWorkspace.get();
+const categoryState = CategoriesState.get();
+const payeeState = PayeesState.get();
 
 type Step =
 	| 'upload'
@@ -68,6 +77,9 @@ type Step =
 
 let currentStep = $state<Step>('upload');
 let selectedFile = $state<File | null>(null);
+
+// Multi-file import state
+const multiFileState = createMultiFileImportState();
 let fileData = $state<{ data: string; name: string; type: string } | null>(null);
 let parseResults = $state<ParseResult | null>(null);
 let rawCSVData = $state<Record<string, any>[] | null>(null);
@@ -82,10 +94,112 @@ let scheduleMatchThreshold = $state(0.75);
 let cleanupState = $state<CleanupState | null>(null);
 let cleanupSheetOpen = $state(false);
 
+// Import progress tracking
+let importProgress = $state(0);
+let importProgressMessage = $state('');
+let isImportStreaming = $state(false);
+
+// Multi-file processing message
+let multiFileProcessingMessage = $state('');
+
+// Multi-file cleanup state (per-file)
+let multiFileCleanupState = $state<CleanupState | null>(null);
+
+// Filter cleanupState to remove payee groups where ALL members are transfers
+// This ensures groups without remaining non-transfer transactions are hidden from cleanup UI
+const filteredCleanupState = $derived.by(() => {
+	if (!cleanupState) return null;
+
+	// Filter out payee groups where ALL members have been set as transfers
+	const filteredPayeeGroups = cleanupState.payeeGroups.filter((group) => {
+		// Keep the group if at least one member is NOT a transfer
+		return group.members.some((member) => {
+			const override = entityOverrides[member.rowIndex];
+			return !override?.transferAccountId;
+		});
+	});
+
+	return {
+		...cleanupState,
+		payeeGroups: filteredPayeeGroups
+	};
+});
+
+// Filter multi-file cleanup state to remove payee groups where ALL members are transfers
+const filteredMultiFileCleanupState = $derived.by(() => {
+	if (!multiFileCleanupState) return null;
+
+	const currentFile = multiFileState.currentFile;
+	const overrides = currentFile?.entityOverrides || {};
+
+	const filteredPayeeGroups = multiFileCleanupState.payeeGroups.filter((group) => {
+		return group.members.some((member) => {
+			const override = overrides[member.rowIndex];
+			return !override?.transferAccountId;
+		});
+	});
+
+	return {
+		...multiFileCleanupState,
+		payeeGroups: filteredPayeeGroups
+	};
+});
+
+// Create derived multi-file preview data with entity overrides merged in
+const multiFilePreviewData = $derived.by(() => {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile || !currentFile.validatedRows) return null;
+
+	const overrides = currentFile.entityOverrides || {};
+
+	return currentFile.validatedRows.map((row) => {
+		const override = overrides[row.rowIndex];
+		const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
+
+		return {
+			...row,
+			originalPayee,
+			normalizedData: {
+				...row.normalizedData,
+				amount: importOptions.reverseAmountSigns && row.normalizedData['amount']
+					? -row.normalizedData['amount']
+					: row.normalizedData['amount'],
+				payee: override?.payeeName !== undefined ? override.payeeName : row.normalizedData['payee'],
+				category: override?.categoryName !== undefined ? override.categoryName : row.normalizedData['category'],
+				description: override?.description !== undefined
+					? override.description
+					: row.normalizedData['description'] || row.normalizedData['notes'],
+				transferAccountId: override?.transferAccountId !== undefined
+					? override.transferAccountId
+					: row.normalizedData['transferAccountId'] ?? null,
+				transferAccountName: override?.transferAccountName !== undefined
+					? override.transferAccountName
+					: row.normalizedData['transferAccountName'] ?? null,
+				rememberTransferMapping: override?.rememberTransferMapping !== undefined
+					? override.rememberTransferMapping
+					: row.normalizedData['rememberTransferMapping'] ?? false
+			}
+		};
+	});
+});
+
 // Payee alias tracking - records mappings from raw CSV strings to selected payees
 let aliasCandidates = $state<Map<number, AliasCandidate>>(new Map());
 const createAliasesMutation = bulkCreatePayeeAliases.options();
 const createCategoryAliasesMutation = bulkCreateCategoryAliases.options();
+
+// Category dismissal tracking - records when user clears AI-suggested categories (negative feedback)
+interface CategoryDismissal {
+	rowIndex: number;
+	payeeId: number | null;
+	payeeName: string;
+	rawPayeeString: string; // Original payee string from import file (e.g., "APPLECARD GSBANK")
+	dismissedCategoryId: number;
+	dismissedCategoryName: string;
+	amount?: number;
+	date?: string;
+}
+let categoryDismissals = $state<Map<number, CategoryDismissal>>(new Map());
 
 // Import profile state
 let matchedProfile = $state<ImportProfile | null>(null);
@@ -149,6 +263,10 @@ let entityOverrides = $state<
 			categoryId?: number | null;
 			categoryName?: string | null;
 			description?: string | null;
+			// Transfer support - when set, this row creates a transfer instead of regular transaction
+			transferAccountId?: number | null;
+			transferAccountName?: string | null;
+			rememberTransferMapping?: boolean;
 		}
 	>
 >({});
@@ -202,7 +320,20 @@ const previewData = $derived.by(() => {
 					description:
 						override?.description !== undefined
 							? override.description
-							: row.normalizedData['description'] || row.normalizedData['notes']
+							: row.normalizedData['description'] || row.normalizedData['notes'],
+					// Transfer fields - fall back to row.normalizedData for auto-accepted mappings
+					transferAccountId:
+						override?.transferAccountId !== undefined
+							? override.transferAccountId
+							: row.normalizedData['transferAccountId'] ?? null,
+					transferAccountName:
+						override?.transferAccountName !== undefined
+							? override.transferAccountName
+							: row.normalizedData['transferAccountName'] ?? null,
+					rememberTransferMapping:
+						override?.rememberTransferMapping !== undefined
+							? override.rememberTransferMapping
+							: row.normalizedData['rememberTransferMapping'] ?? false
 				}
 			};
 		})
@@ -214,7 +345,7 @@ const temporaryCategories = $derived.by(() => {
 	const tempCats = new Set<string>();
 
 	if (previewData) {
-		const categoryState = CategoriesState.get();
+		// Use categoryState initialized at component level (getContext must be called during component init)
 		const existingCategoryNames = categoryState
 			? new Set(Array.from(categoryState.categories.values()).map((c) => c.name?.toLowerCase()))
 			: new Set();
@@ -236,7 +367,7 @@ const temporaryPayees = $derived.by(() => {
 	const tempPayees = new Set<string>();
 
 	if (previewData) {
-		const payeeState = PayeesState.get();
+		// Use payeeState initialized at component level (getContext must be called during component init)
 		const existingPayeeNames = payeeState
 			? new Set(Array.from(payeeState.payees.values()).map((p) => p.name?.toLowerCase()))
 			: new Set();
@@ -261,7 +392,33 @@ function handlePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: 
 		[rowIndex]: {
 			...entityOverrides[rowIndex],
 			payeeId,
-			payeeName
+			payeeName,
+			// Clear transfer when setting payee
+			transferAccountId: null,
+			transferAccountName: null,
+			rememberTransferMapping: false
+		}
+	};
+}
+
+// Handler for transfer account updates
+function handleTransferAccountUpdate(
+	rowIndex: number,
+	accountId: number | null,
+	accountName: string | null,
+	rememberMapping: boolean = false
+) {
+	entityOverrides = {
+		...entityOverrides,
+		[rowIndex]: {
+			...entityOverrides[rowIndex],
+			// Clear payee when setting transfer
+			payeeId: null,
+			payeeName: null,
+			// Set transfer fields
+			transferAccountId: accountId,
+			transferAccountName: accountName,
+			rememberTransferMapping: rememberMapping
 		}
 	};
 }
@@ -355,6 +512,100 @@ function revertPayeeUpdate() {
 	const { rowIndex, previousPayeeId, previousPayeeName } = bulkPayeeUpdateDialog;
 	handlePayeeUpdate(rowIndex, previousPayeeId, previousPayeeName);
 	bulkPayeeUpdateDialog.open = false;
+}
+
+// State for bulk transfer update confirmation dialog
+let bulkTransferUpdateDialog = $state({
+	open: false,
+	rowIndex: 0,
+	accountId: null as number | null,
+	accountName: null as string | null,
+	rememberMapping: false,
+	originalPayeeName: '',
+	matchCount: 0,
+	matches: [] as Array<{ item: any }>
+});
+
+function handleTransferAccountUpdateWithSimilar(
+	rowIndex: number,
+	accountId: number | null,
+	accountName: string | null,
+	rememberMapping: boolean = false
+) {
+	if (!parseResults) return;
+
+	// Apply the update to the selected row first
+	handleTransferAccountUpdate(rowIndex, accountId, accountName, rememberMapping);
+
+	// If clearing the transfer, don't prompt for similar
+	if (!accountId) return;
+
+	const selectedRow = parseResults.rows.find((r) => r.rowIndex === rowIndex);
+	if (!selectedRow) return;
+
+	const originalPayeeName = selectedRow.normalizedData['payee'];
+	if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
+
+	// Find similar payees that aren't already set as transfers
+	const matchesToUpdate = parseResults.rows
+		.filter((row) => {
+			if (row.rowIndex === rowIndex) return false;
+			const rowPayee = row.normalizedData['payee'];
+			if (!rowPayee || typeof rowPayee !== 'string') return false;
+			// Check if already a transfer
+			const override = entityOverrides[row.rowIndex];
+			if (override?.transferAccountId) return false;
+			// Use similarity matching
+			return arePayeesSimilar(rowPayee, originalPayeeName);
+		})
+		.map((item) => ({ item }));
+
+	if (matchesToUpdate.length > 0) {
+		bulkTransferUpdateDialog = {
+			open: true,
+			rowIndex,
+			accountId,
+			accountName,
+			rememberMapping,
+			originalPayeeName,
+			matchCount: matchesToUpdate.length,
+			matches: matchesToUpdate
+		};
+	}
+}
+
+function confirmBulkTransferUpdate() {
+	if (!bulkTransferUpdateDialog.matches) return;
+
+	let updatedCount = 0;
+	bulkTransferUpdateDialog.matches.forEach((match) => {
+		handleTransferAccountUpdate(
+			match.item.rowIndex,
+			bulkTransferUpdateDialog.accountId,
+			bulkTransferUpdateDialog.accountName,
+			bulkTransferUpdateDialog.rememberMapping
+		);
+		updatedCount++;
+	});
+
+	if (updatedCount > 0) {
+		const accountDisplay = bulkTransferUpdateDialog.accountName || 'None';
+		toast.success(
+			`Set transfer to "${accountDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`
+		);
+	}
+
+	bulkTransferUpdateDialog.open = false;
+}
+
+function cancelBulkTransferUpdate() {
+	bulkTransferUpdateDialog.open = false;
+}
+
+function revertTransferUpdate() {
+	const { rowIndex } = bulkTransferUpdateDialog;
+	handleTransferAccountUpdate(rowIndex, null, null, false);
+	bulkTransferUpdateDialog.open = false;
 }
 
 // Payment processor filter state
@@ -486,6 +737,119 @@ function handleCategoryUpdate(
 	categoryId: number | null,
 	categoryName: string | null
 ) {
+	// Track dismissals: when user clears a category that was AI-suggested
+	const isClearingCategory = categoryName === null || categoryName === '';
+
+	console.log(`[CategoryUpdate] Row ${rowIndex}: categoryId=${categoryId}, categoryName=${categoryName}, isClearingCategory=${isClearingCategory}`);
+
+	if (isClearingCategory) {
+		// Get the row data
+		const row = parseResults?.rows.find(r => r.rowIndex === rowIndex);
+		let dismissalTracked = false;
+
+		console.log(`[CategoryUpdate] Row ${rowIndex} ALL category data:`, row ? {
+			// All category-related fields
+			category: row.normalizedData['category'],
+			categoryId: row.normalizedData['categoryId'],
+			inferredCategory: row.normalizedData['inferredCategory'],
+			inferredCategoryId: row.normalizedData['inferredCategoryId'],
+			categoryConfidence: row.normalizedData['categoryConfidence'],
+			categoryFromPayeeDefault: row.normalizedData['categoryFromPayeeDefault'],
+			categoryMatchedByAlias: row.normalizedData['categoryMatchedByAlias'],
+			// Payee fields
+			originalPayee: row.normalizedData['originalPayee'],
+			payee: row.normalizedData['payee'],
+			payeeId: row.normalizedData['payeeId'],
+			matchedByAlias: row.normalizedData['matchedByAlias']
+		} : 'row not found');
+
+		// First check: alias-based categories (from infer-categories endpoint)
+		// These are stored directly on normalizedData
+		// Check multiple sources for category: inferredCategoryId > categoryId
+		if (row) {
+			// Get category ID from multiple possible sources (in priority order)
+			const inferredCategoryId = row.normalizedData['inferredCategoryId'] as number | undefined;
+			const categoryId = row.normalizedData['categoryId'] as number | undefined;
+			const dismissCategoryId = inferredCategoryId || categoryId;
+
+			// Get category name from multiple possible sources
+			const inferredCategoryName = row.normalizedData['inferredCategory'] as string | undefined;
+			const categoryName = row.normalizedData['category'] as string | undefined;
+			const dismissCategoryName = inferredCategoryName || categoryName;
+
+			const categoryConfidence = row.normalizedData['categoryConfidence'] as number | undefined;
+			const originalPayee = row.normalizedData['originalPayee'] as string || row.normalizedData['payee'] as string || '';
+
+			// Track dismissal if there was ANY auto-filled category
+			// (either from inferredCategory, category, or payee default)
+			if (dismissCategoryId && dismissCategoryName) {
+				const payeeName = row.normalizedData['payee'] as string || '';
+				const payee = payeeState?.payees
+					? Array.from(payeeState.payees.values()).find(p => p.name?.toLowerCase() === payeeName.toLowerCase())
+					: null;
+
+				const newDismissals = new Map(categoryDismissals);
+				newDismissals.set(rowIndex, {
+					rowIndex,
+					payeeId: payee?.id ?? null,
+					payeeName: payeeName, // Normalized payee name
+					rawPayeeString: originalPayee, // Original import string for alias matching
+					dismissedCategoryId: dismissCategoryId,
+					dismissedCategoryName: dismissCategoryName,
+					amount: row.normalizedData['amount'] as number | undefined,
+					date: row.normalizedData['date'] as string | undefined
+				});
+				categoryDismissals = newDismissals;
+				dismissalTracked = true;
+				console.log(`[CategoryUpdate] Dismissal tracked for row ${rowIndex}:`, {
+					payeeName,
+					rawPayeeString: originalPayee,
+					dismissCategoryId,
+					dismissCategoryName,
+					source: inferredCategoryId ? 'inferredCategoryId' : 'categoryId'
+				});
+			} else {
+				console.log(`[CategoryUpdate] No dismissal tracked - no category ID found. inferredCategoryId=${inferredCategoryId}, categoryId=${categoryId}`);
+			}
+		}
+
+		// Second check: cleanupState suggestions (from cleanup analysis)
+		if (!dismissalTracked && cleanupState?.categorySuggestions) {
+			const suggestion = cleanupState.categorySuggestions.find(s => s.rowIndex === rowIndex);
+			if (suggestion && suggestion.suggestions.length > 0) {
+				const topSuggestion = suggestion.suggestions[0];
+				// Only track if there was a high-confidence auto-fill (>=0.7)
+				if (topSuggestion.confidence >= 0.7) {
+					const payeeName = row?.normalizedData['payee'] as string || '';
+					const originalPayee = row?.normalizedData['originalPayee'] as string || payeeName;
+					const payee = payeeState?.payees
+						? Array.from(payeeState.payees.values()).find(p => p.name?.toLowerCase() === payeeName.toLowerCase())
+						: null;
+
+					const newDismissals = new Map(categoryDismissals);
+					newDismissals.set(rowIndex, {
+						rowIndex,
+						payeeId: payee?.id ?? null,
+						payeeName: payeeName, // Normalized payee name
+						rawPayeeString: originalPayee, // Original import string for alias matching
+						dismissedCategoryId: topSuggestion.categoryId,
+						dismissedCategoryName: topSuggestion.categoryName,
+						amount: row?.normalizedData['amount'] as number | undefined,
+						date: row?.normalizedData['date'] as string | undefined
+					});
+					categoryDismissals = newDismissals;
+				}
+			}
+		}
+	} else {
+		// User selected a category, remove any previous dismissal for this row
+		if (categoryDismissals.has(rowIndex)) {
+			const newDismissals = new Map(categoryDismissals);
+			newDismissals.delete(rowIndex);
+			categoryDismissals = newDismissals;
+		}
+	}
+
 	entityOverrides = {
 		...entityOverrides,
 		[rowIndex]: {
@@ -551,6 +915,9 @@ function handleCategoryUpdateWithSimilar(
 			if (row.rowIndex === rowIndex) return false;
 			const rowPayee = row.normalizedData['payee'];
 			if (!rowPayee || typeof rowPayee !== 'string') return false;
+			// Note: We include transfer rows here because the user may want to
+			// clear categories from all similar-payee rows at once (even if transfers
+			// don't use categories, clearing them is harmless)
 			return arePayeesSimilar(rowPayee, payeeName);
 		})
 		.map((item) => ({ item }));
@@ -562,8 +929,11 @@ function handleCategoryUpdateWithSimilar(
 			.map((row, idx) => ({ item: row, index: idx }))
 			.filter(({ item }) => {
 				if (item.rowIndex === rowIndex) return false;
-				const rowCategory =
-					entityOverrides[item.rowIndex]?.categoryName || item.normalizedData['category'];
+				// Exclude rows that are transfers - their "category" is leftover data
+				// that won't be used, so they shouldn't be counted as "same category" matches
+				const override = entityOverrides[item.rowIndex];
+				if (override?.transferAccountId) return false;
+				const rowCategory = override?.categoryName || item.normalizedData['category'];
 				return rowCategory === previousCategoryName;
 			});
 	}
@@ -736,6 +1106,33 @@ async function applySmartCategorization() {
 	}
 }
 
+// Smart categorization for multi-file import
+async function applySmartCategorizationToFile(fileId: string, rows: ImportRow[]): Promise<ImportRow[]> {
+	const workspaceId = workspaceState?.workspaceId;
+
+	try {
+		const response = await fetch('/api/import/infer-categories', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				rows,
+				workspaceId
+			})
+		});
+
+		if (response.ok) {
+			const result = await response.json();
+			return result.rows;
+		}
+	} catch (err) {
+		console.error('Failed to apply smart data enrichment for file:', fileId, err);
+	}
+
+	return rows;
+}
+
 // File handling
 async function handleFileSelected(file: File) {
 	selectedFile = file;
@@ -819,6 +1216,378 @@ function handleFileRejected(errorMsg: string) {
 	error = errorMsg;
 }
 
+// Multi-file import handlers
+async function handleMultiFileProcessing() {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile) return;
+
+	isProcessing = true;
+	multiFileProcessingMessage = 'Parsing file...';
+	error = null;
+
+	try {
+		multiFileState.updateFileState(currentFile.id, { status: 'uploading' });
+
+		console.log('[MultiFileImport] Uploading file:', currentFile.fileName, 'to account:', accountId);
+
+		const formData = new FormData();
+		formData.append('importFile', currentFile.file);
+
+		const response = await fetch(`/api/import/upload?accountId=${accountId}`, {
+			method: 'POST',
+			body: formData
+		});
+
+		console.log('[MultiFileImport] Response status:', response.status, response.ok);
+
+		const responseText = await response.text();
+		console.log('[MultiFileImport] Response body:', responseText.substring(0, 500));
+
+		let result;
+		try {
+			result = JSON.parse(responseText);
+		} catch (e) {
+			console.error('[MultiFileImport] Failed to parse response:', e);
+			throw new Error('Invalid response from server');
+		}
+
+		if (!response.ok) {
+			console.error('[MultiFileImport] Upload failed:', result);
+			throw new Error(result.error || 'Upload failed');
+		}
+
+		// The API returns ParseResult directly at the top level
+		// For CSV/Excel files, we need column mapping
+		const needsMapping = currentFile.needsColumnMapping;
+		let detectedProfileMapping: ColumnMapping | undefined;
+
+		// Try to find a matching import profile for CSV files (to pre-populate the mapper)
+		if (needsMapping && result.columns?.length > 0) {
+			multiFileProcessingMessage = 'Checking for saved profiles...';
+			try {
+				const profile = await trpc().importProfileRoutes.findMatch.query({
+					headers: result.columns,
+					filename: currentFile.fileName,
+					accountId: accountId
+				});
+
+				if (profile) {
+					console.log('[MultiFileImport] Found matching profile:', profile.name, '- will pre-populate mapper');
+					detectedProfileMapping = profile.mapping as ColumnMapping;
+					// Record profile usage
+					trpc().importProfileRoutes.recordUsage.mutate({ id: profile.id });
+				}
+			} catch (profileErr) {
+				console.warn('[MultiFileImport] Failed to check for matching import profile:', profileErr);
+			}
+		}
+
+		// Update file state with parse result
+		multiFileState.setParseResult(
+			currentFile.id,
+			result, // ParseResult is at top level
+			needsMapping
+		);
+		multiFileState.setValidatedRows(currentFile.id, result.rows || []);
+
+		// Store detected profile mapping on file state for the column mapper to use
+		if (detectedProfileMapping) {
+			multiFileState.setColumnMapping(currentFile.id, detectedProfileMapping);
+		}
+
+		console.log('[MultiFileImport] Parse complete, needsMapping:', needsMapping, 'rows:', result.rows?.length, 'hasProfileMapping:', !!detectedProfileMapping);
+
+		// If auto-detected format (OFX, QIF, etc.), mark as ready and move to next
+		if (!needsMapping) {
+			multiFileState.markFileReady(currentFile.id);
+			if (multiFileState.isLastFile) {
+				multiFileState.setGlobalStep('review');
+			} else {
+				multiFileState.nextFile();
+				// Process next file
+				await handleMultiFileProcessing();
+			}
+		}
+		// If needs mapping, the UI will show the mapping step
+	} catch (err) {
+		multiFileState.markFileError(
+			currentFile.id,
+			err instanceof Error ? err.message : 'Unknown error'
+		);
+		toast.error(`Failed to process ${currentFile.fileName}`);
+	} finally {
+		isProcessing = false;
+		multiFileProcessingMessage = '';
+	}
+}
+
+async function handleMultiFileColumnMapping(fileId: string, mapping: ColumnMapping) {
+	const file = multiFileState.files.find((f) => f.id === fileId);
+	if (!file) return;
+
+	isProcessing = true;
+	multiFileProcessingMessage = 'Applying column mapping...';
+
+	try {
+		// Convert file to base64 for the remap API
+		const fileBuffer = await file.file.arrayBuffer();
+		const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+
+		const response = await fetch('/api/import/remap', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				file: {
+					data: base64,
+					name: file.fileName,
+					type: file.file.type || 'text/csv'
+				},
+				columnMapping: mapping,
+				accountId: accountId.toString()
+			})
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.error || 'Mapping failed');
+		}
+
+		const result = await response.json();
+
+		console.log('[MultiFileImport] Remap complete, rows:', result.rows?.length);
+
+		multiFileProcessingMessage = 'Inferring categories...';
+
+		// Apply smart categorization to infer categories from payee patterns
+		const enrichedRows = await applySmartCategorizationToFile(fileId, result.rows || []);
+
+		console.log('[MultiFileImport] Smart categorization complete, enriched rows:', enrichedRows.length);
+
+		multiFileState.setColumnMapping(fileId, mapping);
+		// Store the enriched rows with category suggestions
+		multiFileState.setValidatedRows(fileId, enrichedRows);
+		// Go to preview step so user can edit transactions
+		multiFileState.updateFileState(fileId, { status: 'preview' });
+	} catch (err) {
+		multiFileState.markFileError(fileId, err instanceof Error ? err.message : 'Unknown error');
+		toast.error(`Failed to map columns for ${file.fileName}`);
+	} finally {
+		isProcessing = false;
+		multiFileProcessingMessage = '';
+	}
+}
+
+/**
+ * Confirm preview for current file and move to next file or review
+ */
+async function handleMultiFilePreviewConfirm() {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile) return;
+
+	multiFileState.markFileReady(currentFile.id);
+
+	// Move to next file or review
+	if (multiFileState.isLastFile) {
+		multiFileState.setGlobalStep('review');
+	} else {
+		multiFileState.nextFile();
+		await handleMultiFileProcessing();
+	}
+}
+
+/**
+ * Handle entity updates during multi-file preview
+ */
+function handleMultiFilePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: string | null) {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile) return;
+
+	const overrides = { ...(currentFile.entityOverrides || {}) };
+	overrides[rowIndex] = {
+		...(overrides[rowIndex] || {}),
+		payeeId,
+		payeeName,
+		// Clear transfer when setting payee
+		transferAccountId: null,
+		transferAccountName: null
+	};
+	multiFileState.setEntityOverrides(currentFile.id, overrides);
+}
+
+function handleMultiFileCategoryUpdate(rowIndex: number, categoryId: number | null, categoryName: string | null) {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile) return;
+
+	const overrides = { ...(currentFile.entityOverrides || {}) };
+	overrides[rowIndex] = {
+		...(overrides[rowIndex] || {}),
+		categoryId,
+		categoryName
+	};
+	multiFileState.setEntityOverrides(currentFile.id, overrides);
+}
+
+function handleMultiFileDescriptionUpdate(rowIndex: number, description: string | null) {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile) return;
+
+	const overrides = { ...(currentFile.entityOverrides || {}) };
+	overrides[rowIndex] = {
+		...(overrides[rowIndex] || {}),
+		description
+	};
+	multiFileState.setEntityOverrides(currentFile.id, overrides);
+}
+
+function handleMultiFileTransferUpdate(
+	rowIndex: number,
+	transferAccountId: number | null,
+	transferAccountName: string | null,
+	rememberMapping?: boolean
+) {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile) return;
+
+	const overrides = { ...(currentFile.entityOverrides || {}) };
+	overrides[rowIndex] = {
+		...(overrides[rowIndex] || {}),
+		// Clear payee when setting transfer
+		payeeId: null,
+		payeeName: null,
+		transferAccountId,
+		transferAccountName,
+		rememberTransferMapping: rememberMapping
+	};
+	multiFileState.setEntityOverrides(currentFile.id, overrides);
+}
+
+async function handleMultiFileImport() {
+	isProcessing = true;
+	isImportStreaming = true;
+	importProgress = 0;
+	importProgressMessage = 'Preparing import...';
+
+	try {
+		// Collect all validated rows from all files
+		const allRows = multiFileState.getAllValidatedRows();
+		const allOverrides = multiFileState.getAllEntityOverrides();
+
+		// Apply entity overrides to rows
+		const rowsWithOverrides = allRows.map((row, index) => {
+			const override = allOverrides[index];
+			// Extract originalPayee from normalizedData (set by infer-categories) for transfer mapping
+			const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
+			if (override) {
+				return {
+					...row,
+					// IMPORTANT: Set originalPayee at top level for import orchestrator to find
+					originalPayee,
+					normalizedData: {
+						...row.normalizedData,
+						payeeId: override.payeeId,
+						payeeName: override.payeeName,
+						categoryId: override.categoryId,
+						categoryName: override.categoryName,
+						description: override.description,
+						transferAccountId: override.transferAccountId,
+						transferAccountName: override.transferAccountName,
+						rememberTransferMapping: override.rememberTransferMapping
+					}
+				};
+			}
+			return { ...row, originalPayee };
+		});
+
+		importProgressMessage = `Importing ${rowsWithOverrides.length} transactions...`;
+
+		// Use streaming API for progress updates
+		const response = await fetch('/api/import/process?stream=true', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				accountId,
+				rows: rowsWithOverrides,
+				options: importOptions
+			})
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.error || 'Import failed');
+		}
+
+		// Process Server-Sent Events stream
+		const reader = response.body?.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+
+		if (reader) {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				buffer += decoder.decode(value, { stream: true });
+
+				// Process complete SSE messages
+				const lines = buffer.split('\n\n');
+				buffer = lines.pop() || ''; // Keep incomplete message in buffer
+
+				for (const line of lines) {
+					if (line.startsWith('data: ')) {
+						try {
+							const data = JSON.parse(line.slice(6));
+
+							if (data.type === 'progress') {
+								const progress = data.progress;
+								const percent = progress.totalRows > 0
+									? Math.round((progress.currentRow / progress.totalRows) * 100)
+									: 0;
+								importProgress = percent;
+								importProgressMessage = `Creating transactions... ${progress.currentRow}/${progress.totalRows}`;
+							} else if (data.type === 'complete') {
+								importResult = data.result;
+							} else if (data.type === 'error') {
+								throw new Error(data.error);
+							}
+						} catch (parseError) {
+							console.error('Failed to parse SSE message:', parseError);
+						}
+					}
+				}
+			}
+		}
+
+		if (!importResult) {
+			throw new Error('Import completed but no result received');
+		}
+
+		multiFileState.setGlobalStep('complete');
+		currentStep = 'complete';
+
+		// Invalidate queries
+		await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+		await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+
+		toast.success(
+			`Successfully imported ${importResult.transactionsCreated} transactions from ${multiFileState.files.length} files`
+		);
+	} catch (err) {
+		toast.error(err instanceof Error ? err.message : 'Import failed');
+	} finally {
+		isProcessing = false;
+		isImportStreaming = false;
+		importProgress = 0;
+		importProgressMessage = '';
+	}
+}
+
+function resetMultiFileImport() {
+	multiFileState.reset();
+	multiFileCleanupState = null;
+	lastAnalyzedFileId = null;
+	currentStep = 'upload';
+}
+
 function goBackToUpload() {
 	currentStep = 'upload';
 	selectedFile = null;
@@ -831,6 +1600,10 @@ function goBackToUpload() {
 	detectedMapping = null;
 	csvHeaders = [];
 	cleanupState = null;
+	// Reset multi-file state
+	multiFileState.reset();
+	multiFileCleanupState = null;
+	lastAnalyzedFileId = null;
 }
 
 function goBackToMapping() {
@@ -969,6 +1742,106 @@ async function runCleanupAnalysis() {
 $effect(() => {
 	if (currentStep === 'preview' && previewData && !cleanupState) {
 		runCleanupAnalysis();
+	}
+});
+
+// Run cleanup analysis for multi-file imports
+async function runMultiFileCleanupAnalysis() {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile || !currentFile.validatedRows || multiFileCleanupState?.isAnalyzing) return;
+
+	// Initialize cleanup state
+	multiFileCleanupState = {
+		payeeGroups: [],
+		categorySuggestions: [],
+		isAnalyzing: true,
+		analysisProgress: 0,
+		analysisPhase: 'grouping_payees'
+	};
+
+	try {
+		// Extract payee data from rows
+		const payeeInputs = currentFile.validatedRows
+			.filter((row) => row.normalizedData['payee'])
+			.map((row) => {
+				const data = row.normalizedData as Record<string, any>;
+				const originalPayee = (row as any).originalPayee || data['originalPayee'] as string | undefined;
+				return {
+					rowIndex: row.rowIndex,
+					payeeName: data['payee'] as string,
+					originalPayee,
+					amount: data['amount'] as number,
+					date: data['date'] as string,
+					memo: data['description'] || data['notes']
+				};
+			});
+
+		if (payeeInputs.length === 0) {
+			multiFileCleanupState = { ...multiFileCleanupState, isAnalyzing: false };
+			return;
+		}
+
+		multiFileCleanupState = { ...multiFileCleanupState, analysisProgress: 20 };
+
+		// Call the combined analysis endpoint
+		const result = await trpc().importCleanupRoutes.analyzeImport.mutate({
+			rows: payeeInputs
+		});
+
+		multiFileCleanupState = {
+			...multiFileCleanupState,
+			analysisProgress: 80,
+			analysisPhase: 'suggesting_categories'
+		};
+
+		// Update state with results
+		multiFileCleanupState = {
+			payeeGroups: result.payeeGroups,
+			categorySuggestions: result.categorySuggestions,
+			isAnalyzing: false,
+			analysisProgress: 100,
+			analysisPhase: undefined
+		};
+
+		// Apply high-confidence category suggestions to multi-file entity overrides
+		const currentOverrides = { ...(currentFile.entityOverrides || {}) };
+		for (const suggestion of result.categorySuggestions) {
+			if (suggestion.suggestions.length > 0) {
+				const topSuggestion = suggestion.suggestions[0];
+				if (topSuggestion.confidence >= 0.7) {
+					currentOverrides[suggestion.rowIndex] = {
+						...currentOverrides[suggestion.rowIndex],
+						categoryId: topSuggestion.categoryId,
+						categoryName: topSuggestion.categoryName
+					};
+				}
+			}
+		}
+		multiFileState.setEntityOverrides(currentFile.id, currentOverrides);
+	} catch (err) {
+		console.error('Failed to analyze multi-file import data:', err);
+		toast.error('Failed to analyze import data');
+		if (multiFileCleanupState) {
+			multiFileCleanupState = { ...multiFileCleanupState, isAnalyzing: false };
+		}
+	}
+}
+
+// Track which file ID we last ran cleanup analysis for
+let lastAnalyzedFileId = $state<string | null>(null);
+
+// Trigger cleanup analysis when entering multi-file preview step
+$effect(() => {
+	const currentFile = multiFileState.currentFile;
+	if (
+		multiFileState.globalStep === 'processing' &&
+		currentFile?.status === 'preview' &&
+		currentFile.validatedRows &&
+		currentFile.id !== lastAnalyzedFileId
+	) {
+		lastAnalyzedFileId = currentFile.id;
+		multiFileCleanupState = null; // Reset for new file
+		runMultiFileCleanupAnalysis();
 	}
 });
 
@@ -1422,8 +2295,12 @@ async function processImport() {
 			.filter((row) => selectedRows.has(row.rowIndex))
 			.map((row) => {
 				const override = entityOverrides[row.rowIndex];
+				// Extract originalPayee from normalizedData (set by infer-categories) for transfer mapping
+				const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
 				return {
 					...row,
+					// IMPORTANT: Set originalPayee at top level for import orchestrator to find
+					originalPayee,
 					normalizedData: {
 						...row.normalizedData,
 						payee:
@@ -1432,10 +2309,32 @@ async function processImport() {
 							override?.categoryName !== undefined
 								? override.categoryName
 								: row.normalizedData['category'],
+						// IMPORTANT: Also clear categoryId when category is overridden
+						// This prevents the server from using the original inferred category
+						categoryId:
+							override?.categoryId !== undefined
+								? override.categoryId
+								: (override?.categoryName !== undefined
+									? null // Clear categoryId if categoryName was overridden (even to null)
+									: row.normalizedData['categoryId']),
 						description:
 							override?.description !== undefined
 								? override.description
-								: row.normalizedData['description'] || row.normalizedData['notes']
+								: row.normalizedData['description'] || row.normalizedData['notes'],
+						// Transfer fields - when set, this row creates a transfer instead of regular transaction
+						// Must fall back to row.normalizedData for auto-accepted mappings
+						transferAccountId:
+							override?.transferAccountId !== undefined
+								? override.transferAccountId
+								: row.normalizedData['transferAccountId'] ?? null,
+						transferAccountName:
+							override?.transferAccountName !== undefined
+								? override.transferAccountName
+								: row.normalizedData['transferAccountName'] ?? null,
+						rememberTransferMapping:
+							override?.rememberTransferMapping !== undefined
+								? override.rememberTransferMapping
+								: row.normalizedData['rememberTransferMapping'] ?? false
 					}
 				};
 			});
@@ -1445,6 +2344,21 @@ async function processImport() {
 			.filter((c) => c.selected)
 			.map((c) => c.name);
 
+		const dismissalsArray = Array.from(categoryDismissals.values());
+		console.log(`[ProcessImport] Sending ${dismissalsArray.length} category dismissals:`, dismissalsArray);
+
+		// Log transfer data being sent
+		const transferRows = selectedRowsData.filter(r => r.normalizedData?.transferAccountId);
+		if (transferRows.length > 0) {
+			console.log('[ProcessImport] Sending transfer rows:', transferRows.map(r => ({
+				rowIndex: r.rowIndex,
+				transferAccountId: r.normalizedData?.transferAccountId,
+				rememberTransferMapping: r.normalizedData?.rememberTransferMapping,
+				payee: r.normalizedData?.payee,
+				originalPayee: r.originalPayee,
+			})));
+		}
+
 		const importData = {
 			accountId: accountId,
 			data: selectedRowsData,
@@ -1453,6 +2367,8 @@ async function processImport() {
 				categories: selectedCategoryNames
 			},
 			scheduleMatches: scheduleMatches.filter((m) => m.selected),
+			// Include category dismissals for learning (negative feedback)
+			categoryDismissals: dismissalsArray,
 			options: {
 				allowPartialImport,
 				createMissingEntities: createMissingPayees || createMissingCategories,
@@ -1622,6 +2538,10 @@ function startNewImport() {
 	columnMapping = null;
 	cleanupState = null;
 	aliasCandidates = new Map();
+	// Reset multi-file state
+	multiFileState.reset();
+	multiFileCleanupState = null;
+	lastAnalyzedFileId = null;
 }
 
 // Save profile dialog helpers
@@ -1695,7 +2615,24 @@ const steps = [
 	{ id: 'complete', label: 'Complete' }
 ];
 
-const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
+// Map multi-file globalStep to step index
+const currentStepIndex = $derived.by(() => {
+	// Multi-file mode: map globalStep to steps
+	if (currentStep === 'upload') {
+		const globalStep = multiFileState.globalStep;
+		if (globalStep === 'upload') return 0; // Upload File
+		if (globalStep === 'processing') {
+			// Check if current file is in preview mode vs mapping mode
+			if (multiFileState.currentFile?.status === 'preview') {
+				return 2; // Preview Data
+			}
+			return 1; // Map Columns
+		}
+		if (globalStep === 'review') return 2; // Preview Data
+	}
+	// Single-file mode: use currentStep directly
+	return steps.findIndex((s) => s.id === currentStep);
+});
 
 $effect(() => {
 	currentStep;
@@ -1772,19 +2709,126 @@ $effect(() => {
 				</p>
 			</div>
 
-			<FileUploadDropzone
-				acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo']}
-				maxFileSize={10 * 1024 * 1024}
-				onFileSelected={handleFileSelected}
-				onFileRejected={handleFileRejected}
-				showPreview={true} />
+			{#if multiFileState.globalStep === 'upload'}
+					<MultiFileUpload
+						importState={multiFileState}
+						onContinue={() => {
+							multiFileState.startProcessing();
+							handleMultiFileProcessing();
+						}}
+					/>
+				{:else if multiFileState.globalStep === 'processing'}
+					<FileProgress
+						files={multiFileState.files}
+						currentIndex={multiFileState.currentFileIndex}
+						onFileClick={(index) => multiFileState.goToFile(index)}
+					/>
+					<!-- Current file column mapping if needed -->
+					{#if multiFileState.currentFile?.status === 'mapping' && multiFileState.currentFile.parseResult}
+						{@const currentFile = multiFileState.currentFile}
+						{@const currentParseResult = currentFile.parseResult!}
+						<div class="mt-4">
+							<ColumnMapper
+								rawColumns={currentParseResult.columns}
+								sampleData={currentParseResult.rows.slice(0, 5).map(r => r.rawData)}
+								initialMapping={currentFile.columnMapping}
+								onNext={(mapping) => handleMultiFileColumnMapping(currentFile.id, mapping)}
+								onBack={() => {
+									if (multiFileState.isFirstFile) {
+										multiFileState.setGlobalStep('upload');
+									} else {
+										multiFileState.previousFile();
+									}
+								}}
+							/>
+						</div>
+					{:else if multiFileState.currentFile?.status === 'preview' && multiFilePreviewData}
+						{@const currentFile = multiFileState.currentFile}
+						<div class="mt-4 space-y-4">
+							<div class="flex items-center justify-between">
+								<div>
+									<h3 class="text-lg font-semibold">Preview: {currentFile.fileName}</h3>
+									<p class="text-muted-foreground text-sm">
+										{multiFilePreviewData.length} transactions - edit payees, categories, and descriptions as needed
+									</p>
+								</div>
+							</div>
 
-			{#if isProcessing}
-				<div class="py-8 text-center">
-					<div class="border-primary inline-block h-8 w-8 animate-spin rounded-full border-b-2">
-					</div>
-					<p class="text-muted-foreground mt-4 text-sm">Processing file...</p>
-				</div>
+							<ImportPreviewTable
+								data={multiFilePreviewData}
+								{importOptions}
+								{accountId}
+								onImportOptionsChange={(opts) => importOptions = opts}
+								cleanupState={filteredMultiFileCleanupState}
+								onCleanupStateChange={(state) => multiFileCleanupState = state}
+								onPayeeUpdate={handleMultiFilePayeeUpdate}
+								onCategoryUpdate={handleMultiFileCategoryUpdate}
+								onDescriptionUpdate={handleMultiFileDescriptionUpdate}
+								onTransferAccountUpdate={handleMultiFileTransferUpdate}
+							/>
+
+							<div class="flex items-center justify-between pt-4">
+								<Button
+									variant="outline"
+									onclick={() => {
+										multiFileState.updateFileState(currentFile.id, { status: 'mapping' });
+									}}
+								>
+									Back to Mapping
+								</Button>
+								<Button onclick={handleMultiFilePreviewConfirm}>
+									{#if multiFileState.isLastFile}
+										Finish & Review All
+									{:else}
+										Continue to Next File
+									{/if}
+								</Button>
+							</div>
+						</div>
+					{:else if isProcessing}
+						<div class="mt-4 py-8 text-center">
+							<div class="border-primary inline-block h-8 w-8 animate-spin rounded-full border-b-2"></div>
+							<p class="text-muted-foreground mx-auto mt-4 max-w-xs truncate text-sm" title={multiFileState.currentFile?.fileName}>
+								Processing {multiFileState.currentFile?.fileName}...
+							</p>
+						</div>
+					{/if}
+
+					<!-- Processing overlay for multi-file mapping/category inference -->
+					{#if isProcessing && multiFileProcessingMessage}
+						<div class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+							<Card.Root class="w-80 max-w-[90vw]">
+								<Card.Content class="pt-6">
+									<div class="text-center">
+										<div class="border-primary mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2"></div>
+										<p class="font-medium">{multiFileProcessingMessage}</p>
+										<p class="text-muted-foreground mt-2 truncate px-2 text-sm" title={multiFileState.currentFile?.fileName}>
+											{multiFileState.currentFile?.fileName}
+										</p>
+									</div>
+								</Card.Content>
+							</Card.Root>
+						</div>
+					{/if}
+				{:else if multiFileState.globalStep === 'review'}
+					<CombinedReview
+						files={multiFileState.files}
+						totalTransactions={multiFileState.totalTransactions}
+						isImporting={isProcessing}
+						onImport={handleMultiFileImport}
+						onBack={() => {
+							multiFileState.goToFile(multiFileState.files.length - 1);
+							multiFileState.setGlobalStep('processing');
+						}}
+						onEditFile={(index) => {
+							const file = multiFileState.files[index];
+							if (file) {
+								// Set file status back to 'preview' so user can edit transactions
+								multiFileState.updateFileState(file.id, { status: 'preview' });
+								multiFileState.goToFile(index);
+							}
+						}}
+					/>
 			{/if}
 		</div>
 	{:else if currentStep === 'map-columns' && parseResults && rawCSVData}
@@ -1824,13 +2868,15 @@ $effect(() => {
 			<ImportPreviewTable
 				data={previewData.rows}
 				{importOptions}
+				{accountId}
 				onImportOptionsChange={handleImportOptionsChange}
-				{cleanupState}
+				cleanupState={filteredCleanupState}
 				onCleanupStateChange={handleCleanupStateChange}
 				onPayeeUpdate={handlePayeeUpdateWithSimilar}
 				onPayeeAliasCandidate={handlePayeeAliasCandidate}
 				onCategoryUpdate={handleCategoryUpdateWithSimilar}
 				onDescriptionUpdate={handleDescriptionUpdate}
+				onTransferAccountUpdate={handleTransferAccountUpdateWithSimilar}
 				{temporaryCategories}
 				{temporaryPayees}
 				processorCount={processorAnalysis.total}
@@ -2047,17 +3093,22 @@ $effect(() => {
 			</div>
 		</div>
 
-		{#if isProcessing}
+		{#if isProcessing || isImportStreaming}
 			<div
 				class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-				<Card.Root class="w-96">
+				<Card.Root class="w-96 max-w-[90vw]">
 					<Card.Content class="pt-6">
 						<div class="text-center">
 							<div
 								class="border-primary mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2">
 							</div>
-							<p class="font-medium">Processing Import</p>
-							<p class="text-muted-foreground mt-2 text-sm">Creating transactions...</p>
+							<p class="truncate px-2 font-medium">{importProgressMessage || 'Processing Import'}</p>
+							{#if importProgress > 0}
+								<Progress value={importProgress} class="mt-4" />
+								<p class="text-muted-foreground mt-2 text-sm">{importProgress}% complete</p>
+							{:else}
+								<p class="text-muted-foreground mt-2 text-sm">Creating transactions...</p>
+							{/if}
 						</div>
 					</Card.Content>
 				</Card.Root>
@@ -2081,22 +3132,53 @@ $effect(() => {
 					<Card.Title>Import Summary</Card.Title>
 				</Card.Header>
 				<Card.Content class="space-y-4">
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
 						<div>
 							<div class="text-2xl font-bold text-green-600">
-								{importResult.transactionsCreated}
+								{importResult.transactionsCreated ?? 0}
 							</div>
 							<div class="text-muted-foreground text-sm">Transactions Created</div>
 						</div>
-						<div>
-							<div class="text-2xl font-bold">
-								{importResult.entitiesCreated.payees + importResult.entitiesCreated.categories}
+						{#if importResult.reconciled && importResult.reconciled > 0}
+							<div>
+								<div class="text-2xl font-bold text-blue-600">
+									{importResult.reconciled}
+								</div>
+								<div class="text-muted-foreground text-sm">Transfers Reconciled</div>
 							</div>
-							<div class="text-muted-foreground text-sm">Entities Created</div>
-						</div>
+						{/if}
+						{#if importResult.entitiesCreated}
+							<div>
+								<div class="text-2xl font-bold">
+									{(importResult.entitiesCreated.payees ?? 0) + (importResult.entitiesCreated.categories ?? 0)}
+								</div>
+								<div class="text-muted-foreground text-sm">Entities Created</div>
+							</div>
+						{/if}
 					</div>
 
-					{#if importResult.errors.length > 0}
+					{#if importResult.reconciledTransactions && importResult.reconciledTransactions.length > 0}
+						<div class="border-t pt-4">
+							<p class="mb-2 text-sm font-medium text-blue-600">
+								Reconciled with Existing Transfers
+							</p>
+							<p class="text-muted-foreground text-xs mb-2">
+								These imported transactions matched existing transfers and were merged instead of creating duplicates.
+							</p>
+							{#each importResult.reconciledTransactions.slice(0, 5) as reconciled}
+								<p class="text-muted-foreground text-xs">
+									Row {reconciled.rowIndex + 1}: Matched transfer from {reconciled.sourceAccountName}
+								</p>
+							{/each}
+							{#if importResult.reconciledTransactions.length > 5}
+								<p class="text-muted-foreground text-xs italic">
+									... and {importResult.reconciledTransactions.length - 5} more
+								</p>
+							{/if}
+						</div>
+					{/if}
+
+					{#if importResult.errors && importResult.errors.length > 0}
 						<div class="border-t pt-4">
 							<p class="text-destructive mb-2 text-sm font-medium">
 								{importResult.errors.length} Error(s)
@@ -2312,6 +3394,31 @@ $effect(() => {
 			<AlertDialog.Cancel onclick={cancelBulkPayeeUpdate} class="w-full"
 				>No, Just This One</AlertDialog.Cancel>
 			<Button variant="outline" onclick={revertPayeeUpdate} class="w-full">Cancel & Revert</Button>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Bulk Transfer Update Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkTransferUpdateDialog.open}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Convert Similar Transactions to Transfers?</AlertDialog.Title>
+			<AlertDialog.Description>
+				Found {bulkTransferUpdateDialog.matchCount} other transaction{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} with similar payee "{bulkTransferUpdateDialog.originalPayeeName}".
+				<br /><br />
+				Would you like to also convert {bulkTransferUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to transfer{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} to "{bulkTransferUpdateDialog.accountName}"?
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
+			<AlertDialog.Action onclick={confirmBulkTransferUpdate} class="w-full">
+				Yes, Convert All Similar
+			</AlertDialog.Action>
+			<AlertDialog.Cancel onclick={cancelBulkTransferUpdate} class="w-full">
+				No, Just This One
+			</AlertDialog.Cancel>
+			<Button variant="outline" onclick={revertTransferUpdate} class="w-full">
+				Cancel & Revert
+			</Button>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

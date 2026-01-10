@@ -569,9 +569,20 @@ const canRender = $derived(isContextReady && isViewsInitialized);
           </Table.Header>
           <Table.Body>
             {#each table.getRowModel().rows as row (row.id)}
+              {@const isTransfer = row.original.isTransfer === true}
+              {@const isArchived = row.original.isArchived === true}
+              {@const isAdjustment = row.original.isAdjustment === true}
               <Table.Row
                 data-state={row.getIsSelected() && 'selected'}
-                class="data-[state=selected]:border-l-primary data-[state=selected]:border-l-4">
+                data-transfer={isTransfer || undefined}
+                data-archived={isArchived || undefined}
+                data-adjustment={isAdjustment || undefined}
+                class={cn(
+                  'data-[state=selected]:border-l-primary data-[state=selected]:border-l-4',
+                  isTransfer && 'border-l-2 border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20',
+                  isArchived && 'border-l-2 border-l-gray-400 bg-gray-100/50 opacity-60 dark:bg-gray-800/30',
+                  isAdjustment && 'border-l-2 border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20'
+                )}>
                 {#each row.getVisibleCells() as cell (cell.id)}
                   {@const isActive = activeColumnId === cell.column.id}
                   {@const headerForCell = table

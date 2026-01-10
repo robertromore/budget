@@ -134,7 +134,7 @@ const groupedScheduleMatches = $derived.by(() => {
     .sort((a, b) => b.avgScore - a.avgScore); // Sort by average score descending
 });
 
-// Entity overrides - track user-selected payee/category/description for each row
+// Entity overrides - track user-selected payee/category/description/transfer for each row
 let entityOverrides = $state<
   Record<
     number,
@@ -144,6 +144,9 @@ let entityOverrides = $state<
       categoryId?: number | null;
       categoryName?: string | null;
       description?: string | null;
+      transferAccountId?: number | null;
+      transferAccountName?: string | null;
+      rememberTransferMapping?: boolean;
     }
   >
 >({});
@@ -266,10 +269,27 @@ const previewData = $derived.by(() => {
             override?.categoryName !== undefined
               ? override.categoryName
               : row.normalizedData['category'],
+          // Clear categoryId when category is overridden to prevent server using original
+          categoryId:
+            override?.categoryId !== undefined
+              ? override.categoryId
+              : (override?.categoryName !== undefined
+                ? null
+                : row.normalizedData['categoryId']),
           description:
             override?.description !== undefined
               ? override.description
               : row.normalizedData['description'] || row.normalizedData['notes'],
+          // Apply transfer overrides
+          transferAccountId:
+            override?.transferAccountId !== undefined
+              ? override.transferAccountId
+              : row.normalizedData['transferAccountId'],
+          transferAccountName:
+            override?.transferAccountName !== undefined
+              ? override.transferAccountName
+              : row.normalizedData['transferAccountName'],
+          rememberTransferMapping: override?.rememberTransferMapping ?? false,
         },
       };
     }),
@@ -333,6 +353,10 @@ function handlePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: 
       ...entityOverrides[rowIndex],
       payeeId,
       payeeName,
+      // Clear transfer when setting payee
+      transferAccountId: null,
+      transferAccountName: null,
+      rememberTransferMapping: false,
     },
   };
 }
@@ -622,6 +646,130 @@ function handleDescriptionUpdate(rowIndex: number, description: string | null) {
       description,
     },
   };
+}
+
+// Handler for transfer account updates
+function handleTransferAccountUpdate(
+  rowIndex: number,
+  accountId: number | null,
+  accountName: string | null,
+  rememberMapping: boolean = false
+) {
+  console.log('[Import] handleTransferAccountUpdate called:', {
+    rowIndex,
+    accountId,
+    accountName,
+    rememberMapping,
+  });
+  entityOverrides = {
+    ...entityOverrides,
+    [rowIndex]: {
+      ...entityOverrides[rowIndex],
+      // Clear payee and category when setting transfer
+      payeeId: null,
+      payeeName: null,
+      categoryId: null,
+      categoryName: null,
+      // Set transfer fields
+      transferAccountId: accountId,
+      transferAccountName: accountName,
+      rememberTransferMapping: rememberMapping,
+    },
+  };
+}
+
+// State for bulk transfer update confirmation dialog
+let bulkTransferUpdateDialog = $state({
+  open: false,
+  rowIndex: 0,
+  accountId: null as number | null,
+  accountName: null as string | null,
+  rememberMapping: false,
+  originalPayeeName: '',
+  matchCount: 0,
+  matches: [] as Array<{ item: any }>,
+});
+
+function handleTransferAccountUpdateWithSimilar(
+  rowIndex: number,
+  accountId: number | null,
+  accountName: string | null,
+  rememberMapping: boolean = false
+) {
+  if (!parseResults) return;
+
+  // Apply the update to the selected row first
+  handleTransferAccountUpdate(rowIndex, accountId, accountName, rememberMapping);
+
+  // If clearing the transfer, don't prompt for similar
+  if (!accountId) return;
+
+  const selectedRow = parseResults.rows.find((r) => r.rowIndex === rowIndex);
+  if (!selectedRow) return;
+
+  const originalPayeeName = selectedRow.normalizedData['payee'];
+  if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
+
+  // Find similar payees that aren't already set as transfers
+  const matchesToUpdate = parseResults.rows
+    .filter((row) => {
+      if (row.rowIndex === rowIndex) return false;
+      const rowPayee = row.normalizedData['payee'];
+      if (!rowPayee || typeof rowPayee !== 'string') return false;
+      // Check if already a transfer
+      const override = entityOverrides[row.rowIndex];
+      if (override?.transferAccountId) return false;
+      // Use similarity matching
+      return arePayeesSimilar(rowPayee, originalPayeeName);
+    })
+    .map((item) => ({ item }));
+
+  if (matchesToUpdate.length > 0) {
+    bulkTransferUpdateDialog = {
+      open: true,
+      rowIndex,
+      accountId,
+      accountName,
+      rememberMapping,
+      originalPayeeName,
+      matchCount: matchesToUpdate.length,
+      matches: matchesToUpdate,
+    };
+  }
+}
+
+function confirmBulkTransferUpdate() {
+  if (!bulkTransferUpdateDialog.matches) return;
+
+  let updatedCount = 0;
+  bulkTransferUpdateDialog.matches.forEach((match) => {
+    handleTransferAccountUpdate(
+      match.item.rowIndex,
+      bulkTransferUpdateDialog.accountId,
+      bulkTransferUpdateDialog.accountName,
+      bulkTransferUpdateDialog.rememberMapping
+    );
+    updatedCount++;
+  });
+
+  if (updatedCount > 0) {
+    const accountDisplay = bulkTransferUpdateDialog.accountName || 'None';
+    toast.success(
+      `Set transfer to "${accountDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`
+    );
+  }
+
+  bulkTransferUpdateDialog.open = false;
+}
+
+function cancelBulkTransferUpdate() {
+  bulkTransferUpdateDialog.open = false;
+}
+
+function revertTransferUpdate() {
+  const { rowIndex } = bulkTransferUpdateDialog;
+  handleTransferAccountUpdate(rowIndex, null, null, false);
+  bulkTransferUpdateDialog.open = false;
 }
 
 // State for bulk update confirmation dialog
@@ -1184,12 +1332,27 @@ async function processImport() {
               override?.categoryName !== undefined
                 ? override.categoryName
                 : row.normalizedData['category'],
-            // Include explicit categoryId if user selected an existing category
-            categoryId: override?.categoryId ?? row.normalizedData['categoryId'] ?? null,
+            // Clear categoryId when category is overridden to prevent server using original
+            categoryId:
+              override?.categoryId !== undefined
+                ? override.categoryId
+                : (override?.categoryName !== undefined
+                  ? null // Clear categoryId if categoryName was overridden (even to null)
+                  : row.normalizedData['categoryId'] ?? null),
             description:
               override?.description !== undefined
                 ? override.description
                 : row.normalizedData['description'] || row.normalizedData['notes'],
+            // Include transfer account overrides for transfer creation
+            transferAccountId:
+              override?.transferAccountId !== undefined
+                ? override.transferAccountId
+                : row.normalizedData['transferAccountId'] ?? null,
+            transferAccountName:
+              override?.transferAccountName !== undefined
+                ? override.transferAccountName
+                : row.normalizedData['transferAccountName'] ?? null,
+            rememberTransferMapping: override?.rememberTransferMapping ?? row.normalizedData['rememberTransferMapping'] ?? false,
           },
         };
       });
@@ -1218,6 +1381,17 @@ async function processImport() {
         fileName: previewData?.fileName,
       },
     };
+
+    // Log transfer data being sent
+    const transferRows = selectedRowsData.filter(r => r.normalizedData?.transferAccountId);
+    if (transferRows.length > 0) {
+      console.log('[Import] Sending transfer rows:', transferRows.map(r => ({
+        rowIndex: r.rowIndex,
+        transferAccountId: r.normalizedData?.transferAccountId,
+        rememberTransferMapping: r.normalizedData?.rememberTransferMapping,
+        payee: r.normalizedData?.payee,
+      })));
+    }
 
     const response = await fetch('/api/import/process', {
       method: 'POST',
@@ -1672,6 +1846,7 @@ $effect(() => {
             <ImportPreviewTable
               data={previewData.rows}
               {importOptions}
+              accountId={selectedAccountId ? parseInt(selectedAccountId) : undefined}
               onImportOptionsChange={handleImportOptionsChange}
               {cleanupState}
               onCleanupStateChange={handleCleanupStateChange}
@@ -1679,6 +1854,7 @@ $effect(() => {
               onPayeeAliasCandidate={handlePayeeAliasCandidate}
               onCategoryUpdate={handleCategoryUpdateWithSimilar}
               onDescriptionUpdate={handleDescriptionUpdate}
+              onTransferAccountUpdate={handleTransferAccountUpdateWithSimilar}
               {temporaryCategories}
               {temporaryPayees}
               processorCount={processorAnalysis.total}
@@ -2242,6 +2418,31 @@ $effect(() => {
         disabled={processorFilterDialog.selectedProcessors.size === 0}>
         Apply Filter
       </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Bulk Transfer Update Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkTransferUpdateDialog.open}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Convert Similar Transactions to Transfers?</AlertDialog.Title>
+      <AlertDialog.Description>
+        Found {bulkTransferUpdateDialog.matchCount} other transaction{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} with similar payee "{bulkTransferUpdateDialog.originalPayeeName}".
+        <br /><br />
+        Would you like to also convert {bulkTransferUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to transfer{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} to "{bulkTransferUpdateDialog.accountName}"?
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
+      <AlertDialog.Action onclick={confirmBulkTransferUpdate} class="w-full">
+        Yes, Convert All Similar
+      </AlertDialog.Action>
+      <AlertDialog.Cancel onclick={cancelBulkTransferUpdate} class="w-full">
+        No, Just This One
+      </AlertDialog.Cancel>
+      <Button variant="outline" onclick={revertTransferUpdate} class="w-full">
+        Cancel & Revert
+      </Button>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

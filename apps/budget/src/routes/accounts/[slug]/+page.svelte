@@ -13,6 +13,7 @@ import { deleteBudgetDialog, deleteBudgetId, deleteScheduleDialog, deleteSchedul
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
 import { parseDate } from '@internationalized/date';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Brain from '@lucide/svelte/icons/brain';
 import Calendar from '@lucide/svelte/icons/calendar';
 import ChartLine from '@lucide/svelte/icons/chart-line';
@@ -29,6 +30,7 @@ import Zap from '@lucide/svelte/icons/zap';
 import type { Table as TanStackTable } from '@tanstack/table-core';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 // Local component imports
+import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import BudgetRecommendationsPanel from '$lib/components/budgets/budget-recommendations-panel.svelte';
@@ -54,6 +56,7 @@ import {
   SettingsTab,
   TransactionTableContainer,
 } from './(components)';
+import UtilityDashboard from './(components)/utility-dashboard.svelte';
 import AccountBudgetsGrouped from './(components)/account-budgets-grouped.svelte';
 import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
 import AccountSchedulesTable from './(components)/account-schedules-table.svelte';
@@ -66,6 +69,7 @@ const tabValues = [
   'transactions',
   'hsa-expenses',
   'hsa-dashboard',
+  'utility-dashboard',
   'analytics',
   'intelligence',
   'automation',
@@ -111,6 +115,9 @@ const activeTab = $derived.by(() => {
 });
 
 function setActiveTab(value: TabValue) {
+  // Guard against calling before router is initialized
+  if (!browser) return;
+
   const url = new URL(page.url);
   if (value === 'transactions') {
     url.searchParams.delete('tab');
@@ -132,6 +139,7 @@ $effect(() => {
         { id: 'transactions', label: 'Transactions', icon: List },
         { id: 'hsa-expenses', label: 'Medical Expenses', condition: isHsaAccount },
         { id: 'hsa-dashboard', label: 'HSA Dashboard', condition: isHsaAccount },
+        { id: 'utility-dashboard', label: 'Usage', icon: Zap, condition: isUtilityAccount },
         { id: 'analytics', label: 'Analytics', icon: ChartLine },
         { id: 'intelligence', label: 'Intelligence', icon: Brain },
         { id: 'automation', label: 'Automation', icon: Zap },
@@ -203,6 +211,7 @@ const groupedBudgets = $derived(groupedBudgetsQuery?.data ?? { spendingLimits: [
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
 const saveTransactionMutation = rpc.transactions.saveTransaction.options();
 const bulkDeleteTransactionsMutation = rpc.transactions.bulkDeleteTransactions.options();
+const deleteTransferMutation = rpc.transactions.deleteTransfer.options();
 const bulkUpdatePayeeMutation = rpc.transactions.bulkUpdatePayee.options();
 const bulkUpdateCategoryMutation = rpc.transactions.bulkUpdateCategory.options();
 
@@ -286,6 +295,13 @@ let addTransactionDialogOpen = $state(false);
 let bulkDeleteDialogOpen = $state(false);
 let transactionsToDelete = $state<TransactionsFormat[]>([]);
 let isDeletingBulk = $state(false);
+let alsoDeleteLinkedTransfers = $state(true);
+
+// Compute transfer transactions in the bulk delete selection
+const transferTransactionsToDelete = $derived(
+  transactionsToDelete.filter((t) => t.isTransfer && t.transferId)
+);
+const hasTransfersToDelete = $derived(transferTransactionsToDelete.length > 0);
 
 // Bulk update dialog state
 let bulkPayeeUpdateDialog = $state({
@@ -314,6 +330,9 @@ let bulkCategoryUpdateDialog = $state({
 
 // HSA state (for HSA accounts only)
 const isHsaAccount = $derived(accountData?.accountType === 'hsa');
+
+// Utility account state
+const isUtilityAccount = $derived(accountData?.accountType === 'utility');
 let addExpenseOpen = $state(false);
 let useWizard = $state(true); // Default to wizard for new expenses
 let editingExpense = $state<any | null>(null);
@@ -356,6 +375,7 @@ const formattedTransactions = $derived.by(() => {
   return currentTransactions.map((t: Transaction) => {
     const formatted: TransactionsFormat = {
       id: t.id ?? '',
+      seq: (t as any).seq ?? null,
       date: parseDate(t.date),
       amount: t.amount,
       notes: t.notes,
@@ -378,6 +398,16 @@ const formattedTransactions = $derived.by(() => {
     if (t.scheduleFrequency) formatted.scheduleFrequency = t.scheduleFrequency;
     if (t.scheduleInterval !== undefined) formatted.scheduleInterval = t.scheduleInterval;
     if (t.scheduleNextOccurrence) formatted.scheduleNextOccurrence = t.scheduleNextOccurrence;
+
+    // Add transfer metadata if present
+    const txn = t as any;
+    if (txn.isTransfer) formatted.isTransfer = txn.isTransfer;
+    if (txn.transferId) formatted.transferId = txn.transferId;
+    if (txn.transferAccountId) formatted.transferAccountId = txn.transferAccountId;
+    if (txn.transferTransactionId) formatted.transferTransactionId = txn.transferTransactionId;
+    // Transfer account name/slug come from the joined transferAccount relation
+    if (txn.transferAccount?.name) formatted.transferAccountName = txn.transferAccount.name;
+    if (txn.transferAccount?.slug) formatted.transferAccountSlug = txn.transferAccount.slug;
 
     return formatted;
   });
@@ -610,18 +640,39 @@ const confirmBulkDelete = async () => {
 
   isDeletingBulk = true;
   try {
-    // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
-    const idsToDelete = transactionsToDelete
-      .filter((t) => typeof t.id === 'number')
-      .map((t) => t.id as number);
+    // If user wants to delete linked transfers, handle them first
+    if (alsoDeleteLinkedTransfers && hasTransfersToDelete) {
+      // Get unique transfer IDs to delete
+      const transferIds = [...new Set(transferTransactionsToDelete.map((t) => t.transferId!))];
 
-    if (idsToDelete.length > 0) {
-      // Delete all transactions in a single batch request
-      await bulkDeleteTransactionsMutation.mutateAsync(idsToDelete);
+      // Delete all transfers (this deletes both sides)
+      for (const transferId of transferIds) {
+        await deleteTransferMutation.mutateAsync({ transferId });
+      }
+
+      // Get remaining non-transfer transaction IDs
+      const nonTransferIds = transactionsToDelete
+        .filter((t) => typeof t.id === 'number' && !t.isTransfer)
+        .map((t) => t.id as number);
+
+      if (nonTransferIds.length > 0) {
+        await bulkDeleteTransactionsMutation.mutateAsync(nonTransferIds);
+      }
+    } else {
+      // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
+      const idsToDelete = transactionsToDelete
+        .filter((t) => typeof t.id === 'number')
+        .map((t) => t.id as number);
+
+      if (idsToDelete.length > 0) {
+        // Delete all transactions in a single batch request
+        await bulkDeleteTransactionsMutation.mutateAsync(idsToDelete);
+      }
     }
 
     bulkDeleteDialogOpen = false;
     transactionsToDelete = [];
+    alsoDeleteLinkedTransfers = true; // Reset for next time
   } catch (error) {
     console.error('Failed to delete transactions:', error);
   } finally {
@@ -894,6 +945,12 @@ $effect(() => {
             <Tabs.Trigger value="hsa-dashboard" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-hsa-dashboard" data-help-title="HSA Dashboard Tab"
               >HSA Dashboard</Tabs.Trigger>
           {/if}
+          {#if isUtilityAccount}
+            <Tabs.Trigger value="utility-dashboard" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-utility-dashboard" data-help-title="Utility Usage Tab">
+              <Zap class="mr-2 h-4 w-4" />
+              Usage
+            </Tabs.Trigger>
+          {/if}
           <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-analytics" data-help-title="Analytics Tab" data-tour-id="analytics-tab">
             <ChartLine class="mr-2 h-4 w-4" />
             Analytics
@@ -967,6 +1024,15 @@ $effect(() => {
         <Tabs.Content value="hsa-dashboard" class="tabs-connected-content space-y-4">
           {#if accountData}
             <HsaDashboard account={accountData} />
+          {/if}
+        </Tabs.Content>
+      {/if}
+
+      <!-- Utility Dashboard Tab Content -->
+      {#if isUtilityAccount}
+        <Tabs.Content value="utility-dashboard" class="tabs-connected-content space-y-4">
+          {#if accountData}
+            <UtilityDashboard account={accountData} />
           {/if}
         </Tabs.Content>
       {/if}
@@ -1117,6 +1183,8 @@ $effect(() => {
             onEdit={handleEditExpense} />
         {:else if activeTab === 'hsa-dashboard' && isHsaAccount && accountData}
           <HsaDashboard account={accountData} />
+        {:else if activeTab === 'utility-dashboard' && isUtilityAccount && accountData}
+          <UtilityDashboard account={accountData} />
         {:else if activeTab === 'analytics'}
           {#if transactions && !isLoading}
             <AnalyticsDashboard
@@ -1227,6 +1295,27 @@ $effect(() => {
               : ''}? This action cannot be undone.
           </AlertDialog.Description>
         </AlertDialog.Header>
+
+        {#if hasTransfersToDelete}
+          <div class="bg-muted/50 flex items-start gap-3 rounded-lg border p-4">
+            <ArrowRightLeft class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
+            <div class="flex-1 space-y-3">
+              <p class="text-sm">
+                {transferTransactionsToDelete.length} of the selected transactions {transferTransactionsToDelete.length ===
+                1
+                  ? 'is a transfer'
+                  : 'are transfers'} linked to transactions in other accounts.
+              </p>
+              <div class="flex items-center gap-2">
+                <Checkbox id="bulk-delete-linked" bind:checked={alsoDeleteLinkedTransfers} />
+                <Label for="bulk-delete-linked" class="cursor-pointer text-sm font-medium">
+                  Also delete the linked transfer transactions
+                </Label>
+              </div>
+            </div>
+          </div>
+        {/if}
+
         <AlertDialog.Footer>
           <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
           <AlertDialog.Action
