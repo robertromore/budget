@@ -23,6 +23,8 @@ export const transactionKeys = createQueryKeys("transactions", {
   allByAccount: (accountId: number, params?: any) =>
     ["transactions", "all", accountId, params] as const,
   summary: (accountId: number) => ["transactions", "summary", accountId] as const,
+  similarPayee: (transactionId: number, accountId?: number) =>
+    ["transactions", "similarPayee", transactionId, accountId] as const,
 });
 
 /**
@@ -504,15 +506,137 @@ export const updateTransfer = defineMutation({
 });
 
 /**
- * Delete a transfer transaction
+ * Delete a transfer transaction (deletes both sides of the transfer)
  */
 export const deleteTransfer = defineMutation({
   mutationFn: async (params: { transferId: string }) => {
     await trpc().transactionRoutes.deleteTransfer.mutate(params);
   },
   onSuccess: () => {
+    // Invalidate all transaction queries since we don't know which accounts were affected
+    cachePatterns.invalidatePrefix(["transactions"]);
+    // Invalidate accounts list to update balances in sidebar
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: "Transfer deleted successfully",
+  errorMessage: "Failed to delete transfer",
+});
+
+/**
+ * Unlink a transfer - converts linked transfer transactions into independent transactions
+ */
+export const unlinkTransfer = defineMutation({
+  mutationFn: async (params: { transferId: string }) => {
+    await trpc().transactionRoutes.unlinkTransfer.mutate(params);
+  },
+  onSuccess: () => {
+    // Invalidate all transaction lists since we don't know which accounts were affected
     cachePatterns.invalidateQueries(transactionKeys.lists());
   },
+  successMessage: "Transfer unlinked successfully",
+  errorMessage: "Failed to unlink transfer",
+});
+
+/**
+ * Convert an existing transaction into a transfer
+ */
+export const convertToTransfer = defineMutation({
+  mutationFn: async (params: {
+    transactionId: number;
+    targetAccountId: number;
+    rememberMapping?: boolean;
+    rawPayeeString?: string;
+  }) => {
+    const result = await trpc().transactionRoutes.convertToTransfer.mutate(params);
+    return result;
+  },
+  onSuccess: (data) => {
+    if (data.sourceTransaction && data.targetTransaction) {
+      // Use prefix matching to catch all query variations (with-upcoming, different options, etc.)
+      cachePatterns.invalidatePrefix(["transactions", "account", data.sourceTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "account", data.targetTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", data.sourceTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", data.targetTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "summary", data.sourceTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "summary", data.targetTransaction.accountId]);
+      // Invalidate similar payee queries since a transaction was converted
+      cachePatterns.invalidatePrefix(["transactions", "similarPayee"]);
+      // Also invalidate accounts list to update balances in sidebar
+      cachePatterns.invalidatePrefix(["accounts", "list"]);
+    }
+  },
+  successMessage: "Transaction converted to transfer",
+  errorMessage: "Failed to convert transaction to transfer",
+});
+
+/**
+ * Find transactions with similar payees to a given transaction
+ * Used to offer bulk transfer conversion
+ */
+export const findSimilarPayeeTransactions = (
+  transactionId: number,
+  options?: {
+    accountId?: number;
+    limit?: number;
+  }
+) =>
+  defineQuery({
+    queryKey: transactionKeys.similarPayee(transactionId, options?.accountId),
+    queryFn: () =>
+      trpc().transactionRoutes.findSimilarPayeeTransactions.query({
+        transactionId,
+        accountId: options?.accountId,
+        limit: options?.limit,
+      }),
+    options: {
+      staleTime: 30 * 1000, // 30 seconds
+      enabled: transactionId > 0,
+    },
+  });
+
+/**
+ * Convert multiple transactions to transfers (bulk conversion)
+ */
+export const convertToTransferBulk = defineMutation({
+  mutationFn: async (params: {
+    transactionIds: number[];
+    targetAccountId: number;
+    rememberMapping?: boolean;
+    rawPayeeString?: string;
+  }) => {
+    const result = await trpc().transactionRoutes.convertToTransferBulk.mutate(params);
+    return result;
+  },
+  onSuccess: (data) => {
+    // Invalidate all affected accounts
+    const affectedAccountIds = new Set<number>();
+
+    data.transfers.forEach((transfer) => {
+      if (transfer.sourceTransaction) {
+        affectedAccountIds.add(transfer.sourceTransaction.accountId);
+      }
+      if (transfer.targetTransaction) {
+        affectedAccountIds.add(transfer.targetTransaction.accountId);
+      }
+    });
+
+    // Use prefix matching to catch all query variations
+    affectedAccountIds.forEach((accountId) => {
+      cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "summary", accountId]);
+    });
+
+    // Also invalidate lists, accounts, and similar payee queries
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+    cachePatterns.invalidatePrefix(["transactions", "similarPayee"]);
+  },
+  successMessage: (result) =>
+    result.converted > 0
+      ? `Converted ${result.converted} transaction${result.converted > 1 ? "s" : ""} to transfers`
+      : "No transactions converted",
+  errorMessage: "Failed to convert transactions to transfers",
 });
 
 /**
@@ -648,5 +772,115 @@ export const getRelatedTransactions = (options: {
         (options.accountId !== undefined && options.accountId > 0) ||
         (options.categoryId !== undefined && options.categoryId > 0) ||
         (options.payeeIds !== undefined && options.payeeIds.length > 0),
+    },
+  });
+
+// ==================== Archive & Balance Adjustment ====================
+
+/**
+ * Archive a transaction (exclude from balance but keep in history)
+ */
+export const archiveTransaction = defineMutation<{ id: number }, Transaction>({
+  mutationFn: (params) => trpc().transactionRoutes.archive.mutate(params),
+  onSuccess: (transaction) => {
+    if (transaction.accountId) {
+      cachePatterns.invalidatePrefix(["transactions", "account", transaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", transaction.accountId]);
+      cachePatterns.invalidatePrefix(transactionKeys.summary(transaction.accountId));
+    }
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: "Transaction archived",
+  errorMessage: "Failed to archive transaction",
+});
+
+/**
+ * Unarchive a transaction (include in balance again)
+ */
+export const unarchiveTransaction = defineMutation<{ id: number }, Transaction>({
+  mutationFn: (params) => trpc().transactionRoutes.unarchive.mutate(params),
+  onSuccess: (transaction) => {
+    if (transaction.accountId) {
+      cachePatterns.invalidatePrefix(["transactions", "account", transaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", transaction.accountId]);
+      cachePatterns.invalidatePrefix(transactionKeys.summary(transaction.accountId));
+    }
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: "Transaction restored",
+  errorMessage: "Failed to restore transaction",
+});
+
+/**
+ * Bulk archive transactions
+ */
+export const bulkArchiveTransactions = defineMutation<
+  { ids: number[] },
+  { success: boolean; archivedCount: number }
+>({
+  mutationFn: (params) => trpc().transactionRoutes.bulkArchive.mutate(params),
+  onSuccess: () => {
+    // Invalidate all transaction queries
+    cachePatterns.invalidatePrefix(["transactions"]);
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: (result) => `${result.archivedCount} transactions archived`,
+  errorMessage: "Failed to archive transactions",
+});
+
+/**
+ * Archive all transactions before a specific date
+ */
+export const archiveTransactionsBeforeDate = defineMutation<
+  { accountId: number; beforeDate: string },
+  { success: boolean; archivedCount: number }
+>({
+  mutationFn: (params) => trpc().transactionRoutes.archiveBeforeDate.mutate(params),
+  onSuccess: (_, { accountId }) => {
+    cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", accountId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(accountId));
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: (result) => `${result.archivedCount} transactions archived`,
+  errorMessage: "Failed to archive transactions",
+});
+
+/**
+ * Create a balance adjustment transaction
+ */
+export const createBalanceAdjustment = defineMutation<
+  {
+    accountId: number;
+    targetBalance: number;
+    reason: string;
+    date?: string;
+  },
+  Transaction
+>({
+  mutationFn: (params) => trpc().transactionRoutes.createBalanceAdjustment.mutate(params),
+  onSuccess: (transaction, { accountId }) => {
+    cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", accountId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(accountId));
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: "Balance adjustment created",
+  errorMessage: "Failed to create balance adjustment",
+});
+
+/**
+ * Get count of archived transactions for an account
+ */
+export const getArchivedTransactionCount = (accountId: number) =>
+  defineQuery<{ count: number }>({
+    queryKey: ["transactions", "archived", "count", accountId] as const,
+    queryFn: () => trpc().transactionRoutes.getArchivedCount.query({ accountId }),
+    options: {
+      staleTime: 30 * 1000,
     },
   });

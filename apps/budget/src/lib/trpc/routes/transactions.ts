@@ -347,6 +347,99 @@ export const transactionRoutes = t.router({
       })
     ),
 
+  // Unlink a transfer - converts linked transactions into independent transactions
+  unlinkTransfer: rateLimitedProcedure
+    .input(
+      z.object({
+        transferId: z.string().min(1, "Transfer ID is required"),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        await transactionService.unlinkTransfer(input.transferId, ctx.workspaceId);
+        return { success: true };
+      })
+    ),
+
+  // Convert an existing transaction into a transfer
+  convertToTransfer: rateLimitedProcedure
+    .input(
+      z.object({
+        transactionId: z.number().positive("Transaction ID must be positive"),
+        targetAccountId: z.number().positive("Target account ID must be positive"),
+        rememberMapping: z.boolean().optional().default(false),
+        rawPayeeString: z.string().optional(), // Original payee string for mapping
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const result = await transactionService.convertToTransfer(
+          input.transactionId,
+          input.targetAccountId,
+          ctx.workspaceId
+        );
+
+        // If user wants to remember this mapping for future imports
+        if (input.rememberMapping && input.rawPayeeString) {
+          const { getTransferMappingService } = await import(
+            "$lib/server/domains/transfers"
+          );
+          const transferMappingService = getTransferMappingService();
+
+          await transferMappingService.recordMappingFromConversion(
+            input.rawPayeeString,
+            input.targetAccountId,
+            ctx.workspaceId,
+            result.sourceTransaction.accountId
+          );
+        }
+
+        return result;
+      })
+    ),
+
+  // Find transactions with similar payees (for bulk conversion prompt)
+  findSimilarPayeeTransactions: publicProcedure
+    .input(
+      z.object({
+        transactionId: z.number().positive("Transaction ID must be positive"),
+        accountId: z.number().positive().optional(), // Optionally limit to a specific account
+        limit: z.number().positive().optional().default(100),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.findSimilarPayeeTransactions(input.transactionId, ctx.workspaceId, {
+          accountId: input.accountId,
+          limit: input.limit,
+        })
+      )
+    ),
+
+  // Convert multiple transactions to transfers (bulk conversion)
+  convertToTransferBulk: bulkOperationProcedure
+    .input(
+      z.object({
+        transactionIds: z.array(z.number().positive()).min(1, "At least one transaction ID required"),
+        targetAccountId: z.number().positive("Target account ID must be positive"),
+        rememberMapping: z.boolean().optional().default(false),
+        rawPayeeString: z.string().optional(), // Original payee string for mapping
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.convertToTransferBulk(
+          {
+            transactionIds: input.transactionIds,
+            targetAccountId: input.targetAccountId,
+            rememberMapping: input.rememberMapping,
+            rawPayeeString: input.rawPayeeString,
+          },
+          ctx.workspaceId
+        )
+      )
+    ),
+
   // Bulk update payee for transactions matching criteria
   bulkUpdatePayee: rateLimitedProcedure
     .input(
@@ -496,6 +589,130 @@ export const transactionRoutes = t.router({
         }
 
         return result;
+      })
+    ),
+
+  // ==================== Archive & Balance Adjustment Routes ====================
+
+  // Archive a transaction (exclude from balance but keep in history)
+  archive: rateLimitedProcedure
+    .input(
+      z.object({
+        id: z.number().positive("Transaction ID must be positive"),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const repository = serviceFactory.getTransactionRepository();
+        return await repository.archiveTransaction(input.id, ctx.workspaceId);
+      })
+    ),
+
+  // Unarchive a transaction (include in balance again)
+  unarchive: rateLimitedProcedure
+    .input(
+      z.object({
+        id: z.number().positive("Transaction ID must be positive"),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const repository = serviceFactory.getTransactionRepository();
+        return await repository.unarchiveTransaction(input.id, ctx.workspaceId);
+      })
+    ),
+
+  // Bulk archive transactions
+  bulkArchive: bulkOperationProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number().positive()).min(1, "At least one transaction ID required"),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const repository = serviceFactory.getTransactionRepository();
+        let archivedCount = 0;
+        for (const id of input.ids) {
+          await repository.archiveTransaction(id, ctx.workspaceId);
+          archivedCount++;
+        }
+        return { success: true, archivedCount };
+      })
+    ),
+
+  // Archive all transactions before a specific date
+  archiveBeforeDate: rateLimitedProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive("Account ID must be positive"),
+        beforeDate: z.string().min(1, "Date is required"), // ISO date string
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const repository = serviceFactory.getTransactionRepository();
+        const archivedCount = await repository.archiveTransactionsBeforeDate(
+          input.accountId,
+          input.beforeDate,
+          ctx.workspaceId
+        );
+        return { success: true, archivedCount };
+      })
+    ),
+
+  // Create a balance adjustment transaction
+  createBalanceAdjustment: rateLimitedProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive("Account ID must be positive"),
+        targetBalance: z.number(), // The balance we want to achieve
+        reason: z.string().min(1, "Reason is required"),
+        date: z.string().optional(), // ISO date string, defaults to today
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const repository = serviceFactory.getTransactionRepository();
+
+        // Calculate the current balance
+        const currentBalance = await repository.getAccountBalance(
+          input.accountId,
+          ctx.workspaceId
+        );
+
+        // Calculate the adjustment amount needed
+        const adjustmentAmount = input.targetBalance - currentBalance;
+
+        // Use provided date or today
+        const adjustmentDate = input.date || new Date().toISOString().split("T")[0];
+
+        // Create the adjustment transaction
+        return await repository.createBalanceAdjustment(
+          input.accountId,
+          adjustmentAmount,
+          input.reason,
+          adjustmentDate,
+          ctx.workspaceId
+        );
+      })
+    ),
+
+  // Get count of archived transactions for an account
+  getArchivedCount: publicProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive("Account ID must be positive"),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const repository = serviceFactory.getTransactionRepository();
+        const count = await repository.countArchivedTransactions(
+          input.accountId,
+          ctx.workspaceId
+        );
+        return { count };
       })
     ),
 });

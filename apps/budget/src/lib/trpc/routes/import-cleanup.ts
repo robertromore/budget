@@ -24,6 +24,7 @@ const analyzePayeesSchema = z.object({
 const categorySuggestInputSchema = z.object({
   rowIndex: z.number().int(),
   payeeName: z.string(),
+  rawPayeeString: z.string().optional(),
   amount: z.number(),
   date: z.string(),
   memo: z.string().optional(),
@@ -115,7 +116,15 @@ export const importCleanupRoutes = t.router({
         const rowsForCategorySuggestion = input.rows
           .filter((r): r is typeof r & { amount: number; date: string } =>
             r.amount !== undefined && r.date !== undefined
-          );
+          )
+          .map((row) => ({
+            rowIndex: row.rowIndex,
+            payeeName: row.payeeName,
+            rawPayeeString: row.originalPayee,
+            amount: row.amount,
+            date: row.date,
+            memo: row.memo,
+          }));
 
         const [payeeResult, categoryResult] = await Promise.all([
           grouper.analyzePayees(

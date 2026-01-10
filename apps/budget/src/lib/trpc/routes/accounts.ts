@@ -730,6 +730,18 @@ export const accountRoutes = t.router({
         .from(transactions)
         .where(and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)));
 
+      // Get transfer transaction count (transactions that are part of a transfer)
+      const [transferCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.accountId, input.accountId),
+            isNull(transactions.deletedAt),
+            eq(transactions.isTransfer, true)
+          )
+        );
+
       // Get schedule count (schedules table doesn't have deletedAt)
       const [scheduleCount] = await ctx.db
         .select({ count: sql<number>`COUNT(*)` })
@@ -770,6 +782,7 @@ export const accountRoutes = t.router({
 
       return {
         transactions: Number(transactionCount?.count || 0),
+        transfers: Number(transferCount?.count || 0),
         schedules: Number(scheduleCount?.count || 0),
         importProfiles: Number(importProfileCount?.count || 0),
         detectedPatterns: Number(patternCount?.count || 0),
@@ -779,7 +792,12 @@ export const accountRoutes = t.router({
 
   // Delete all transactions for an account
   deleteAllTransactions: rateLimitedProcedure
-    .input(z.object({ accountId: z.number().positive() }))
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        deleteLinkedTransfers: z.boolean().optional().default(false),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       // Verify account belongs to workspace
       const account = await ctx.db.query.accounts.findFirst({
@@ -798,6 +816,45 @@ export const accountRoutes = t.router({
         });
       }
 
+      let linkedTransfersDeleted = 0;
+
+      // If deleting linked transfers, first find all transfer transactions and delete their linked counterparts
+      if (input.deleteLinkedTransfers) {
+        // Find all transfer transactions in this account
+        const transferTransactions = await ctx.db
+          .select({ transferId: transactions.transferId })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.accountId, input.accountId),
+              isNull(transactions.deletedAt),
+              eq(transactions.isTransfer, true)
+            )
+          );
+
+        // Get unique transfer IDs
+        const transferIds = [
+          ...new Set(transferTransactions.map((t) => t.transferId).filter(Boolean)),
+        ] as string[];
+
+        if (transferIds.length > 0) {
+          // Delete linked transactions in other accounts (those with same transferId but different accountId)
+          const linkedResult = await ctx.db
+            .update(transactions)
+            .set({ deletedAt: getCurrentTimestamp() })
+            .where(
+              and(
+                inArray(transactions.transferId, transferIds),
+                ne(transactions.accountId, input.accountId),
+                isNull(transactions.deletedAt)
+              )
+            )
+            .returning({ id: transactions.id });
+
+          linkedTransfersDeleted = linkedResult.length;
+        }
+      }
+
       // Soft delete all transactions for this account
       const result = await ctx.db
         .update(transactions)
@@ -805,7 +862,10 @@ export const accountRoutes = t.router({
         .where(and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)))
         .returning({ id: transactions.id });
 
-      return { deletedCount: result.length };
+      return {
+        deletedCount: result.length,
+        linkedTransfersDeleted,
+      };
     }),
 
   // Delete transactions by date range
@@ -1163,5 +1223,241 @@ export const accountRoutes = t.router({
       }
 
       return { success: true };
+    }),
+
+  // ==================== Balance Management Routes ====================
+
+  // Get balance management info for an account
+  getBalanceManagementInfo: publicProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .query(async ({ ctx, input }) => {
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Count archived transactions
+      const [archivedCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.accountId, input.accountId),
+            eq(transactions.isArchived, true),
+            isNull(transactions.deletedAt)
+          )
+        );
+
+      // Count transactions before reset date (if set)
+      let transactionsBeforeResetDate = 0;
+      if (account.balanceResetDate) {
+        const [beforeCount] = await ctx.db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.accountId, input.accountId),
+              sql`${transactions.date} <= ${account.balanceResetDate}`,
+              isNull(transactions.deletedAt)
+            )
+          );
+        transactionsBeforeResetDate = Number(beforeCount?.count || 0);
+      }
+
+      return {
+        balanceResetDate: account.balanceResetDate,
+        balanceAtResetDate: account.balanceAtResetDate,
+        reconciledBalance: account.reconciledBalance,
+        reconciledDate: account.reconciledDate,
+        archivedTransactionCount: Number(archivedCount?.count || 0),
+        transactionsBeforeResetDate,
+      };
+    }),
+
+  // Set balance reset date (Option 1)
+  setBalanceResetDate: rateLimitedProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        resetDate: z.string(), // ISO date string
+        balanceAtDate: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          balanceResetDate: input.resetDate,
+          balanceAtResetDate: input.balanceAtDate,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update balance reset date",
+        });
+      }
+
+      return result[0];
+    }),
+
+  // Clear balance reset date
+  clearBalanceResetDate: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          balanceResetDate: null,
+          balanceAtResetDate: null,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to clear balance reset date",
+        });
+      }
+
+      return result[0];
+    }),
+
+  // Set reconciled balance (Option 3)
+  setReconciledBalance: rateLimitedProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        reconciledDate: z.string(), // ISO date string
+        reconciledBalance: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          reconciledBalance: input.reconciledBalance,
+          reconciledDate: input.reconciledDate,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to set reconciled balance",
+        });
+      }
+
+      return result[0];
+    }),
+
+  // Clear reconciled balance
+  clearReconciledBalance: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          reconciledBalance: null,
+          reconciledDate: null,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to clear reconciled balance",
+        });
+      }
+
+      return result[0];
     }),
 });

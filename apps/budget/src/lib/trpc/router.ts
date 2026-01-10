@@ -15,12 +15,14 @@ import { annotationRoutes } from "$lib/trpc/routes/annotations";
 import { authRoutes } from "$lib/trpc/routes/auth";
 import { automationRoutes } from "$lib/trpc/routes/automation";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
+import { connectionRoutes } from "$lib/trpc/routes/connections";
 import { categoryAliasRoutes } from "$lib/trpc/routes/category-aliases";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
 import { payeeAliasRoutes } from "$lib/trpc/routes/payee-aliases";
 import { payeeCategoriesRoutes } from "$lib/trpc/routes/payee-categories";
 import { payeeRoutes } from "$lib/trpc/routes/payees";
 import { transactionRoutes } from "$lib/trpc/routes/transactions";
+import { transferMappingRoutes } from "$lib/trpc/routes/transfer-mappings";
 import { workspaceInvitationsRoutes } from "$lib/trpc/routes/workspace-invitations";
 import { workspaceMembersRoutes } from "$lib/trpc/routes/workspace-members";
 import { t } from "$lib/trpc/t";
@@ -37,6 +39,7 @@ import { reportRoutes } from "./routes/reports";
 import { scheduleRoutes } from "./routes/schedules";
 import { securityRoutes } from "./routes/security";
 import { settingsRoutes } from "./routes/settings";
+import { utilityRoutes } from "./routes/utility";
 import { viewsRoutes } from "./routes/views";
 import { workspaceRoutes } from "./routes/workspaces";
 
@@ -57,17 +60,20 @@ export const router = t.router({
   automationRoutes,
   categoriesRoutes,
   categoryAliasRoutes,
+  connectionRoutes,
   categoryGroupsRoutes,
   payeeAliasRoutes,
   payeeCategoriesRoutes,
   payeeRoutes,
   scheduleRoutes,
   transactionRoutes,
+  transferMappingRoutes,
   viewsRoutes,
   budgetRoutes,
   patternRoutes,
   reportRoutes,
   medicalExpensesRouter,
+  utilityRoutes,
   importProfileRoutes,
   importCleanupRoutes,
   settingsRoutes,

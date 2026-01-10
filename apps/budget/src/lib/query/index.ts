@@ -11,6 +11,7 @@ import * as budgets from "./budgets";
 import * as categories from "./categories";
 import * as categoryAliases from "./category-aliases";
 import * as categoryGroups from "./category-groups";
+import * as connections from "./connections";
 import * as importProfiles from "./import-profiles";
 import * as llmSettings from "./llm-settings";
 import * as medicalExpenses from "./medical-expenses";
@@ -23,6 +24,8 @@ import * as schedules from "./schedules";
 import * as security from "./security";
 import * as settings from "./settings";
 import * as transactions from "./transactions";
+import * as transferMappings from "./transfer-mappings";
+import * as utility from "./utility";
 import * as views from "./views";
 import * as workspaceInvitations from "./workspace-invitations";
 import * as workspaceMembers from "./workspace-members";
@@ -41,6 +44,7 @@ export const rpc = {
   categories,
   categoryAliases,
   categoryGroups,
+  connections,
   importProfiles,
   llmSettings,
   medicalExpenses,
@@ -53,6 +57,8 @@ export const rpc = {
   security,
   settings,
   transactions,
+  transferMappings,
+  utility,
   views,
   workspaceInvitations,
   workspaceMembers,
@@ -79,6 +85,7 @@ export type BudgetQueries = typeof budgets;
 export type CategoryQueries = typeof categories;
 export type CategoryAliasQueries = typeof categoryAliases;
 export type CategoryGroupQueries = typeof categoryGroups;
+export type ConnectionQueries = typeof connections;
 export type ImportProfileQueries = typeof importProfiles;
 export type LLMSettingsQueries = typeof llmSettings;
 export type MedicalExpenseQueries = typeof medicalExpenses;
@@ -91,6 +98,8 @@ export type ScheduleQueries = typeof schedules;
 export type SecurityQueries = typeof security;
 export type SettingsQueries = typeof settings;
 export type TransactionQueries = typeof transactions;
+export type TransferMappingQueries = typeof transferMappings;
+export type UtilityQueries = typeof utility;
 export type ViewQueries = typeof views;
 export type WorkspaceInvitationQueries = typeof workspaceInvitations;
 export type WorkspaceMemberQueries = typeof workspaceMembers;
@@ -106,6 +115,7 @@ export { budgetKeys } from "./budgets";
 export { categoryKeys } from "./categories";
 export { categoryAliasKeys } from "./category-aliases";
 export { categoryGroupKeys } from "./category-groups";
+export { connectionKeys, providerSettingsKeys } from "./connections";
 export { importProfileKeys } from "./import-profiles";
 export { LLMSettings, llmSettingsKeys } from "./llm-settings";
 export { medicalExpenseKeys } from "./medical-expenses";
@@ -117,6 +127,8 @@ export { payeeKeys } from "./payees";
 export { scheduleKeys } from "./schedules";
 export { securityKeys } from "./security";
 export { transactionKeys } from "./transactions";
+export { transferMappingKeys } from "./transfer-mappings";
+export { utilityKeys } from "./utility";
 export { viewKeys } from "./views";
 export { workspaceInvitationKeys } from "./workspace-invitations";
 export { workspaceMemberKeys } from "./workspace-members";

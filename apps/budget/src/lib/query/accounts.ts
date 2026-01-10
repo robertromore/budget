@@ -101,3 +101,87 @@ export const saveAccount = defineMutation({
   successMessage: "Account saved",
   errorMessage: "Failed to save account",
 });
+
+// ==================== Balance Management Queries ====================
+
+/**
+ * Get balance management info for an account
+ */
+export const getBalanceManagementInfo = (accountId: number) =>
+  defineQuery<{
+    balanceResetDate: string | null;
+    balanceAtResetDate: number | null;
+    reconciledBalance: number | null;
+    reconciledDate: string | null;
+    archivedTransactionCount: number;
+    transactionsBeforeResetDate: number;
+  }>({
+    queryKey: [...accountKeys.detail(accountId), "balanceManagement"] as const,
+    queryFn: () => trpc().accountRoutes.getBalanceManagementInfo.query({ accountId }),
+    options: {
+      staleTime: 30 * 1000,
+    },
+  });
+
+/**
+ * Set balance reset date (Option 1)
+ */
+export const setBalanceResetDate = defineMutation<
+  { accountId: number; resetDate: string; balanceAtDate: number },
+  any
+>({
+  mutationFn: (input) => trpc().accountRoutes.setBalanceResetDate.mutate(input),
+  onSuccess: (_, { accountId }) => {
+    cachePatterns.invalidatePrefix(accountKeys.detail(accountId));
+    cachePatterns.invalidatePrefix(accountKeys.list());
+    // Also invalidate transactions as balances will be recalculated
+    cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+  },
+  successMessage: "Balance reset date set",
+  errorMessage: "Failed to set balance reset date",
+});
+
+/**
+ * Clear balance reset date
+ */
+export const clearBalanceResetDate = defineMutation<{ accountId: number }, any>({
+  mutationFn: (input) => trpc().accountRoutes.clearBalanceResetDate.mutate(input),
+  onSuccess: (_, { accountId }) => {
+    cachePatterns.invalidatePrefix(accountKeys.detail(accountId));
+    cachePatterns.invalidatePrefix(accountKeys.list());
+    cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+  },
+  successMessage: "Balance reset date cleared",
+  errorMessage: "Failed to clear balance reset date",
+});
+
+/**
+ * Set reconciled balance (Option 3)
+ */
+export const setReconciledBalance = defineMutation<
+  { accountId: number; reconciledDate: string; reconciledBalance: number },
+  any
+>({
+  mutationFn: (input) => trpc().accountRoutes.setReconciledBalance.mutate(input),
+  onSuccess: (_, { accountId }) => {
+    cachePatterns.invalidatePrefix(accountKeys.detail(accountId));
+    cachePatterns.invalidatePrefix(accountKeys.list());
+    cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+  },
+  successMessage: "Reconciled balance set",
+  errorMessage: "Failed to set reconciled balance",
+});
+
+/**
+ * Clear reconciled balance
+ */
+export const clearReconciledBalance = defineMutation<{ accountId: number }, any>({
+  mutationFn: (input) => trpc().accountRoutes.clearReconciledBalance.mutate(input),
+  onSuccess: (_, { accountId }) => {
+    cachePatterns.invalidatePrefix(accountKeys.detail(accountId));
+    cachePatterns.invalidatePrefix(accountKeys.list());
+    cachePatterns.invalidatePrefix(["transactions", "account", accountId]);
+  },
+  successMessage: "Reconciled balance cleared",
+  errorMessage: "Failed to clear reconciled balance",
+});
