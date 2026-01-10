@@ -97,7 +97,7 @@ function getConfidenceBadgeVariant(
 }
 </script>
 
-<div class="space-y-4">
+<div class="flex h-full flex-col gap-4">
   {#if !cleanupState || cleanupState.isAnalyzing}
     <!-- Analysis Progress -->
     <div class="flex flex-col items-center justify-center space-y-4 py-8">
@@ -166,7 +166,7 @@ function getConfidenceBadgeVariant(
     {/if}
 
     <!-- Payee Groups List -->
-    <ScrollArea class="h-[calc(100vh-350px)]">
+    <ScrollArea class="min-h-0 flex-1">
       <div class="space-y-2 pr-3">
         {#each cleanupState.payeeGroups as group (group.groupId)}
           {@const isExpanded = expandedGroups.has(group.groupId)}
