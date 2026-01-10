@@ -2,12 +2,18 @@
 import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
+import * as Tabs from '$lib/components/ui/tabs';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Label } from '$lib/components/ui/label';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { AccountsState } from '$lib/states/entities';
 import type { AliasCandidate, ImportRow } from '$lib/types/import';
 import { cn } from '$lib/utils';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Check from '@lucide/svelte/icons/check';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import User from '@lucide/svelte/icons/user';
+import Wallet from '@lucide/svelte/icons/wallet';
 import X from '@lucide/svelte/icons/x';
 import type { Row } from '@tanstack/table-core';
 import Fuse from 'fuse.js';
@@ -16,10 +22,19 @@ interface Props {
   row: Row<ImportRow>;
   onUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
   onAliasCandidate?: (rowIndex: number, alias: AliasCandidate) => void;
+  /** Handler for transfer account selection */
+  onTransferUpdate?: (
+    rowIndex: number,
+    accountId: number | null,
+    accountName: string | null,
+    rememberMapping?: boolean
+  ) => void;
   temporaryPayees?: string[];
+  /** ID of the account being imported into (to exclude from transfer options) */
+  currentAccountId?: number;
 }
 
-let { row, onUpdate, onAliasCandidate, temporaryPayees = [] }: Props = $props();
+let { row, onUpdate, onAliasCandidate, onTransferUpdate, temporaryPayees = [], currentAccountId }: Props = $props();
 
 // Get the original payee string from the import data (before any user overrides)
 // This is set by import/+page.svelte when creating previewData
@@ -28,8 +43,38 @@ const rawPayeeString = $derived(row.original.originalPayee ?? '');
 const payeeState = PayeesState.get();
 const payeesArray = $derived(payeeState ? Array.from(payeeState.payees.values()) : []);
 
+// Get accounts for transfer mode
+const accountsState = AccountsState.get();
+const accountsArray = $derived(
+  accountsState?.all
+    .filter((a) => a.id !== currentAccountId && !a.closed) // Exclude current account and closed accounts
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      accountIcon: a.accountIcon,
+      accountColor: a.accountColor,
+    })) ?? []
+);
+
 const rowIndex = $derived(row.original.rowIndex);
 const isInvalid = $derived(row.original.validationStatus === 'invalid');
+
+// Check if this row is configured as a transfer
+const transferAccountId = $derived(row.original.normalizedData['transferAccountId'] as number | null | undefined);
+const transferAccountName = $derived(row.original.normalizedData['transferAccountName'] as string | null | undefined);
+const isTransfer = $derived(!!transferAccountId);
+
+// Check for suggested transfer from saved mappings
+const suggestedTransferAccountId = $derived(
+  row.original.normalizedData['suggestedTransferAccountId'] as number | undefined
+);
+const suggestedTransferAccountName = $derived(
+  row.original.normalizedData['suggestedTransferAccountName'] as string | undefined
+);
+const transferMappingConfidence = $derived(
+  row.original.normalizedData['transferMappingConfidence'] as 'high' | 'medium' | 'low' | undefined
+);
+const hasSuggestion = $derived(!!suggestedTransferAccountId && !isTransfer);
 
 // Access row data directly - get payee name from row (which includes overrides)
 const selectedPayeeName = $derived(
@@ -85,7 +130,55 @@ const visibleTemporaryPayees = $derived(
 );
 
 const selectedPayee = $derived(payeesArray.find((p) => p.id === selectedPayeeId));
-const displayName = $derived(selectedPayee?.name || selectedPayeeName || 'Select payee...');
+const displayName = $derived.by(() => {
+  // If this is a transfer, show the account name
+  if (isTransfer && transferAccountName) {
+    return transferAccountName;
+  }
+  return selectedPayee?.name || selectedPayeeName || 'Select payee...';
+});
+
+// Fuse for account search
+const accountsFused = $derived(
+  new Fuse(accountsArray, { keys: ['name'], includeScore: true, threshold: 0.3 })
+);
+
+// Account search value (separate from payee search)
+let accountSearchValue = $state('');
+
+// Visible accounts based on search
+const visibleAccounts = $derived.by(() => {
+  if (accountSearchValue.trim()) {
+    return accountsFused.search(accountSearchValue).map((result) => result.item);
+  }
+  return accountsArray;
+});
+
+// Selected account (if in transfer mode)
+const selectedAccount = $derived(accountsArray.find((a) => a.id === transferAccountId));
+
+// Tab state - defaults based on whether this is already a transfer
+let activeTab = $state<'payee' | 'transfer'>('payee');
+
+// Sync tab state when transfer status changes or suggestion exists
+$effect(() => {
+  if (isTransfer) {
+    activeTab = 'transfer';
+  } else if (hasSuggestion) {
+    // Auto-switch to transfer tab when we have a suggestion
+    activeTab = 'transfer';
+  }
+});
+
+// Remember mapping checkbox state - default to true so transfers are remembered
+let rememberMapping = $state(true);
+
+// Reset rememberMapping to true when popover opens (so it's checked by default each time)
+$effect(() => {
+  if (open) {
+    rememberMapping = true;
+  }
+});
 
 // Show "Create" option when: there's search text AND no exact match exists (case-sensitive)
 const showCreateOption = $derived.by(() => {
@@ -164,13 +257,36 @@ function handleClear() {
   searchValue = '';
   open = false;
 }
+
+// Transfer handlers
+function handleSelectAccount(accountId: number, accountName: string) {
+  console.log('[PayeeCell] handleSelectAccount:', {
+    rowIndex,
+    accountId,
+    accountName,
+    rememberMapping,
+  });
+  onTransferUpdate?.(rowIndex, accountId, accountName, rememberMapping);
+  accountSearchValue = '';
+  open = false;
+}
+
+function handleClearTransfer() {
+  onTransferUpdate?.(rowIndex, null, null, false);
+  accountSearchValue = '';
+  open = false;
+}
 </script>
 
-<div class="w-full min-w-[200px]">
+<div class="w-full min-w-50">
   {#if isInvalid}
     <div
       class="text-muted-foreground flex h-8 w-full items-center overflow-hidden text-xs text-ellipsis whitespace-nowrap opacity-50">
-      <User class="mr-2 h-3 w-3" />
+      {#if isTransfer}
+        <ArrowRightLeft class="mr-2 h-3 w-3" />
+      {:else}
+        <User class="mr-2 h-3 w-3" />
+      {/if}
       {displayName}
     </div>
   {:else}
@@ -182,62 +298,144 @@ function handleClear() {
             variant="outline"
             class={cn(
               'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
-              !selectedPayee && !selectedPayeeName && 'text-muted-foreground'
+              isTransfer && 'text-blue-600 border-blue-200',
+              hasSuggestion && 'text-amber-600 border-amber-200',
+              !isTransfer && !hasSuggestion && !selectedPayee && !selectedPayeeName && 'text-muted-foreground'
             )}>
-            <User class="mr-2 h-3 w-3" />
+            {#if hasSuggestion}
+              <Sparkles class="mr-2 h-3 w-3 text-amber-500" />
+            {:else if isTransfer}
+              <ArrowRightLeft class="mr-2 h-3 w-3" />
+            {:else}
+              <User class="mr-2 h-3 w-3" />
+            {/if}
             {displayName}
           </Button>
         {/snippet}
       </Popover.Trigger>
-    <Popover.Content class="w-[250px] p-0" align="start">
-      <Command.Root shouldFilter={false}>
-        <Command.Input placeholder="Search or create payee..." bind:value={searchValue} />
-        <Command.List class="max-h-[300px]">
-          <Command.Group>
-            {#if showCreateOption}
-              <Command.Item
-                value="create-new"
-                onSelect={() => handleCreateNew()}
-                class="text-primary">
-                <Check class="mr-2 h-4 w-4 text-transparent" />
-                Create "{searchValue.trim()}"
-              </Command.Item>
+      <Popover.Content class="w-72 p-0" align="start">
+        <Tabs.Root bind:value={activeTab} class="w-full">
+          <Tabs.List class="grid w-full grid-cols-2">
+            <Tabs.Trigger value="payee" class="text-xs">
+              <User class="mr-1.5 h-3 w-3" />
+              Payee
+            </Tabs.Trigger>
+            <Tabs.Trigger value="transfer" class="text-xs">
+              <ArrowRightLeft class="mr-1.5 h-3 w-3" />
+              Transfer
+            </Tabs.Trigger>
+          </Tabs.List>
+
+          <!-- Payee Tab -->
+          <Tabs.Content value="payee" class="p-0">
+            <Command.Root shouldFilter={false}>
+              <Command.Input placeholder="Search or create payee..." bind:value={searchValue} />
+              <Command.List class="max-h-60">
+                <Command.Group>
+                  {#if showCreateOption}
+                    <Command.Item
+                      value="create-new"
+                      onSelect={() => handleCreateNew()}
+                      class="text-primary">
+                      <Check class="mr-2 h-4 w-4 text-transparent" />
+                      Create "{searchValue.trim()}"
+                    </Command.Item>
+                  {/if}
+                  {#if (selectedPayeeName || selectedPayeeId) && !searchValue.trim()}
+                    <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
+                      <X class="mr-2 h-4 w-4" />
+                      Clear payee
+                    </Command.Item>
+                    <Command.Separator />
+                  {/if}
+                  {#each visiblePayees as payee (payee.id)}
+                    {@const isSelected = selectedPayeeId === payee.id}
+                    <Command.Item
+                      value={String(payee.id)}
+                      onSelect={() => handleSelect(payee.id, payee.name || '')}>
+                      <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
+                      {payee.name}
+                    </Command.Item>
+                  {/each}
+                  {#if visibleTemporaryPayees.length > 0}
+                    <Command.Separator />
+                    <Command.Group heading="Temporary (Will be created)">
+                      {#each visibleTemporaryPayees as tempPayee (tempPayee)}
+                        {@const isSelected = selectedPayeeName === tempPayee}
+                        <Command.Item
+                          value={tempPayee}
+                          onSelect={() => handleSelectTemporary(tempPayee)}
+                          class="text-blue-600">
+                          <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
+                          {tempPayee}
+                        </Command.Item>
+                      {/each}
+                    </Command.Group>
+                  {/if}
+                </Command.Group>
+              </Command.List>
+            </Command.Root>
+          </Tabs.Content>
+
+          <!-- Transfer Tab -->
+          <Tabs.Content value="transfer" class="p-0">
+            {#if hasSuggestion}
+              <div class="border-b bg-amber-50 px-3 py-2">
+                <div class="flex items-center gap-2 text-xs">
+                  <Sparkles class="h-3 w-3 text-amber-500" />
+                  <span class="text-amber-700">
+                    Suggested: <strong>{suggestedTransferAccountName}</strong>
+                    <span class="text-amber-500">({transferMappingConfidence})</span>
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="mt-1 h-6 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+                  onclick={() => handleSelectAccount(suggestedTransferAccountId!, suggestedTransferAccountName!)}>
+                  Accept suggestion
+                </Button>
+              </div>
             {/if}
-            {#if (selectedPayeeName || selectedPayeeId) && !searchValue.trim()}
-              <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
-                <X class="mr-2 h-4 w-4" />
-                Clear payee
-              </Command.Item>
-              <Command.Separator />
-            {/if}
-            {#each visiblePayees as payee (payee.id)}
-              {@const isSelected = selectedPayeeId === payee.id}
-              <Command.Item
-                value={String(payee.id)}
-                onSelect={() => handleSelect(payee.id, payee.name || '')}>
-                <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
-                {payee.name}
-              </Command.Item>
-            {/each}
-            {#if visibleTemporaryPayees.length > 0}
-              <Command.Separator />
-              <Command.Group heading="Temporary (Will be created)">
-                {#each visibleTemporaryPayees as tempPayee}
-                  {@const isSelected = selectedPayeeName === tempPayee}
-                  <Command.Item
-                    value={tempPayee}
-                    onSelect={() => handleSelectTemporary(tempPayee)}
-                    class="text-blue-600">
-                    <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
-                    {tempPayee}
-                  </Command.Item>
-                {/each}
-              </Command.Group>
-            {/if}
-          </Command.Group>
-        </Command.List>
-      </Command.Root>
-    </Popover.Content>
+            <Command.Root shouldFilter={false}>
+              <Command.Input placeholder="Search accounts..." bind:value={accountSearchValue} />
+              <Command.List class="max-h-52">
+                <Command.Group>
+                  {#if isTransfer && !accountSearchValue.trim()}
+                    <Command.Item value="clear-transfer" onSelect={() => handleClearTransfer()} class="text-destructive">
+                      <X class="mr-2 h-4 w-4" />
+                      Clear transfer
+                    </Command.Item>
+                    <Command.Separator />
+                  {/if}
+                  {#each visibleAccounts as account (account.id)}
+                    {@const isSelected = transferAccountId === account.id}
+                    <Command.Item
+                      value={String(account.id)}
+                      onSelect={() => handleSelectAccount(account.id, account.name)}>
+                      <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
+                      <Wallet class="mr-2 h-4 w-4 text-muted-foreground" />
+                      {account.name}
+                    </Command.Item>
+                  {/each}
+                  {#if visibleAccounts.length === 0}
+                    <Command.Empty>No accounts found</Command.Empty>
+                  {/if}
+                </Command.Group>
+              </Command.List>
+            </Command.Root>
+            <!-- Remember mapping option -->
+            <div class="border-t p-2">
+              <div class="flex items-center gap-2">
+                <Checkbox id="remember-{rowIndex}" bind:checked={rememberMapping} />
+                <Label for="remember-{rowIndex}" class="text-xs text-muted-foreground cursor-pointer">
+                  Remember for future imports
+                </Label>
+              </div>
+            </div>
+          </Tabs.Content>
+        </Tabs.Root>
+      </Popover.Content>
     </Popover.Root>
   {/if}
 </div>

@@ -14,8 +14,9 @@ import { Textarea } from '$lib/components/ui/textarea';
 import { WizardFormWrapper } from '$lib/components/wizard';
 import AccountWizard from '$lib/components/wizard/account-wizard.svelte';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
-import { accountTypeEnum, type Account, type AccountType } from '$lib/schema';
+import { accountTypeEnum, utilitySubtypeEnum, type Account, type AccountType, type UtilitySubtype } from '$lib/schema';
 import { superformInsertAccountSchema } from '$lib/schema/superforms';
+import Zap from '@lucide/svelte/icons/zap';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { accountWizardStore } from '$lib/stores/wizardStore.svelte';
 import CreditCard from '@lucide/svelte/icons/credit-card';
@@ -129,6 +130,11 @@ if (_accountId && _accountId > 0) {
     $formData.minimumPayment = (account as any).minimumPayment || null;
     $formData.paymentDueDay = (account as any).paymentDueDay || null;
     $formData.interestRate = (account as any).interestRate || null;
+    // Utility fields
+    $formData.utilitySubtype = (account as any).utilitySubtype || null;
+    $formData.utilityProvider = (account as any).utilityProvider || '';
+    $formData.utilityAccountNumber = (account as any).utilityAccountNumber || '';
+    $formData.utilityServiceAddress = (account as any).utilityServiceAddress || '';
 
     // Set initial data for wizard
     initialData.id = _accountId;
@@ -145,6 +151,11 @@ if (_accountId && _accountId > 0) {
     initialData.minimumPayment = (account as any).minimumPayment;
     initialData.paymentDueDay = (account as any).paymentDueDay;
     initialData.interestRate = (account as any).interestRate;
+    // Utility fields
+    initialData.utilitySubtype = (account as any).utilitySubtype;
+    initialData.utilityProvider = (account as any).utilityProvider;
+    initialData.utilityAccountNumber = (account as any).utilityAccountNumber;
+    initialData.utilityServiceAddress = (account as any).utilityServiceAddress;
   }
 }
 
@@ -164,6 +175,11 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
   $formData.minimumPayment = wizardFormData['minimumPayment'] || null;
   $formData.paymentDueDay = wizardFormData['paymentDueDay'] || null;
   $formData.interestRate = wizardFormData['interestRate'] || null;
+  // Utility fields
+  $formData.utilitySubtype = wizardFormData['utilitySubtype'] || null;
+  $formData.utilityProvider = wizardFormData['utilityProvider'] || '';
+  $formData.utilityAccountNumber = wizardFormData['utilityAccountNumber'] || '';
+  $formData.utilityServiceAddress = wizardFormData['utilityServiceAddress'] || '';
 
   // Wait a tick to ensure reactive updates complete
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -218,8 +234,26 @@ const accountTypeLabels: Record<string, string> = {
   loan: 'Loan',
   cash: 'Cash',
   hsa: 'Health Savings Account',
+  utility: 'Utility Account',
   other: 'Other',
 };
+
+// Utility subtype labels
+const utilitySubtypeLabels: Record<string, string> = {
+  electric: 'Electric',
+  gas: 'Gas',
+  water: 'Water',
+  internet: 'Internet',
+  sewer: 'Sewer',
+  trash: 'Trash',
+  other: 'Other',
+};
+
+// Utility subtype options for the dropdown
+const utilitySubtypeOptions = utilitySubtypeEnum.map((type) => ({
+  value: type,
+  label: utilitySubtypeLabels[type] || type,
+}));
 
 // Account type options for the dropdown
 const accountTypeOptions = accountTypeEnum.map((type) => ({
@@ -236,6 +270,18 @@ const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
   loan: { icon: 'banknote', color: '#EF4444' }, // red
   cash: { icon: 'wallet', color: '#6B7280' }, // gray
   hsa: { icon: 'heart-pulse', color: '#14B8A6' }, // teal
+  utility: { icon: 'zap', color: '#f59e0b' }, // amber
+};
+
+// Default icons for utility subtypes
+const utilitySubtypeDefaults: Record<string, { icon: string; color: string }> = {
+  electric: { icon: 'zap', color: '#f59e0b' }, // amber
+  gas: { icon: 'flame', color: '#f97316' }, // orange
+  water: { icon: 'droplets', color: '#06b6d4' }, // cyan
+  internet: { icon: 'wifi', color: '#8b5cf6' }, // purple
+  sewer: { icon: 'pipe', color: '#78716c' }, // stone
+  trash: { icon: 'trash-2', color: '#84cc16' }, // lime
+  other: { icon: 'plug', color: '#6b7280' }, // gray
 };
 
 // Auto-detect account type from name
@@ -280,6 +326,23 @@ function detectAccountTypeFromName(name: string): AccountType | null {
     cash: 'cash',
     wallet: 'cash',
     petty: 'cash',
+
+    // Utility keywords
+    utility: 'utility',
+    electric: 'utility',
+    electricity: 'utility',
+    power: 'utility',
+    energy: 'utility',
+    gas: 'utility',
+    water: 'utility',
+    internet: 'utility',
+    isp: 'utility',
+    broadband: 'utility',
+    fiber: 'utility',
+    sewer: 'utility',
+    trash: 'utility',
+    garbage: 'utility',
+    waste: 'utility',
   };
 
   // Check each keyword
@@ -320,17 +383,13 @@ $effect(() => {
     // Auto-set onBudget for certain account types
     // Credit cards and loans: off-budget (spending is tracked in categories, payments are transfers)
     // HSA accounts: off-budget (tax-advantaged medical savings)
-    if ((currentType === 'credit_card' || currentType === 'loan') && !accountId) {
+    // Utility accounts: off-budget (usage tracking, not typical spending)
+    const offBudgetTypes = ['credit_card', 'loan', 'hsa', 'utility'];
+    if (offBudgetTypes.includes(currentType) && !accountId) {
       $formData.onBudget = false;
-    } else if (currentType === 'hsa' && !accountId) {
-      $formData.onBudget = false;
-    } else if (
-      previousAccountType === 'credit_card' ||
-      previousAccountType === 'loan' ||
-      previousAccountType === 'hsa'
-    ) {
-      // If switching FROM credit card/loan/hsa to another type, default back to on-budget
-      if (!accountId) {
+    } else if (previousAccountType && offBudgetTypes.includes(previousAccountType)) {
+      // If switching FROM an off-budget type to another type, default back to on-budget
+      if (!accountId && !offBudgetTypes.includes(currentType)) {
         $formData.onBudget = true;
       }
     }
@@ -393,6 +452,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
     minimumPayment: $formData.minimumPayment,
     paymentDueDay: $formData.paymentDueDay,
     interestRate: $formData.interestRate,
+    utilitySubtype: $formData.utilitySubtype,
+    utilityProvider: $formData.utilityProvider,
+    utilityAccountNumber: $formData.utilityAccountNumber,
+    utilityServiceAddress: $formData.utilityServiceAddress,
   }}
   bind:currentMode={mode}>
   {#snippet formContent()}
@@ -414,6 +477,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.minimumPayment ?? ''} name="minimumPayment" />
       <input hidden value={$formData.paymentDueDay ?? ''} name="paymentDueDay" />
       <input hidden value={$formData.interestRate ?? ''} name="interestRate" />
+      <input hidden value={$formData.utilitySubtype ?? ''} name="utilitySubtype" />
+      <input hidden value={$formData.utilityProvider ?? ''} name="utilityProvider" />
+      <input hidden value={$formData.utilityAccountNumber ?? ''} name="utilityAccountNumber" />
+      <input hidden value={$formData.utilityServiceAddress ?? ''} name="utilityServiceAddress" />
 
       <!-- Basic Information Section -->
       <Card.Root>
@@ -663,6 +730,104 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         </Card.Root>
       {/if}
 
+      <!-- Utility Account Details -->
+      {#if $formData.accountType === 'utility'}
+        <Card.Root>
+          <Card.Header class="pb-4">
+            <div class="flex items-center gap-2">
+              <Zap class="text-primary h-5 w-5" />
+              <Card.Title class="text-lg">Utility Details</Card.Title>
+            </div>
+            <Card.Description>
+              Configure your utility account to track usage and billing information.
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <!-- Utility Type -->
+              <Form.Field form={entityForm} name="utilitySubtype">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Form.Label>Utility Type</Form.Label>
+                    <Select.Root
+                      type="single"
+                      bind:value={$formData.utilitySubtype}
+                      onValueChange={(value) => {
+                        if (value) {
+                          const defaults = utilitySubtypeDefaults[value];
+                          if (defaults) {
+                            $formData.accountIcon = defaults.icon;
+                            $formData.accountColor = defaults.color;
+                          }
+                        }
+                      }}>
+                      <Select.Trigger {...props}>
+                        {$formData.utilitySubtype
+                          ? utilitySubtypeOptions.find((opt) => opt.value === $formData.utilitySubtype)
+                              ?.label
+                          : 'Select utility type'}
+                      </Select.Trigger>
+                      <Select.Content>
+                        {#each utilitySubtypeOptions as option}
+                          <Select.Item value={option.value}>{option.label}</Select.Item>
+                        {/each}
+                      </Select.Content>
+                    </Select.Root>
+                    <Form.Description>The type of utility service</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+
+              <!-- Utility Provider -->
+              <Form.Field form={entityForm} name="utilityProvider">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Form.Label>Provider Name</Form.Label>
+                    <Input
+                      {...props}
+                      bind:value={$formData.utilityProvider}
+                      placeholder="e.g., Duke Energy, AT&T" />
+                    <Form.Description>The name of your utility provider</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+
+              <!-- Utility Account Number -->
+              <Form.Field form={entityForm} name="utilityAccountNumber">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Form.Label>Account Number</Form.Label>
+                    <Input
+                      {...props}
+                      bind:value={$formData.utilityAccountNumber}
+                      placeholder="Your utility account number" />
+                    <Form.Description>Your account number with the provider</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+
+              <!-- Service Address -->
+              <Form.Field form={entityForm} name="utilityServiceAddress">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Form.Label>Service Address</Form.Label>
+                    <Input
+                      {...props}
+                      bind:value={$formData.utilityServiceAddress}
+                      placeholder="Address where service is provided" />
+                    <Form.Description>The address receiving this utility service</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+            </div>
+          </Card.Content>
+        </Card.Root>
+      {/if}
+
       <!-- Budget Settings -->
       <Card.Root>
         <Card.Header class="pb-4">
@@ -753,6 +918,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.minimumPayment ?? ''} name="minimumPayment" />
       <input hidden value={$formData.paymentDueDay ?? ''} name="paymentDueDay" />
       <input hidden value={$formData.interestRate ?? ''} name="interestRate" />
+      <input hidden value={$formData.utilitySubtype ?? ''} name="utilitySubtype" />
+      <input hidden value={$formData.utilityProvider ?? ''} name="utilityProvider" />
+      <input hidden value={$formData.utilityAccountNumber ?? ''} name="utilityAccountNumber" />
+      <input hidden value={$formData.utilityServiceAddress ?? ''} name="utilityServiceAddress" />
     </form>
   {/snippet}
 </WizardFormWrapper>

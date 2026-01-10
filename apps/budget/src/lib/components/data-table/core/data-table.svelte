@@ -70,6 +70,8 @@ const tableInstance = createSvelteTable<TData>({
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
   manualPagination: serverPagination,
+  // Prevent auto-reset of page index when data changes (e.g., editing a row)
+  autoResetPageIndex: false,
 
   // State via getters - naturally reactive
   state: {

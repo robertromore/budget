@@ -3,6 +3,7 @@ import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import type { ImportRow, ValidationError } from '$lib/types/import';
 import { formatDisplayValue } from '$lib/utils/formatters';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Clock from '@lucide/svelte/icons/clock';
@@ -18,6 +19,8 @@ let { row }: Props = $props();
 const status = $derived(row.original.validationStatus);
 const hasWarning = $derived(status === 'warning' && row.original.validationErrors);
 const hasError = $derived(status === 'invalid' && row.original.validationErrors);
+const hasTransferMatch = $derived(status === 'transfer_match' && row.original.transferTargetMatch);
+const transferMatch = $derived(row.original.transferTargetMatch);
 const warningMessages = $derived<ValidationError[]>(
   hasWarning ? row.original.validationErrors?.filter((e) => e.severity === 'warning') || [] : []
 );
@@ -35,6 +38,8 @@ function getStatusIcon(status: string) {
       return CircleAlert;
     case 'warning':
       return TriangleAlert;
+    case 'transfer_match':
+      return ArrowRightLeft;
     default:
       return Clock;
   }
@@ -48,6 +53,8 @@ function getStatusColor(status: string) {
       return 'text-destructive';
     case 'warning':
       return 'text-yellow-600';
+    case 'transfer_match':
+      return 'text-blue-600';
     default:
       return 'text-muted-foreground';
   }
@@ -61,6 +68,8 @@ function getStatusBadge(status: string) {
       return { variant: 'destructive' as const, label: 'Invalid' };
     case 'warning':
       return { variant: 'outline' as const, label: 'Warning' };
+    case 'transfer_match':
+      return { variant: 'secondary' as const, label: 'Transfer' };
     default:
       return { variant: 'secondary' as const, label: 'Pending' };
   }
@@ -70,7 +79,40 @@ const StatusIcon = $derived(getStatusIcon(status));
 const badge = $derived(getStatusBadge(status));
 </script>
 
-{#if hasWarning && warningMessages.length > 0}
+{#if hasTransferMatch && transferMatch}
+  <Tooltip.Root>
+    <Tooltip.Trigger class="flex cursor-help items-center gap-2">
+      <StatusIcon class={`h-4 w-4 ${getStatusColor(status)}`} />
+      <Badge variant={badge.variant} class="bg-blue-100 text-blue-800 text-xs">
+        {badge.label}
+      </Badge>
+    </Tooltip.Trigger>
+    <Tooltip.Content class="max-w-md">
+      <div class="space-y-2">
+        <p class="text-sm font-semibold text-blue-600">Matches Existing Transfer</p>
+        <div class="space-y-1 text-xs">
+          <p>
+            <span class="font-medium">From:</span>
+            <span class="text-muted-foreground">{transferMatch.sourceAccountName}</span>
+          </p>
+          {#if transferMatch.dateDifference > 0}
+            <p>
+              <span class="font-medium">Date difference:</span>
+              <span class="text-muted-foreground">{transferMatch.dateDifference} day{transferMatch.dateDifference > 1 ? 's' : ''}</span>
+            </p>
+          {/if}
+          <p>
+            <span class="font-medium">Confidence:</span>
+            <span class="text-muted-foreground capitalize">{transferMatch.confidence}</span>
+          </p>
+        </div>
+        <p class="text-muted-foreground mt-2 text-xs italic">
+          This transaction will be reconciled with the existing transfer instead of creating a duplicate.
+        </p>
+      </div>
+    </Tooltip.Content>
+  </Tooltip.Root>
+{:else if hasWarning && warningMessages.length > 0}
   <Tooltip.Root>
     <Tooltip.Trigger class="flex cursor-help items-center gap-2">
       <StatusIcon class={`h-4 w-4 ${getStatusColor(status)}`} />

@@ -304,7 +304,7 @@ const _deleteAccountId = $derived(deleteAccountId);
                                 <span class="text-[10px] opacity-70">available</span>
                               </div>
                               <div class="text-muted-foreground text-[10px]">
-                                {currencyFormatter.format(Math.abs(account.balance || 0))} / {currencyFormatter.format(
+                                {currencyFormatter.format(account.balance && account.balance < 0 ? Math.abs(account.balance) : 0)} / {currencyFormatter.format(
                                   account.debtLimit
                                 )}
                               </div>

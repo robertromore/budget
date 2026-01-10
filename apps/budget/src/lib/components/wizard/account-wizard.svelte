@@ -206,6 +206,20 @@ function detectAccountTypeFromName(name: string): string | null {
     'health savings': 'hsa',
     health: 'hsa',
     petty: 'cash',
+
+    electric: 'utility',
+    electricity: 'utility',
+    power: 'utility',
+    gas: 'utility',
+    water: 'utility',
+    sewer: 'utility',
+    internet: 'utility',
+    wifi: 'utility',
+    broadband: 'utility',
+    trash: 'utility',
+    garbage: 'utility',
+    utility: 'utility',
+    utilities: 'utility',
   };
 
   // Check each keyword
@@ -249,6 +263,12 @@ const accountTypes = [
     examples: ['Mortgage', 'Auto Loan', 'Personal Loan'],
     color: 'text-orange-600',
     description: 'Mortgage, Auto, Personal',
+  },
+  {
+    category: 'Utility Accounts',
+    examples: ['Electric', 'Gas', 'Water', 'Internet'],
+    color: 'text-amber-600',
+    description: 'Track usage and bills',
   },
 ];
 
@@ -307,6 +327,12 @@ const exampleNotesByCategory: Record<string, string[]> = {
     'Paired with High-Deductible Health Plan. Family contribution limit $8,300/year.',
     'Triple tax advantage: deductible contributions, tax-free growth, tax-free withdrawals for qualified medical expenses.',
   ],
+  utility: [
+    'Electric bill account. Duke Energy. Track kWh usage and seasonal patterns.',
+    'Water bill tracking. Municipal utility. Monitor usage for leak detection.',
+    'Gas utility account. Compare winter heating costs year-over-year.',
+    'Internet service. Xfinity 500Mbps plan. Track data usage and rate changes.',
+  ],
 };
 
 const noteCategories = [
@@ -317,6 +343,7 @@ const noteCategories = [
   { value: 'investment', label: 'Investment', color: 'border-l-orange-500' },
   { value: 'loan', label: 'Loan', color: 'border-l-red-500' },
   { value: 'hsa', label: 'HSA', color: 'border-l-teal-500' },
+  { value: 'utility', label: 'Utility', color: 'border-l-amber-500' },
 ];
 
 // Default icons and colors for account types
@@ -328,6 +355,15 @@ const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
   loan: { icon: 'banknote', color: '#EF4444' }, // red
   cash: { icon: 'wallet', color: '#6B7280' }, // gray
   hsa: { icon: 'heart-pulse', color: '#14B8A6' }, // teal
+  utility: { icon: 'zap', color: '#F59E0B' }, // amber
+};
+
+// Specific icons for utility subtypes (used in Quick Start)
+const utilityExampleDefaults: Record<string, { icon: string; color: string; subtype: string }> = {
+  Electric: { icon: 'zap', color: '#F59E0B', subtype: 'electric' }, // amber
+  Gas: { icon: 'flame', color: '#F97316', subtype: 'gas' }, // orange
+  Water: { icon: 'droplets', color: '#06B6D4', subtype: 'water' }, // cyan
+  Internet: { icon: 'wifi', color: '#8B5CF6', subtype: 'internet' }, // purple
 };
 
 // Handle account type selection
@@ -343,6 +379,14 @@ function handleAccountTypeClick(accountType: string) {
   const detectedType = detectAccountTypeFromName(accountType);
   if (detectedType) {
     handleAccountTypeChange(detectedType);
+
+    // For utility accounts, set specific icon/color/subtype based on the clicked example
+    if (detectedType === 'utility' && utilityExampleDefaults[accountType]) {
+      const utilityDefaults = utilityExampleDefaults[accountType];
+      updateField('accountIcon', utilityDefaults.icon);
+      updateField('accountColor', utilityDefaults.color);
+      updateField('utilitySubtype', utilityDefaults.subtype);
+    }
   }
 
   // Focus the input and position cursor at the end
@@ -431,6 +475,7 @@ const accountTypeLabels: Record<string, string> = {
   loan: 'Loan',
   cash: 'Cash',
   hsa: 'Health Savings Account',
+  utility: 'Utility',
   other: 'Other',
 };
 
@@ -735,59 +780,89 @@ const selectedIcon = $derived(() => {
         <h3 class="text-lg font-semibold">Additional Details</h3>
       </div>
       <p class="text-muted-foreground text-sm">
-        Add optional details like institution, starting balance, and account identification.
+        {#if formData['accountType'] === 'utility'}
+          Add details about your utility provider and service.
+        {:else}
+          Add optional details like institution, starting balance, and account identification.
+        {/if}
       </p>
     </div>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <!-- Institution -->
+      <!-- Institution / Provider -->
       <div class="space-y-2">
         <Label for="institution" class="flex items-center gap-2 text-sm font-medium">
           <Building2 class="h-4 w-4" />
-          Bank/Institution
+          {formData['accountType'] === 'utility' ? 'Provider' : 'Bank/Institution'}
         </Label>
         <Input
           id="institution"
           value={formData['institution'] || ''}
           oninput={(e) => updateField('institution', e.currentTarget.value)}
-          placeholder="e.g., Chase Bank, Fidelity"
+          placeholder={formData['accountType'] === 'utility'
+            ? 'e.g., Duke Energy, Comcast, City Water'
+            : 'e.g., Chase Bank, Fidelity'}
           class="w-full" />
         <p class="text-muted-foreground text-xs">
-          The financial institution that holds this account
+          {formData['accountType'] === 'utility'
+            ? 'The company that provides this utility service'
+            : 'The financial institution that holds this account'}
         </p>
       </div>
 
-      <!-- Initial Balance -->
-      <div class="space-y-2">
-        <Label for="initial-balance" class="flex items-center gap-2 text-sm font-medium">
-          <Banknote class="h-4 w-4" />
-          Starting Balance
-        </Label>
-        <Input
-          id="initial-balance"
-          type="number"
-          step="0.01"
-          value={formData['initialBalance'] || ''}
-          oninput={(e) => updateField('initialBalance', parseFloat(e.currentTarget.value) || 0)}
-          placeholder="0.00"
-          class="w-full" />
-        <p class="text-muted-foreground text-xs">The current balance of this account (optional)</p>
-      </div>
+      <!-- Initial Balance (hide for utility accounts) -->
+      {#if formData['accountType'] !== 'utility'}
+        <div class="space-y-2">
+          <Label for="initial-balance" class="flex items-center gap-2 text-sm font-medium">
+            <Banknote class="h-4 w-4" />
+            Starting Balance
+          </Label>
+          <Input
+            id="initial-balance"
+            type="number"
+            step="0.01"
+            value={formData['initialBalance'] || ''}
+            oninput={(e) => updateField('initialBalance', parseFloat(e.currentTarget.value) || 0)}
+            placeholder="0.00"
+            class="w-full" />
+          <p class="text-muted-foreground text-xs">The current balance of this account (optional)</p>
+        </div>
+      {/if}
 
-      <!-- Account Number Last 4 -->
+      <!-- Account Number Last 4 (or full account number for utilities) -->
       <div class="space-y-2">
-        <Label for="account-last4" class="text-sm font-medium">Account Last 4 Digits</Label>
+        <Label for="account-last4" class="text-sm font-medium">
+          {formData['accountType'] === 'utility' ? 'Account Number' : 'Account Last 4 Digits'}
+        </Label>
         <Input
           id="account-last4"
           value={formData['accountNumberLast4'] || ''}
           oninput={(e) => updateField('accountNumberLast4', e.currentTarget.value)}
-          placeholder="1234"
-          pattern="[0-9]{4}"
-          maxlength={4}
+          placeholder={formData['accountType'] === 'utility' ? 'Your utility account number' : '1234'}
+          pattern={formData['accountType'] === 'utility' ? undefined : '[0-9]{4}'}
+          maxlength={formData['accountType'] === 'utility' ? 50 : 4}
           class="w-full" />
         <p class="text-muted-foreground text-xs">
-          Last 4 digits for easy identification (optional)
+          {formData['accountType'] === 'utility'
+            ? 'Your account number with this provider (optional)'
+            : 'Last 4 digits for easy identification (optional)'}
         </p>
       </div>
+
+      <!-- Service Address (utility only) -->
+      {#if formData['accountType'] === 'utility'}
+        <div class="space-y-2">
+          <Label for="service-address" class="text-sm font-medium">Service Address</Label>
+          <Input
+            id="service-address"
+            value={formData['utilityServiceAddress'] || ''}
+            oninput={(e) => updateField('utilityServiceAddress', e.currentTarget.value)}
+            placeholder="123 Main St, City, State"
+            class="w-full" />
+          <p class="text-muted-foreground text-xs">
+            The address receiving this utility service (optional)
+          </p>
+        </div>
+      {/if}
     </div>
 
     <!-- Debt Account Fields (Credit Cards & Loans) -->
@@ -1109,12 +1184,14 @@ const selectedIcon = $derived(() => {
 
         {#if formData['institution']}
           <div class="space-y-1">
-            <p class="text-sm font-medium">Institution</p>
+            <p class="text-sm font-medium">
+              {formData['accountType'] === 'utility' ? 'Provider' : 'Institution'}
+            </p>
             <p class="text-muted-foreground text-sm">{formData['institution']}</p>
           </div>
         {/if}
 
-        {#if formData['initialBalance'] !== undefined && formData['initialBalance'] !== 0}
+        {#if formData['initialBalance'] !== undefined && formData['initialBalance'] !== 0 && formData['accountType'] !== 'utility'}
           <div class="space-y-1">
             <p class="text-sm font-medium">Starting Balance</p>
             <p class="text-muted-foreground text-sm">${formData['initialBalance']?.toFixed(2)}</p>
@@ -1123,11 +1200,32 @@ const selectedIcon = $derived(() => {
 
         {#if formData['accountNumberLast4']}
           <div class="space-y-1">
-            <p class="text-sm font-medium">Account Last 4</p>
+            <p class="text-sm font-medium">
+              {formData['accountType'] === 'utility' ? 'Account Number' : 'Account Last 4'}
+            </p>
             <p class="text-muted-foreground font-mono text-sm">
-              ••••{formData['accountNumberLast4']}
+              {formData['accountType'] === 'utility'
+                ? formData['accountNumberLast4']
+                : `••••${formData['accountNumberLast4']}`}
             </p>
           </div>
+        {/if}
+
+        <!-- Utility Account Details -->
+        {#if formData['accountType'] === 'utility'}
+          {#if formData['utilitySubtype']}
+            <div class="space-y-1">
+              <p class="text-sm font-medium">Utility Type</p>
+              <p class="text-muted-foreground text-sm capitalize">{formData['utilitySubtype']}</p>
+            </div>
+          {/if}
+
+          {#if formData['utilityServiceAddress']}
+            <div class="space-y-1">
+              <p class="text-sm font-medium">Service Address</p>
+              <p class="text-muted-foreground text-sm">{formData['utilityServiceAddress']}</p>
+            </div>
+          {/if}
         {/if}
 
         {#if formData['accountIcon']}

@@ -73,11 +73,20 @@ const externalCategoryId = $derived(row.original.normalizedData['categoryId'] as
 let _selectedCategoryName = $state<string>('');
 let _selectedCategoryId = $state<number | null>(null);
 
-// Sync from external data on initial load
-let hasInitialized = $state(false);
+// Track the last synced external values to detect external changes
+let lastSyncedCategoryName = $state<string | undefined>(undefined);
+let lastSyncedCategoryId = $state<number | null | undefined>(undefined);
+
+// Sync from external data when it changes (handles both initial load and bulk updates)
 $effect(() => {
-  if (!hasInitialized && (externalCategoryName !== undefined || externalCategoryId !== undefined)) {
-    hasInitialized = true;
+  // Detect if external data has changed since last sync
+  const externalChanged =
+    externalCategoryName !== lastSyncedCategoryName ||
+    externalCategoryId !== lastSyncedCategoryId;
+
+  if (externalChanged) {
+    lastSyncedCategoryName = externalCategoryName;
+    lastSyncedCategoryId = externalCategoryId;
 
     // First check for explicit categoryId (from alias match or previous selection)
     if (externalCategoryId && typeof externalCategoryId === 'number') {
@@ -89,7 +98,7 @@ $effect(() => {
       }
     }
 
-    // Fall back to name lookup
+    // Fall back to name lookup or direct value
     const newName = externalCategoryName || '';
     _selectedCategoryName = newName;
 

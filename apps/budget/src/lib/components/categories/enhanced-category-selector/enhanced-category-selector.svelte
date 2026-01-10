@@ -28,6 +28,7 @@
 		displayMode?: DisplayMode;
 		allowCreate?: boolean;
 		allowEdit?: boolean;
+		allowClear?: boolean;
 		buttonClass?: string;
 		placeholder?: string;
 	}
@@ -38,6 +39,7 @@
 		displayMode = "normal",
 		allowCreate = true,
 		allowEdit = true,
+		allowClear = true,
 		buttonClass = "",
 		placeholder = "Select category...",
 	}: Props = $props();
@@ -71,6 +73,19 @@
 	const allCategories = $derived(
 		categoriesState ? categoriesState.getActiveCategories() : [],
 	);
+
+	// Refresh categories from server when selector opens (to catch categories created elsewhere)
+	$effect(() => {
+		if (open && categoriesState) {
+			rpc.categories.listCategories().execute().then((freshCategories) => {
+				if (freshCategories) {
+					categoriesState.init(freshCategories as Category[]);
+				}
+			}).catch((err) => {
+				console.error("Failed to refresh categories:", err);
+			});
+		}
+	});
 
 	// Selected category (the one that will be returned as value)
 	const selectedCategory = $derived(
@@ -123,6 +138,14 @@
 		resetState();
 	}
 
+	// Handle clear category (set to null and close)
+	function handleClearCategory() {
+		value = null;
+		onValueChange(null);
+		open = false;
+		resetState();
+	}
+
 	// Handle category edit
 	function handleCategoryEdit(categoryId: number) {
 		focusedCategoryId = categoryId;
@@ -148,24 +171,47 @@
 		data: QuickEditCategoryData,
 	): Promise<void> {
 		if (editMode === "create") {
-			// Create new category
-			const result = await rpc.categories.createCategory.execute({
-				name: data.name,
-				parentId: data.parentId,
-				categoryType: data.categoryType,
-				categoryIcon: data.categoryIcon,
-				categoryColor: data.categoryColor,
-				notes: data.notes,
-				isActive: true,
-				displayOrder: 0,
-				isTaxDeductible: false,
-				isSeasonal: false,
-			});
-			if (categoriesState) {
-				categoriesState.addCategory(result as Category);
+			try {
+				// Create new category
+				const result = await rpc.categories.createCategory.execute({
+					name: data.name,
+					parentId: data.parentId,
+					categoryType: data.categoryType,
+					categoryIcon: data.categoryIcon,
+					categoryColor: data.categoryColor,
+					notes: data.notes,
+					isActive: true,
+					displayOrder: 0,
+					isTaxDeductible: false,
+					isSeasonal: false,
+				});
+				if (categoriesState) {
+					categoriesState.addCategory(result as Category);
+				}
+				// Auto-select the new category
+				handleCategorySelect(result.id);
+			} catch (err) {
+				// Check if it's a "already exists" error
+				const errorMessage = err instanceof Error ? err.message : String(err);
+				if (errorMessage.includes("already exists")) {
+					// Fetch all categories from server and find the existing one
+					const allCategories = await rpc.categories.listCategories().execute();
+					if (categoriesState && allCategories) {
+						// Refresh the local state with server data
+						categoriesState.init(allCategories as Category[]);
+						// Find and select the existing category by name
+						const existing = allCategories.find(
+							(c) => c.name.toLowerCase() === data.name.toLowerCase()
+						);
+						if (existing) {
+							handleCategorySelect(existing.id);
+							return;
+						}
+					}
+				}
+				// Re-throw if not handled
+				throw err;
 			}
-			// Auto-select the new category
-			handleCategorySelect(result.id);
 		} else if (focusedCategory) {
 			// Update existing category
 			const result = await rpc.categories.updateCategory.execute({
@@ -303,10 +349,12 @@
 							focusedId={focusedCategoryId}
 							{displayMode}
 							{allowCreate}
+							{allowClear}
 							onCategoryFocus={handleCategoryFocus}
 							onCategorySelect={handleCategorySelect}
 							onCategoryEdit={handleCategoryEdit}
 							onCreateNew={handleCreateNew}
+							onClearCategory={handleClearCategory}
 						/>
 					</div>
 
@@ -342,10 +390,12 @@
 							focusedId={focusedCategoryId}
 							{displayMode}
 							{allowCreate}
+							{allowClear}
 							onCategoryFocus={handleCategoryFocus}
 							onCategorySelect={handleCategorySelect}
 							onCategoryEdit={handleCategoryEdit}
 							onCreateNew={handleCreateNew}
+							onClearCategory={handleClearCategory}
 						/>
 					</div>
 

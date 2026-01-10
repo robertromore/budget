@@ -5,6 +5,7 @@
 	import { cn } from "$lib/utils";
 	import Plus from "@lucide/svelte/icons/plus";
 	import Search from "@lucide/svelte/icons/search";
+	import X from "@lucide/svelte/icons/x";
 	import Fuse from "fuse.js";
 	import CategoryListItem from "./category-list-item.svelte";
 	import type { DisplayMode } from "./types";
@@ -20,10 +21,12 @@
 		focusedId?: number | null;
 		displayMode?: DisplayMode;
 		allowCreate?: boolean;
+		allowClear?: boolean;
 		onCategoryFocus: (categoryId: number) => void;
 		onCategorySelect: (categoryId: number) => void;
 		onCategoryEdit: (categoryId: number) => void;
 		onCreateNew: (searchValue: string) => void;
+		onClearCategory?: () => void;
 	}
 
 	let {
@@ -32,10 +35,12 @@
 		focusedId = null,
 		displayMode = "normal",
 		allowCreate = true,
+		allowClear = true,
 		onCategoryFocus,
 		onCategorySelect,
 		onCategoryEdit,
 		onCreateNew,
+		onClearCategory,
 	}: Props = $props();
 
 	let searchQuery = $state("");
@@ -306,6 +311,18 @@
 			bind:this={scrollContainer}
 			class="flex-1 space-y-6 overflow-auto p-4"
 		>
+			<!-- Clear category option - shown at top when a category is selected -->
+			{#if allowClear && selectedId !== null && !searchQuery.trim()}
+				<Button
+					variant="ghost"
+					class="text-destructive hover:text-destructive hover:bg-destructive/10 mb-4 w-full justify-start"
+					onclick={onClearCategory}
+				>
+					<X class="mr-2 h-4 w-4" />
+					Clear category
+				</Button>
+			{/if}
+
 			{#if noResults}
 				<!-- No results state -->
 				<div class="py-8 text-center">

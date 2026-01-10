@@ -27,6 +27,8 @@ interface ImportOptions {
 interface Props {
   data: ImportRow[];
   importOptions: ImportOptions;
+  /** ID of the account being imported into (used to filter account list for transfers) */
+  accountId?: number;
   onImportOptionsChange: (options: ImportOptions) => void;
   cleanupState: CleanupState | null;
   onCleanupStateChange: (state: CleanupState) => void;
@@ -38,6 +40,13 @@ interface Props {
     categoryName: string | null
   ) => void;
   onDescriptionUpdate?: (rowIndex: number, description: string | null) => void;
+  /** Handler for transfer account selection - converts row to a transfer */
+  onTransferAccountUpdate?: (
+    rowIndex: number,
+    accountId: number | null,
+    accountName: string | null,
+    rememberMapping?: boolean
+  ) => void;
   temporaryPayees?: string[];
   temporaryCategories?: string[];
   processorCount?: number;
@@ -52,6 +61,7 @@ interface Props {
 let {
   data,
   importOptions,
+  accountId,
   onImportOptionsChange,
   cleanupState,
   onCleanupStateChange,
@@ -59,6 +69,7 @@ let {
   onPayeeAliasCandidate,
   onCategoryUpdate,
   onDescriptionUpdate,
+  onTransferAccountUpdate,
   temporaryPayees,
   temporaryCategories,
   processorCount = 0,
@@ -77,7 +88,7 @@ let columnFilters = $state<ColumnFiltersState>([]);
 let columnVisibility = $state<VisibilityState>({});
 
 
-// Initialize selection with only valid rows
+// Initialize selection with valid, pending, and transfer_match rows
 let hasInitialized = $state(false);
 $effect(() => {
   if (!hasInitialized && data.length > 0) {
@@ -85,7 +96,12 @@ $effect(() => {
     const initialSelection: RowSelectionState = {};
     data.forEach((row) => {
       // Use row.rowIndex as key (matching old component behavior)
-      if (row.validationStatus === 'valid' || row.validationStatus === 'pending') {
+      // Include transfer_match rows since they represent valid reconciliation candidates
+      if (
+        row.validationStatus === 'valid' ||
+        row.validationStatus === 'pending' ||
+        row.validationStatus === 'transfer_match'
+      ) {
         initialSelection[String(row.rowIndex)] = true;
       }
     });
@@ -138,9 +154,11 @@ const columnActions: ImportPreviewColumnActions = $derived({
   onPayeeAliasCandidate,
   onCategoryUpdate,
   onDescriptionUpdate,
+  onTransferAccountUpdate,
   temporaryPayees,
   temporaryCategories,
   categorySuggestions: cleanupState?.categorySuggestions,
+  currentAccountId: accountId,
 });
 
 

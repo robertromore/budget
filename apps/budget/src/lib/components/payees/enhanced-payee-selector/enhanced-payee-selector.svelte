@@ -28,6 +28,7 @@
 		displayMode?: DisplayMode;
 		allowCreate?: boolean;
 		allowEdit?: boolean;
+		allowClear?: boolean;
 		buttonClass?: string;
 		placeholder?: string;
 	}
@@ -38,6 +39,7 @@
 		displayMode = "normal",
 		allowCreate = true,
 		allowEdit = true,
+		allowClear = true,
 		buttonClass = "",
 		placeholder = "Select payee...",
 	}: Props = $props();
@@ -71,6 +73,19 @@
 	const allPayees = $derived(
 		payeesState ? Array.from(payeesState.payees.values()) : [],
 	);
+
+	// Refresh payees from server when selector opens (to catch payees created elsewhere)
+	$effect(() => {
+		if (open && payeesState) {
+			rpc.payees.listPayees().execute().then((freshPayees) => {
+				if (freshPayees) {
+					payeesState.init(freshPayees as Payee[]);
+				}
+			}).catch((err) => {
+				console.error("Failed to refresh payees:", err);
+			});
+		}
+	});
 
 	// Selected payee (the one that will be returned as value)
 	const selectedPayee = $derived(allPayees.find((p) => p.id === value));
@@ -111,6 +126,14 @@
 		value = payeeId;
 		onValueChange(payeeId);
 		saveToRecentPayees(payeeId);
+		open = false;
+		resetState();
+	}
+
+	// Handle clear payee (set to null and close)
+	function handleClearPayee() {
+		value = null;
+		onValueChange(null);
 		open = false;
 		resetState();
 	}
@@ -260,10 +283,12 @@
 							focusedId={focusedPayeeId}
 							{displayMode}
 							{allowCreate}
+							{allowClear}
 							onPayeeFocus={handlePayeeFocus}
 							onPayeeSelect={handlePayeeSelect}
 							onPayeeEdit={handlePayeeEdit}
 							onCreateNew={handleCreateNew}
+							onClearPayee={handleClearPayee}
 						/>
 					</div>
 
@@ -297,10 +322,12 @@
 							focusedId={focusedPayeeId}
 							{displayMode}
 							{allowCreate}
+							{allowClear}
 							onPayeeFocus={handlePayeeFocus}
 							onPayeeSelect={handlePayeeSelect}
 							onPayeeEdit={handlePayeeEdit}
 							onCreateNew={handleCreateNew}
+							onClearPayee={handleClearPayee}
 						/>
 					</div>
 

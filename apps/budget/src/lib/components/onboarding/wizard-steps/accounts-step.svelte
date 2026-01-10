@@ -13,6 +13,7 @@ import TrendingUp from '@lucide/svelte/icons/trending-up';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
 import FileText from '@lucide/svelte/icons/file-text';
 import Home from '@lucide/svelte/icons/home';
+import Zap from '@lucide/svelte/icons/zap';
 
 const formData = $derived(onboardingWizardStore.typedFormData);
 
@@ -24,6 +25,7 @@ const accountTypes: { type: AccountToTrack; icon: typeof Landmark; description: 
   { type: 'hsa', icon: HeartPulse, description: 'Health Savings or Flexible Spending Account' },
   { type: 'loan', icon: FileText, description: 'Student loans, auto loans, personal loans' },
   { type: 'mortgage', icon: Home, description: 'Home mortgage tracking' },
+  { type: 'utility', icon: Zap, description: 'Track utility bills and usage (electric, gas, water)' },
 ];
 </script>
 

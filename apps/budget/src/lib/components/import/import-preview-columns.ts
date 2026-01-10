@@ -11,6 +11,7 @@ import { renderComponent } from "$lib/components/ui/data-table";
 import type { AliasCandidate, CategorySuggestion, ImportRow } from "$lib/types/import";
 import AlertCircle from "@lucide/svelte/icons/alert-circle";
 import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
+import ArrowRightLeft from "@lucide/svelte/icons/arrow-right-left";
 import CheckCircle from "@lucide/svelte/icons/check-circle";
 import Circle from "@lucide/svelte/icons/circle";
 import type { Column, ColumnDef } from "@tanstack/table-core";
@@ -24,6 +25,7 @@ import { DataTableColumnHeader } from "$lib/components/data-table/core";
 // Filter options for validation status
 const statusFilterOptions: FacetedFilterOption[] = [
   { label: "Valid", value: "valid", icon: CheckCircle },
+  { label: "Transfer Match", value: "transfer_match", icon: ArrowRightLeft },
   { label: "Pending", value: "pending", icon: Circle },
   { label: "Warning", value: "warning", icon: AlertTriangle },
   { label: "Invalid", value: "invalid", icon: AlertCircle },
@@ -66,9 +68,18 @@ export interface ImportPreviewColumnActions {
     categoryName: string | null
   ) => void;
   onDescriptionUpdate?: (rowIndex: number, description: string | null) => void;
+  /** Handler for transfer account selection */
+  onTransferAccountUpdate?: (
+    rowIndex: number,
+    accountId: number | null,
+    accountName: string | null,
+    rememberMapping?: boolean
+  ) => void;
   temporaryPayees?: string[];
   temporaryCategories?: string[];
   categorySuggestions?: CategorySuggestion[];
+  /** ID of the account being imported into (to exclude from transfer options) */
+  currentAccountId?: number;
 }
 
 // Re-export for consumers
@@ -77,7 +88,7 @@ export type { AliasCandidate };
 export function createImportPreviewColumns(
   actions: ImportPreviewColumnActions = {}
 ): ColumnDef<ImportRow>[] {
-  const { onPayeeUpdate, onPayeeAliasCandidate, onCategoryUpdate, onDescriptionUpdate, temporaryPayees, temporaryCategories, categorySuggestions } =
+  const { onPayeeUpdate, onPayeeAliasCandidate, onCategoryUpdate, onDescriptionUpdate, onTransferAccountUpdate, temporaryPayees, temporaryCategories, categorySuggestions, currentAccountId } =
     actions;
 
   return [
@@ -143,7 +154,7 @@ export function createImportPreviewColumns(
         }),
       cell: ({ row }) => renderComponent(ImportTableStatusCell, { row }),
       sortingFn: (rowA, rowB) => {
-        const statusOrder = { invalid: 0, warning: 1, pending: 2, valid: 3 };
+        const statusOrder = { invalid: 0, warning: 1, pending: 2, transfer_match: 3, valid: 4 };
         const statusA =
           statusOrder[rowA.original.validationStatus as keyof typeof statusOrder] || 0;
         const statusB =
@@ -204,7 +215,9 @@ export function createImportPreviewColumns(
           row,
           ...(onPayeeUpdate ? { onUpdate: onPayeeUpdate } : {}),
           ...(onPayeeAliasCandidate ? { onAliasCandidate: onPayeeAliasCandidate } : {}),
+          ...(onTransferAccountUpdate ? { onTransferUpdate: onTransferAccountUpdate } : {}),
           ...(temporaryPayees ? { temporaryPayees } : {}),
+          ...(currentAccountId ? { currentAccountId } : {}),
         }),
       accessorFn: (row) => row.normalizedData["payee"],
       enableColumnFilter: true,
