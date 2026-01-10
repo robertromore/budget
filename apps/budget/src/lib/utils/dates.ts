@@ -613,3 +613,34 @@ export function formatDateDisplay(
 export function getCurrentTimestamp(): string {
   return toISOString(currentDate);
 }
+
+/**
+ * Format a date as a human-readable relative time string (e.g., "5 minutes ago")
+ * @param date - JavaScript Date object to format
+ * @returns Human-readable relative time string
+ *
+ * @example
+ * formatTimeAgo(new Date(Date.now() - 60000)); // "1 minute ago"
+ * formatTimeAgo(new Date(Date.now() - 3600000)); // "1 hour ago"
+ * formatTimeAgo(new Date(Date.now() - 86400000)); // "1 day ago"
+ */
+export function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 60) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes === 1 ? "" : "s"} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}

@@ -219,19 +219,20 @@ export interface CalculatedMetrics {
 
 export function calculateAllMetrics(account: Account): CalculatedMetrics {
   const balance = account.balance || 0;
-  const absBalance = Math.abs(balance);
+  // With corrected balance semantics: negative = debt, positive = credit/overpayment
+  const debtAmount = balance < 0 ? Math.abs(balance) : 0;
   const debtLimit = account.debtLimit || 0;
 
   const metrics: CalculatedMetrics = {
-    currentBalance: absBalance,
+    currentBalance: debtAmount,
   };
 
   // Credit health metrics
   if (debtLimit > 0) {
     metrics.creditLimit = debtLimit;
-    metrics.availableCredit = debtLimit - absBalance;
-    metrics.creditUtilization = (absBalance / debtLimit) * 100;
-    metrics.isOverLimit = absBalance > debtLimit;
+    metrics.availableCredit = debtLimit - debtAmount;
+    metrics.creditUtilization = debtAmount > 0 ? (debtAmount / debtLimit) * 100 : 0;
+    metrics.isOverLimit = debtAmount > debtLimit;
   }
 
   // Payment date calculations
@@ -253,21 +254,21 @@ export function calculateAllMetrics(account: Account): CalculatedMetrics {
   }
 
   // Interest estimation
-  if (account.interestRate && absBalance > 0) {
+  if (account.interestRate && debtAmount > 0) {
     // Simple monthly interest calculation
     const monthlyRate = account.interestRate / 100 / 12;
-    metrics.estimatedInterestThisMonth = absBalance * monthlyRate;
+    metrics.estimatedInterestThisMonth = debtAmount * monthlyRate;
   }
 
   // Payoff timeline
-  if (account.minimumPayment && absBalance > 0 && account.interestRate) {
+  if (account.minimumPayment && debtAmount > 0 && account.interestRate) {
     // Simplified payoff calculation (doesn't account for decreasing balance)
     const monthlyRate = account.interestRate / 100 / 12;
     const minPayment = account.minimumPayment;
 
-    if (minPayment > absBalance * monthlyRate) {
+    if (minPayment > debtAmount * monthlyRate) {
       // Can actually pay off
-      let remaining = absBalance;
+      let remaining = debtAmount;
       let months = 0;
       const maxMonths = 600; // 50 years max
 

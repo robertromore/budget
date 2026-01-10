@@ -543,26 +543,34 @@ export function calculateBalanceHistory(
 }
 
 /**
- * Get current balance from account or estimate from transactions
+ * Get current debt balance from account for payoff calculations.
+ *
+ * With the corrected balance semantics:
+ * - Negative balance = debt (you owe money) → return the absolute value as debt amount
+ * - Positive balance = credit/overpayment → return 0 (no debt to pay off)
+ * - Zero balance = no debt → return 0
  */
 export function getCurrentBalance(
   account: Account,
   transactions: TransactionsFormat[]
 ): number {
-  // If account has a balance, use it
+  // If account has a balance, check if it's debt (negative)
   if (account.balance !== undefined && account.balance !== null) {
-    return Math.abs(account.balance);
+    // Negative balance means debt - return the absolute value as the debt amount
+    // Positive or zero balance means no debt (credit or paid off)
+    return account.balance < 0 ? Math.abs(account.balance) : 0;
   }
 
-  // Otherwise calculate from transactions
-  let balance = 0;
+  // Otherwise estimate from transactions
+  // Charges (negative) increase debt, payments (positive) decrease debt
+  let debt = 0;
   for (const tx of transactions) {
     if (tx.amount > 0) {
-      balance -= tx.amount; // Payments reduce balance
+      debt -= tx.amount; // Payments reduce debt
     } else {
-      balance += Math.abs(tx.amount); // Charges increase balance
+      debt += Math.abs(tx.amount); // Charges increase debt
     }
   }
 
-  return Math.max(0, balance);
+  return Math.max(0, debt);
 }

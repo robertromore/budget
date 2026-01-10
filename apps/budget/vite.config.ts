@@ -4,6 +4,23 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  server: {
+    watch: {
+      // Ignore database files to prevent constant rebuilds from DB operations
+      ignored: [
+        "**/drizzle/db/**",
+        "**/*.db",
+        "**/*.db-journal",
+        "**/*.db-wal",
+        "**/*.db-shm",
+        "**/*.sqlite",
+        "**/*.sqlite-journal",
+        "**/*.sqlite-wal",
+        "**/*.sqlite-shm",
+        "**/data/**/*.db",
+      ],
+    },
+  },
   build: {
     chunkSizeWarningLimit: 1000, // Increase warning threshold to 1MB
     rollupOptions: {

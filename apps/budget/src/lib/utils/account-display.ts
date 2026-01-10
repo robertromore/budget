@@ -46,6 +46,10 @@ export function formatAccountBalance(account: Account): FormattedBalance {
 
 /**
  * Calculate debt account-specific metrics
+ *
+ * With the corrected balance semantics:
+ * - Negative balance = debt (you owe money)
+ * - Positive balance = credit/overpayment (no debt)
  */
 export function calculateDebtMetrics(account: Account): DebtAccountMetrics | null {
   if (!account.accountType || !isDebtAccount(account.accountType)) {
@@ -53,22 +57,24 @@ export function calculateDebtMetrics(account: Account): DebtAccountMetrics | nul
   }
 
   const balance = account.balance || 0;
-  const absBalance = Math.abs(balance);
+  // Debt amount is the absolute value of negative balances only
+  // Positive balances mean credit (no debt)
+  const debtAmount = balance < 0 ? Math.abs(balance) : 0;
   const debtLimit = account.debtLimit || 0;
 
   const metrics: DebtAccountMetrics = {};
 
   if (account.accountType === "credit_card" && debtLimit > 0) {
     // Credit card metrics
-    metrics.availableCredit = debtLimit - absBalance;
-    metrics.creditUtilization = (absBalance / debtLimit) * 100;
-    metrics.isOverLimit = absBalance > debtLimit;
+    metrics.availableCredit = debtLimit - debtAmount;
+    metrics.creditUtilization = debtAmount > 0 ? (debtAmount / debtLimit) * 100 : 0;
+    metrics.isOverLimit = debtAmount > debtLimit;
   }
 
   if (account.accountType === "loan" && debtLimit > 0) {
     // Loan metrics
-    metrics.remainingBalance = absBalance;
-    metrics.payoffProgress = ((debtLimit - absBalance) / debtLimit) * 100;
+    metrics.remainingBalance = debtAmount;
+    metrics.payoffProgress = debtAmount > 0 ? ((debtLimit - debtAmount) / debtLimit) * 100 : 100;
   }
 
   return metrics;
