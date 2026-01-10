@@ -5,71 +5,22 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1766602593299,
-      "tag": "0000_amazing_avengers",
+      "when": 1767972655094,
+      "tag": "0000_hard_flatman",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1766606141878,
-      "tag": "0001_perpetual_riptide",
+      "when": 1767981604093,
+      "tag": "0001_silly_epoch",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "6",
-      "when": 1766867230529,
-      "tag": "0002_right_gunslinger",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1766877376854,
-      "tag": "0003_sleepy_infant_terrible",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1766883861376,
-      "tag": "0004_hot_gauntlet",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1766891001653,
-      "tag": "0005_thick_shape",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1767151926356,
-      "tag": "0006_last_bill_hollister",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1767153563948,
-      "tag": "0007_talented_fixer",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1767577522917,
-      "tag": "0008_redundant_shape",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1767626225250,
-      "tag": "0009_useful_red_wolf",
+      "when": 1767985763906,
+      "tag": "0002_fine_crusher_hogan",
       "breakpoints": true
     }
   ]
