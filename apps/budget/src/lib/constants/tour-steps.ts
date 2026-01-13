@@ -94,9 +94,13 @@ async function ensureDemoAccountSetup(route?: string) {
 }
 
 /**
- * Import wizard step order
+ * Import wizard step order (aligned with multi-file flow)
+ * - upload: file selection
+ * - processing: column mapping, cleanup, preview per file
+ * - review: combined review before import
+ * - complete: import finished
  */
-type ImportWizardStep = "upload" | "map-columns" | "preview" | "review-schedules" | "review-entities" | "complete";
+type ImportWizardStep = "upload" | "processing" | "review" | "complete";
 
 /**
  * Helper: Advance import wizard to a specific step with animation
@@ -108,10 +112,8 @@ type ImportWizardStep = "upload" | "map-columns" | "preview" | "review-schedules
 async function advanceImportWizardTo(targetStep: ImportWizardStep) {
   const stepOrder: ImportWizardStep[] = [
     "upload",
-    "map-columns",
-    "preview",
-    "review-schedules",
-    "review-entities",
+    "processing",
+    "review",
     "complete",
   ];
   const targetIndex = stepOrder.indexOf(targetStep);
@@ -133,20 +135,19 @@ async function advanceImportWizardTo(targetStep: ImportWizardStep) {
   for (let i = startIndex; i <= targetIndex; i++) {
     const step = stepOrder[i];
     if (step === "upload") {
-      // Trigger demo import (this advances past upload to map-columns)
+      // Trigger demo import - this adds file and starts multi-file processing
       // Wait time must exceed DEMO_IMPORT_INTERNAL_DELAY for data to load
       demoMode.triggerDemoImport();
       await sleep(TOUR_TIMING.DEMO_IMPORT_WAIT);
-    } else if (step === "map-columns") {
-      // Map columns is auto-shown after demo import, just wait for DOM rendering
+    } else if (step === "processing") {
+      // Processing step is auto-shown after demo import, just wait for DOM rendering
       await sleep(TOUR_TIMING.DOM_RENDER_BUFFER);
-    } else if (step === "preview") {
-      demoMode.triggerAdvanceWizard("preview");
+    } else if (step === "review") {
+      // Advance to review step
+      demoMode.triggerAdvanceWizard("review");
       await sleep(TOUR_TIMING.WIZARD_STEP_TRANSITION);
-      demoMode.triggerOpenCleanupSheet();
-      await sleep(TOUR_TIMING.SHEET_OPEN_DELAY);
-    } else {
-      demoMode.triggerAdvanceWizard(step);
+    } else if (step === "complete") {
+      demoMode.triggerAdvanceWizard("complete");
       await sleep(TOUR_TIMING.WIZARD_STEP_TRANSITION);
     }
   }
@@ -375,10 +376,8 @@ export const ACCOUNT_TOUR_STEP_IDS = {
   SETTINGS_TAB: "settings-tab",
   IMPORT_INTRO: "import-intro",
   IMPORT_UPLOAD: "demo-import-upload",
-  IMPORT_MAPPING: "demo-import-mapping",
-  IMPORT_PREVIEW: "demo-import-preview",
-  IMPORT_SCHEDULES: "demo-import-schedules",
-  IMPORT_ENTITIES: "demo-import-entities",
+  IMPORT_PROCESSING: "demo-import-processing",
+  IMPORT_REVIEW: "demo-import-review",
   IMPORT_COMPLETE: "demo-import-complete",
   TOUR_COMPLETE: "account-tour-complete",
 } as const;
@@ -754,7 +753,7 @@ export const IMPORT_DEEP_DIVE: TourStep[] = [
     targetSelector: "[data-tour-id='import-upload-zone']",
     title: "Step 1: Upload File",
     description:
-      "Start by uploading a CSV or QFX file exported from your bank. Just drag and drop or click to browse.",
+      "Start by uploading a CSV or QFX file exported from your bank. Just drag and drop or click to browse. You can upload multiple files at once.",
     placement: "right",
     highlightPadding: 8,
     chapter: "account-page/import",
@@ -763,61 +762,31 @@ export const IMPORT_DEEP_DIVE: TourStep[] = [
     },
   },
   {
-    id: ACCOUNT_TOUR_STEP_IDS.IMPORT_MAPPING,
-    targetSelector: "[data-tour-id='import-column-mapping']",
-    title: "Step 2: Map Columns",
+    id: ACCOUNT_TOUR_STEP_IDS.IMPORT_PROCESSING,
+    targetSelector: "[data-tour-id='import-upload-zone']",
+    title: "Step 2: Process Files",
     description:
-      "We automatically detect column types, but you can adjust the mapping if needed. Match date, amount, and description columns.",
+      "Each file goes through column mapping, payee cleanup, and preview. The system automatically detects columns and groups similar payees together.",
     placement: "right",
     highlightPadding: 8,
     chapter: "account-page/import",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=import");
-      await advanceImportWizardTo("map-columns");
+      await advanceImportWizardTo("processing");
     },
   },
   {
-    id: ACCOUNT_TOUR_STEP_IDS.IMPORT_PREVIEW,
-    targetSelector: "[data-tour-id='import-cleanup-sheet']",
-    title: "Step 3: Preview & Clean Up",
+    id: ACCOUNT_TOUR_STEP_IDS.IMPORT_REVIEW,
+    targetSelector: "[data-tour-id='import-upload-zone']",
+    title: "Step 3: Review & Import",
     description:
-      "The payee cleanup tool groups similar payees together. You can accept suggestions, merge payees, or enter custom names. This helps keep your data organized.",
-    placement: "left",
-    highlightPadding: 12,
-    chapter: "account-page/import",
-    setup: async () => {
-      await ensureDemoAccountSetup("/accounts/demo-checking?tab=import");
-      await advanceImportWizardTo("preview");
-      // Update the target rect now that the sheet is fully open
-      spotlightTour.updateTargetRect();
-    },
-  },
-  {
-    id: ACCOUNT_TOUR_STEP_IDS.IMPORT_SCHEDULES,
-    targetSelector: "[data-tour-id='import-schedules']",
-    title: "Step 4: Match Schedules",
-    description:
-      "We detect transactions that might match your recurring schedules. Link them to avoid duplicates and keep your schedules in sync.",
+      "Review all transactions from all files before importing. You can go back to edit individual files if needed.",
     placement: "right",
     highlightPadding: 8,
     chapter: "account-page/import",
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=import");
-      await advanceImportWizardTo("review-schedules");
-    },
-  },
-  {
-    id: ACCOUNT_TOUR_STEP_IDS.IMPORT_ENTITIES,
-    targetSelector: "[data-tour-id='import-entities']",
-    title: "Step 5: Review New Entities",
-    description:
-      "Review any new payees or categories that will be created. You can skip creation or merge with existing ones.",
-    placement: "right",
-    highlightPadding: 8,
-    chapter: "account-page/import",
-    setup: async () => {
-      await ensureDemoAccountSetup("/accounts/demo-checking?tab=import");
-      await advanceImportWizardTo("review-entities");
+      await advanceImportWizardTo("review");
     },
   },
   {

@@ -16,13 +16,17 @@ import type { Schedule } from "$lib/schema/schedules";
 // Types
 // =============================================================================
 
+// Import demo steps aligned with multi-file flow
+// - idle: no import in progress
+// - upload: globalStep === 'upload' (file selection)
+// - processing: globalStep === 'processing' (includes mapping, cleanup, preview per file)
+// - review: globalStep === 'review' (combined review before import)
+// - complete: globalStep === 'complete' (import finished)
 export type ImportDemoStep =
   | "idle"
   | "upload"
-  | "map-columns"
-  | "preview"
-  | "review-schedules"
-  | "review-entities"
+  | "processing"
+  | "review"
   | "complete";
 
 export interface DemoTransaction {
@@ -736,7 +740,7 @@ class DemoModeState {
     this.#importStep = "upload";
     // Simulate processing delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    this.#importStep = "map-columns";
+    this.#importStep = "processing";
   }
 
   /**
@@ -746,10 +750,8 @@ class DemoModeState {
     const steps: ImportDemoStep[] = [
       "idle",
       "upload",
-      "map-columns",
-      "preview",
-      "review-schedules",
-      "review-entities",
+      "processing",
+      "review",
       "complete",
     ];
 
@@ -766,10 +768,8 @@ class DemoModeState {
     const steps: ImportDemoStep[] = [
       "idle",
       "upload",
-      "map-columns",
-      "preview",
-      "review-schedules",
-      "review-entities",
+      "processing",
+      "review",
       "complete",
     ];
 
