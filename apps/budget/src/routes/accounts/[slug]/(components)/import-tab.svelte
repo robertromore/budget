@@ -1,7 +1,6 @@
 <script lang="ts">
+import PayeeCleanupStep from '$lib/components/import/cleanup/payee-cleanup-step.svelte';
 import ColumnMapper from '$lib/components/import/column-mapper.svelte';
-import EntityReview from '$lib/components/import/entity-review.svelte';
-import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
 import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
 import {
@@ -13,13 +12,11 @@ import {
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { bulkCreateCategoryAliases } from '$lib/query/category-aliases';
 import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
-import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
-import { Slider } from '$lib/components/ui/slider';
 import { Progress } from '$lib/components/ui/progress';
 import type { ImportProfile } from '$lib/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
@@ -33,8 +30,8 @@ import type {
 	ColumnMapping,
 	ImportPreviewData,
 	ImportResult,
-	ParseResult,
-	ScheduleMatch
+	ImportRow,
+	ParseResult
 } from '$lib/types/import';
 import {
 	PAYMENT_PROCESSORS,
@@ -42,7 +39,6 @@ import {
 	detectPaymentProcessor
 } from '$lib/utils/import/payment-processor-filter';
 import { arePayeesSimilar } from '$lib/utils/payee-matching';
-import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import Circle from '@lucide/svelte/icons/circle';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Save from '@lucide/svelte/icons/save';
@@ -67,30 +63,18 @@ const workspaceState = currentWorkspace.get();
 const categoryState = CategoriesState.get();
 const payeeState = PayeesState.get();
 
-type Step =
-	| 'upload'
-	| 'map-columns'
-	| 'preview'
-	| 'review-schedules'
-	| 'review-entities'
-	| 'complete';
+// Step only tracks top-level state: upload (multi-file flow handles all sub-steps) or complete
+type Step = 'upload' | 'complete';
 
 let currentStep = $state<Step>('upload');
-let selectedFile = $state<File | null>(null);
 
 // Multi-file import state
 const multiFileState = createMultiFileImportState();
-let fileData = $state<{ data: string; name: string; type: string } | null>(null);
 let parseResults = $state<ParseResult | null>(null);
-let rawCSVData = $state<Record<string, any>[] | null>(null);
 let columnMapping = $state<ColumnMapping | null>(null);
-let entityPreview = $state<ImportPreviewData | null>(null);
 let importResult = $state<ImportResult | null>(null);
 let isProcessing = $state(false);
 let error = $state<string | null>(null);
-let selectedRows = $state<Set<number>>(new Set());
-let scheduleMatches = $state<ScheduleMatch[]>([]);
-let scheduleMatchThreshold = $state(0.75);
 let cleanupState = $state<CleanupState | null>(null);
 let cleanupSheetOpen = $state(false);
 
@@ -104,26 +88,6 @@ let multiFileProcessingMessage = $state('');
 
 // Multi-file cleanup state (per-file)
 let multiFileCleanupState = $state<CleanupState | null>(null);
-
-// Filter cleanupState to remove payee groups where ALL members are transfers
-// This ensures groups without remaining non-transfer transactions are hidden from cleanup UI
-const filteredCleanupState = $derived.by(() => {
-	if (!cleanupState) return null;
-
-	// Filter out payee groups where ALL members have been set as transfers
-	const filteredPayeeGroups = cleanupState.payeeGroups.filter((group) => {
-		// Keep the group if at least one member is NOT a transfer
-		return group.members.some((member) => {
-			const override = entityOverrides[member.rowIndex];
-			return !override?.transferAccountId;
-		});
-	});
-
-	return {
-		...cleanupState,
-		payeeGroups: filteredPayeeGroups
-	};
-});
 
 // Filter multi-file cleanup state to remove payee groups where ALL members are transfers
 const filteredMultiFileCleanupState = $derived.by(() => {
@@ -149,6 +113,10 @@ const filteredMultiFileCleanupState = $derived.by(() => {
 const multiFilePreviewData = $derived.by(() => {
 	const currentFile = multiFileState.currentFile;
 	if (!currentFile || !currentFile.validatedRows) return null;
+
+	// Debug: log the raw validated rows payee values
+	const samplePayees = currentFile.validatedRows.slice(0, 5).map(r => r.normalizedData['payee']);
+	console.log('[PreviewData] Deriving from validatedRows, sample payees:', samplePayees);
 
 	const overrides = currentFile.entityOverrides || {};
 
@@ -216,42 +184,6 @@ let saveProfileDialog = $state({
 
 // Pre-set account ID from props
 const selectedAccountId = $derived(accountId.toString());
-
-// Filter schedule matches based on threshold
-const filteredScheduleMatches = $derived(
-	scheduleMatches.filter((match) => match.score >= scheduleMatchThreshold)
-);
-
-// Group schedule matches by schedule ID
-const groupedScheduleMatches = $derived.by(() => {
-	const grouped = new Map<number, { scheduleName: string; matches: ScheduleMatch[] }>();
-
-	filteredScheduleMatches.forEach((match) => {
-		if (!grouped.has(match.scheduleId)) {
-			grouped.set(match.scheduleId, {
-				scheduleName: match.scheduleName,
-				matches: []
-			});
-		}
-		grouped.get(match.scheduleId)!.matches.push(match);
-	});
-
-	return Array.from(grouped.entries())
-		.map(([scheduleId, data]) => {
-			const sortedMatches = data.matches.sort(
-				(a, b) =>
-					new Date(a.transactionData.date).getTime() - new Date(b.transactionData.date).getTime()
-			);
-			const avgScore = sortedMatches.reduce((sum, m) => sum + m.score, 0) / sortedMatches.length;
-			return {
-				scheduleId,
-				scheduleName: data.scheduleName,
-				matches: sortedMatches,
-				avgScore
-			};
-		})
-		.sort((a, b) => b.avgScore - a.avgScore);
-});
 
 // Entity overrides
 let entityOverrides = $state<
@@ -695,42 +627,6 @@ function cancelProcessorFilter() {
 	processorFilterDialog.open = false;
 }
 
-// Schedule match handlers
-function handleScheduleMatchToggle(rowIndex: number, selected: boolean) {
-	scheduleMatches = scheduleMatches.map((match) =>
-		match.rowIndex === rowIndex ? { ...match, selected } : match
-	);
-}
-
-function getConfidenceBadgeVariant(
-	confidence: string
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-	switch (confidence) {
-		case 'exact':
-			return 'default';
-		case 'high':
-			return 'secondary';
-		default:
-			return 'outline';
-	}
-}
-
-function getScoreBorderColor(score: number): string {
-	if (score >= 0.9) return 'border-l-4 border-l-green-500';
-	if (score >= 0.8) return 'border-l-4 border-l-green-400';
-	if (score >= 0.75) return 'border-l-4 border-l-yellow-500';
-	if (score >= 0.65) return 'border-l-4 border-l-orange-500';
-	return 'border-l-4 border-l-red-500';
-}
-
-function getScoreAllBorderColor(score: number): string {
-	if (score >= 0.9) return 'border-green-500 border-l-4';
-	if (score >= 0.8) return 'border-green-400 border-l-4';
-	if (score >= 0.75) return 'border-yellow-500 border-l-4';
-	if (score >= 0.65) return 'border-orange-500 border-l-4';
-	return 'border-red-500 border-l-4';
-}
-
 // Category update handlers
 function handleCategoryUpdate(
 	rowIndex: number,
@@ -884,6 +780,9 @@ let bulkUpdateDialog = $state({
 	matchesByCategory: [] as Array<{ item: any }>
 });
 
+// Track whether bulk update is for multi-file mode
+let bulkUpdateIsMultiFile = $state(false);
+
 function handleCategoryUpdateWithSimilar(
 	rowIndex: number,
 	categoryId: number | null,
@@ -939,6 +838,7 @@ function handleCategoryUpdateWithSimilar(
 	}
 
 	if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
+		bulkUpdateIsMultiFile = false;
 		bulkUpdateDialog = {
 			open: true,
 			rowIndex,
@@ -956,8 +856,17 @@ function handleCategoryUpdateWithSimilar(
 	}
 }
 
+// Helper to apply category update in either single-file or multi-file mode
+function applyBulkCategoryUpdate(rowIndex: number, categoryId: number | null, categoryName: string | null) {
+	if (bulkUpdateIsMultiFile) {
+		handleMultiFileCategoryUpdate(rowIndex, categoryId, categoryName);
+	} else {
+		handleCategoryUpdate(rowIndex, categoryId, categoryName);
+	}
+}
+
 function confirmBulkUpdateJustOne() {
-	handleCategoryUpdate(
+	applyBulkCategoryUpdate(
 		bulkUpdateDialog.rowIndex,
 		bulkUpdateDialog.categoryId,
 		bulkUpdateDialog.categoryName
@@ -968,7 +877,7 @@ function confirmBulkUpdateJustOne() {
 function confirmBulkUpdateByPayee() {
 	if (!bulkUpdateDialog.matchesByPayee) return;
 
-	handleCategoryUpdate(
+	applyBulkCategoryUpdate(
 		bulkUpdateDialog.rowIndex,
 		bulkUpdateDialog.categoryId,
 		bulkUpdateDialog.categoryName
@@ -976,7 +885,7 @@ function confirmBulkUpdateByPayee() {
 
 	let updatedCount = 0;
 	bulkUpdateDialog.matchesByPayee.forEach((match) => {
-		handleCategoryUpdate(
+		applyBulkCategoryUpdate(
 			match.item.rowIndex,
 			bulkUpdateDialog.categoryId,
 			bulkUpdateDialog.categoryName
@@ -1002,7 +911,7 @@ function confirmBulkUpdateByPayee() {
 function confirmBulkUpdateByCategory() {
 	if (!bulkUpdateDialog.matchesByCategory) return;
 
-	handleCategoryUpdate(
+	applyBulkCategoryUpdate(
 		bulkUpdateDialog.rowIndex,
 		bulkUpdateDialog.categoryId,
 		bulkUpdateDialog.categoryName
@@ -1010,7 +919,7 @@ function confirmBulkUpdateByCategory() {
 
 	let updatedCount = 0;
 	bulkUpdateDialog.matchesByCategory.forEach((match) => {
-		handleCategoryUpdate(
+		applyBulkCategoryUpdate(
 			match.item.rowIndex,
 			bulkUpdateDialog.categoryId,
 			bulkUpdateDialog.categoryName
@@ -1034,7 +943,7 @@ function confirmBulkUpdateByCategory() {
 }
 
 function confirmBulkUpdateBoth() {
-	handleCategoryUpdate(
+	applyBulkCategoryUpdate(
 		bulkUpdateDialog.rowIndex,
 		bulkUpdateDialog.categoryId,
 		bulkUpdateDialog.categoryName
@@ -1051,7 +960,7 @@ function confirmBulkUpdateBoth() {
 
 	let updatedCount = 0;
 	uniqueMatches.forEach((match) => {
-		handleCategoryUpdate(
+		applyBulkCategoryUpdate(
 			match.item.rowIndex,
 			bulkUpdateDialog.categoryId,
 			bulkUpdateDialog.categoryName
@@ -1133,89 +1042,6 @@ async function applySmartCategorizationToFile(fileId: string, rows: ImportRow[])
 	return rows;
 }
 
-// File handling
-async function handleFileSelected(file: File) {
-	selectedFile = file;
-	isProcessing = true;
-	error = null;
-	matchedProfile = null;
-	detectedMapping = null;
-	csvHeaders = [];
-
-	try {
-		const arrayBuffer = await file.arrayBuffer();
-		const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-		fileData = {
-			data: base64,
-			name: file.name,
-			type: file.type
-		};
-
-		const formData = new FormData();
-		formData.append('importFile', file);
-
-		const url = new URL('/api/import/upload', window.location.origin);
-		url.searchParams.set('accountId', selectedAccountId);
-		url.searchParams.set('reverseAmountSigns', reverseAmountSigns.toString());
-
-		const response = await fetch(url.toString(), {
-			method: 'POST',
-			body: formData
-		});
-
-		const result = await response.json();
-
-		if (response.ok) {
-			parseResults = result;
-			rawCSVData = result.rows.map((row: any) => row.rawData);
-
-			if (result.scheduleMatches) {
-				scheduleMatches = result.scheduleMatches;
-			}
-
-			await applySmartCategorization();
-
-			const fileExtension = file.name.split('.').pop()?.toLowerCase();
-			if (fileExtension === 'csv' && rawCSVData && rawCSVData.length > 0) {
-				csvHeaders = Object.keys(rawCSVData[0] ?? {});
-
-				try {
-					const profile = await trpc().importProfileRoutes.findMatch.query({
-						headers: csvHeaders,
-						filename: file.name,
-						accountId: accountId
-					});
-
-					if (profile) {
-						matchedProfile = profile;
-						detectedMapping = profile.mapping;
-
-						trpc().importProfileRoutes.recordUsage.mutate({ id: profile.id });
-					}
-				} catch (profileErr) {
-					console.warn('Failed to check for matching import profile:', profileErr);
-				}
-			}
-
-			if (fileExtension === 'qif' || fileExtension === 'ofx' || fileExtension === 'qfx') {
-				currentStep = 'preview';
-			} else {
-				currentStep = 'map-columns';
-			}
-		} else {
-			error = result.error || 'Failed to parse file';
-		}
-	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to parse file';
-	} finally {
-		isProcessing = false;
-	}
-}
-
-function handleFileRejected(errorMsg: string) {
-	error = errorMsg;
-}
-
 // Multi-file import handlers
 async function handleMultiFileProcessing() {
 	const currentFile = multiFileState.currentFile;
@@ -1258,7 +1084,7 @@ async function handleMultiFileProcessing() {
 
 		// The API returns ParseResult directly at the top level
 		// For CSV/Excel files, we need column mapping
-		const needsMapping = currentFile.needsColumnMapping;
+		const needsMapping = currentFile.needsColumnMapping ?? false;
 		let detectedProfileMapping: ColumnMapping | undefined;
 
 		// Try to find a matching import profile for CSV files (to pre-populate the mapper)
@@ -1274,6 +1100,7 @@ async function handleMultiFileProcessing() {
 				if (profile) {
 					console.log('[MultiFileImport] Found matching profile:', profile.name, '- will pre-populate mapper');
 					detectedProfileMapping = profile.mapping as ColumnMapping;
+					matchedProfile = profile; // Track that a profile was used (hides "Save Profile" on completion)
 					// Record profile usage
 					trpc().importProfileRoutes.recordUsage.mutate({ id: profile.id });
 				}
@@ -1297,16 +1124,13 @@ async function handleMultiFileProcessing() {
 
 		console.log('[MultiFileImport] Parse complete, needsMapping:', needsMapping, 'rows:', result.rows?.length, 'hasProfileMapping:', !!detectedProfileMapping);
 
-		// If auto-detected format (OFX, QIF, etc.), mark as ready and move to next
+		// If auto-detected format (OFX, QIF, etc.), go to cleanup step first
 		if (!needsMapping) {
-			multiFileState.markFileReady(currentFile.id);
-			if (multiFileState.isLastFile) {
-				multiFileState.setGlobalStep('review');
-			} else {
-				multiFileState.nextFile();
-				// Process next file
-				await handleMultiFileProcessing();
-			}
+			// Apply smart categorization before cleanup
+			const enrichedRows = await applySmartCategorizationToFile(currentFile.id, result.rows || []);
+			multiFileState.setValidatedRows(currentFile.id, enrichedRows);
+			// Go to cleanup step for payee review
+			multiFileState.updateFileState(currentFile.id, { status: 'cleanup' });
 		}
 		// If needs mapping, the UI will show the mapping step
 	} catch (err) {
@@ -1366,8 +1190,16 @@ async function handleMultiFileColumnMapping(fileId: string, mapping: ColumnMappi
 		multiFileState.setColumnMapping(fileId, mapping);
 		// Store the enriched rows with category suggestions
 		multiFileState.setValidatedRows(fileId, enrichedRows);
-		// Go to preview step so user can edit transactions
-		multiFileState.updateFileState(fileId, { status: 'preview' });
+
+		// Preserve mapping info for "Save Import Profile" feature on completion
+		// Use the first file's mapping and headers
+		if (!columnMapping) {
+			columnMapping = mapping;
+			csvHeaders = file.parseResult?.columns || [];
+		}
+
+		// Go to cleanup step so user can review payee groupings before preview
+		multiFileState.updateFileState(fileId, { status: 'cleanup' });
 	} catch (err) {
 		multiFileState.markFileError(fileId, err instanceof Error ? err.message : 'Unknown error');
 		toast.error(`Failed to map columns for ${file.fileName}`);
@@ -1427,6 +1259,77 @@ function handleMultiFileCategoryUpdate(rowIndex: number, categoryId: number | nu
 	multiFileState.setEntityOverrides(currentFile.id, overrides);
 }
 
+function handleMultiFileCategoryUpdateWithSimilar(
+	rowIndex: number,
+	categoryId: number | null,
+	categoryName: string | null
+) {
+	const currentFile = multiFileState.currentFile;
+	if (!currentFile || !currentFile.validatedRows) return;
+
+	const isClearingCategory = !categoryName || categoryName.trim() === '';
+	const selectedRow = currentFile.validatedRows.find((r) => r.rowIndex === rowIndex);
+	if (!selectedRow) return;
+
+	const payeeName = selectedRow.normalizedData['payee'];
+	if (!payeeName || typeof payeeName !== 'string') {
+		handleMultiFileCategoryUpdate(rowIndex, categoryId, categoryName);
+		return;
+	}
+
+	const overrides = currentFile.entityOverrides || {};
+	const previousCategoryName =
+		overrides[rowIndex]?.categoryName || selectedRow.normalizedData['category'] || null;
+	const hasRealPreviousCategory = previousCategoryName && previousCategoryName.trim() !== '';
+
+	if (isClearingCategory && !hasRealPreviousCategory) {
+		handleMultiFileCategoryUpdate(rowIndex, categoryId, categoryName);
+		return;
+	}
+
+	const matchesByPayee = currentFile.validatedRows
+		.filter((row) => {
+			if (row.rowIndex === rowIndex) return false;
+			const rowPayee = row.normalizedData['payee'];
+			if (!rowPayee || typeof rowPayee !== 'string') return false;
+			return arePayeesSimilar(rowPayee, payeeName);
+		})
+		.map((item) => ({ item }));
+
+	let matchesByCategory: Array<{ item: any }> = [];
+
+	if (hasRealPreviousCategory) {
+		matchesByCategory = currentFile.validatedRows
+			.filter((item) => {
+				if (item.rowIndex === rowIndex) return false;
+				// Exclude rows that are transfers
+				const override = overrides[item.rowIndex];
+				if (override?.transferAccountId) return false;
+				const rowCategory = override?.categoryName || item.normalizedData['category'];
+				return rowCategory === previousCategoryName;
+			})
+			.map((item) => ({ item }));
+	}
+
+	if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
+		bulkUpdateIsMultiFile = true;
+		bulkUpdateDialog = {
+			open: true,
+			rowIndex,
+			categoryId,
+			categoryName,
+			previousCategoryName,
+			payeeName,
+			matchCountByPayee: matchesByPayee.length,
+			matchCountByCategory: matchesByCategory.length,
+			matchesByPayee,
+			matchesByCategory
+		};
+	} else {
+		handleMultiFileCategoryUpdate(rowIndex, categoryId, categoryName);
+	}
+}
+
 function handleMultiFileDescriptionUpdate(rowIndex: number, description: string | null) {
 	const currentFile = multiFileState.currentFile;
 	if (!currentFile) return;
@@ -1449,15 +1352,27 @@ function handleMultiFileTransferUpdate(
 	if (!currentFile) return;
 
 	const overrides = { ...(currentFile.entityOverrides || {}) };
-	overrides[rowIndex] = {
-		...(overrides[rowIndex] || {}),
-		// Clear payee when setting transfer
-		payeeId: null,
-		payeeName: null,
-		transferAccountId,
-		transferAccountName,
-		rememberTransferMapping: rememberMapping
-	};
+	if (transferAccountId) {
+		// Setting a transfer - clear payee and category
+		overrides[rowIndex] = {
+			...(overrides[rowIndex] || {}),
+			payeeId: null,
+			payeeName: null,
+			categoryId: null,
+			categoryName: null,
+			transferAccountId,
+			transferAccountName,
+			rememberTransferMapping: rememberMapping
+		};
+	} else {
+		// Clearing a transfer - just remove transfer fields, keep everything else
+		overrides[rowIndex] = {
+			...(overrides[rowIndex] || {}),
+			transferAccountId: null,
+			transferAccountName: null,
+			rememberTransferMapping: false
+		};
+	}
 	multiFileState.setEntityOverrides(currentFile.id, overrides);
 }
 
@@ -1486,8 +1401,12 @@ async function handleMultiFileImport() {
 						...row.normalizedData,
 						payeeId: override.payeeId,
 						payeeName: override.payeeName,
+						// Also set 'payee' - the import orchestrator reads this field for payee matching
+						payee: override.payeeName ?? row.normalizedData['payee'],
 						categoryId: override.categoryId,
 						categoryName: override.categoryName,
+						// Also set 'category' - the import orchestrator reads this field for category matching
+						category: override.categoryName ?? row.normalizedData['category'],
 						description: override.description,
 						transferAccountId: override.transferAccountId,
 						transferAccountName: override.transferAccountName,
@@ -1564,9 +1483,14 @@ async function handleMultiFileImport() {
 		multiFileState.setGlobalStep('complete');
 		currentStep = 'complete';
 
-		// Invalidate queries
+		// Invalidate queries - must include payees and categories since import creates new entities
 		await queryClient.invalidateQueries({ queryKey: ['transactions'] });
 		await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+		await queryClient.invalidateQueries({ queryKey: ['payees'] });
+		await queryClient.invalidateQueries({ queryKey: ['categories'] });
+
+		// Persist cleanup choices (payee aliases and transfer mappings) for future imports
+		await persistCleanupChoices(importResult);
 
 		toast.success(
 			`Successfully imported ${importResult.transactionsCreated} transactions from ${multiFileState.files.length} files`
@@ -1588,162 +1512,6 @@ function resetMultiFileImport() {
 	currentStep = 'upload';
 }
 
-function goBackToUpload() {
-	currentStep = 'upload';
-	selectedFile = null;
-	parseResults = null;
-	columnMapping = null;
-	rawCSVData = null;
-	entityPreview = null;
-	error = null;
-	matchedProfile = null;
-	detectedMapping = null;
-	csvHeaders = [];
-	cleanupState = null;
-	// Reset multi-file state
-	multiFileState.reset();
-	multiFileCleanupState = null;
-	lastAnalyzedFileId = null;
-}
-
-function goBackToMapping() {
-	currentStep = 'map-columns';
-	error = null;
-}
-
-async function handleColumnMappingComplete(mapping: ColumnMapping) {
-	columnMapping = mapping;
-	isProcessing = true;
-	error = null;
-
-	try {
-		const response = await fetch('/api/import/remap', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				file: fileData,
-				columnMapping: mapping,
-				accountId: selectedAccountId
-			})
-		});
-
-		const result = await response.json();
-
-		if (response.ok) {
-			parseResults = result;
-			rawCSVData = result.rows.map((row: any) => row.rawData);
-
-			if (result.scheduleMatches) {
-				scheduleMatches = result.scheduleMatches;
-			}
-
-			// Apply smart categorization with the remapped data
-			// This handles payee alias matching and category inference
-			await applySmartCategorization();
-
-			currentStep = 'preview';
-		} else {
-			error = result.error || 'Failed to remap CSV with custom column mapping';
-		}
-	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to remap CSV';
-	} finally {
-		isProcessing = false;
-	}
-}
-
-// Run cleanup analysis when entering preview step
-async function runCleanupAnalysis() {
-	if (!previewData || cleanupState?.isAnalyzing) return;
-
-	// Initialize cleanup state
-	cleanupState = {
-		payeeGroups: [],
-		categorySuggestions: [],
-		isAnalyzing: true,
-		analysisProgress: 0,
-		analysisPhase: 'grouping_payees'
-	};
-
-	try {
-		// Extract payee data from rows
-		const payeeInputs = previewData.rows
-			.filter((row) => row.normalizedData['payee'])
-			.map((row) => {
-				const data = row.normalizedData as Record<string, any>;
-				const originalPayee = (row as any).originalPayee || data['originalPayee'] as string | undefined;
-				return {
-					rowIndex: row.rowIndex,
-					payeeName: data['payee'] as string,
-					// Pass the raw CSV payee string for alias tracking
-					originalPayee,
-					amount: data['amount'] as number,
-					date: data['date'] as string,
-					memo: data['description'] || data['notes']
-				};
-			});
-
-		if (payeeInputs.length === 0) {
-			cleanupState = { ...cleanupState, isAnalyzing: false };
-			return;
-		}
-
-		cleanupState = { ...cleanupState, analysisProgress: 20 };
-
-		// Call the combined analysis endpoint
-		const result = await trpc().importCleanupRoutes.analyzeImport.mutate({
-			rows: payeeInputs
-		});
-
-		cleanupState = {
-			...cleanupState,
-			analysisProgress: 80,
-			analysisPhase: 'suggesting_categories'
-		};
-
-		// Update state with results
-		cleanupState = {
-			payeeGroups: result.payeeGroups,
-			categorySuggestions: result.categorySuggestions,
-			isAnalyzing: false,
-			analysisProgress: 100,
-			analysisPhase: undefined
-		};
-
-		// Apply high-confidence category suggestions to entityOverrides
-		for (const suggestion of result.categorySuggestions) {
-			if (suggestion.suggestions.length > 0) {
-				const topSuggestion = suggestion.suggestions[0];
-				// Auto-fill if confidence >= 0.7 (70%)
-				if (topSuggestion.confidence >= 0.7) {
-					entityOverrides = {
-						...entityOverrides,
-						[suggestion.rowIndex]: {
-							...entityOverrides[suggestion.rowIndex],
-							categoryId: topSuggestion.categoryId,
-							categoryName: topSuggestion.categoryName
-						}
-					};
-				}
-			}
-		}
-	} catch (err) {
-		console.error('Failed to analyze import data:', err);
-		toast.error('Failed to analyze import data');
-		if (cleanupState) {
-			cleanupState = { ...cleanupState, isAnalyzing: false };
-		}
-	}
-}
-
-// Trigger cleanup analysis when entering preview step
-$effect(() => {
-	if (currentStep === 'preview' && previewData && !cleanupState) {
-		runCleanupAnalysis();
-	}
-});
 
 // Run cleanup analysis for multi-file imports
 async function runMultiFileCleanupAnalysis() {
@@ -1804,16 +1572,24 @@ async function runMultiFileCleanupAnalysis() {
 		};
 
 		// Apply high-confidence category suggestions to multi-file entity overrides
+		// Skip rows that are suggested transfers (transfers don't have categories)
 		const currentOverrides = { ...(currentFile.entityOverrides || {}) };
 		for (const suggestion of result.categorySuggestions) {
 			if (suggestion.suggestions.length > 0) {
 				const topSuggestion = suggestion.suggestions[0];
 				if (topSuggestion.confidence >= 0.7) {
-					currentOverrides[suggestion.rowIndex] = {
-						...currentOverrides[suggestion.rowIndex],
-						categoryId: topSuggestion.categoryId,
-						categoryName: topSuggestion.categoryName
-					};
+					// Check if this row has a suggested transfer - if so, skip category
+					const row = currentFile.validatedRows?.find(r => r.rowIndex === suggestion.rowIndex);
+					const isTransfer = row?.normalizedData['suggestedTransferAccountId'] ||
+						currentOverrides[suggestion.rowIndex]?.transferAccountId;
+
+					if (!isTransfer) {
+						currentOverrides[suggestion.rowIndex] = {
+							...currentOverrides[suggestion.rowIndex],
+							categoryId: topSuggestion.categoryId,
+							categoryName: topSuggestion.categoryName
+						};
+					}
 				}
 			}
 		}
@@ -1865,181 +1641,49 @@ $effect(() => {
 	}
 });
 
-// Watch for demo mode wizard step trigger
+// Watch for demo mode wizard step trigger (multi-file flow)
 let lastWizardStepTrigger = 0;
 $effect(() => {
 	const trigger = demoMode.triggerWizardStep;
 	if (trigger.count > lastWizardStepTrigger && demoMode.isActive) {
 		lastWizardStepTrigger = trigger.count;
-		const step = trigger.step as Step;
-		if (step) {
-			currentStep = step;
-			// Sync with demoMode so tour navigation knows the current step
-			demoMode.setImportStep(step as any);
-			// For preview, ensure cleanup state is initialized with demo data
-			if (step === 'preview' && !cleanupState) {
-				cleanupState = {
-					payeeGroups: [
-						{
-							groupId: 'demo-group-1',
-							canonicalName: 'Whole Foods Market',
-							confidence: 0.95,
-							members: [
-								{ rowIndex: 0, originalPayee: 'WHOLE FOODS MKT #123', normalizedPayee: 'Whole Foods Market' }
-							],
-							existingMatch: { id: 1, name: 'Whole Foods', confidence: 0.92 },
-							userDecision: 'pending'
-						},
-						{
-							groupId: 'demo-group-2',
-							canonicalName: 'Shell Gas Station',
-							confidence: 0.88,
-							members: [
-								{ rowIndex: 1, originalPayee: 'SHELL SERVICE STN', normalizedPayee: 'Shell Gas Station' }
-							],
-							existingMatch: { id: 2, name: 'Shell', confidence: 0.85 },
-							userDecision: 'pending'
-						},
-						{
-							groupId: 'demo-group-3',
-							canonicalName: 'Amazon',
-							confidence: 0.78,
-							members: [
-								{ rowIndex: 3, originalPayee: 'AMAZON.COM*AB12CD34', normalizedPayee: 'Amazon' }
-							],
-							userDecision: 'pending'
-						}
-					],
-					categorySuggestions: [],
-					isAnalyzing: false,
-					analysisProgress: 100
-				};
+		const step = trigger.step;
+
+		// Handle multi-file flow steps
+		if (step === 'processing') {
+			// Processing is handled automatically by loadDemoImportData
+			demoMode.setImportStep('processing');
+		} else if (step === 'review') {
+			// Advance all files to ready and go to review
+			for (const file of multiFileState.files) {
+				multiFileState.markFileReady(file.id);
 			}
-			// For schedule review, create mock schedule matches
-			if (step === 'review-schedules' && scheduleMatches.length === 0) {
-				const today = new Date();
-				scheduleMatches = [
-					{
-						rowIndex: 0,
-						scheduleId: 1,
-						scheduleName: 'Monthly Groceries',
-						score: 0.92,
-						confidence: 'high' as const,
-						selected: true,
-						matchedOn: ['payee', 'amount'],
-						reasons: ['Payee matches: Whole Foods Market', 'Amount within 5% tolerance'],
-						transactionData: {
-							date: today.toISOString().split('T')[0],
-							amount: -67.45,
-							payee: 'Whole Foods Market'
-						},
-						scheduleData: {
-							name: 'Monthly Groceries',
-							amount: -70.0,
-							amount_type: 'approximate' as const,
-							recurring: true
-						}
-					},
-					{
-						rowIndex: 1,
-						scheduleId: 2,
-						scheduleName: 'Gas Fill-up',
-						score: 0.85,
-						confidence: 'high' as const,
-						selected: false,
-						matchedOn: ['payee', 'amount'],
-						reasons: ['Payee matches: Shell', 'Amount within 10% tolerance'],
-						transactionData: {
-							date: new Date(today.getTime() - 86400000).toISOString().split('T')[0],
-							amount: -42.50,
-							payee: 'Shell Gas Station'
-						},
-						scheduleData: {
-							name: 'Gas Fill-up',
-							amount: -45.0,
-							amount_type: 'approximate' as const,
-							recurring: true
-						}
-					}
-				];
-			}
-			// For entity review, create mock entity preview data
-			if (step === 'review-entities' && !entityPreview) {
-				entityPreview = {
-					payees: [
-						{
-							name: 'Whole Foods Market',
-							source: 'import' as const,
-							occurrences: 2,
-							selected: false,
-							existing: { id: 1, name: 'Whole Foods' }
-						},
-						{
-							name: 'Shell Gas Station',
-							source: 'import' as const,
-							occurrences: 1,
-							selected: false,
-							existing: { id: 2, name: 'Shell' }
-						},
-						{
-							name: 'Amazon',
-							source: 'import' as const,
-							occurrences: 1,
-							selected: true
-						}
-					],
-					categories: [
-						{
-							name: 'Groceries',
-							source: 'inferred' as const,
-							occurrences: 2,
-							selected: false,
-							existing: { id: 10, name: 'Groceries' }
-						},
-						{
-							name: 'Transportation',
-							source: 'inferred' as const,
-							occurrences: 1,
-							selected: false,
-							existing: { id: 11, name: 'Transportation' }
-						},
-						{
-							name: 'Shopping',
-							source: 'inferred' as const,
-							occurrences: 1,
-							selected: true
-						}
-					],
-					transactions: {
-						total: 6,
-						valid: 6,
-						duplicates: 0,
-						errors: 0
-					}
-				};
-			}
-			// For complete, create mock import result
-			if (step === 'complete' && !importResult) {
-				importResult = {
-					success: true,
-					transactionsCreated: 6,
-					entitiesCreated: { payees: 1, categories: 1 },
-					errors: [],
-					warnings: [],
-					duplicatesDetected: [],
-					summary: {
-						totalRows: 6,
-						validRows: 6,
-						invalidRows: 0,
-						skippedRows: 0
-					}
-				};
-			}
+			multiFileState.setGlobalStep('review');
+			demoMode.setImportStep('review');
+		} else if (step === 'complete') {
+			// Create mock import result for demo
+			importResult = {
+				success: true,
+				transactionsCreated: 6,
+				entitiesCreated: { payees: 1, categories: 1 },
+				errors: [],
+				warnings: [],
+				duplicatesDetected: [],
+				summary: {
+					totalRows: 6,
+					validRows: 6,
+					invalidRows: 0,
+					skippedRows: 0
+				}
+			};
+			multiFileState.setGlobalStep('complete');
+			currentStep = 'complete';
+			demoMode.setImportStep('complete');
 		}
 	}
 });
 
-// Load demo CSV data for the tour
+// Load demo CSV data for the tour (uses multi-file flow)
 async function loadDemoImportData() {
 	isProcessing = true;
 	error = null;
@@ -2050,76 +1694,29 @@ async function loadDemoImportData() {
 			throw new Error('Demo CSV not available');
 		}
 
-		// Parse CSV manually
-		const lines = csvContent.trim().split('\n');
-		const headers = lines[0].split(',').map(h => h.trim());
-		csvHeaders = headers;
+		// Create a File object from the demo CSV content
+		const demoFile = new File([csvContent], 'demo-transactions.csv', { type: 'text/csv' });
 
-		const rows = lines.slice(1).map((line, index) => {
-			const values = line.split(',').map(v => v.trim());
-			const rawData: Record<string, string> = {};
-			headers.forEach((header, i) => {
-				rawData[header] = values[i] || '';
-			});
+		// Reset multi-file state and add the demo file
+		multiFileState.reset();
+		const { added, rejected } = multiFileState.addFiles([demoFile]);
 
-			// Parse amount (remove $ and handle negatives)
-			const amountStr = rawData['Amount'] || '0';
-			const amount = parseFloat(amountStr.replace(/[$,]/g, ''));
+		if (rejected.length > 0 || added.length === 0) {
+			throw new Error('Failed to add demo file to import queue');
+		}
 
-			return {
-				rowIndex: index,
-				rawData,
-				normalizedData: {
-					date: rawData['Date'],
-					payee: rawData['Description'],
-					amount: amount,
-					notes: ''
-				},
-				validationStatus: 'valid' as const,
-				validationErrors: []
-			};
-		});
-
-		rawCSVData = rows.map(r => r.rawData);
-
-		// Create parseResults structure matching ParseResult type
-		parseResults = {
-			fileName: 'demo-transactions.csv',
-			fileSize: csvContent.length,
-			fileType: 'text/csv',
-			rowCount: rows.length,
-			columns: headers,
-			rows,
-			parseErrors: []
-		};
-
-		// Set a detected mapping for demo
-		detectedMapping = {
-			date: 'Date',
-			amount: 'Amount',
-			payee: 'Description',
-			notes: null,
-			category: null
-		};
-
-		// Create fake file data for display
-		selectedFile = new File([csvContent], 'demo-transactions.csv', { type: 'text/csv' });
-		fileData = {
-			data: btoa(csvContent),
-			name: 'demo-transactions.csv',
-			type: 'text/csv'
-		};
-
-		// Small delay for visual feedback, then advance to column mapping
-		// This delay is the source of truth - TOUR_TIMING.DEMO_IMPORT_WAIT must exceed this
+		// Small delay for visual feedback
 		await new Promise(resolve => setTimeout(resolve, TOUR_TIMING.DEMO_IMPORT_INTERNAL_DELAY));
-		currentStep = 'map-columns';
+
+		// Start the multi-file processing flow
+		multiFileState.startProcessing();
+		await handleMultiFileProcessing();
 
 		// Sync with demoMode so tour navigation knows we've loaded data
-		demoMode.setImportStep('map-columns');
+		demoMode.setImportStep('processing');
 
 		toast.success('Demo file loaded', {
-			description: `${rows.length} transactions ready for import.`
+			description: `${added[0].file.name} ready for column mapping.`
 		});
 
 	} catch (err) {
@@ -2130,62 +1727,6 @@ async function loadDemoImportData() {
 	}
 }
 
-// Handle cleanup state changes from the toolbar component
-function handleCleanupStateChange(state: CleanupState) {
-	cleanupState = state;
-	// Apply cleanup decisions to entityOverrides and create alias candidates
-	for (const group of state.payeeGroups) {
-		if (group.userDecision === 'accept' || group.userDecision === 'custom') {
-			const payeeName = group.userDecision === 'custom' && group.customName
-				? group.customName
-				: group.canonicalName;
-			const payeeId = group.existingMatch?.id ?? null;
-
-			for (const member of group.members) {
-				entityOverrides = {
-					...entityOverrides,
-					[member.rowIndex]: {
-						...entityOverrides[member.rowIndex],
-						payeeId,
-						payeeName
-					}
-				};
-
-				// Create alias candidate for both existing and new payees
-				// For existing payees: track payeeId
-				// For new payees: track payeeName (will be resolved to ID after import)
-				if (member.originalPayee && member.originalPayee !== payeeName) {
-					const newCandidates = new Map(aliasCandidates);
-					newCandidates.set(member.rowIndex, {
-						rawString: member.originalPayee,
-						payeeId: payeeId ?? undefined,  // null for new payees
-						payeeName,  // Track name for resolution after import
-					});
-					aliasCandidates = newCandidates;
-				}
-			}
-		}
-	}
-	// Apply category suggestions
-	for (const suggestion of state.categorySuggestions) {
-		if (suggestion.selectedCategoryId) {
-			const selectedSuggestion = suggestion.suggestions.find(
-				(s) => s.categoryId === suggestion.selectedCategoryId
-			);
-			if (selectedSuggestion) {
-				entityOverrides = {
-					...entityOverrides,
-					[suggestion.rowIndex]: {
-						...entityOverrides[suggestion.rowIndex],
-						categoryId: suggestion.selectedCategoryId,
-						categoryName: selectedSuggestion.categoryName
-					}
-				};
-			}
-		}
-	}
-}
-
 // Handler for alias candidates from payee cell selection
 function handlePayeeAliasCandidate(rowIndex: number, alias: AliasCandidate) {
 	const newCandidates = new Map(aliasCandidates);
@@ -2193,349 +1734,14 @@ function handlePayeeAliasCandidate(rowIndex: number, alias: AliasCandidate) {
 	aliasCandidates = newCandidates;
 }
 
-function proceedToScheduleReview() {
-	if (!parseResults) return;
-
-	if (scheduleMatches.length > 0) {
-		currentStep = 'review-schedules';
-	} else {
-		proceedToEntityReview();
-	}
-}
-
-async function proceedToEntityReview() {
-	if (!parseResults || !previewData) return;
-
-	isProcessing = true;
-	error = null;
-
-	try {
-		const selectedRowsData = previewData.rows.filter((row) => selectedRows.has(row.rowIndex));
-
-		const response = await fetch('/api/import/preview-entities', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ rows: selectedRowsData })
-		});
-
-		const result = await response.json();
-
-		if (response.ok) {
-			entityPreview = result;
-			currentStep = 'review-entities';
-		} else {
-			error = result.error || 'Failed to generate entity preview';
-		}
-	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to generate entity preview';
-	} finally {
-		isProcessing = false;
-	}
-}
-
-function goBackToPreview() {
-	currentStep = 'preview';
-	error = null;
-}
-
-function handlePayeeToggle(name: string, selected: boolean) {
-	if (!entityPreview) return;
-	const payee = entityPreview.payees.find((p) => p.name === name);
-	if (payee && !payee.existing) {
-		payee.selected = selected;
-	}
-}
-
-function handleCategoryToggle(name: string, selected: boolean) {
-	if (!entityPreview) return;
-	const category = entityPreview.categories.find((c) => c.name === name);
-	if (category && !category.existing) {
-		category.selected = selected;
-	}
-}
-
-function selectAllPayees() {
-	if (!entityPreview) return;
-	entityPreview.payees.forEach((p) => {
-		if (!p.existing) p.selected = true;
-	});
-}
-
-function deselectAllPayees() {
-	if (!entityPreview) return;
-	entityPreview.payees.forEach((p) => {
-		if (!p.existing) p.selected = false;
-	});
-}
-
-function selectAllCategories() {
-	if (!entityPreview) return;
-	entityPreview.categories.forEach((c) => {
-		if (!c.existing) c.selected = true;
-	});
-}
-
-function deselectAllCategories() {
-	if (!entityPreview) return;
-	entityPreview.categories.forEach((c) => {
-		if (!c.existing) c.selected = false;
-	});
-}
-
-async function processImport() {
-	if (!parseResults || !entityPreview || !previewData) return;
-
-	isProcessing = true;
-	error = null;
-
-	try {
-		const selectedRowsData = parseResults.rows
-			.filter((row) => selectedRows.has(row.rowIndex))
-			.map((row) => {
-				const override = entityOverrides[row.rowIndex];
-				// Extract originalPayee from normalizedData (set by infer-categories) for transfer mapping
-				const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
-				return {
-					...row,
-					// IMPORTANT: Set originalPayee at top level for import orchestrator to find
-					originalPayee,
-					normalizedData: {
-						...row.normalizedData,
-						payee:
-							override?.payeeName !== undefined ? override.payeeName : row.normalizedData['payee'],
-						category:
-							override?.categoryName !== undefined
-								? override.categoryName
-								: row.normalizedData['category'],
-						// IMPORTANT: Also clear categoryId when category is overridden
-						// This prevents the server from using the original inferred category
-						categoryId:
-							override?.categoryId !== undefined
-								? override.categoryId
-								: (override?.categoryName !== undefined
-									? null // Clear categoryId if categoryName was overridden (even to null)
-									: row.normalizedData['categoryId']),
-						description:
-							override?.description !== undefined
-								? override.description
-								: row.normalizedData['description'] || row.normalizedData['notes'],
-						// Transfer fields - when set, this row creates a transfer instead of regular transaction
-						// Must fall back to row.normalizedData for auto-accepted mappings
-						transferAccountId:
-							override?.transferAccountId !== undefined
-								? override.transferAccountId
-								: row.normalizedData['transferAccountId'] ?? null,
-						transferAccountName:
-							override?.transferAccountName !== undefined
-								? override.transferAccountName
-								: row.normalizedData['transferAccountName'] ?? null,
-						rememberTransferMapping:
-							override?.rememberTransferMapping !== undefined
-								? override.rememberTransferMapping
-								: row.normalizedData['rememberTransferMapping'] ?? false
-					}
-				};
-			});
-
-		const selectedPayeeNames = entityPreview.payees.filter((p) => p.selected).map((p) => p.name);
-		const selectedCategoryNames = entityPreview.categories
-			.filter((c) => c.selected)
-			.map((c) => c.name);
-
-		const dismissalsArray = Array.from(categoryDismissals.values());
-		console.log(`[ProcessImport] Sending ${dismissalsArray.length} category dismissals:`, dismissalsArray);
-
-		// Log transfer data being sent
-		const transferRows = selectedRowsData.filter(r => r.normalizedData?.transferAccountId);
-		if (transferRows.length > 0) {
-			console.log('[ProcessImport] Sending transfer rows:', transferRows.map(r => ({
-				rowIndex: r.rowIndex,
-				transferAccountId: r.normalizedData?.transferAccountId,
-				rememberTransferMapping: r.normalizedData?.rememberTransferMapping,
-				payee: r.normalizedData?.payee,
-				originalPayee: r.originalPayee,
-			})));
-		}
-
-		const importData = {
-			accountId: accountId,
-			data: selectedRowsData,
-			selectedEntities: {
-				payees: selectedPayeeNames,
-				categories: selectedCategoryNames
-			},
-			scheduleMatches: scheduleMatches.filter((m) => m.selected),
-			// Include category dismissals for learning (negative feedback)
-			categoryDismissals: dismissalsArray,
-			options: {
-				allowPartialImport,
-				createMissingEntities: createMissingPayees || createMissingCategories,
-				createMissingPayees,
-				createMissingCategories,
-				reverseAmountSigns,
-				fileName: previewData?.fileName
-			}
-		};
-
-		const response = await fetch('/api/import/process', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(importData)
-		});
-
-		const result = await response.json();
-
-		if (response.ok) {
-			importResult = result.result;
-			currentStep = 'complete';
-
-			// Record payee aliases from user confirmations during import
-			// This handles both existing payees (with payeeId) and newly created payees (resolved by name)
-			if (aliasCandidates.size > 0) {
-				try {
-					// Build lookups from created payee mappings
-					// Priority: user-selected name > normalized name > original import string
-					const nameToIdMap = new Map<string, number>();
-					const originalToIdMap = new Map<string, number>();
-					if (result.result.createdPayeeMappings) {
-						for (const mapping of result.result.createdPayeeMappings) {
-							// Normalized name (what's stored in DB) - lower priority
-							nameToIdMap.set(mapping.normalizedName.toLowerCase(), mapping.payeeId);
-							// Original import string - for fallback matching
-							originalToIdMap.set(mapping.originalName.toLowerCase(), mapping.payeeId);
-						}
-					}
-
-					// Resolve aliases - for existing payees use payeeId, for new payees look up by name
-					const aliasesToCreate = Array.from(aliasCandidates.values())
-						.map((alias) => {
-							// If we already have a payeeId (existing payee), use it
-							if (alias.payeeId) {
-								return {
-									rawString: alias.rawString,
-									payeeId: alias.payeeId,
-									sourceAccountId: accountId,
-								};
-							}
-
-							// Try to resolve by user-selected payee name first (higher priority)
-							if (alias.payeeName) {
-								const payeeId = nameToIdMap.get(alias.payeeName.toLowerCase());
-								if (payeeId) {
-									return {
-										rawString: alias.rawString,
-										payeeId,
-										sourceAccountId: accountId,
-									};
-								}
-							}
-
-							// Fallback: try to match by the original import string
-							if (alias.rawString) {
-								const payeeId = originalToIdMap.get(alias.rawString.toLowerCase());
-								if (payeeId) {
-									return {
-										rawString: alias.rawString,
-										payeeId,
-										sourceAccountId: accountId,
-									};
-								}
-							}
-
-							return null; // Could not resolve
-						})
-						.filter((alias): alias is NonNullable<typeof alias> => alias !== null);
-
-					if (aliasesToCreate.length > 0) {
-						await createAliasesMutation.mutateAsync({ aliases: aliasesToCreate });
-					}
-				} catch (aliasError) {
-					console.warn('Failed to record payee aliases:', aliasError);
-				}
-			}
-
-			// Record category aliases from import
-			// This records raw string → category mappings for future imports
-			if (result.result.createdCategoryMappings && result.result.createdCategoryMappings.length > 0) {
-				try {
-					const categoryAliasesToCreate = result.result.createdCategoryMappings.map((mapping: { rawString: string; categoryId: number; payeeId?: number; wasAiSuggested?: boolean }) => ({
-						rawString: mapping.rawString,
-						categoryId: mapping.categoryId,
-						payeeId: mapping.payeeId,
-						sourceAccountId: accountId,
-						wasAiSuggested: mapping.wasAiSuggested,
-					}));
-
-					await createCategoryAliasesMutation.mutateAsync({ aliases: categoryAliasesToCreate });
-				} catch (categoryAliasError) {
-					console.warn('Failed to record category aliases:', categoryAliasError);
-				}
-			}
-
-			// Invalidate all relevant queries to ensure the UI updates
-			// Use refetchType: 'all' to force refetch of all matching queries
-			await queryClient.invalidateQueries({
-				queryKey: ['accounts'],
-				refetchType: 'all'
-			});
-			// Invalidate account-specific transaction queries
-			await queryClient.invalidateQueries({
-				queryKey: ['transactions', 'all', accountId],
-				refetchType: 'all'
-			});
-			await queryClient.invalidateQueries({
-				queryKey: ['transactions', 'account', accountId],
-				refetchType: 'all'
-			});
-			await queryClient.invalidateQueries({
-				queryKey: ['transactions', 'summary', accountId],
-				refetchType: 'all'
-			});
-			// Invalidate analytics/chart queries that depend on transaction data
-			await queryClient.invalidateQueries({
-				queryKey: ['transactions', 'analytics'],
-				refetchType: 'all'
-			});
-			// Also invalidate general transaction queries
-			await queryClient.invalidateQueries({
-				queryKey: ['transactions'],
-				refetchType: 'all'
-			});
-			await queryClient.invalidateQueries({
-				queryKey: ['payees'],
-				refetchType: 'all'
-			});
-			await queryClient.invalidateQueries({
-				queryKey: ['categories'],
-				refetchType: 'all'
-			});
-		} else {
-			error = result.error || 'Failed to process import';
-		}
-	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to process import';
-	} finally {
-		isProcessing = false;
-	}
-}
-
 function startNewImport() {
 	currentStep = 'upload';
-	selectedFile = null;
 	parseResults = null;
-	entityPreview = null;
 	importResult = null;
-	selectedRows = new Set();
-	scheduleMatches = [];
 	error = null;
-	matchedProfile = null;
-	detectedMapping = null;
-	csvHeaders = [];
 	columnMapping = null;
+	csvHeaders = [];
+	matchedProfile = null;
 	cleanupState = null;
 	aliasCandidates = new Map();
 	// Reset multi-file state
@@ -2544,14 +1750,165 @@ function startNewImport() {
 	lastAnalyzedFileId = null;
 }
 
+/**
+ * Persist cleanup step choices (payee aliases, transfer mappings, and category aliases) for future imports.
+ * This allows the system to remember user decisions so they don't need to be re-selected.
+ */
+async function persistCleanupChoices(result: ImportResult) {
+	console.log('[persistCleanupChoices] Starting...', {
+		hasCleanupState: !!multiFileCleanupState,
+		hasWorkspace: !!workspaceState?.workspace?.id,
+		groupCount: multiFileCleanupState?.payeeGroups?.length ?? 0
+	});
+
+	if (!multiFileCleanupState || !workspaceState?.workspace?.id) {
+		console.log('[persistCleanupChoices] Early return - missing state');
+		return;
+	}
+
+	const aliasRecords: Array<{ rawString: string; payeeId: number; sourceAccountId?: number }> = [];
+	const transferRecords: Array<{ rawPayeeString: string; targetAccountId: number; sourceAccountId?: number }> = [];
+	const categoryAliasRecords: Array<{ rawString: string; categoryId: number; sourceAccountId?: number }> = [];
+
+	// Build a map of canonical names to payee IDs from the import result
+	const payeeMap = new Map<string, number>();
+	if (result.createdPayeeMappings) {
+		for (const mapping of result.createdPayeeMappings) {
+			payeeMap.set(mapping.normalizedName.toLowerCase(), mapping.payeeId);
+		}
+	}
+
+	console.log('[persistCleanupChoices] Processing groups:', multiFileCleanupState.payeeGroups.map(g => ({
+		canonicalName: g.canonicalName,
+		userDecision: g.userDecision,
+		transferAccountId: g.transferAccountId,
+		transferAccountName: g.transferAccountName,
+		memberCount: g.members.length
+	})));
+
+	for (const group of multiFileCleanupState.payeeGroups) {
+		// Skip rejected groups - user chose not to clean these
+		if (group.userDecision === 'reject') continue;
+
+		// Get the payee ID for this group
+		const finalName = group.customName || group.canonicalName;
+		const payeeId = group.existingMatch?.id || payeeMap.get(finalName.toLowerCase());
+
+		if (group.transferAccountId) {
+			console.log('[persistCleanupChoices] Found transfer group:', {
+				canonicalName: group.canonicalName,
+				transferAccountId: group.transferAccountId,
+				members: group.members.map(m => m.originalPayee)
+			});
+			// Record transfer mappings for all members
+			for (const member of group.members) {
+				transferRecords.push({
+					rawPayeeString: member.originalPayee,
+					targetAccountId: group.transferAccountId,
+					sourceAccountId: accountId
+				});
+			}
+		} else if (payeeId) {
+			// Record payee aliases for all members
+			for (const member of group.members) {
+				// Only record if raw string differs from canonical name
+				if (member.originalPayee.toLowerCase() !== finalName.toLowerCase()) {
+					aliasRecords.push({
+						rawString: member.originalPayee,
+						payeeId,
+						sourceAccountId: accountId
+					});
+				}
+			}
+		}
+	}
+
+	// Collect category aliases and row-level transfer mappings from entity overrides
+	// This remembers which category/transfer the user selected for each payee string
+	const allRows = multiFileState.getAllValidatedRows();
+	const allOverrides = multiFileState.getAllEntityOverrides();
+	const seenCategoryAliases = new Set<string>(); // Dedupe by rawString+categoryId
+	const seenTransferMappings = new Set<string>(); // Dedupe by rawString+targetAccountId
+
+	for (let i = 0; i < allRows.length; i++) {
+		const row = allRows[i];
+		const override = allOverrides[i];
+
+		// Get the original payee string
+		const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | undefined;
+		if (!originalPayee) continue;
+
+		// Check if this row was converted to a transfer (row-level override, not group-level)
+		if (override?.transferAccountId) {
+			// Record transfer mapping if user wants to remember it (default to true)
+			if (override.rememberTransferMapping !== false) {
+				const key = `${originalPayee.toLowerCase()}:${override.transferAccountId}`;
+				if (!seenTransferMappings.has(key)) {
+					seenTransferMappings.add(key);
+					transferRecords.push({
+						rawPayeeString: originalPayee,
+						targetAccountId: override.transferAccountId,
+						sourceAccountId: accountId
+					});
+				}
+			}
+			continue; // Transfers don't have categories
+		}
+
+		// Get the category from override or from the validated data
+		const categoryId = override?.categoryId || (row.normalizedData['inferredCategoryId'] as number | undefined);
+		if (!categoryId) continue;
+
+		// Dedupe - only record each rawString+categoryId pair once
+		const key = `${originalPayee.toLowerCase()}:${categoryId}`;
+		if (seenCategoryAliases.has(key)) continue;
+		seenCategoryAliases.add(key);
+
+		categoryAliasRecords.push({
+			rawString: originalPayee,
+			categoryId,
+			sourceAccountId: accountId
+		});
+	}
+
+	console.log('[persistCleanupChoices] Collected:', {
+		categoryAliases: categoryAliasRecords.length,
+		transferMappingsFromOverrides: seenTransferMappings.size,
+		totalTransferMappings: transferRecords.length
+	});
+
+	// Bulk persist via tRPC
+	try {
+		const promises: Promise<unknown>[] = [];
+		if (aliasRecords.length > 0) {
+			promises.push(trpc().payeeAliasRoutes.bulkCreate.mutate({ aliases: aliasRecords }));
+		}
+		if (transferRecords.length > 0) {
+			promises.push(trpc().transferMappingRoutes.bulkCreate.mutate({ mappings: transferRecords }));
+		}
+		if (categoryAliasRecords.length > 0) {
+			promises.push(trpc().categoryAliasRoutes.bulkCreate.mutate({ aliases: categoryAliasRecords }));
+		}
+		if (promises.length > 0) {
+			await Promise.all(promises);
+			console.log(`[Import] Persisted ${aliasRecords.length} payee aliases, ${transferRecords.length} transfer mappings, and ${categoryAliasRecords.length} category aliases`);
+		}
+	} catch (err) {
+		// Don't fail the import if alias/mapping persistence fails - just log it
+		console.error('[Import] Failed to persist cleanup choices:', err);
+	}
+}
+
 // Save profile dialog helpers
 function openSaveProfileDialog() {
-	const defaultName = selectedFile
-		? selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+	// Use current file name from multi-file state for defaults
+	const fileName = multiFileState.currentFile?.fileName;
+	const defaultName = fileName
+		? fileName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
 		: 'New Import Profile';
 
-	const defaultPattern = selectedFile
-		? selectedFile.name.replace(/\d{4}[-_]?\d{2}[-_]?\d{2}/g, '*').replace(/\d+/g, '*')
+	const defaultPattern = fileName
+		? fileName.replace(/\d{4}[-_]?\d{2}[-_]?\d{2}/g, '*').replace(/\d+/g, '*')
 		: '';
 
 	saveProfileDialog = {
@@ -2609,6 +1966,7 @@ function closeSaveProfileDialog() {
 const steps = [
 	{ id: 'upload', label: 'Upload File' },
 	{ id: 'map-columns', label: 'Map Columns' },
+	{ id: 'cleanup-payees', label: 'Cleanup Payees' },
 	{ id: 'preview', label: 'Preview Data' },
 	{ id: 'review-schedules', label: 'Review Schedules' },
 	{ id: 'review-entities', label: 'Review Entities' },
@@ -2624,18 +1982,18 @@ const currentStepIndex = $derived.by(() => {
 		if (globalStep === 'processing') {
 			// Check if current file is in preview mode vs mapping mode
 			if (multiFileState.currentFile?.status === 'preview') {
-				return 2; // Preview Data
+				return 3; // Preview Data (after cleanup-payees)
 			}
 			return 1; // Map Columns
 		}
-		if (globalStep === 'review') return 2; // Preview Data
+		if (globalStep === 'review') return 3; // Preview Data (after cleanup-payees)
 	}
 	// Single-file mode: use currentStep directly
 	return steps.findIndex((s) => s.id === currentStep);
 });
 
 $effect(() => {
-	currentStep;
+	console.log('[Import] Step changed to:', currentStep, 'parseResults:', !!parseResults, 'previewData:', !!previewData);
 	window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 </script>
@@ -2742,6 +2100,111 @@ $effect(() => {
 								}}
 							/>
 						</div>
+					{:else if multiFileState.currentFile?.status === 'cleanup' && multiFileState.currentFile.validatedRows}
+						{@const currentFile = multiFileState.currentFile}
+						{@const validatedRows = currentFile.validatedRows!}
+						<div class="mt-4">
+							<PayeeCleanupStep
+								rows={validatedRows}
+								currentAccountId={accountId}
+								onNext={(state) => {
+									// IMPORTANT: Update multiFileCleanupState with user's final selections
+									// This is used by persistCleanupChoices to save aliases and transfer mappings
+									multiFileCleanupState = state;
+
+									// Apply cleanup to the file's rows before moving to preview
+									// We apply canonical names for all groups EXCEPT 'reject' (user explicitly skipped)
+									const payeeOverrides = new Map<number, {
+										payeeId: number | null;
+										payeeName: string;
+										transferAccountId?: number;
+										transferAccountName?: string;
+									}>();
+									for (const group of state.payeeGroups) {
+										// Skip rejected groups - user explicitly chose not to clean them
+										if (group.userDecision === 'reject') continue;
+
+										// Check if this is a transfer
+										if (group.transferAccountId && group.transferAccountName) {
+											for (const member of group.members) {
+												payeeOverrides.set(member.rowIndex, {
+													payeeId: null,
+													payeeName: group.transferAccountName,
+													transferAccountId: group.transferAccountId,
+													transferAccountName: group.transferAccountName
+												});
+											}
+										} else {
+											// Regular payee - use custom name if set, otherwise canonical name
+											const payeeName = group.userDecision === 'custom' && group.customName
+												? group.customName
+												: group.canonicalName;
+											// Only use existingMatch.id when accepting the canonical name as-is
+											// For custom or pending groups, set to null so the cleaned name is used
+											const payeeId = group.userDecision === 'accept' && group.existingMatch?.id
+												? group.existingMatch.id
+												: null;
+											for (const member of group.members) {
+												payeeOverrides.set(member.rowIndex, { payeeId, payeeName });
+											}
+										}
+									}
+
+									if (payeeOverrides.size > 0) {
+										// Update validated rows with cleanup decisions
+										const updatedRows = currentFile.validatedRows!.map((row) => {
+											const override = payeeOverrides.get(row.rowIndex);
+											if (override) {
+												if (override.transferAccountId) {
+													// Transfer row - clear category fields too
+													return {
+														...row,
+														normalizedData: {
+															...row.normalizedData,
+															transferAccountId: override.transferAccountId,
+															transferAccountName: override.transferAccountName,
+															payee: override.transferAccountName,
+															payeeId: null,
+															category: null,
+															categoryId: null,
+															inferredCategory: null,
+															inferredCategoryId: null,
+															originalPayee: row.normalizedData['originalPayee'] ?? row.normalizedData['payee']
+														}
+													};
+												} else {
+													// Regular payee row
+													return {
+														...row,
+														normalizedData: {
+															...row.normalizedData,
+															payee: override.payeeName,
+															payeeId: override.payeeId,
+															originalPayee: row.normalizedData['originalPayee'] ?? row.normalizedData['payee']
+														}
+													};
+												}
+											}
+											return row;
+										});
+										multiFileState.setValidatedRows(currentFile.id, updatedRows);
+									}
+									multiFileState.updateFileState(currentFile.id, { status: 'preview' });
+								}}
+								onBack={() => {
+									if (currentFile.needsColumnMapping) {
+										multiFileState.updateFileState(currentFile.id, { status: 'mapping' });
+									} else if (multiFileState.isFirstFile) {
+										multiFileState.setGlobalStep('upload');
+									} else {
+										multiFileState.previousFile();
+									}
+								}}
+								onSkip={() => {
+									multiFileState.updateFileState(currentFile.id, { status: 'preview' });
+								}}
+							/>
+						</div>
 					{:else if multiFileState.currentFile?.status === 'preview' && multiFilePreviewData}
 						{@const currentFile = multiFileState.currentFile}
 						<div class="mt-4 space-y-4">
@@ -2762,7 +2225,7 @@ $effect(() => {
 								cleanupState={filteredMultiFileCleanupState}
 								onCleanupStateChange={(state) => multiFileCleanupState = state}
 								onPayeeUpdate={handleMultiFilePayeeUpdate}
-								onCategoryUpdate={handleMultiFileCategoryUpdate}
+								onCategoryUpdate={handleMultiFileCategoryUpdateWithSimilar}
 								onDescriptionUpdate={handleMultiFileDescriptionUpdate}
 								onTransferAccountUpdate={handleMultiFileTransferUpdate}
 							/>
@@ -2817,7 +2280,13 @@ $effect(() => {
 						isImporting={isProcessing}
 						onImport={handleMultiFileImport}
 						onBack={() => {
-							multiFileState.goToFile(multiFileState.files.length - 1);
+							const lastFileIndex = multiFileState.files.length - 1;
+							const lastFile = multiFileState.files[lastFileIndex];
+							// Set file back to 'preview' status so it renders correctly
+							if (lastFile) {
+								multiFileState.updateFileState(lastFile.id, { status: 'preview' });
+							}
+							multiFileState.goToFile(lastFileIndex);
 							multiFileState.setGlobalStep('processing');
 						}}
 						onEditFile={(index) => {
@@ -2831,289 +2300,6 @@ $effect(() => {
 					/>
 			{/if}
 		</div>
-	{:else if currentStep === 'map-columns' && parseResults && rawCSVData}
-		<div data-tour-id="import-column-mapping">
-			{#if matchedProfile}
-				<div
-					class="bg-primary/10 border-primary/20 mb-4 flex items-center justify-between rounded-lg border p-3">
-					<div class="flex items-center gap-2">
-						<Sparkles class="text-primary h-4 w-4" />
-						<span class="text-sm">
-							Using saved profile: <strong>{matchedProfile.name}</strong>
-						</span>
-					</div>
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={() => {
-							matchedProfile = null;
-							detectedMapping = null;
-						}}>
-						Undo
-					</Button>
-				</div>
-			{/if}
-				{#key matchedProfile?.id}
-				<ColumnMapper
-					rawColumns={Object.keys(rawCSVData[0] || {})}
-					initialMapping={detectedMapping ?? undefined}
-					sampleData={rawCSVData}
-					onNext={handleColumnMappingComplete}
-					onBack={goBackToUpload} />
-			{/key}
-		</div>
-	{:else if currentStep === 'preview' && parseResults && previewData}
-		<div class="space-y-4" data-tour-id="import-preview-table">
-			<!-- Preview Table with integrated toolbar -->
-			<ImportPreviewTable
-				data={previewData.rows}
-				{importOptions}
-				{accountId}
-				onImportOptionsChange={handleImportOptionsChange}
-				cleanupState={filteredCleanupState}
-				onCleanupStateChange={handleCleanupStateChange}
-				onPayeeUpdate={handlePayeeUpdateWithSimilar}
-				onPayeeAliasCandidate={handlePayeeAliasCandidate}
-				onCategoryUpdate={handleCategoryUpdateWithSimilar}
-				onDescriptionUpdate={handleDescriptionUpdate}
-				onTransferAccountUpdate={handleTransferAccountUpdateWithSimilar}
-				{temporaryCategories}
-				{temporaryPayees}
-				processorCount={processorAnalysis.total}
-				onOpenProcessorFilter={openProcessorFilterDialog}
-				bind:cleanupSheetOpen
-				bind:selectedRows
-			/>
-
-			<!-- Navigation -->
-			<div class="flex items-center justify-between pt-4">
-				<Button variant="outline" onclick={goBackToUpload}>Back</Button>
-				<Button onclick={proceedToScheduleReview}>Continue</Button>
-			</div>
-		</div>
-
-		{#if isProcessing}
-			<div
-				class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-				<Card.Root class="w-96">
-					<Card.Content class="pt-6">
-						<div class="text-center">
-							<div
-								class="border-primary mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2">
-							</div>
-							<p class="font-medium">Analyzing Entities</p>
-							<p class="text-muted-foreground mt-2 text-sm">Checking payees and categories...</p>
-						</div>
-					</Card.Content>
-				</Card.Root>
-			</div>
-		{/if}
-	{:else if currentStep === 'review-schedules'}
-		<div class="space-y-6" data-tour-id="import-schedules">
-			<div>
-				<div class="mb-2 flex items-center gap-3">
-					<CalendarClock class="text-primary h-8 w-8" />
-					<h2 class="text-2xl font-bold">Review Schedule Matches</h2>
-				</div>
-				<p class="text-muted-foreground mt-2">
-					We found {scheduleMatches.length} transaction{scheduleMatches.length !== 1 ? 's' : ''}
-					that match existing schedules. Select which ones you'd like to link.
-				</p>
-			</div>
-
-			<!-- Match Threshold Slider -->
-			<Card.Root>
-				<Card.Header class="pb-4">
-					<Card.Title class="text-base">Match Threshold</Card.Title>
-					<Card.Description class="text-sm">
-						Adjust to show matches above {Math.round(scheduleMatchThreshold * 100)}% confidence ·
-						Showing {filteredScheduleMatches.length} of {scheduleMatches.length} matches
-					</Card.Description>
-				</Card.Header>
-				<Card.Content>
-					<div class="space-y-4">
-						<Slider
-							type="single"
-							bind:value={scheduleMatchThreshold}
-							min={0.2}
-							max={1.0}
-							step={0.05}
-							class="w-full" />
-						<div class="text-muted-foreground flex justify-between text-xs">
-							<span>20%</span>
-							<span>40%</span>
-							<span>60%</span>
-							<span>80%</span>
-							<span>100%</span>
-						</div>
-					</div>
-				</Card.Content>
-			</Card.Root>
-
-			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{#each groupedScheduleMatches as group (group.scheduleId)}
-					<Card.Root class="flex flex-col {getScoreBorderColor(group.avgScore)}">
-						<Card.Header class="pb-3">
-							<div class="flex items-start justify-between gap-2">
-								<div class="flex min-w-0 items-start gap-2">
-									<CalendarClock class="text-primary mt-0.5 h-5 w-5 shrink-0" />
-									<div class="min-w-0">
-										<Card.Title class="truncate text-base">{group.scheduleName}</Card.Title>
-										<Card.Description class="text-xs">
-											{group.matches.length} match{group.matches.length !== 1 ? 'es' : ''} · {Math.round(
-												group.avgScore * 100
-											)}% avg
-										</Card.Description>
-									</div>
-								</div>
-								<div class="flex shrink-0 flex-col gap-1">
-									<Button
-										variant="outline"
-										size="sm"
-										class="h-7 px-2 text-xs"
-										onclick={() => {
-											group.matches.forEach((match) => {
-												match.selected = true;
-											});
-											scheduleMatches = [...scheduleMatches];
-										}}>
-										All
-									</Button>
-									<Button
-										variant="outline"
-										size="sm"
-										class="h-7 px-2 text-xs"
-										onclick={() => {
-											group.matches.forEach((match) => {
-												match.selected = false;
-											});
-											scheduleMatches = [...scheduleMatches];
-										}}>
-										None
-									</Button>
-								</div>
-							</div>
-						</Card.Header>
-						<Card.Content>
-							<div class="space-y-3">
-								{#each group.matches as match (match.rowIndex)}
-									<div
-										class="flex cursor-pointer items-start gap-2 rounded-lg border p-2 transition-colors {getScoreAllBorderColor(
-											match.score
-										)}
-                     {match.selected ? 'bg-primary/5' : 'bg-card hover:bg-accent/50'}"
-										onclick={() => handleScheduleMatchToggle(match.rowIndex, !match.selected)}
-										onkeydown={(e) => {
-											if (e.key === 'Enter' || e.key === ' ') {
-												e.preventDefault();
-												handleScheduleMatchToggle(match.rowIndex, !match.selected);
-											}
-										}}
-										role="button"
-										tabindex="0"
-										aria-pressed={match.selected}>
-										<Checkbox
-											checked={match.selected}
-											onCheckedChange={(checked) =>
-												handleScheduleMatchToggle(match.rowIndex, checked === true)}
-											class="mt-1" />
-										<div class="min-w-0 flex-1">
-											<div class="mb-2 flex items-center justify-between gap-2">
-												<div class="truncate text-sm font-medium">
-													{new Date(match.transactionData.date).toLocaleDateString()}
-												</div>
-												<Badge.Badge
-													variant={getConfidenceBadgeVariant(match.confidence)}
-													class="shrink-0">
-													{Math.round(match.score * 100)}%
-												</Badge.Badge>
-											</div>
-											<div class="space-y-1">
-												<div class="flex items-center justify-between text-sm">
-													<span class="text-muted-foreground text-xs">Transaction</span>
-													<span class="font-mono font-medium"
-														>${Math.abs(match.transactionData.amount).toFixed(2)}</span>
-												</div>
-												<div class="flex items-center justify-between text-sm">
-													<span class="text-muted-foreground text-xs">Schedule</span>
-													<span class="font-mono"
-														>${Math.abs(match.scheduleData.amount).toFixed(2)}</span>
-												</div>
-											</div>
-											{#if match.transactionData.payee}
-												<div class="text-muted-foreground mt-2 truncate text-xs">
-													{match.transactionData.payee}
-												</div>
-											{/if}
-										</div>
-									</div>
-								{/each}
-							</div>
-						</Card.Content>
-					</Card.Root>
-				{/each}
-			</div>
-
-			<div class="flex items-center justify-between">
-				<Button variant="outline" onclick={goBackToPreview}>Back</Button>
-				<Button onclick={proceedToEntityReview}>Continue to Entity Review</Button>
-			</div>
-		</div>
-	{:else if currentStep === 'review-entities' && entityPreview}
-		<div class="space-y-6" data-tour-id="import-entities">
-			<div>
-				<h2 class="text-2xl font-bold">Review Entities</h2>
-				<p class="text-muted-foreground mt-2">
-					Select which payees and categories you want to create
-				</p>
-			</div>
-
-			<EntityReview
-				payees={entityPreview.payees}
-				categories={entityPreview.categories}
-				onPayeeToggle={handlePayeeToggle}
-				onCategoryToggle={handleCategoryToggle}
-				onSelectAllPayees={selectAllPayees}
-				onDeselectAllPayees={deselectAllPayees}
-				onSelectAllCategories={selectAllCategories}
-				onDeselectAllCategories={deselectAllCategories} />
-
-			<div class="flex items-center justify-between">
-				<Button variant="outline" onclick={goBackToPreview} disabled={isProcessing}> Back </Button>
-				<Button onclick={processImport} disabled={isProcessing}>
-					{#if isProcessing}
-						<div
-							class="border-primary-foreground mr-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2">
-						</div>
-						Processing...
-					{:else}
-						Import Transactions
-					{/if}
-				</Button>
-			</div>
-		</div>
-
-		{#if isProcessing || isImportStreaming}
-			<div
-				class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-				<Card.Root class="w-96 max-w-[90vw]">
-					<Card.Content class="pt-6">
-						<div class="text-center">
-							<div
-								class="border-primary mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2">
-							</div>
-							<p class="truncate px-2 font-medium">{importProgressMessage || 'Processing Import'}</p>
-							{#if importProgress > 0}
-								<Progress value={importProgress} class="mt-4" />
-								<p class="text-muted-foreground mt-2 text-sm">{importProgress}% complete</p>
-							{:else}
-								<p class="text-muted-foreground mt-2 text-sm">Creating transactions...</p>
-							{/if}
-						</div>
-					</Card.Content>
-				</Card.Root>
-			</div>
-		{/if}
 	{:else if currentStep === 'complete' && importResult}
 		<div class="space-y-6" data-tour-id="import-complete">
 			<div class="text-center">

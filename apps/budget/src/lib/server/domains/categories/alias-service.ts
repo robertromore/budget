@@ -421,15 +421,15 @@ export class CategoryAliasService {
     dismissals: Array<{ rawString: string; categoryId: number }>,
     workspaceId: number
   ): Promise<{ processed: number; aliasesUpdated: number; aliasesCreated: number }> {
-    console.log(`[CategoryAlias] bulkRecordDismissals called with ${dismissals.length} dismissals:`,
-      dismissals.map(d => ({ rawString: d.rawString, categoryId: d.categoryId }))
-    );
+    // console.log(`[CategoryAlias] bulkRecordDismissals called with ${dismissals.length} dismissals:`,
+    //   dismissals.map(d => ({ rawString: d.rawString, categoryId: d.categoryId }))
+    // );
 
     let aliasesUpdated = 0;
     let aliasesCreated = 0;
 
     for (const dismissal of dismissals) {
-      console.log(`[CategoryAlias] Processing dismissal: rawString="${dismissal.rawString}", categoryId=${dismissal.categoryId}`);
+      // console.log(`[CategoryAlias] Processing dismissal: rawString="${dismissal.rawString}", categoryId=${dismissal.categoryId}`);
 
       const alias = await this.repository.findByRawStringAndCategory(
         dismissal.rawString,
@@ -467,9 +467,9 @@ export class CategoryAliasService {
       }
     }
 
-    console.log(
-      `[CategoryAlias] Bulk dismissals: updated ${aliasesUpdated}, created ${aliasesCreated} dismissed aliases`
-    );
+    // console.log(
+    //   `[CategoryAlias] Bulk dismissals: updated ${aliasesUpdated}, created ${aliasesCreated} dismissed aliases`
+    // );
 
     return { processed: dismissals.length, aliasesUpdated, aliasesCreated };
   }
@@ -490,12 +490,12 @@ export class CategoryAliasService {
     workspaceId: number,
     minConfidenceThreshold: number = 0.9
   ): Promise<boolean> {
-    console.log(`[CategoryAlias] isCategoryDismissed check:`, {
-      rawString,
-      categoryId,
-      workspaceId,
-      minConfidenceThreshold,
-    });
+    // console.log(`[CategoryAlias] isCategoryDismissed check:`, {
+    //   rawString,
+    //   categoryId,
+    //   workspaceId,
+    //   minConfidenceThreshold,
+    // });
 
     const alias = await this.repository.findByRawStringAndCategory(
       rawString,
@@ -503,20 +503,20 @@ export class CategoryAliasService {
       workspaceId
     );
 
-    console.log(`[CategoryAlias] findByRawStringAndCategory result:`, alias ? {
-      id: alias.id,
-      rawString: alias.rawString,
-      categoryId: alias.categoryId,
-      confidence: alias.confidence,
-    } : 'no alias found');
+    // console.log(`[CategoryAlias] findByRawStringAndCategory result:`, alias ? {
+    //   id: alias.id,
+    //   rawString: alias.rawString,
+    //   categoryId: alias.categoryId,
+    //   confidence: alias.confidence,
+    // } : 'no alias found');
 
     // If an alias exists with confidence below threshold, it was dismissed
     if (alias && alias.confidence < minConfidenceThreshold) {
-      console.log(`[CategoryAlias] Category IS dismissed (confidence ${alias.confidence} < ${minConfidenceThreshold})`);
+      // console.log(`[CategoryAlias] Category IS dismissed (confidence ${alias.confidence} < ${minConfidenceThreshold})`);
       return true;
     }
 
-    console.log(`[CategoryAlias] Category is NOT dismissed`);
+    // console.log(`[CategoryAlias] Category is NOT dismissed`);
     return false;
   }
 }

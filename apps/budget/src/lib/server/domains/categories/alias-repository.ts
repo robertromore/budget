@@ -51,7 +51,7 @@ export class CategoryAliasRepository {
     const normalizedString = this.normalizeString(data.rawString);
     const now = getCurrentTimestamp();
 
-    console.log(`[AliasRepo] Creating alias: rawString="${data.rawString}", normalized="${normalizedString}", categoryId=${data.categoryId}, confidence=${data.confidence}`);
+    // console.log(`[AliasRepo] Creating alias: rawString="${data.rawString}", normalized="${normalizedString}", categoryId=${data.categoryId}, confidence=${data.confidence}`);
 
     const [alias] = await db
       .insert(categoryAliases)
@@ -68,7 +68,7 @@ export class CategoryAliasRepository {
       throw new Error("Failed to create category alias");
     }
 
-    console.log(`[AliasRepo] Created alias id=${alias.id}`);
+    // console.log(`[AliasRepo] Created alias id=${alias.id}`);
     return alias;
   }
 
@@ -328,7 +328,7 @@ export class CategoryAliasRepository {
           created++;
         } catch (error) {
           // Handle unique constraint violation (race condition)
-          console.log(`[AliasRepo] Failed to create alias for "${aliasData.rawString}":`, error);
+          // console.log(`[AliasRepo] Failed to create alias for "${aliasData.rawString}":`, error);
         }
       }
     }
@@ -605,7 +605,7 @@ export class CategoryAliasRepository {
     workspaceId: number
   ): Promise<CategoryAlias | null> {
     const normalizedString = this.normalizeString(rawString);
-    console.log(`[AliasRepo] findByRawStringAndCategory: rawString="${rawString}", normalized="${normalizedString}", categoryId=${categoryId}`);
+    // console.log(`[AliasRepo] findByRawStringAndCategory: rawString="${rawString}", normalized="${normalizedString}", categoryId=${categoryId}`);
 
     // Try exact match first
     const [exactResult] = await db
@@ -622,7 +622,7 @@ export class CategoryAliasRepository {
       .limit(1);
 
     if (exactResult) {
-      console.log(`[AliasRepo] Found exact match: id=${exactResult.id}, confidence=${exactResult.confidence}`);
+      // console.log(`[AliasRepo] Found exact match: id=${exactResult.id}, confidence=${exactResult.confidence}`);
       return exactResult;
     }
 
@@ -640,11 +640,11 @@ export class CategoryAliasRepository {
       )
       .limit(1);
 
-    if (normalizedResult) {
-      console.log(`[AliasRepo] Found normalized match: id=${normalizedResult.id}, rawString="${normalizedResult.rawString}", confidence=${normalizedResult.confidence}`);
-    } else {
-      console.log(`[AliasRepo] No match found for rawString="${rawString}" and categoryId=${categoryId}`);
-    }
+    // if (normalizedResult) {
+    //   console.log(`[AliasRepo] Found normalized match: id=${normalizedResult.id}, rawString="${normalizedResult.rawString}", confidence=${normalizedResult.confidence}`);
+    // } else {
+    //   console.log(`[AliasRepo] No match found for rawString="${rawString}" and categoryId=${categoryId}`);
+    // }
 
     return normalizedResult || null;
   }

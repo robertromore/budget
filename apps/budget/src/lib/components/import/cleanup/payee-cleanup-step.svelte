@@ -3,17 +3,21 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Checkbox } from '$lib/components/ui/checkbox';
+import * as Command from '$lib/components/ui/command';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Progress } from '$lib/components/ui/progress';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
 import { Separator } from '$lib/components/ui/separator';
+import * as Popover from '$lib/components/ui/popover';
 import type {
 	CleanupState,
 	PayeeGroup,
 	CategorySuggestion
 } from '$lib/types/import';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { trpc } from '$lib/trpc/client';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Check from '@lucide/svelte/icons/check';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import ChevronUp from '@lucide/svelte/icons/chevron-up';
@@ -24,6 +28,7 @@ import Sparkles from '@lucide/svelte/icons/sparkles';
 import Users from '@lucide/svelte/icons/users';
 import X from '@lucide/svelte/icons/x';
 import { toast } from 'svelte-sonner';
+import Fuse from 'fuse.js';
 
 interface Props {
 	rows: Array<{
@@ -33,9 +38,11 @@ interface Props {
 	onNext: (cleanupState: CleanupState) => void;
 	onBack: () => void;
 	onSkip: () => void;
+	/** Current account being imported into (excluded from transfer options) */
+	currentAccountId?: number;
 }
 
-let { rows, onNext, onBack, onSkip }: Props = $props();
+let { rows, onNext, onBack, onSkip, currentAccountId }: Props = $props();
 
 // State
 let cleanupState = $state<CleanupState>({
@@ -50,13 +57,66 @@ let expandedGroups = $state(new Set<string>());
 let editingGroup = $state<string | null>(null);
 let editingName = $state('');
 
+// Account search value per group
+let groupAccountSearch = $state<Record<string, string>>({});
+// Track which group's popover is open
+let groupPopoverOpen = $state<Record<string, boolean>>({});
+
+// Get accounts for transfer selection
+const accountsState = AccountsState.get();
+const accountsArray = $derived(
+	accountsState?.all
+		.filter((a) => a.id !== currentAccountId && !a.closed)
+		.map((a) => ({
+			id: a.id,
+			name: a.name,
+			accountIcon: a.accountIcon,
+			accountColor: a.accountColor
+		})) ?? []
+);
+
+// Fuse for account search
+const accountsFused = $derived(
+	new Fuse(accountsArray, { keys: ['name'], includeScore: true, threshold: 0.3 })
+);
+
+function getFilteredAccounts(groupId: string) {
+	const searchValue = groupAccountSearch[groupId] || '';
+	if (!searchValue) return accountsArray;
+	return accountsFused.search(searchValue).map((r) => r.item);
+}
+
+function markGroupAsTransfer(groupId: string, account: { id: number; name: string }) {
+	cleanupState.payeeGroups = cleanupState.payeeGroups.map((g) =>
+		g.groupId === groupId
+			? {
+					...g,
+					userDecision: 'accept' as const,
+					transferAccountId: account.id,
+					transferAccountName: account.name
+				}
+			: g
+	);
+	// Clear search
+	groupAccountSearch = { ...groupAccountSearch, [groupId]: '' };
+}
+
+function clearGroupTransfer(groupId: string) {
+	cleanupState.payeeGroups = cleanupState.payeeGroups.map((g) =>
+		g.groupId === groupId
+			? { ...g, transferAccountId: undefined, transferAccountName: undefined }
+			: g
+	);
+}
+
 // Derived stats
 const stats = $derived.by(() => {
 	const groups = cleanupState.payeeGroups;
-	const accepted = groups.filter((g) => g.userDecision === 'accept').length;
+	const accepted = groups.filter((g) => g.userDecision === 'accept' && !g.transferAccountId).length;
 	const rejected = groups.filter((g) => g.userDecision === 'reject').length;
 	const pending = groups.filter((g) => g.userDecision === 'pending').length;
 	const withExisting = groups.filter((g) => g.existingMatch).length;
+	const transfers = groups.filter((g) => g.transferAccountId).length;
 
 	const catSuggestions = cleanupState.categorySuggestions;
 	const autoFilled = catSuggestions.filter((s) => s.selectedCategoryId && !s.userOverride).length;
@@ -68,6 +128,7 @@ const stats = $derived.by(() => {
 		rejected,
 		pending,
 		withExisting,
+		transfers,
 		autoFilled,
 		needsReview
 	};
@@ -184,6 +245,20 @@ function resetAllDecisions() {
 		customName: undefined
 	}));
 	toast.info('Reset all decisions');
+}
+
+function resetGroup(groupId: string) {
+	cleanupState.payeeGroups = cleanupState.payeeGroups.map((g) =>
+		g.groupId === groupId
+			? {
+					...g,
+					userDecision: g.confidence >= 0.95 ? ('accept' as const) : ('pending' as const),
+					customName: undefined,
+					transferAccountId: undefined,
+					transferAccountName: undefined
+				}
+			: g
+	);
 }
 
 function getConfidenceColor(confidence: number): string {
@@ -325,25 +400,29 @@ function handleProceed() {
 						Review similar payees and decide how to handle them.
 					</Card.Description>
 				</Card.Header>
-				<Card.Content>
-					<ScrollArea class="max-h-[400px]">
-						<div class="space-y-2">
+				<Card.Content class="overflow-hidden">
+					<ScrollArea class="h-[400px]">
+						<div class="space-y-2 pr-4">
 							{#each cleanupState.payeeGroups as group (group.groupId)}
 								{@const isExpanded = expandedGroups.has(group.groupId)}
 								{@const isEditing = editingGroup === group.groupId}
 								{@const displayName =
 									group.userDecision === 'custom' && group.customName
 										? group.customName
-										: group.canonicalName}
+										: group.transferAccountName || group.canonicalName}
+								{@const isTransfer = !!group.transferAccountId}
+								{@const filteredAccounts = getFilteredAccounts(group.groupId)}
 
 								<div
-									class="rounded-lg border p-3 transition-colors {group.userDecision === 'accept'
-										? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
-										: group.userDecision === 'reject'
-											? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
-											: group.userDecision === 'custom'
-												? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
-												: ''}">
+									class="rounded-lg border p-3 transition-colors {isTransfer
+										? 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950'
+										: group.userDecision === 'accept'
+											? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+											: group.userDecision === 'reject'
+												? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
+												: group.userDecision === 'custom'
+													? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
+													: ''}">
 									<div class="flex items-start gap-3">
 										<!-- Expand/Collapse Toggle -->
 										<button
@@ -359,83 +438,322 @@ function handleProceed() {
 
 										<!-- Main Content -->
 										<div class="min-w-0 flex-1">
-											<div class="flex items-start justify-between gap-2">
-												<div class="min-w-0 flex-1">
-													{#if isEditing}
-														<div class="flex items-center gap-2">
-															<Input
-																bind:value={editingName}
-																class="h-8"
-																placeholder="Enter custom name"
-																onkeydown={(e) => {
-																	if (e.key === 'Enter') saveEditGroup(group.groupId);
-																	if (e.key === 'Escape') cancelEditGroup();
-																}} />
-															<Button
-																variant="ghost"
-																size="sm"
-																onclick={() => saveEditGroup(group.groupId)}>
-																<Check class="h-4 w-4" />
-															</Button>
-															<Button variant="ghost" size="sm" onclick={cancelEditGroup}>
-																<X class="h-4 w-4" />
-															</Button>
-														</div>
-													{:else}
-														<div class="flex items-center gap-2">
-															<span class="font-medium">{displayName}</span>
-															<Badge
-																variant={getConfidenceBadgeVariant(group.confidence)}
-																class="text-xs">
-																{Math.round(group.confidence * 100)}%
-															</Badge>
-															{#if group.members.length > 1}
-																<span class="text-muted-foreground text-xs">
-																	({group.members.length} variations)
-																</span>
-															{/if}
-														</div>
-													{/if}
-
-													{#if group.existingMatch}
-														<p class="text-muted-foreground mt-1 text-xs">
-															Matches existing: <span class="font-medium"
-																>{group.existingMatch.name}</span>
-															({Math.round(group.existingMatch.confidence * 100)}% match)
-														</p>
-													{/if}
-												</div>
-
-												<!-- Action Buttons -->
-												{#if !isEditing}
-													<div class="flex shrink-0 items-center gap-1">
-														<Button
-															variant={group.userDecision === 'accept' ? 'default' : 'ghost'}
-															size="sm"
-															class="h-7 w-7 p-0"
-															onclick={() => acceptGroup(group.groupId)}
-															title="Accept">
-															<Check class="h-4 w-4" />
-														</Button>
-														<Button
-															variant="ghost"
-															size="sm"
-															class="h-7 w-7 p-0"
-															onclick={() => startEditGroup(group)}
-															title="Edit name">
-															<Edit3 class="h-4 w-4" />
-														</Button>
-														<Button
-															variant={group.userDecision === 'reject' ? 'destructive' : 'ghost'}
-															size="sm"
-															class="h-7 w-7 p-0"
-															onclick={() => rejectGroup(group.groupId)}
-															title="Reject">
-															<X class="h-4 w-4" />
-														</Button>
-													</div>
+											<!-- Header with name and badge -->
+											<div class="mb-2 flex items-center gap-2">
+												{#if isTransfer}
+													<ArrowRightLeft class="h-4 w-4 text-purple-600" />
+												{/if}
+												<span class="font-medium">{displayName}</span>
+												<Badge
+													variant={getConfidenceBadgeVariant(group.confidence)}
+													class="text-xs">
+													{Math.round(group.confidence * 100)}%
+												</Badge>
+												{#if group.members.length > 1}
+													<span class="text-muted-foreground text-xs">
+														({group.members.length} variations)
+													</span>
+												{/if}
+												{#if isTransfer}
+													<Badge variant="secondary" class="text-xs">Transfer</Badge>
 												{/if}
 											</div>
+
+											{#if group.existingMatch && !isTransfer}
+												<p class="text-muted-foreground mb-2 text-xs">
+													Matches existing: <span class="font-medium"
+														>{group.existingMatch.name}</span>
+													({Math.round(group.existingMatch.confidence * 100)}% match)
+												</p>
+											{/if}
+
+											<!-- Action Buttons -->
+											{#if isEditing}
+												<div class="flex items-center gap-2">
+													<Input
+														bind:value={editingName}
+														class="h-8"
+														placeholder="Enter custom name"
+														onkeydown={(e) => {
+															if (e.key === 'Enter') saveEditGroup(group.groupId);
+															if (e.key === 'Escape') cancelEditGroup();
+														}} />
+													<Button
+														variant="ghost"
+														size="sm"
+														onclick={() => saveEditGroup(group.groupId)}>
+														<Check class="h-4 w-4" />
+													</Button>
+													<Button variant="ghost" size="sm" onclick={cancelEditGroup}>
+														<X class="h-4 w-4" />
+													</Button>
+												</div>
+											{:else if group.userDecision === 'custom' && group.customName}
+												<!-- Custom name set - show confirmation state -->
+												<div class="flex flex-wrap items-center gap-2">
+													<div class="flex items-center gap-1.5 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+														<Check class="h-3 w-3" />
+														<span>Renamed</span>
+													</div>
+													<Button
+														variant="outline"
+														size="sm"
+														class="h-7"
+														onclick={() => startEditGroup(group)}>
+														<Edit3 class="mr-1 h-3 w-3" />
+														Edit
+													</Button>
+													<!-- Transfer popover -->
+													<Popover.Root
+														open={groupPopoverOpen[group.groupId] ?? false}
+														onOpenChange={(open) => {
+															groupPopoverOpen = { ...groupPopoverOpen, [group.groupId]: open };
+														}}>
+														<Popover.Trigger>
+															{#snippet child({ props })}
+																<Button {...props} variant="ghost" size="sm" class="h-7">
+																	<ArrowRightLeft class="mr-1 h-3 w-3" />
+																	Transfer
+																</Button>
+															{/snippet}
+														</Popover.Trigger>
+														<Popover.Content class="w-64 p-2" align="start">
+															<div class="space-y-2">
+																<Input
+																	placeholder="Search accounts..."
+																	class="h-8"
+																	value={groupAccountSearch[group.groupId] || ''}
+																	oninput={(e) => {
+																		groupAccountSearch = {
+																			...groupAccountSearch,
+																			[group.groupId]: e.currentTarget.value
+																		};
+																	}} />
+																<div class="max-h-40 space-y-1 overflow-y-auto">
+																	{#each filteredAccounts.slice(0, 6) as account (account.id)}
+																		<button
+																			type="button"
+																			class="hover:bg-muted flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
+																			onclick={() => {
+																				markGroupAsTransfer(group.groupId, account);
+																				groupPopoverOpen = {
+																					...groupPopoverOpen,
+																					[group.groupId]: false
+																				};
+																			}}>
+																			<ArrowRightLeft class="h-3 w-3 text-purple-600" />
+																			<span>{account.name}</span>
+																		</button>
+																	{:else}
+																		<p class="text-muted-foreground py-2 text-center text-xs">
+																			No accounts found
+																		</p>
+																	{/each}
+																</div>
+															</div>
+														</Popover.Content>
+													</Popover.Root>
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-7"
+														onclick={() => resetGroup(group.groupId)}>
+														Reset
+													</Button>
+												</div>
+											{:else if group.userDecision === 'accept' && !isTransfer}
+												<!-- Accepted - show confirmation state -->
+												<div class="flex flex-wrap items-center gap-2">
+													<div class="flex items-center gap-1.5 rounded-md bg-green-100 px-2 py-1 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+														<Check class="h-3 w-3" />
+														<span>Accepted</span>
+													</div>
+													<Button
+														variant="outline"
+														size="sm"
+														class="h-7"
+														onclick={() => startEditGroup(group)}>
+														<Edit3 class="mr-1 h-3 w-3" />
+														Edit
+													</Button>
+													<!-- Transfer popover -->
+													<Popover.Root
+														open={groupPopoverOpen[group.groupId] ?? false}
+														onOpenChange={(open) => {
+															groupPopoverOpen = { ...groupPopoverOpen, [group.groupId]: open };
+														}}>
+														<Popover.Trigger>
+															{#snippet child({ props })}
+																<Button {...props} variant="ghost" size="sm" class="h-7">
+																	<ArrowRightLeft class="mr-1 h-3 w-3" />
+																	Transfer
+																</Button>
+															{/snippet}
+														</Popover.Trigger>
+														<Popover.Content class="w-64 p-2" align="start">
+															<div class="space-y-2">
+																<Input
+																	placeholder="Search accounts..."
+																	class="h-8"
+																	value={groupAccountSearch[group.groupId] || ''}
+																	oninput={(e) => {
+																		groupAccountSearch = {
+																			...groupAccountSearch,
+																			[group.groupId]: e.currentTarget.value
+																		};
+																	}} />
+																<div class="max-h-40 space-y-1 overflow-y-auto">
+																	{#each filteredAccounts.slice(0, 6) as account (account.id)}
+																		<button
+																			type="button"
+																			class="hover:bg-muted flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
+																			onclick={() => {
+																				markGroupAsTransfer(group.groupId, account);
+																				groupPopoverOpen = {
+																					...groupPopoverOpen,
+																					[group.groupId]: false
+																				};
+																			}}>
+																			<ArrowRightLeft class="h-3 w-3 text-purple-600" />
+																			<span>{account.name}</span>
+																		</button>
+																	{:else}
+																		<p class="text-muted-foreground py-2 text-center text-xs">
+																			No accounts found
+																		</p>
+																	{/each}
+																</div>
+															</div>
+														</Popover.Content>
+													</Popover.Root>
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-7"
+														onclick={() => resetGroup(group.groupId)}>
+														Reset
+													</Button>
+												</div>
+											{:else if group.userDecision === 'reject'}
+												<!-- Rejected - show confirmation state -->
+												<div class="flex flex-wrap items-center gap-2">
+													<div class="flex items-center gap-1.5 rounded-md bg-red-100 px-2 py-1 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
+														<X class="h-3 w-3" />
+														<span>Skipped</span>
+													</div>
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-7"
+														onclick={() => resetGroup(group.groupId)}>
+														Undo
+													</Button>
+												</div>
+											{:else if isTransfer}
+												<!-- Transfer set - show confirmation state -->
+												<div class="flex flex-wrap items-center gap-2">
+													<div class="flex items-center gap-1.5 rounded-md bg-purple-100 px-2 py-1 text-sm text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+														<ArrowRightLeft class="h-3 w-3" />
+														<span>Transfer to {group.transferAccountName}</span>
+													</div>
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-7"
+														onclick={() => clearGroupTransfer(group.groupId)}>
+														Clear
+													</Button>
+												</div>
+											{:else}
+												<!-- Pending - show full action buttons -->
+												<div class="flex flex-wrap items-center gap-1">
+													<Button
+														variant="default"
+														size="sm"
+														class="h-7"
+														onclick={() => {
+															clearGroupTransfer(group.groupId);
+															acceptGroup(group.groupId);
+														}}>
+														<Check class="mr-1 h-3 w-3" />
+														Accept
+													</Button>
+													<Button
+														variant="outline"
+														size="sm"
+														class="h-7"
+														onclick={() => startEditGroup(group)}>
+														<Edit3 class="mr-1 h-3 w-3" />
+														Edit
+													</Button>
+													<Button
+														variant="outline"
+														size="sm"
+														class="h-7"
+														onclick={() => {
+															clearGroupTransfer(group.groupId);
+															rejectGroup(group.groupId);
+														}}>
+														<X class="mr-1 h-3 w-3" />
+														Skip
+													</Button>
+
+													<!-- Transfer button with popover -->
+													<Popover.Root
+														open={groupPopoverOpen[group.groupId] ?? false}
+														onOpenChange={(open) => {
+															groupPopoverOpen = { ...groupPopoverOpen, [group.groupId]: open };
+														}}>
+														<Popover.Trigger>
+															{#snippet child({ props })}
+																<Button
+																	{...props}
+																	variant="outline"
+																	size="sm"
+																	class="h-7">
+																	<ArrowRightLeft class="mr-1 h-3 w-3" />
+																	Transfer
+																</Button>
+															{/snippet}
+														</Popover.Trigger>
+														<Popover.Content class="w-64 p-2" align="start">
+															<div class="space-y-2">
+																<Input
+																	placeholder="Search accounts..."
+																	class="h-8"
+																	value={groupAccountSearch[group.groupId] || ''}
+																	oninput={(e) => {
+																		groupAccountSearch = {
+																			...groupAccountSearch,
+																			[group.groupId]: e.currentTarget.value
+																		};
+																	}} />
+																<div class="max-h-40 space-y-1 overflow-y-auto">
+																	{#each filteredAccounts.slice(0, 6) as account (account.id)}
+																		<button
+																			type="button"
+																			class="hover:bg-muted flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
+																			onclick={() => {
+																				markGroupAsTransfer(group.groupId, account);
+																				groupPopoverOpen = {
+																					...groupPopoverOpen,
+																					[group.groupId]: false
+																				};
+																			}}>
+																			<ArrowRightLeft class="h-3 w-3 text-purple-600" />
+																			<span>{account.name}</span>
+																		</button>
+																	{:else}
+																		<p class="text-muted-foreground py-2 text-center text-xs">
+																			No accounts found
+																		</p>
+																	{/each}
+																</div>
+															</div>
+														</Popover.Content>
+													</Popover.Root>
+												</div>
+											{/if}
 
 											<!-- Expanded Members -->
 											{#if isExpanded && group.members.length > 0}

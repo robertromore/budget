@@ -103,10 +103,10 @@ export class CategorySuggester {
     let withSuggestions = 0;
 
     // Debug: Log first few inputs
-    if (inputs.length > 0) {
-      console.log('[CategorySuggester] Processing', inputs.length, 'rows for workspace', workspaceId);
-      console.log('[CategorySuggester] Sample input:', inputs[0]);
-    }
+    // if (inputs.length > 0) {
+    //   console.log('[CategorySuggester] Processing', inputs.length, 'rows for workspace', workspaceId);
+    //   console.log('[CategorySuggester] Sample input:', inputs[0]);
+    // }
 
     for (const input of inputs) {
       const context = {
@@ -125,9 +125,9 @@ export class CategorySuggester {
       );
 
       // Debug: Log first suggestion result
-      if (input.rowIndex === inputs[0].rowIndex) {
-        console.log('[CategorySuggester] First row smart suggestions:', smartSuggestions.length, smartSuggestions);
-      }
+      // if (input.rowIndex === inputs[0].rowIndex) {
+      //   console.log('[CategorySuggester] First row smart suggestions:', smartSuggestions.length, smartSuggestions);
+      // }
 
       const options: CategorySuggestionOption[] = smartSuggestions
         .filter((s) => s.confidence >= this.config.minConfidence)

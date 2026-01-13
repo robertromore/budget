@@ -476,11 +476,11 @@ export function createSmartCategoryService(
       limit: number = 5
     ): Promise<SmartCategorySuggestion[]> {
       const workspaceCategories = await loadCategories(workspaceId);
-      console.log('[SmartCategoryService] Loaded', workspaceCategories.length, 'categories for workspace', workspaceId);
+      // console.log('[SmartCategoryService] Loaded', workspaceCategories.length, 'categories for workspace', workspaceId);
       if (workspaceCategories.length === 0) {
         return [];
       }
-      console.log('[SmartCategoryService] Categories:', workspaceCategories.map(c => c.name));
+      // console.log('[SmartCategoryService] Categories:', workspaceCategories.map(c => c.name));
 
       // =================================================================
       // 0. Category Alias Check (HIGHEST PRIORITY)
@@ -503,14 +503,14 @@ export function createSmartCategoryService(
         );
 
         if (aliasMatch.found && aliasMatch.categoryId) {
-          console.log('[SmartCategoryService] Category alias match found:', aliasMatch);
+          // console.log('[SmartCategoryService] Category alias match found:', aliasMatch);
 
           if (aliasMatch.confidence < CATEGORY_ALIAS_MIN_CONFIDENCE) {
-            console.log('[SmartCategoryService] Skipping low-confidence alias match:', {
-              confidence: aliasMatch.confidence,
-              rawString,
-              categoryId: aliasMatch.categoryId,
-            });
+            // console.log('[SmartCategoryService] Skipping low-confidence alias match:', {
+            //   confidence: aliasMatch.confidence,
+            //   rawString,
+            //   categoryId: aliasMatch.categoryId,
+            // });
           } else {
             // Look up the category details
             const matchedCategory = workspaceCategories.find(c => c.id === aliasMatch.categoryId);
@@ -536,7 +536,7 @@ export function createSmartCategoryService(
               // If alias confidence is very high (>0.9), just return alias match
               // without computing other suggestions for performance
               if (aliasConfidence >= 0.95) {
-                console.log('[SmartCategoryService] High-confidence alias match, returning early');
+                // console.log('[SmartCategoryService] High-confidence alias match, returning early');
                 return aliasResults.slice(0, limit);
               }
             }
@@ -566,10 +566,10 @@ export function createSmartCategoryService(
 
       // 1. Payee-based suggestions (highest weight)
       const payeeName = context.payeeName || extractMerchantName(context.description);
-      console.log('[SmartCategoryService] Looking up payee:', payeeName);
+      // console.log('[SmartCategoryService] Looking up payee:', payeeName);
       const simService = getSimilarityService();
       const payeeSuggestion = await simService.suggestCategoryByPayee(workspaceId, payeeName);
-      console.log('[SmartCategoryService] Payee suggestion:', payeeSuggestion);
+      // console.log('[SmartCategoryService] Payee suggestion:', payeeSuggestion);
 
       if (payeeSuggestion) {
         const entry = categoryScores.get(payeeSuggestion.categoryId);
@@ -593,7 +593,7 @@ export function createSmartCategoryService(
       for (const mapping of PAYEE_CATEGORY_MAPPINGS) {
         const matchesPayee = mapping.payeePatterns.some(pattern => pattern.test(payeeName));
         if (matchesPayee) {
-          console.log('[SmartCategoryService] Payee pattern match:', payeeName, '→', mapping.categoryKeywords);
+          // console.log('[SmartCategoryService] Payee pattern match:', payeeName, '→', mapping.categoryKeywords);
           for (const [catId, entry] of categoryScores) {
             const keywordScore = entry.category.name
               ? scoreCategory(entry.category.name, mapping.categoryKeywords)
@@ -745,18 +745,18 @@ export function createSmartCategoryService(
 
       // Debug: Log all category scores before filtering
       const allScores = Array.from(categoryScores.values());
-      console.log('[SmartCategoryService] Category scores before filter:', allScores.map(e => ({
-        name: e.category.name,
-        score: e.score.toFixed(3),
-        factors: e.factors.length
-      })));
+      // console.log('[SmartCategoryService] Category scores before filter:', allScores.map(e => ({
+      //   name: e.category.name,
+      //   score: e.score.toFixed(3),
+      //   factors: e.factors.length
+      // })));
 
       const sortedEntries = allScores
         .filter((e) => e.score >= cfg.minConfidenceToSuggest)
         .sort((a, b) => b.score - a.score)
         .slice(0, limit);
 
-      console.log('[SmartCategoryService] After filter (>= 0.3):', sortedEntries.length, 'categories');
+      // console.log('[SmartCategoryService] After filter (>= 0.3):', sortedEntries.length, 'categories');
 
       const dismissedCategoryIds = new Set<number>();
       if (rawString) {

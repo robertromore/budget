@@ -460,6 +460,10 @@ export interface PayeeGroup {
   userDecision: PayeeGroupDecision;
   /** Custom name if user chose 'custom' decision */
   customName?: string;
+  /** If user marked this group as a transfer, the target account ID */
+  transferAccountId?: number;
+  /** If user marked this group as a transfer, the target account name */
+  transferAccountName?: string;
 }
 
 /**
@@ -562,7 +566,7 @@ export interface ImportFile {
   /** Detected file type */
   fileType: ImportFileType;
   /** Current processing status */
-  status: "pending" | "uploading" | "mapping" | "preview" | "ready" | "error";
+  status: "pending" | "uploading" | "mapping" | "cleanup" | "preview" | "ready" | "error";
   /** Error message if status is 'error' */
   error?: string;
   /** Parse result from file upload */

@@ -58,9 +58,14 @@ export class TransferMappingRepository {
     text = text.replace(/\d{2,4}-\d{2}-\d{2}/g, "");
 
     // Remove transaction IDs: alphanumeric strings containing * or # (8+ chars)
-    // or purely numeric sequences of 8+ digits
     text = text.replace(/\b[A-Z0-9]*[*#][A-Z0-9*#]+\b/gi, "");
+
+    // Remove long numeric sequences (8+ digits) anywhere
     text = text.replace(/\b\d{8,}\b/g, "");
+
+    // Remove trailing reference numbers (4-7 digits at end of string)
+    // This catches patterns like "APPLECARD GSBANK 12345" or "VENMO PAYMENT 1234567"
+    text = text.replace(/\s+\d{4,7}\s*$/g, "");
 
     // Remove card number patterns (****1234)
     text = text.replace(/\*{4}\d{4}/g, "");
@@ -414,10 +419,15 @@ export class TransferMappingRepository {
 
     // Finally try cleaned match (strips amounts, IDs, etc.)
     const cleanedInput = this.cleanString(rawPayeeString);
+    console.log("[TransferMappingRepo] Trying cleaned match:", {
+      original: rawPayeeString,
+      cleaned: cleanedInput,
+    });
 
     if (cleanedInput.length >= 3) {
       // Only try if we have a meaningful string left
       const allMappings = await this.findAll(workspaceId);
+      console.log("[TransferMappingRepo] Total mappings to check:", allMappings.length);
 
       // Find mappings whose cleaned version matches
       const cleanedMatches = allMappings.filter((mapping) => {
@@ -425,9 +435,22 @@ export class TransferMappingRepository {
         return cleanedMapping === cleanedInput;
       });
 
+      // Log sample of cleaned mappings for debugging
+      if (allMappings.length > 0 && cleanedMatches.length === 0) {
+        const samples = allMappings.slice(0, 5).map(m => ({
+          raw: m.rawPayeeString,
+          cleaned: this.cleanString(m.rawPayeeString),
+        }));
+        console.log("[TransferMappingRepo] Sample cleaned mappings (no match):", samples);
+      }
+
       if (cleanedMatches.length > 0) {
         // Return the most used mapping with matching cleaned string
         const bestMatch = cleanedMatches.sort((a, b) => b.matchCount - a.matchCount)[0];
+        console.log("[TransferMappingRepo] Cleaned match found:", {
+          mappingId: bestMatch.id,
+          targetAccountId: bestMatch.targetAccountId,
+        });
         return {
           targetAccountId: bestMatch.targetAccountId,
           confidence: bestMatch.confidence * 0.8, // Lower confidence for cleaned match
@@ -437,6 +460,7 @@ export class TransferMappingRepository {
       }
     }
 
+    console.log("[TransferMappingRepo] No match found");
     return null;
   }
 

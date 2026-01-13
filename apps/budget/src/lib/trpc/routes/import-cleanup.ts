@@ -59,7 +59,7 @@ export const importCleanupRoutes = t.router({
         const existingPayees = await payeeService.getAllPayees(ctx.workspaceId);
 
         const grouper = createPayeeGrouper(input.config);
-        const result = await grouper.analyzePayees(input.rows, existingPayees);
+        const result = await grouper.analyzePayees(input.rows, existingPayees, ctx.workspaceId);
 
         return result;
       } catch (error) {
@@ -133,7 +133,8 @@ export const importCleanupRoutes = t.router({
               payeeName: r.payeeName,
               originalPayee: r.originalPayee, // Pass through for alias tracking
             })),
-            existingPayees
+            existingPayees,
+            ctx.workspaceId // Pass workspace ID for saved alias/mapping lookup
           ),
           suggester.suggestCategories(ctx.workspaceId, rowsForCategorySuggestion),
         ]);

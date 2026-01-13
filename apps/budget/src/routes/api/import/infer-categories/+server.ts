@@ -2,8 +2,9 @@ import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import { PayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
+import { getTransferMappingService } from "$lib/server/domains/transfers";
 import { db } from "$lib/server/db";
-import { payees, categories } from "$lib/schema";
+import { payees, categories, accounts } from "$lib/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import type { ImportRow } from "$lib/types/import";
 import { json } from "@sveltejs/kit";
@@ -20,14 +21,14 @@ export const POST: RequestHandler = async ({ request }) => {
       workspaceId?: number;
     };
 
-    console.log(`[CategoryInfer] Received request: ${rows?.length || 0} rows, workspaceId=${workspaceId}`);
+    // console.log(`[CategoryInfer] Received request: ${rows?.length || 0} rows, workspaceId=${workspaceId}`);
 
     if (!rows || !Array.isArray(rows)) {
       return json({ error: "Invalid request: rows array required" }, { status: 400 });
     }
 
     if (!workspaceId) {
-      console.warn("[CategoryInfer] No workspaceId provided - category alias checks will be skipped!");
+      // console.warn("[CategoryInfer] No workspaceId provided - category alias checks will be skipped!");
     }
 
     // Initialize matchers and services
@@ -35,12 +36,28 @@ export const POST: RequestHandler = async ({ request }) => {
     const payeeMatcher = new PayeeMatcher();
     const aliasService = workspaceId ? new PayeeAliasService() : null;
     const categoryAliasService = workspaceId ? getCategoryAliasService() : null;
+    const transferMappingService = workspaceId ? getTransferMappingService() : null;
 
-    // Pre-fetch payees and categories for the workspace if workspaceId is provided
+    // Pre-fetch payees, categories, and accounts for the workspace if workspaceId is provided
     let payeeMap = new Map<number, { name: string; defaultCategoryId: number | null }>();
     let categoryMap = new Map<number, string>();
+    let accountMap = new Map<number, string>(); // accountId -> name
 
     if (workspaceId) {
+      // Fetch all active accounts for transfer mapping lookups
+      const workspaceAccounts = await db
+        .select({
+          id: accounts.id,
+          name: accounts.name,
+        })
+        .from(accounts)
+        .where(and(eq(accounts.workspaceId, workspaceId), isNull(accounts.deletedAt)));
+
+      for (const a of workspaceAccounts) {
+        if (a.name) {
+          accountMap.set(a.id, a.name);
+        }
+      }
       // Fetch all active payees
       const workspacePayees = await db
         .select({
@@ -92,6 +109,12 @@ export const POST: RequestHandler = async ({ request }) => {
     const categoryAliasCache = new Map<
       string,
       { categoryId: number; categoryName: string; confidence: number } | null
+    >();
+
+    // Track transfer mapping matches (raw string -> target account info)
+    const transferMappingCache = new Map<
+      string,
+      { targetAccountId: number; targetAccountName: string; confidence: number } | null
     >();
 
     // Process each row: check aliases, normalize payee names, and infer categories
@@ -172,13 +195,60 @@ export const POST: RequestHandler = async ({ request }) => {
           }
         }
 
+        // Check for saved transfer mapping before inferring category
+        // Transfers don't have categories, so we skip category inference if a mapping is found
+        const rawPayeeForTransfer = (updates["originalPayee"] || data["originalPayee"] || originalPayee) as string | undefined;
+        let isTransfer = false;
+
+        if (transferMappingService && workspaceId && rawPayeeForTransfer) {
+          // Check cache first
+          let transferMatch = transferMappingCache.get(rawPayeeForTransfer);
+          if (transferMatch === undefined) {
+            // Not in cache, look up
+            const match = await transferMappingService.findTransferMapping(rawPayeeForTransfer, workspaceId);
+            if (match) {
+              const accountName = accountMap.get(match.targetAccountId);
+              if (accountName) {
+                transferMatch = {
+                  targetAccountId: match.targetAccountId,
+                  targetAccountName: accountName,
+                  confidence: match.confidence,
+                };
+              } else {
+                transferMatch = null;
+              }
+            } else {
+              transferMatch = null;
+            }
+            transferMappingCache.set(rawPayeeForTransfer, transferMatch);
+          }
+
+          if (transferMatch) {
+            updates["suggestedTransferAccountId"] = transferMatch.targetAccountId;
+            updates["suggestedTransferAccountName"] = transferMatch.targetAccountName;
+            updates["transferMappingConfidence"] = transferMatch.confidence;
+            isTransfer = true;
+
+            // Clear any category fields - transfers don't have categories
+            updates["category"] = null;
+            updates["categoryId"] = null;
+            updates["inferredCategory"] = null;
+            updates["inferredCategoryId"] = null;
+            updates["categoryConfidence"] = null;
+            updates["categoryFromPayeeDefault"] = null;
+            updates["categoryMatchedByAlias"] = null;
+          }
+        }
+
         // Infer category if no explicit category is provided (and not already set from alias)
+        // Skip category inference for rows that are suggested transfers
         const hasCategory =
           (updates["category"] || data["category"]) &&
           typeof (updates["category"] || data["category"]) === "string" &&
           (updates["category"] || data["category"]).trim().length > 0;
 
         if (
+          !isTransfer &&
           !hasCategory &&
           (updates["payee"] || data["payee"] || data["notes"] || data["description"])
         ) {
@@ -220,10 +290,10 @@ export const POST: RequestHandler = async ({ request }) => {
                     }
                   } else {
                     // Alias found but confidence too low (user dismissed it)
-                    console.log(
-                      `[CategoryInfer] Skipping low-confidence alias for "${rawPayeeString}": ` +
-                      `confidence ${match.confidence.toFixed(2)} < ${CATEGORY_ALIAS_MIN_CONFIDENCE}`
-                    );
+                    // console.log(
+                    //   `[CategoryInfer] Skipping low-confidence alias for "${rawPayeeString}": ` +
+                    //   `confidence ${match.confidence.toFixed(2)} < ${CATEGORY_ALIAS_MIN_CONFIDENCE}`
+                    // );
                     aliasMatch = null;
                   }
                 } else {
@@ -254,7 +324,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
             // Fall back to keyword matching if no alias found or confidence too low
             if (!foundCategoryFromAlias) {
-              console.log(`[CategoryInfer] Keyword matching for row, rawPayeeString="${rawPayeeString}", normalizedPayee="${normalizedPayee}"`);
+              // console.log(`[CategoryInfer] Keyword matching for row, rawPayeeString="${rawPayeeString}", normalizedPayee="${normalizedPayee}"`);
 
               const description = (updates["notes"] || data["notes"] || data["description"]) as string;
 
@@ -280,7 +350,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 // Found a direct match with user's categories
                 suggestedCategoryId = match.category.id;
                 suggestedCategoryName = match.category.name;
-                console.log(`[CategoryInfer] Keyword matcher found category: "${suggestedCategoryName}" (ID: ${suggestedCategoryId}) with score ${match.score}`);
+                // console.log(`[CategoryInfer] Keyword matcher found category: "${suggestedCategoryName}" (ID: ${suggestedCategoryId}) with score ${match.score}`);
               } else {
                 // Fall back to pattern-based suggestion (returns hardcoded category names)
                 suggestedCategoryName = categoryMatcher.suggestCategoryName({
@@ -289,7 +359,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 });
 
                 if (suggestedCategoryName) {
-                  console.log(`[CategoryInfer] Keyword matcher suggested pattern: "${suggestedCategoryName}"`);
+                  // console.log(`[CategoryInfer] Keyword matcher suggested pattern: "${suggestedCategoryName}"`);
                   // Try to find matching category ID
                   suggestedCategoryId = categoryNameToId.get(suggestedCategoryName.toLowerCase());
                   if (!suggestedCategoryId) {
@@ -305,14 +375,14 @@ export const POST: RequestHandler = async ({ request }) => {
                         // Update name to actual category name
                         const actualName = categoryMap.get(id);
                         if (actualName) suggestedCategoryName = actualName;
-                        console.log(`[CategoryInfer] Partial match: pattern "${suggestedCategoryName}" -> category ID ${id}`);
+                        // console.log(`[CategoryInfer] Partial match: pattern "${suggestedCategoryName}" -> category ID ${id}`);
                         break;
                       }
                     }
-                    if (!suggestedCategoryId) {
-                      console.log(`[CategoryInfer] No category ID found for pattern "${suggestedCategoryName}". Available:`,
-                        Array.from(categoryNameToId.keys()).slice(0, 5));
-                    }
+                    // if (!suggestedCategoryId) {
+                    //   console.log(`[CategoryInfer] No category ID found for pattern "${suggestedCategoryName}". Available:`,
+                    //     Array.from(categoryNameToId.keys()).slice(0, 5));
+                    // }
                   }
                 }
               }
@@ -327,11 +397,11 @@ export const POST: RequestHandler = async ({ request }) => {
                     workspaceId,
                     CATEGORY_ALIAS_MIN_CONFIDENCE
                   );
-                  if (isDismissed) {
-                    console.log(
-                      `[CategoryInfer] Category "${suggestedCategoryName}" was previously dismissed for "${rawPayeeString}"`
-                    );
-                  }
+                  // if (isDismissed) {
+                  //   console.log(
+                  //     `[CategoryInfer] Category "${suggestedCategoryName}" was previously dismissed for "${rawPayeeString}"`
+                  //   );
+                  // }
                 }
 
                 if (!isDismissed) {

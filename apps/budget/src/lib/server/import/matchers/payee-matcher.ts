@@ -293,6 +293,9 @@ export class PayeeMatcher {
     // Remove card numbers: ****1234
     text = text.replace(/\s*\*{4}\d{4}\s*/g, " ");
 
+    // Remove dollar amounts ($50.00, $1,234.56)
+    text = text.replace(/\s*\$[\d,]+(?:\.\d{2})?\s*/g, " ");
+
     // Remove dates
     text = text.replace(/\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*/g, " ");
     text = text.replace(/\s*\d{2,4}-\d{2}-\d{2}\s*/g, " ");

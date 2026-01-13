@@ -135,7 +135,10 @@ const displayName = $derived.by(() => {
   if (isTransfer && transferAccountName) {
     return transferAccountName;
   }
-  return selectedPayee?.name || selectedPayeeName || 'Select payee...';
+  // Prefer the row's payee name (selectedPayeeName) over the existing payee's name
+  // This ensures user-edited names like "MidAmerican" display correctly even when
+  // an existing payee "MIDAMERICAN" matches via case-insensitive lookup
+  return selectedPayeeName || selectedPayee?.name || 'Select payee...';
 });
 
 // Fuse for account search

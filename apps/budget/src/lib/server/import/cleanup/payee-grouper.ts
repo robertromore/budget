@@ -11,9 +11,14 @@ import type {
   PayeeGroupMember,
   ExistingPayeeMatch,
 } from "$lib/types/import";
+import { accounts as accountsTable } from "$lib/schema/accounts";
+import { db } from "$lib/server/db";
+import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
+import { getTransferMappingService } from "$lib/server/domains/transfers";
 import { PayeeMatcher } from "../matchers/payee-matcher";
 import { calculateStringSimilarity, normalizePayeeName } from "../utils";
 import { createId } from "@paralleldrive/cuid2";
+import { eq } from "drizzle-orm";
 
 /**
  * Configuration for payee grouping thresholds
@@ -70,10 +75,14 @@ export class PayeeGrouper {
 
   /**
    * Analyze and group similar payees from import data
+   * @param inputs - Raw payee data from import
+   * @param existingPayees - Existing payees in the workspace
+   * @param workspaceId - Optional workspace ID for checking saved aliases/mappings
    */
   async analyzePayees(
     inputs: PayeeGroupInput[],
-    existingPayees: Payee[]
+    existingPayees: Payee[],
+    workspaceId?: number
   ): Promise<PayeeGrouperResult> {
     // Step 1: Normalize all payee names
     // Use input.originalPayee (raw CSV string) if provided, otherwise fall back to payeeName
@@ -90,11 +99,16 @@ export class PayeeGrouper {
     // Step 3: Match groups to existing payees
     const groupsWithMatches = await this.matchToExistingPayees(groups, existingPayees);
 
-    // Step 4: Calculate statistics
-    const stats = this.calculateStats(groupsWithMatches);
+    // Step 4: Apply saved choices from previous imports (aliases and transfer mappings)
+    const groupsWithSavedChoices = workspaceId
+      ? await this.applySavedChoices(groupsWithMatches, existingPayees, workspaceId)
+      : groupsWithMatches;
+
+    // Step 5: Calculate statistics
+    const stats = this.calculateStats(groupsWithSavedChoices);
 
     return {
-      groups: groupsWithMatches,
+      groups: groupsWithSavedChoices,
       stats,
     };
   }
@@ -114,6 +128,8 @@ export class PayeeGrouper {
       .replace(/^(debit|credit|pos|atm|check|sq\s*\*|tst\*|pymt|pmt|ach)\s*/i, "")
       // Remove store numbers
       .replace(/\s*#\d+\s*$/g, "")
+      // Remove dollar amounts ($50.00, $1,234.56)
+      .replace(/\s*\$[\d,]+(?:\.\d{2})?\s*/g, " ")
       // Remove location suffixes
       .replace(/\s+\d+\s*$/g, "")
       // Remove trailing transaction IDs
@@ -242,46 +258,99 @@ export class PayeeGrouper {
   }
 
   /**
-   * Select the best canonical name for a group
+   * Select the best canonical name for a group.
+   * Uses original payee strings to preserve casing (like "IBMC", "MidAmerican").
    */
   private selectCanonicalName(members: PayeeGroupMember[]): string {
-    // Count occurrences of each normalized name
-    const nameCounts = new Map<string, number>();
+    // Count occurrences of each original payee (preserves casing)
+    const nameCounts = new Map<string, { count: number; original: string }>();
     for (const member of members) {
-      const name = member.normalizedPayee;
-      nameCounts.set(name, (nameCounts.get(name) || 0) + 1);
-    }
-
-    // Find the most frequent name
-    let bestName = members[0].normalizedPayee;
-    let maxCount = 0;
-
-    for (const [name, count] of nameCounts) {
-      // Prefer more frequent names, but also prefer shorter names (less noise)
-      const score = count * 10 - name.length;
-      if (count > maxCount || (count === maxCount && score > maxCount * 10 - bestName.length)) {
-        maxCount = count;
-        bestName = name;
+      // Use normalized version as key for grouping, but store original for casing
+      const key = member.normalizedPayee;
+      const existing = nameCounts.get(key);
+      if (existing) {
+        existing.count++;
+        // Prefer shorter original names (less noise like transaction IDs)
+        if (member.originalPayee.length < existing.original.length) {
+          existing.original = member.originalPayee;
+        }
+      } else {
+        nameCounts.set(key, { count: 1, original: member.originalPayee });
       }
     }
 
-    // Capitalize the result
-    return this.capitalizePayeeName(bestName);
+    // Find the most frequent name
+    let bestEntry = { count: 0, original: members[0].originalPayee };
+    let bestNormalized = members[0].normalizedPayee;
+
+    for (const [normalized, entry] of nameCounts) {
+      // Prefer more frequent names, but also prefer shorter names (less noise)
+      const score = entry.count * 10 - normalized.length;
+      const bestScore = bestEntry.count * 10 - bestNormalized.length;
+      if (entry.count > bestEntry.count || (entry.count === bestEntry.count && score > bestScore)) {
+        bestEntry = entry;
+        bestNormalized = normalized;
+      }
+    }
+
+    // Apply smart capitalization to the original string
+    return this.smartCapitalize(bestEntry.original);
   }
 
   /**
-   * Capitalize payee name properly
+   * Apply smart capitalization that preserves acronyms and camelCase patterns.
+   * Examples:
+   * - "IBMC" stays "IBMC" (all caps acronym)
+   * - "MidAmerican" stays "MidAmerican" (camelCase preserved)
+   * - "walmart" becomes "Walmart" (needs capitalization)
+   * - "WALMART #1234 DALLAS TX" becomes "Walmart" (cleaned and capitalized)
    */
-  private capitalizePayeeName(name: string): string {
-    return name
+  private smartCapitalize(name: string): string {
+    // First, clean the name (remove store numbers, transaction IDs, amounts, etc.)
+    let cleaned = name
+      .replace(/\s*#\d+\s*/g, " ") // Remove store numbers
+      .replace(/\s+\d{4,}\s*/g, " ") // Remove long number sequences
+      .replace(/\s*\$[\d,]+(?:\.\d{2})?\s*/g, " ") // Remove dollar amounts ($50.00, $1,234.56)
+      .replace(/\s+[A-Z]{2}\s*$/i, "") // Remove state codes at end
+      .replace(/\s{2,}/g, " ") // Collapse multiple spaces
+      .trim();
+
+    // If cleaned result is empty, use original
+    if (!cleaned) cleaned = name.trim();
+
+    // Split into words and process each
+    return cleaned
       .split(" ")
+      .filter(word => word.length > 0)
       .map((word) => {
-        if (word.length === 0) return word;
-        // Keep common abbreviations uppercase
-        if (["llc", "inc", "ltd", "corp", "co"].includes(word.toLowerCase())) {
+        // Check if word is an acronym (all uppercase, 2-5 chars)
+        if (word.length >= 2 && word.length <= 5 && word === word.toUpperCase() && /^[A-Z]+$/.test(word)) {
+          return word; // Keep acronyms as-is
+        }
+
+        // Check if word has intentional mixed case (like "MidAmerican", "iPhone")
+        // Has uppercase in middle or end = intentional casing
+        if (/[a-z][A-Z]/.test(word) || /[A-Z][a-z]+[A-Z]/.test(word)) {
+          return word; // Preserve intentional mixed case
+        }
+
+        // Common abbreviations should be uppercase
+        if (["llc", "inc", "ltd", "corp", "co", "usa", "atm", "pos"].includes(word.toLowerCase())) {
           return word.toUpperCase();
         }
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+
+        // If all uppercase and longer than acronym length, apply title case
+        if (word === word.toUpperCase() && word.length > 5) {
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }
+
+        // If all lowercase, apply title case
+        if (word === word.toLowerCase()) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+
+        // Otherwise preserve existing casing
+        return word;
       })
       .join(" ");
   }
@@ -335,9 +404,15 @@ export class PayeeGrouper {
           confidence: bestMatch.score,
         };
 
+        // Use the existing payee's name as canonical for high-confidence matches
+        const shouldUseExistingName =
+          bestMatch.score >= this.config.autoAcceptThreshold && matchedPayee.name;
+
         return {
           ...group,
           existingMatch,
+          // Update canonical name to the clean existing payee name
+          canonicalName: shouldUseExistingName ? matchedPayee.name! : group.canonicalName,
           // Auto-accept if high confidence match to existing payee
           userDecision:
             bestMatch.score >= this.config.autoAcceptThreshold ? "accept" : group.userDecision,
@@ -358,6 +433,98 @@ export class PayeeGrouper {
       existingMatches: groups.filter((g) => g.existingMatch).length,
       autoAccepted: groups.filter((g) => g.userDecision === "accept").length,
     };
+  }
+
+  /**
+   * Apply saved choices from previous imports.
+   * Checks payee aliases and transfer mappings to pre-populate user decisions.
+   */
+  private async applySavedChoices(
+    groups: PayeeGroup[],
+    existingPayees: Payee[],
+    workspaceId: number
+  ): Promise<PayeeGroup[]> {
+    const aliasService = getPayeeAliasService();
+    const transferService = getTransferMappingService();
+
+    console.log("[PayeeGrouper.applySavedChoices] Checking saved choices for", groups.length, "groups, workspaceId:", workspaceId);
+
+    return Promise.all(
+      groups.map(async (group) => {
+        // Skip groups that are already auto-accepted with high confidence existing match
+        if (group.userDecision === "accept" && group.existingMatch && group.existingMatch.confidence >= 0.95) {
+          console.log("[PayeeGrouper.applySavedChoices] Skipping already accepted group:", group.canonicalName);
+          // Ensure canonical name uses the existing payee's clean name
+          return {
+            ...group,
+            canonicalName: group.existingMatch.name,
+          };
+        }
+
+        // Check each member's original payee string for saved choices
+        for (const member of group.members) {
+          console.log("[PayeeGrouper.applySavedChoices] Checking member:", member.originalPayee, "for group:", group.canonicalName);
+
+          // Check for transfer mapping first (higher priority - user explicitly marked as transfer)
+          const transferMatch = await transferService.findTransferMapping(
+            member.originalPayee,
+            workspaceId
+          );
+
+          if (transferMatch) {
+            // Look up the account name
+            const account = await db
+              .select({ name: accountsTable.name })
+              .from(accountsTable)
+              .where(eq(accountsTable.id, transferMatch.targetAccountId))
+              .get();
+
+            console.log("[PayeeGrouper.applySavedChoices] Found transfer mapping!", {
+              originalPayee: member.originalPayee,
+              targetAccountId: transferMatch.targetAccountId,
+              accountName: account?.name,
+            });
+
+            return {
+              ...group,
+              userDecision: "accept" as const,
+              transferAccountId: transferMatch.targetAccountId,
+              transferAccountName: account?.name ?? "Unknown Account",
+            };
+          }
+
+          // Check for payee alias (user confirmed a payee mapping)
+          const aliasMatch = await aliasService.findPayeeByAlias(
+            member.originalPayee,
+            workspaceId
+          );
+          if (aliasMatch && aliasMatch.confidence >= 0.8) {
+            // Find matching existing payee
+            const matchedPayee = existingPayees.find((p) => p.id === aliasMatch.payeeId);
+            if (matchedPayee) {
+              console.log("[PayeeGrouper.applySavedChoices] Found alias match!", {
+                originalPayee: member.originalPayee,
+                payeeId: aliasMatch.payeeId,
+                payeeName: matchedPayee.name,
+                confidence: aliasMatch.confidence,
+              });
+
+              return {
+                ...group,
+                userDecision: "accept" as const,
+                existingMatch: {
+                  id: matchedPayee.id,
+                  name: matchedPayee.name ?? group.canonicalName,
+                  confidence: aliasMatch.confidence,
+                },
+                canonicalName: matchedPayee.name ?? group.canonicalName,
+              };
+            }
+          }
+        }
+        return group;
+      })
+    );
   }
 }
 

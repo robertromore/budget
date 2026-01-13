@@ -500,6 +500,27 @@ export class ImportOrchestrator {
         (payeeMatch.confidence === "exact" || payeeMatch.confidence === "high")
       ) {
         payeeId = payeeMatch.payee.id;
+
+        // Update existing payee name if the cleaned version is better (e.g., properly capitalized)
+        // Only update if the names differ (case-insensitive match means different casing)
+        if (payeeMatch.payee.name !== cleanedPayeeName &&
+            payeeMatch.payee.name?.toLowerCase() === cleanedPayeeName.toLowerCase()) {
+          try {
+            await db
+              .update(payeeTable)
+              .set({ name: cleanedPayeeName })
+              .where(eq(payeeTable.id, payeeMatch.payee.id));
+            // Update local cache
+            payeeMatch.payee.name = cleanedPayeeName;
+            logger.debug("Updated existing payee name to cleaned version", {
+              payeeId,
+              oldName: payeeMatch.payee.name,
+              newName: cleanedPayeeName
+            });
+          } catch (updateError) {
+            logger.warn("Failed to update payee name", { payeeId, error: updateError });
+          }
+        }
       } else if (_options.createMissingPayees ?? _options.createMissingEntities) {
         // Check if this payee is in the selected entities list
         // If selectedEntities is not provided OR payees array is empty, select all payees
@@ -521,6 +542,20 @@ export class ImportOrchestrator {
           if (existingBySlug) {
             // Use existing payee
             payeeId = existingBySlug.id;
+
+            // Update existing payee name if the cleaned version is better
+            if (existingBySlug.name !== cleanedPayeeName &&
+                existingBySlug.name?.toLowerCase() === cleanedPayeeName.toLowerCase()) {
+              try {
+                await db
+                  .update(payeeTable)
+                  .set({ name: cleanedPayeeName })
+                  .where(eq(payeeTable.id, existingBySlug.id));
+                existingBySlug.name = cleanedPayeeName;
+              } catch (updateError) {
+                logger.warn("Failed to update payee name by slug", { payeeId, error: updateError });
+              }
+            }
           } else {
             try {
               const [newPayee] = await db
