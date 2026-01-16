@@ -18,7 +18,7 @@
 	import { entityTypes } from '$lib/types/automation';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import Save from '@lucide/svelte/icons/save';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Form state
 	let name = $state('');

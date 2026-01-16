@@ -1,6 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state';
 import { ChatPanel, ChatTrigger } from '$lib/components/ai';
+import { NotificationPopover } from '$lib/components/notifications';
 import { DemoModeBanner } from '$lib/components/demo';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
@@ -33,6 +34,7 @@ import { autoScheduler } from '$lib/stores/auto-scheduler.svelte';
 import { chartPalette } from '$lib/stores/chart-palette.svelte';
 import { setPageActionsContext } from '$lib/stores/page-actions.svelte';
 import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
+import { setNotificationContext } from '$lib/stores/notifications.svelte';
 import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
 import { setQueryClientContext } from '@tanstack/svelte-query';
 import { mode, ModeWatcher } from 'mode-watcher';
@@ -57,6 +59,9 @@ setPageActionsContext();
 
 // Set up page tabs context for child pages
 setPageTabsContext();
+
+// Set up notification context for toast interception
+setNotificationContext();
 
 // Use TanStack Query for reactive updates
 const accountsQuery = rpc.accounts.listAccounts().options();
@@ -176,6 +181,7 @@ onMount(() => {
                 {/if}
                 <IntelligenceInputButton />
                 <HelpButton />
+                <NotificationPopover />
                 <SettingsButton />
                 <HeaderPageActions />
                 <HeaderPageTabs />

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/
 import { Button } from '$lib/components/ui/button';
 import { onboardingWizardStore, ONBOARDING_STEPS } from '$lib/stores/onboarding-wizard.svelte';
 import { trpc } from '$lib/trpc/client';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import { onMount } from 'svelte';
 
 // Import wizard step components

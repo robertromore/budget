@@ -11,7 +11,7 @@
 		getUserEncryptionPreferences
 	} from '$lib/query/security';
 	import { currentWorkspace } from '$lib/states/current-workspace.svelte';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 	import AlertCircle from '@lucide/svelte/icons/alert-circle';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import Info from '@lucide/svelte/icons/info';

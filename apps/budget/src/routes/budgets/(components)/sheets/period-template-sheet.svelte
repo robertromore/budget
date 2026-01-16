@@ -3,7 +3,7 @@ import BudgetPeriodTemplateForm from '$lib/components/budgets/budget-period-temp
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
 import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface Props {
   open?: boolean;

@@ -22,7 +22,7 @@ import Plus from '@lucide/svelte/icons/plus';
 import Search from '@lucide/svelte/icons/search';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Zap from '@lucide/svelte/icons/zap';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface PageData {
   mappings: TransferMappingWithAccount[];

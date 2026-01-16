@@ -21,7 +21,7 @@ import type { FlowState } from '$lib/types/automation';
 import Plus from '@lucide/svelte/icons/plus';
 import Save from '@lucide/svelte/icons/save';
 import Zap from '@lucide/svelte/icons/zap';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import AccountAutomationEmptyState from './account-automation-empty-state.svelte';
 import { RuleCard } from '$lib/components/automation';
 

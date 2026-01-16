@@ -5,7 +5,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import Check from '@lucide/svelte/icons/check';
 import UserCircle from '@lucide/svelte/icons/user-circle';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import type { PageData } from './$types';
 import CreateWorkspaceForm from './(components)/create-workspace-form.svelte';
 

@@ -19,7 +19,7 @@
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import X from '@lucide/svelte/icons/x';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Get rule ID from URL
 	const ruleId = $derived(parseInt(page.params.id ?? '0', 10));

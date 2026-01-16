@@ -7,7 +7,7 @@ import * as Select from '$lib/components/ui/select';
 import { Button } from '$lib/components/ui/button';
 import { IconPicker } from '$lib/components/ui/icon-picker';
 import { ColorPicker } from '$lib/components/ui/color-picker';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import type { Account, AccountType } from '$lib/schema';

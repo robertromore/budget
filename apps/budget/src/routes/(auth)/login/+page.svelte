@@ -5,7 +5,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 	import Loader from '@lucide/svelte/icons/loader';
 
 	let email = $state('');

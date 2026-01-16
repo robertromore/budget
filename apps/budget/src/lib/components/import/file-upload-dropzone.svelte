@@ -7,7 +7,7 @@ import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import FileText from '@lucide/svelte/icons/file-text';
 import Upload from '@lucide/svelte/icons/upload';
 import X from '@lucide/svelte/icons/x';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface Props {
   acceptedFormats: string[];

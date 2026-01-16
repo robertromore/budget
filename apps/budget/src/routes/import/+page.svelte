@@ -45,7 +45,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Wallet from '@lucide/svelte/icons/wallet';
 import { useQueryClient } from '@tanstack/svelte-query';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 let { data } = $props();
 const queryClient = useQueryClient();

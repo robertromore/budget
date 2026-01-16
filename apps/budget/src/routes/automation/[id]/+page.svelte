@@ -23,7 +23,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import History from '@lucide/svelte/icons/history';
 	import Save from '@lucide/svelte/icons/save';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Get rule ID from URL
 	const ruleId = $derived(parseInt(page.params.id ?? '0', 10));

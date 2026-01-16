@@ -8,6 +8,7 @@ export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
 export type NumberFormat = "en-US" | "de-DE" | "fr-FR";
 export type TableDisplayMode = "popover" | "sheet";
 export type BorderRadius = "none" | "sm" | "md" | "lg" | "xl";
+export type NotificationMode = "toast" | "popover";
 
 // Maps radius setting to CSS value
 const radiusValues: Record<BorderRadius, string> = {
@@ -25,6 +26,7 @@ interface DisplayPreferencesData {
 	showCents: boolean;
 	tableDisplayMode: TableDisplayMode;
 	borderRadius: BorderRadius;
+	notificationMode: NotificationMode;
 }
 
 const defaults: DisplayPreferencesData = {
@@ -34,6 +36,7 @@ const defaults: DisplayPreferencesData = {
 	showCents: true,
 	tableDisplayMode: "popover",
 	borderRadius: "lg",
+	notificationMode: "toast",
 };
 
 /**
@@ -79,6 +82,10 @@ class DisplayPreferencesStore {
 		return this.preferences.borderRadius;
 	}
 
+	get notificationMode(): NotificationMode {
+		return this.preferences.notificationMode;
+	}
+
 	setDateFormat(format: DateFormat) {
 		this.preferences.dateFormat = format;
 		this.saveToStorage();
@@ -114,6 +121,12 @@ class DisplayPreferencesStore {
 		this.applyBorderRadius(radius);
 		this.saveToStorage();
 		this.syncToBackend({ borderRadius: radius });
+	}
+
+	setNotificationMode(mode: NotificationMode) {
+		this.preferences.notificationMode = mode;
+		this.saveToStorage();
+		this.syncToBackend({ notificationMode: mode });
 	}
 
 	/**
@@ -207,6 +220,7 @@ class DisplayPreferencesStore {
 				if (backendPrefs.showCents !== undefined) displayPrefs.showCents = backendPrefs.showCents;
 				if (backendPrefs.tableDisplayMode) displayPrefs.tableDisplayMode = backendPrefs.tableDisplayMode;
 				if (backendPrefs.borderRadius) displayPrefs.borderRadius = backendPrefs.borderRadius;
+				if (backendPrefs.notificationMode) displayPrefs.notificationMode = backendPrefs.notificationMode;
 
 				if (Object.keys(displayPrefs).length > 0) {
 					this.preferences = { ...this.preferences, ...displayPrefs };

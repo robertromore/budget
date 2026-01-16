@@ -9,7 +9,7 @@ import { AccountsState } from '$lib/states/entities';
 import type { TransactionsFormat } from '$lib/types';
 import type { EditableEntityItem } from '$lib/types';
 import { formatCurrency } from '$lib/utils/formatters';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Users from '@lucide/svelte/icons/users';

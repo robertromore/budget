@@ -3,7 +3,7 @@ import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { buttonVariants } from '$lib/components/ui/button';
 import { rpc } from '$lib/query';
 import type { TransactionsFormat } from '$lib/types';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface Props {
   transaction: TransactionsFormat;

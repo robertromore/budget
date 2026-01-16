@@ -12,7 +12,7 @@ import type { PayeeAlias } from '$lib/schema/payee-aliases';
 import Link from '@lucide/svelte/icons/link';
 import Plus from '@lucide/svelte/icons/plus';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface Props {
   payeeId: number;

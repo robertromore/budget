@@ -10,7 +10,7 @@
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 	import { bulkCreateAnnotations, getAnnotationsByMonths } from '$lib/query/annotations';
 	import { ANNOTATION_TAGS, type AnnotationTag } from '$lib/schema/month-annotations';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Icons
 	import StickyNote from '@lucide/svelte/icons/sticky-note';

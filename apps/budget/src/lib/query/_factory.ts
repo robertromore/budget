@@ -1,7 +1,7 @@
 import type { CreateMutationOptions, CreateQueryOptions, QueryKey } from "@tanstack/svelte-query";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { TRPCError } from "@trpc/server";
-import { toast } from "svelte-sonner";
+import { toast } from "$lib/utils/toast-interceptor";
 import { queryClient } from "./_client";
 
 /**

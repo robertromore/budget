@@ -3,7 +3,7 @@ import * as Card from '$lib/components/ui/card';
 import { Switch } from '$lib/components/ui/switch';
 import { Label } from '$lib/components/ui/label';
 import { Button } from '$lib/components/ui/button';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import type { Account } from '$lib/schema';

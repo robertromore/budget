@@ -32,7 +32,7 @@ import {
   TrendingUp,
   TriangleAlert,
 } from '@lucide/svelte/icons';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface Props {
   budgets: BudgetWithRelations[];

@@ -31,7 +31,7 @@ import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Wallet from '@lucide/svelte/icons/wallet';
 import { useQueryClient } from '@tanstack/svelte-query';
 import type { Component } from 'svelte';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import TopCategoriesView from '../../../routes/accounts/[slug]/(components)/(charts)/top-categories-view.svelte';
 import ConfigureMetricsDialog from './configure-metrics-dialog.svelte';
 

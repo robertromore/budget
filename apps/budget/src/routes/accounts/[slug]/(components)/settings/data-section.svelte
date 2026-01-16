@@ -5,7 +5,7 @@ import { Button, buttonVariants } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import DateInput from '$lib/components/input/date-input.svelte';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { cachePatterns } from '$lib/query/_client';

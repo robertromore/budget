@@ -20,7 +20,7 @@ import Ellipsis from '@lucide/svelte/icons/ellipsis';
 import ExternalLink from '@lucide/svelte/icons/external-link';
 import Search from '@lucide/svelte/icons/search';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface Props {
 	account: Account;

@@ -3,7 +3,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { chartSelection, type ChartSelectionAction } from '$lib/states/ui/chart-selection.svelte';
 	import { currencyFormatter } from '$lib/utils/formatters';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Action sheets
 	import AnnotationSheet from './actions/annotation-sheet.svelte';

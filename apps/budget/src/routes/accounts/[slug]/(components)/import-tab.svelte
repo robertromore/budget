@@ -44,7 +44,7 @@ import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Save from '@lucide/svelte/icons/save';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import { useQueryClient } from '@tanstack/svelte-query';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 let {
 	accountId,
@@ -113,10 +113,6 @@ const filteredMultiFileCleanupState = $derived.by(() => {
 const multiFilePreviewData = $derived.by(() => {
 	const currentFile = multiFileState.currentFile;
 	if (!currentFile || !currentFile.validatedRows) return null;
-
-	// Debug: log the raw validated rows payee values
-	const samplePayees = currentFile.validatedRows.slice(0, 5).map(r => r.normalizedData['payee']);
-	console.log('[PreviewData] Deriving from validatedRows, sample payees:', samplePayees);
 
 	const overrides = currentFile.entityOverrides || {};
 
@@ -636,28 +632,10 @@ function handleCategoryUpdate(
 	// Track dismissals: when user clears a category that was AI-suggested
 	const isClearingCategory = categoryName === null || categoryName === '';
 
-	console.log(`[CategoryUpdate] Row ${rowIndex}: categoryId=${categoryId}, categoryName=${categoryName}, isClearingCategory=${isClearingCategory}`);
-
 	if (isClearingCategory) {
 		// Get the row data
 		const row = parseResults?.rows.find(r => r.rowIndex === rowIndex);
 		let dismissalTracked = false;
-
-		console.log(`[CategoryUpdate] Row ${rowIndex} ALL category data:`, row ? {
-			// All category-related fields
-			category: row.normalizedData['category'],
-			categoryId: row.normalizedData['categoryId'],
-			inferredCategory: row.normalizedData['inferredCategory'],
-			inferredCategoryId: row.normalizedData['inferredCategoryId'],
-			categoryConfidence: row.normalizedData['categoryConfidence'],
-			categoryFromPayeeDefault: row.normalizedData['categoryFromPayeeDefault'],
-			categoryMatchedByAlias: row.normalizedData['categoryMatchedByAlias'],
-			// Payee fields
-			originalPayee: row.normalizedData['originalPayee'],
-			payee: row.normalizedData['payee'],
-			payeeId: row.normalizedData['payeeId'],
-			matchedByAlias: row.normalizedData['matchedByAlias']
-		} : 'row not found');
 
 		// First check: alias-based categories (from infer-categories endpoint)
 		// These are stored directly on normalizedData
@@ -697,15 +675,6 @@ function handleCategoryUpdate(
 				});
 				categoryDismissals = newDismissals;
 				dismissalTracked = true;
-				console.log(`[CategoryUpdate] Dismissal tracked for row ${rowIndex}:`, {
-					payeeName,
-					rawPayeeString: originalPayee,
-					dismissCategoryId,
-					dismissCategoryName,
-					source: inferredCategoryId ? 'inferredCategoryId' : 'categoryId'
-				});
-			} else {
-				console.log(`[CategoryUpdate] No dismissal tracked - no category ID found. inferredCategoryId=${inferredCategoryId}, categoryId=${categoryId}`);
 			}
 		}
 
@@ -1054,8 +1023,6 @@ async function handleMultiFileProcessing() {
 	try {
 		multiFileState.updateFileState(currentFile.id, { status: 'uploading' });
 
-		console.log('[MultiFileImport] Uploading file:', currentFile.fileName, 'to account:', accountId);
-
 		const formData = new FormData();
 		formData.append('importFile', currentFile.file);
 
@@ -1064,10 +1031,7 @@ async function handleMultiFileProcessing() {
 			body: formData
 		});
 
-		console.log('[MultiFileImport] Response status:', response.status, response.ok);
-
 		const responseText = await response.text();
-		console.log('[MultiFileImport] Response body:', responseText.substring(0, 500));
 
 		let result;
 		try {
@@ -1098,7 +1062,6 @@ async function handleMultiFileProcessing() {
 				});
 
 				if (profile) {
-					console.log('[MultiFileImport] Found matching profile:', profile.name, '- will pre-populate mapper');
 					detectedProfileMapping = profile.mapping as ColumnMapping;
 					matchedProfile = profile; // Track that a profile was used (hides "Save Profile" on completion)
 					// Record profile usage
@@ -1121,8 +1084,6 @@ async function handleMultiFileProcessing() {
 		if (detectedProfileMapping) {
 			multiFileState.setColumnMapping(currentFile.id, detectedProfileMapping);
 		}
-
-		console.log('[MultiFileImport] Parse complete, needsMapping:', needsMapping, 'rows:', result.rows?.length, 'hasProfileMapping:', !!detectedProfileMapping);
 
 		// If auto-detected format (OFX, QIF, etc.), go to cleanup step first
 		if (!needsMapping) {
@@ -1178,14 +1139,10 @@ async function handleMultiFileColumnMapping(fileId: string, mapping: ColumnMappi
 
 		const result = await response.json();
 
-		console.log('[MultiFileImport] Remap complete, rows:', result.rows?.length);
-
 		multiFileProcessingMessage = 'Inferring categories...';
 
 		// Apply smart categorization to infer categories from payee patterns
 		const enrichedRows = await applySmartCategorizationToFile(fileId, result.rows || []);
-
-		console.log('[MultiFileImport] Smart categorization complete, enriched rows:', enrichedRows.length);
 
 		multiFileState.setColumnMapping(fileId, mapping);
 		// Store the enriched rows with category suggestions
@@ -1755,14 +1712,7 @@ function startNewImport() {
  * This allows the system to remember user decisions so they don't need to be re-selected.
  */
 async function persistCleanupChoices(result: ImportResult) {
-	console.log('[persistCleanupChoices] Starting...', {
-		hasCleanupState: !!multiFileCleanupState,
-		hasWorkspace: !!workspaceState?.workspace?.id,
-		groupCount: multiFileCleanupState?.payeeGroups?.length ?? 0
-	});
-
 	if (!multiFileCleanupState || !workspaceState?.workspace?.id) {
-		console.log('[persistCleanupChoices] Early return - missing state');
 		return;
 	}
 
@@ -1778,14 +1728,6 @@ async function persistCleanupChoices(result: ImportResult) {
 		}
 	}
 
-	console.log('[persistCleanupChoices] Processing groups:', multiFileCleanupState.payeeGroups.map(g => ({
-		canonicalName: g.canonicalName,
-		userDecision: g.userDecision,
-		transferAccountId: g.transferAccountId,
-		transferAccountName: g.transferAccountName,
-		memberCount: g.members.length
-	})));
-
 	for (const group of multiFileCleanupState.payeeGroups) {
 		// Skip rejected groups - user chose not to clean these
 		if (group.userDecision === 'reject') continue;
@@ -1795,11 +1737,6 @@ async function persistCleanupChoices(result: ImportResult) {
 		const payeeId = group.existingMatch?.id || payeeMap.get(finalName.toLowerCase());
 
 		if (group.transferAccountId) {
-			console.log('[persistCleanupChoices] Found transfer group:', {
-				canonicalName: group.canonicalName,
-				transferAccountId: group.transferAccountId,
-				members: group.members.map(m => m.originalPayee)
-			});
 			// Record transfer mappings for all members
 			for (const member of group.members) {
 				transferRecords.push({
@@ -1871,12 +1808,6 @@ async function persistCleanupChoices(result: ImportResult) {
 		});
 	}
 
-	console.log('[persistCleanupChoices] Collected:', {
-		categoryAliases: categoryAliasRecords.length,
-		transferMappingsFromOverrides: seenTransferMappings.size,
-		totalTransferMappings: transferRecords.length
-	});
-
 	// Bulk persist via tRPC
 	try {
 		const promises: Promise<unknown>[] = [];
@@ -1891,7 +1822,6 @@ async function persistCleanupChoices(result: ImportResult) {
 		}
 		if (promises.length > 0) {
 			await Promise.all(promises);
-			console.log(`[Import] Persisted ${aliasRecords.length} payee aliases, ${transferRecords.length} transfer mappings, and ${categoryAliasRecords.length} category aliases`);
 		}
 	} catch (err) {
 		// Don't fail the import if alias/mapping persistence fails - just log it
@@ -1993,7 +1923,6 @@ const currentStepIndex = $derived.by(() => {
 });
 
 $effect(() => {
-	console.log('[Import] Step changed to:', currentStep, 'parseResults:', !!parseResults, 'previewData:', !!previewData);
 	window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 </script>

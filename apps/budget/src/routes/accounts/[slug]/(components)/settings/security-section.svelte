@@ -4,7 +4,7 @@ import { Label } from '$lib/components/ui/label';
 import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
 import * as RadioGroup from '$lib/components/ui/radio-group';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import {
 	getAccountEncryptionSettings,
 	updateAccountEncryptionSettings,

@@ -5,7 +5,7 @@
   import { Label } from "$lib/components/ui/label";
   import { listPayees, updatePayee } from "$lib/query/payees";
   import { previewNormalization } from "$lib/query/similarity";
-  import { toast } from "svelte-sonner";
+  import { toast } from "$lib/utils/toast-interceptor";
 
   import NormalizationPreviewTable, {
     type NormalizationPreview,

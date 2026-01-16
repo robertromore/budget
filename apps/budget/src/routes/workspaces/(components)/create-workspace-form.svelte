@@ -4,7 +4,7 @@ import * as Card from '$lib/components/ui/card';
 import * as Form from '$lib/components/ui/form';
 import { Input } from '$lib/components/ui/input';
 import { formInsertWorkspaceSchema, type FormInsertWorkspaceSchema } from '$lib/schema/workspaces';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import type { SuperValidated } from 'sveltekit-superforms';
 import { superForm } from 'sveltekit-superforms';
 import { zod4Client } from 'sveltekit-superforms/adapters';

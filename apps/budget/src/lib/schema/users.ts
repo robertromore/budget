@@ -88,6 +88,9 @@ export interface UserPreferences {
   tableDisplayMode?: "popover" | "sheet";
   borderRadius?: "none" | "sm" | "md" | "lg" | "xl";
 
+  // Notification preferences
+  notificationMode?: "toast" | "popover";
+
   // Theme preferences
   theme?: string; // Preset name or 'custom'
   customThemeColor?: string;

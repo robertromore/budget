@@ -9,7 +9,8 @@
 	  displayPreferences,
 	  type DateFormat,
 	  type NumberFormat,
-	  type TableDisplayMode
+	  type TableDisplayMode,
+	  type NotificationMode
 	} from '$lib/stores/display-preferences.svelte';
 	import {
 	  headerActionsMode,
@@ -24,6 +25,7 @@
 	const currentNumberFormat = $derived(displayPreferences.numberFormat);
 	const currentShowCents = $derived(displayPreferences.showCents);
 	const currentTableDisplayMode = $derived(displayPreferences.tableDisplayMode);
+	const currentNotificationMode = $derived(displayPreferences.notificationMode);
 	const currentHeaderActionsMode = $derived(headerActionsMode.value);
 	const currentHeaderActionsDisplay = $derived(headerActionsMode.displayMode);
 	const currentHeaderTabsMode = $derived(headerActionsMode.tabsMode);
@@ -77,6 +79,12 @@
 		{ value: 'sheet', label: 'Responsive sheet', description: 'Side panel on desktop, drawer on mobile with more space' }
 	] as const;
 
+	// Notification mode options
+	const notificationModeOptions = [
+		{ value: 'toast', label: 'Toast popups', description: 'Show notifications as temporary popups in the corner of the screen' },
+		{ value: 'popover', label: 'Notification center', description: 'Collect notifications in a bell icon popover for later review' }
+	] as const;
+
 	function handleDateFormatChange(value: string) {
 		displayPreferences.setDateFormat(value as DateFormat);
 	}
@@ -113,6 +121,10 @@
 
 	function handleTableDisplayModeChange(value: string) {
 		displayPreferences.setTableDisplayMode(value as TableDisplayMode);
+	}
+
+	function handleNotificationModeChange(value: string) {
+		displayPreferences.setNotificationMode(value as NotificationMode);
 	}
 </script>
 
@@ -207,6 +219,33 @@
 					</p>
 				</div>
 				<Switch id="show-cents" checked={currentShowCents} onCheckedChange={handleShowCentsChange} />
+			</div>
+		</Card.Content>
+	</Card.Root>
+
+	<!-- Notification Mode -->
+	<Card.Root data-help-id="display-notification-mode" data-help-title="Notification Style">
+		<Card.Header>
+			<Card.Title>Notification Style</Card.Title>
+			<Card.Description>Choose how success and error messages are displayed</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<div class="space-y-3">
+				{#each notificationModeOptions as option}
+					<Label
+						class="hover:bg-accent/50 flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-aria-checked:border-primary has-aria-checked:bg-primary/10"
+					>
+						<Checkbox
+							checked={currentNotificationMode === option.value}
+							onCheckedChange={() => handleNotificationModeChange(option.value)}
+							class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+						/>
+						<div class="grid gap-1.5 font-normal">
+							<p class="text-sm font-medium leading-none">{option.label}</p>
+							<p class="text-muted-foreground text-sm">{option.description}</p>
+						</div>
+					</Label>
+				{/each}
 			</div>
 		</Card.Content>
 	</Card.Root>

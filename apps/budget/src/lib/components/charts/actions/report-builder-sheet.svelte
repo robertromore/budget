@@ -23,7 +23,7 @@
 	} from '$lib/schema/report-templates';
 	import { currencyFormatter } from '$lib/utils/formatters';
 	import { generatePdf, downloadHtml, downloadMarkdown } from '$lib/utils/pdf-client';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// LayerCake for charts
 	import { LayerCake, Svg } from 'layercake';

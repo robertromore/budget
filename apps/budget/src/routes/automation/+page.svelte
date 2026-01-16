@@ -9,7 +9,7 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { rpc } from '$lib/query';
 	import type { AutomationRule } from '$lib/schema/automation-rules';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Queries
 	const rulesQuery = rpc.automation.getAll().options();

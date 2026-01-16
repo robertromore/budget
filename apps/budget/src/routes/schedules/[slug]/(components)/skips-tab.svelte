@@ -6,7 +6,7 @@ import * as Card from '$lib/components/ui/card';
 import * as Table from '$lib/components/ui/table';
 import { getSkipHistory, removeSkip } from '$lib/query/schedules';
 import { openSkipOccurrenceDialog } from '$lib/states/ui/global.svelte';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import type { PageData } from '../$types';
 
 import CalendarX from '@lucide/svelte/icons/calendar-x';

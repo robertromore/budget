@@ -9,7 +9,7 @@
 	import CheckCircle from '@lucide/svelte/icons/check-circle';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import X from '@lucide/svelte/icons/x';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 	import type { MultiFileImportStateManager } from './multi-file-import-state.svelte';
 	import { getFileTypeName } from './multi-file-import-state.svelte';
 

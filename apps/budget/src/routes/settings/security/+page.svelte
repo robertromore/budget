@@ -18,7 +18,7 @@
 		getTrustedDevices,
 		revokeDeviceTrust
 	} from '$lib/query/security';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 	import AlertCircle from '@lucide/svelte/icons/alert-circle';
 	import Check from '@lucide/svelte/icons/check';
 	import Copy from '@lucide/svelte/icons/copy';

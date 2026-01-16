@@ -12,7 +12,7 @@ import {
 } from '$lib/states/ui/global.svelte';
 import CalendarX from '@lucide/svelte/icons/calendar-x';
 import FastForward from '@lucide/svelte/icons/fast-forward';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 const _skipOccurrenceDialog = $derived(skipOccurrenceDialog);
 const _skipOccurrenceData = $derived(skipOccurrenceData);

@@ -13,7 +13,7 @@ import type { DetectedPattern } from '$lib/schema/detected-patterns';
 import type { Payee } from '$lib/schema/payees';
 import { formatCurrency } from '$lib/utils/formatters';
 import { Calendar, Check, Clock, DollarSign, LoaderCircle, RefreshCw, Sparkles, Tag, X } from '@lucide/svelte/icons';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 // Extended type to include relations loaded by the query
 type DetectedPatternWithRelations = DetectedPattern & {

@@ -4,7 +4,7 @@ import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Form from '$lib/components/ui/form';
 import * as Tabs from '$lib/components/ui/tabs';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 import { beforeNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';

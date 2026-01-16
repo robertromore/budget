@@ -27,7 +27,7 @@ import Merge from '@lucide/svelte/icons/merge';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Users from '@lucide/svelte/icons/users';
 import X from '@lucide/svelte/icons/x';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 import Fuse from 'fuse.js';
 
 interface Props {

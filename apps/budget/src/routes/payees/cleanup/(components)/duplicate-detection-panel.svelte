@@ -12,7 +12,7 @@
   import { LLMSettings } from "$lib/query";
   import type { DuplicateGroup, LLMLogEntry } from "$lib/query/payees-types";
   import type { Payee } from "$lib/schema/payees";
-  import { toast } from "svelte-sonner";
+  import { toast } from "$lib/utils/toast-interceptor";
 
   import DuplicateGroupCard from "./duplicate-group-card.svelte";
   import MergeConfirmationDialog from "./merge-confirmation-dialog.svelte";

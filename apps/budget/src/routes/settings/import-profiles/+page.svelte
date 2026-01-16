@@ -22,7 +22,7 @@ import Hash from '@lucide/svelte/icons/hash';
 import Star from '@lucide/svelte/icons/star';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Upload from '@lucide/svelte/icons/upload';
-import { toast } from 'svelte-sonner';
+import { toast } from '$lib/utils/toast-interceptor';
 
 interface PageData {
   importProfiles: ImportProfile[];

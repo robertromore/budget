@@ -7,7 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 	import { currencyFormatter } from '$lib/utils/formatters';
-	import { toast } from 'svelte-sonner';
+	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Icons
 	import Download from '@lucide/svelte/icons/download';
