@@ -124,7 +124,7 @@ function setActiveTab(value: TabValue) {
   } else {
     url.searchParams.set('tab', value);
   }
-  goto(url.toString(), { replaceState: false, noScroll: true, keepFocus: true });
+  goto(url.pathname + url.search, { replaceState: false, noScroll: true, keepFocus: true });
 }
 
 // Register tabs for header display
