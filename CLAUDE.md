@@ -317,3 +317,12 @@ Handled by mutation's `errorMessage` or TanStack Query's error state.
 - Use the query layer for all data operations in components
 - Prefer `$derived` over `$effect` when possible
 - Keep components focused and small
+
+## Code Review Checklist
+
+See [llm-code-review-checklist.md](llm-code-review-checklist.md) for routine checks when writing or modifying code, including:
+- Using existing utility functions
+- Cache invalidation patterns
+- Import management
+- Fresh dates vs stale constants
+- Svelte 5 patterns

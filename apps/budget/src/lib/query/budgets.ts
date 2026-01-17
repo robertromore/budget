@@ -190,6 +190,8 @@ export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelati
     );
 
     cachePatterns.invalidatePrefix(budgetKeys["lists"]());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
 
     // Invalidate all schedules cache if a scheduled-expense budget was created (creates a schedule)
     if (variables.type === "scheduled-expense") {
@@ -209,6 +211,8 @@ export const updateBudget = defineMutation<
     getState()?.upsertBudget(budget);
     cachePatterns.invalidatePrefix(budgetKeys.detail(budget.id));
     cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
   },
   successMessage: "Budget updated",
   errorMessage: "Failed to update budget",
@@ -235,6 +239,7 @@ export const deleteBudget = defineMutation<
     // Also invalidate to ensure consistency with server
     cachePatterns.invalidatePrefix(budgetKeys.lists());
     cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
 
     // Invalidate recommendations since a budget created from a recommendation may have been deleted
     cachePatterns.invalidatePrefix(budgetKeys.recommendations());
@@ -256,6 +261,8 @@ export const duplicateBudget = defineMutation<
   onSuccess: (budget) => {
     getState()?.upsertBudget(budget);
     cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
   },
   successMessage: "Budget duplicated",
   errorMessage: "Failed to duplicate budget",
@@ -269,6 +276,8 @@ export const bulkArchiveBudgets = defineMutation<
   onSuccess: (_result, ids) => {
     // Invalidate all budgets cache since multiple budgets changed
     cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
     ids.forEach((id) => cachePatterns.invalidatePrefix(budgetKeys.detail(id)));
   },
   successMessage: (result) =>
@@ -293,6 +302,7 @@ export const bulkDeleteBudgets = defineMutation<
     // Use queryClient directly for immediate invalidation
     queryClient.invalidateQueries({ queryKey: ["budgets", "list"] });
     queryClient.invalidateQueries({ queryKey: ["budgets", "account"] });
+    queryClient.invalidateQueries({ queryKey: ["budgets", "related"] });
 
     // Invalidate recommendations since budgets created from recommendations may have been deleted
     queryClient.invalidateQueries({ queryKey: ["budgets", "recommendations"] });
@@ -1220,6 +1230,7 @@ export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
     cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
     cachePatterns.invalidatePrefix(budgetKeys.lists());
     cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
 
     // Invalidate all schedules cache if a scheduled-expense budget was created (creates a schedule)
     if (budget.type === "scheduled-expense") {

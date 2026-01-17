@@ -28,8 +28,8 @@ import slugify from "@sindresorhus/slugify";
 import { logger } from "$lib/server/shared/logging";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { currentDate as defaultCurrentDate, timezone as defaultTimezone } from "$lib/utils/dates";
-import { CalendarDate, type DateValue } from "@internationalized/date";
+import { parseISOString, timezone as defaultTimezone, toISOString } from "$lib/utils/dates";
+import { CalendarDate, type DateValue, today } from "@internationalized/date";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { BudgetAnalysisService, type AnalysisParams } from "./budget-analysis-service";
 import type { DeficitRecoveryPlan } from "./deficit-recovery";
@@ -1085,6 +1085,10 @@ export class BudgetService {
         interval: 1,
       };
 
+      // Determine the schedule start date based on transaction history
+      const transactionIds = metadata?.transactionIds as number[] | undefined;
+      const scheduleStartDate = await this.calculateScheduleStartDate(transactionIds);
+
       // Step 1: Create schedule and schedule_dates in a transaction
       const createdSchedule = await db.transaction(async (tx) => {
         const scheduleSlug = await generateUniqueSlugForDB(
@@ -1114,15 +1118,12 @@ export class BudgetService {
           throw new Error("Failed to create schedule");
         }
 
-        // Get today's date as the start date (ISO format)
-        const today = new Date().toISOString().split("T")[0];
-
         // Create schedule date record with scheduleId
         const scheduleDateResult = await tx
           .insert(scheduleDates)
           .values({
             scheduleId: schedule.id,
-            start: today,
+            start: scheduleStartDate,
             end: null,
             frequency: freqConfig.frequency,
             interval: freqConfig.interval,
@@ -1197,7 +1198,6 @@ export class BudgetService {
       await this.recommendationService!.applyRecommendation(id, newBudget.id);
 
       // Step 6: Link related transactions to the schedule and budget
-      const transactionIds = metadata?.transactionIds as number[] | undefined;
       if (transactionIds?.length) {
         try {
           // Update transactions to link to the new schedule
@@ -1513,6 +1513,71 @@ export class BudgetService {
     // Cascade delete will automatically remove associated period instances
     await this.repository.deletePeriodTemplate(id);
   }
+
+  /**
+   * Calculate the schedule start date based on transaction history.
+   * Finds the most common day of month from past transactions and returns
+   * the next occurrence of that day.
+   */
+  private async calculateScheduleStartDate(transactionIds?: number[]): Promise<string> {
+    const todayDate = today(defaultTimezone);
+
+    if (!transactionIds?.length) {
+      return toISOString(todayDate);
+    }
+
+    // Query transaction dates to find the typical payment day
+    const txnDates = await db
+      .select({ date: transactions.date })
+      .from(transactions)
+      .where(inArray(transactions.id, transactionIds));
+
+    if (txnDates.length === 0) {
+      return toISOString(todayDate);
+    }
+
+    // Count occurrences of each day of month
+    const dayOfMonthCounts = new Map<number, number>();
+    for (const txn of txnDates) {
+      // Handle both YYYY-MM-DD and full ISO timestamp formats
+      const dateStr = txn.date.split("T")[0];
+      const parsed = parseISOString(dateStr);
+      if (parsed) {
+        dayOfMonthCounts.set(parsed.day, (dayOfMonthCounts.get(parsed.day) || 0) + 1);
+      }
+    }
+
+    // Find the most common day of month
+    let mostCommonDay = 1;
+    let maxCount = 0;
+    for (const [day, count] of dayOfMonthCounts) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommonDay = day;
+      }
+    }
+
+    // Calculate next occurrence of this day
+    const currentDay = todayDate.day;
+    let targetYear = todayDate.year;
+    let targetMonth = todayDate.month;
+
+    if (mostCommonDay < currentDay) {
+      // Day has passed this month, use next month
+      targetMonth += 1;
+      if (targetMonth > 12) {
+        targetMonth = 1;
+        targetYear += 1;
+      }
+    }
+
+    // Handle edge case where day doesn't exist in target month (e.g., 31st in February)
+    const targetDate = new CalendarDate(targetYear, targetMonth, 1);
+    const lastDayOfMonth = targetDate.add({ months: 1 }).subtract({ days: 1 }).day;
+    const actualDay = Math.min(mostCommonDay, lastDayOfMonth);
+
+    return toISOString(new CalendarDate(targetYear, targetMonth, actualDay));
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -1528,7 +1593,7 @@ export interface PeriodBoundary {
 export class BudgetPeriodCalculator {
   static calculatePeriodBoundaries(
     template: BudgetPeriodTemplate,
-    referenceDate: DateValue = defaultCurrentDate
+    referenceDate: DateValue = today(defaultTimezone)
   ): PeriodBoundary {
     const timezone = template.timezone || defaultTimezone;
     const normalizedReference = this.toCalendarDate(referenceDate);
@@ -1697,7 +1762,7 @@ export class BudgetPeriodService {
 
     const boundary = BudgetPeriodCalculator.calculatePeriodBoundaries(
       template,
-      options.referenceDate ?? defaultCurrentDate
+      options.referenceDate ?? today(defaultTimezone)
     );
 
     const startDate = boundary.start.toString();
