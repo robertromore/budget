@@ -34,9 +34,10 @@ export default defineConfig({
     testTimeout: 10000,
     hookTimeout: 10000,
 
-    // Coverage configuration
+    // Coverage configuration (disabled by default - v8 provider requires node:inspector which Bun doesn't support)
+    // Run with --coverage flag when using Node.js runtime
     coverage: {
-      enabled: true,
+      enabled: false,
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "coverage",
