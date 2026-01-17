@@ -4,7 +4,7 @@
  * Tests for converting rule configuration into SvelteFlow nodes and edges.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import {
   ruleToFlow,
   createDefaultFlow,

@@ -5,7 +5,7 @@
  * Tests each action handler and error handling.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   executeActions,
   type ActionExecutionContext,
@@ -16,36 +16,36 @@ import type { ActionConfig, ActionResult } from "$lib/types/automation";
 function createMockServices(): ActionExecutionContext["services"] {
   return {
     transactions: {
-      update: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
     },
     accounts: {
-      update: mock(() => Promise.resolve()),
-      close: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      close: vi.fn(() => Promise.resolve()),
     },
     payees: {
-      update: mock(() => Promise.resolve()),
-      merge: mock(() => Promise.resolve()),
-      createAlias: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      merge: vi.fn(() => Promise.resolve()),
+      createAlias: vi.fn(() => Promise.resolve()),
     },
     categories: {
-      update: mock(() => Promise.resolve()),
-      moveToGroup: mock(() => Promise.resolve()),
-      createAlias: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      moveToGroup: vi.fn(() => Promise.resolve()),
+      createAlias: vi.fn(() => Promise.resolve()),
     },
     schedules: {
-      update: mock(() => Promise.resolve()),
-      skip: mock(() => Promise.resolve()),
-      pause: mock(() => Promise.resolve()),
-      resume: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      skip: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(() => Promise.resolve()),
+      resume: vi.fn(() => Promise.resolve()),
     },
     budgets: {
-      update: mock(() => Promise.resolve()),
-      assignTransaction: mock(() => Promise.resolve()),
-      rollover: mock(() => Promise.resolve()),
-      pause: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      assignTransaction: vi.fn(() => Promise.resolve()),
+      rollover: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(() => Promise.resolve()),
     },
     notifications: {
-      send: mock(() => Promise.resolve()),
+      send: vi.fn(() => Promise.resolve()),
     },
   };
 }
@@ -580,7 +580,7 @@ describe("Action Executor Integration Tests", () => {
 
     it("should catch and handle service errors", async () => {
       const errorServices = createMockServices();
-      errorServices.transactions.update = mock(() => {
+      errorServices.transactions.update = vi.fn(() => {
         throw new Error("Database connection failed");
       });
       const ctx = createTestContext(errorServices);
@@ -624,7 +624,7 @@ describe("Action Executor Integration Tests", () => {
   describe("Multiple Actions", () => {
     it("should execute multiple actions in sequence", async () => {
       const executionOrder: string[] = [];
-      mockServices.transactions.update = mock(async (id, data) => {
+      mockServices.transactions.update = vi.fn(async (id, data) => {
         executionOrder.push(Object.keys(data)[0]);
       });
 

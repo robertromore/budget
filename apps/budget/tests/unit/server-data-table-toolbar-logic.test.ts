@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, afterEach} from "bun:test";
+import {describe, it, expect, beforeEach, afterEach} from "vitest";
 
 describe("ServerDataTableToolbar Logic", () => {
   describe("Debounced Search Logic", () => {

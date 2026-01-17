@@ -1,4 +1,4 @@
-import {describe, test, expect, beforeEach, afterEach} from "bun:test";
+import {describe, test, expect, beforeEach, afterEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
 import {eq} from "drizzle-orm";
 import {categories} from "$lib/schema";

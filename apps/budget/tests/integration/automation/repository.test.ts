@@ -5,7 +5,7 @@
  * Uses in-memory SQLite for isolated testing.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
 import { workspaces } from "../../../src/lib/schema/workspaces";

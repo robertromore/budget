@@ -4,7 +4,7 @@
  * Tests for type definitions, type guards, and data lookup functions.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import {
   entityTypes,
   getEntityTypeLabel,

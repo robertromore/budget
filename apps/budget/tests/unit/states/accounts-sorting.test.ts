@@ -1,4 +1,4 @@
-import {describe, test, expect, beforeEach} from "bun:test";
+import {describe, test, expect, beforeEach} from "vitest";
 import {AccountsState} from "$lib/states/entities/accounts.svelte";
 import type {Account} from "$lib/schema";
 

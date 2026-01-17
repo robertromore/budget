@@ -1,4 +1,4 @@
-import {describe, test, expect, beforeEach, afterEach} from "bun:test";
+import {describe, test, expect, beforeEach, afterEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
 import {setupTestDb, clearTestDb} from "../setup/test-db";
 import {accounts, transactions, categories, payees} from "$lib/schema";

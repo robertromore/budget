@@ -1,4 +1,4 @@
-import {describe, it, expect} from "bun:test";
+import {describe, it, expect} from "vitest";
 import {CalendarDate} from "@internationalized/date";
 import {nextMonthly} from "../../../src/lib/utils/date-frequency";
 

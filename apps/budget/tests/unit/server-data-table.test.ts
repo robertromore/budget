@@ -1,4 +1,4 @@
-import {describe, it, expect} from "bun:test";
+import {describe, it, expect} from "vitest";
 import type {TransactionsFormat} from "$lib/types/transactions";
 import {CalendarDate} from "@internationalized/date";
 

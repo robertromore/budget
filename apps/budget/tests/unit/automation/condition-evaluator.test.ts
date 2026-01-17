@@ -5,7 +5,7 @@
  * negation, deep field access, and edge cases.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import {
   evaluateCondition,
   evaluateConditionGroup,

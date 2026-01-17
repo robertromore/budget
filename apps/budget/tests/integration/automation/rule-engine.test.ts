@@ -5,7 +5,7 @@
  * and action execution flow.
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 import {
   RuleEngine,
@@ -24,33 +24,33 @@ import type { TriggerConfig, ConditionGroup, ActionConfig, RuleEvent } from "$li
 function createMockServices(): ActionExecutionContext["services"] {
   return {
     transactions: {
-      update: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
     },
     accounts: {
-      update: mock(() => Promise.resolve()),
-      close: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      close: vi.fn(() => Promise.resolve()),
     },
     payees: {
-      update: mock(() => Promise.resolve()),
-      merge: mock(() => Promise.resolve()),
-      createAlias: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      merge: vi.fn(() => Promise.resolve()),
+      createAlias: vi.fn(() => Promise.resolve()),
     },
     categories: {
-      update: mock(() => Promise.resolve()),
-      moveToGroup: mock(() => Promise.resolve()),
-      createAlias: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      moveToGroup: vi.fn(() => Promise.resolve()),
+      createAlias: vi.fn(() => Promise.resolve()),
     },
     schedules: {
-      update: mock(() => Promise.resolve()),
-      skip: mock(() => Promise.resolve()),
-      pause: mock(() => Promise.resolve()),
-      resume: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      skip: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(() => Promise.resolve()),
+      resume: vi.fn(() => Promise.resolve()),
     },
     budgets: {
-      update: mock(() => Promise.resolve()),
-      assignTransaction: mock(() => Promise.resolve()),
-      rollover: mock(() => Promise.resolve()),
-      pause: mock(() => Promise.resolve()),
+      update: vi.fn(() => Promise.resolve()),
+      assignTransaction: vi.fn(() => Promise.resolve()),
+      rollover: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(() => Promise.resolve()),
     },
   };
 }
@@ -590,7 +590,7 @@ describe("Rule Engine Integration Tests", () => {
       const mockServicesWithTracking = {
         ...mockServices,
         transactions: {
-          update: mock(async (id: number, data: Record<string, unknown>) => {
+          update: vi.fn(async (id: number, data: Record<string, unknown>) => {
             if (data.categoryId === 1) executionOrder.push("high");
             if (data.categoryId === 2) executionOrder.push("low");
           }),

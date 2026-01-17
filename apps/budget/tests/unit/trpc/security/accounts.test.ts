@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach} from "bun:test";
+import {describe, it, expect, beforeEach} from "vitest";
 import {createCaller} from "../../../../src/lib/trpc/router";
 import {createContext} from "../../../../src/lib/trpc/context";
 import {TRPCError} from "@trpc/server";

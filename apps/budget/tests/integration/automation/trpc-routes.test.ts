@@ -9,7 +9,7 @@
  * The services layer tests provide comprehensive coverage of the business logic.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 import { workspaces } from "../../../src/lib/schema/workspaces";
 import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";

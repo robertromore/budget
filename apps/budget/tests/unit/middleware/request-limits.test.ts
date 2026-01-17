@@ -1,4 +1,4 @@
-import {describe, test, expect} from "bun:test";
+import {describe, test, expect} from "vitest";
 
 describe("Request Limits Middleware Tests", () => {
   describe("Size Validation", () => {
