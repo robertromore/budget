@@ -7,6 +7,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    // Inline these dependencies to resolve ESM module resolution issues
+    server: {
+      deps: {
+        inline: ["drizzle-zod", "zod"],
+      },
+    },
     include: [
       "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
       "tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
@@ -63,7 +69,7 @@ export default defineConfig({
     },
 
     // Test organization and reporting
-    reporter: ["verbose", "json", "html"],
+    reporters: ["verbose", "json", "html"],
     outputFile: {
       json: "test-results/results.json",
       html: "test-results/index.html",

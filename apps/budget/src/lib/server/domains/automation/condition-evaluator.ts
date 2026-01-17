@@ -315,7 +315,8 @@ function dayOfWeek(dateValue: unknown, allowedDays: unknown): boolean {
   const date = toDate(dateValue);
   if (!date || !Array.isArray(allowedDays)) return false;
 
-  const dayNum = date.getDay(); // 0-6, Sunday is 0
+  // Use UTC methods to avoid timezone issues with date strings like "2024-01-15"
+  const dayNum = date.getUTCDay(); // 0-6, Sunday is 0
   // Convert day numbers to names for comparison
   const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const dayName = dayNames[dayNum];
@@ -329,7 +330,8 @@ function dayOfMonth(dateValue: unknown, day: unknown): boolean {
   const date = toDate(dateValue);
   const numDay = toNumber(day);
   if (!date || numDay === null) return false;
-  return date.getDate() === numDay;
+  // Use UTC methods to avoid timezone issues with date strings
+  return date.getUTCDate() === numDay;
 }
 
 // =============================================================================

@@ -275,7 +275,7 @@ describe("AccountsState Sorting", () => {
     test("should handle accounts with null/undefined values", () => {
       const accountsWithNulls: Account[] = [
         {
-          id: 1,
+          id: 99, // Use different id to avoid duplicates
           cuid: null,
           name: "",
           slug: "",

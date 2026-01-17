@@ -106,7 +106,8 @@ describe("Cache System Tests", () => {
       const pageSize = 50;
 
       const key = cacheKeys.accountTransactions(accountId, page, pageSize);
-      expect(key).toBe("account:123:transactions:0:50");
+      // Key includes default sort/filter values: sortBy=date, sortOrder=desc, dateFrom=null, dateTo=null
+      expect(key).toBe("account:123:transactions:0:50:date:desc:null:null");
     });
 
     test("should generate consistent search keys", () => {

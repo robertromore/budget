@@ -312,6 +312,7 @@ describe("Recurring Date Logic", () => {
 });
 
 // Helper functions for testing - simplified implementations
+// All functions use UTC methods since test dates are created from ISO strings (parsed as UTC)
 function generateDailyDates(startDate: Date, endDate: Date, interval: number): Date[] {
   if (interval <= 0 || startDate > endDate) return [];
 
@@ -320,7 +321,7 @@ function generateDailyDates(startDate: Date, endDate: Date, interval: number): D
 
   while (current <= endDate) {
     dates.push(new Date(current));
-    current.setDate(current.getDate() + interval);
+    current.setUTCDate(current.getUTCDate() + interval);
   }
 
   return dates;
@@ -346,7 +347,7 @@ function generateWeeklyDates(startDate: Date, endDate: Date, interval: number): 
 
   while (current <= endDate) {
     dates.push(new Date(current));
-    current.setDate(current.getDate() + interval * 7);
+    current.setUTCDate(current.getUTCDate() + interval * 7);
   }
 
   return dates;
@@ -363,9 +364,9 @@ function generateWeeklyDatesWithWeekdays(
   const dates: Date[] = [];
   const current = new Date(startDate);
 
-  // Find the start of the week containing startDate
+  // Find the start of the week containing startDate (using UTC)
   const weekStart = new Date(current);
-  weekStart.setDate(current.getDate() - current.getDay() + 1); // Monday = 1
+  weekStart.setUTCDate(current.getUTCDate() - current.getUTCDay() + 1); // Monday = 1
 
   let weekCounter = 0;
   while (weekStart <= endDate) {
@@ -373,7 +374,7 @@ function generateWeeklyDatesWithWeekdays(
       // Add dates for specified weekdays in this week
       weekdays.forEach((weekday) => {
         const dateInWeek = new Date(weekStart);
-        dateInWeek.setDate(weekStart.getDate() + weekday - 1);
+        dateInWeek.setUTCDate(weekStart.getUTCDate() + weekday - 1);
 
         if (dateInWeek >= startDate && dateInWeek <= endDate) {
           dates.push(new Date(dateInWeek));
@@ -381,7 +382,7 @@ function generateWeeklyDatesWithWeekdays(
       });
     }
 
-    weekStart.setDate(weekStart.getDate() + 7);
+    weekStart.setUTCDate(weekStart.getUTCDate() + 7);
     weekCounter++;
   }
 
@@ -398,17 +399,18 @@ function generateMonthlyDates(startDate: Date, endDate: Date, interval: number):
     dates.push(new Date(current));
 
     // Move to next month(s), handling month boundary issues
-    const targetMonth = current.getMonth() + interval;
-    const targetYear = current.getFullYear() + Math.floor(targetMonth / 12);
+    // Use UTC methods since test dates are parsed as UTC midnight
+    const targetMonth = current.getUTCMonth() + interval;
+    const targetYear = current.getUTCFullYear() + Math.floor(targetMonth / 12);
     const normalizedMonth = targetMonth % 12;
 
     // Try to keep the same day of month, but adjust if it doesn't exist
-    const dayOfMonth = startDate.getDate();
-    current.setFullYear(targetYear, normalizedMonth, 1);
+    const dayOfMonth = startDate.getUTCDate();
+    current.setUTCFullYear(targetYear, normalizedMonth, 1);
 
     // Get the last day of the target month
-    const lastDayOfMonth = new Date(targetYear, normalizedMonth + 1, 0).getDate();
-    current.setDate(Math.min(dayOfMonth, lastDayOfMonth));
+    const lastDayOfMonth = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+    current.setUTCDate(Math.min(dayOfMonth, lastDayOfMonth));
   }
 
   return dates;
@@ -424,18 +426,19 @@ function generateYearlyDates(startDate: Date, endDate: Date, interval: number): 
     dates.push(new Date(current));
 
     // Move to next year(s), handling leap year edge cases
-    const targetYear = current.getFullYear() + interval;
-    const month = startDate.getMonth();
-    const dayOfMonth = startDate.getDate();
+    // Use UTC methods since test dates are parsed as UTC midnight
+    const targetYear = current.getUTCFullYear() + interval;
+    const month = startDate.getUTCMonth();
+    const dayOfMonth = startDate.getUTCDate();
 
-    current.setFullYear(targetYear, month, 1);
+    current.setUTCFullYear(targetYear, month, 1);
 
     // Handle February 29th in non-leap years
     if (month === 1 && dayOfMonth === 29) {
       const isLeapYear = (targetYear % 4 === 0 && targetYear % 100 !== 0) || targetYear % 400 === 0;
-      current.setDate(isLeapYear ? 29 : 28);
+      current.setUTCDate(isLeapYear ? 29 : 28);
     } else {
-      current.setDate(dayOfMonth);
+      current.setUTCDate(dayOfMonth);
     }
   }
 
@@ -444,14 +447,15 @@ function generateYearlyDates(startDate: Date, endDate: Date, interval: number): 
 
 function adjustWeekendToNext(date: Date): Date {
   const adjusted = new Date(date);
-  const dayOfWeek = adjusted.getDay(); // 0 = Sunday, 6 = Saturday
+  // Use UTC methods since test dates are parsed as UTC midnight
+  const dayOfWeek = adjusted.getUTCDay(); // 0 = Sunday, 6 = Saturday
 
   if (dayOfWeek === 6) {
     // Saturday
-    adjusted.setDate(adjusted.getDate() + 2); // Move to Monday
+    adjusted.setUTCDate(adjusted.getUTCDate() + 2); // Move to Monday
   } else if (dayOfWeek === 0) {
     // Sunday
-    adjusted.setDate(adjusted.getDate() + 1); // Move to Monday
+    adjusted.setUTCDate(adjusted.getUTCDate() + 1); // Move to Monday
   }
 
   return adjusted;
@@ -459,14 +463,15 @@ function adjustWeekendToNext(date: Date): Date {
 
 function adjustWeekendToPrevious(date: Date): Date {
   const adjusted = new Date(date);
-  const dayOfWeek = adjusted.getDay();
+  // Use UTC methods since test dates are parsed as UTC midnight
+  const dayOfWeek = adjusted.getUTCDay();
 
   if (dayOfWeek === 6) {
     // Saturday
-    adjusted.setDate(adjusted.getDate() - 1); // Move to Friday
+    adjusted.setUTCDate(adjusted.getUTCDate() - 1); // Move to Friday
   } else if (dayOfWeek === 0) {
     // Sunday
-    adjusted.setDate(adjusted.getDate() - 2); // Move to Friday
+    adjusted.setUTCDate(adjusted.getUTCDate() - 2); // Move to Friday
   }
 
   return adjusted;

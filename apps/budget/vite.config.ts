@@ -18,6 +18,9 @@ export default defineConfig({
         "**/*.sqlite-wal",
         "**/*.sqlite-shm",
         "**/data/**/*.db",
+        // Ignore test files to prevent dev server refreshes when editing tests
+        "**/tests/**",
+        "**/test-results/**",
       ],
     },
   },
