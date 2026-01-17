@@ -37,6 +37,9 @@
 			onMarkAsRead(notification.id);
 		}
 	}
+
+	const Icon = $derived(icons[notification.type]);
+	const iconColor = $derived(iconColors[notification.type]);
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -47,10 +50,8 @@
 		: ''}"
 	onclick={handleClick}
 >
-	<svelte:component
-		this={icons[notification.type]}
-		class="mt-0.5 h-5 w-5 shrink-0 {iconColors[notification.type]} {notification.type ===
-		'loading'
+	<Icon
+		class="mt-0.5 h-5 w-5 shrink-0 {iconColor} {notification.type === 'loading'
 			? 'animate-spin'
 			: ''}"
 	/>
