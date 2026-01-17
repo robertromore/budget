@@ -25,13 +25,12 @@ export default defineConfig({
       // Playwright E2E tests (run with `npx playwright test` instead)
       "tests/e2e/**",
       "tests/test.ts",
-      "tests/integration/navigation/**",
-      "tests/integration/ui/**",
-      "tests/integration/views/**",
-      "tests/integration/crud/edit-account-functionality.test.ts",
-      "tests/integration/filters/filter-display-navigation.test.ts",
+      // Integration tests require workspace context (cookies) and database infrastructure
+      // Run these separately with proper test database setup
+      "tests/integration/**",
+      // Example tests demonstrate patterns, some require browser environment
+      "tests/examples/**",
     ],
-    setupFiles: ["tests/integration/setup/vitest-setup.ts"],
     testTimeout: 10000,
     hookTimeout: 10000,
 
