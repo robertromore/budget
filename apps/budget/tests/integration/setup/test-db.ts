@@ -25,14 +25,27 @@ export async function setupTestDb() {
 // Clean up all tables
 export async function clearTestDb(db: ReturnType<typeof createTestDb>) {
   // Get all table names from schema
+  // Order matters for foreign key constraints - children before parents
   const tables = [
-    "account",
+    // Budget-related tables (child tables first)
+    "budget_transactions",
+    "budget_period_instances",
+    "budget_period_templates",
+    "budget_account_associations",
+    "budget_category_associations",
+    "budget_recommendations",
+    "budgets",
+    // Schedule tables
+    "schedule_dates",
+    "schedules",
+    // Core entity tables
     "transaction",
+    "account",
     "payee",
     "categories",
-    "schedules",
-    "schedule_dates",
     "views",
+    // Workspace (parent of most entities)
+    "workspace",
   ];
 
   // Delete all data from tables (in reverse order to handle foreign keys)
