@@ -38,7 +38,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Test Checking",
       slug: "test-checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 

@@ -37,7 +37,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Test Checking",
       slug: "test-checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 
@@ -69,7 +69,7 @@ async function createBudgetWithEnforcement(
       workspaceId: ctx.workspaceId,
       name: `${enforcementLevel} Budget`,
       slug: `${enforcementLevel}-budget`,
-      type: "category",
+      type: "category-envelope",
       scope: "category",
       status: "active",
       enforcementLevel,
@@ -89,12 +89,10 @@ async function createBudgetWithEnforcement(
     .insert(schema.budgetPeriodInstances)
     .values({
       templateId: template.id,
-      budgetId: budget.id,
       startDate: "2024-01-01",
       endDate: "2024-01-31",
       allocatedAmount,
       actualAmount: 0,
-      status: "active",
     })
     .returning();
 

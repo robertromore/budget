@@ -28,13 +28,15 @@ export async function clearTestDb(db: ReturnType<typeof createTestDb>) {
   // Order matters for foreign key constraints - children before parents
   const tables = [
     // Budget-related tables (child tables first)
-    "budget_transactions",
-    "budget_period_instances",
-    "budget_period_templates",
-    "budget_account_associations",
-    "budget_category_associations",
-    "budget_recommendations",
-    "budgets",
+    "budget_transaction",
+    "budget_period_instance",
+    "budget_period_template",
+    "budget_account",
+    "budget_category",
+    "budget_group_membership",
+    "budget_recommendation",
+    "budget",
+    "budget_group",
     // Schedule tables
     "schedule_dates",
     "schedules",

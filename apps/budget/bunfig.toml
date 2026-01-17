@@ -1,0 +1,6 @@
+# Bun test configuration
+# See: https://bun.sh/docs/cli/test
+
+[test]
+# Preload test database setup
+preload = ["./tests/integration/setup/test-db.ts"]

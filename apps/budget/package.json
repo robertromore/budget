@@ -9,7 +9,7 @@
     "preview": "bunx --bun vite preview",
     "test": "bun run test:unit && bun run test:playwright",
     "test:unit": "bunx vitest run tests/unit/",
-    "test:integration": "echo 'Integration tests require workspace context setup - see tests/integration/README.md'",
+    "test:integration": "bun test tests/integration/import tests/integration/reports tests/integration/medical tests/integration/categories tests/integration/ml tests/integration/patterns tests/integration/annotations tests/integration/workspace tests/integration/auth tests/integration/onboarding tests/integration/budgets tests/integration/transactions tests/integration/payees tests/integration/utility tests/integration/connections tests/integration/schedules/schedule-occurrence.test.ts tests/integration/schedules/schedule-skips.test.ts tests/integration/setup",
     "test:e2e": "bunx vitest run tests/e2e/",
     "test:coverage": "bunx vitest run --coverage",
     "test:watch": "bunx vitest watch",

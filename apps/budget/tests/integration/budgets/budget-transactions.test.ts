@@ -39,7 +39,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Test Checking",
       slug: "test-checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 
@@ -58,7 +58,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Grocery Budget",
       slug: "grocery-budget",
-      type: "category",
+      type: "category-envelope",
       scope: "category",
       status: "active",
       enforcementLevel: "warning",
@@ -78,12 +78,10 @@ async function setupTestContext(): Promise<TestContext> {
     .insert(schema.budgetPeriodInstances)
     .values({
       templateId: template.id,
-      budgetId: budget.id,
       startDate: "2024-01-01",
       endDate: "2024-01-31",
       allocatedAmount: 500,
       actualAmount: 0,
-      status: "active",
     })
     .returning();
 
@@ -259,7 +257,7 @@ describe("Budget Transactions & Allocations", () => {
           workspaceId: ctx.workspaceId,
           name: "Entertainment Budget",
           slug: "entertainment-budget",
-          type: "category",
+          type: "category-envelope",
           scope: "category",
           status: "active",
           enforcementLevel: "warning",
