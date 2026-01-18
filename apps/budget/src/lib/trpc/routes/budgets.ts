@@ -13,6 +13,7 @@ import {
   newScheduleSchema,
   scheduleCreationModes,
 } from "$lib/schema/superforms/budgets";
+import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { NotFoundError } from "$lib/server/shared/types/errors";
@@ -21,7 +22,7 @@ import { translateDomainError } from "$lib/trpc/shared/errors";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import { TRPCError } from "@trpc/server";
 import slugify from "@sindresorhus/slugify";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const budgetIdSchema = z.object({
@@ -232,6 +233,96 @@ const templateService = serviceFactory.getBudgetTemplateService();
 const intelligenceService = serviceFactory.getBudgetDetectionService();
 const automationService = serviceFactory.getBudgetGroupAutomationService();
 
+/**
+ * Helper to create a period template from budget metadata.defaultPeriod
+ * This automatically creates the first period instances as well.
+ * Also queries for the earliest related transaction to determine how far back to create periods.
+ */
+async function createPeriodTemplateFromMetadata(
+  budgetId: number,
+  metadata: Record<string, unknown> | undefined,
+  workspaceId: number,
+  filters?: {
+    accountIds?: number[];
+    categoryIds?: number[];
+  }
+) {
+  const defaultPeriod = metadata?.defaultPeriod as {
+    type?: string;
+    startDay?: number;
+    intervalCount?: number;
+  } | undefined;
+
+  if (!defaultPeriod?.type) return;
+
+  const periodType = defaultPeriod.type as typeof periodTemplateTypes[number];
+  const startDay = defaultPeriod.startDay || 1;
+
+  // Query the earliest transaction date based on filters
+  let earliestTransactionDate: string | undefined;
+  if (filters?.accountIds?.length || filters?.categoryIds?.length) {
+    const conditions = [];
+    conditions.push(eq(transactions.workspaceId, workspaceId));
+
+    if (filters.accountIds?.length) {
+      conditions.push(inArray(transactions.accountId, filters.accountIds));
+    }
+    if (filters.categoryIds?.length) {
+      conditions.push(inArray(transactions.categoryId, filters.categoryIds));
+    }
+
+    const result = await db
+      .select({ minDate: sql<string>`MIN(${transactions.date})` })
+      .from(transactions)
+      .where(and(...conditions));
+
+    earliestTransactionDate = result[0]?.minDate ?? undefined;
+  }
+
+  // Map form startDay to the appropriate field based on period type
+  const templateInput: {
+    budgetId: number;
+    type: typeof periodTemplateTypes[number];
+    intervalCount?: number;
+    startDayOfWeek?: number;
+    startDayOfMonth?: number;
+    startMonth?: number;
+    earliestTransactionDate?: string;
+  } = {
+    budgetId,
+    type: periodType,
+    earliestTransactionDate,
+  };
+
+  switch (periodType) {
+    case "weekly":
+      templateInput.startDayOfWeek = startDay;
+      break;
+    case "monthly":
+      templateInput.startDayOfMonth = startDay;
+      break;
+    case "quarterly":
+      // For quarterly, startDay is day within quarter (1-92)
+      // Map to month (1-3) and day of month
+      templateInput.startMonth = Math.ceil(startDay / 31) || 1;
+      templateInput.startDayOfMonth = ((startDay - 1) % 31) + 1;
+      break;
+    case "yearly":
+      // For yearly, startDay is day of year (1-366)
+      // Map to month and day
+      const yearDate = new Date(2024, 0, startDay); // Use leap year for calculation
+      templateInput.startMonth = yearDate.getMonth() + 1;
+      templateInput.startDayOfMonth = yearDate.getDate();
+      break;
+    case "custom":
+      templateInput.intervalCount = defaultPeriod.intervalCount || 30;
+      templateInput.startDayOfMonth = 1; // Start from 1st for custom periods
+      break;
+  }
+
+  await budgetService.createPeriodTemplate(templateInput, workspaceId);
+}
+
 export const budgetRoutes = t.router({
   count: publicProcedure.query(async ({ ctx }) => {
     try {
@@ -396,7 +487,7 @@ export const budgetRoutes = t.router({
           });
         }
 
-        return await db.transaction(async (tx) => {
+        const { budget, budgetMetadata } = await db.transaction(async (tx) => {
           // 1. Create the schedule first
           const scheduleSlug = await generateUniqueSlugForDB(
             tx,
@@ -506,8 +597,18 @@ export const budgetRoutes = t.router({
               and(eq(schedules.id, createdSchedule.id), eq(schedules.workspaceId, ctx.workspaceId))
             );
 
-          return budget;
+          return { budget, budgetMetadata };
         });
+
+        // Auto-create period template from metadata if configured (after transaction)
+        await createPeriodTemplateFromMetadata(
+          budget.id,
+          budgetMetadata,
+          ctx.workspaceId,
+          { accountIds: budgetData.accountIds, categoryIds: budgetData.categoryIds }
+        );
+
+        return budget;
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw translateDomainError(error);
@@ -517,6 +618,19 @@ export const budgetRoutes = t.router({
     // Handle linking existing schedule
     if (input.type === "scheduled-expense" && scheduleMode === "link" && linkedScheduleId) {
       try {
+        // Verify the schedule exists and belongs to this workspace
+        const existingSchedule = await db.query.schedules.findFirst({
+          where: (s, { eq, and }) =>
+            and(eq(s.id, linkedScheduleId), eq(s.workspaceId, ctx.workspaceId)),
+        });
+
+        if (!existingSchedule) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Schedule not found or does not belong to this workspace",
+          });
+        }
+
         // Add schedule link to metadata
         const budgetMetadata = {
           ...((budgetData.metadata as Record<string, unknown>) || {}),
@@ -540,6 +654,14 @@ export const budgetRoutes = t.router({
           .set({ budgetId: budget.id })
           .where(and(eq(schedules.id, linkedScheduleId), eq(schedules.workspaceId, ctx.workspaceId)));
 
+        // Auto-create period template from metadata if configured
+        await createPeriodTemplateFromMetadata(
+          budget.id,
+          budgetMetadata,
+          ctx.workspaceId,
+          { accountIds: budgetData.accountIds, categoryIds: budgetData.categoryIds }
+        );
+
         return budget;
       } catch (error) {
         throw translateDomainError(error);
@@ -548,7 +670,17 @@ export const budgetRoutes = t.router({
 
     // Standard budget creation (no schedule)
     try {
-      return await budgetService.createBudget(budgetData as any, ctx.workspaceId);
+      const budget = await budgetService.createBudget(budgetData as any, ctx.workspaceId);
+
+      // Auto-create period template from metadata if configured
+      await createPeriodTemplateFromMetadata(
+        budget.id,
+        budgetData.metadata as Record<string, unknown>,
+        ctx.workspaceId,
+        { accountIds: budgetData.accountIds, categoryIds: budgetData.categoryIds }
+      );
+
+      return budget;
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -1651,10 +1783,10 @@ export const budgetRoutes = t.router({
 
   applyRecommendation: publicProcedure
     .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.applyRecommendation(input.id);
+        return await budgetService.applyRecommendation(input.id, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }

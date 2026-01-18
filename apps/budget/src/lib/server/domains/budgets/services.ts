@@ -1010,13 +1010,21 @@ export class BudgetService {
     return await this.recommendationService.resetAppliedRecommendation(id);
   }
 
-  async applyRecommendation(id: number) {
+  async applyRecommendation(id: number, userWorkspaceId?: number) {
     if (!this.recommendationService) {
       throw new Error("Recommendation service not available");
     }
 
     // Get the recommendation details
     const recommendation = await this.recommendationService.getRecommendation(id);
+
+    // Validate workspace if provided - ensure recommendation belongs to user's workspace
+    if (userWorkspaceId && recommendation.workspaceId !== userWorkspaceId) {
+      throw new NotFoundError("Recommendation", id);
+    }
+
+    // Use user's workspace if provided, otherwise fall back to recommendation's workspace
+    const workspaceId = userWorkspaceId ?? recommendation.workspaceId;
 
     // Create the budget based on the recommendation
     const metadata = recommendation.metadata as any;
@@ -1054,9 +1062,6 @@ export class BudgetService {
       // Extract from title as last resort
       budgetName = recommendation.title.replace(/^Create (scheduled )?budget for /i, "");
     }
-
-    // Get workspaceId from recommendation
-    const workspaceId = recommendation.workspaceId;
 
     // Handle scheduled-expense type with schedule creation
     if (suggestedType === "scheduled-expense" && payee) {
@@ -1184,12 +1189,23 @@ export class BudgetService {
         .where(and(eq(schedules.id, createdSchedule.id), eq(schedules.workspaceId, workspaceId)));
 
       // Step 4: Create default monthly period template with the allocated amount
+      // Query earliest transaction date if we have transaction IDs
+      let earliestTransactionDate: string | undefined;
+      if (transactionIds?.length) {
+        const earliestTxn = await db
+          .select({ date: sql<string>`MIN(${transactions.date})` })
+          .from(transactions)
+          .where(inArray(transactions.id, transactionIds));
+        earliestTransactionDate = earliestTxn[0]?.date ?? undefined;
+      }
+
       await this.createPeriodTemplate(
         {
           budgetId: newBudget.id,
           type: "monthly",
           startDayOfMonth: 1,
           allocatedAmount: suggestedAmount,
+          earliestTransactionDate,
         },
         workspaceId
       );
@@ -1354,6 +1370,8 @@ export class BudgetService {
       startMonth?: number;
       timezone?: string;
       allocatedAmount?: number;
+      /** Optional earliest transaction date to determine how far back to create periods */
+      earliestTransactionDate?: string;
     },
     workspaceId: number
   ): Promise<BudgetPeriodTemplate> {
@@ -1407,11 +1425,25 @@ export class BudgetService {
       timezone: data.timezone ?? null,
     });
 
-    // Automatically create the first period instance
+    // Automatically create period instances (past and future)
     const periodManager = new PeriodManager();
+
+    // Calculate lookBehindMonths based on earliest transaction date if provided
+    let lookBehindMonths = 3; // Default: 3 months back
+    if (data.earliestTransactionDate) {
+      const earliestDate = parseISOString(data.earliestTransactionDate);
+      if (earliestDate) {
+        const todayDate = today(defaultTimezone);
+        // Calculate months between earliest transaction and today
+        const yearDiff = todayDate.year - earliestDate.year;
+        const monthDiff = todayDate.month - earliestDate.month;
+        lookBehindMonths = Math.max(1, yearDiff * 12 + monthDiff + 1); // +1 to include the month of the earliest transaction
+      }
+    }
+
     const periodOptions: any = {
       lookAheadMonths: 3,
-      lookBehindMonths: 0,
+      lookBehindMonths,
       autoCreateEnvelopes: false,
       copyPreviousPeriodSettings: false,
       enableRollover: false,

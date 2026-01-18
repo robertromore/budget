@@ -227,6 +227,9 @@ export const deleteBudget = defineMutation<
   onSuccess: (_, { id, deleteLinkedSchedule }) => {
     getState()?.removeBudget(id);
     cachePatterns.removeQuery(budgetKeys.detail(id));
+    // Also invalidate all detail queries (including by-slug) to clear stale data
+    // This prevents issues when a budget with the same slug is recreated
+    cachePatterns.invalidatePrefix(budgetKeys.details());
 
     // Optimistically remove the budget from all budget list queries immediately
     // This includes both list queries ["budgets", "list", ...] and account queries ["budgets", "account", ...]
@@ -1207,6 +1210,11 @@ export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
     // Update state if available
     getState()?.upsertBudget(budget);
 
+    // Set the budget detail cache directly with fresh data
+    // This ensures the detail page has the correct data immediately
+    cachePatterns.setQueryData(budgetKeys.detail(budget.id), budget);
+    cachePatterns.setQueryData(budgetKeys.detailBySlug(budget.slug), budget);
+
     // Optimistically add the new budget to all budget queries immediately
     // This includes both list queries and account-specific queries
     cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
@@ -1231,6 +1239,8 @@ export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
     cachePatterns.invalidatePrefix(budgetKeys.lists());
     cachePatterns.invalidatePrefix(["budgets", "account"]);
     cachePatterns.invalidatePrefix(["budgets", "related"]);
+    // Also invalidate detail caches to clear any stale data
+    cachePatterns.invalidatePrefix(budgetKeys.details());
 
     // Invalidate all schedules cache if a scheduled-expense budget was created (creates a schedule)
     if (budget.type === "scheduled-expense") {
