@@ -3,12 +3,13 @@ import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 import type {
+  AccountSubscriptionsResult,
   DuplicateDetectionResult,
   DuplicateGroup,
   PayeeAnalytics,
   PayeeIntelligence,
   PayeeStats,
-  PayeeSuggestions
+  PayeeSuggestions,
 } from "./payees-types";
 
 // Re-export types for consumers
@@ -300,6 +301,20 @@ export const getSubscriptionAnalysis = (
       }),
     options: {
       staleTime: 10 * 60 * 1000, // 10 minutes
+    },
+  });
+
+export const getSubscriptionsForAccount = (accountId: number, minConfidence = 0.5) =>
+  defineQuery<AccountSubscriptionsResult>({
+    queryKey: ["payees", "subscriptions", "account", accountId, minConfidence],
+    queryFn: () =>
+      trpc().payeeRoutes.getSubscriptionsForAccount.query({
+        accountId,
+        minConfidence,
+      }),
+    options: {
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      enabled: accountId > 0,
     },
   });
 

@@ -1020,11 +1020,24 @@ export const payeeRoutes = t.router({
           }),
       })
     )
-    .query(async ({ input, ctx }) => {
-      return withErrorHandler(() =>
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
         payeeService.getBulkSubscriptionAnalysis(ctx.workspaceId, input.payeeIds, input.analysisOptions)
-      );
-    }),
+      )
+    ),
+
+  getSubscriptionsForAccount: publicProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        minConfidence: z.number().min(0).max(1).default(0.5),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getSubscriptionsForAccount(input.accountId, ctx.workspaceId, input.minConfidence)
+      )
+    ),
 
   updateSubscriptionMetadata: rateLimitedProcedure
     .input(

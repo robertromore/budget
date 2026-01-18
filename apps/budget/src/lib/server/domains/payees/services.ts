@@ -10,6 +10,9 @@ import type {
   Payee,
   PayeeType,
 } from "$lib/schema";
+import { budgets, transactions } from "$lib/schema";
+import { db } from "$lib/server/db";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { extractMerchantName, merchantSimilarity } from "$lib/server/domains/ml/similarity/text-similarity";
 import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
@@ -114,6 +117,31 @@ export interface PayeeAnalytics {
   topCategories: Array<{ categoryId: number; categoryName: string; payeeCount: number }>;
   averageTransactionsPerPayee: number;
   recentlyActiveCount: number;
+}
+
+export interface AccountSubscription {
+  payeeId: number;
+  payeeName: string;
+  payeeSlug: string;
+  subscriptionType: string;
+  billingCycle: string;
+  baseCost: number;
+  detectionConfidence: number;
+  transactionCount: number;
+  totalSpent: number;
+  lastTransactionDate: string | null;
+  firstTransactionDate: string | null;
+  budgetId: number | null;
+  budgetName: string | null;
+}
+
+export interface AccountSubscriptionsResult {
+  subscriptions: AccountSubscription[];
+  summary: {
+    totalCount: number;
+    totalMonthlyCost: number;
+    totalAnnualCost: number;
+  };
 }
 
 /**
@@ -3736,6 +3764,138 @@ export class PayeeService {
     return await this.updatePayee(payeeId, {
       subscriptionInfo: updatedSubscriptionInfo,
     }, workspaceId);
+  }
+
+  /**
+   * Get subscriptions for a specific account
+   *
+   * This method detects subscriptions among payees that have transactions
+   * in the specified account, enriched with account-specific transaction stats.
+   */
+  async getSubscriptionsForAccount(
+    accountId: number,
+    workspaceId: number,
+    minConfidence: number = 0.5
+  ): Promise<AccountSubscriptionsResult> {
+    // Step 1: Get payees that have transactions in this account
+    const payees = await this.repository.findByAccountTransactions(accountId, workspaceId);
+
+    if (payees.length === 0) {
+      return {
+        subscriptions: [],
+        summary: { totalCount: 0, totalMonthlyCost: 0, totalAnnualCost: 0 },
+      };
+    }
+
+    const payeeIds = payees.map((p) => p.id);
+
+    // Step 2: Detect subscriptions among these payees
+    const detections = await this.detectSubscriptions(workspaceId, payeeIds, false, minConfidence);
+
+    if (detections.length === 0) {
+      return {
+        subscriptions: [],
+        summary: { totalCount: 0, totalMonthlyCost: 0, totalAnnualCost: 0 },
+      };
+    }
+
+    // Step 2.5: Fetch budget names for payees with defaultBudgetId
+    const budgetIds = payees
+      .map((p) => p.defaultBudgetId)
+      .filter((id): id is number => id !== null && id !== undefined);
+
+    const budgetMap = new Map<number, string>();
+    if (budgetIds.length > 0) {
+      const budgetData = await db
+        .select({ id: budgets.id, name: budgets.name })
+        .from(budgets)
+        .where(inArray(budgets.id, budgetIds));
+
+      for (const budget of budgetData) {
+        budgetMap.set(budget.id, budget.name);
+      }
+    }
+
+    // Step 3: Enrich with account-specific transaction stats
+    const enrichedSubscriptions: AccountSubscription[] = await Promise.all(
+      detections.map(async (detection) => {
+        // Get account-specific transaction stats for this payee
+        const [stats] = await db
+          .select({
+            transactionCount: sql<number>`COUNT(*)`,
+            totalSpent: sql<number>`COALESCE(SUM(ABS(${transactions.amount})), 0)`,
+            lastTransactionDate: sql<string | null>`MAX(${transactions.date})`,
+            firstTransactionDate: sql<string | null>`MIN(${transactions.date})`,
+          })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.accountId, accountId),
+              eq(transactions.payeeId, detection.payeeId),
+              isNull(transactions.deletedAt)
+            )
+          );
+
+        const payee = payees.find((p) => p.id === detection.payeeId);
+        const budgetId = payee?.defaultBudgetId ?? null;
+        const budgetName = budgetId ? budgetMap.get(budgetId) ?? null : null;
+
+        return {
+          payeeId: detection.payeeId,
+          payeeName: payee?.name ?? "Unknown",
+          payeeSlug: payee?.slug ?? "",
+          subscriptionType: detection.subscriptionType,
+          billingCycle: detection.suggestedMetadata?.billingCycle ?? "monthly",
+          baseCost: detection.suggestedMetadata?.baseCost ?? 0,
+          detectionConfidence: detection.detectionConfidence,
+          transactionCount: stats?.transactionCount ?? 0,
+          totalSpent: stats?.totalSpent ?? 0,
+          lastTransactionDate: stats?.lastTransactionDate ?? null,
+          firstTransactionDate: stats?.firstTransactionDate ?? null,
+          budgetId,
+          budgetName,
+        };
+      })
+    );
+
+    // Step 4: Calculate summary with normalized monthly costs
+    const totalMonthlyCost = enrichedSubscriptions.reduce((sum, sub) => {
+      const monthlyCost = this.normalizeToMonthlyCost(sub.baseCost, sub.billingCycle);
+      return sum + monthlyCost;
+    }, 0);
+
+    return {
+      subscriptions: enrichedSubscriptions.sort(
+        (a, b) => b.detectionConfidence - a.detectionConfidence
+      ),
+      summary: {
+        totalCount: enrichedSubscriptions.length,
+        totalMonthlyCost,
+        totalAnnualCost: totalMonthlyCost * 12,
+      },
+    };
+  }
+
+  /**
+   * Normalize a cost to monthly based on billing cycle
+   */
+  private normalizeToMonthlyCost(cost: number, billingCycle: string): number {
+    switch (billingCycle) {
+      case "daily":
+        return cost * 30;
+      case "weekly":
+        return cost * 4.33;
+      case "monthly":
+        return cost;
+      case "quarterly":
+        return cost / 3;
+      case "semi_annual":
+        return cost / 6;
+      case "annual":
+        return cost / 12;
+      default:
+        return cost; // Assume monthly for irregular/unknown
+    }
   }
 
   // ============================================================================
