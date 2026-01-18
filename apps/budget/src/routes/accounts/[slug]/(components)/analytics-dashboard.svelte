@@ -3,14 +3,11 @@ import { cn } from '$lib/utils';
 import type { TransactionsFormat } from '$lib/types';
 import type { Account } from '$lib/schema/accounts';
 import { analyticsTypes } from './(analytics)/analytics-types';
-import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 
 // Interactive components
 import ChartDrillDownSheet from './chart-drill-down-sheet.svelte';
-import ChartDateRangeIndicator from './chart-date-range-indicator.svelte';
-import { TimePeriodSelector } from '$lib/components/charts';
 
 // Credit Card charts
 import CreditUtilizationChart from './(charts)/credit-utilization-chart.svelte';
@@ -98,27 +95,6 @@ const groupedAnalytics = $derived.by(() => {
 
   return groups;
 });
-
-// Filter transactions based on global time period
-// Access globalPeriod reactively
-const globalPeriod = $derived(timePeriodFilter.globalPeriod);
-
-const filteredTransactions = $derived.by(() => {
-  const period = globalPeriod;
-  if (period.preset === 'all-time') return transactions;
-
-  const range = timePeriodFilter.getDateRange(period);
-  if (!range) return transactions;
-
-  return transactions.filter((tx) => {
-    // Use UTC-based comparison to match chart data processing
-    // tx.date is a CalendarDate - extract YYYY-MM-DD and create UTC Date
-    const dateStr = tx.date.toString(); // Returns "YYYY-MM-DD"
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const txDateUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    return txDateUtc >= range.start && txDateUtc <= range.end;
-  });
-});
 </script>
 
 <div class="flex flex-col gap-6">
@@ -130,11 +106,6 @@ const filteredTransactions = $derived.by(() => {
         Detailed analysis of your spending patterns and financial trends
       </p>
     </div>
-    <!-- Global filter hidden for now - using per-chart filters instead -->
-    <!-- <div class="flex items-center gap-2">
-      <TimePeriodSelector />
-      <ChartDateRangeIndicator />
-    </div> -->
   </div>
 
   <!-- Main Layout: Vertical Tabs + Content -->
@@ -185,55 +156,55 @@ const filteredTransactions = $derived.by(() => {
             <MonthlySpendingChart accountId={Number(accountId)} />
           </div>
         {:else if effectiveSelectedAnalytic === 'income-vs-expenses'}
-          <IncomeVsExpensesChart transactions={filteredTransactions} />
+          <IncomeVsExpensesChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'daily-calendar'}
-          <DailySpendingCalendar transactions={filteredTransactions} />
+          <DailySpendingCalendar {transactions} />
         {:else if effectiveSelectedAnalytic === 'spending-velocity'}
-          <SpendingVelocityChart transactions={filteredTransactions} />
+          <SpendingVelocityChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'year-over-year'}
-          <YearOverYearChart transactions={filteredTransactions} />
+          <YearOverYearChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'weekday-patterns'}
-          <WeekdayPatternsChart transactions={filteredTransactions} />
+          <WeekdayPatternsChart {transactions} />
 
         <!-- Category Analysis -->
         {:else if effectiveSelectedAnalytic === 'category-composition'}
-          <CategoryCompositionChart transactions={filteredTransactions} />
+          <CategoryCompositionChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'top-categories'}
           <div data-tour-id="analytics-category-chart">
-            <TopCategoriesView transactions={filteredTransactions} />
+            <TopCategoriesView {transactions} />
           </div>
         {:else if effectiveSelectedAnalytic === 'category-radar'}
-          <CategoryRadarChart transactions={filteredTransactions} />
+          <CategoryRadarChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'category-trends'}
-          <CategoryTrendsChart transactions={filteredTransactions} />
+          <CategoryTrendsChart {transactions} />
 
         <!-- Behavioral Insights -->
         {:else if effectiveSelectedAnalytic === 'spending-distribution'}
-          <SpendingDistributionChart transactions={filteredTransactions} />
+          <SpendingDistributionChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'outlier-detection'}
-          <OutlierDetectionChart transactions={filteredTransactions} />
+          <OutlierDetectionChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'recurring-spending'}
-          <RecurringSpendingChart transactions={filteredTransactions} />
+          <RecurringSpendingChart {transactions} />
 
         <!-- Financial Health -->
         {:else if effectiveSelectedAnalytic === 'savings-rate'}
-          <SavingsRateChart transactions={filteredTransactions} />
+          <SavingsRateChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'cash-flow'}
-          <CashFlowChart transactions={filteredTransactions} />
+          <CashFlowChart {transactions} />
 
         <!-- Payee Analysis -->
         {:else if effectiveSelectedAnalytic === 'top-payees'}
-          <PayeeRankingsChart transactions={filteredTransactions} />
+          <PayeeRankingsChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'payee-frequency'}
-          <PayeeFrequencyChart transactions={filteredTransactions} />
+          <PayeeFrequencyChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'payee-trends'}
-          <PayeeTrendsChart transactions={filteredTransactions} />
+          <PayeeTrendsChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'new-payees'}
-          <NewPayeesChart transactions={filteredTransactions} />
+          <NewPayeesChart {transactions} />
 
         <!-- Transaction Analysis -->
         {:else if effectiveSelectedAnalytic === 'transaction-explorer'}
-          <TransactionExplorerChart transactions={filteredTransactions} />
+          <TransactionExplorerChart {transactions} />
         {/if}
       {/if}
     </div>
@@ -241,4 +212,4 @@ const filteredTransactions = $derived.by(() => {
 </div>
 
 <!-- Drill-down sheet for chart interactions -->
-<ChartDrillDownSheet transactions={filteredTransactions} />
+<ChartDrillDownSheet {transactions} />
