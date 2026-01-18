@@ -31,3 +31,6 @@ export { default as IntelligenceTab } from "./intelligence-tab.svelte";
 
 // Automation Tab
 export { default as AutomationTab } from "./automation-tab.svelte";
+
+// Subscriptions Tab
+export { default as SubscriptionsTab } from "./subscriptions-tab.svelte";

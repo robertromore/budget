@@ -21,6 +21,7 @@ import FileText from '@lucide/svelte/icons/file-text';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
 import List from '@lucide/svelte/icons/list';
 import Plus from '@lucide/svelte/icons/plus';
+import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Upload from '@lucide/svelte/icons/upload';
@@ -54,6 +55,7 @@ import {
   IntelligenceTab,
   MedicalExpenseForm,
   SettingsTab,
+  SubscriptionsTab,
   TransactionTableContainer,
 } from './(components)';
 import UtilityDashboard from './(components)/utility-dashboard.svelte';
@@ -71,6 +73,7 @@ const tabValues = [
   'hsa-dashboard',
   'utility-dashboard',
   'analytics',
+  'subscriptions',
   'intelligence',
   'automation',
   'schedules',
@@ -141,6 +144,7 @@ $effect(() => {
         { id: 'hsa-dashboard', label: 'HSA Dashboard', condition: isHsaAccount },
         { id: 'utility-dashboard', label: 'Usage', icon: Zap, condition: isUtilityAccount },
         { id: 'analytics', label: 'Analytics', icon: ChartLine },
+        { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCw },
         { id: 'intelligence', label: 'Intelligence', icon: Brain },
         { id: 'automation', label: 'Automation', icon: Zap },
         { id: 'schedules', label: 'Schedules', icon: Calendar },
@@ -955,6 +959,10 @@ $effect(() => {
             <ChartLine class="mr-2 h-4 w-4" />
             Analytics
           </Tabs.Trigger>
+          <Tabs.Trigger value="subscriptions" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-subscriptions" data-help-title="Subscriptions Tab" data-tour-id="subscriptions-tab">
+            <RefreshCw class="mr-2 h-4 w-4" />
+            Subscriptions
+          </Tabs.Trigger>
           <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-intelligence" data-help-title="Intelligence Tab" data-tour-id="intelligence-tab">
             <Brain class="mr-2 h-4 w-4" />
             Intelligence
@@ -1054,6 +1062,13 @@ $effect(() => {
             </div>
             <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
           </div>
+        {/if}
+      </Tabs.Content>
+
+      <!-- Subscriptions Tab Content -->
+      <Tabs.Content value="subscriptions" class="tabs-connected-content space-y-4" data-help-id="subscriptions-tab" data-help-title="Subscriptions Tab">
+        {#if accountId && accountSlug && activeTab === 'subscriptions'}
+          <SubscriptionsTab accountId={Number(accountId)} {accountSlug} />
         {/if}
       </Tabs.Content>
 
@@ -1201,6 +1216,10 @@ $effect(() => {
               </div>
               <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
+          {/if}
+        {:else if activeTab === 'subscriptions'}
+          {#if accountId && accountSlug}
+            <SubscriptionsTab accountId={Number(accountId)} {accountSlug} />
           {/if}
         {:else if activeTab === 'schedules'}
           {#if schedules && !isLoading}
