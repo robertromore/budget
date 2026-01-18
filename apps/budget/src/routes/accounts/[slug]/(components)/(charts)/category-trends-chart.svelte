@@ -1,20 +1,20 @@
 <script lang="ts">
+	import { AnalyticsChartShell } from '$lib/components/charts';
 	import { AxisX, AxisY, ComparisonDotPlot } from '$lib/components/layercake';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { currencyFormatter } from '$lib/utils/formatters';
-	import type { TransactionsFormat } from '$lib/types';
-	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
-	import { LayerCake, Svg, Html } from 'layercake';
-	import { scaleBand, scaleLinear } from 'd3-scale';
-	import { AnalyticsChartShell } from '$lib/components/charts';
+	import type { TransactionsFormat } from '$lib/types';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { getLastDayOfMonthUTC, parseDateStringToUTC } from '$lib/utils/date-formatters';
+	import { currencyFormatter } from '$lib/utils/formatters';
 	import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
-	import Filter from '@lucide/svelte/icons/filter';
-	import TrendingUp from '@lucide/svelte/icons/trending-up';
-	import TrendingDown from '@lucide/svelte/icons/trending-down';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import Filter from '@lucide/svelte/icons/filter';
+	import TrendingDown from '@lucide/svelte/icons/trending-down';
+	import TrendingUp from '@lucide/svelte/icons/trending-up';
+	import { scaleBand, scaleLinear } from 'd3-scale';
+	import { Html, LayerCake, Svg } from 'layercake';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -51,85 +51,67 @@
 		'alphabetical': 'A-Z'
 	};
 
-	// Access effective time period for this chart
-	const effectivePeriod = $derived(timePeriodFilter.getEffectivePeriod('category-trends'));
-
-	// Filter transactions based on time period
-	const filteredTransactions = $derived.by(() => {
-		const period = effectivePeriod;
-
-		if (period.preset !== 'all-time') {
-			const range = timePeriodFilter.getDateRange(period);
-			if (range) {
-				return transactions.filter((tx) => {
-					const date = tx.date instanceof Date ? tx.date : new Date(tx.date?.toString() || '');
-					return !isNaN(date.getTime()) && date >= range.start && date <= range.end;
-				});
-			}
-		}
-
-		return transactions;
-	});
-
-	// Helper to parse date
-	function parseDate(tx: TransactionsFormat): Date {
-		return tx.date instanceof Date ? tx.date : new Date(tx.date?.toString() || '');
-	}
-
 	// Calculate date ranges based on comparison period
+	// Uses today's date as the reference point for comparisons
 	const dateRanges = $derived.by(() => {
-		const dates = filteredTransactions
-			.map(parseDate)
-			.filter((d) => !isNaN(d.getTime()))
-			.sort((a, b) => a.getTime() - b.getTime());
+		const validDates = transactions
+			.map((tx) => parseDateStringToUTC(tx.date?.toString() || ''))
+			.filter((d) => !isNaN(d.getTime()));
 
-		if (dates.length < 2) return null;
+		if (validDates.length < 2) return null;
 
-		const latestDate = dates[dates.length - 1];
+		// Use today's date as reference (in UTC)
+		const today = new Date();
 		let currentStart: Date, currentEnd: Date, previousStart: Date, previousEnd: Date;
+
+		const todayYear = today.getUTCFullYear();
+		const todayMonth = today.getUTCMonth();
+		const todayDay = today.getUTCDate();
+		const todayDayOfWeek = today.getUTCDay();
 
 		switch (comparisonPeriod) {
 			case 'this-vs-last-week': {
-				// Current week: Sunday to Saturday containing latestDate
-				const dayOfWeek = latestDate.getDay();
-				currentStart = new Date(latestDate);
-				currentStart.setDate(latestDate.getDate() - dayOfWeek);
-				currentStart.setHours(0, 0, 0, 0);
-				currentEnd = new Date(currentStart);
-				currentEnd.setDate(currentStart.getDate() + 6);
-				currentEnd.setHours(23, 59, 59, 999);
+				// Current week: Sunday to Saturday containing today
+				const currentStartDay = todayDay - todayDayOfWeek;
+				currentStart = new Date(Date.UTC(todayYear, todayMonth, currentStartDay, 0, 0, 0, 0));
+				currentEnd = new Date(Date.UTC(todayYear, todayMonth, currentStartDay + 6, 23, 59, 59, 999));
 				// Previous week
-				previousStart = new Date(currentStart);
-				previousStart.setDate(currentStart.getDate() - 7);
-				previousEnd = new Date(previousStart);
-				previousEnd.setDate(previousStart.getDate() + 6);
-				previousEnd.setHours(23, 59, 59, 999);
+				previousStart = new Date(Date.UTC(todayYear, todayMonth, currentStartDay - 7, 0, 0, 0, 0));
+				previousEnd = new Date(Date.UTC(todayYear, todayMonth, currentStartDay - 1, 23, 59, 59, 999));
 				break;
 			}
 			case 'this-vs-last-quarter': {
-				const currentQuarter = Math.floor(latestDate.getMonth() / 3);
-				currentStart = new Date(latestDate.getFullYear(), currentQuarter * 3, 1);
-				currentEnd = new Date(latestDate.getFullYear(), currentQuarter * 3 + 3, 0, 23, 59, 59, 999);
+				const currentQuarter = Math.floor(todayMonth / 3);
+				const quarterStartMonth = currentQuarter * 3;
+				const quarterEndMonth = quarterStartMonth + 2;
+				currentStart = new Date(Date.UTC(todayYear, quarterStartMonth, 1, 0, 0, 0, 0));
+				currentEnd = new Date(Date.UTC(todayYear, quarterEndMonth, getLastDayOfMonthUTC(todayYear, quarterEndMonth), 23, 59, 59, 999));
+
 				const prevQuarter = currentQuarter - 1;
-				const prevYear = prevQuarter < 0 ? latestDate.getFullYear() - 1 : latestDate.getFullYear();
+				const prevYear = prevQuarter < 0 ? todayYear - 1 : todayYear;
 				const adjustedPrevQuarter = prevQuarter < 0 ? 3 : prevQuarter;
-				previousStart = new Date(prevYear, adjustedPrevQuarter * 3, 1);
-				previousEnd = new Date(prevYear, adjustedPrevQuarter * 3 + 3, 0, 23, 59, 59, 999);
+				const prevQuarterStartMonth = adjustedPrevQuarter * 3;
+				const prevQuarterEndMonth = prevQuarterStartMonth + 2;
+				previousStart = new Date(Date.UTC(prevYear, prevQuarterStartMonth, 1, 0, 0, 0, 0));
+				previousEnd = new Date(Date.UTC(prevYear, prevQuarterEndMonth, getLastDayOfMonthUTC(prevYear, prevQuarterEndMonth), 23, 59, 59, 999));
 				break;
 			}
 			case 'this-vs-same-month-last-year': {
-				currentStart = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
-				currentEnd = new Date(latestDate.getFullYear(), latestDate.getMonth() + 1, 0, 23, 59, 59, 999);
-				previousStart = new Date(latestDate.getFullYear() - 1, latestDate.getMonth(), 1);
-				previousEnd = new Date(latestDate.getFullYear() - 1, latestDate.getMonth() + 1, 0, 23, 59, 59, 999);
+				currentStart = new Date(Date.UTC(todayYear, todayMonth, 1, 0, 0, 0, 0));
+				currentEnd = new Date(Date.UTC(todayYear, todayMonth, getLastDayOfMonthUTC(todayYear, todayMonth), 23, 59, 59, 999));
+				previousStart = new Date(Date.UTC(todayYear - 1, todayMonth, 1, 0, 0, 0, 0));
+				previousEnd = new Date(Date.UTC(todayYear - 1, todayMonth, getLastDayOfMonthUTC(todayYear - 1, todayMonth), 23, 59, 59, 999));
 				break;
 			}
 			case 'this-vs-last-month':
 			default: {
-				currentStart = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
-				currentEnd = new Date(latestDate.getFullYear(), latestDate.getMonth() + 1, 0, 23, 59, 59, 999);
-				previousStart = new Date(latestDate.getFullYear(), latestDate.getMonth() - 1, 1);
-				previousEnd = new Date(latestDate.getFullYear(), latestDate.getMonth(), 0, 23, 59, 59, 999);
+				currentStart = new Date(Date.UTC(todayYear, todayMonth, 1, 0, 0, 0, 0));
+				currentEnd = new Date(Date.UTC(todayYear, todayMonth, getLastDayOfMonthUTC(todayYear, todayMonth), 23, 59, 59, 999));
+				const prevMonth = todayMonth - 1;
+				const prevMonthYear = prevMonth < 0 ? todayYear - 1 : todayYear;
+				const adjustedPrevMonth = prevMonth < 0 ? 11 : prevMonth;
+				previousStart = new Date(Date.UTC(prevMonthYear, adjustedPrevMonth, 1, 0, 0, 0, 0));
+				previousEnd = new Date(Date.UTC(prevMonthYear, adjustedPrevMonth, getLastDayOfMonthUTC(prevMonthYear, adjustedPrevMonth), 23, 59, 59, 999));
 				break;
 			}
 		}
@@ -147,10 +129,10 @@
 		const currentTotals = new Map<string, number>();
 		const previousTotals = new Map<string, number>();
 
-		for (const tx of filteredTransactions) {
+		for (const tx of transactions) {
 			if (tx.amount >= 0) continue;
 
-			const date = parseDate(tx);
+			const date = parseDateStringToUTC(tx.date?.toString() || '');
 			if (isNaN(date.getTime())) continue;
 
 			const category = tx.category?.name || 'Uncategorized';
@@ -347,8 +329,6 @@
 	supportedChartTypes={['bar']}
 	defaultChartType="bar"
 	emptyMessage="Need at least 2 periods of data"
-	chartId="category-trends"
-	allowedPeriodGroups={['months', 'year', 'other']}
 >
 	{#snippet title()}
 		Category Trends
@@ -430,7 +410,7 @@
 	{/snippet}
 
 	{#snippet chart({ data }: { data: typeof categoryComparison })}
-		<div class="h-[500px] w-full pb-20">
+		<div class="h-125 w-full pb-20">
 			<LayerCake
 				{data}
 				x="current"

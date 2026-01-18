@@ -213,3 +213,51 @@ export function extractDateString(date: unknown): string {
 export function toMonthString(date: Date): string {
   return date.toISOString().slice(0, 7);
 }
+
+// ===== UTC Date utilities for chart comparisons =====
+// These functions work with native Date objects in UTC for consistent timezone handling
+
+/**
+ * Parse a YYYY-MM-DD date string to a UTC Date object at noon
+ * Using noon avoids edge cases around midnight timezone shifts
+ * @param dateStr - Date string in YYYY-MM-DD format
+ * @returns UTC Date object, or invalid Date if parsing fails
+ */
+export function parseDateStringToUTC(dateStr: string): Date {
+  if (!dateStr) return new Date(NaN);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  if (!year || !month || !day) return new Date(NaN);
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+}
+
+/**
+ * Get the last day of a month in UTC
+ * @param year - Full year (e.g., 2024)
+ * @param month - Month (0-indexed, 0 = January, 11 = December)
+ * @returns Day number (28-31)
+ */
+export function getLastDayOfMonthUTC(year: number, month: number): number {
+  // Day 0 of month M+1 gives the last day of month M
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+/**
+ * Create a UTC Date boundary for the start of a month
+ * @param year - Full year
+ * @param month - Month (0-indexed)
+ * @returns UTC Date at start of month (00:00:00.000)
+ */
+export function getMonthStartUTC(year: number, month: number): Date {
+  return new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+}
+
+/**
+ * Create a UTC Date boundary for the end of a month
+ * @param year - Full year
+ * @param month - Month (0-indexed)
+ * @returns UTC Date at end of month (23:59:59.999)
+ */
+export function getMonthEndUTC(year: number, month: number): Date {
+  const lastDay = getLastDayOfMonthUTC(year, month);
+  return new Date(Date.UTC(year, month, lastDay, 23, 59, 59, 999));
+}

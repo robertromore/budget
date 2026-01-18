@@ -36,11 +36,20 @@
 		}
 		return scale.domain();
 	});
+
+	// Get bandwidth for band scales to center labels
+	const bandwidth = $derived.by(() => {
+		const scale = $yScale as any;
+		if (scale && typeof scale.bandwidth === 'function') {
+			return scale.bandwidth();
+		}
+		return 0;
+	});
 </script>
 
 <g class="axis y-axis {className}">
 	{#each tickValues as tick}
-		{@const y = $yScale(tick)}
+		{@const y = $yScale(tick) + bandwidth / 2}
 		<g class="tick" transform="translate(0, {y})">
 			{#if gridlines}
 				<line x1={0} x2={$xRange[1]} class="stroke-muted/20" stroke-dasharray="2,2" />

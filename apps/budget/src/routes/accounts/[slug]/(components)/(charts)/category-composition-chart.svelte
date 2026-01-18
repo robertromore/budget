@@ -247,6 +247,8 @@
 	{/snippet}
 
 	{#snippet chart({ data }: { data: typeof monthlyData })}
+		{@const tickValues = data.map((d) => d.index)}
+		{@const indexToLabel = new Map(data.map((d) => [d.index, d.monthLabel]))}
 		<div
 			class="h-full w-full pb-20"
 			bind:clientWidth={containerWidth}
@@ -255,14 +257,15 @@
 			{#if containerReady}
 				<LayerCake
 					{data}
-					x="monthLabel"
+					x="index"
 					y={(d: MonthData) => stackKeys.reduce((sum, key) => sum + ((d[key] as number) || 0), 0)}
+					xDomain={[-0.5, data.length - 0.5]}
 					yDomain={[0, maxValue * 1.1]}
 					padding={{ top: 10, right: 15, bottom: 30, left: 60 }}
 				>
 					<Svg>
 						<AxisY ticks={5} gridlines={true} format={(d) => currencyFormatter.format(d)} />
-						<AxisX ticks={data.length} />
+						<AxisX {tickValues} format={(d) => indexToLabel.get(d) ?? ''} />
 						<StackedBar
 							keys={stackKeys}
 							{colors}

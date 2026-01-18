@@ -222,6 +222,22 @@ export class TimePeriodFilterState {
 	}
 
 	/**
+	 * Get the previous period of equal duration for comparison
+	 * @param period - The current period to calculate previous for
+	 * @returns Previous period date range, or null for 'all-time'
+	 */
+	getPreviousPeriodRange(period: TimePeriod): { start: Date; end: Date } | null {
+		const currentRange = this.getDateRange(period);
+		if (!currentRange) return null;
+
+		const durationMs = currentRange.end.getTime() - currentRange.start.getTime();
+		return {
+			start: new Date(currentRange.start.getTime() - durationMs - 1),
+			end: new Date(currentRange.start.getTime() - 1)
+		};
+	}
+
+	/**
 	 * Reset all state
 	 */
 	reset() {
