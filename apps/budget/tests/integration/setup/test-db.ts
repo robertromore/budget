@@ -37,15 +37,76 @@ export async function clearTestDb(db: ReturnType<typeof createTestDb>) {
     "budget_recommendation",
     "budget",
     "budget_group",
+    "budget_template",
+    "budget_automation_activity",
+    "budget_automation_settings",
+    "envelope_allocation",
+    "envelope_rollover_history",
+    "envelope_transfer",
     // Schedule tables
+    "schedule_skips",
     "schedule_dates",
     "schedules",
+    // Transfer mappings
+    "transfer_mappings",
+    // Workspace invitations and members
+    "workspace_invitation",
+    "workspace_member",
+    // Workspace counters (sequences)
+    "workspace_counter",
+    // ML learning tables
+    "payee_category_corrections",
+    "payee_categories",
+    "category_group_recommendations",
+    "category_group_memberships",
+    "category_groups",
+    "category_group_settings",
+    "import_profile",
+    // Alias tables
+    "payee_aliases",
+    "category_aliases",
+    // Payee AI enhancements
+    "payee_ai_enhancements",
+    // Medical/HSA tables (singular names match migrations)
+    "expense_receipt",
+    "hsa_claim",
+    "medical_expense",
+    // AI conversation tables
+    "ai_conversation_message",
+    "ai_conversation",
+    // Security tables
+    "encryption_keys",
+    "user_trusted_contexts",
+    "access_log",
+    // Report tables
+    "report_templates",
+    // Automation rules
+    "automation_rule_logs",
+    "automation_rules",
+    // Utility tables
+    "utility_rate_tier",
+    "utility_usage",
+    "anomaly_alerts",
+    // ML models
+    "ml_models",
+    // Detected patterns
+    "detected_patterns",
+    // Filter
+    "filter",
+    // Month annotations
+    "month_annotations",
     // Core entity tables
     "transaction",
     "account",
     "payee",
     "categories",
     "views",
+    // Auth tables
+    "auth_account",
+    "session",
+    "verification",
+    // Users (referenced by invitations/members)
+    "user",
     // Workspace (parent of most entities)
     "workspace",
   ];
