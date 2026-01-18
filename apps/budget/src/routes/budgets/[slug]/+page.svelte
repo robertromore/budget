@@ -82,6 +82,7 @@ import { SvelteSet } from 'svelte/reactivity';
 import BudgetRolloverManager from '../(components)/managers/budget-rollover-manager.svelte';
 import PeriodAutomation from '../(components)/managers/period-automation.svelte';
 import PeriodTemplateSheet from '../(components)/sheets/period-template-sheet.svelte';
+import BudgetAnalyticsTab from './(components)/budget-analytics-tab.svelte';
 
 let { data } = $props();
 
@@ -638,7 +639,7 @@ async function toggleBudgetStatus() {
       </div>
 
       <div class="flex shrink-0 items-center gap-2">
-        {#if isEnvelopeBudget && periods.length > 0}
+        {#if periods.length > 0}
           <div class="flex items-center gap-1">
             <!-- Previous Period Button -->
             <Button
@@ -1248,21 +1249,16 @@ async function toggleBudgetStatus() {
 
       <!-- Analytics Tab -->
       <Tabs.Content value="analytics">
-        <Card.Root>
-          <Card.Header>
-            <Card.Title>Analytics</Card.Title>
-            <Card.Description>View spending trends and insights for your budget</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            <div class="text-muted-foreground py-12 text-center">
-              <TrendingUp class="mx-auto mb-4 h-12 w-12 opacity-50" />
-              <p class="mb-2 text-lg font-medium">Analytics Coming Soon</p>
-              <p class="text-sm">
-                Detailed spending trends and budget insights will be available here.
-              </p>
-            </div>
-          </Card.Content>
-        </Card.Root>
+        {#if budget}
+          <BudgetAnalyticsTab
+            budgetId={budget.id}
+            budgetType={budget.type}
+            currentPeriodId={currentPeriod?.id}
+            previousPeriodId={previousPeriod?.id}
+            periodStartDate={selectedPeriod?.startDate}
+            periodEndDate={selectedPeriod?.endDate}
+          />
+        {/if}
       </Tabs.Content>
 
       <!-- Period Management Tab -->
