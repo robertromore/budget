@@ -7,6 +7,7 @@
  */
 
 import type { AcceptancePrediction, UserBehaviorProfile } from "../types";
+import { formatPercent } from "$lib/server/utils/formatters";
 
 // =============================================================================
 // Types
@@ -335,8 +336,8 @@ export function createAcceptancePredictor(
         contribution: confidenceContrib,
         description:
           confidenceContrib > 0
-            ? `High confidence (${(features.confidence * 100).toFixed(0)}%) increases acceptance likelihood`
-            : `Low confidence (${(features.confidence * 100).toFixed(0)}%) decreases acceptance likelihood`,
+            ? `High confidence (${formatPercent(features.confidence)}) increases acceptance likelihood`
+            : `Low confidence (${formatPercent(features.confidence)}) decreases acceptance likelihood`,
       });
 
       // Category rate contribution
@@ -349,8 +350,8 @@ export function createAcceptancePredictor(
             contribution: categoryContrib,
             description:
               categoryContrib > 0
-                ? `You often accept recommendations for this category (${(categoryRate * 100).toFixed(0)}%)`
-                : `You rarely accept recommendations for this category (${(categoryRate * 100).toFixed(0)}%)`,
+                ? `You often accept recommendations for this category (${formatPercent(categoryRate)})`
+                : `You rarely accept recommendations for this category (${formatPercent(categoryRate)})`,
           });
         }
       }
@@ -361,7 +362,7 @@ export function createAcceptancePredictor(
       factors.push({
         factor: "historical_behavior",
         contribution: historicalContrib,
-        description: `Your overall acceptance rate is ${(context.profile.engagement.acceptanceRate * 100).toFixed(0)}%`,
+        description: `Your overall acceptance rate is ${formatPercent(context.profile.engagement.acceptanceRate)}`,
       });
 
       // Session fatigue
@@ -380,7 +381,7 @@ export function createAcceptancePredictor(
         factors.push({
           factor: "similarity",
           contribution: similarityContrib,
-          description: `Strong match with similar transactions (${(features.similarityScore * 100).toFixed(0)}%)`,
+          description: `Strong match with similar transactions (${formatPercent(features.similarityScore)})`,
         });
       }
 

@@ -6,6 +6,7 @@
  */
 
 import { mean, quantile, standardDeviation } from "simple-statistics";
+import { formatPercentRaw } from "$lib/server/utils/formatters";
 
 // =============================================================================
 // Types
@@ -327,14 +328,14 @@ export class PercentileDetector {
       triggered = true;
     }
 
-    const percentileStr = (percentile * 100).toFixed(1);
+    const percentileStr = formatPercentRaw(percentile * 100, 1);
 
     return {
       score,
       triggered,
       reason: triggered
-        ? `Amount in ${percentileStr}th percentile (extreme)`
-        : `Amount in ${percentileStr}th percentile (normal range)`,
+        ? `Amount in ${percentileStr} percentile (extreme)`
+        : `Amount in ${percentileStr} percentile (normal range)`,
       details: { percentile, lowerThreshold: this.lowerThreshold, upperThreshold: this.upperThreshold },
     };
   }

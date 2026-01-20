@@ -16,6 +16,7 @@ import type { MLModelStore } from "../model-store";
 import { createRecurringTransactionDetectionService } from "../recurring-detection/service";
 import type { RecurringPattern } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
+import { formatPercentRaw } from "$lib/utils/formatters";
 
 // =============================================================================
 // Types
@@ -618,7 +619,7 @@ export function createSavingsOpportunityService(
             type: "price_increase",
             priority: calculatePriority(monthlyIncrease),
             title: `Price increase detected: ${bill.payeeName}`,
-            description: `Price increased ${increasePercent.toFixed(1)}% (from $${earlierAvg.toFixed(2)} to $${recentAvg.toFixed(2)})`,
+            description: `Price increased ${formatPercentRaw(increasePercent, 1)} (from $${earlierAvg.toFixed(2)} to $${recentAvg.toFixed(2)})`,
             estimatedMonthlySavings: monthlyIncrease,
             estimatedAnnualSavings: monthlyIncrease * 12,
             confidence: 0.8,
@@ -834,7 +835,7 @@ export function createSavingsOpportunityService(
             type: "spending_increase",
             priority: calculatePriority(monthlyIncrease),
             title: `Spending increase at ${data.payeeName}`,
-            description: `Spending increased ${changePercent.toFixed(0)}% (from $${earlierMonthlyAvg.toFixed(2)}/mo to $${recentMonthlyAvg.toFixed(2)}/mo)`,
+            description: `Spending increased ${formatPercentRaw(changePercent, 0)} (from $${earlierMonthlyAvg.toFixed(2)}/mo to $${recentMonthlyAvg.toFixed(2)}/mo)`,
             estimatedMonthlySavings: monthlyIncrease * 0.5, // Assume 50% reduction possible
             estimatedAnnualSavings: monthlyIncrease * 0.5 * 12,
             confidence: 0.6,
@@ -947,7 +948,7 @@ export function createSavingsOpportunityService(
         // Build description
         let description = `Paying $${monthlyValue.toFixed(2)}/month for ${monthsOfHistory} months`;
         if (hasIncreased) {
-          description += `. Price increased ${increasePercent.toFixed(0)}%`;
+          description += `. Price increased ${formatPercentRaw(increasePercent, 0)}`;
         }
 
         // Determine bill type for better suggestions

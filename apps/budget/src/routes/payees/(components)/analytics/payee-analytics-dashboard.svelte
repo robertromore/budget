@@ -8,7 +8,7 @@ import * as Tabs from '$lib/components/ui/tabs';
 
 import { trpc } from '$lib/trpc/client';
 import { formatDateDisplay } from '$lib/utils/dates';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 // Icons
 import Activity from '@lucide/svelte/icons/activity';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
@@ -270,7 +270,7 @@ const chartConfig = {
                   {currencyFormatter.format(analytics.totalSpending || 0)}
                 </div>
                 <p class="text-muted-foreground text-xs">
-                  {analytics.spendingTrend > 0 ? '+' : ''}{analytics.spendingTrend?.toFixed(1)}%
+                  {analytics.spendingTrend > 0 ? '+' : ''}{formatPercentRaw(analytics.spendingTrend ?? 0, 1)}
                   from last period
                 </p>
               </Card.Content>

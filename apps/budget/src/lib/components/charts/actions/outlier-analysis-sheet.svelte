@@ -6,7 +6,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Progress } from '$lib/components/ui/progress';
 	import { chartSelection, type SelectedDataPoint } from '$lib/states/ui/chart-selection.svelte';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+	import { quantile } from '$lib/utils/chart-statistics';
 
 	// Icons
 	import AlertCircle from '@lucide/svelte/icons/alert-circle';
@@ -63,11 +64,9 @@
 		const normal = pointsWithStats.filter((p) => p.category === 'normal');
 
 		// Calculate IQR-based outliers (alternative method)
-		const sorted = [...sortedPoints].sort((a, b) => a.value - b.value);
-		const q1Index = Math.floor(sorted.length * 0.25);
-		const q3Index = Math.floor(sorted.length * 0.75);
-		const q1 = sorted[q1Index]?.value ?? 0;
-		const q3 = sorted[q3Index]?.value ?? 0;
+		const sortedValues = [...sortedPoints].map((p) => p.value).sort((a, b) => a - b);
+		const q1 = quantile(sortedValues, 0.25);
+		const q3 = quantile(sortedValues, 0.75);
 		const iqr = q3 - q1;
 		const lowerFence = q1 - 1.5 * iqr;
 		const upperFence = q3 + 1.5 * iqr;
@@ -197,7 +196,7 @@
 							<div>
 								<p class="text-xs text-muted-foreground">Outlier Rate</p>
 								<p class="text-2xl font-bold tabular-nums">
-									{outlierAnalysis.outlierPercentage.toFixed(0)}%
+									{formatPercentRaw(outlierAnalysis.outlierPercentage, 0)}
 								</p>
 							</div>
 							<div>
@@ -324,7 +323,7 @@
 											<p class="text-sm text-muted-foreground">
 												{currencyFormatter.format(point.value)}
 												<span class={point.isAbove ? 'text-destructive' : 'text-green-600'}>
-													({point.percentFromMean > 0 ? '+' : ''}{point.percentFromMean.toFixed(0)}% from mean)
+													({point.percentFromMean > 0 ? '+' : ''}{formatPercentRaw(point.percentFromMean, 0)} from mean)
 												</span>
 											</p>
 										</div>

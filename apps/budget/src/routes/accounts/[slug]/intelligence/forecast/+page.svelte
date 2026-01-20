@@ -10,7 +10,7 @@
   import { ML } from "$lib/query/ml";
   import { AccountsState } from "$lib/states/entities";
   import { getPageTabsContext } from "$lib/stores/page-tabs.svelte";
-  import { formatCurrency } from "$lib/utils";
+  import { formatCurrency, formatPercent } from "$lib/utils";
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import ArrowUp from "@lucide/svelte/icons/arrow-up";
@@ -297,7 +297,7 @@
                     {formatCurrency(prediction.upperBound)}
                   </td>
                   <td class="py-2 text-right">
-                    {(prediction.confidence * 100).toFixed(0)}%
+                    {formatPercent(prediction.confidence)}
                   </td>
                 </tr>
               {/each}

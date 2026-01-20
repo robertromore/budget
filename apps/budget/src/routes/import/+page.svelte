@@ -37,6 +37,7 @@ import {
   detectPaymentProcessor,
 } from '$lib/utils/import/payment-processor-filter';
 import { arePayeesSimilar } from '$lib/utils/payee-matching';
+import { formatCurrency } from '$lib/utils/formatters';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import Circle from '@lucide/svelte/icons/circle';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
@@ -2022,12 +2023,12 @@ $effect(() => {
                             <div class="flex items-center justify-between text-sm">
                               <span class="text-muted-foreground text-xs">Transaction</span>
                               <span class="font-mono font-medium"
-                                >${Math.abs(match.transactionData.amount).toFixed(2)}</span>
+                                >{formatCurrency(Math.abs(match.transactionData.amount))}</span>
                             </div>
                             <div class="flex items-center justify-between text-sm">
                               <span class="text-muted-foreground text-xs">Schedule</span>
                               <span class="font-mono"
-                                >${Math.abs(match.scheduleData.amount).toFixed(2)}</span>
+                                >{formatCurrency(Math.abs(match.scheduleData.amount))}</span>
                             </div>
                           </div>
                           {#if match.transactionData.payee}

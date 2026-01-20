@@ -205,11 +205,12 @@ export const columns = (
       filterFn: "dateIn" as any,
       meta: {
         label: "Date",
-        facetedFilter: (column: Column<ExpenseFormat, unknown>) => {
+        facetedFilter: (column: Column<ExpenseFormat, unknown>, value: unknown[]) => {
           return {
             name: "Date",
             icon: CalendarDays,
             column,
+            value,
             component: () =>
               renderComponent(DataTableFacetedFilterDateWithOperators as any, {
                 column,
@@ -407,11 +408,12 @@ export const columns = (
       filterFn: "amountFilter" as any,
       meta: {
         label: "Amount",
-        facetedFilter: (column: Column<ExpenseFormat, unknown>) => {
+        facetedFilter: (column: Column<ExpenseFormat, unknown>, value: unknown[]) => {
           return {
             name: "Amount",
             icon: DollarSign,
             column,
+            value,
             component: () =>
               renderComponent(DataTableFacetedFilterAmount as any, {
                 column,
@@ -518,7 +520,7 @@ export const columns = (
       },
       meta: {
         label: "Claim Status",
-        facetedFilter: (column: Column<ExpenseFormat, unknown>) => {
+        facetedFilter: (column: Column<ExpenseFormat, unknown>, value: unknown[]) => {
           const statusOptions = new SvelteMap(
             claimStatusKeys.map((key) => [
               key,
@@ -532,6 +534,7 @@ export const columns = (
             name: "Claim Status",
             icon: CircleCheckBig,
             column,
+            value,
             component: () =>
               renderComponent(DataTableFacetedFilter as any, {
                 column,

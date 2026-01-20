@@ -15,9 +15,9 @@ import {
   type BudgetSuggestion,
 } from '$lib/query/budgets';
 import type { TransactionsFormat } from '$lib/types';
-import { cn } from '$lib/utils';
+import { cn, formatPercent } from '$lib/utils';
 import { toISOString } from '$lib/utils/dates';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import {
   ArrowRightLeft,
   CircleDollarSign,
@@ -168,7 +168,7 @@ $effect(() => {
   if (selectedBudget && budgetLimit) {
     const utilizationAfter = ((budgetUtilization + proposedAmount) / budgetLimit) * 100;
     if (utilizationAfter > 80) {
-      validationWarning = `This allocation will use ${utilizationAfter.toFixed(1)}% of the budget`;
+      validationWarning = `This allocation will use ${formatPercentRaw(utilizationAfter, 1)} of the budget`;
     }
   }
 
@@ -372,10 +372,9 @@ const availableBudgetOptions = $derived.by(() => {
                             class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                             <span>•</span>
                             <span
-                              >{(
-                                (allocation.allocatedAmount / Math.abs(transactionAmount)) *
-                                100
-                              ).toFixed(1)}%</span>
+                              >{formatPercent(
+                                allocation.allocatedAmount / Math.abs(transactionAmount), 1
+                              )}</span>
                           </div>
                         </div>
                         <div class="mt-2">
@@ -537,7 +536,7 @@ const availableBudgetOptions = $derived.by(() => {
                     Budget usage: {currencyFormatter.format(budgetUtilization)} / {currencyFormatter.format(
                       budgetLimit
                     )}
-                    ({((budgetUtilization / budgetLimit) * 100).toFixed(1)}%)
+                    ({formatPercent(budgetUtilization / budgetLimit, 1)})
                   </div>
                 {/if}
               </div>

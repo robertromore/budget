@@ -8,7 +8,7 @@ import { getMonthlySpendingAggregates, getMonthlySpendingForecast } from '$lib/q
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import { chartSelection, type SelectedDataPoint } from '$lib/states/ui/chart-selection.svelte';
 import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, getTrendValueAtIndex, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
 import { calculateComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 import { toDateString } from '$lib/utils/date-formatters';
@@ -555,7 +555,7 @@ const summaryStats = $derived.by(() => {
   // Get latest month's change from previous
   const latestChange = filteredMonthlyData[filteredMonthlyData.length - 1]?.changeFromPrevious;
   const changeIndicator = latestChange !== null && latestChange !== undefined
-    ? `${latestChange > 0 ? '+' : ''}${latestChange.toFixed(1)}% vs prev`
+    ? `${latestChange > 0 ? '+' : ''}${formatPercentRaw(latestChange, 1)} vs prev`
     : undefined;
 
   return [
@@ -929,7 +929,7 @@ const activeAnalysisCount = $derived(
                   <!-- Change from previous month -->
                   {#if point.changeFromPrevious !== null && point.changeFromPrevious !== undefined}
                     <p class="text-xs" class:text-destructive={point.changeFromPrevious > 0} class:text-green-600={point.changeFromPrevious < 0}>
-                      {point.changeFromPrevious > 0 ? '↑' : '↓'} {Math.abs(point.changeFromPrevious).toFixed(1)}% vs prev month
+                      {point.changeFromPrevious > 0 ? '↑' : '↓'} {formatPercentRaw(Math.abs(point.changeFromPrevious), 1)} vs prev month
                     </p>
                   {/if}
 
@@ -949,7 +949,7 @@ const activeAnalysisCount = $derived(
                       <p class="text-xs" style="color: var(--chart-2);">
                         3-mo avg: {currencyFormatter.format(trendPoint.average)}
                         <span class="text-muted-foreground">
-                          ({diffPercent > 0 ? '+' : ''}{diffPercent.toFixed(0)}%)
+                          ({diffPercent > 0 ? '+' : ''}{formatPercentRaw(diffPercent, 0)})
                         </span>
                       </p>
                     {/if}
@@ -967,7 +967,7 @@ const activeAnalysisCount = $derived(
                         <p class="text-xs" style="color: var(--primary);">
                           Regression: {currencyFormatter.format(regressionValue)}
                           <span class="text-muted-foreground">
-                            ({diffPercent > 0 ? '+' : ''}{diffPercent.toFixed(0)}%)
+                            ({diffPercent > 0 ? '+' : ''}{formatPercentRaw(diffPercent, 0)})
                           </span>
                         </p>
                       {/if}
@@ -979,7 +979,7 @@ const activeAnalysisCount = $derived(
                         <p class="text-xs" style="color: var(--chart-6);">
                           Hist. avg: {currencyFormatter.format(historicalAverage)}
                           <span class="text-muted-foreground">
-                            ({diffPercent > 0 ? '+' : ''}{diffPercent.toFixed(0)}%)
+                            ({diffPercent > 0 ? '+' : ''}{formatPercentRaw(diffPercent, 0)})
                           </span>
                         </p>
                       {/if}
@@ -1001,7 +1001,7 @@ const activeAnalysisCount = $derived(
                       <p class="text-muted-foreground text-xs mb-1">Top Categories</p>
                       {#each point.topCategories.slice(0, 3) as cat}
                         <p class="text-xs">
-                          {cat.categoryName}: {currencyFormatter.format(cat.amount)} ({cat.percentage.toFixed(0)}%)
+                          {cat.categoryName}: {currencyFormatter.format(cat.amount)} ({formatPercentRaw(cat.percentage, 0)})
                         </p>
                       {/each}
                     </div>

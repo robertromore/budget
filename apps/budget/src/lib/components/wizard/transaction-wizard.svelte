@@ -16,6 +16,7 @@ import {
 import type { EditableEntityItem } from '$lib/types';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import { currentDate } from '$lib/utils/dates';
+import { formatCurrency } from '$lib/utils/formatters';
 import { createTransactionValidationEngine } from '$lib/utils/wizard-validation';
 import type { DateValue } from '@internationalized/date';
 import {
@@ -368,7 +369,7 @@ async function handleComplete() {
         <div class="space-y-1">
           <p class="text-muted-foreground text-sm font-medium">Amount</p>
           <p class="text-2xl font-bold">
-            ${Math.abs(reviewData.amount).toFixed(2)}
+            {formatCurrency(Math.abs(reviewData.amount))}
             {#if reviewData.amount < 0}
               <Badge variant="destructive" class="ml-2">Expense</Badge>
             {:else}

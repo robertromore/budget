@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 
 	// Icons
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
@@ -82,13 +82,13 @@
 					{#if trendInfo.percentChange > 0}
 						<TrendingUp class="h-5 w-5 text-destructive" />
 						<span class="text-destructive">
-							Spending increased {Math.abs(trendInfo.percentChange).toFixed(1)}%
+							Spending increased {formatPercentRaw(Math.abs(trendInfo.percentChange), 1)}
 							({currencyFormatter.format(trendInfo.change)})
 						</span>
 					{:else if trendInfo.percentChange < 0}
 						<TrendingDown class="h-5 w-5 text-green-600" />
 						<span class="text-green-600">
-							Spending decreased {Math.abs(trendInfo.percentChange).toFixed(1)}%
+							Spending decreased {formatPercentRaw(Math.abs(trendInfo.percentChange), 1)}
 							({currencyFormatter.format(Math.abs(trendInfo.change))})
 						</span>
 					{:else}
@@ -136,7 +136,7 @@
 										{:else if vsAvg < 0}
 											<ArrowDown class="inline h-3 w-3" />
 										{/if}
-										{vsAvgPercent > 0 ? '+' : ''}{vsAvgPercent.toFixed(1)}%
+										{vsAvgPercent > 0 ? '+' : ''}{formatPercentRaw(vsAvgPercent, 1)}
 									</span>
 								</Table.Cell>
 								<Table.Cell class="text-center">

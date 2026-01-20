@@ -5,7 +5,7 @@ import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
 import { getRelatedTransactions } from '$lib/query/transactions';
 import type { BudgetRecommendationWithRelations, RecommendationMetadata } from '$lib/schema/recommendations';
-import { cn, formatCurrency } from '$lib/utils';
+import { cn, formatCurrency, formatPercent } from '$lib/utils';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Check from '@lucide/svelte/icons/check';
@@ -223,7 +223,7 @@ function getTypeLabel(type: string): string {
           {#if metadata?.utilizationRate !== undefined}
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Utilization Rate</span>
-              <span class="font-medium">{(metadata.utilizationRate * 100).toFixed(0)}%</span>
+              <span class="font-medium">{formatPercent(metadata.utilizationRate)}</span>
             </div>
           {/if}
           {#if metadata?.monthsExceeded !== undefined && metadata.monthsExceeded > 0}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button } from "$lib/components/ui/button";
 	import { ScrollArea } from "$lib/components/ui/scroll-area";
+	import { formatTimeAgo } from "$lib/utils/dates";
 	import { MessageSquare, RotateCcw, Trash2 } from "@lucide/svelte/icons";
 
 	interface Conversation {
@@ -21,29 +22,6 @@
 
 	let { conversations, currentId, onSelect, onDelete, onResend, isLoading = false }: Props =
 		$props();
-
-	/**
-	 * Format relative time (e.g., "2 hours ago", "3 days ago")
-	 */
-	function formatRelativeTime(date: Date): string {
-		const now = new Date();
-		const diffMs = now.getTime() - date.getTime();
-		const diffSec = Math.floor(diffMs / 1000);
-		const diffMin = Math.floor(diffSec / 60);
-		const diffHour = Math.floor(diffMin / 60);
-		const diffDay = Math.floor(diffHour / 24);
-
-		if (diffSec < 60) return "just now";
-		if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? "s" : ""} ago`;
-		if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? "s" : ""} ago`;
-		if (diffDay < 7) return `${diffDay} day${diffDay !== 1 ? "s" : ""} ago`;
-		if (diffDay < 30) {
-			const weeks = Math.floor(diffDay / 7);
-			return `${weeks} week${weeks !== 1 ? "s" : ""} ago`;
-		}
-		const months = Math.floor(diffDay / 30);
-		return `${months} month${months !== 1 ? "s" : ""} ago`;
-	}
 </script>
 
 <div class="flex flex-col gap-2">
@@ -75,7 +53,7 @@
 								<p class="text-muted-foreground text-xs">
 									{conv.messageCount} message{conv.messageCount !== 1 ? "s" : ""}
 									&middot;
-									{formatRelativeTime(new Date(conv.updatedAt))}
+									{formatTimeAgo(new Date(conv.updatedAt))}
 								</p>
 							</div>
 							<div class="flex shrink-0 gap-0.5">

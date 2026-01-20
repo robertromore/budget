@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { AxisX, AxisY, GroupedBar, StackedBar } from '$lib/components/layercake';
 	import { Button } from '$lib/components/ui/button';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
@@ -9,6 +9,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { calculateBasicStats, calculateExtendedPercentiles } from '$lib/utils/chart-statistics';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -247,7 +248,7 @@
 			{ label: 'Highest Month', value: highestMonth, description: currencyFormatter.format(highestAmount) },
 			{
 				label: 'YoY Change',
-				value: yoyChange > 0 ? `+${yoyChange.toFixed(1)}%` : `${yoyChange.toFixed(1)}%`,
+				value: yoyChange > 0 ? `+${formatPercentRaw(yoyChange, 1)}` : formatPercentRaw(yoyChange, 1),
 				description: `${currentYear} vs ${previousYear || 'N/A'}`
 			},
 			{
@@ -280,10 +281,11 @@
 		const allValues = yearTotals.flatMap(yt => yt.monthlyValues).filter(v => v > 0);
 		if (allValues.length === 0) return null;
 
-		const sortedValues = [...allValues].sort((a, b) => a - b);
-		const mean = allValues.reduce((s, v) => s + v, 0) / allValues.length;
-		const median = sortedValues[Math.floor(sortedValues.length / 2)];
-		const total = allValues.reduce((s, v) => s + v, 0);
+		// Use utility functions for statistics
+		const basicStats = calculateBasicStats(allValues);
+		if (!basicStats) return null;
+
+		const percentiles = calculateExtendedPercentiles(allValues);
 
 		// Find highest and lowest months across all years
 		let highestValue = 0;
@@ -305,15 +307,6 @@
 			}
 		}
 
-		// Percentiles
-		const p25 = sortedValues[Math.floor(sortedValues.length * 0.25)] || 0;
-		const p50 = median;
-		const p75 = sortedValues[Math.floor(sortedValues.length * 0.75)] || 0;
-
-		// Standard deviation
-		const variance = allValues.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / allValues.length;
-		const stdDev = Math.sqrt(variance);
-
 		// YoY changes
 		const currentYear = yearTotals[0];
 		const previousYear = yearTotals[1];
@@ -331,10 +324,10 @@
 
 		return {
 			summary: {
-				average: mean,
-				median: median,
-				total: total,
-				count: allValues.length
+				average: basicStats.mean,
+				median: basicStats.median,
+				total: basicStats.total,
+				count: basicStats.count
 			},
 			trend: {
 				direction: trendDirection,
@@ -346,12 +339,12 @@
 				highest: { value: highestValue, month: highestMonth, monthLabel: highestMonth },
 				lowest: { value: lowestValue === Infinity ? 0 : lowestValue, month: lowestMonth, monthLabel: lowestMonth },
 				range: highestValue - (lowestValue === Infinity ? 0 : lowestValue),
-				p25,
-				p50,
-				p75,
-				iqr: p75 - p25,
-				stdDev,
-				coefficientOfVariation: mean !== 0 ? (stdDev / mean) * 100 : 0
+				p25: percentiles?.p25 ?? 0,
+				p50: percentiles?.p50 ?? basicStats.median,
+				p75: percentiles?.p75 ?? 0,
+				iqr: percentiles?.iqr ?? 0,
+				stdDev: basicStats.stdDev,
+				coefficientOfVariation: basicStats.mean !== 0 ? (basicStats.stdDev / basicStats.mean) * 100 : 0
 			},
 			outliers: { count: 0, months: [] },
 			comparison: {

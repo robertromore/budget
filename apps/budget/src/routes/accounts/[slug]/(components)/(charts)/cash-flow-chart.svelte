@@ -2,7 +2,7 @@
 	import { Area, Line, AxisX, AxisY, BiDirectionalBar, ZeroLine, HorizontalLine, CustomLine, PercentileBands, StackedBar } from '$lib/components/layercake';
 	import { AnalysisDropdown } from '$lib/components/charts';
 	import { Button } from '$lib/components/ui/button';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
@@ -189,7 +189,7 @@
 			{
 				label: 'Positive Days',
 				value: `${positiveDays}/${dailyCashFlow.length}`,
-				description: `${((positiveDays / dailyCashFlow.length) * 100).toFixed(0)}% of days`
+				description: `${formatPercentRaw((positiveDays / dailyCashFlow.length) * 100)} of days`
 			}
 		];
 	});

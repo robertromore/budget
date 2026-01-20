@@ -4,6 +4,12 @@ import { Input } from '$lib/components/ui/input';
 import TransactionSkeleton from './transaction-skeleton.svelte';
 import { DataTable } from '.';
 
+interface TransferAccount {
+  id: number;
+  name: string;
+  accountType?: string | null;
+}
+
 let {
   isLoading = false,
   transactions = [],
@@ -18,6 +24,8 @@ let {
   onScheduleClick,
   budgetCount = 0,
   onBulkDelete,
+  transferAccounts = [],
+  onTransferSelect,
 }: {
   isLoading: boolean;
   transactions: any[];
@@ -36,6 +44,8 @@ let {
   onScheduleClick?: (transaction: any) => void;
   budgetCount?: number;
   onBulkDelete?: (transactions: any[]) => void;
+  transferAccounts?: TransferAccount[];
+  onTransferSelect?: (transactionId: number, targetAccountId: number) => void;
 } = $props();
 </script>
 
@@ -51,7 +61,9 @@ let {
         payeesState,
         updateTransactionData,
         onScheduleClick,
-        budgetCount
+        budgetCount,
+        transferAccounts,
+        onTransferSelect
       )}
       transactions={formattedTransactions}
       {views}

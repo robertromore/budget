@@ -3,6 +3,7 @@
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { cn, formatCurrency } from "$lib/utils";
+  import { formatPercentRaw } from "$lib/utils/formatters";
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import ArrowUp from "@lucide/svelte/icons/arrow-up";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
@@ -86,11 +87,11 @@
       </Card.Title>
       {#if savingsRate > 0}
         <Badge variant="outline" class="text-green-500">
-          {savingsRate.toFixed(0)}% saved
+          {formatPercentRaw(savingsRate, 0)} saved
         </Badge>
       {:else if savingsRate < 0}
         <Badge variant="outline" class="text-red-500">
-          {Math.abs(savingsRate).toFixed(0)}% over
+          {formatPercentRaw(Math.abs(savingsRate), 0)} over
         </Badge>
       {/if}
     </div>
@@ -149,7 +150,7 @@
               "text-red-500": incomeChange < 0,
             })}
           >
-            {incomeChange > 0 ? "+" : ""}{incomeChange.toFixed(1)}% from last month
+            {incomeChange > 0 ? "+" : ""}{formatPercentRaw(incomeChange, 1)} from last month
           </p>
         {/if}
       </div>
@@ -172,7 +173,7 @@
               "text-green-500": expenseChange < 0,
             })}
           >
-            {expenseChange > 0 ? "+" : ""}{expenseChange.toFixed(1)}% from last month
+            {expenseChange > 0 ? "+" : ""}{formatPercentRaw(expenseChange, 1)} from last month
           </p>
         {/if}
       </div>

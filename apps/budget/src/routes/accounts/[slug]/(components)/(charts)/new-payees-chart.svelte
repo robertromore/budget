@@ -8,6 +8,8 @@
 	import { scaleBand, scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { formatMonthYearShort, formatShortDate } from '$lib/utils/date-formatters';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -90,7 +92,7 @@
 				const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
 				return {
 					month,
-					monthLabel: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+					monthLabel: formatMonthYearShort(date),
 					count: data.count,
 					totalSpent: data.totalSpent,
 					avgFirstPurchase: data.totalSpent / data.count,
@@ -141,15 +143,12 @@
 
 		const totalNew = counts.reduce((s, c) => s + c, 0);
 		const mean = totalNew / n;
-		const median = sortedCounts[Math.floor(n / 2)] || 0;
-
-		// Standard deviation
-		const variance = counts.reduce((s, c) => s + Math.pow(c - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const medianValue = median(counts);
+		const stdDev = standardDeviation(counts);
 
 		// Percentiles
 		const p25 = sortedCounts[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
+		const p50 = medianValue;
 		const p75 = sortedCounts[Math.floor(n * 0.75)] || 0;
 
 		// Find peak and lowest months
@@ -163,7 +162,7 @@
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: medianValue,
 				total: totalNew,
 				count: n
 			},
@@ -309,7 +308,7 @@
 						<div>
 							<span class="font-medium">{item.payee}</span>
 							<span class="text-muted-foreground text-xs ml-2">
-								{item.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+								{formatShortDate(item.date)}
 							</span>
 						</div>
 						<span class="text-muted-foreground">{currencyFormatter.format(item.amount)}</span>

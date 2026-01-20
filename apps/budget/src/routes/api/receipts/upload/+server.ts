@@ -1,5 +1,6 @@
 import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$lib/schema/expense-receipts";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { formatFileSize } from "$lib/utils/formatters";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -38,7 +39,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // Validate file size
     if (file.size > MAX_RECEIPT_SIZE) {
-      throw error(400, `File size must be less than ${MAX_RECEIPT_SIZE / 1024 / 1024}MB`);
+      throw error(400, `File size must be less than ${formatFileSize(MAX_RECEIPT_SIZE)}`);
     }
 
     // Upload receipt

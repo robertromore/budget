@@ -7,6 +7,7 @@
 
 import type { Payee } from "$lib/schema/payees";
 import type { Schedule } from "$lib/schema/schedules";
+import { formatPercent } from "$lib/server/utils/formatters";
 import { PayeeMatcher } from "./payee-matcher";
 
 export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";
@@ -174,7 +175,7 @@ export class ScheduleMatcher {
     // Only log matches above 60% to reduce noise
     if (score >= 0.6) {
       console.log(
-        `[ScheduleMatcher] Match: "${schedule.name}" | Score: ${(score * 100).toFixed(0)}% | Payee: "${criteria.payeeName}" | Amt: $${criteria.amount.toFixed(2)}`
+        `[ScheduleMatcher] Match: "${schedule.name}" | Score: ${formatPercent(score)} | Payee: "${criteria.payeeName}" | Amt: $${criteria.amount.toFixed(2)}`
       );
     }
 

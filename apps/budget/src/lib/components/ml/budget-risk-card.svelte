@@ -3,6 +3,7 @@
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { cn, formatCurrency } from "$lib/utils";
+  import { formatPercentRaw } from "$lib/utils/formatters";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import CheckCircle from "@lucide/svelte/icons/check-circle";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
@@ -121,7 +122,7 @@
               </div>
               <div class="mt-1 flex items-center justify-between text-xs">
                 <span class="text-muted-foreground">
-                  {risk.percentSpent.toFixed(0)}% spent
+                  {formatPercentRaw(risk.percentSpent, 0)} spent
                 </span>
                 <span class={riskCfg.color}>
                   +{formatCurrency(risk.predictedOverspend)}

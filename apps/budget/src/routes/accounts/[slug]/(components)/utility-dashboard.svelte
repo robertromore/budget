@@ -1,7 +1,7 @@
 <script lang="ts">
 import { rpc } from '$lib/query';
 import * as Card from '$lib/components/ui/card';
-import { formatCurrency } from '$lib/utils/formatters';
+import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import { USAGE_UNIT_LABELS } from '$lib/schema/utility-usage';
 import type { Account } from '$lib/schema';
 import Zap from '@lucide/svelte/icons/zap';
@@ -90,10 +90,10 @@ const trendDirection = $derived.by(() => {
         <div class="text-muted-foreground flex items-center text-xs">
           {#if trendDirection === 'up'}
             <TrendingUp class="text-destructive mr-1 h-3 w-3" />
-            <span class="text-destructive">{usageChange?.toFixed(1)}% vs last period</span>
+            <span class="text-destructive">{formatPercentRaw(usageChange ?? 0, 1)} vs last period</span>
           {:else if trendDirection === 'down'}
             <TrendingDown class="mr-1 h-3 w-3 text-green-500" />
-            <span class="text-green-500">{Math.abs(usageChange ?? 0).toFixed(1)}% vs last period</span>
+            <span class="text-green-500">{formatPercentRaw(Math.abs(usageChange ?? 0), 1)} vs last period</span>
           {:else}
             <span>No previous data</span>
           {/if}

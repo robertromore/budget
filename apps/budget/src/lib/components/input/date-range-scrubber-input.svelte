@@ -1,5 +1,6 @@
 <script lang="ts">
   import { cn } from '$lib/utils';
+  import { formatShortDate } from '$lib/utils/date-formatters';
   import GripHorizontal from '@lucide/svelte/icons/grip-horizontal';
 
   interface Props {
@@ -37,7 +38,7 @@
   }
 
   function formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return formatShortDate(date);
   }
 
   function formatDayOfYear(day: number): string {

@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { formatCurrency } from '$lib/utils';
+import { formatPercentRaw } from '$lib/utils/formatters';
 import { Progress } from '$lib/components/ui/progress';
 import { TriangleAlert, TrendingUp, TrendingDown, Check } from '@lucide/svelte/icons';
 
@@ -133,7 +134,7 @@ function getStatusIcon(status: 'safe' | 'warning' | 'danger' | 'over', isNegativ
             <div class="space-y-1">
               <div class="flex justify-between text-xs">
                 <span class="text-muted-foreground">
-                  {impact.percentUsed.toFixed(1)}% of {formatCurrency(impact.budgetLimit)}
+                  {formatPercentRaw(impact.percentUsed, 1)} of {formatCurrency(impact.budgetLimit)}
                 </span>
                 {#if impact.remaining !== null}
                   <span

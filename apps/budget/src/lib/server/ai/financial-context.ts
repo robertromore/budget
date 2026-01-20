@@ -12,6 +12,7 @@ import { budgets, envelopeAllocations } from "$lib/schema/budgets";
 import { scheduleDates } from "$lib/schema/schedule-dates";
 import { schedules } from "$lib/schema/schedules";
 import { db } from "$lib/server/db";
+import { formatCurrency } from "$lib/server/utils/formatters";
 import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 
 // =============================================================================
@@ -482,16 +483,7 @@ export async function fetchFinancialContext(workspaceId: number): Promise<Financ
 // Formatting for Prompt
 // =============================================================================
 
-/**
- * Format currency for display
- */
-function formatCurrency(amount: number): string {
-	return new Intl.NumberFormat("en-US", {
-		style: "currency",
-		currency: "USD",
-		minimumFractionDigits: 2,
-	}).format(amount);
-}
+// Note: formatCurrency is imported from $lib/server/utils/formatters
 
 /**
  * Format financial context for inclusion in AI system prompt

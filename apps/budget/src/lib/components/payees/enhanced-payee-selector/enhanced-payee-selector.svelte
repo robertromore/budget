@@ -18,9 +18,21 @@
 	  QuickEditPayeeData,
 	} from "./types";
 
+	import * as Tabs from "$lib/components/ui/tabs";
+	import * as Command from "$lib/components/ui/command";
 	import Columns2 from "@lucide/svelte/icons/columns-2";
 	import LayoutList from "@lucide/svelte/icons/layout-list";
 	import User from "@lucide/svelte/icons/user";
+	import ArrowRightLeft from "@lucide/svelte/icons/arrow-right-left";
+	import Wallet from "@lucide/svelte/icons/wallet";
+	import Check from "@lucide/svelte/icons/check";
+	import Fuse from "fuse.js";
+
+	interface TransferAccount {
+		id: number;
+		name: string;
+		accountType?: string | null;
+	}
 
 	interface Props {
 		value?: number | null;
@@ -31,6 +43,14 @@
 		allowClear?: boolean;
 		buttonClass?: string;
 		placeholder?: string;
+		/** Enable transfer tab for converting to transfers */
+		showTransferTab?: boolean;
+		/** Available accounts for transfer selection */
+		accounts?: TransferAccount[];
+		/** Current account ID to exclude from transfer targets */
+		currentAccountId?: number;
+		/** Callback when a transfer account is selected */
+		onTransferSelect?: (accountId: number) => void;
 	}
 
 	let {
@@ -42,6 +62,10 @@
 		allowClear = true,
 		buttonClass = "",
 		placeholder = "Select payee...",
+		showTransferTab = false,
+		accounts = [],
+		currentAccountId,
+		onTransferSelect,
 	}: Props = $props();
 
 	// Layout mode preference storage
@@ -67,6 +91,10 @@
 	let focusedPayeeId = $state<number | null>(null);
 	let editMode = $state<EditMode>("view");
 	let createInitialName = $state("");
+
+	// Transfer tab state
+	let activeTab = $state<"payee" | "transfer">("payee");
+	let transferSearchValue = $state("");
 
 	// Payees from context
 	const payeesState = PayeesState.get();
@@ -101,6 +129,27 @@
 	const effectiveLayoutMode = $derived(
 		isDesktop.current ? layoutMode : "slide-in",
 	);
+
+	// Transfer accounts (excluding current account)
+	const transferAccounts = $derived(
+		accounts.filter((a) => a.id !== currentAccountId),
+	);
+
+	// Fuse instance for transfer account search
+	const transferFuse = $derived(
+		new Fuse(transferAccounts, {
+			keys: ["name", "accountType"],
+			threshold: 0.3,
+		}),
+	);
+
+	// Filtered transfer accounts based on search
+	const filteredTransferAccounts = $derived.by(() => {
+		if (!transferSearchValue.trim()) {
+			return transferAccounts;
+		}
+		return transferFuse.search(transferSearchValue).map((r) => r.item);
+	});
 
 	// Show detail panel in slide-in mode
 	const showDetailPanel = $derived(
@@ -158,6 +207,13 @@
 		createInitialName = "";
 	}
 
+	// Handle transfer account selection
+	function handleTransferAccountSelect(accountId: number) {
+		onTransferSelect?.(accountId);
+		open = false;
+		resetState();
+	}
+
 	// Handle save payee (create or update)
 	async function handleSavePayee(data: QuickEditPayeeData): Promise<void> {
 		if (editMode === "create") {
@@ -199,6 +255,8 @@
 		focusedPayeeId = null;
 		editMode = "view";
 		createInitialName = "";
+		activeTab = "payee";
+		transferSearchValue = "";
 	}
 
 	// Handle open change via callback
@@ -231,43 +289,115 @@
 		{/snippet}
 
 		{#snippet header()}
-			<div class="flex items-center justify-between">
-				<div>
-					<h2 class="text-lg font-semibold">Select Payee</h2>
-					<p class="text-muted-foreground text-sm">
-						{allPayees.length} payees available
-					</p>
+			<div class="space-y-4">
+				<div class="flex items-center justify-between">
+					<div>
+						<h2 class="text-lg font-semibold">
+							{showTransferTab ? "Select Payee or Transfer" : "Select Payee"}
+						</h2>
+						<p class="text-muted-foreground text-sm">
+							{#if activeTab === "transfer"}
+								{transferAccounts.length} accounts available
+							{:else}
+								{allPayees.length} payees available
+							{/if}
+						</p>
+					</div>
+
+					<!-- Layout mode toggle (desktop only, payee tab only) -->
+					{#if isDesktop.current && activeTab === "payee"}
+						<ToggleGroup.Root
+							type="single"
+							value={layoutMode}
+							onValueChange={handleLayoutModeChange}
+							class="border"
+						>
+							<ToggleGroup.Item
+								value="slide-in"
+								aria-label="Slide-in layout"
+								class="px-2"
+							>
+								<LayoutList class="h-4 w-4" />
+							</ToggleGroup.Item>
+							<ToggleGroup.Item
+								value="side-by-side"
+								aria-label="Side-by-side layout"
+								class="px-2"
+							>
+								<Columns2 class="h-4 w-4" />
+							</ToggleGroup.Item>
+						</ToggleGroup.Root>
+					{/if}
 				</div>
 
-				<!-- Layout mode toggle (desktop only) -->
-				{#if isDesktop.current}
-					<ToggleGroup.Root
-						type="single"
-						value={layoutMode}
-						onValueChange={handleLayoutModeChange}
-						class="border"
-					>
-						<ToggleGroup.Item
-							value="slide-in"
-							aria-label="Slide-in layout"
-							class="px-2"
-						>
-							<LayoutList class="h-4 w-4" />
-						</ToggleGroup.Item>
-						<ToggleGroup.Item
-							value="side-by-side"
-							aria-label="Side-by-side layout"
-							class="px-2"
-						>
-							<Columns2 class="h-4 w-4" />
-						</ToggleGroup.Item>
-					</ToggleGroup.Root>
+				<!-- Payee/Transfer tabs -->
+				{#if showTransferTab}
+					<Tabs.Root bind:value={activeTab} class="w-full">
+						<Tabs.List class="grid w-full grid-cols-2">
+							<Tabs.Trigger value="payee" class="flex items-center gap-2">
+								<User class="h-4 w-4" />
+								Payee
+							</Tabs.Trigger>
+							<Tabs.Trigger value="transfer" class="flex items-center gap-2">
+								<ArrowRightLeft class="h-4 w-4" />
+								Transfer
+							</Tabs.Trigger>
+						</Tabs.List>
+					</Tabs.Root>
 				{/if}
 			</div>
 		{/snippet}
 
 		{#snippet content()}
-			{#if effectiveLayoutMode === "slide-in"}
+			{#if activeTab === "transfer" && showTransferTab}
+				<!-- Transfer account list -->
+				<div class="flex h-[calc(100vh-14rem)] min-h-[300px] flex-col">
+					<!-- Search input -->
+					<div class="border-b p-3">
+						<Command.Root class="rounded-lg border" shouldFilter={false}>
+							<Command.Input
+								placeholder="Search accounts..."
+								bind:value={transferSearchValue}
+							/>
+						</Command.Root>
+					</div>
+
+					<!-- Account list -->
+					<div class="flex-1 overflow-y-auto">
+						{#if filteredTransferAccounts.length === 0}
+							<div class="flex flex-col items-center justify-center py-12 text-center">
+								<Wallet class="text-muted-foreground mb-4 h-12 w-12" />
+								<p class="text-muted-foreground text-sm">
+									{transferSearchValue ? "No accounts match your search" : "No other accounts available"}
+								</p>
+							</div>
+						{:else}
+							<div class="divide-y">
+								{#each filteredTransferAccounts as account (account.id)}
+									<button
+										type="button"
+										class="hover:bg-accent flex w-full items-center gap-3 p-3 text-left transition-colors"
+										onclick={() => handleTransferAccountSelect(account.id)}
+									>
+										<div class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
+											<ArrowRightLeft class="text-primary h-5 w-5" />
+										</div>
+										<div class="min-w-0 flex-1">
+											<div class="truncate font-medium">{account.name}</div>
+											{#if account.accountType}
+												<div class="text-muted-foreground text-xs capitalize">
+													{account.accountType.replace(/_/g, " ")}
+												</div>
+											{/if}
+										</div>
+										<Check class="text-muted-foreground/30 h-4 w-4" />
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				</div>
+			{:else if effectiveLayoutMode === "slide-in"}
 				<!-- Slide-in layout -->
 				<div class="relative h-[calc(100vh-12rem)] min-h-[400px] overflow-hidden">
 					<!-- List panel -->

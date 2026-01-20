@@ -16,6 +16,7 @@ import {
 } from '@lucide/svelte/icons';
 import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils';
+import { formatPercentRaw } from '$lib/utils/formatters';
 
 interface BudgetPeriodTemplate {
   id: number;
@@ -251,7 +252,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
           <div class="flex justify-between text-sm">
             <span class="text-muted-foreground">Progress</span>
             <span class="font-medium">
-              {calculateProgress(currentPeriod.spent, currentPeriod.allocated).toFixed(1)}%
+              {formatPercentRaw(calculateProgress(currentPeriod.spent, currentPeriod.allocated), 1)}
             </span>
           </div>
           <Progress

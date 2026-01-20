@@ -1,5 +1,9 @@
 import type { Payee, PaymentFrequency } from "$lib/schema/payees";
+import { formatTimeAgo } from "$lib/utils/dates";
+import { debounce } from "$lib/utils/search";
 import type { GroupStrategy, PayeeGroup, PayeeWithMetadata } from "./types";
+
+export { debounce };
 
 // Frequency ranking for sorting (higher = more frequent)
 const frequencyRank: Record<PaymentFrequency, number> = {
@@ -332,40 +336,5 @@ export function getFrequentPayees(allPayees: Payee[], limit: number = 10): Payee
  * Format last used date for display
  */
 export function formatLastUsed(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return "Today";
-  } else if (diffDays === 1) {
-    return "Yesterday";
-  } else if (diffDays < 7) {
-    return `${diffDays}d ago`;
-  } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks}w ago`;
-  } else if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months}mo ago`;
-  } else {
-    const years = Math.floor(diffDays / 365);
-    return `${years}y ago`;
-  }
-}
-
-/**
- * Debounce function for search
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return function (this: any, ...args: Parameters<T>) {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
+  return formatTimeAgo(new Date(dateString));
 }

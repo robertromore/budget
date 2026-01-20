@@ -2,6 +2,7 @@ import type { Payee, PayeeCategory } from "$lib/schema";
 import { categories, payeeCategories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
+import { formatPercentRaw } from "$lib/utils/formatters";
 import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 // ================================================================================
@@ -486,7 +487,7 @@ export class PayeeCategoryRecommendationService {
       return {
         score,
         factors: [
-          `${percentage.toFixed(0)}% of transactions are "${topTransactionCategory.categoryName}"`,
+          `${formatPercentRaw(percentage, 0)} of transactions are "${topTransactionCategory.categoryName}"`,
         ],
       };
     }

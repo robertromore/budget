@@ -43,12 +43,20 @@ import ReadOnlyCategoryCell from "../(components)/(cells)/read-only-category-cel
 import TransferPayeeCell from "../(components)/(cells)/transfer-payee-cell.svelte";
 import NotesCellWithBadges from "../(components)/(cells)/notes-cell-with-badges.svelte";
 
+interface TransferAccount {
+  id: number;
+  name: string;
+  accountType?: string | null;
+}
+
 export const columns = (
   categories: CategoriesState,
   payees: PayeesState,
   updateData: (id: number, columnId: string, newValue?: unknown) => Promise<void>,
   onScheduleClick?: (transaction: TransactionsFormat) => void,
-  budgetCount: number = 0
+  budgetCount: number = 0,
+  transferAccounts: TransferAccount[] = [],
+  onTransferSelect?: (transactionId: number, targetAccountId: number) => void
 ): ColumnDef<TransactionsFormat>[] => {
   const updateHandler = (
     info: CellContext<TransactionsFormat, unknown>,
@@ -232,11 +240,12 @@ export const columns = (
       filterFn: "dateIn" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Date",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
+        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
           return {
             name: "Date",
             icon: CalendarDays,
             column,
+            value,
             component: () =>
               renderComponent(
                 DataTableFacetedFilterDateWithOperators as any,
@@ -291,11 +300,16 @@ export const columns = (
             props: {
               value: info.getValue() as number | null,
               onUpdateValue: (new_value: number | null) => updateHandler(info, "payeeId", new_value),
-              transactionContext: {
-                amount: transaction.amount,
-                categoryId: transaction.categoryId,
-                accountId: transaction.accountId,
-              },
+              accounts: transferAccounts,
+              currentAccountId: transaction.accountId,
+              onTransferSelect: onTransferSelect
+                ? (targetAccountId: number) => {
+                    const transactionId = transaction.id;
+                    if (typeof transactionId === "number") {
+                      onTransferSelect(transactionId, targetAccountId);
+                    }
+                  }
+                : undefined,
             },
           }),
         });
@@ -417,11 +431,12 @@ export const columns = (
       filterFn: "entityIsFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Category",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
+        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
           return {
             name: "Category",
             icon: SquareMousePointer,
             column,
+            value,
             component: () =>
               renderComponent(DataTableFacetedFilterCategory as any, {
                 column,
@@ -499,11 +514,12 @@ export const columns = (
       filterFn: "amountFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Amount",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
+        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
           return {
             name: "Amount",
             icon: DollarSign,
             column,
+            value,
             component: () =>
               renderComponent(DataTableFacetedFilterAmount as any, {
                 column,

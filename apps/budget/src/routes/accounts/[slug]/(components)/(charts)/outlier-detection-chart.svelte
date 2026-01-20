@@ -7,7 +7,8 @@
 	import CircleDot from '@lucide/svelte/icons/circle-dot';
 	import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 	import BoxSelect from '@lucide/svelte/icons/box-select';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
@@ -279,7 +280,7 @@
 			{
 				label: 'Outliers Found',
 				value: outliers.length.toString(),
-				description: `${((outliers.length / beeswarmData.length) * 100).toFixed(1)}% of transactions`
+				description: `${formatPercentRaw((outliers.length / beeswarmData.length) * 100, 1)} of transactions`
 			},
 			{
 				label: 'Largest Outlier',
@@ -289,7 +290,7 @@
 			{
 				label: 'Outlier Total',
 				value: currencyFormatter.format(outlierTotal),
-				description: `${((outlierTotal / beeswarmData.reduce((s, d) => s + d.absAmount, 0)) * 100).toFixed(1)}% of spending`
+				description: `${formatPercentRaw((outlierTotal / beeswarmData.reduce((s, d) => s + d.absAmount, 0)) * 100, 1)} of spending`
 			}
 		];
 	});
@@ -304,15 +305,14 @@
 
 		const total = amounts.reduce((s, a) => s + a, 0);
 		const mean = total / n;
-		const median = sortedAmounts[Math.floor(n / 2)] || 0;
+		const med = median(sortedAmounts);
 
 		// Standard deviation
-		const variance = amounts.reduce((s, a) => s + Math.pow(a - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const stdDev = standardDeviation(amounts);
 
 		// Percentiles
 		const p25 = sortedAmounts[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
+		const p50 = med;
 		const p75 = sortedAmounts[Math.floor(n * 0.75)] || 0;
 
 		// Outlier metrics
@@ -325,7 +325,7 @@
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: med,
 				total: total,
 				count: n
 			},
@@ -598,11 +598,11 @@
 										{#if hoveredItem.isOutlier}
 											<div class="mt-2 border-t pt-2 text-xs text-muted-foreground space-y-0.5">
 												<p>{hoveredItem.deviationFromThreshold.toFixed(2)}× above threshold</p>
-												<p>Top {(100 - hoveredItem.percentileRank).toFixed(1)}% of transactions</p>
+												<p>Top {formatPercentRaw(100 - hoveredItem.percentileRank, 1)} of transactions</p>
 											</div>
 										{:else}
 											<div class="mt-2 border-t pt-2 text-xs text-muted-foreground">
-												<p>Percentile: {hoveredItem.percentileRank.toFixed(1)}%</p>
+												<p>Percentile: {formatPercentRaw(hoveredItem.percentileRank, 1)}</p>
 											</div>
 										{/if}
 
@@ -646,7 +646,7 @@
 										</p>
 										<div class="mt-2 border-t pt-2 text-xs text-muted-foreground space-y-0.5">
 											<p>{hoveredItem.deviationFromThreshold.toFixed(2)}× above threshold</p>
-											<p>Top {(100 - hoveredItem.percentileRank).toFixed(1)}% of transactions</p>
+											<p>Top {formatPercentRaw(100 - hoveredItem.percentileRank, 1)} of transactions</p>
 										</div>
 										<p class="text-muted-foreground mt-2 border-t pt-1 text-xs">Click for details</p>
 									</div>

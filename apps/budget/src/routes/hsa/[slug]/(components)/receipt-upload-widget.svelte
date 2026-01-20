@@ -83,7 +83,7 @@ function validateAndSetFile(file: File) {
 
   // Check file size
   if (file.size > MAX_SIZE) {
-    uploadError = `File size must be less than ${MAX_SIZE / 1024 / 1024}MB`;
+    uploadError = `File size must be less than ${formatFileSize(MAX_SIZE)}`;
     return;
   }
 

@@ -1,6 +1,7 @@
 import { payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
+import { formatPercent } from "$lib/server/utils/formatters";
 import { currentDate, toISOString } from "$lib/utils/dates";
 import { and, count, eq, gte, isNull, lte } from "drizzle-orm";
 import { BudgetAllocationService } from "./budget-allocation";
@@ -1574,7 +1575,7 @@ export class PayeeMLCoordinator {
         priority: unifiedRecommendations.overall.priority as "critical" | "high" | "medium" | "low",
         title: "Budget and Category Optimization Available",
         description: unifiedRecommendations.overall.recommendation,
-        insight: `ML analysis suggests ${unifiedRecommendations.overall.action} with ${(unifiedRecommendations.overall.confidence * 100).toFixed(0)}% confidence`,
+        insight: `ML analysis suggests ${unifiedRecommendations.overall.action} with ${formatPercent(unifiedRecommendations.overall.confidence)} confidence`,
         confidence: unifiedRecommendations.overall.confidence,
         sources: ["unified_ml"],
         recommendedActions: [
@@ -1711,7 +1712,7 @@ export class PayeeMLCoordinator {
         type: "prediction" as const,
         priority: "medium" as const,
         title: "Prediction Accuracy Below Optimal",
-        description: `ML prediction accuracy is ${(unifiedRecommendations.performanceMetrics.predictionAccuracy * 100).toFixed(0)}%, below optimal threshold`,
+        description: `ML prediction accuracy is ${formatPercent(unifiedRecommendations.performanceMetrics.predictionAccuracy)}, below optimal threshold`,
         insight:
           "Low prediction accuracy may lead to suboptimal recommendations and automation decisions",
         confidence: 0.9,
@@ -1851,7 +1852,7 @@ export class PayeeMLCoordinator {
         type: "alert" as const,
         priority: "high" as const,
         title: "Low System Confidence Alert",
-        description: `Overall ML confidence is ${(systemConfidence.overall * 100).toFixed(0)}%, below acceptable threshold`,
+        description: `Overall ML confidence is ${formatPercent(systemConfidence.overall)}, below acceptable threshold`,
         insight:
           "Low system confidence indicates potential data quality issues or model performance problems",
         confidence: 0.95,

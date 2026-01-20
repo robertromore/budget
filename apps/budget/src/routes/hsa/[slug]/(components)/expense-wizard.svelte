@@ -10,6 +10,7 @@ import { Textarea } from '$lib/components/ui/textarea';
 import { rpc } from '$lib/query';
 import { medicalExpenseTypeEnum } from '$lib/schema/medical-expenses';
 import { cn } from '$lib/utils';
+import { formatCurrency } from '$lib/utils/formatters';
 import { parseDate, type DateValue } from '@internationalized/date';
 import Check from '@lucide/svelte/icons/check';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -495,12 +496,12 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
 
             <div>
               <p class="text-muted-foreground text-sm">Total Amount</p>
-              <p class="text-lg font-medium">${amount.toFixed(2)}</p>
+              <p class="text-lg font-medium">{formatCurrency(amount)}</p>
             </div>
 
             <div>
               <p class="text-muted-foreground text-sm">Out of Pocket</p>
-              <p class="text-primary text-lg font-medium">${outOfPocket.toFixed(2)}</p>
+              <p class="text-primary text-lg font-medium">{formatCurrency(outOfPocket)}</p>
             </div>
 
             <div>

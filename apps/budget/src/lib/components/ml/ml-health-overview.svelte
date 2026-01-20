@@ -2,7 +2,7 @@
   import { Badge } from "$lib/components/ui/badge";
   import * as Card from "$lib/components/ui/card";
   import { Progress } from "$lib/components/ui/progress";
-  import { cn } from "$lib/utils";
+  import { cn, formatPercent } from "$lib/utils";
   import Activity from "@lucide/svelte/icons/activity";
   import Brain from "@lucide/svelte/icons/brain";
   import Gauge from "@lucide/svelte/icons/gauge";
@@ -93,7 +93,7 @@
     <div class="space-y-2">
       <div class="flex items-center justify-between text-sm">
         <span class="text-muted-foreground">Health Score</span>
-        <span class="font-medium">{Math.round(score * 100)}%</span>
+        <span class="font-medium">{formatPercent(score)}</span>
       </div>
       <Progress value={score * 100} class="h-2" />
     </div>
@@ -113,7 +113,7 @@
           <TrendingUp class="h-3 w-3" />
           <span>Accuracy</span>
         </div>
-        <p class="text-lg font-semibold">{(metrics.averageAccuracy * 100).toFixed(1)}%</p>
+        <p class="text-lg font-semibold">{formatPercent(metrics.averageAccuracy, 1)}</p>
       </div>
 
       <div class="space-y-1">
@@ -129,7 +129,7 @@
           <Activity class="h-3 w-3" />
           <span>Error Rate</span>
         </div>
-        <p class="text-lg font-semibold">{(metrics.errorRate * 100).toFixed(2)}%</p>
+        <p class="text-lg font-semibold">{formatPercent(metrics.errorRate, 2)}</p>
       </div>
     </div>
 

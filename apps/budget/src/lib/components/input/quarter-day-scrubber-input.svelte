@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Input } from '$lib/components/ui/input';
   import { cn } from '$lib/utils';
+  import { formatShortDate } from '$lib/utils/date-formatters';
   import GripHorizontal from '@lucide/svelte/icons/grip-horizontal';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
@@ -71,7 +72,7 @@
   }
 
   function formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return formatShortDate(date);
   }
 
   function formatDayOfQuarter(day: number): string {

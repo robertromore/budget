@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import { cn } from '$lib/utils';
-import { formatCurrency } from '$lib/utils/formatters';
+import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import type { Component } from 'svelte';
 
 interface AnalyticsData {
@@ -44,7 +44,7 @@ const borderColor = $derived(data.color ? `border-l-[${data.color}]` : '');
         </Card.Title>
       </div>
       <div class="text-muted-foreground text-xs">
-        {data.percentage.toFixed(1)}%
+        {formatPercentRaw(data.percentage, 1)}
       </div>
     </div>
   </Card.Header>

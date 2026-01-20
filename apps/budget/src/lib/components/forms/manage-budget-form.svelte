@@ -4,6 +4,8 @@ import { FieldHelpButton } from '$lib/components/help';
 import MultiSelectEntityInput from '$lib/components/input/multi-select-entity-input.svelte';
 import { helpMode } from '$lib/states/ui/help.svelte';
 import { cn } from '$lib/utils';
+import { formatShortDate } from '$lib/utils/date-formatters';
+import { formatCurrency } from '$lib/utils/formatters';
 import DateRangeScrubberInput from '$lib/components/input/date-range-scrubber-input.svelte';
 import MonthDayScrubberInput from '$lib/components/input/month-day-scrubber-input.svelte';
 import NumberScrubberInput from '$lib/components/input/number-scrubber-input.svelte';
@@ -134,8 +136,8 @@ function dayOfYearToDate(dayOfYear: number, year?: number): Date {
   return date;
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function formatDateShort(date: Date): string {
+  return formatShortDate(date);
 }
 
 // Helper to format a number with ordinal suffix (1st, 2nd, 3rd, etc.)
@@ -159,8 +161,8 @@ const customPeriodDateRange = $derived.by(() => {
   const startDate = dayOfYearToDate(startDay);
   const endDate = dayOfYearToDate(startDay + intervalCount - 1);
   return {
-    start: formatDate(startDate),
-    end: formatDate(endDate),
+    start: formatDateShort(startDate),
+    end: formatDateShort(endDate),
     startFull: startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
   };
 });
@@ -718,7 +720,7 @@ const isHelpHighlighted = (helpId: string) =>
                 <div>
                   <p class="text-sm font-medium">{selectedSchedule.name}</p>
                   <p class="text-muted-foreground text-xs">
-                    Amount: ${selectedSchedule.amount.toFixed(2)} •
+                    Amount: {formatCurrency(selectedSchedule.amount)} •
                     {selectedSchedule.scheduleDate?.frequency || 'One-time'}
                   </p>
                 </div>

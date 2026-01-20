@@ -12,6 +12,7 @@ import Phone from '@lucide/svelte/icons/phone';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import User from '@lucide/svelte/icons/user';
+import { formatCurrency } from '$lib/utils/formatters';
 import PayeeAliasesCard from '../(components)/payee-aliases-card.svelte';
 
 // Get payee slug from URL parameter
@@ -193,7 +194,7 @@ $effect(() => {
           {#if payee.avgAmount}
             <div>
               <span class="text-muted-foreground text-sm font-medium">Average Amount</span>
-              <p class="text-sm">${payee.avgAmount.toFixed(2)}</p>
+              <p class="text-sm">{formatCurrency(payee.avgAmount)}</p>
             </div>
           {/if}
 

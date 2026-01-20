@@ -9,7 +9,7 @@ import { Progress } from '$lib/components/ui/progress';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { Badge } from '$lib/components/ui/badge';
 import { getSpendingTrends } from '$lib/query/budgets';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
 import Minus from '@lucide/svelte/icons/minus';
@@ -140,7 +140,7 @@ function getProgressClass(rate: number): string {
           <div class="rounded-lg border p-4">
             <div class="text-muted-foreground text-sm font-medium">Avg. Utilization</div>
             <div class="text-2xl font-bold mt-1 {getUtilizationColor(summary.avgUtilization)}">
-              {summary.avgUtilization.toFixed(1)}%
+              {formatPercentRaw(summary.avgUtilization, 1)}
             </div>
             <Progress
               value={Math.min(summary.avgUtilization, 100)}
@@ -160,7 +160,7 @@ function getProgressClass(rate: number): string {
                 variant="outline"
                 class={period.utilizationRate > 100 ? 'border-red-500 text-red-500' : period.utilizationRate > 80 ? 'border-yellow-500 text-yellow-500' : 'border-green-500 text-green-500'}
               >
-                {period.utilizationRate.toFixed(0)}%
+                {formatPercentRaw(period.utilizationRate, 0)}
               </Badge>
             </div>
             <div class="grid grid-cols-2 gap-4 text-sm mb-2">

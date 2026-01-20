@@ -6,7 +6,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Progress } from '$lib/components/ui/progress';
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+	import { quantile } from '$lib/utils/chart-statistics';
 
 	// Icons
 	import Calculator from '@lucide/svelte/icons/calculator';
@@ -44,12 +45,12 @@
 			skewness = (n / ((n - 1) * (n - 2))) * sumCubed;
 		}
 
-		// Percentiles
+		// Percentiles (using simple-statistics quantile via chart-statistics utility)
 		const sorted = [...values].sort((a, b) => a - b);
-		const p10 = sorted[Math.floor(n * 0.1)] ?? sorted[0];
-		const p25 = sorted[Math.floor(n * 0.25)] ?? sorted[0];
-		const p75 = sorted[Math.floor(n * 0.75)] ?? sorted[n - 1];
-		const p90 = sorted[Math.floor(n * 0.9)] ?? sorted[n - 1];
+		const p10 = quantile(sorted, 0.1);
+		const p25 = quantile(sorted, 0.25);
+		const p75 = quantile(sorted, 0.75);
+		const p90 = quantile(sorted, 0.9);
 		const iqr = p75 - p25;
 
 		// Sum
@@ -152,7 +153,7 @@
 						<div>
 							<p class="text-xs text-muted-foreground">Coefficient of Variation</p>
 							<p class="text-lg font-semibold tabular-nums">
-								{(additionalStats?.cv ?? 0).toFixed(1)}%
+								{formatPercentRaw(additionalStats?.cv ?? 0, 1)}
 							</p>
 							<p class="text-xs text-muted-foreground">
 								{(additionalStats?.cv ?? 0) < 20 ? 'Low variability' : (additionalStats?.cv ?? 0) < 40 ? 'Moderate' : 'High variability'}
@@ -270,7 +271,7 @@
 							<div>
 								<p class="text-xs text-muted-foreground">Percent Change</p>
 								<p class="font-semibold tabular-nums" class:text-destructive={additionalStats.percentChange > 0} class:text-green-600={additionalStats.percentChange < 0}>
-									{additionalStats.percentChange > 0 ? '+' : ''}{additionalStats.percentChange.toFixed(1)}%
+									{additionalStats.percentChange > 0 ? '+' : ''}{formatPercentRaw(additionalStats.percentChange, 1)}
 								</p>
 							</div>
 						</div>

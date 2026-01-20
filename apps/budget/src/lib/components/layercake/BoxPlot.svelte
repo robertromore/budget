@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 	import type { Readable } from 'svelte/store';
+	import { quantile } from '$lib/utils/chart-statistics';
 
 	interface LayerCakeContext {
 		data: Readable<any[]>;
@@ -76,11 +77,10 @@
 		if ($data.length === 0) return null;
 
 		const values = $data.map((d) => (typeof d === 'number' ? d : d[valueKey])).sort((a, b) => a - b);
-		const n = values.length;
 
-		const q1 = values[Math.floor(n * 0.25)];
-		const median = values[Math.floor(n * 0.5)];
-		const q3 = values[Math.floor(n * 0.75)];
+		const q1 = quantile(values, 0.25);
+		const median = quantile(values, 0.5);
+		const q3 = quantile(values, 0.75);
 		const iqr = q3 - q1;
 
 		const lowerFence = q1 - multiplier * iqr;
@@ -88,7 +88,7 @@
 
 		// Whiskers extend to the most extreme data point within the fence
 		const whiskerLow = Math.max(values[0], lowerFence);
-		const whiskerHigh = Math.min(values[n - 1], upperFence);
+		const whiskerHigh = Math.min(values[values.length - 1], upperFence);
 
 		// Outliers are points outside the fences
 		const outliers = $data.filter((d) => {
@@ -107,7 +107,7 @@
 			upperFence,
 			outliers,
 			min: values[0],
-			max: values[n - 1]
+			max: values[values.length - 1]
 		};
 	});
 

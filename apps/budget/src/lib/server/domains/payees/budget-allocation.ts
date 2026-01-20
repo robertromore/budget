@@ -1,6 +1,7 @@
 import { categories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { and, eq, isNull } from "drizzle-orm";
+import { formatPercentRaw } from "$lib/utils/formatters";
 import { CategoryLearningService } from "./category-learning";
 import { PayeeIntelligenceService } from "./intelligence";
 
@@ -855,7 +856,7 @@ export class BudgetAllocationService {
       );
     } else if (Math.abs(adjustmentPercent) > 20) {
       reasoning.push(
-        `Current allocation is ${Math.abs(adjustmentPercent).toFixed(1)}% ${adjustmentPercent > 0 ? "below" : "above"} optimal level`
+        `Current allocation is ${formatPercentRaw(Math.abs(adjustmentPercent), 1)} ${adjustmentPercent > 0 ? "below" : "above"} optimal level`
       );
     }
 

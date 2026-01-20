@@ -21,7 +21,7 @@
 		type ReportConfig,
 		type ReportTemplateType,
 	} from '$lib/schema/report-templates';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import { generatePdf, downloadHtml, downloadMarkdown } from '$lib/utils/pdf-client';
 	import { toast } from '$lib/utils/toast-interceptor';
 
@@ -718,7 +718,7 @@
 												</div>
 												{#if config.display.showPercentages}
 													<div class="w-12 text-right text-xs" style="color: #666;">
-														{cat.percentage.toFixed(0)}%
+														{formatPercentRaw(cat.percentage, 0)}
 													</div>
 												{/if}
 											</div>
@@ -748,7 +748,7 @@
 												</td>
 												{#if config.display.showPercentages}
 													<td class="py-2 text-right" style="color: #666;">
-														{percentage.toFixed(1)}%
+														{formatPercentRaw(percentage, 1)}
 													</td>
 												{/if}
 												<td class="py-2 text-right" style="color: #666;">{cat.count}</td>

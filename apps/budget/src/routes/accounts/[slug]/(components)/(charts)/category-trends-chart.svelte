@@ -5,9 +5,10 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 	import type { TransactionsFormat } from '$lib/types';
+	import { standardDeviation } from '$lib/utils/chart-statistics';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import { getLastDayOfMonthUTC, parseDateStringToUTC } from '$lib/utils/date-formatters';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Filter from '@lucide/svelte/icons/filter';
@@ -226,12 +227,12 @@
 			{
 				label: 'Biggest Increase',
 				value: biggestIncrease ? biggestIncrease.category : 'N/A',
-				description: biggestIncrease ? `+${biggestIncrease.change.toFixed(0)}%` : undefined
+				description: biggestIncrease ? `+${formatPercentRaw(biggestIncrease.change, 0)}` : undefined
 			},
 			{
 				label: 'Biggest Decrease',
 				value: biggestDecrease ? biggestDecrease.category : 'N/A',
-				description: biggestDecrease ? `${biggestDecrease.change.toFixed(0)}%` : undefined
+				description: biggestDecrease ? formatPercentRaw(biggestDecrease.change, 0) : undefined
 			},
 			{
 				label: 'Net Change',
@@ -264,8 +265,7 @@
 		const p75 = sortedCurrent[Math.floor(sortedCurrent.length * 0.75)] || 0;
 
 		// Standard deviation
-		const variance = currentValues.reduce((s, v) => s + Math.pow(v - avgCurrent, 2), 0) / currentValues.length;
-		const stdDev = Math.sqrt(variance);
+		const stdDev = standardDeviation(currentValues);
 
 		// Overall change
 		const overallChange = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : 0;
@@ -432,7 +432,7 @@
 						lineStroke={(d) => (d.change >= 0 ? 'var(--destructive)' : 'var(--chart-2)')}
 						lineWidth={2}
 						showLabels={true}
-						labelFormat={(d) => `${d.change >= 0 ? '+' : ''}${d.change.toFixed(0)}%`}
+						labelFormat={(d) => `${d.change >= 0 ? '+' : ''}${formatPercentRaw(d.change, 0)}`}
 						onclick={(d) => handleCategoryClick(d)}
 						onhover={(d) => (hoveredItem = d)}
 						hoverOpacity={1}
@@ -456,7 +456,7 @@
 										<TrendingDown class="h-3 w-3 text-green-600" />
 									{/if}
 									<p class={hoveredItem.change >= 0 ? 'text-destructive text-xs' : 'text-green-600 text-xs'}>
-										{hoveredItem.change >= 0 ? '+' : ''}{hoveredItem.change.toFixed(1)}% ({hoveredItem.changeAbs >= 0 ? '+' : ''}{currencyFormatter.format(hoveredItem.changeAbs)})
+										{hoveredItem.change >= 0 ? '+' : ''}{formatPercentRaw(hoveredItem.change, 1)} ({hoveredItem.changeAbs >= 0 ? '+' : ''}{currencyFormatter.format(hoveredItem.changeAbs)})
 									</p>
 								</div>
 								<p class="text-muted-foreground mt-1 text-xs">Click to view transactions</p>

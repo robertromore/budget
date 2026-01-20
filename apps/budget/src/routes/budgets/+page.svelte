@@ -25,7 +25,7 @@ import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
-import { formatCurrency } from '$lib/utils/formatters';
+import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import {
   ArrowRightLeft,
   ChartBar,
@@ -424,7 +424,7 @@ const summaryMetrics = $derived.by(() => {
             {formatAbsCurrency(summaryMetrics.totalConsumed)}
           </div>
           <p class="text-muted-foreground text-[10px] sm:text-xs">
-            {summaryMetrics.percentUsed.toFixed(1)}% of allocated
+            {formatPercentRaw(summaryMetrics.percentUsed, 1)} of allocated
           </p>
         </Card.Content>
       </Card.Root>

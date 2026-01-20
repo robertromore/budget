@@ -6,7 +6,7 @@ import { getQueryClient } from '$lib/query/_client';
 import { listBudgets } from '$lib/query/budgets';
 import { transactionKeys } from '$lib/query/transactions';
 import type { TransactionsFormat } from '$lib/types';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercent } from '$lib/utils/formatters';
 import { CircleDollarSign, Plus, TriangleAlert } from '@lucide/svelte/icons';
 
 interface Props {
@@ -119,10 +119,9 @@ function handleAllocationChanged() {
                   Allocated: {currencyFormatter.format(Math.abs(allocation.allocatedAmount))}
                 </p>
                 <p class="text-xs">
-                  Percentage: {(
-                    (Math.abs(allocation.allocatedAmount) / Math.abs(transaction.amount)) *
-                    100
-                  ).toFixed(1)}%
+                  Percentage: {formatPercent(
+                    Math.abs(allocation.allocatedAmount) / Math.abs(transaction.amount), 1
+                  )}
                 </p>
                 <p class="text-xs opacity-75">
                   {allocation.autoAssigned ? 'Auto-assigned' : 'Manual allocation'}

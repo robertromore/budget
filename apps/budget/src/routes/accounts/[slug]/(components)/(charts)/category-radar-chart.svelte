@@ -2,6 +2,7 @@
 	import { Radar } from '$lib/components/layercake';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import type { TransactionsFormat } from '$lib/types';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import { currencyFormatter } from '$lib/utils/formatters';
 	import { Html, LayerCake, Svg } from 'layercake';
@@ -81,15 +82,14 @@
 
 		const total = values.reduce((s, v) => s + v, 0);
 		const mean = total / n;
-		const median = sortedValues[Math.floor(n / 2)] || 0;
+		const medianValue = median(values);
 
 		// Standard deviation
-		const variance = values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const stdDev = standardDeviation(values);
 
 		// Percentiles
 		const p25 = sortedValues[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
+		const p50 = medianValue;
 		const p75 = sortedValues[Math.floor(n * 0.75)] || 0;
 
 		const [topName, topValue] = categoryData[0];
@@ -101,7 +101,7 @@
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: medianValue,
 				total: total,
 				count: n
 			},

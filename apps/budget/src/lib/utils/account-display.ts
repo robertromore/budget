@@ -1,5 +1,5 @@
 import { isDebtAccount, type Account } from "$lib/schema/accounts";
-import { formatCurrency as formatCurrencyFromFormatters } from "$lib/utils/formatters";
+import { formatCurrency as formatCurrencyFromFormatters, formatPercentRaw } from "$lib/utils/formatters";
 
 export type BalanceColor = "positive" | "negative" | "neutral";
 
@@ -90,7 +90,7 @@ export const formatCurrency = formatCurrencyFromFormatters;
  * Format percentage for display
  */
 export function formatPercentage(value: number): string {
-  return `${value.toFixed(1)}%`;
+  return formatPercentRaw(value, 1);
 }
 
 /**

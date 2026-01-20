@@ -12,7 +12,8 @@
 		Brush
 	} from '$lib/components/layercake';
 	import { AnalysisDropdown, ChartSelectionPanel } from '$lib/components/charts';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+	import { formatMonthYear, toMonthString } from '$lib/utils/date-formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import type { Account } from '$lib/schema/accounts';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
@@ -143,7 +144,7 @@
 			const predictedValue = trend.intercept + trend.slope * (lastPoint.index + i);
 			const clampedValue = Math.max(0, predictedValue); // Utilization can't be negative
 
-			const monthStr = `${nextDate.getUTCFullYear()}-${String(nextDate.getUTCMonth() + 1).padStart(2, '0')}`;
+			const monthStr = toMonthString(nextDate);
 			const monthLabel = nextDate.toLocaleDateString('en-US', {
 				month: 'long',
 				year: 'numeric',
@@ -476,10 +477,10 @@
 								{@const mavgValue = showMovingAvg ? getMovingAvgForMonth(point.month) : null}
 								<div class="min-w-50 rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 									<p class="font-medium">
-										{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+										{formatMonthYear(point.date, { long: true, utc: true })}
 									</p>
 									<p class="font-semibold {status.class}">
-										{point.utilization.toFixed(1)}% utilization
+										{formatPercentRaw(point.utilization, 1)} utilization
 										<span class="font-normal">({status.text})</span>
 									</p>
 									<div class="text-muted-foreground mt-1 text-xs">
@@ -505,7 +506,7 @@
 
 											{#if showMovingAvg && mavgValue !== null}
 												<p class="text-muted-foreground">
-													{MOVING_AVG_WINDOW}-mo avg: {mavgValue.toFixed(1)}%
+													{MOVING_AVG_WINDOW}-mo avg: {formatPercentRaw(mavgValue, 1)}
 												</p>
 											{/if}
 										</div>

@@ -4,7 +4,7 @@
   import * as Card from "$lib/components/ui/card";
   import { Input } from "$lib/components/ui/input";
   import { Skeleton } from "$lib/components/ui/skeleton";
-  import { cn, formatCurrency } from "$lib/utils";
+  import { cn, formatCurrency, formatPercent } from "$lib/utils";
   import Calendar from "@lucide/svelte/icons/calendar";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import DollarSign from "@lucide/svelte/icons/dollar-sign";
@@ -189,7 +189,7 @@
           </p>
           <div class="mt-2 flex items-center gap-2">
             <Badge variant="secondary" class="text-xs">
-              {(parsedQuery.confidence * 100).toFixed(0)}% confidence
+              {formatPercent(parsedQuery.confidence)} confidence
             </Badge>
             {#if executionTimeMs > 0}
               <span class="text-muted-foreground text-xs">

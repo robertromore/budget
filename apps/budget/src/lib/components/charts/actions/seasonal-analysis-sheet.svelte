@@ -6,7 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Progress } from '$lib/components/ui/progress';
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 
 	// Icons
 	import Calendar from '@lucide/svelte/icons/calendar';
@@ -217,7 +217,7 @@
 							<div>
 								<p class="text-xs text-muted-foreground">Seasonality Strength</p>
 								<p class="text-lg font-semibold tabular-nums">
-									{seasonalAnalysis.seasonalityStrength.toFixed(0)}%
+									{formatPercentRaw(seasonalAnalysis.seasonalityStrength, 0)}
 								</p>
 								<p class="text-xs {getSeasonalityLabel(seasonalAnalysis.seasonalityStrength).color}">{getSeasonalityLabel(seasonalAnalysis.seasonalityStrength).label}</p>
 							</div>
@@ -275,7 +275,7 @@
 												{currencyFormatter.format(month.average)}
 											</span>
 											<span class="w-16 text-right text-xs tabular-nums" class:text-destructive={month.percentFromMean > 0} class:text-green-600={month.percentFromMean < 0}>
-												{month.percentFromMean > 0 ? '+' : ''}{month.percentFromMean.toFixed(0)}%
+												{month.percentFromMean > 0 ? '+' : ''}{formatPercentRaw(month.percentFromMean, 0)}
 											</span>
 										</div>
 									</div>
@@ -315,7 +315,7 @@
 										{currencyFormatter.format(quarter.average)}
 									</p>
 									<p class="text-xs tabular-nums" class:text-destructive={quarter.percentFromMean > 0} class:text-green-600={quarter.percentFromMean < 0}>
-										{quarter.percentFromMean > 0 ? '+' : ''}{quarter.percentFromMean.toFixed(0)}% vs avg
+										{quarter.percentFromMean > 0 ? '+' : ''}{formatPercentRaw(quarter.percentFromMean, 0)} vs avg
 									</p>
 									<p class="mt-1 text-xs text-muted-foreground">
 										{quarter.count} periods
@@ -357,7 +357,7 @@
 												{yoy.change > 0 ? '+' : ''}{currencyFormatter.format(yoy.change)}
 											</p>
 											<p class="text-xs tabular-nums" class:text-destructive={yoy.percentChange > 0} class:text-green-600={yoy.percentChange < 0}>
-												{yoy.percentChange > 0 ? '+' : ''}{yoy.percentChange.toFixed(1)}%
+												{yoy.percentChange > 0 ? '+' : ''}{formatPercentRaw(yoy.percentChange, 1)}
 											</p>
 										</div>
 									</div>

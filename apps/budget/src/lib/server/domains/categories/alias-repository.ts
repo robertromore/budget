@@ -24,6 +24,7 @@ type CreateCategoryAliasInput = {
 };
 import { categories, categoryAliases, payees } from "$lib/schema";
 import { db } from "$lib/server/db";
+import { normalizeText } from "$lib/server/import/utils";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
@@ -41,7 +42,7 @@ export class CategoryAliasRepository {
    * Converts to lowercase, trims whitespace, and removes extra spaces.
    */
   private normalizeString(raw: string): string {
-    return raw.toLowerCase().trim().replace(/\s+/g, " ");
+    return normalizeText(raw);
   }
 
   /**

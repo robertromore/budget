@@ -5,6 +5,7 @@
  */
 
 import { SLASH_COMMANDS } from "./registry";
+import { formatCurrency } from "$lib/server/utils/formatters";
 
 type ToolResult = { success: true } | { success: false; message: string };
 
@@ -72,7 +73,7 @@ function formatBalanceResult(result: unknown): string {
 	let output = "## Account Balances\n\n";
 
 	for (const account of data.accounts) {
-		const balanceFormatted = formatMoney(account.balance);
+		const balanceFormatted = formatCurrency(account.balance);
 		const balanceClass = account.balance >= 0 ? "" : " (negative)";
 		output += `### ${account.name}\n`;
 		output += `- **Balance**: ${balanceFormatted}${balanceClass}\n`;
@@ -109,7 +110,7 @@ function formatTransactionsResult(result: unknown): string {
 	for (const txn of data.transactions.slice(0, 15)) {
 		const date = txn.date;
 		const payee = txn.payee || "Unknown";
-		const amount = formatMoney(txn.amount);
+		const amount = formatCurrency(txn.amount);
 		const category = txn.category || "-";
 		output += `| ${date} | ${payee} | ${amount} | ${category} |\n`;
 	}
@@ -144,9 +145,9 @@ function formatBudgetResult(result: unknown): string {
 	for (const budget of data.budgets) {
 		const statusIcon = budget.percentUsed > 100 ? "🔴" : budget.percentUsed > 80 ? "🟡" : "🟢";
 		output += `### ${statusIcon} ${budget.name}\n`;
-		output += `- **Allocated**: ${formatMoney(budget.allocated)}\n`;
-		output += `- **Spent**: ${formatMoney(budget.spent)} (${budget.percentUsed}%)\n`;
-		output += `- **Remaining**: ${formatMoney(budget.remaining)}\n`;
+		output += `- **Allocated**: ${formatCurrency(budget.allocated)}\n`;
+		output += `- **Spent**: ${formatCurrency(budget.spent)} (${budget.percentUsed}%)\n`;
+		output += `- **Remaining**: ${formatCurrency(budget.remaining)}\n`;
 		if (budget.period) {
 			output += `- **Period**: ${budget.period.start} to ${budget.period.end}\n`;
 		}
@@ -173,7 +174,7 @@ function formatSpendingResult(result: unknown): string {
 	output += "|-------|-------------|-------------|\n";
 
 	for (const payee of data.payees) {
-		output += `| ${payee.name} | ${formatMoney(payee.totalSpent)} | ${payee.transactionCount} |\n`;
+		output += `| ${payee.name} | ${formatCurrency(payee.totalSpent)} | ${payee.transactionCount} |\n`;
 	}
 
 	return output;
@@ -193,12 +194,12 @@ function formatCategorySpendingResult(result: unknown): string {
 	}
 
 	let output = `## Category Spending\n\n`;
-	output += `**Total**: ${formatMoney(data.totalSpending)}\n\n`;
+	output += `**Total**: ${formatCurrency(data.totalSpending)}\n\n`;
 	output += "| Category | Amount | % of Total |\n";
 	output += "|----------|--------|------------|\n";
 
 	for (const cat of data.categories) {
-		output += `| ${cat.name} | ${formatMoney(cat.totalSpent)} | ${cat.percentOfTotal}% |\n`;
+		output += `| ${cat.name} | ${formatCurrency(cat.totalSpent)} | ${cat.percentOfTotal}% |\n`;
 	}
 
 	return output;
@@ -262,13 +263,13 @@ function formatSavingsResult(result: unknown): string {
 	}
 
 	let output = `## Savings Opportunities\n\n`;
-	output += `**Potential Monthly Savings**: ${formatMoney(data.totalMonthlyPotential)}\n`;
-	output += `**Potential Annual Savings**: ${formatMoney(data.totalAnnualPotential)}\n\n`;
+	output += `**Potential Monthly Savings**: ${formatCurrency(data.totalMonthlyPotential)}\n`;
+	output += `**Potential Annual Savings**: ${formatCurrency(data.totalAnnualPotential)}\n\n`;
 
 	for (const opp of data.opportunities) {
 		const priorityIcon = opp.priority === "high" ? "🔴" : opp.priority === "medium" ? "🟡" : "🟢";
 		output += `### ${priorityIcon} ${opp.title}\n`;
-		output += `**Save**: ${formatMoney(opp.estimatedMonthlySavings)}/month\n\n`;
+		output += `**Save**: ${formatCurrency(opp.estimatedMonthlySavings)}/month\n\n`;
 		output += `${opp.description}\n\n`;
 		if (opp.suggestedActions.length > 0) {
 			output += "**Actions**:\n";
@@ -308,14 +309,14 @@ function formatRecurringResult(result: unknown): string {
 	}
 
 	let output = `## Recurring Transactions\n\n`;
-	output += `**Total Monthly Value**: ${formatMoney(data.totalMonthlyValue)}\n`;
+	output += `**Total Monthly Value**: ${formatCurrency(data.totalMonthlyValue)}\n`;
 	output += `**Found**: ${data.summary.subscriptions} subscriptions, ${data.summary.bills} bills\n\n`;
 	output += "| Payee | Amount | Frequency | Next Due |\n";
 	output += "|-------|--------|-----------|----------|\n";
 
 	for (const p of data.patterns) {
 		const status = p.isActive ? "" : " (inactive)";
-		output += `| ${p.payeeName}${status} | ${formatMoney(p.averageAmount)} | ${p.frequency} | ${p.nextPredicted || "-"} |\n`;
+		output += `| ${p.payeeName}${status} | ${formatCurrency(p.averageAmount)} | ${p.frequency} | ${p.nextPredicted || "-"} |\n`;
 	}
 
 	return output;
@@ -355,9 +356,9 @@ function formatForecastResult(result: unknown): string {
 	let output = `## Cash Flow Forecast\n\n`;
 	output += `**Confidence**: ${data.confidence}%\n\n`;
 	output += `### Summary\n`;
-	output += `- **Avg Monthly Cash Flow**: ${formatMoney(data.summary.avgPredictedCashFlow)}\n`;
-	output += `- **Expected Income**: ${formatMoney(data.summary.totalPredictedIncome)}\n`;
-	output += `- **Expected Expenses**: ${formatMoney(data.summary.totalPredictedExpenses)}\n\n`;
+	output += `- **Avg Monthly Cash Flow**: ${formatCurrency(data.summary.avgPredictedCashFlow)}\n`;
+	output += `- **Expected Income**: ${formatCurrency(data.summary.totalPredictedIncome)}\n`;
+	output += `- **Expected Expenses**: ${formatCurrency(data.summary.totalPredictedExpenses)}\n\n`;
 	output += "### Predictions\n\n";
 	output += "| Period | Predicted | Range |\n";
 	output += "|--------|-----------|-------|\n";
@@ -365,9 +366,9 @@ function formatForecastResult(result: unknown): string {
 	for (const p of data.predictions) {
 		const range =
 			p.lowerBound !== undefined && p.upperBound !== undefined
-				? `${formatMoney(p.lowerBound)} - ${formatMoney(p.upperBound)}`
+				? `${formatCurrency(p.lowerBound)} - ${formatCurrency(p.upperBound)}`
 				: "-";
-		output += `| ${p.date} | ${formatMoney(p.predictedAmount)} | ${range} |\n`;
+		output += `| ${p.date} | ${formatCurrency(p.predictedAmount)} | ${range} |\n`;
 	}
 
 	return output;
@@ -489,11 +490,4 @@ function formatGenericResult(result: unknown): string {
 // UTILITIES
 // ============================================
 
-function formatMoney(amount: number): string {
-	const absAmount = Math.abs(amount);
-	const formatted = absAmount.toLocaleString("en-US", {
-		style: "currency",
-		currency: "USD",
-	});
-	return amount < 0 ? `-${formatted}` : formatted;
-}
+// Note: formatCurrency is imported from $lib/server/utils/formatters

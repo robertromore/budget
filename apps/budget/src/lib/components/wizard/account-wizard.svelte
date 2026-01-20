@@ -14,6 +14,8 @@ import {
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
 import { createAccountValidationEngine } from '$lib/utils/wizard-validation';
+import { getOrdinalSuffix } from '$lib/utils/dates';
+import { formatCurrency } from '$lib/utils/formatters';
 import {
   Banknote,
   Building2,
@@ -108,13 +110,7 @@ function generateCreditCardDescription(): string | null {
   const parts: string[] = [];
 
   if (formData['debtLimit']) {
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-    parts.push(`${formatter.format(formData['debtLimit'])} credit limit`);
+    parts.push(`${formatCurrency(formData['debtLimit'])} credit limit`);
   }
 
   if (formData['interestRate']) {
@@ -123,28 +119,11 @@ function generateCreditCardDescription(): string | null {
 
   if (formData['paymentDueDay']) {
     const day = formData['paymentDueDay'];
-    const suffix =
-      day === 1
-        ? 'st'
-        : day === 2
-          ? 'nd'
-          : day === 3
-            ? 'rd'
-            : day === 21
-              ? 'st'
-              : day === 22
-                ? 'nd'
-                : day === 23
-                  ? 'rd'
-                  : day === 31
-                    ? 'st'
-                    : 'th';
-    parts.push(`payment due ${day}${suffix} of month`);
+    parts.push(`payment due ${day}${getOrdinalSuffix(day)} of month`);
   }
 
   if (formData['minimumPayment']) {
-    const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-    parts.push(`${formatter.format(formData['minimumPayment'])} minimum payment`);
+    parts.push(`${formatCurrency(formData['minimumPayment'])} minimum payment`);
   }
 
   return parts.length > 0 ? parts.join(', ') : null;
@@ -1194,7 +1173,7 @@ const selectedIcon = $derived(() => {
         {#if formData['initialBalance'] !== undefined && formData['initialBalance'] !== 0 && formData['accountType'] !== 'utility'}
           <div class="space-y-1">
             <p class="text-sm font-medium">Starting Balance</p>
-            <p class="text-muted-foreground text-sm">${formData['initialBalance']?.toFixed(2)}</p>
+            <p class="text-muted-foreground text-sm">{formatCurrency(formData['initialBalance'] ?? 0)}</p>
           </div>
         {/if}
 
@@ -1255,7 +1234,7 @@ const selectedIcon = $derived(() => {
               <p class="text-sm font-medium">
                 {formData['accountType'] === 'credit_card' ? 'Credit Limit' : 'Loan Amount'}
               </p>
-              <p class="text-muted-foreground text-sm">${formData['debtLimit']?.toFixed(2)}</p>
+              <p class="text-muted-foreground text-sm">{formatCurrency(formData['debtLimit'] ?? 0)}</p>
             </div>
           {/if}
 
@@ -1269,7 +1248,7 @@ const selectedIcon = $derived(() => {
           {#if formData['minimumPayment']}
             <div class="space-y-1">
               <p class="text-sm font-medium">Minimum Payment</p>
-              <p class="text-muted-foreground text-sm">${formData['minimumPayment']?.toFixed(2)}</p>
+              <p class="text-muted-foreground text-sm">{formatCurrency(formData['minimumPayment'] ?? 0)}</p>
             </div>
           {/if}
 

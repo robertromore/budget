@@ -2,6 +2,8 @@
 	import { Scatter, AxisX, AxisY, Tooltip } from '$lib/components/layercake';
 	import { Button } from '$lib/components/ui/button';
 	import { currencyFormatter } from '$lib/utils/formatters';
+	import { formatShortDate } from '$lib/utils/date-formatters';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { LayerCake, Svg } from 'layercake';
@@ -123,15 +125,14 @@
 
 		const total = amounts.reduce((s, a) => s + a, 0);
 		const mean = total / n;
-		const median = sortedAmounts[Math.floor(n / 2)] || 0;
+		const med = median(sortedAmounts);
 
 		// Standard deviation
-		const variance = amounts.reduce((s, a) => s + Math.pow(a - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const stdDev = standardDeviation(amounts);
 
 		// Percentiles
 		const p25 = sortedAmounts[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
+		const p50 = med;
 		const p75 = sortedAmounts[Math.floor(n * 0.75)] || 0;
 
 		// Find largest and smallest
@@ -148,7 +149,7 @@
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: med,
 				total: total,
 				count: n
 			},
@@ -271,7 +272,7 @@
 							ticks={6}
 							format={(d) => {
 								const date = d instanceof Date ? d : new Date(d);
-								return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+								return formatShortDate(date);
 							}}
 						/>
 						<Scatter

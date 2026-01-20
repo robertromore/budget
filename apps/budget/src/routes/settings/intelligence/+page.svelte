@@ -12,6 +12,7 @@
   import { MLSettings } from "$lib/query/ml-settings";
   import { WebSearchSettings } from "$lib/query/web-search-settings";
   import type { DuplicateDetectionMethod, IntelligenceInputPreferences, WebSearchProvider } from "$lib/schema/workspaces";
+  import { formatPercent } from "$lib/utils";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import Brain from "@lucide/svelte/icons/brain";
   import Check from "@lucide/svelte/icons/check";
@@ -343,7 +344,7 @@
           <div class="flex items-center justify-between">
             <Label>Similarity Threshold</Label>
             <span class="text-muted-foreground text-sm">
-              {(config.similarityThreshold * 100).toFixed(0)}%
+              {formatPercent(config.similarityThreshold)}
             </span>
           </div>
           <Slider

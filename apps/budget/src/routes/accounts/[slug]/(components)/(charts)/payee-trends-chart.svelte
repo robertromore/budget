@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { MultiLine, MultiScatter, AxisX, AxisY, Tooltip, CustomLine, HorizontalLine } from '$lib/components/layercake';
 	import { AnalysisDropdown } from '$lib/components/charts';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
-	import { calculateLinearTrend, calculateHistoricalAverage, type TrendLineData } from '$lib/utils/chart-statistics';
+	import { calculateLinearTrend, calculateHistoricalAverage, calculateBasicStats, calculateExtendedPercentiles, mean, type TrendLineData } from '$lib/utils/chart-statistics';
 	import { LayerCake, Svg } from 'layercake';
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
-	import { extractDateString } from '$lib/utils/date-formatters';
+	import { extractDateString, formatMonthYear } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -142,7 +142,7 @@
 			}
 		}
 		if (allValues.length === 0) return null;
-		return allValues.reduce((s, v) => s + v, 0) / allValues.length;
+		return mean(allValues);
 	});
 
 	// Calculate linear trend for the primary (top) payee
@@ -192,12 +192,12 @@
 			{
 				label: 'Trending Up',
 				value: trendingUp ? trendingUp.payee.substring(0, 12) : 'None',
-				description: trendingUp ? `+${trendingUp.trend.toFixed(0)}%` : undefined
+				description: trendingUp ? `+${formatPercentRaw(trendingUp.trend, 0)}` : undefined
 			},
 			{
 				label: 'Trending Down',
 				value: trendingDown ? trendingDown.payee.substring(0, 12) : 'None',
-				description: trendingDown ? `${trendingDown.trend.toFixed(0)}%` : undefined
+				description: trendingDown ? formatPercentRaw(trendingDown.trend, 0) : undefined
 			}
 		];
 	});
@@ -222,23 +222,15 @@
 
 		if (allValues.length === 0) return null;
 
-		const sortedValues = [...allValues].sort((a, b) => a - b);
-		const mean = allValues.reduce((s, v) => s + v, 0) / allValues.length;
-		const median = sortedValues[Math.floor(sortedValues.length / 2)];
-		const total = allValues.reduce((s, v) => s + v, 0);
+		// Use utility functions for statistics
+		const basicStats = calculateBasicStats(allValues);
+		if (!basicStats) return null;
+
+		const percentiles = calculateExtendedPercentiles(allValues);
 
 		// Find highest payee
 		const highestPayee = Array.from(payeeTotals.entries()).reduce((a, b) => (a[1] > b[1] ? a : b));
 		const lowestPayee = Array.from(payeeTotals.entries()).reduce((a, b) => (a[1] < b[1] ? a : b));
-
-		// Percentiles
-		const p25 = sortedValues[Math.floor(sortedValues.length * 0.25)] || 0;
-		const p50 = median;
-		const p75 = sortedValues[Math.floor(sortedValues.length * 0.75)] || 0;
-
-		// Standard deviation
-		const variance = allValues.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / allValues.length;
-		const stdDev = Math.sqrt(variance);
 
 		// Trend calculation
 		const trends = topPayees.map((payee) => {
@@ -254,10 +246,10 @@
 
 		return {
 			summary: {
-				average: mean,
-				median: median,
-				total: total,
-				count: allValues.length
+				average: basicStats.mean,
+				median: basicStats.median,
+				total: basicStats.total,
+				count: basicStats.count
 			},
 			trend: {
 				direction: trendDirection,
@@ -269,12 +261,12 @@
 				highest: { value: highestPayee[1], month: highestPayee[0], monthLabel: highestPayee[0] },
 				lowest: { value: lowestPayee[1], month: lowestPayee[0], monthLabel: lowestPayee[0] },
 				range: highestPayee[1] - lowestPayee[1],
-				p25,
-				p50,
-				p75,
-				iqr: p75 - p25,
-				stdDev,
-				coefficientOfVariation: mean !== 0 ? (stdDev / mean) * 100 : 0
+				p25: percentiles?.p25 ?? 0,
+				p50: percentiles?.p50 ?? basicStats.median,
+				p75: percentiles?.p75 ?? 0,
+				iqr: percentiles?.iqr ?? 0,
+				stdDev: basicStats.stdDev,
+				coefficientOfVariation: basicStats.mean !== 0 ? (basicStats.stdDev / basicStats.mean) * 100 : 0
 			},
 			outliers: { count: 0, months: [] },
 			comparison: {
@@ -295,7 +287,7 @@
 		chartInteractions.openDrillDown({
 			type: 'payee-month',
 			value: { payee, month: point.month },
-			label: `${payee} - ${point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}`
+			label: `${payee} - ${formatMonthYear(point.date, { long: true, utc: true })}`
 		});
 	}
 
@@ -400,7 +392,7 @@
 						{#snippet children({ point })}
 							<div class="rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 								<p class="font-medium">
-									{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+									{formatMonthYear(point.date, { long: true, utc: true })}
 								</p>
 								{#each topPayees as payee, pi}
 									<p style="color: {colors[pi % colors.length]}">

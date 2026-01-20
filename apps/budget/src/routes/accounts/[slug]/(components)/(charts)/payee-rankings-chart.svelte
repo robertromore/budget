@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { HorizontalBar, AxisX } from '$lib/components/layercake';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { LayerCake, Svg, Html } from 'layercake';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 	import { AnalyticsChartShell } from '$lib/components/charts';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import { parseDateStringToUTC } from '$lib/utils/date-formatters';
 
@@ -154,7 +155,7 @@
 				label: 'Top Payee',
 				value: topPayee?.name || '-',
 				description: topPayee?.change !== null
-					? `${topPayee.change >= 0 ? '+' : ''}${topPayee.change.toFixed(0)}% vs prev`
+					? `${topPayee.change >= 0 ? '+' : ''}${formatPercentRaw(topPayee.change, 0)} vs prev`
 					: `${topPayee?.count || 0} transactions`
 			},
 			{
@@ -166,7 +167,7 @@
 				label: 'Spending Up',
 				value: increasedPayees.toString(),
 				description: biggestIncrease
-					? `${biggestIncrease.name.slice(0, 10)}... +${biggestIncrease.change?.toFixed(0)}%`
+					? `${biggestIncrease.name.slice(0, 10)}... +${formatPercentRaw(biggestIncrease.change ?? 0, 0)}`
 					: 'payees'
 			},
 			{
@@ -187,15 +188,14 @@
 
 		const total = totals.reduce((s, t) => s + t, 0);
 		const mean = total / n;
-		const median = sortedTotals[Math.floor(n / 2)] || 0;
+		const medianValue = median(totals);
 
 		// Standard deviation
-		const variance = totals.reduce((s, t) => s + Math.pow(t - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const stdDev = standardDeviation(totals);
 
 		// Percentiles
 		const p25 = sortedTotals[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
+		const p50 = medianValue;
 		const p75 = sortedTotals[Math.floor(n * 0.75)] || 0;
 
 		// Concentration - top 3 payees as % of total
@@ -205,7 +205,7 @@
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: medianValue,
 				total: total,
 				count: payeeData.reduce((s, p) => s + p.count, 0)
 			},
@@ -319,7 +319,7 @@
 											Total: {currencyFormatter.format(hoveredItem.total)}
 											{#if hoveredItem.change !== null}
 												<span class={hoveredItem.change >= 0 ? 'text-destructive' : 'text-green-600'}>
-													({hoveredItem.change >= 0 ? '+' : ''}{hoveredItem.change.toFixed(0)}%)
+													({hoveredItem.change >= 0 ? '+' : ''}{formatPercentRaw(hoveredItem.change, 0)})
 												</span>
 											{:else if hoveredItem.isNew}
 												<span class="text-blue-600">(new)</span>
@@ -361,7 +361,7 @@
 									dominant-baseline="middle"
 									class="text-[9px] font-medium {payee.change >= 0 ? 'fill-destructive' : 'fill-green-600'}"
 								>
-									{payee.change >= 0 ? '+' : ''}{payee.change.toFixed(0)}%
+									{payee.change >= 0 ? '+' : ''}{formatPercentRaw(payee.change, 0)}
 								</text>
 							{:else if payee.isNew}
 								<text

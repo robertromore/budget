@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Bar, AxisX, AxisY } from '$lib/components/layercake';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
@@ -124,7 +125,7 @@
 			},
 			{
 				label: 'Weekend vs Weekday',
-				value: patterns.weekendVsWeekday > 0 ? `+${patterns.weekendVsWeekday.toFixed(0)}%` : `${patterns.weekendVsWeekday.toFixed(0)}%`,
+				value: patterns.weekendVsWeekday > 0 ? `+${formatPercentRaw(patterns.weekendVsWeekday, 0)}` : formatPercentRaw(patterns.weekendVsWeekday, 0),
 				description: patterns.weekendVsWeekday > 0 ? 'More on weekends' : 'More on weekdays'
 			},
 			{
@@ -144,21 +145,20 @@
 
 		const mean = averages.reduce((s, a) => s + a, 0) / averages.length;
 		const total = totals.reduce((s, t) => s + t, 0);
-		const median = sortedAverages[Math.floor(sortedAverages.length / 2)];
+		const med = median(sortedAverages);
 
 		// Standard deviation
-		const variance = averages.reduce((s, a) => s + Math.pow(a - mean, 2), 0) / averages.length;
-		const stdDev = Math.sqrt(variance);
+		const stdDev = standardDeviation(averages);
 
 		// Percentiles (for 7 values)
 		const p25 = sortedAverages[1] || 0;
-		const p50 = median;
+		const p50 = med;
 		const p75 = sortedAverages[5] || 0;
 
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: med,
 				total: total,
 				count: weekdayData.reduce((sum, d) => sum + d.transactions, 0)
 			},

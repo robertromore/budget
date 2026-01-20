@@ -6,7 +6,7 @@
   import * as Select from "$lib/components/ui/select";
   import { Skeleton } from "$lib/components/ui/skeleton";
   import { ML } from "$lib/query/ml";
-  import { formatCurrency } from "$lib/utils";
+  import { formatCurrency, formatPercent } from "$lib/utils";
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import ArrowUp from "@lucide/svelte/icons/arrow-up";
@@ -229,7 +229,7 @@
                     {formatCurrency(prediction.upperBound)}
                   </td>
                   <td class="py-2 text-right">
-                    {(prediction.confidence * 100).toFixed(0)}%
+                    {formatPercent(prediction.confidence)}
                   </td>
                 </tr>
               {/each}
@@ -262,7 +262,7 @@
           <div class="space-y-1">
             <p class="text-muted-foreground text-xs">Mean Absolute % Error (MAPE)</p>
             <p class="text-lg font-semibold">
-              {(forecastQuery.data.metrics.mape * 100).toFixed(1)}%
+              {formatPercent(forecastQuery.data.metrics.mape, 1)}
             </p>
           </div>
         </div>

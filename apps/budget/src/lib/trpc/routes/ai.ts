@@ -12,6 +12,7 @@ import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$lib/server/ai/prompts
 import { getActiveProvider, type ProviderInstance } from "$lib/server/ai/providers";
 import { createAITools } from "$lib/server/ai/tools";
 import { db } from "$lib/server/db";
+import { formatCurrency } from "$lib/server/utils/formatters";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { parseSlashCommand, formatCommandResult, SLASH_COMMANDS } from "$lib/server/ai/commands";
@@ -130,13 +131,12 @@ function formatToolResultsAsResponse(
 					const spending = transactions.filter(t => t.amount < 0);
 					const spendingTotal = spending.reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-					responses.push(`I found **${transactions.length} transactions** totaling **$${spendingTotal.toFixed(2)}** in spending.`);
+					responses.push(`I found **${transactions.length} transactions** totaling **${formatCurrency(spendingTotal)}** in spending.`);
 
 					if (transactions.length <= 10) {
 						responses.push("\n| Date | Payee | Amount | Category |\n|------|-------|--------|----------|");
 						for (const t of transactions) {
-							const amount = t.amount < 0 ? `-$${Math.abs(t.amount).toFixed(2)}` : `$${t.amount.toFixed(2)}`;
-							responses.push(`| ${t.date} | ${t.payeeName || "Unknown"} | ${amount} | ${t.categoryName || "Uncategorized"} |`);
+							responses.push(`| ${t.date} | ${t.payeeName || "Unknown"} | ${formatCurrency(t.amount)} | ${t.categoryName || "Uncategorized"} |`);
 						}
 					}
 				}
@@ -153,7 +153,7 @@ function formatToolResultsAsResponse(
 					responses.push("I couldn't find that account.");
 				} else {
 					for (const acc of accounts) {
-						responses.push(`**${acc.name}** (${acc.type}): **$${acc.balance.toFixed(2)}**`);
+						responses.push(`**${acc.name}** (${acc.type}): **${formatCurrency(acc.balance)}**`);
 					}
 				}
 				break;
@@ -170,7 +170,7 @@ function formatToolResultsAsResponse(
 				} else {
 					responses.push("### Spending by Category\n");
 					for (const cat of categories.slice(0, 10)) {
-						responses.push(`- **${cat.name}**: $${Math.abs(cat.total).toFixed(2)} (${cat.transactionCount} transactions)`);
+						responses.push(`- **${cat.name}**: ${formatCurrency(Math.abs(cat.total))} (${cat.transactionCount} transactions)`);
 					}
 				}
 				break;
@@ -190,7 +190,7 @@ function formatToolResultsAsResponse(
 					for (const b of budgets) {
 						const pct = b.allocated > 0 ? Math.round((b.spent / b.allocated) * 100) : 0;
 						const status = pct > 100 ? "over budget" : pct > 80 ? "near limit" : "on track";
-						responses.push(`- **${b.name}**: $${b.spent.toFixed(2)} / $${b.allocated.toFixed(2)} (${pct}% - ${status})`);
+						responses.push(`- **${b.name}**: ${formatCurrency(b.spent)} / ${formatCurrency(b.allocated)} (${pct}% - ${status})`);
 					}
 				}
 				break;
@@ -206,7 +206,7 @@ function formatToolResultsAsResponse(
 					responses.push("No spending found for that payee.");
 				} else {
 					for (const p of payees) {
-						responses.push(`**${p.name}**: $${Math.abs(p.total).toFixed(2)} across ${p.transactionCount} transactions`);
+						responses.push(`**${p.name}**: ${formatCurrency(Math.abs(p.total))} across ${p.transactionCount} transactions`);
 					}
 				}
 				break;

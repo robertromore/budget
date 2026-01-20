@@ -2,6 +2,7 @@
 	import { AxisX, AxisY, HorizontalLine, Bar, GroupedBar, StackedBar, Brush } from '$lib/components/layercake';
 	import { ChartSelectionPanel } from '$lib/components/charts';
 	import { currencyFormatter } from '$lib/utils/formatters';
+	import { formatMonthYear } from '$lib/utils/date-formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import type { Account } from '$lib/schema/accounts';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
@@ -403,7 +404,7 @@
 							<div class="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2">
 								<div class="min-w-52 rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 									<p class="font-medium">
-										{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+										{formatMonthYear(point.date, { long: true, utc: true })}
 									</p>
 									<div class="mt-1 space-y-1">
 										<p class="text-green-600">
@@ -479,7 +480,7 @@
 							<div class="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2">
 								<div class="min-w-52 rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 									<p class="font-medium">
-										{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+										{formatMonthYear(point.date, { long: true, utc: true })}
 									</p>
 									<div class="mt-1 space-y-1">
 										<p class="text-green-600">
@@ -555,7 +556,7 @@
 							<div class="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2">
 								<div class="min-w-48 rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 									<p class="font-medium">
-										{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+										{formatMonthYear(point.date, { long: true, utc: true })}
 									</p>
 									<p class="mt-1 font-semibold" style="color: {statusColor}">
 										{currencyFormatter.format(point.payment)}

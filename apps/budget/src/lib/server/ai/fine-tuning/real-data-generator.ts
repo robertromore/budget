@@ -13,6 +13,7 @@
 
 import { db } from "$lib/server/db";
 import { accounts, budgets, budgetCategories, categories, payees, transactions } from "$lib/schema";
+import { formatPercent } from "$lib/server/utils/formatters";
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import {
 	BUDGET_ASSISTANT_SYSTEM_PROMPT,
@@ -236,8 +237,8 @@ function generateRealSpendingExamples(data: Awaited<ReturnType<typeof fetchWorks
 		.filter((c) => c.categoryName && c.totalSpent)
 		.slice(0, 5)
 		.map((c, i) => {
-			const pct = ((c.totalSpent! / totalSpent) * 100).toFixed(0);
-			return `${i + 1}. **${c.categoryName}**: ${formatCurrency(c.totalSpent!)} (${pct}%)`;
+			const pct = formatPercent(c.totalSpent! / totalSpent, 0);
+			return `${i + 1}. **${c.categoryName}**: ${formatCurrency(c.totalSpent!)} (${pct})`;
 		})
 		.join("\n");
 

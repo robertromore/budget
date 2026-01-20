@@ -14,6 +14,7 @@
   import * as Card from "$lib/components/ui/card";
   import { Skeleton } from "$lib/components/ui/skeleton";
   import { ML } from "$lib/query/ml";
+  import { formatPercent } from "$lib/utils";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import Brain from "@lucide/svelte/icons/brain";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
@@ -372,13 +373,13 @@
           <div class="space-y-1">
             <p class="text-muted-foreground text-xs">Acceptance Rate</p>
             <p class="text-xl font-semibold">
-              {(userProfileQuery.data.engagement.acceptanceRate * 100).toFixed(1)}%
+              {formatPercent(userProfileQuery.data.engagement.acceptanceRate, 1)}
             </p>
           </div>
           <div class="space-y-1">
             <p class="text-muted-foreground text-xs">Confidence Calibration</p>
             <p class="text-xl font-semibold">
-              {(userProfileQuery.data.learningProgress.confidenceCalibration * 100).toFixed(0)}%
+              {formatPercent(userProfileQuery.data.learningProgress.confidenceCalibration)}
             </p>
           </div>
         </div>

@@ -29,7 +29,7 @@ import Wallet from '@lucide/svelte/icons/wallet';
 import Wand from '@lucide/svelte/icons/wand';
 import Zap from '@lucide/svelte/icons/zap';
 import type { Table as TanStackTable } from '@tanstack/table-core';
-import { demoMode } from '$lib/states/ui/demo-mode.svelte';
+import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
 // Local component imports
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
@@ -64,7 +64,41 @@ import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
 import AccountSchedulesTable from './(components)/account-schedules-table.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
+import ConvertToTransferDialog from './(dialogs)/convert-to-transfer-dialog.svelte';
 import { columns } from './(data)/columns.svelte';
+
+// Convert demo schedules to Schedule type for display
+function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
+  const now = new Date().toISOString();
+  return {
+    id: demoSchedule.id,
+    workspaceId: -1,
+    seq: null,
+    name: demoSchedule.name,
+    slug: demoSchedule.slug,
+    status: 'active',
+    amount: demoSchedule.amount,
+    amount_2: null,
+    amount_type: 'exact',
+    recurring: true,
+    auto_add: false,
+    dateId: null,
+    payeeId: demoSchedule.payee?.id ?? null,
+    categoryId: demoSchedule.category?.id ?? null,
+    accountId: -1,
+    budgetId: null,
+    createdAt: now,
+    updatedAt: now,
+    payee: demoSchedule.payee ? { id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any : null,
+    category: demoSchedule.category ? { id: demoSchedule.category.id, name: demoSchedule.category.name } as any : null,
+    scheduleDate: {
+      id: demoSchedule.id,
+      frequency: demoSchedule.frequency,
+      interval: demoSchedule.interval,
+      nextOccurrence: demoSchedule.nextOccurrence,
+    } as any,
+  } as Schedule;
+}
 
 // Define valid tab values
 const tabValues = [
@@ -197,7 +231,7 @@ const schedulesQuery = $derived(
   accountId && !isDemoView ? getSchedulesByAccount(Number(accountId)).options() : undefined
 );
 const schedules = $derived.by(() => {
-  if (isDemoView) return demoMode.demoSchedules;
+  if (isDemoView) return demoMode.demoSchedules.map(demoScheduleToSchedule);
   return schedulesQuery?.data ?? [];
 });
 const budgetsQuery = $derived(
@@ -211,6 +245,19 @@ const groupedBudgetsQuery = $derived(
 );
 const groupedBudgets = $derived(groupedBudgetsQuery?.data ?? { spendingLimits: [], savingsGoals: [], recurringExpenses: [], totalCount: 0 });
 
+// Query for all accounts (for transfer selection) - only on client
+const allAccountsQuery = $derived(
+  browser && !isDemoView ? rpc.accounts.listAccounts().options() : undefined
+);
+const transferAccounts = $derived.by(() => {
+  const accounts = allAccountsQuery?.data ?? [];
+  return accounts.map(a => ({
+    id: a.id,
+    name: a.name,
+    accountType: a.accountType,
+  }));
+});
+
 // Create the mutations once
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
 const saveTransactionMutation = rpc.transactions.saveTransaction.options();
@@ -218,6 +265,7 @@ const bulkDeleteTransactionsMutation = rpc.transactions.bulkDeleteTransactions.o
 const deleteTransferMutation = rpc.transactions.deleteTransfer.options();
 const bulkUpdatePayeeMutation = rpc.transactions.bulkUpdatePayee.options();
 const bulkUpdateCategoryMutation = rpc.transactions.bulkUpdateCategory.options();
+const convertToTransferMutation = rpc.transactions.convertToTransfer.options();
 
 // Budget mutations
 const duplicateBudgetMutation = rpc.budgets.duplicateBudget.options();
@@ -356,6 +404,11 @@ function handleAddExpense() {
 // Schedule preview state
 let schedulePreviewOpen = $state(false);
 let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
+
+// Convert to transfer dialog state (for payee selector transfer tab)
+let convertToTransferDialogOpen = $state(false);
+let convertToTransferTransaction = $state<TransactionsFormat | null>(null);
+let preselectedTransferAccountId = $state<number | undefined>(undefined);
 
 // Schedule bulk delete state
 let bulkDeleteSchedulesDialogOpen = $state(false);
@@ -628,6 +681,17 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
     }
   } catch (err: any) {
     console.error('Failed to update transaction:', err);
+  }
+};
+
+// Handle transfer conversion from payee selector - opens dialog for bulk conversion options
+const handleTransferSelect = (transactionId: number, targetAccountId: number) => {
+  // Find the transaction from formattedTransactions
+  const transaction = formattedTransactions.find(t => t.id === transactionId);
+  if (transaction) {
+    convertToTransferTransaction = transaction;
+    preselectedTransferAccountId = targetAccountId;
+    convertToTransferDialogOpen = true;
   }
 };
 
@@ -1006,6 +1070,8 @@ $effect(() => {
           {budgetCount}
           onScheduleClick={handleScheduleClick}
           onBulkDelete={handleBulkDelete}
+          {transferAccounts}
+          onTransferSelect={handleTransferSelect}
           bind:table />
 
         <!-- Add Transaction Dialog -->
@@ -1183,6 +1249,8 @@ $effect(() => {
             {budgetCount}
             onScheduleClick={handleScheduleClick}
             onBulkDelete={handleBulkDelete}
+            {transferAccounts}
+            onTransferSelect={handleTransferSelect}
             bind:table />
 
           <AddTransactionDialog
@@ -1388,6 +1456,15 @@ $effect(() => {
         : typeof selectedScheduleTransaction?.date === 'string'
           ? selectedScheduleTransaction.date
           : undefined} />
+
+    <!-- Convert to Transfer Dialog (from payee selector transfer tab) -->
+    {#if convertToTransferTransaction}
+      <ConvertToTransferDialog
+        transaction={convertToTransferTransaction}
+        bind:dialogOpen={convertToTransferDialogOpen}
+        preselectedAccountId={preselectedTransferAccountId}
+      />
+    {/if}
 
     <!-- HSA Add/Edit Expense Sheet -->
     {#if isHsaAccount && accountData}

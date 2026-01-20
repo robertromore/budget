@@ -2,7 +2,7 @@
 import { rpc } from '$lib/query';
 import * as Card from '$lib/components/ui/card';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
-import { formatCurrency } from '$lib/utils/formatters';
+import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -142,7 +142,7 @@ const contributionProgress = $derived(
           <p class="text-muted-foreground text-xs">
             {contributionProgress > 100
               ? 'Over contribution limit!'
-              : `${(100 - contributionProgress).toFixed(1)}% remaining`}
+              : `${formatPercentRaw(100 - contributionProgress, 1)} remaining`}
           </p>
         </div>
       </Card.Content>

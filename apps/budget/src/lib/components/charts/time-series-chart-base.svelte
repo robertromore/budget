@@ -3,6 +3,7 @@
 	import { AnalysisDropdown, ChartSelectionPanel } from '$lib/components/charts';
 	import { timePeriodFilter, type TimePeriod } from '$lib/states/ui/time-period-filter.svelte';
 	import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
+	import { formatMonthYear, toMonthString } from '$lib/utils/date-formatters';
 	import { LayerCake, Svg } from 'layercake';
 	import { scaleLinear } from 'd3-scale';
 	import AnalyticsChartShell from './analytics-chart-shell.svelte';
@@ -185,8 +186,8 @@
 
 			const predictedValue = trend.intercept + trend.slope * (lastPoint.index + i);
 
-			const monthStr = `${nextDate.getUTCFullYear()}-${String(nextDate.getUTCMonth() + 1).padStart(2, '0')}`;
-			const monthLabel = nextDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+			const monthStr = toMonthString(nextDate);
+			const monthLabel = formatMonthYear(nextDate, { long: true, utc: true });
 
 			forecast.push({
 				x: lastPoint.index + i,

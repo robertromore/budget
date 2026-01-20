@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
   import * as Card from "$lib/components/ui/card";
-  import { cn } from "$lib/utils";
+  import { cn, formatPercent } from "$lib/utils";
   import Activity from "@lucide/svelte/icons/activity";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import CheckCircle2 from "@lucide/svelte/icons/check-circle-2";
@@ -120,7 +120,7 @@
           <div class="flex items-center gap-1.5">
             <CheckCircle2 class="text-muted-foreground h-3 w-3" />
             <span class="text-muted-foreground">Accuracy:</span>
-            <span class="font-medium">{(metrics.accuracy * 100).toFixed(1)}%</span>
+            <span class="font-medium">{formatPercent(metrics.accuracy, 1)}</span>
           </div>
         {/if}
 
@@ -128,7 +128,7 @@
           <div class="flex items-center gap-1.5">
             <AlertTriangle class="text-muted-foreground h-3 w-3" />
             <span class="text-muted-foreground">Errors:</span>
-            <span class="font-medium">{(metrics.errorRate * 100).toFixed(1)}%</span>
+            <span class="font-medium">{formatPercent(metrics.errorRate, 1)}</span>
           </div>
         {/if}
       </div>

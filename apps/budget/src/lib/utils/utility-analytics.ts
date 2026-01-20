@@ -8,6 +8,7 @@
  */
 
 import type { UtilityUsage } from "$lib/schema/utility-usage";
+import { formatPercentRaw } from "$lib/utils/formatters";
 
 // ============================================================================
 // Types
@@ -212,7 +213,7 @@ export function detectAnomalies(
       anomalies.push({
         type: "high_usage",
         severity: usageZScore > 3 ? "critical" : "warning",
-        message: `Usage ${deviationPercent.toFixed(0)}% above average`,
+        message: `Usage ${formatPercentRaw(deviationPercent, 0)} above average`,
         recordId: record.id,
         periodStart: record.periodStart,
         periodEnd: record.periodEnd,
@@ -243,7 +244,7 @@ export function detectAnomalies(
       anomalies.push({
         type: "low_usage",
         severity: "info",
-        message: `Usage ${deviationPercent.toFixed(0)}% below average`,
+        message: `Usage ${formatPercentRaw(deviationPercent, 0)} below average`,
         recordId: record.id,
         periodStart: record.periodStart,
         periodEnd: record.periodEnd,
@@ -266,7 +267,7 @@ export function detectAnomalies(
         anomalies.push({
           type: "usage_spike",
           severity: changePercent > 100 ? "critical" : "warning",
-          message: `${changePercent.toFixed(0)}% increase from previous period`,
+          message: `${formatPercentRaw(changePercent, 0)} increase from previous period`,
           recordId: record.id,
           periodStart: record.periodStart,
           periodEnd: record.periodEnd,
@@ -299,7 +300,7 @@ export function detectAnomalies(
         anomalies.push({
           type: "high_cost",
           severity: deviationPercent > 50 ? "warning" : "info",
-          message: `Rate ${deviationPercent.toFixed(0)}% above average`,
+          message: `Rate ${formatPercentRaw(deviationPercent, 0)} above average`,
           recordId: record.id,
           periodStart: record.periodStart,
           periodEnd: record.periodEnd,
@@ -326,7 +327,7 @@ export function detectAnomalies(
         anomalies.push({
           type: "billing_error",
           severity: costDiffPercent > 25 ? "warning" : "info",
-          message: `Usage cost differs from expected by ${costDiffPercent.toFixed(0)}%`,
+          message: `Usage cost differs from expected by ${formatPercentRaw(costDiffPercent, 0)}`,
           recordId: record.id,
           periodStart: record.periodStart,
           periodEnd: record.periodEnd,

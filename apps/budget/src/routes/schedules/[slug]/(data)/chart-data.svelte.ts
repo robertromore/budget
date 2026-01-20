@@ -1,4 +1,5 @@
 import { nextDaily, nextMonthly, nextWeekly, nextYearly } from "$lib/utils/date-frequency";
+import { formatShortDate, toDateString } from "$lib/utils/date-formatters";
 import { currentDate, parseISOString } from "$lib/utils/dates";
 import type { PageData } from "../$types";
 
@@ -36,10 +37,7 @@ export function generateCumulativeBalanceData(schedule: PageData["schedule"]): C
       amount: transaction.amount,
       type: "historical",
       status: transaction.status,
-      dateLabel: new Date(transaction.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
+      dateLabel: formatShortDate(new Date(transaction.date)),
     });
   });
 
@@ -65,10 +63,10 @@ export function generateCumulativeBalanceData(schedule: PageData["schedule"]): C
 
     while (nextDate <= futureLimit && (!endDate || nextDate <= endDate)) {
       rawData.push({
-        date: nextDate.toISOString().split("T")[0]!,
+        date: toDateString(nextDate),
         amount: schedule.amount,
         type: "projected",
-        dateLabel: nextDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        dateLabel: formatShortDate(nextDate),
       });
 
       // Calculate next occurrence

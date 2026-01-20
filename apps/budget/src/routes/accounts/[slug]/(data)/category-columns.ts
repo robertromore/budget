@@ -2,7 +2,7 @@ import type { ColumnDef, Column } from "@tanstack/table-core";
 import type { TopCategoryData } from "$lib/types";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
-import { formatCurrency } from "$lib/utils/formatters";
+import { formatCurrency, formatPercentRaw } from "$lib/utils/formatters";
 import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
 import DollarSign from "@lucide/svelte/icons/dollar-sign";
 import Hash from "@lucide/svelte/icons/hash";
@@ -12,7 +12,7 @@ import Percent from "@lucide/svelte/icons/percent";
 const countFormatter = (value: number) => Math.round(value).toString();
 
 // Percentage formatter (one decimal place with % symbol)
-const percentageFormatter = (value: number) => `${value.toFixed(1)}%`;
+const percentageFormatter = (value: number) => formatPercentRaw(value, 1);
 
 /**
  * Column definitions for the top categories analytics table
@@ -131,7 +131,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
       id: "percentage",
       accessorKey: "percentage",
       header: "Percentage",
-      cell: ({ row }) => `${row.original.percentage.toFixed(1)}%`,
+      cell: ({ row }) => formatPercentRaw(row.original.percentage, 1),
       enableSorting: true,
       enableHiding: true,
       enableColumnFilter: true,

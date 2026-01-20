@@ -9,7 +9,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Progress } from '$lib/components/ui/progress';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { comparePeriods, getPeriodAnalytics } from '$lib/query/budgets';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import ArrowDown from '@lucide/svelte/icons/arrow-down';
 import ArrowUp from '@lucide/svelte/icons/arrow-up';
 import Minus from '@lucide/svelte/icons/minus';
@@ -48,7 +48,7 @@ const hasComparison = $derived(!!comparison);
 // Format percentage change
 function formatChange(value: number): string {
   const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(1)}%`;
+  return `${sign}${formatPercentRaw(value, 1)}`;
 }
 
 // Get trend info
@@ -146,7 +146,7 @@ function getPerformanceColor(score: number): string {
             <div class="text-muted-foreground text-sm font-medium">Utilization Rate</div>
             <div class="mt-1 flex items-baseline justify-between">
               <span class="text-2xl font-bold {getUtilizationColor(comparison.currentPeriod.utilizationRate)}">
-                {comparison.currentPeriod.utilizationRate.toFixed(1)}%
+                {formatPercentRaw(comparison.currentPeriod.utilizationRate, 1)}
               </span>
               <div class="flex items-center gap-1 {getTrendColor(comparison.changes.utilizationChange)}">
                 <svelte:component this={getTrendIcon(comparison.changes.utilizationChange)} class="h-4 w-4" />
@@ -246,7 +246,7 @@ function getPerformanceColor(score: number): string {
           <div class="rounded-lg border p-4">
             <div class="text-muted-foreground text-sm font-medium">Utilization</div>
             <div class="text-2xl font-bold mt-1 {getUtilizationColor(currentAnalytics.utilizationRate)}">
-              {currentAnalytics.utilizationRate.toFixed(1)}%
+              {formatPercentRaw(currentAnalytics.utilizationRate, 1)}
             </div>
             <Progress
               value={Math.min(currentAnalytics.utilizationRate, 100)}

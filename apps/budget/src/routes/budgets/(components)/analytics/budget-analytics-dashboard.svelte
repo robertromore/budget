@@ -8,7 +8,7 @@ import { getSpendingTrends, listBudgets } from '$lib/query/budgets';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { cn } from '$lib/utils';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import {
   Calendar,
   ChartBar,
@@ -220,7 +220,7 @@ const pieChartConfig = $derived.by(() => {
       <Card.Content>
         <div class="text-2xl font-bold">{currencyFormatter.format(totalSpent)}</div>
         <p class="text-muted-foreground text-xs">
-          {overallProgress.toFixed(1)}% of allocated funds
+          {formatPercentRaw(overallProgress, 1)} of allocated funds
         </p>
       </Card.Content>
     </Card.Root>
@@ -350,7 +350,7 @@ const pieChartConfig = $derived.by(() => {
                   <div class="flex flex-1 items-center gap-2">
                     <Progress value={Math.min(budget.utilizationRate, 100)} class="flex-1" />
                     <span class="text-muted-foreground font-mono text-xs">
-                      {budget.utilizationRate.toFixed(1)}%
+                      {formatPercentRaw(budget.utilizationRate, 1)}
                     </span>
                   </div>
                 </div>

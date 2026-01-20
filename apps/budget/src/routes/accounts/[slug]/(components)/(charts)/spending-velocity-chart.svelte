@@ -2,7 +2,7 @@
 	import { Line, Area, AxisX, AxisY, Brush, Tooltip, Scatter, HorizontalLine, CustomLine, PercentileBands } from '$lib/components/layercake';
 	import { AnalysisDropdown, ChartSelectionPanel } from '$lib/components/charts';
 	import { Button } from '$lib/components/ui/button';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
@@ -13,7 +13,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ChartType } from '$lib/components/layercake';
-	import { extractDateString, toDateString } from '$lib/utils/date-formatters';
+	import { extractDateString, toDateString, formatShortDate, formatWeekdayDate } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -145,7 +145,7 @@
 				rolling: rollingSum / rollingCount,
 				index: i,
 				month: dateStr,
-				monthLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+				monthLabel: formatShortDate(date),
 			});
 		}
 
@@ -237,7 +237,7 @@
 			{ label: 'Low Rate', value: `${currencyFormatter.format(lowRate)}/day` },
 			{
 				label: 'Trend',
-				value: trendPct > 0 ? `+${trendPct.toFixed(1)}%` : `${trendPct.toFixed(1)}%`,
+				value: trendPct > 0 ? `+${formatPercentRaw(trendPct, 1)}` : formatPercentRaw(trendPct, 1),
 				description: trendPct > 0 ? 'Spending increasing' : 'Spending decreasing'
 			}
 		];
@@ -454,7 +454,7 @@
 							const idx = typeof d === 'number' ? Math.round(d) : 0;
 							const point = data[idx];
 							if (!point) return '';
-							return point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+							return formatShortDate(point.date);
 						}}
 					/>
 
@@ -546,7 +546,7 @@
 							{@const vsAvg = historicalAvgForTooltip ? ((point.rolling - historicalAvgForTooltip) / historicalAvgForTooltip) * 100 : null}
 							<foreignObject x={Math.min(x + 10, 180)} y={10} width="200" height="220">
 								<div class="rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
-									<p class="font-medium">{point.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+									<p class="font-medium">{formatWeekdayDate(point.date)}</p>
 
 									<!-- Rolling vs Daily -->
 									<div class="mt-1 space-y-0.5">
@@ -561,7 +561,7 @@
 									<!-- Comparison to historical average -->
 									{#if vsAvg !== null}
 										<p class="mt-1 text-xs {vsAvg > 0 ? 'text-destructive' : 'text-green-600'}">
-											{vsAvg > 0 ? '+' : ''}{vsAvg.toFixed(1)}% vs avg
+											{vsAvg > 0 ? '+' : ''}{formatPercentRaw(vsAvg, 1)} vs avg
 										</p>
 									{/if}
 

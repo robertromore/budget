@@ -3,12 +3,12 @@
 	import { ChartSelectionPanel } from '$lib/components/charts';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 	import { chartSelection, type SelectedDataPoint } from '$lib/states/ui/chart-selection.svelte';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
-	import { calculateLinearTrend, calculateHistoricalAverage, type TrendLineData } from '$lib/utils/chart-statistics';
+	import { calculateLinearTrend, calculateHistoricalAverage, calculateBasicStats, calculateExtendedPercentiles, type TrendLineData } from '$lib/utils/chart-statistics';
 	import { LayerCake, Svg } from 'layercake';
 	import { scaleLinear } from 'd3-scale';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -16,7 +16,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
-	import { extractDateString } from '$lib/utils/date-formatters';
+	import { extractDateString, formatMonthYearShort } from '$lib/utils/date-formatters';
 
 	// Toggle states for analysis overlays
 	let showLinearTrend = $state(false);
@@ -227,7 +227,7 @@
 
 	// Format month for display
 	function formatMonth(date: Date): string {
-		return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+		return formatMonthYearShort(date);
 	}
 
 	// Convert a data point to SelectedDataPoint format
@@ -354,7 +354,7 @@
 			},
 			{
 				label: 'Recurring %',
-				value: `${((totalRecurring / total) * 100).toFixed(0)}%`,
+				value: formatPercentRaw((totalRecurring / total) * 100),
 				description: 'of total spending'
 			}
 		];
@@ -367,38 +367,29 @@
 		const recurringTotals = monthlyData.map((d) => d.recurring);
 		const oneTimeTotals = monthlyData.map((d) => d.oneTime);
 		const totals = monthlyData.map((d) => d.total);
-		const sortedTotals = [...totals].sort((a, b) => a - b);
-		const n = totals.length;
 
-		const totalSpending = totals.reduce((s, t) => s + t, 0);
+		// Use utility functions for statistics
+		const basicStats = calculateBasicStats(totals);
+		if (!basicStats) return null;
+
+		const percentiles = calculateExtendedPercentiles(totals);
+
 		const totalRecurring = recurringTotals.reduce((s, r) => s + r, 0);
 		const totalOneTime = oneTimeTotals.reduce((s, o) => s + o, 0);
-
-		const mean = totalSpending / n;
-		const median = sortedTotals[Math.floor(n / 2)] || 0;
-
-		// Standard deviation
-		const variance = totals.reduce((s, t) => s + Math.pow(t - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
-
-		// Percentiles
-		const p25 = sortedTotals[Math.floor(n * 0.25)] || 0;
-		const p50 = median;
-		const p75 = sortedTotals[Math.floor(n * 0.75)] || 0;
 
 		// Find highest and lowest months
 		const highestIdx = totals.indexOf(Math.max(...totals));
 		const lowestIdx = totals.indexOf(Math.min(...totals));
 
 		// Recurring percentage
-		const recurringPercent = totalSpending > 0 ? (totalRecurring / totalSpending) * 100 : 0;
+		const recurringPercent = basicStats.total > 0 ? (totalRecurring / basicStats.total) * 100 : 0;
 
 		return {
 			summary: {
-				average: mean,
-				median: median,
-				total: totalSpending,
-				count: n
+				average: basicStats.mean,
+				median: basicStats.median,
+				total: basicStats.total,
+				count: basicStats.count
 			},
 			trend: {
 				direction: 'flat',
@@ -409,17 +400,17 @@
 			distribution: {
 				highest: { value: totals[highestIdx], month: monthlyData[highestIdx]?.month || '', monthLabel: monthlyData[highestIdx]?.month || '' },
 				lowest: { value: totals[lowestIdx], month: monthlyData[lowestIdx]?.month || '', monthLabel: monthlyData[lowestIdx]?.month || '' },
-				range: Math.max(...totals) - Math.min(...totals),
-				p25,
-				p50,
-				p75,
-				iqr: p75 - p25,
-				stdDev,
-				coefficientOfVariation: mean !== 0 ? (stdDev / mean) * 100 : 0
+				range: basicStats.range,
+				p25: percentiles?.p25 ?? 0,
+				p50: percentiles?.p50 ?? basicStats.median,
+				p75: percentiles?.p75 ?? 0,
+				iqr: percentiles?.iqr ?? 0,
+				stdDev: basicStats.stdDev,
+				coefficientOfVariation: basicStats.mean !== 0 ? (basicStats.stdDev / basicStats.mean) * 100 : 0
 			},
 			outliers: { count: 0, months: [] },
 			comparison: {
-				vsHistoricalAvg: totalRecurring / n,
+				vsHistoricalAvg: totalRecurring / basicStats.count,
 				vsHistoricalAvgPercent: recurringPercent,
 				vsBudgetTarget: null,
 				vsBudgetTargetPercent: null,
@@ -656,7 +647,7 @@
 										Total: {currencyFormatter.format(point.total)}
 									</p>
 									<p class="text-xs text-muted-foreground">
-										{recurringPercent.toFixed(0)}% recurring
+										{formatPercentRaw(recurringPercent, 0)} recurring
 									</p>
 
 									<!-- Previous month comparison -->
@@ -664,7 +655,7 @@
 										{@const change = point.total - prevMonth.total}
 										{@const changePercent = prevMonth.total > 0 ? (change / prevMonth.total) * 100 : 0}
 										<p class="text-xs mt-1 {change > 0 ? 'text-destructive' : 'text-green-600'}">
-											{change > 0 ? '↑' : '↓'} {currencyFormatter.format(Math.abs(change))} ({changePercent > 0 ? '+' : ''}{changePercent.toFixed(0)}%) vs prev month
+											{change > 0 ? '↑' : '↓'} {currencyFormatter.format(Math.abs(change))} ({changePercent > 0 ? '+' : ''}{formatPercentRaw(changePercent, 0)}) vs prev month
 										</p>
 									{/if}
 
@@ -673,7 +664,7 @@
 										{@const diffFromAvg = point.total - historicalAverage}
 										{@const diffPercent = (diffFromAvg / historicalAverage) * 100}
 										<p class="text-xs" style="color: var(--chart-6);">
-											{diffFromAvg > 0 ? '+' : ''}{diffPercent.toFixed(0)}% vs historical avg
+											{diffFromAvg > 0 ? '+' : ''}{formatPercentRaw(diffPercent, 0)} vs historical avg
 										</p>
 									{/if}
 

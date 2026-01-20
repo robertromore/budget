@@ -12,6 +12,7 @@ import {
 	type TrendLineData,
 	type PercentileBands
 } from './chart-statistics';
+import { formatPercentRaw } from './formatters';
 
 // ===== Type Definitions =====
 
@@ -729,7 +730,7 @@ export function formatStatCurrency(value: number): string {
 export function formatStatPercent(value: number | null, includeSign = true): string {
 	if (value === null) return 'N/A';
 	const sign = includeSign && value > 0 ? '+' : '';
-	return `${sign}${value.toFixed(1)}%`;
+	return `${sign}${formatPercentRaw(value, 1)}`;
 }
 
 /**

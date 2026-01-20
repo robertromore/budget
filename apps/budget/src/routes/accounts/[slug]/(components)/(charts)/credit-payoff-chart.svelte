@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Line, AxisX, AxisY, Tooltip, CustomLine, ZeroLine, InteractiveLegend, MultiLine, Scatter } from '$lib/components/layercake';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import type { Account } from '$lib/schema/accounts';
 	import { calculatePayoffScenarios, getCurrentBalance, type PayoffScenario } from '$lib/utils/credit-card-analytics';
@@ -333,7 +333,7 @@
 				<div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
 					Current Balance: <strong class="text-foreground">{currencyFormatter.format(currentBalance)}</strong>
 					{#if interestRate > 0}
-						| APR: <strong class="text-foreground">{interestRate.toFixed(2)}%</strong>
+						| APR: <strong class="text-foreground">{formatPercentRaw(interestRate, 2)}</strong>
 					{/if}
 					{#if minimumPayment > 0}
 						| Minimum: <strong class="text-foreground">{currencyFormatter.format(minimumPayment)}/mo</strong>

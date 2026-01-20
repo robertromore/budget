@@ -6,6 +6,7 @@
 		formatStatPercent,
 		getTrendIndicator
 	} from '$lib/utils/comprehensive-statistics';
+	import { formatPercentRaw } from '$lib/utils/formatters';
 	import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import Activity from '@lucide/svelte/icons/activity';
@@ -224,7 +225,7 @@
 							<p class="text-xs text-muted-foreground">Relative variability (lower is more consistent)</p>
 						</div>
 						<p class="text-sm font-semibold tabular-nums">
-							{stats.distribution.coefficientOfVariation.toFixed(1)}%
+							{formatPercentRaw(stats.distribution.coefficientOfVariation, 1)}
 						</p>
 					</div>
 				{/if}
@@ -312,7 +313,7 @@
 									{stats.comparison.vsBudgetTarget > 0 ? '+' : ''}{formatStatCurrency(stats.comparison.vsBudgetTarget)}
 								</p>
 								<p class="text-xs text-muted-foreground tabular-nums">
-									{stats.comparison.vsBudgetTargetPercent?.toFixed(0)}% of budget
+									{formatPercentRaw(stats.comparison.vsBudgetTargetPercent ?? 0, 0)} of budget
 								</p>
 							</div>
 						</div>

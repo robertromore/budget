@@ -15,6 +15,7 @@ import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import Check from '@lucide/svelte/icons/check';
 import { cn } from '$lib/utils';
+import { formatCurrency } from '$lib/utils/formatters';
 import { untrack } from 'svelte';
 
 interface Props {
@@ -493,12 +494,12 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
 
             <div>
               <p class="text-muted-foreground text-sm">Total Amount</p>
-              <p class="text-lg font-medium">${amount.toFixed(2)}</p>
+              <p class="text-lg font-medium">{formatCurrency(amount)}</p>
             </div>
 
             <div>
               <p class="text-muted-foreground text-sm">Out of Pocket</p>
-              <p class="text-primary text-lg font-medium">${outOfPocket.toFixed(2)}</p>
+              <p class="text-primary text-lg font-medium">{formatCurrency(outOfPocket)}</p>
             </div>
 
             <div>

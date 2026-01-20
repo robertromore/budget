@@ -7,7 +7,8 @@
 	import { LayerCake, Svg, Html } from 'layercake';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
-	import { extractDateString } from '$lib/utils/date-formatters';
+	import { extractDateString, formatMonthYearShort } from '$lib/utils/date-formatters';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -99,7 +100,7 @@
 				const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
 				return {
 					month,
-					monthLabel: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+					monthLabel: formatMonthYearShort(date),
 					index: idx,
 					...data
 				};
@@ -149,11 +150,8 @@
 
 		const total = monthlyTotals.reduce((s, t) => s + t, 0);
 		const mean = total / n;
-		const median = sortedTotals[Math.floor(n / 2)] || 0;
-
-		// Standard deviation
-		const variance = monthlyTotals.reduce((s, t) => s + Math.pow(t - mean, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const medianValue = median(monthlyTotals);
+		const stdDev = standardDeviation(monthlyTotals);
 
 		// Find highest/lowest months
 		const highestIdx = monthlyTotals.indexOf(Math.max(...monthlyTotals));
@@ -171,7 +169,7 @@
 		return {
 			summary: {
 				average: mean,
-				median: median,
+				median: medianValue,
 				total: total,
 				count: n
 			},
@@ -186,7 +184,7 @@
 				lowest: { value: monthlyTotals[lowestIdx], month: monthlyData[lowestIdx]?.monthLabel || '', monthLabel: monthlyData[lowestIdx]?.monthLabel || '' },
 				range: Math.max(...monthlyTotals) - Math.min(...monthlyTotals),
 				p25: sortedTotals[Math.floor(n * 0.25)] || 0,
-				p50: median,
+				p50: medianValue,
 				p75: sortedTotals[Math.floor(n * 0.75)] || 0,
 				iqr: (sortedTotals[Math.floor(n * 0.75)] || 0) - (sortedTotals[Math.floor(n * 0.25)] || 0),
 				stdDev,

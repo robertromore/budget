@@ -17,9 +17,10 @@ import Users from '@lucide/svelte/icons/users';
 interface Props {
   transaction: TransactionsFormat;
   dialogOpen: boolean;
+  preselectedAccountId?: number;
 }
 
-let { transaction, dialogOpen = $bindable() }: Props = $props();
+let { transaction, dialogOpen = $bindable(), preselectedAccountId }: Props = $props();
 
 // Get accounts state
 const accountsState = AccountsState.get();
@@ -42,6 +43,16 @@ let selectedAccount = $state<{ id: number; name: string } | undefined>(undefined
 let isSubmitting = $state(false);
 let rememberMapping = $state(false);
 let convertSimilar = $state(false);
+
+// Auto-select account when preselectedAccountId is provided
+$effect(() => {
+  if (preselectedAccountId && availableAccounts.length > 0 && !selectedAccount) {
+    const account = availableAccounts.find(a => a.id === preselectedAccountId);
+    if (account) {
+      selectedAccount = { id: account.id, name: account.name };
+    }
+  }
+});
 
 // Get the payee string to use for mapping (prefer original import string, fall back to payee name)
 const payeeStringForMapping = $derived(

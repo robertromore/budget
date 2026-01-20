@@ -5,7 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 
 	// Icons
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -210,7 +210,7 @@
 							<div>
 								<p class="text-xs text-muted-foreground">% Change</p>
 								<p class="text-lg font-semibold tabular-nums" class:text-destructive={trendAnalysis.percentTotalChange > 0} class:text-green-600={trendAnalysis.percentTotalChange < 0}>
-									{trendAnalysis.percentTotalChange > 0 ? '+' : ''}{trendAnalysis.percentTotalChange.toFixed(1)}%
+									{trendAnalysis.percentTotalChange > 0 ? '+' : ''}{formatPercentRaw(trendAnalysis.percentTotalChange, 1)}
 								</p>
 							</div>
 						</div>
@@ -230,14 +230,14 @@
 							<div>
 								<p class="text-xs text-muted-foreground">Trend Strength (R²)</p>
 								<p class="text-lg font-semibold tabular-nums">
-									{(trendAnalysis.rSquared * 100).toFixed(1)}%
+									{formatPercentRaw(trendAnalysis.rSquared * 100, 1)}
 								</p>
 								<p class="text-xs {getTrendStrength(trendAnalysis.rSquared).color}">{getTrendStrength(trendAnalysis.rSquared).label}</p>
 							</div>
 							<div>
 								<p class="text-xs text-muted-foreground">Volatility (CV)</p>
 								<p class="text-lg font-semibold tabular-nums">
-									{trendAnalysis.volatility.toFixed(1)}%
+									{formatPercentRaw(trendAnalysis.volatility, 1)}
 								</p>
 								<p class="text-xs text-muted-foreground">
 									{trendAnalysis.volatility < 20 ? 'Low' : trendAnalysis.volatility < 40 ? 'Moderate' : 'High'}
@@ -302,7 +302,7 @@
 											+{currencyFormatter.format(trendAnalysis.largestIncrease.change)}
 										</p>
 										<p class="text-xs text-destructive">
-											+{trendAnalysis.largestIncrease.percentChange.toFixed(1)}%
+											+{formatPercentRaw(trendAnalysis.largestIncrease.percentChange, 1)}
 										</p>
 									</div>
 								</div>
@@ -321,7 +321,7 @@
 											{currencyFormatter.format(trendAnalysis.largestDecrease.change)}
 										</p>
 										<p class="text-xs text-green-600">
-											{trendAnalysis.largestDecrease.percentChange.toFixed(1)}%
+											{formatPercentRaw(trendAnalysis.largestDecrease.percentChange, 1)}
 										</p>
 									</div>
 								</div>
@@ -373,7 +373,7 @@
 									<span class="tabular-nums" class:text-destructive={change.change > 0} class:text-green-600={change.change < 0}>
 										{change.change > 0 ? '+' : ''}{currencyFormatter.format(change.change)}
 										<span class="ml-1 text-xs">
-											({change.percentChange > 0 ? '+' : ''}{change.percentChange.toFixed(1)}%)
+											({change.percentChange > 0 ? '+' : ''}{formatPercentRaw(change.percentChange, 1)})
 										</span>
 									</span>
 								</div>

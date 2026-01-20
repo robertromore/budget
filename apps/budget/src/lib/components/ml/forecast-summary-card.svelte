@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
   import * as Card from "$lib/components/ui/card";
-  import { cn, formatCurrency } from "$lib/utils";
+  import { cn, formatCurrency, formatPercent, formatPercentRaw } from "$lib/utils";
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import ArrowUp from "@lucide/svelte/icons/arrow-up";
   import Minus from "@lucide/svelte/icons/minus";
@@ -139,7 +139,7 @@
                 {:else}
                   <ArrowDown class="h-3 w-3" />
                 {/if}
-                {Math.abs(totals.percentChange).toFixed(1)}%
+                {formatPercentRaw(Math.abs(totals.percentChange), 1)}
               </span>
             {/if}
           </div>
@@ -180,7 +180,7 @@
         {#if confidence !== undefined}
           <div class="space-y-0.5">
             <p class="text-muted-foreground text-xs">Confidence</p>
-            <p class="font-medium">{(confidence * 100).toFixed(0)}%</p>
+            <p class="font-medium">{formatPercent(confidence)}</p>
           </div>
         {/if}
       </div>

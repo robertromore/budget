@@ -13,6 +13,7 @@ import { budgets } from "$lib/schema/budgets";
 import type { RecommendationMetadata, RecommendationPriority } from "$lib/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
+import { standardDeviation } from "$lib/utils/chart-statistics";
 import { eq } from "drizzle-orm";
 import type { BudgetWithRelations } from "./repository";
 
@@ -472,8 +473,7 @@ export class BudgetGroupAnalysisService {
     if (amounts.length < 2) return 0;
 
     const avg = amounts.reduce((sum, a) => sum + a, 0) / amounts.length;
-    const variance = amounts.reduce((sum, a) => sum + Math.pow(a - avg, 2), 0) / amounts.length;
-    const stdDev = Math.sqrt(variance);
+    const stdDev = standardDeviation(amounts);
 
     // Low variance = high similarity
     const coefficientOfVariation = stdDev / avg;

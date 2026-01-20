@@ -2,7 +2,8 @@
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import { cn, formatCurrency } from "$lib/utils";
+  import { cn, formatCurrency, formatPercent } from "$lib/utils";
+  import { formatShortDate } from "$lib/utils/date-formatters";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import Calendar from "@lucide/svelte/icons/calendar";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
@@ -101,8 +102,7 @@
   };
 
   function formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return formatShortDate(new Date(dateStr));
   }
 
   function getConfidenceColor(confidence: number): string {
@@ -203,7 +203,7 @@
                   {formatCurrency(pattern.averageAmount)}
                 </p>
                 <p class={cn("text-xs", getConfidenceColor(pattern.confidence))}>
-                  {(pattern.confidence * 100).toFixed(0)}%
+                  {formatPercent(pattern.confidence)}
                 </p>
               </div>
             </div>

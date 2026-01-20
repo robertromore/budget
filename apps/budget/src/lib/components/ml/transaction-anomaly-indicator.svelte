@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
   import * as Tooltip from "$lib/components/ui/tooltip";
-  import { cn } from "$lib/utils";
+  import { cn, formatPercent } from "$lib/utils";
   import AlertCircle from "@lucide/svelte/icons/alert-circle";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import Info from "@lucide/svelte/icons/info";
@@ -85,7 +85,7 @@
             <p class="text-muted-foreground text-xs">{explanation}</p>
           {/if}
           <p class="text-muted-foreground text-xs">
-            Anomaly Score: {(score * 100).toFixed(0)}%
+            Anomaly Score: {formatPercent(score)}
           </p>
         </div>
       </Tooltip.Content>
@@ -98,7 +98,7 @@
         <Badge variant={config.variant} class={cn("gap-1", className)}>
           <config.icon class="h-3 w-3" />
           {#if showScore}
-            <span>{(score * 100).toFixed(0)}%</span>
+            <span>{formatPercent(score)}</span>
           {:else}
             <span>{config.label}</span>
           {/if}

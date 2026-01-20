@@ -18,6 +18,7 @@ import {
   transactions,
 } from "$lib/schema";
 import { db } from "$lib/server/db";
+import { formatPercent } from "$lib/server/utils/formatters";
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 
@@ -364,8 +365,8 @@ export function createBudgetPredictionService(
     }
 
     if (overSpendRisk === "medium") {
-      const reduceBy = ((dailySpendingRate - recommendedDailyLimit) / dailySpendingRate * 100).toFixed(0);
-      return `At current pace, you'll exceed your budget by ~$${Math.abs(predictedOverspend).toFixed(2)}. Reduce daily spending by ${reduceBy}% to stay on track.`;
+      const reduceBy = formatPercent((dailySpendingRate - recommendedDailyLimit) / dailySpendingRate, 0);
+      return `At current pace, you'll exceed your budget by ~$${Math.abs(predictedOverspend).toFixed(2)}. Reduce daily spending by ${reduceBy} to stay on track.`;
     }
 
     if (overSpendRisk === "high") {

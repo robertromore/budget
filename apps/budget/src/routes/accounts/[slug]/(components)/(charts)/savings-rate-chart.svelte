@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Line, Area, AxisX, AxisY, Tooltip, ZeroLine, HorizontalLine, CustomLine, PercentileBands, Scatter, Brush } from '$lib/components/layercake';
 	import { AnalysisDropdown, ChartSelectionPanel } from '$lib/components/charts';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
@@ -16,7 +16,7 @@
 	import Target from '@lucide/svelte/icons/target';
 	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 	import { chartSelection, type SelectedDataPoint } from '$lib/states/ui/chart-selection.svelte';
-	import { extractDateString } from '$lib/utils/date-formatters';
+	import { extractDateString, formatMonthYear, toMonthString } from '$lib/utils/date-formatters';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -78,7 +78,7 @@
 
 				return {
 					month,
-					monthLabel: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+					monthLabel: formatMonthYear(date, { long: true, utc: true }),
 					date,
 					income: data.income,
 					expenses: data.expenses,
@@ -168,8 +168,8 @@
 			// Clamp to -100% to 100% range
 			const clampedValue = Math.max(-100, Math.min(100, predictedValue));
 
-			const monthStr = `${nextDate.getUTCFullYear()}-${String(nextDate.getUTCMonth() + 1).padStart(2, '0')}`;
-			const monthLabel = nextDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+			const monthStr = toMonthString(nextDate);
+			const monthLabel = formatMonthYear(nextDate, { long: true, utc: true });
 
 			forecast.push({
 				x: lastPoint.index + i,
@@ -650,10 +650,10 @@
 							{@const yoyInfo = showYoYComparison ? getYoYDataForMonth(point.month) : null}
 							<div class="rounded-md border bg-popover px-3 py-2 text-sm shadow-md min-w-50">
 								<p class="font-medium">
-									{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+									{formatMonthYear(point.date, { long: true, utc: true })}
 								</p>
 								<p class={point.savingsRate >= 0 ? 'font-semibold text-green-600' : 'font-semibold text-red-600'}>
-									{point.savingsRate.toFixed(1)}% savings rate
+									{formatPercentRaw(point.savingsRate, 1)} savings rate
 								</p>
 								<div class="text-muted-foreground mt-1 text-xs">
 									<p>Income: {currencyFormatter.format(point.income)}</p>
@@ -685,7 +685,7 @@
 									<!-- Moving average -->
 									{#if showMovingAvg && mavgValue !== null}
 										<p class="text-muted-foreground">
-											{MOVING_AVG_WINDOW}-mo avg: {mavgValue.toFixed(1)}%
+											{MOVING_AVG_WINDOW}-mo avg: {formatPercentRaw(mavgValue, 1)}
 										</p>
 									{/if}
 
@@ -693,7 +693,7 @@
 									{#if showYoYComparison && yoyInfo}
 										<p class={yoyInfo.yoyChange >= 0 ? 'text-green-600' : 'text-amber-600'}>
 											{yoyInfo.yoyChange >= 0 ? '+' : ''}{yoyInfo.yoyChange.toFixed(1)}pp vs last year
-											<span class="text-muted-foreground">({yoyInfo.prevYearRate.toFixed(1)}%)</span>
+											<span class="text-muted-foreground">({formatPercentRaw(yoyInfo.prevYearRate, 1)})</span>
 										</p>
 									{/if}
 								</div>

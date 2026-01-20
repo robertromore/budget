@@ -38,6 +38,52 @@ export const percentageFormatter = {
   format: (value: number): string => `${value.toFixed(1)}%`,
 };
 
+/**
+ * Format a decimal value as a percentage
+ * @param value - Decimal value (0.5 = 50%, 1.0 = 100%)
+ * @param decimals - Number of decimal places (default: 0)
+ * @returns Formatted percentage string (e.g., "50%", "75.5%")
+ *
+ * @example
+ * formatPercent(0.75) // "75%"
+ * formatPercent(0.756, 1) // "75.6%"
+ * formatPercent(1.25) // "125%"
+ */
+export function formatPercent(value: number, decimals = 0): string {
+  return `${(value * 100).toFixed(decimals)}%`;
+}
+
+/**
+ * Format a decimal value as a percentage with sign indicator
+ * @param value - Decimal value (0.5 = 50%, -0.25 = -25%)
+ * @param decimals - Number of decimal places (default: 1)
+ * @returns Formatted percentage with sign (e.g., "+50%", "-25.5%")
+ *
+ * @example
+ * formatPercentChange(0.15) // "+15.0%"
+ * formatPercentChange(-0.08) // "-8.0%"
+ * formatPercentChange(0) // "0.0%"
+ */
+export function formatPercentChange(value: number, decimals = 1): string {
+  const percent = (value * 100).toFixed(decimals);
+  if (value > 0) return `+${percent}%`;
+  return `${percent}%`;
+}
+
+/**
+ * Format a raw percentage value (already multiplied by 100)
+ * @param value - Percentage value (50 = 50%, 100 = 100%)
+ * @param decimals - Number of decimal places (default: 0)
+ * @returns Formatted percentage string
+ *
+ * @example
+ * formatPercentRaw(75) // "75%"
+ * formatPercentRaw(75.6, 1) // "75.6%"
+ */
+export function formatPercentRaw(value: number, decimals = 0): string {
+  return `${value.toFixed(decimals)}%`;
+}
+
 export const daysFormatter = {
   format: (value: number): string => `${Math.round(value)} days`,
 };

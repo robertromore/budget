@@ -9,6 +9,7 @@
 	import { scaleBand, scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -159,11 +160,8 @@
 		const totalTransactions = counts.reduce((s, c) => s + c, 0);
 		const totalSpending = totals.reduce((s, t) => s + t, 0);
 		const meanCount = totalTransactions / n;
-		const medianCount = sortedCounts[Math.floor(n / 2)] || 0;
-
-		// Standard deviation of counts
-		const variance = counts.reduce((s, c) => s + Math.pow(c - meanCount, 2), 0) / n;
-		const stdDev = Math.sqrt(variance);
+		const medianCount = median(counts);
+		const stdDev = standardDeviation(counts);
 
 		// Frequency distribution
 		const frequencyDist = {
@@ -179,7 +177,7 @@
 		return {
 			summary: {
 				average: totalSpending / n,
-				median: totals.sort((a, b) => a - b)[Math.floor(n / 2)] || 0,
+				median: median(totals),
 				total: totalSpending,
 				count: totalTransactions
 			},

@@ -2,7 +2,7 @@
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import { cn } from "$lib/utils";
+  import { cn, formatPercent } from "$lib/utils";
   import AlertCircle from "@lucide/svelte/icons/alert-circle";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
@@ -118,7 +118,7 @@
             Transaction #{transactionId}
           </Card.Title>
           <p class="text-muted-foreground text-xs">
-            Anomaly Score: {(overallScore * 100).toFixed(0)}%
+            Anomaly Score: {formatPercent(overallScore)}
           </p>
         </div>
       </div>
@@ -150,7 +150,7 @@
                     style="width: {dim.score * 100}%"
                   ></div>
                 </div>
-                <span class="w-8 text-right font-medium">{(dim.score * 100).toFixed(0)}%</span>
+                <span class="w-8 text-right font-medium">{formatPercent(dim.score)}</span>
               </div>
             </div>
           {/each}

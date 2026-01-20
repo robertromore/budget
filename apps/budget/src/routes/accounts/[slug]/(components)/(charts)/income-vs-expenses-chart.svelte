@@ -4,7 +4,7 @@ import { AnalysisDropdown, ChartOverlays } from '$lib/components/charts';
 import type { TransactionsFormat } from '$lib/types';
 import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
 import { timezone } from '$lib/utils/dates';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
@@ -182,7 +182,7 @@ const summaryStats = $derived.by(() => {
   const avgMonthlyExpenses = totalExpenses / chartData.length;
 
   const incomeRatio =
-    avgMonthlyExpenses > 0 ? ((avgMonthlyIncome / avgMonthlyExpenses) * 100).toFixed(0) + '%' : '∞';
+    avgMonthlyExpenses > 0 ? formatPercentRaw((avgMonthlyIncome / avgMonthlyExpenses) * 100) : '∞';
 
   return [
     {

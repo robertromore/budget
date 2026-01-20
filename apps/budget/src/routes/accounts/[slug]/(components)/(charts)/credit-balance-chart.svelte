@@ -12,7 +12,8 @@
 		Brush
 	} from '$lib/components/layercake';
 	import { AnalysisDropdown, ChartSelectionPanel } from '$lib/components/charts';
-	import { currencyFormatter } from '$lib/utils/formatters';
+	import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+	import { formatMonthYear, toMonthString } from '$lib/utils/date-formatters';
 	import type { TransactionsFormat } from '$lib/types';
 	import type { Account } from '$lib/schema/accounts';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
@@ -153,12 +154,8 @@
 			const predictedValue = trend.intercept + trend.slope * (lastPoint.index + i);
 			const clampedValue = Math.max(0, predictedValue);
 
-			const monthStr = `${nextDate.getUTCFullYear()}-${String(nextDate.getUTCMonth() + 1).padStart(2, '0')}`;
-			const monthLabel = nextDate.toLocaleDateString('en-US', {
-				month: 'long',
-				year: 'numeric',
-				timeZone: 'UTC'
-			});
+			const monthStr = toMonthString(nextDate);
+			const monthLabel = formatMonthYear(nextDate, { long: true, utc: true });
 
 			forecast.push({
 				x: lastPoint.index + i,
@@ -515,7 +512,7 @@
 								{@const mavgValue = showMovingAvg ? getMovingAvgForMonth(point.month) : null}
 								<div class="min-w-52 rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
 									<p class="font-medium">
-										{point.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+										{formatMonthYear(point.date, { long: true, utc: true })}
 									</p>
 									<p class="font-semibold">
 										{currencyFormatter.format(getDisplayValue(point))}
@@ -526,7 +523,7 @@
 									<div class="text-muted-foreground mt-1 text-xs">
 										<p>Balance: {currencyFormatter.format(point.endingBalance)}</p>
 										<p>Available: {currencyFormatter.format(point.availableCredit)}</p>
-										<p>Utilization: {point.utilization.toFixed(1)}%</p>
+										<p>Utilization: {formatPercentRaw(point.utilization, 1)}</p>
 										{#if creditLimit > 0}
 											<p>Credit Limit: {currencyFormatter.format(creditLimit)}</p>
 										{/if}
@@ -575,7 +572,7 @@
 			<!-- Current balance summary -->
 			{#if creditLimit > 0}
 				<div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
-					Current: {currencyFormatter.format(currentBalance)} of {currencyFormatter.format(creditLimit)} ({((currentBalance / creditLimit) * 100).toFixed(1)}% used)
+					Current: {currencyFormatter.format(currentBalance)} of {currencyFormatter.format(creditLimit)} ({formatPercentRaw((currentBalance / creditLimit) * 100, 1)} used)
 				</div>
 			{/if}
 

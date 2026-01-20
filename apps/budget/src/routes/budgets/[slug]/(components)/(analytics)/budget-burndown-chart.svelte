@@ -9,7 +9,7 @@ import { Progress } from '$lib/components/ui/progress';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { Badge } from '$lib/components/ui/badge';
 import { getDailySpending, getPeriodAnalytics } from '$lib/query/budgets';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { today, getLocalTimeZone } from '@internationalized/date';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
@@ -221,7 +221,7 @@ const displayDays = $derived.by(() => {
             {currencyFormatter.format(currentSpent)}
           </div>
           <div class="text-xs text-muted-foreground mt-1">
-            {utilizationRate.toFixed(1)}% of budget
+            {formatPercentRaw(utilizationRate, 1)} of budget
           </div>
         </div>
 
@@ -257,7 +257,7 @@ const displayDays = $derived.by(() => {
         <div class="flex items-center justify-between text-sm mb-2">
           <span class="text-muted-foreground">Budget Progress</span>
           <span class="font-medium {getStatusColor(utilizationRate)}">
-            {utilizationRate.toFixed(1)}%
+            {formatPercentRaw(utilizationRate, 1)}
           </span>
         </div>
         <Progress
@@ -284,7 +284,7 @@ const displayDays = $derived.by(() => {
                 <span class="font-medium">{currencyFormatter.format(day.dailySpending)}</span>
                 {#if day.dailySpending > 0}
                   <span class="text-muted-foreground text-xs ml-1">
-                    ({dayPercent > 100 ? '+' : ''}{(dayPercent - 100).toFixed(0)}% vs ideal)
+                    ({dayPercent > 100 ? '+' : ''}{formatPercentRaw(dayPercent - 100, 0)} vs ideal)
                   </span>
                 {/if}
               </div>

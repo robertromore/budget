@@ -4,7 +4,8 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { rpc } from '$lib/query';
 import { USAGE_UNIT_LABELS, type UsageUnit } from '$lib/schema/utility-usage';
-import { formatCurrency } from '$lib/utils/formatters';
+import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
+import { formatMonthYearShort } from '$lib/utils/date-formatters';
 import { LayerCake, Svg } from 'layercake';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
@@ -34,7 +35,7 @@ const chartData = $derived.by(() => {
 
 	return sorted.map((record, idx) => {
 		const startDate = new Date(record.periodStart);
-		const monthLabel = startDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+		const monthLabel = formatMonthYearShort(startDate);
 
 		return {
 			...record,
@@ -158,7 +159,7 @@ function formatUsage(value: number): string {
 							{:else if stats.trendPercent < 0}
 								<TrendingDown class="mr-1 h-3 w-3" />
 							{/if}
-							{Math.abs(stats.trendPercent).toFixed(1)}%
+							{formatPercentRaw(Math.abs(stats.trendPercent), 1)}
 						</p>
 					</div>
 				</div>

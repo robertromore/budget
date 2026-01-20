@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { formatFileSize } from "$lib/utils/formatters";
 import { medicalExpenses } from "./medical-expenses";
 
 export const receiptTypeEnum = {
@@ -96,7 +97,7 @@ export const formInsertExpenseReceiptSchema = createInsertSchema(expenseReceipts
       z
         .number()
         .positive()
-        .max(MAX_RECEIPT_SIZE, `File size must be less than ${MAX_RECEIPT_SIZE / 1024 / 1024}MB`)
+        .max(MAX_RECEIPT_SIZE, `File size must be less than ${formatFileSize(MAX_RECEIPT_SIZE)}`)
     ),
   mimeType: (schema) =>
     schema.pipe(

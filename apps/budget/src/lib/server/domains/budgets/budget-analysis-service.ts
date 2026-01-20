@@ -17,6 +17,7 @@ import type {
 import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
+import { median, mean, standardDeviation } from "$lib/utils/chart-statistics";
 import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
 
@@ -362,9 +363,9 @@ export class BudgetAnalysisService {
       if (data.amounts.length < minTransactions) continue;
 
       const sorted = [...data.amounts].sort((a, b) => a - b);
-      const median = this.calculateMedian(sorted);
-      const mean = this.calculateMean(sorted);
-      const stdDev = this.calculateStdDev(sorted, mean);
+      const medianVal = median(sorted);
+      const meanVal = mean(sorted);
+      const stdDev = standardDeviation(sorted);
 
       // Calculate trend
       const trend = this.detectTrend(data.amounts);
@@ -387,8 +388,8 @@ export class BudgetAnalysisService {
         transactionIds: data.transactionIds,
         monthsCovered,
         amounts: data.amounts,
-        median,
-        mean,
+        median: medianVal,
+        mean: meanVal,
         stdDev,
         min: Math.min(...sorted),
         max: Math.max(...sorted),
@@ -822,8 +823,8 @@ export class BudgetAnalysisService {
 
       if (intervals.length === 0) continue;
 
-      const avgInterval = this.calculateMean(intervals);
-      const intervalStdDev = this.calculateStdDev(intervals, avgInterval);
+      const avgInterval = mean(intervals);
+      const intervalStdDev = standardDeviation(intervals);
 
       // Check if intervals are consistent (recurring pattern)
       // Allow 20% variance in intervals
@@ -838,12 +839,12 @@ export class BudgetAnalysisService {
 
       // Calculate amount predictability
       const sorted = [...data.amounts].sort((a, b) => a - b);
-      const median = this.calculateMedian(sorted);
-      const mean = this.calculateMean(data.amounts);
-      const stdDev = this.calculateStdDev(data.amounts, mean);
+      const medianVal = median(sorted);
+      const meanVal = mean(data.amounts);
+      const stdDev = standardDeviation(data.amounts);
 
       // Predictability: lower variance = higher predictability
-      const varianceCoefficient = stdDev / mean;
+      const varianceCoefficient = stdDev / meanVal;
       const predictability = Math.max(0, Math.min(100, 100 - varianceCoefficient * 100));
 
       // Only include if amounts are relatively consistent (>60% predictability)
@@ -858,8 +859,8 @@ export class BudgetAnalysisService {
         amounts: data.amounts,
         dates: data.dates,
         transactionIds: data.transactionIds,
-        median,
-        mean,
+        median: medianVal,
+        mean: meanVal,
         stdDev,
         predictability,
         intervalDays: avgInterval,
@@ -1171,28 +1172,13 @@ export class BudgetAnalysisService {
       });
   }
 
-  // Statistical helper methods
-  private calculateMedian(sorted: number[]): number {
-    const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
-  }
-
-  private calculateMean(values: number[]): number {
-    return values.reduce((sum, val) => sum + val, 0) / values.length;
-  }
-
-  private calculateStdDev(values: number[], mean: number): number {
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-    return Math.sqrt(variance);
-  }
-
   private detectTrend(amounts: number[]): "increasing" | "decreasing" | "stable" {
     if (amounts.length < 3) return "stable";
 
     // Simple linear regression slope
     const n = amounts.length;
     const xMean = (n - 1) / 2;
-    const yMean = this.calculateMean(amounts);
+    const yMean = mean(amounts);
 
     let numerator = 0;
     let denominator = 0;
@@ -1221,7 +1207,7 @@ export class BudgetAnalysisService {
       gaps.push(days);
     }
 
-    const avgGap = this.calculateMean(gaps);
+    const avgGap = mean(gaps);
 
     if (avgGap <= 10) return "weekly";
     if (avgGap <= 35) return "monthly";

@@ -2,7 +2,7 @@
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import { cn } from "$lib/utils";
+  import { cn, formatPercent } from "$lib/utils";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import GitMerge from "@lucide/svelte/icons/git-merge";
   import Search from "@lucide/svelte/icons/search";
@@ -68,7 +68,7 @@
         <div class="flex items-center justify-between">
           <p class="text-muted-foreground text-xs">Consolidation Potential</p>
           <Badge variant="secondary" class="text-xs">
-            {(consolidationPotential * 100).toFixed(0)}%
+            {formatPercent(consolidationPotential)}
           </Badge>
         </div>
         <p class="text-lg font-semibold">

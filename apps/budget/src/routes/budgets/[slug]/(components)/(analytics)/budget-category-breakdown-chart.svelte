@@ -8,7 +8,7 @@ import * as Card from '$lib/components/ui/card';
 import { Progress } from '$lib/components/ui/progress';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { getCategoryBreakdown } from '$lib/query/budgets';
-import { currencyFormatter } from '$lib/utils/formatters';
+import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 
 interface Props {
   budgetId: number;
@@ -90,7 +90,7 @@ const totalAmount = $derived(
                 style="--progress-background: {category.color}"
               />
               <span class="text-muted-foreground text-xs w-12 text-right">
-                {percentage.toFixed(1)}%
+                {formatPercentRaw(percentage, 1)}
               </span>
             </div>
           </div>

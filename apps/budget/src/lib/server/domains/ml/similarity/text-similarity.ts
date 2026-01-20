@@ -6,20 +6,20 @@
  */
 
 import { distance as levenshteinDistance } from "fastest-levenshtein";
+import { normalizeText as baseNormalizeText } from "$lib/server/import/utils";
 
 // =============================================================================
 // Text Preprocessing
 // =============================================================================
 
 /**
- * Normalize text for comparison
+ * Normalize text for similarity comparison.
+ * Extends base normalization with punctuation stripping for better fuzzy matching.
  */
 export function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s]/g, " ") // Replace punctuation with spaces
-    .replace(/\s+/g, " ") // Collapse multiple spaces
-    .trim();
+  // First apply base normalization (lowercase, collapse whitespace, trim)
+  // Then strip punctuation for similarity matching
+  return baseNormalizeText(text.replace(/[^\w\s]/g, " "));
 }
 
 /**
