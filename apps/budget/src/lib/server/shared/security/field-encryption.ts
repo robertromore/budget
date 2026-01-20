@@ -13,6 +13,7 @@ import {
 } from "crypto";
 import type { EncryptionLevel } from "$lib/types/encryption";
 import { ENCRYPTED_FIELDS_BY_LEVEL } from "$lib/types/encryption";
+import { normalize } from "$lib/utils/string-utilities";
 
 // Constants
 const ALGORITHM = "aes-256-gcm";
@@ -79,7 +80,7 @@ export function isEncrypted(value: string | null | undefined): boolean {
  */
 export function createBlindIndex(value: string, dek: Buffer): string {
   return createHmac("sha256", dek)
-    .update(value.toLowerCase().trim())
+    .update(normalize(value))
     .digest("hex");
 }
 

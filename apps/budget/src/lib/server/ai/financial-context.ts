@@ -13,6 +13,7 @@ import { scheduleDates } from "$lib/schema/schedule-dates";
 import { schedules } from "$lib/schema/schedules";
 import { db } from "$lib/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
+import { roundToCents } from "$lib/utils/math-utilities";
 import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 
 // =============================================================================
@@ -170,7 +171,7 @@ async function fetchAccounts(workspaceId: number): Promise<AccountSummary[]> {
 			id: account.id,
 			name: account.name,
 			type: accountType,
-			balance: Math.round(balance * 100) / 100,
+			balance: roundToCents(balance),
 			onBudget: account.onBudget ?? true,
 			institution: account.institution,
 			debtLimit: account.debtLimit,
@@ -317,9 +318,9 @@ async function fetchBudgetStatus(workspaceId: number): Promise<BudgetSummary[]> 
 			id: b.budgetId,
 			name: b.budgetName,
 			categoryName: b.categoryName,
-			allocatedAmount: Math.round(allocated * 100) / 100,
-			spentAmount: Math.round(spent * 100) / 100,
-			remainingAmount: Math.round(remaining * 100) / 100,
+			allocatedAmount: roundToCents(allocated),
+			spentAmount: roundToCents(spent),
+			remainingAmount: roundToCents(remaining),
 			percentUsed: Math.round(percentUsed),
 			status,
 		};
@@ -438,11 +439,11 @@ async function calculateInsights(
 	const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 : 0;
 
 	return {
-		netWorth: Math.round(netWorth * 100) / 100,
-		totalAssets: Math.round(totalAssets * 100) / 100,
-		totalLiabilities: Math.round(totalLiabilities * 100) / 100,
-		monthlyIncome: Math.round(monthlyIncome * 100) / 100,
-		monthlyExpenses: Math.round(monthlyExpenses * 100) / 100,
+		netWorth: roundToCents(netWorth),
+		totalAssets: roundToCents(totalAssets),
+		totalLiabilities: roundToCents(totalLiabilities),
+		monthlyIncome: roundToCents(monthlyIncome),
+		monthlyExpenses: roundToCents(monthlyExpenses),
 		savingsRate: Math.round(savingsRate),
 	};
 }

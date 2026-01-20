@@ -6,6 +6,7 @@ import type {
   CategoryAliasTrigger,
   CategoryAliasWithCategory,
 } from "$lib/schema/category-aliases";
+import { normalize } from "$lib/utils/string-utilities";
 import { CategoryAliasRepository } from "./alias-repository";
 
 /**
@@ -169,7 +170,7 @@ export class CategoryAliasService {
     // Filter out duplicates - keep the last occurrence for each rawString
     const uniqueRecords = new Map<string, (typeof records)[0]>();
     for (const record of records) {
-      uniqueRecords.set(record.rawString.toLowerCase().trim(), record);
+      uniqueRecords.set(normalize(record.rawString), record);
     }
 
     return await this.repository.bulkCreate(

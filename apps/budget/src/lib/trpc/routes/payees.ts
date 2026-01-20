@@ -10,6 +10,7 @@ import {
   updateEnhancementFeedbackSchema,
 } from "$lib/schema";
 import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { normalize } from "$lib/utils/string-utilities";
 import {
   advancedSearchPayeesSchema,
   applyIntelligentDefaultsSchema,
@@ -1668,7 +1669,7 @@ Return ONLY valid JSON, no explanation:`;
 
           // Validate tags (array of strings)
           const suggestedTags = Array.isArray(parsed.suggestedTags)
-            ? parsed.suggestedTags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0).map((t: string) => t.trim().toLowerCase())
+            ? parsed.suggestedTags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0).map((t: string) => normalize(t))
             : null;
 
           // Validate payment methods (array of valid payment method strings)

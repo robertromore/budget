@@ -1,3 +1,4 @@
+import { normalize } from "$lib/utils/string-utilities";
 import {
   Apple,
   Archive,
@@ -227,7 +228,7 @@ export const ALL_ICONS: IconOption[] = ICON_CATEGORIES.flatMap((category) => cat
 export function searchIcons(query: string): IconOption[] {
   if (!query.trim()) return ALL_ICONS;
 
-  const searchTerm = query.toLowerCase().trim();
+  const searchTerm = normalize(query);
 
   return ALL_ICONS.filter((icon) => {
     const nameMatch = icon.name.toLowerCase().includes(searchTerm);

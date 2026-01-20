@@ -170,6 +170,61 @@ export function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
+/**
+ * Format a number as USD currency with absolute value
+ * Useful for display contexts where sign is shown separately
+ * @param amount - The amount to format
+ * @returns Formatted currency string without negative sign
+ *
+ * @example
+ * formatCurrencyAbs(-1234.56) // "$1,234.56"
+ */
+export function formatCurrencyAbs(amount: number): string {
+  return formatCurrency(Math.abs(amount));
+}
+
+/**
+ * Format a number with specific decimal places
+ * @param value - The number to format
+ * @param decimals - Number of decimal places
+ * @returns Formatted number string
+ *
+ * @example
+ * formatNumberFixed(1234.5678, 2) // "1,234.57"
+ */
+export function formatNumberFixed(value: number, decimals: number): string {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
+/**
+ * Format a number with appropriate suffix (K, M, B)
+ * @param value - The number to format
+ * @param decimals - Number of decimal places (default: 1)
+ * @returns Formatted string with suffix
+ *
+ * @example
+ * formatCompact(1234) // "1.2K"
+ * formatCompact(1500000) // "1.5M"
+ */
+export function formatCompact(value: number, decimals = 1): string {
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  if (absValue >= 1_000_000_000) {
+    return `${sign}${(absValue / 1_000_000_000).toFixed(decimals)}B`;
+  }
+  if (absValue >= 1_000_000) {
+    return `${sign}${(absValue / 1_000_000).toFixed(decimals)}M`;
+  }
+  if (absValue >= 1_000) {
+    return `${sign}${(absValue / 1_000).toFixed(decimals)}K`;
+  }
+  return `${sign}${absValue.toFixed(decimals)}`;
+}
+
 // Value formatter for displaying any type of value in UI (tooltips, errors, etc.)
 export function formatDisplayValue(value: any): string {
   if (value === undefined || value === null) {

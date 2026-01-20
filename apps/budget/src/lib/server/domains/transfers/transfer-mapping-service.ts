@@ -5,6 +5,7 @@ import type {
   TransferMappingStats,
   TransferMappingWithAccount,
 } from "$lib/schema/transfer-mappings";
+import { normalize } from "$lib/utils/string-utilities";
 import { TransferMappingRepository } from "./transfer-mapping-repository";
 
 /**
@@ -164,7 +165,7 @@ export class TransferMappingService {
     // Filter out duplicates - keep the last occurrence for each rawPayeeString
     const uniqueRecords = new Map<string, (typeof records)[0]>();
     for (const record of records) {
-      uniqueRecords.set(record.rawPayeeString.toLowerCase().trim(), record);
+      uniqueRecords.set(normalize(record.rawPayeeString), record);
     }
 
     return await this.repository.bulkCreate(

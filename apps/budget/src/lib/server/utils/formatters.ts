@@ -7,8 +7,19 @@
  * Note: For client-side code, prefer `$lib/utils/formatters` which respects user preferences.
  */
 
+// Re-export shared pure functions from main formatters
+export {
+  formatPercent,
+  formatPercentChange,
+  formatPercentRaw,
+  formatCompact,
+  formatFileSize,
+  formatNumberFixed,
+  formatDisplayValue,
+} from "$lib/utils/formatters";
+
 // =============================================================================
-// Currency Formatting
+// Currency Formatting (Server-specific with decimals option)
 // =============================================================================
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -26,7 +37,7 @@ const currencyFormatterNoDecimals = new Intl.NumberFormat("en-US", {
 });
 
 /**
- * Format a number as USD currency
+ * Format a number as USD currency (server-side, no user preferences)
  * @param amount - The amount to format
  * @param decimals - Whether to include decimal places (default: true)
  * @returns Formatted currency string (e.g., "$1,234.56" or "-$50.00")
@@ -55,7 +66,7 @@ export function formatCurrencyAbs(amount: number): string {
 }
 
 // =============================================================================
-// Number Formatting
+// Number Formatting (Server-specific)
 // =============================================================================
 
 const numberFormatter = new Intl.NumberFormat("en-US", {
@@ -63,7 +74,7 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
 });
 
 /**
- * Format a number with thousands separators
+ * Format a number with thousands separators (server-side)
  * @param value - The number to format
  * @returns Formatted number string
  *
@@ -74,72 +85,8 @@ export function formatNumber(value: number): string {
   return numberFormatter.format(value);
 }
 
-/**
- * Format a number with specific decimal places
- * @param value - The number to format
- * @param decimals - Number of decimal places
- * @returns Formatted number string
- *
- * @example
- * formatNumberFixed(1234.5678, 2) // "1,234.57"
- */
-export function formatNumberFixed(value: number, decimals: number): string {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
-}
-
 // =============================================================================
-// Percentage Formatting
-// =============================================================================
-
-/**
- * Format a decimal value as a percentage
- * @param value - Decimal value (0.5 = 50%, 1.0 = 100%)
- * @param decimals - Number of decimal places (default: 0)
- * @returns Formatted percentage string
- *
- * @example
- * formatPercent(0.75) // "75%"
- * formatPercent(0.756, 1) // "75.6%"
- */
-export function formatPercent(value: number, decimals = 0): string {
-  return `${(value * 100).toFixed(decimals)}%`;
-}
-
-/**
- * Format a decimal value as a percentage with sign indicator
- * @param value - Decimal value (0.5 = +50%, -0.25 = -25%)
- * @param decimals - Number of decimal places (default: 1)
- * @returns Formatted percentage with sign
- *
- * @example
- * formatPercentChange(0.15) // "+15.0%"
- * formatPercentChange(-0.08) // "-8.0%"
- */
-export function formatPercentChange(value: number, decimals = 1): string {
-  const percent = (value * 100).toFixed(decimals);
-  if (value > 0) return `+${percent}%`;
-  return `${percent}%`;
-}
-
-/**
- * Format a raw percentage value (already multiplied by 100)
- * @param value - Percentage value (50 = 50%, 100 = 100%)
- * @param decimals - Number of decimal places (default: 0)
- * @returns Formatted percentage string
- *
- * @example
- * formatPercentRaw(75) // "75%"
- * formatPercentRaw(75.6, 1) // "75.6%"
- */
-export function formatPercentRaw(value: number, decimals = 0): string {
-  return `${value.toFixed(decimals)}%`;
-}
-
-// =============================================================================
-// Date Formatting
+// Date Formatting (Server-specific)
 // =============================================================================
 
 /**
@@ -187,49 +134,4 @@ export function formatFullDate(date: Date | string): string {
  */
 export function formatISODate(date: Date): string {
   return date.toISOString().split("T")[0];
-}
-
-// =============================================================================
-// Utility Formatters
-// =============================================================================
-
-/**
- * Format a number with appropriate suffix (K, M, B)
- * @param value - The number to format
- * @param decimals - Number of decimal places (default: 1)
- * @returns Formatted string with suffix
- *
- * @example
- * formatCompact(1234) // "1.2K"
- * formatCompact(1500000) // "1.5M"
- */
-export function formatCompact(value: number, decimals = 1): string {
-  const absValue = Math.abs(value);
-  const sign = value < 0 ? "-" : "";
-
-  if (absValue >= 1_000_000_000) {
-    return `${sign}${(absValue / 1_000_000_000).toFixed(decimals)}B`;
-  }
-  if (absValue >= 1_000_000) {
-    return `${sign}${(absValue / 1_000_000).toFixed(decimals)}M`;
-  }
-  if (absValue >= 1_000) {
-    return `${sign}${(absValue / 1_000).toFixed(decimals)}K`;
-  }
-  return `${sign}${absValue.toFixed(decimals)}`;
-}
-
-/**
- * Format file size in bytes to human-readable string
- * @param bytes - File size in bytes
- * @returns Formatted string (e.g., "1.5 MB", "256 KB")
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }

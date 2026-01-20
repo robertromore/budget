@@ -6,6 +6,7 @@
  */
 
 import type { AIToolName } from "../tools";
+import { normalize } from "$lib/utils/string-utilities";
 
 export interface SlashCommand {
 	name: string;
@@ -133,7 +134,7 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
 		examples: ["/savings", "/savings unused_subscription", "/savings price_increase"],
 		tool: "findSavingsOpportunities",
 		parseArgs: (args) => {
-			const trimmed = args.trim().toLowerCase();
+			const trimmed = normalize(args);
 			const validTypes = ["unused_subscription", "price_increase", "duplicate_service", "negotiation_candidate"];
 			if (validTypes.includes(trimmed)) {
 				return { type: trimmed };
@@ -149,7 +150,7 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
 		examples: ["/recurring", "/recurring monthly", "/recurring yearly"],
 		tool: "detectRecurringPatterns",
 		parseArgs: (args) => {
-			const trimmed = args.trim().toLowerCase();
+			const trimmed = normalize(args);
 			const validFrequencies = ["daily", "weekly", "biweekly", "monthly", "quarterly", "yearly"];
 			if (validFrequencies.includes(trimmed)) {
 				return { frequency: trimmed };

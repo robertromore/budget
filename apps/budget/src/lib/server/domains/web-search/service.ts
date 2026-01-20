@@ -9,6 +9,7 @@ import type {
   SearchAdapter,
   SearchResult,
 } from "./types";
+import { normalize } from "$lib/utils/string-utilities";
 
 // In-memory cache for search results (24-hour TTL)
 const searchCache = new Map<string, CachedSearchResult>();
@@ -24,7 +25,7 @@ export class WebSearchService {
 		businessName: string,
 		generateText: (prompt: string) => Promise<string>
 	): Promise<ContactEnrichmentResult> {
-		const cacheKey = `contact:${businessName.toLowerCase().trim()}`;
+		const cacheKey = `contact:${normalize(businessName)}`;
 
 		// Check cache first
 		const cached = searchCache.get(cacheKey);
@@ -201,7 +202,7 @@ If you cannot find a field with high confidence, use null. Do not guess or make 
 	 * Clear a specific entry from the cache
 	 */
 	static clearCacheEntry(businessName: string): void {
-		const cacheKey = `contact:${businessName.toLowerCase().trim()}`;
+		const cacheKey = `contact:${normalize(businessName)}`;
 		searchCache.delete(cacheKey);
 	}
 }

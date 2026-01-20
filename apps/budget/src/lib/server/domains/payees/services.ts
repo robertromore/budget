@@ -18,6 +18,7 @@ import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { currentDate, toISOString } from "$lib/utils/dates";
+import { normalize } from "$lib/utils/string-utilities";
 import { BudgetAllocationService } from "./budget-allocation";
 import { CategoryLearningService } from "./category-learning";
 import {
@@ -5025,8 +5026,8 @@ Respond in JSON format only:
     if (strategy === "contact" || strategy === "comprehensive") {
       // Email
       if (payeeA.email && payeeB.email) {
-        const emailA = payeeA.email.toLowerCase().trim();
-        const emailB = payeeB.email.toLowerCase().trim();
+        const emailA = normalize(payeeA.email);
+        const emailB = normalize(payeeB.email);
         if (emailA === emailB) {
           similarities.push({
             field: "email",

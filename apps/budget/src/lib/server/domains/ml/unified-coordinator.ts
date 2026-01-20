@@ -18,6 +18,7 @@ import type {
   PayeeSimilarityMatch,
 } from "./types";
 import { createUserBehaviorService, type UserBehaviorService } from "./user-behavior";
+import { normalize } from "$lib/utils/string-utilities";
 
 // =============================================================================
 // Types
@@ -217,7 +218,7 @@ export class UnifiedMLCoordinator {
           matches: matches.map((m) => ({
             payeeId: m.payeeId,
             payeeName: m.payeeName,
-            normalizedName: m.payeeName.toLowerCase().trim(),
+            normalizedName: normalize(m.payeeName),
             similarityScore: m.similarityScore,
             matchType: m.matchType === "lsh" ? "semantic" as const : m.matchType as "exact" | "fuzzy" | "semantic" | "canonical",
           })),

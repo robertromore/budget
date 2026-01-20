@@ -32,6 +32,7 @@ import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { CategoryMatcher } from "./matchers/category-matcher";
 import { PayeeMatcher } from "./matchers/payee-matcher";
 import { TransactionValidator } from "./validators/transaction-validator";
+import { normalize } from "$lib/utils/string-utilities";
 
 export interface ImportProgress {
   stage: "validating" | "matching" | "creating" | "complete";
@@ -689,14 +690,14 @@ export class ImportOrchestrator {
           !selectedEntities.categories ||
           selectedEntities.categories.length === 0 ||
           selectedEntities.categories.some(
-            (selected) => selected.trim().toLowerCase() === normalizedCategoryName.toLowerCase()
+            (selected) => normalize(selected) === normalize(normalizedCategoryName)
           );
 
         console.log(`Category "${normalizedCategoryName}" - isSelected: ${isSelected}`, {
           selectedEntities: selectedEntities?.categories,
           matches: selectedEntities?.categories.map((s) => ({
             selected: s,
-            match: s.trim().toLowerCase() === normalizedCategoryName.toLowerCase(),
+            match: normalize(s) === normalize(normalizedCategoryName),
           })),
         });
 
@@ -811,7 +812,7 @@ export class ImportOrchestrator {
               selectedEntities.categories.length === 0 ||
               selectedEntities.categories.some(
                 (selected) =>
-                  selected.trim().toLowerCase() === suggestedCategoryName.trim().toLowerCase()
+                  normalize(selected) === normalize(suggestedCategoryName)
               );
 
             if (isSelected) {

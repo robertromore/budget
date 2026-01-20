@@ -6,6 +6,7 @@
  */
 
 import { formatFileSize } from "$lib/utils/formatters";
+import { normalize } from "$lib/utils/string-utilities";
 import { logger } from "$lib/server/shared/logging";
 import { ValidationError } from "./errors";
 
@@ -74,7 +75,7 @@ export function normalizeHeader(header: string): string {
     "cheque number": "checkNumber",
   };
 
-  const normalized = header.toLowerCase().trim();
+  const normalized = normalize(header);
   return headerMap[normalized] || normalized;
 }
 
@@ -481,7 +482,7 @@ export function extractQBOTransactions(xmlData: any): any[] {
 export function isQuickBooksCSV(headers: string[]): boolean {
   const qbHeaders = ["transaction type", "type", "split", "num", "clr", "account", "balance"];
 
-  const normalizedHeaders = headers.map((h) => h.toLowerCase().trim());
+  const normalizedHeaders = headers.map((h) => normalize(h));
 
   const matches = qbHeaders.filter((qbHeader) =>
     normalizedHeaders.some((h) => h.includes(qbHeader))

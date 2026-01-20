@@ -1,6 +1,7 @@
 import type { Payee } from "$lib/schema";
 import { logger } from "$lib/server/shared/logging";
 import { ValidationError } from "$lib/server/shared/types/errors";
+import { normalize } from "$lib/utils/string-utilities";
 
 // ==================== CORE CONTACT INTERFACES ====================
 
@@ -1449,8 +1450,8 @@ export class ContactManagementService {
       // Add more state mappings as needed
     };
 
-    const normalized = state.toLowerCase().trim();
-    return stateAbbreviations[normalized] || state.toUpperCase().trim();
+    const normalizedState = normalize(state);
+    return stateAbbreviations[normalizedState] || state.toUpperCase().trim();
   }
 
   private standardizeZipCode(zipCode: string): string {

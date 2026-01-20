@@ -9,6 +9,7 @@ import { payeeAliases, payees } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { normalizeText } from "$lib/server/import/utils";
 import { NotFoundError } from "$lib/server/shared/types/errors";
+import { normalize } from "$lib/utils/string-utilities";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
@@ -46,7 +47,7 @@ export class PayeeAliasRepository {
    * Strips amounts, transaction IDs, dates, and other variable data.
    */
   private cleanString(raw: string): string {
-    let text = raw.toLowerCase().trim();
+    let text = normalize(raw);
 
     // Remove dollar amounts: $1,234.56 or $1234.56 or $1234
     text = text.replace(/\$[\d,]+(?:\.\d{2})?/g, "");

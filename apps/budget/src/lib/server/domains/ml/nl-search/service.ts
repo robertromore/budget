@@ -13,6 +13,7 @@
 
 import { accounts, categories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
+import { normalize } from "$lib/utils/string-utilities";
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 
 // =============================================================================
@@ -252,7 +253,7 @@ export class NaturalLanguageSearchService {
    * Parse a natural language query into structured filters
    */
   parseQuery(query: string): ParsedQuery {
-    const normalizedQuery = query.toLowerCase().trim();
+    const normalizedQuery = normalize(query);
     const interpretations: string[] = [];
     let confidence = 0.5;
 
@@ -818,7 +819,7 @@ export class NaturalLanguageSearchService {
     workspaceId: number
   ): Promise<{ suggestions: string[]; type: "payee" | "category" | "date" | "amount" }[]> {
     const suggestions: { suggestions: string[]; type: "payee" | "category" | "date" | "amount" }[] = [];
-    const query = partialQuery.toLowerCase().trim();
+    const query = normalize(partialQuery);
 
     // If query ends with "at " or "from ", suggest payees
     if (/(?:at|from|to)\s*$/.test(query)) {

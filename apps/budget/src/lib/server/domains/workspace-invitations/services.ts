@@ -9,6 +9,7 @@ import {
   ValidationError,
 } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
+import { normalize } from "$lib/utils/string-utilities";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import {
@@ -60,7 +61,7 @@ export class WorkspaceInvitationService {
     message?: string
   ): Promise<WorkspaceInvitation> {
     // Validate email
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = normalize(email);
     if (!this.isValidEmail(normalizedEmail)) {
       throw new ValidationError("Invalid email address");
     }

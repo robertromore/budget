@@ -9,6 +9,7 @@
 
 import type { UtilityUsage } from "$lib/schema/utility-usage";
 import { formatPercentRaw } from "$lib/utils/formatters";
+import { roundToCents } from "$lib/utils/math-utilities";
 
 // ============================================================================
 // Types
@@ -571,14 +572,14 @@ export function projectBill(
   }
 
   return {
-    estimatedTotal: Math.round(estimatedTotal * 100) / 100,
+    estimatedTotal: roundToCents(estimatedTotal),
     breakdown: {
-      baseCharge: Math.round(baseCharge * 100) / 100,
-      usageCost: Math.round(usageCost * 100) / 100,
-      estimatedTaxes: Math.round(estimatedTaxes * 100) / 100,
-      estimatedFees: Math.round(estimatedFees * 100) / 100,
+      baseCharge: roundToCents(baseCharge),
+      usageCost: roundToCents(usageCost),
+      estimatedTaxes: roundToCents(estimatedTaxes),
+      estimatedFees: roundToCents(estimatedFees),
     },
-    projectedUsage: Math.round(projectedUsage * 100) / 100,
+    projectedUsage: roundToCents(projectedUsage),
     basedOnRecords: records.length,
     confidenceLevel,
     notes: notes.length > 0 ? notes.join(". ") : undefined,

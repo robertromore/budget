@@ -7,6 +7,7 @@
 
 import { browser } from "$app/environment";
 import type { Account, AccountType } from "$lib/schema/accounts";
+import { roundToCents } from "$lib/utils/math-utilities";
 import type { Category } from "$lib/schema/categories";
 import type { Payee } from "$lib/schema/payees";
 import type { Schedule } from "$lib/schema/schedules";
@@ -363,8 +364,8 @@ function generateDemoBudgets(
       status: "active",
       enforcementLevel: "warning",
       allocatedAmount: accountMonthlyAllocated,
-      spent: Math.round(accountMonthlySpent * 100) / 100,
-      remaining: Math.round(accountMonthlyRemaining * 100) / 100,
+      spent: roundToCents(accountMonthlySpent),
+      remaining: roundToCents(accountMonthlyRemaining),
       progressStatus: accountMonthlyPercent > 90 ? "approaching" : accountMonthlyPercent > 100 ? "over" : "on_track",
       progressPercent: Math.min(100, Math.round(accountMonthlyPercent)),
       accounts: [{ id: demoAccount.id, name: demoAccount.name }],
@@ -384,8 +385,8 @@ function generateDemoBudgets(
       status: "active",
       enforcementLevel: "warning",
       allocatedAmount: foodAllocated,
-      spent: Math.round(foodSpent * 100) / 100,
-      remaining: Math.round(foodRemaining * 100) / 100,
+      spent: roundToCents(foodSpent),
+      remaining: roundToCents(foodRemaining),
       progressStatus: foodPercent > 80 ? "approaching" : foodPercent > 100 ? "over" : "on_track",
       progressPercent: Math.min(100, Math.round(foodPercent)),
       accounts: [],
@@ -399,16 +400,16 @@ function generateDemoBudgets(
           categoryName: "Groceries",
           categoryColor: "#22C55E",
           allocated: groceriesAllocated,
-          spent: Math.round(groceriesSpent * 100) / 100,
-          remaining: Math.round((groceriesAllocated - groceriesSpent) * 100) / 100,
+          spent: roundToCents(groceriesSpent),
+          remaining: roundToCents(groceriesAllocated - groceriesSpent),
         },
         {
           categoryId: -2,
           categoryName: "Dining Out",
           categoryColor: "#F97316",
           allocated: diningAllocated,
-          spent: Math.round(diningSpent * 100) / 100,
-          remaining: Math.round((diningAllocated - diningSpent) * 100) / 100,
+          spent: roundToCents(diningSpent),
+          remaining: roundToCents(diningAllocated - diningSpent),
         },
       ],
       createdAt: now,

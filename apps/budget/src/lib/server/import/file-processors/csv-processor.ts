@@ -12,6 +12,7 @@ import type {
   NormalizedTransaction,
 } from "$lib/types/import";
 import Papa from "papaparse";
+import { normalize } from "$lib/utils/string-utilities";
 import { FileValidationError, ParseError } from "../errors";
 import {
   detectCSVDelimiter,
@@ -193,7 +194,7 @@ export class CSVProcessor implements FileProcessor {
     if (this.columnMapping.category && row[this.columnMapping.category] !== undefined) {
       const categoryValue = row[this.columnMapping.category];
       // Filter out "Uncategorized" - treat it as no category
-      if (categoryValue && categoryValue.trim().toLowerCase() !== "uncategorized") {
+      if (categoryValue && normalize(categoryValue) !== "uncategorized") {
         mapped["category"] = categoryValue;
       }
     }
@@ -213,7 +214,7 @@ export class CSVProcessor implements FileProcessor {
 
     // Skip special transaction types (only check if using auto-detection, not custom mapping)
     if (!this.columnMapping) {
-      const transactionType = mappedRow["transaction"]?.toString().toLowerCase().trim() || "";
+      const transactionType = normalize(mappedRow["transaction"]?.toString() || "") || "";
       if (transactionType === "beginning balance" || transactionType === "ending balance") {
         // Mark as skipped by not including required fields
         return normalized;
@@ -277,7 +278,7 @@ export class CSVProcessor implements FileProcessor {
     if (mappedRow["notes"]) {
       normalized.notes = sanitizeText(mappedRow["notes"], 500);
     } else if (!this.columnMapping && mappedRow["transaction"]) {
-      const transactionType = mappedRow["transaction"]?.toString().toLowerCase().trim() || "";
+      const transactionType = normalize(mappedRow["transaction"]?.toString() || "") || "";
       if (transactionType !== "beginning balance" && transactionType !== "ending balance") {
         // Use transaction column as notes if no notes column exists
         normalized.notes = sanitizeText(mappedRow["transaction"], 500);

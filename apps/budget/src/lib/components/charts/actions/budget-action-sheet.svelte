@@ -10,6 +10,7 @@
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 	import { listBudgets, updateBudget } from '$lib/query/budgets';
 	import { currencyFormatter } from '$lib/utils/formatters';
+	import { roundToCents } from '$lib/utils/math-utilities';
 	import { toast } from '$lib/utils/toast-interceptor';
 	import { goto } from '$app/navigation';
 
@@ -111,7 +112,7 @@
 			// Update the budget's metadata.allocatedAmount
 			const newMetadata = {
 				...selectedBudget.metadata,
-				allocatedAmount: Math.round(suggestedAmount * 100) / 100
+				allocatedAmount: roundToCents(suggestedAmount)
 			};
 
 			await updateMutation.mutateAsync({

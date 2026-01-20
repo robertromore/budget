@@ -4,6 +4,7 @@ import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
 import type { ColumnMapping } from '$lib/types/import';
 import { formatPreviewAmount } from '$lib/utils/import';
+import { normalize } from '$lib/utils/string-utilities';
 
 interface Props {
   rawColumns: string[];
@@ -112,7 +113,7 @@ $effect(() => {
     // Auto-detect mappings based on column names
     // Only assign one column per field (first match wins)
     rawColumns.forEach((col) => {
-      const colLower = col.toLowerCase().trim();
+      const colLower = normalize(col);
 
       if (colLower.includes('date') && !assignedFields.has('date')) {
         columnMapping[col] = 'date';

@@ -12,6 +12,7 @@ import type {
   NormalizedTransaction,
 } from "$lib/types/import";
 import Papa from "papaparse";
+import { normalize } from "$lib/utils/string-utilities";
 import { FileValidationError, ParseError } from "../errors";
 import {
   detectCSVDelimiter,
@@ -124,7 +125,7 @@ export class QBCSVProcessor implements FileProcessor {
 
     for (const [field, keywords] of Object.entries(headerMap)) {
       for (const header of headers) {
-        const normalized = header.toLowerCase().trim();
+        const normalized = normalize(header);
         for (const keyword of keywords) {
           if (normalized.includes(keyword)) {
             (mapping as any)[field] = header;

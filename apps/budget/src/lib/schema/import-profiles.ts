@@ -8,6 +8,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { accounts } from "./accounts";
 import { workspaces } from "./workspaces";
+import { normalize } from "$lib/utils/string-utilities";
 
 // Column mapping structure for CSV imports
 // Supports both schema naming (inflow/outflow/memo) and UI naming (credit/debit/notes)
@@ -168,10 +169,10 @@ export type FormUpdateImportProfileSchema = typeof formUpdateImportProfileSchema
 
 // Helper function to generate a deterministic column signature from headers
 export function generateColumnSignature(headers: string[]): string {
-  const normalized = headers
-    .map((h) => h.toLowerCase().trim())
+  const normalizedHeaders = headers
+    .map((h) => normalize(h))
     .filter((h) => h.length > 0)
     .sort();
 
-  return normalized.join("|");
+  return normalizedHeaders.join("|");
 }

@@ -10,6 +10,7 @@ import { Input } from '$lib/components/ui/input';
 import { Textarea } from '$lib/components/ui/textarea';
 import { type FieldEnhancementSummary } from '$lib/query/payee-enhancements';
 import { inferPayeeDetails, type PayeeDetailsSuggestions } from '$lib/query/payees';
+import { normalize } from '$lib/utils/string-utilities';
 // Icons
 import Building from '@lucide/svelte/icons/building';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -114,7 +115,7 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
     if (suggestions.suggestedTags && suggestions.suggestedTags.length > 0) {
       // Merge with existing tags if present
       const existingTags = $formData.tags
-        ? $formData.tags.split(',').map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+        ? $formData.tags.split(',').map((t: string) => normalize(t)).filter(Boolean)
         : [];
       const newTags = [...new Set([...existingTags, ...suggestions.suggestedTags])];
       $formData.tags = newTags.join(', ');

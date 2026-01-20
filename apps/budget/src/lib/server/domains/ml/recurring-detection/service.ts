@@ -14,6 +14,7 @@
 
 import { accounts, categories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
+import { roundToCents } from "$lib/utils/math-utilities";
 import { and, eq, gte, isNull, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import type {
@@ -302,7 +303,7 @@ export class RecurringTransactionDetectionService {
 
     return {
       name: pattern.payeeName,
-      amount: pattern.amountType === "exact" ? amount : Math.round(amount * 100) / 100,
+      amount: pattern.amountType === "exact" ? amount : roundToCents(amount),
       amount_2,
       amount_type,
       frequency: scheduleFrequency,

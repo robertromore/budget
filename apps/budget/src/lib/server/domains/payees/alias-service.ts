@@ -5,6 +5,7 @@ import type {
   PayeeAliasStats,
   PayeeAliasWithPayee,
 } from "$lib/schema/payee-aliases";
+import { normalize } from "$lib/utils/string-utilities";
 import { PayeeAliasRepository } from "./alias-repository";
 
 /**
@@ -131,7 +132,7 @@ export class PayeeAliasService {
     // Filter out duplicates - keep the last occurrence for each rawString
     const uniqueRecords = new Map<string, (typeof records)[0]>();
     for (const record of records) {
-      uniqueRecords.set(record.rawString.toLowerCase().trim(), record);
+      uniqueRecords.set(normalize(record.rawString), record);
     }
 
     return await this.repository.bulkCreate(
@@ -267,7 +268,7 @@ export class PayeeAliasService {
     );
 
     // The payee name itself is not a suggestion
-    const normalizedPayeeName = payeeName.toLowerCase().trim().replace(/\s+/g, " ");
+    const normalizedPayeeName = normalize(payeeName);
     existingRawStrings.add(normalizedPayeeName);
 
     // Return empty for now - would need transaction access to find variations

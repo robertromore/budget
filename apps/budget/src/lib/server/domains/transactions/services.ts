@@ -8,7 +8,9 @@ import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { invalidateAccountCache } from "$lib/utils/cache";
+import { roundToCents } from "$lib/utils/math-utilities";
 import { arePayeesSimilar } from "$lib/utils/payee-matching";
+import { normalize } from "$lib/utils/string-utilities";
 import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { BudgetCalculationService } from "../budgets/calculation-service";
@@ -736,12 +738,12 @@ export class TransactionService {
       },
     });
 
-    const normalizedSearchName = originalPayeeName.toLowerCase().trim();
+    const normalizedSearchName = normalize(originalPayeeName);
     const transactionsToUpdate = matchingTransactions.filter(
       (t) =>
         t.id !== transactionId &&
         t.payee?.name &&
-        t.payee.name.toLowerCase().trim() === normalizedSearchName
+        normalize(t.payee.name) === normalizedSearchName
     );
 
     // Update all matching transactions
@@ -816,12 +818,12 @@ export class TransactionService {
         return { count: 0 };
       }
 
-      const normalizedPayeeName = payeeName.toLowerCase().trim();
+      const normalizedPayeeName = normalize(payeeName);
       transactionsToUpdate = allTransactions.filter(
         (t) =>
           t.id !== transactionId &&
           t.payee?.name &&
-          t.payee.name.toLowerCase().trim() === normalizedPayeeName
+          normalize(t.payee.name) === normalizedPayeeName
       );
     } else if (matchBy === "category") {
       // Match by previous category ID
@@ -1324,7 +1326,7 @@ export class TransactionService {
 
       // Use average amount if no amount provided and we have good data
       if (!amount && intelligence.averageAmount && intelligence.transactionCount >= 3) {
-        suggestedAmount = Math.round(intelligence.averageAmount * 100) / 100; // Round to cents
+        suggestedAmount = roundToCents(intelligence.averageAmount);
         confidence += 0.2;
       }
     }
@@ -1499,7 +1501,7 @@ export class TransactionService {
 
     // Update average amount if we have sufficient data
     if (intelligence.averageAmount !== null && intelligence.transactionCount >= 2) {
-      updateData.avgAmount = Math.round(intelligence.averageAmount * 100) / 100;
+      updateData.avgAmount = roundToCents(intelligence.averageAmount);
     }
 
     // Update payment frequency if detected

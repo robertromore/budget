@@ -13,6 +13,7 @@ import { categories } from "$lib/schema/categories";
 import { payees } from "$lib/schema/payees";
 import { budgets, budgetCategories, budgetPeriodInstances, budgetPeriodTemplates } from "$lib/schema/budgets";
 import { and, eq, gte, lte, like, desc, sql, isNull, inArray } from "drizzle-orm";
+import { roundToCents } from "$lib/utils/math-utilities";
 import {
 	createMLModelStore,
 	createSavingsOpportunityService,
@@ -956,7 +957,7 @@ export function createAITools(workspaceId: number) {
 					return {
 						success: true as const,
 						count: patterns.length,
-						totalMonthlyValue: Math.round(totalMonthlyValue * 100) / 100,
+						totalMonthlyValue: roundToCents(totalMonthlyValue),
 						patterns: patterns.slice(0, 15).map((p) => ({
 							payeeName: p.payeeName,
 							frequency: p.frequency,
@@ -1035,17 +1036,17 @@ export function createAITools(workspaceId: number) {
 						predictionCount: forecast.predictions.length,
 						predictions: forecast.predictions.map((p) => ({
 							date: p.date,
-							predictedAmount: Math.round(p.value * 100) / 100,
-							lowerBound: Math.round(p.lowerBound * 100) / 100,
-							upperBound: Math.round(p.upperBound * 100) / 100,
+							predictedAmount: roundToCents(p.value),
+							lowerBound: roundToCents(p.lowerBound),
+							upperBound: roundToCents(p.upperBound),
 						})),
 						incomePredictions: forecast.incomePredictions.slice(0, 5).map((p) => ({
 							date: p.date,
-							predictedAmount: Math.round(p.value * 100) / 100,
+							predictedAmount: roundToCents(p.value),
 						})),
 						expensePredictions: forecast.expensePredictions.slice(0, 5).map((p) => ({
 							date: p.date,
-							predictedAmount: Math.round(p.value * 100) / 100,
+							predictedAmount: roundToCents(p.value),
 						})),
 						summary: {
 							avgPredictedCashFlow: Math.round(
