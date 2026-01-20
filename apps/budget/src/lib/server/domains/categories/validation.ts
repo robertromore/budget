@@ -1,3 +1,4 @@
+import { isNotEmptyObject } from "$lib/utils";
 import { z } from "zod";
 
 /**
@@ -35,7 +36,7 @@ export const updateCategorySchema = z
       .nullable()
       .transform((val) => val || null),
   })
-  .refine((data) => Object.keys(data).length > 0, {
+  .refine((data) => isNotEmptyObject(data), {
     message: "At least one field must be provided for update",
   });
 

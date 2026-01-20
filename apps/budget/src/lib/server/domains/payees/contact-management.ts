@@ -1,6 +1,8 @@
 import type { Payee } from "$lib/schema";
 import { logger } from "$lib/server/shared/logging";
 import { ValidationError } from "$lib/server/shared/types/errors";
+import { isNotEmptyObject } from "$lib/utils";
+import { nowISOString } from "$lib/utils/dates";
 import { normalize } from "$lib/utils/string-utilities";
 
 // ==================== CORE CONTACT INTERFACES ====================
@@ -803,7 +805,7 @@ export class ContactManagementService {
     retentionDate: string;
   }> {
     const auditId = `audit-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-    const timestamp = new Date().toISOString();
+    const timestamp = nowISOString();
     const complianceFlags: string[] = [];
 
     // Check for sensitive data access
@@ -881,7 +883,7 @@ export class ContactManagementService {
     // In a real implementation, this would use proper encryption
     // For now, we'll simulate encryption
     const keyId = "key-" + Math.random().toString(36).substring(2, 11);
-    const timestamp = new Date().toISOString();
+    const timestamp = nowISOString();
 
     const simpleEncrypt = (data: string): string => {
       // This is NOT real encryption - just for demonstration
@@ -1327,7 +1329,7 @@ export class ContactManagementService {
       }
 
       // If we found any contact information, add it to results
-      if (Object.keys(extractedFields).length > 0) {
+      if (isNotEmptyObject(extractedFields)) {
         extractedContacts.push({
           payeeName: transaction.payeeName || "Unknown",
           confidence,

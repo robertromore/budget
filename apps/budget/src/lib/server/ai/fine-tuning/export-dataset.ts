@@ -7,6 +7,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 import { exportToAlpaca, exportToJSONL, generateTrainingDataset } from "./generator";
 
 const OUTPUT_DIR = path.join(process.cwd(), "training-data");
@@ -31,7 +32,7 @@ async function main() {
 		fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 	}
 
-	const timestamp = new Date().toISOString().split("T")[0];
+	const timestamp = getCurrentTimestamp();
 
 	// JSONL format (most common)
 	const jsonlPath = path.join(OUTPUT_DIR, `budget-assistant-${timestamp}.jsonl`);

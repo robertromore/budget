@@ -4,6 +4,7 @@ import type {
   CreateSimplefinConnectionInput,
   CreateTellerConnectionInput,
   ExternalAccount,
+  ProviderCredentials,
   SimplefinCredentials,
   TellerCredentials,
 } from "$lib/schema/account-connections";
@@ -13,7 +14,7 @@ import type { ConnectionProviderInterface, ConnectionStats, SyncOptions, SyncRes
 import { SimpleFINProvider } from "./providers/simplefin";
 import { TellerProvider } from "./providers/teller";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
 import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
 import { logger } from "$lib/server/shared/logging";
 
@@ -233,7 +234,7 @@ export class ConnectionService {
 
     try {
       // Decrypt credentials for provider
-      const credentials = decryptCredentials(connection.encryptedCredentials, workspaceId);
+      const credentials = decryptCredentials<ProviderCredentials>(connection.encryptedCredentials, workspaceId);
 
       // Fetch transactions from provider
       const rows = await provider.fetchTransactions(connection, credentials, options.since);
@@ -262,7 +263,7 @@ export class ConnectionService {
             createMissingPayees: true,
             createMissingCategories: false, // Don't auto-create categories from sync
             skipDuplicates: true,
-            fileName: `bank-sync:${connection.provider}:${new Date().toISOString()}`,
+            fileName: `bank-sync:${connection.provider}:${nowISOString()}`,
           }
         );
 

@@ -9,6 +9,7 @@
 import { browser } from "$app/environment";
 import { trpc } from "$lib/trpc/client";
 import type { EncryptionKeyType } from "$lib/types/encryption";
+import { nowISOString } from "$lib/utils/dates";
 
 // =============================================================================
 // Types
@@ -219,7 +220,7 @@ class EncryptionUnlockState {
           keyType: result.keyType as EncryptionKeyType,
           targetType,
           targetId: targetId ?? "",
-          cachedAt: new Date().toISOString(),
+          cachedAt: nowISOString(),
         });
       }
 

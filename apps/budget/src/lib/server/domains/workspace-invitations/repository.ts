@@ -256,7 +256,7 @@ export class WorkspaceInvitationRepository {
   async updateStatus(
     id: number,
     status: InvitationStatus,
-    acceptedUserId?: number
+    acceptedUserId?: string
   ): Promise<WorkspaceInvitation> {
     try {
       const [invitation] = await db

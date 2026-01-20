@@ -1,6 +1,7 @@
 import { importProfiles, type ImportProfile, type NewImportProfile } from "$lib/schema/import-profiles";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { nowISOString } from "$lib/utils/dates";
 import { and, desc, eq, like } from "drizzle-orm";
 
 export interface UpdateImportProfileData {
@@ -140,7 +141,7 @@ export class ImportProfileRepository extends BaseRepository<
       .update(importProfiles)
       .set({
         ...data,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowISOString(),
       })
       .where(and(eq(importProfiles.id, id), eq(importProfiles.workspaceId, workspaceId)))
       .returning();
@@ -172,8 +173,8 @@ export class ImportProfileRepository extends BaseRepository<
       .update(importProfiles)
       .set({
         useCount: (profile.useCount ?? 0) + 1,
-        lastUsedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        lastUsedAt: nowISOString(),
+        updatedAt: nowISOString(),
       })
       .where(and(eq(importProfiles.id, id), eq(importProfiles.workspaceId, workspaceId)));
   }
@@ -186,7 +187,7 @@ export class ImportProfileRepository extends BaseRepository<
       .update(importProfiles)
       .set({
         isAccountDefault: false,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowISOString(),
       })
       .where(
         and(eq(importProfiles.accountId, accountId), eq(importProfiles.workspaceId, workspaceId))

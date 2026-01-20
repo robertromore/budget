@@ -7,10 +7,12 @@ import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
+import { isNotEmptyObject } from "$lib/utils";
 import { invalidateAccountCache } from "$lib/utils/cache";
 import { roundToCents } from "$lib/utils/math-utilities";
 import { arePayeesSimilar } from "$lib/utils/payee-matching";
 import { normalize } from "$lib/utils/string-utilities";
+import { nowISOString } from "$lib/utils/dates";
 import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { BudgetCalculationService } from "../budgets/calculation-service";
@@ -752,7 +754,7 @@ export class TransactionService {
         .update(transactions)
         .set({
           payeeId: newPayeeId,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowISOString(),
         })
         .where(eq(transactions.id, t.id))
     );
@@ -839,7 +841,7 @@ export class TransactionService {
         .update(transactions)
         .set({
           categoryId: newCategoryId,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowISOString(),
         })
         .where(eq(transactions.id, t.id))
     );
@@ -1520,7 +1522,7 @@ export class TransactionService {
     }
 
     // Update the payee with calculated fields
-    if (Object.keys(updateData).length > 0) {
+    if (isNotEmptyObject(updateData)) {
       await this.payeeService.updatePayee(payeeId, updateData, workspaceId);
     }
   }

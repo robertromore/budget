@@ -1,4 +1,5 @@
 import type { Schedule } from "$lib/schema/schedules";
+import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 export interface ScheduleSearchFilters {
@@ -74,7 +75,7 @@ class ScheduleSearchStateManager {
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
-    return Object.keys(this.filters).length > 0;
+    return isNotEmptyObject(this.filters);
   });
 
   hasSearchTerm = $derived.by(() => {

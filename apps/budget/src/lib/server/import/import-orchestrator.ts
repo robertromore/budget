@@ -32,6 +32,7 @@ import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { CategoryMatcher } from "./matchers/category-matcher";
 import { PayeeMatcher } from "./matchers/payee-matcher";
 import { TransactionValidator } from "./validators/transaction-validator";
+import { isNotEmptyObject } from "$lib/utils";
 import { normalize } from "$lib/utils/string-utilities";
 
 export interface ImportProgress {
@@ -953,7 +954,7 @@ export class ImportOrchestrator {
 
     // Store complete raw import data for audit/debugging purposes
     // This includes both the original file data and the normalized data before any import adjustments
-    if (row.rawData && Object.keys(row.rawData).length > 0) {
+    if (row.rawData && isNotEmptyObject(row.rawData)) {
       const rawImportSnapshot = {
         // Original data from the file (OFX/QFX/CSV fields exactly as they appeared)
         originalFileData: row.rawData,

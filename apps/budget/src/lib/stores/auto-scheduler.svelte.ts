@@ -7,6 +7,7 @@
  */
 
 import { trpc } from "$lib/trpc/client";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 
 class AutoScheduler {
   private static readonly STORAGE_KEY = "budget-app-last-auto-add-run";
@@ -76,7 +77,7 @@ class AutoScheduler {
    * Get today's date as YYYY-MM-DD string
    */
   private getTodayString(): string {
-    return new Date().toISOString().split("T")[0];
+    return getCurrentTimestamp();
   }
 
   /**

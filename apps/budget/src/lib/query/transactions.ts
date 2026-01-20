@@ -6,6 +6,7 @@ import type {
   UpdateTransactionData,
 } from "$lib/server/domains/transactions";
 import { trpc } from "$lib/trpc/client";
+import { nowISOString } from "$lib/utils/dates";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
@@ -424,8 +425,8 @@ export const optimisticHelpers = {
       const optimisticTransaction = {
         ...newTransaction,
         id: -Math.random(), // Temporary negative ID
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: nowISOString(),
+        updatedAt: nowISOString(),
         deletedAt: null,
       };
       cachePatterns.setQueryData(transactionKeys.byAccount(accountId), [
@@ -445,7 +446,7 @@ export const optimisticHelpers = {
       cachePatterns.setQueryData(transactionKeys.detail(id), {
         ...previousData,
         ...updateData,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowISOString(),
       });
     }
     return previousData;

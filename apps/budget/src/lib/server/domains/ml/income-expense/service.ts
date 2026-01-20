@@ -15,6 +15,7 @@ import { and, gte, inArray, sql } from "drizzle-orm";
 import { linearRegression, mean, standardDeviation } from "simple-statistics";
 import type { ForecastPrediction } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
+import { nowISOString } from "$lib/utils/dates";
 
 // =============================================================================
 // Types
@@ -859,7 +860,7 @@ export function createIncomeExpenseService(): IncomeExpenseService {
           incomeToExpenseRatio: monthlyExpenseAvg > 0 ? monthlyIncomeAvg / monthlyExpenseAvg : 0,
         },
         seasonality,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: nowISOString(),
       };
     },
 

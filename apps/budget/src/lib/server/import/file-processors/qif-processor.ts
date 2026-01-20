@@ -6,6 +6,7 @@
  */
 
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import { isNotEmptyObject } from "$lib/utils";
 import { FileValidationError, ParseError } from "../errors";
 import { parseDate, sanitizeText, validateFileType } from "../utils";
 
@@ -137,7 +138,7 @@ export class QIFProcessor implements FileProcessor {
 
       // Transaction delimiter
       if (trimmedLine === "^") {
-        if (Object.keys(currentTransaction).length > 0) {
+        if (isNotEmptyObject(currentTransaction)) {
           transactions.push(currentTransaction);
           currentTransaction = {};
         }
@@ -177,7 +178,7 @@ export class QIFProcessor implements FileProcessor {
     }
 
     // Add last transaction if not ended with ^
-    if (Object.keys(currentTransaction).length > 0) {
+    if (isNotEmptyObject(currentTransaction)) {
       transactions.push(currentTransaction);
     }
 

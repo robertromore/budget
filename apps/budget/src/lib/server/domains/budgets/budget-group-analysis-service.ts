@@ -13,6 +13,7 @@ import { budgets } from "$lib/schema/budgets";
 import type { RecommendationMetadata, RecommendationPriority } from "$lib/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
+import { compact } from "$lib/utils";
 import { standardDeviation } from "$lib/utils/chart-statistics";
 import { eq } from "drizzle-orm";
 import type { BudgetWithRelations } from "./repository";
@@ -211,7 +212,7 @@ export class BudgetGroupAnalysisService {
 
     // Find common categories
     const allCategories = budgets.flatMap(
-      (b) => b.categories.map((c) => c.category?.name).filter(Boolean) as string[]
+      (b) => compact(b.categories.map((c) => c.category?.name))
     );
     const categoryFreq = new Map<string, number>();
     allCategories.forEach((cat) => {
@@ -345,22 +346,22 @@ export class BudgetGroupAnalysisService {
     if (cats1.length === 0 || cats2.length === 0) return 0;
 
     // Check for exact category matches
-    const ids1 = cats1.map((c) => c?.id).filter(Boolean);
-    const ids2 = cats2.map((c) => c?.id).filter(Boolean);
+    const ids1 = compact(cats1.map((c) => c?.id));
+    const ids2 = compact(cats2.map((c) => c?.id));
     const exactMatches = ids1.filter((id) => ids2.includes(id));
 
     if (exactMatches.length > 0) return 40;
 
     // Check for parent category matches
-    const parents1 = cats1.map((c) => c?.parentId).filter(Boolean);
-    const parents2 = cats2.map((c) => c?.parentId).filter(Boolean);
+    const parents1 = compact(cats1.map((c) => c?.parentId));
+    const parents2 = compact(cats2.map((c) => c?.parentId));
     const parentMatches = parents1.filter((pid) => parents2.includes(pid));
 
     if (parentMatches.length > 0) return 28;
 
     // Check for keyword matches in category names
-    const names1 = cats1.map((c) => c?.name?.toLowerCase()).filter(Boolean) as string[];
-    const names2 = cats2.map((c) => c?.name?.toLowerCase()).filter(Boolean) as string[];
+    const names1 = compact(cats1.map((c) => c?.name?.toLowerCase()));
+    const names2 = compact(cats2.map((c) => c?.name?.toLowerCase()));
     const keywords1 = names1.flatMap((n) => this.extractKeywords(n));
     const keywords2 = names2.flatMap((n) => this.extractKeywords(n));
     const keywordMatches = keywords1.filter((k) => keywords2.includes(k));
@@ -383,15 +384,15 @@ export class BudgetGroupAnalysisService {
     if (accs1.length === 0 || accs2.length === 0) return 0;
 
     // Check for exact account matches
-    const ids1 = accs1.map((a) => a?.id).filter(Boolean);
-    const ids2 = accs2.map((a) => a?.id).filter(Boolean);
+    const ids1 = compact(accs1.map((a) => a?.id));
+    const ids2 = compact(accs2.map((a) => a?.id));
     const exactMatches = ids1.filter((id) => ids2.includes(id));
 
     if (exactMatches.length > 0) return 30;
 
     // Check for same account type
-    const types1 = accs1.map((a) => a?.accountType).filter(Boolean);
-    const types2 = accs2.map((a) => a?.accountType).filter(Boolean);
+    const types1 = compact(accs1.map((a) => a?.accountType));
+    const types2 = compact(accs2.map((a) => a?.accountType));
     const typeMatches = types1.filter((type) => types2.includes(type));
 
     if (typeMatches.length > 0) return 15;
@@ -570,9 +571,8 @@ export class BudgetGroupAnalysisService {
   private suggestNameFromAccounts(accountIds: number[], budgets: BudgetWithRelations[]): string {
     if (accountIds.length === 0) return "Budget Group";
 
-    const accountNames = budgets
-      .flatMap((b) => b.accounts.map((a) => a.account?.name))
-      .filter(Boolean) as string[];
+    const accountNames = compact(budgets
+      .flatMap((b) => b.accounts.map((a) => a.account?.name)));
 
     if (accountNames.length > 0) {
       return `${accountNames[0]} Budgets`;

@@ -256,3 +256,13 @@ export function padEnd(
 ): string {
   return String(str).padEnd(length, char);
 }
+
+/**
+ * Normalize an email address for consistent storage and comparison.
+ * Lowercases and trims the email address.
+ * Note: Does NOT validate the email format - use a validator for that.
+ * @example normalizeEmail("  User@Example.COM  ") => "user@example.com"
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}

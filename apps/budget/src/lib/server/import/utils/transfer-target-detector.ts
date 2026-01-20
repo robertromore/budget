@@ -10,6 +10,7 @@ import { accounts as accountTable } from "$lib/schema/accounts";
 import { transactions as transactionTable } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import type { ImportRow, TransferTargetMatch } from "$lib/types/import";
+import { compact } from "$lib/utils";
 import { and, eq, isNull } from "drizzle-orm";
 
 /**
@@ -142,7 +143,7 @@ export async function detectTransferTargetMatches(
 
   // Get account names for display
   const accountIds = [
-    ...new Set(transferTargets.map((t) => t.transferAccountId).filter(Boolean)),
+    ...new Set(compact(transferTargets.map((t) => t.transferAccountId))),
   ] as number[];
   const accountNames = await getAccountNames(accountIds);
 

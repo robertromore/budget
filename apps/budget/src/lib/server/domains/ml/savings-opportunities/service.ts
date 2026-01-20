@@ -16,6 +16,7 @@ import type { MLModelStore } from "../model-store";
 import { createRecurringTransactionDetectionService } from "../recurring-detection/service";
 import type { RecurringPattern } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
+import { nowISOString } from "$lib/utils/dates";
 import { formatPercentRaw } from "$lib/utils/formatters";
 
 // =============================================================================
@@ -501,7 +502,7 @@ export function createSavingsOpportunityService(
         totalAnnualPotential: totalMonthlyPotential * 12,
         byType,
         byPriority,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: nowISOString(),
       };
     },
 

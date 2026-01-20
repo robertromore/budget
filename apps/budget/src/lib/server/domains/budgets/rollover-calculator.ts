@@ -8,6 +8,7 @@ import {
 } from "$lib/schema/budgets/envelope-allocations";
 import { db } from "$lib/server/db";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface RolloverCalculationResult {
@@ -416,7 +417,7 @@ export class RolloverCalculator {
         .set({
           rolloverAmount,
           availableAmount: existingEnvelope[0].allocatedAmount + rolloverAmount,
-          lastCalculated: new Date().toISOString(),
+          lastCalculated: nowISOString(),
         })
         .where(eq(envelopeAllocations.id, existingEnvelope[0].id));
     } else {
@@ -433,7 +434,7 @@ export class RolloverCalculator {
         status: rolloverAmount > 0 ? "active" : "depleted",
         rolloverMode: sourceEnvelope.rolloverMode,
         metadata: sourceEnvelope.metadata,
-        lastCalculated: new Date().toISOString(),
+        lastCalculated: nowISOString(),
       });
     }
   }

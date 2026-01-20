@@ -2,6 +2,7 @@ import type { PayeeCategory } from "$lib/schema/payee-categories";
 import { payeeCategories } from "$lib/schema/payee-categories";
 import { payees } from "$lib/schema/payees";
 import { db } from "$lib/server/db";
+import { nowISOString } from "$lib/utils/dates";
 import { and, count, eq, isNull } from "drizzle-orm";
 
 // ================================================================================
@@ -171,7 +172,7 @@ export class PayeeCategoryRepository {
       .update(payeeCategories)
       .set({
         ...data,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowISOString(),
       })
       .where(
         and(
@@ -192,8 +193,8 @@ export class PayeeCategoryRepository {
     await db
       .update(payeeCategories)
       .set({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        deletedAt: nowISOString(),
+        updatedAt: nowISOString(),
       })
       .where(and(eq(payeeCategories.id, id), eq(payeeCategories.workspaceId, workspaceId)));
   }
@@ -212,7 +213,7 @@ export class PayeeCategoryRepository {
           .update(payeeCategories)
           .set({
             displayOrder,
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(
             and(

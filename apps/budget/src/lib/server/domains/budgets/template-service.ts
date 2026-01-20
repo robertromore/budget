@@ -2,6 +2,7 @@ import { budgetTemplates, type BudgetTemplate, type NewBudgetTemplate } from "$l
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
+import { isEmptyObject } from "$lib/utils";
 import { desc, eq } from "drizzle-orm";
 
 export interface CreateBudgetTemplateRequest {
@@ -121,7 +122,7 @@ export class BudgetTemplateService {
       updates.metadata = input.metadata;
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (isEmptyObject(updates)) {
       throw new ValidationError("No updates provided", "template");
     }
 

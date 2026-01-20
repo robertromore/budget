@@ -6,6 +6,7 @@
  */
 
 import type { RecommendationOutcome, UserBehaviorProfile } from "../types";
+import { nowISOString } from "$lib/utils/dates";
 
 // =============================================================================
 // Types
@@ -157,7 +158,7 @@ export function createBehaviorTracker(
     if (!sessions.has(sid)) {
       sessions.set(sid, {
         sessionId: sid,
-        startTime: new Date().toISOString(),
+        startTime: nowISOString(),
         interactionCount: 0,
         recommendationsShown: 0,
         recommendationsAccepted: 0,
@@ -192,7 +193,7 @@ export function createBehaviorTracker(
       const fullInteraction: TrackedInteraction = {
         ...interaction,
         id: generateId(),
-        timestamp: new Date().toISOString(),
+        timestamp: nowISOString(),
       };
 
       interactions.push(fullInteraction);
@@ -422,7 +423,7 @@ export function createBehaviorTracker(
           acceptanceRate: stats.acceptanceRate,
           correctionRate: stats.correctionRate,
           lastActiveAt:
-            allSessions.length > 0 ? allSessions[0].endTime ?? allSessions[0].startTime : new Date().toISOString(),
+            allSessions.length > 0 ? allSessions[0].endTime ?? allSessions[0].startTime : nowISOString(),
           sessionFrequency,
         },
         learningProgress: {

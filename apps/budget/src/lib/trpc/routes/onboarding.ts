@@ -12,6 +12,7 @@ import {
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { db } from "$lib/server/db";
@@ -41,7 +42,7 @@ const onboardingFormDataSchema = z.object({
     ])
   ),
   accountsToTrack: z.array(
-    z.enum(["checking", "savings", "credit-card", "investment", "hsa", "loan", "mortgage"])
+    z.enum(["checking", "savings", "credit-card", "investment", "hsa", "loan", "mortgage", "utility"])
   ),
   spendingAreas: z.array(
     z.enum([
@@ -111,7 +112,7 @@ function createWorkspaceRepository(database: typeof db): OnboardingWorkspaceRepo
         .update(workspaces)
         .set({
           preferences: JSON.stringify(preferences),
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowISOString(),
         })
         .where(eq(workspaces.id, workspaceId));
     },

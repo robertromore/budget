@@ -2,7 +2,7 @@ import { rpc } from "$lib/query";
 import type { Category, Payee, Transaction } from "$lib/schema";
 import type { Account } from "$lib/schema/accounts";
 import type { TransactionsFormat } from "$lib/types";
-import { without } from "$lib/utils";
+import { compact, without } from "$lib/utils";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
 import { getContext, setContext } from "svelte";
 
@@ -18,14 +18,14 @@ export class CurrentAccountState {
   formatted: TransactionsFormat[] = $derived(transactionFormatter.format(this.transactions) ?? []);
   categories?: Category[] = $derived.by(() => {
     return (
-      (this.formatted?.filter(Boolean) as TransactionsFormat[])
+      compact(this.formatted ?? [])
         .map((transaction: TransactionsFormat) => transaction.category)
         .filter((category) => category !== null) || []
     );
   });
   payees?: Payee[] = $derived.by(() => {
     return (
-      (this.formatted?.filter(Boolean) as TransactionsFormat[])
+      compact(this.formatted ?? [])
         .map((transaction: TransactionsFormat) => transaction.payee)
         .filter((payee) => payee !== null) || []
     );

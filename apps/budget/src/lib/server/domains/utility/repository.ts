@@ -8,6 +8,7 @@ import {
 } from "$lib/schema/utility-usage";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, desc, eq, gte, lte, sql, asc } from "drizzle-orm";
 
 // Types for utility usage operations
@@ -354,7 +355,7 @@ export class UtilityRateTierRepository extends BaseRepository<
    * Find current (active) rate tiers for an account
    */
   async findCurrentTiers(accountId: number): Promise<UtilityRateTier[]> {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getCurrentTimestamp();
 
     return await db
       .select()

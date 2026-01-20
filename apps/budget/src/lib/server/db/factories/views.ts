@@ -2,6 +2,7 @@ import { db } from "..";
 import { views, type View } from "$lib/schema/views";
 import type { ViewFilter, ViewDisplayState } from "$lib/types";
 import { faker } from "@faker-js/faker";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 
 export interface ViewFactoryOptions {
   withFilters?: boolean;
@@ -102,7 +103,7 @@ function generateFilters(presetType: string): ViewFilter[] {
           filter: "inDateRange",
           value: [
             new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-            new Date().toISOString().split("T")[0],
+            getCurrentTimestamp(),
           ],
         },
       ];
@@ -133,7 +134,7 @@ function generateFilters(presetType: string): ViewFilter[] {
           filter: "inDateRange",
           value: [
             new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-            new Date().toISOString().split("T")[0],
+            getCurrentTimestamp(),
           ],
         },
         {

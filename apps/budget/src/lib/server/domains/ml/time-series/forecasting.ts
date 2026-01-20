@@ -18,6 +18,7 @@ import type {
   TimeSeriesForecast
 } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
+import { nowISOString } from "$lib/utils/dates";
 
 export interface ForecastOptions {
   horizon: number;
@@ -99,7 +100,7 @@ export class TimeSeriesForecastingService {
       decomposition: forecast.decomposition,
       metrics: forecast.metrics,
       confidence: this.calculateOverallConfidence(forecast),
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: nowISOString(),
     };
   }
 
@@ -958,7 +959,7 @@ export class TimeSeriesForecastingService {
       decomposition: { trend: [], seasonal: [], residual: [] },
       metrics: { mape: 0, rmse: 0, mae: 0 },
       confidence: 0,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: nowISOString(),
     };
   }
 

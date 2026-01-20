@@ -40,6 +40,7 @@ import { superformInsertBudgetSchema } from '$lib/schema/superforms';
 import { BudgetState } from '$lib/states/budgets.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { EditableEntityItem } from '$lib/types';
+import { compact } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import CircleX from '@lucide/svelte/icons/circle-x';
 import Tag from '@lucide/svelte/icons/tag';
@@ -172,16 +173,14 @@ const availableCategories = $derived(categories);
 
 const selectedAccounts = $derived.by(
   () =>
-    selectedAccountIds
-      .map((id: number) => availableAccounts.find((account) => account.id === id))
-      .filter(Boolean) as Account[]
+    compact(selectedAccountIds
+      .map((id: number) => availableAccounts.find((account) => account.id === id))) as Account[]
 );
 
 const selectedCategories = $derived.by(
   () =>
-    selectedCategoryIds
-      .map((id: number) => availableCategories.find((category) => category.id === id))
-      .filter(Boolean) as Category[]
+    compact(selectedCategoryIds
+      .map((id: number) => availableCategories.find((category) => category.id === id))) as Category[]
 );
 
 // Categories state for entity management

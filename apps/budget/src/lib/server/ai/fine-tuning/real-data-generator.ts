@@ -14,6 +14,7 @@
 import { db } from "$lib/server/db";
 import { accounts, budgets, budgetCategories, categories, payees, transactions } from "$lib/schema";
 import { formatPercent } from "$lib/server/utils/formatters";
+import { nowISOString } from "$lib/utils/dates";
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import {
 	BUDGET_ASSISTANT_SYSTEM_PROMPT,
@@ -500,7 +501,7 @@ export async function generateRealDataset(workspaceId: number): Promise<Training
 
 	return {
 		version: "1.0.0-personal",
-		createdAt: new Date().toISOString(),
+		createdAt: nowISOString(),
 		count: examples.length,
 		categories: categoryCount,
 		baseModel: "qwen2.5:3b",

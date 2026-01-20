@@ -1,6 +1,7 @@
 import type { Category, Payee, ScheduleSkip } from "$lib/schema";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { CategoryService } from "../categories/services";
 import { PayeeService } from "../payees/services";
 import { TransactionService, type CreateTransactionData } from "../transactions/services";
@@ -456,8 +457,8 @@ export class ScheduleService {
               category: category,
               notes: `Scheduled: ${schedule.name}`,
               status: "scheduled",
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              createdAt: nowISOString(),
+              updatedAt: nowISOString(),
               deletedAt: null,
               balance: null,
               // Schedule metadata for preview

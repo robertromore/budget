@@ -18,6 +18,7 @@ import type {
   PayeeSimilarityMatch,
 } from "./types";
 import { createUserBehaviorService, type UserBehaviorService } from "./user-behavior";
+import { nowISOString } from "$lib/utils/dates";
 import { normalize } from "$lib/utils/string-utilities";
 
 // =============================================================================
@@ -469,7 +470,7 @@ export class UnifiedMLCoordinator {
       services.push({
         name,
         status: status.status,
-        lastCheck: health?.lastCheck ?? new Date().toISOString(),
+        lastCheck: health?.lastCheck ?? nowISOString(),
         responseTime: health?.responseTime ?? 0,
         errorRate: health ? health.errors / Math.max(1, health.errors + 10) : 0,
       });
@@ -480,7 +481,7 @@ export class UnifiedMLCoordinator {
         alerts.push({
           severity: status.status === "error" ? "error" : "warning",
           message: `${name} service is ${status.status}`,
-          timestamp: new Date().toISOString(),
+          timestamp: nowISOString(),
           service: name,
         });
       }
@@ -547,7 +548,7 @@ export class UnifiedMLCoordinator {
 
   private initializeHealthTracking(): void {
     const services = ["forecasting", "anomalyDetection", "similarity", "userBehavior"];
-    const now = new Date().toISOString();
+    const now = nowISOString();
 
     for (const service of services) {
       this.serviceHealth.set(service, {
@@ -562,7 +563,7 @@ export class UnifiedMLCoordinator {
     const current = this.serviceHealth.get(service) ?? { lastCheck: "", responseTime: 0, errors: 0 };
 
     this.serviceHealth.set(service, {
-      lastCheck: new Date().toISOString(),
+      lastCheck: nowISOString(),
       responseTime: (current.responseTime + responseTime) / 2, // Rolling average
       errors: success ? Math.max(0, current.errors - 1) : current.errors + 1,
     });

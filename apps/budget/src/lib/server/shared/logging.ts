@@ -3,6 +3,8 @@
  * Provides structured logging with different severity levels
  */
 
+import { nowISOString } from "$lib/utils/dates";
+
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LogContext {
@@ -37,7 +39,7 @@ function serializeError(error: unknown): Record<string, unknown> | unknown {
 
 class Logger {
   private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
-    const timestamp = new Date().toISOString();
+    const timestamp = nowISOString();
     const contextStr = context ? ` ${JSON.stringify(context)}` : "";
     return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
   }

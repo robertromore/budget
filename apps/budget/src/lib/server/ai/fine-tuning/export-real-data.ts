@@ -13,6 +13,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 import { exportRealToJSONL, generateRealDataset } from "./real-data-generator";
 
 const OUTPUT_DIR = path.join(process.cwd(), "training-data", "personal");
@@ -67,7 +68,7 @@ async function main() {
 			fs.writeFileSync(gitignorePath, "# Personal training data - do not commit\n*\n!.gitignore\n");
 		}
 
-		const timestamp = new Date().toISOString().split("T")[0];
+		const timestamp = getCurrentTimestamp();
 
 		// Export JSONL
 		const jsonlPath = path.join(OUTPUT_DIR, `personal-${timestamp}.jsonl`);

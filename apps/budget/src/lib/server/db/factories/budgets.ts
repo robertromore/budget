@@ -12,6 +12,7 @@ import {
   type PeriodTemplateType,
 } from "$lib/schema/budgets";
 import { faker } from "@faker-js/faker";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 import { sequence } from "./utils/sequence";
 
 export interface BudgetFactoryOptions {
@@ -211,7 +212,7 @@ function generateBudgetMetadata(type: BudgetType, periodType?: PeriodTemplateTyp
       metadata.goal = {
         targetAmount: faker.number.float({ min: 5000, max: 50000, fractionDigits: 2 }),
         targetDate: targetDate.toISOString().split("T")[0],
-        startDate: new Date().toISOString().split("T")[0],
+        startDate: getCurrentTimestamp(),
         contributionFrequency: "monthly",
         autoContribute: faker.datatype.boolean(),
       };

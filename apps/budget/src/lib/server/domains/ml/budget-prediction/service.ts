@@ -19,6 +19,7 @@ import {
 } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { formatPercent } from "$lib/server/utils/formatters";
+import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 
@@ -176,7 +177,7 @@ export function createBudgetPredictionService(
    * Get current period for a budget
    */
   async function getCurrentPeriod(budgetId: number) {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getCurrentTimestamp();
 
     const period = await db
       .select({
@@ -593,7 +594,7 @@ export function createBudgetPredictionService(
         totalPredictedOverspend,
         budgetsAtRisk,
         overallRisk,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: nowISOString(),
       };
     },
 

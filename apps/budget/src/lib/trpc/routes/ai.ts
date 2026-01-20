@@ -15,9 +15,10 @@ import { db } from "$lib/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { parseSlashCommand, formatCommandResult, SLASH_COMMANDS } from "$lib/server/ai/commands";
 import { TRPCError } from "@trpc/server";
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { and, asc, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
@@ -274,7 +275,7 @@ async function generateChatResponse(
 			content: m.content,
 		})),
 		tools,
-		maxSteps: 5, // Allow up to 5 tool call steps per request
+		stopWhen: stepCountIs(5), // Allow up to 5 tool call steps per request
 	});
 
 	// Collect tool usage info
@@ -411,7 +412,7 @@ export const aiRoutes = t.router({
 				.update(aiConversations)
 				.set({
 					messageCount: sql`${aiConversations.messageCount} + 2`,
-					updatedAt: new Date().toISOString(),
+					updatedAt: nowISOString(),
 				})
 				.where(eq(aiConversations.id, conversationId));
 
@@ -635,7 +636,7 @@ export const aiRoutes = t.router({
 		.mutation(async ({ ctx, input }) => {
 			await db
 				.update(aiConversations)
-				.set({ deletedAt: new Date().toISOString() })
+				.set({ deletedAt: nowISOString() })
 				.where(
 					and(
 						eq(aiConversations.id, input.id),
@@ -659,7 +660,7 @@ export const aiRoutes = t.router({
 		.mutation(async ({ ctx, input }) => {
 			await db
 				.update(aiConversations)
-				.set({ title: input.title, updatedAt: new Date().toISOString() })
+				.set({ title: input.title, updatedAt: nowISOString() })
 				.where(
 					and(
 						eq(aiConversations.id, input.id),

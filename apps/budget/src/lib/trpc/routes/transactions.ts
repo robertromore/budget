@@ -11,6 +11,7 @@ import {
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -685,7 +686,7 @@ export const transactionRoutes = t.router({
         const adjustmentAmount = input.targetBalance - currentBalance;
 
         // Use provided date or today
-        const adjustmentDate = input.date || new Date().toISOString().split("T")[0];
+        const adjustmentDate = input.date || getCurrentTimestamp();
 
         // Create the adjustment transaction
         return await repository.createBalanceAdjustment(

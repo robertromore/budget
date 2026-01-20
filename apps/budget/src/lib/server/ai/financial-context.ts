@@ -13,6 +13,7 @@ import { scheduleDates } from "$lib/schema/schedule-dates";
 import { schedules } from "$lib/schema/schedules";
 import { db } from "$lib/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
+import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
 import { roundToCents } from "$lib/utils/math-utilities";
 import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 
@@ -334,7 +335,7 @@ async function fetchUpcomingScheduled(
 	workspaceId: number,
 	limit: number = 10
 ): Promise<ScheduledTransaction[]> {
-	const today = new Date().toISOString().split("T")[0];
+	const today = getCurrentTimestamp();
 	const twoWeeksLater = new Date();
 	twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
 	const endDate = twoWeeksLater.toISOString().split("T")[0];
@@ -476,7 +477,7 @@ export async function fetchFinancialContext(workspaceId: number): Promise<Financ
 		budgetStatus,
 		upcomingScheduled,
 		insights,
-		dataAsOf: new Date().toISOString(),
+		dataAsOf: nowISOString(),
 	};
 }
 

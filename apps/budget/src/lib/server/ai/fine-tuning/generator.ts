@@ -5,6 +5,7 @@
  * Creates diverse, realistic conversations covering all app capabilities.
  */
 
+import { nowISOString } from "$lib/utils/dates";
 import {
 	BUDGET_ASSISTANT_SYSTEM_PROMPT,
 	type TrainingCategory,
@@ -5594,7 +5595,7 @@ export function generateTrainingDataset(options: {
 
 	return {
 		version: "1.0.0",
-		createdAt: new Date().toISOString(),
+		createdAt: nowISOString(),
 		count: allExamples.length,
 		categories,
 		baseModel: "qwen2.5:7b",

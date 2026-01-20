@@ -14,6 +14,7 @@ import {
 } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
+import { nowISOString } from "$lib/utils/dates";
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import type { AnomalyAlert, MLModel } from "./types";
 
@@ -38,7 +39,7 @@ export class MLModelStore {
       trainingSamples?: number;
     }
   ): Promise<number> {
-    const now = new Date().toISOString();
+    const now = nowISOString();
 
     // Check for existing model
     const existing = await db
@@ -182,7 +183,7 @@ export class MLModelStore {
   async deactivateModel(modelId: number): Promise<void> {
     await db
       .update(mlModels)
-      .set({ isActive: false, updatedAt: new Date().toISOString() })
+      .set({ isActive: false, updatedAt: nowISOString() })
       .where(eq(mlModels.id, modelId));
   }
 
@@ -225,7 +226,7 @@ export class MLModelStore {
       .update(mlPredictions)
       .set({
         actualOutcome,
-        resolvedAt: new Date().toISOString(),
+        resolvedAt: nowISOString(),
       })
       .where(eq(mlPredictions.id, predictionId));
   }
@@ -423,7 +424,7 @@ export class MLModelStore {
       .update(anomalyAlerts)
       .set({
         status,
-        reviewedAt: new Date().toISOString(),
+        reviewedAt: nowISOString(),
         notes,
       })
       .where(eq(anomalyAlerts.id, alertId));

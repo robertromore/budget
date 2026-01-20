@@ -1,4 +1,5 @@
 import { payeeTypes, paymentFrequencies } from "$lib/schema";
+import { isNotEmptyObject } from "$lib/utils";
 import { z } from "zod";
 
 /**
@@ -130,7 +131,7 @@ export const updatePayeeSchema = z
       .optional()
       .nullable(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
+  .refine((data) => isNotEmptyObject(data), {
     message: "At least one field must be provided for update",
   });
 

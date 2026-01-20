@@ -14,6 +14,7 @@ import { scheduleSkips } from "$lib/schema/schedule-skips";
 import { schedules } from "$lib/schema/schedules";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import { compact, isEmptyObject } from "$lib/utils";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { isValidIconName } from "$lib/utils/icon-validation";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
@@ -382,7 +383,7 @@ export const accountRoutes = t.router({
       }
 
       // Only update if there's something to update
-      if (Object.keys(updateData).length === 0) {
+      if (isEmptyObject(updateData)) {
         return existingAccount;
       }
 
@@ -834,7 +835,7 @@ export const accountRoutes = t.router({
 
         // Get unique transfer IDs
         const transferIds = [
-          ...new Set(transferTransactions.map((t) => t.transferId).filter(Boolean)),
+          ...new Set(compact(transferTransactions.map((t) => t.transferId))),
         ] as string[];
 
         if (transferIds.length > 0) {

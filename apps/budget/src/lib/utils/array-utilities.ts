@@ -320,6 +320,16 @@ export function mapAndFilter<T, U>(
 }
 
 /**
+ * Remove null and undefined values from array.
+ * Type-safe alternative to .filter(Boolean) that preserves falsy values like 0, '', false.
+ * @example compact([1, null, 2, undefined, 3]) => [1, 2, 3]
+ * @example compact([0, null, '', false, undefined]) => [0, '', false]
+ */
+export function compact<T>(arr: (T | null | undefined)[]): T[] {
+  return arr.filter((item): item is T => item != null);
+}
+
+/**
  * Create a lookup map from array
  * @example keyBy([{id: 1, name: 'a'}, {id: 2, name: 'b'}], x => x.id)
  *          => Map { 1 => {id: 1, name: 'a'}, 2 => {id: 2, name: 'b'} }

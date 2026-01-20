@@ -279,3 +279,5 @@ export * from "./string-utilities";
 export * from "./array-utilities";
 export * from "./math-utilities";
 export * from "./safe-parse-utilities";
+export * from "./financial-utilities";
+export * from "./object-utilities";

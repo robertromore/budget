@@ -4,6 +4,7 @@ import type {
   RecommendationStatus,
   RecommendationType,
 } from "$lib/schema/recommendations";
+import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 export interface RecommendationSearchFilters {
@@ -79,7 +80,7 @@ class RecommendationSearchStateManager {
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
-    return Object.keys(this.filters).length > 0;
+    return isNotEmptyObject(this.filters);
   });
 
   hasSearchTerm = $derived.by(() => {

@@ -7,6 +7,7 @@ import {
   type EnvelopeMetadata,
 } from "$lib/schema/budgets/envelope-allocations";
 import { faker } from "@faker-js/faker";
+import { nowISOString } from "$lib/utils/dates";
 
 export interface EnvelopeFactoryOptions {
   allocatedAmount?: number;
@@ -150,7 +151,7 @@ export const envelopeFactory = async (
       status,
       rolloverMode,
       metadata,
-      lastCalculated: new Date().toISOString(),
+      lastCalculated: nowISOString(),
     })
     .returning();
 

@@ -23,6 +23,7 @@ import {
 } from "$lib/server/shared/security";
 import { publicProcedure, secureOperationProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
@@ -205,7 +206,7 @@ export const llmSettingsRoutes = t.router({
               ...currentPrefs,
               llm: updatedLLM,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -250,7 +251,7 @@ export const llmSettingsRoutes = t.router({
           .update(workspaces)
           .set({
             preferences: JSON.stringify({ ...currentPrefs, llm: updatedLLM }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -295,7 +296,7 @@ export const llmSettingsRoutes = t.router({
           .update(workspaces)
           .set({
             preferences: JSON.stringify({ ...currentPrefs, llm: updatedLLM }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -327,7 +328,7 @@ export const llmSettingsRoutes = t.router({
           .update(workspaces)
           .set({
             preferences: JSON.stringify({ ...currentPrefs, llm: updatedLLM }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -359,7 +360,7 @@ export const llmSettingsRoutes = t.router({
           .update(workspaces)
           .set({
             preferences: JSON.stringify({ ...currentPrefs, llm: updatedLLM }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 

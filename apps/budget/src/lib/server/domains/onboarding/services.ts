@@ -10,6 +10,7 @@ import type { OnboardingFormData, OnboardingStatus } from "$lib/types/onboarding
 import { DEFAULT_ONBOARDING_STATUS } from "$lib/types/onboarding";
 import type { AccountService } from "$lib/server/domains/accounts/services";
 import type { CategoryService } from "$lib/server/domains/categories/services";
+import { nowISOString } from "$lib/utils/dates";
 import { SmartDefaultsGenerator, type AccountConfig, type SmartDefaultsResult } from "./smart-defaults";
 
 /**
@@ -122,7 +123,7 @@ export class OnboardingService {
       onboarding: {
         ...currentOnboarding,
         tourCompleted: true,
-        tourCompletedAt: new Date().toISOString(),
+        tourCompletedAt: nowISOString(),
       },
     };
 
@@ -238,7 +239,7 @@ export class OnboardingService {
       onboarding: {
         ...(prefs?.onboarding || DEFAULT_ONBOARDING_STATUS),
         wizardCompleted: true,
-        wizardCompletedAt: new Date().toISOString(),
+        wizardCompletedAt: nowISOString(),
       },
     };
 

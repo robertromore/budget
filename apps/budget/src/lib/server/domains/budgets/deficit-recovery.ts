@@ -7,6 +7,7 @@ import {
 import { categories } from "$lib/schema/categories";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 
 export interface DeficitAnalysis {
@@ -475,7 +476,7 @@ export class DeficitRecoveryService {
         .update(envelopeAllocations)
         .set({
           availableAmount: fromEnvelope.availableAmount - amount,
-          lastCalculated: new Date().toISOString(),
+          lastCalculated: nowISOString(),
         })
         .where(eq(envelopeAllocations.id, fromEnvelopeId));
 
@@ -485,7 +486,7 @@ export class DeficitRecoveryService {
           availableAmount: toEnvelope.availableAmount + amount,
           deficitAmount: Math.max(0, toEnvelope.deficitAmount - amount),
           status: toEnvelope.deficitAmount - amount <= 0 ? "active" : "overspent",
-          lastCalculated: new Date().toISOString(),
+          lastCalculated: nowISOString(),
         })
         .where(eq(envelopeAllocations.id, toEnvelopeId));
 

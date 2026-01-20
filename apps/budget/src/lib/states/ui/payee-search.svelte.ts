@@ -1,5 +1,6 @@
 import type { Payee } from "$lib/schema";
 import type { PayeeSearchFilters } from "$lib/server/domains/payees/repository";
+import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 interface PayeeSearchState {
@@ -63,7 +64,7 @@ class PayeeSearchStateManager {
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
-    return Object.keys(this.filters).length > 0;
+    return isNotEmptyObject(this.filters);
   });
 
   hasSearchTerm = $derived.by(() => {

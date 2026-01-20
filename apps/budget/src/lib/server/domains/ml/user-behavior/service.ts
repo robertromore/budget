@@ -29,6 +29,7 @@ import {
   type CalibrationReport,
   type ConfidenceCalibrator
 } from "./confidence-calibration";
+import { nowISOString } from "$lib/utils/dates";
 
 // =============================================================================
 // Types
@@ -251,7 +252,7 @@ export function createUserBehaviorService(
           calibrator.addDataPoint({
             predictedConfidence: confidence,
             actualOutcome: interactionType === "recommendation_accepted",
-            timestamp: new Date().toISOString(),
+            timestamp: nowISOString(),
             entityType,
           });
         }
@@ -460,7 +461,7 @@ export function createUserBehaviorService(
     async retrainModels(workspaceId: number): Promise<void> {
       const calibrator = getCalibrator(workspaceId);
       calibrator.retrain();
-      lastRetrainedAt.set(workspaceId, new Date().toISOString());
+      lastRetrainedAt.set(workspaceId, nowISOString());
 
       // Persist model state
       const calibratorState = calibrator.export();

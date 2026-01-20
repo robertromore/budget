@@ -608,10 +608,22 @@ export function formatDateDisplay(
 
 /**
  * Get current timestamp in ISO format for database operations
- * @returns ISO string with current date and time
+ * @returns ISO string with current date only (YYYY-MM-DD)
  */
 export function getCurrentTimestamp(): string {
   return toISOString(currentDate);
+}
+
+/**
+ * Get current date-time as full ISO 8601 string.
+ * Replacement for `new Date().toISOString()` pattern.
+ * @returns Full ISO string with date and time (e.g., "2024-01-15T10:30:00.000Z")
+ *
+ * @example
+ * nowISOString() // "2024-01-15T14:30:45.123Z"
+ */
+export function nowISOString(): string {
+  return new Date().toISOString();
 }
 
 /**

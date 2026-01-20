@@ -8,6 +8,7 @@ import type {
 } from "$lib/schema/categories";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
+import { isEmptyObject } from "$lib/utils";
 import { defaultCategories } from "./default-categories";
 import {
   CategoryRepository,
@@ -293,7 +294,7 @@ export class CategoryService {
       updateData.incomeReliability = data.incomeReliability;
     }
 
-    if (Object.keys(updateData).length === 0) {
+    if (isEmptyObject(updateData)) {
       throw new ValidationError("No valid fields to update");
     }
 

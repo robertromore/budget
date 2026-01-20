@@ -8,6 +8,7 @@
 import { browser } from "$app/environment";
 import type { Account, AccountType } from "$lib/schema/accounts";
 import { roundToCents } from "$lib/utils/math-utilities";
+import { nowISOString } from "$lib/utils/dates";
 import type { Category } from "$lib/schema/categories";
 import type { Payee } from "$lib/schema/payees";
 import type { Schedule } from "$lib/schema/schedules";
@@ -121,7 +122,7 @@ export interface DemoBudgetRecommendation {
 // =============================================================================
 
 function generateDemoAccount(): Account {
-  const now = new Date().toISOString();
+  const now = nowISOString();
   return {
     id: -1, // Negative ID to distinguish from real accounts
     seq: 1, // Demo account gets seq 1
@@ -151,11 +152,21 @@ function generateDemoAccount(): Account {
     balance: 4250.75,
     encryptionLevel: null,
     encryptionKeyId: null,
+    // Utility account fields
+    utilitySubtype: null,
+    utilityProvider: null,
+    utilityAccountNumber: null,
+    utilityServiceAddress: null,
+    // Balance management fields
+    balanceResetDate: null,
+    balanceAtResetDate: null,
+    reconciledBalance: null,
+    reconciledDate: null,
   };
 }
 
 function generateDemoCategories(): Category[] {
-  const now = new Date().toISOString();
+  const now = nowISOString();
   // Use unknown cast for demo data - we only need fields used in display
   return [
     { id: -1, workspaceId: -1, name: "Groceries", slug: "groceries", categoryColor: "#22C55E", categoryIcon: "shopping-cart", parentId: null, displayOrder: 0, categoryType: "expense", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
@@ -168,7 +179,7 @@ function generateDemoCategories(): Category[] {
 }
 
 function generateDemoPayees(): Payee[] {
-  const now = new Date().toISOString();
+  const now = nowISOString();
   // Use unknown cast for demo data - we only need fields used in display
   return [
     { id: -1, workspaceId: -1, name: "Whole Foods Market", slug: "whole-foods-market", notes: null, defaultCategoryId: -1, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
@@ -312,7 +323,7 @@ function generateDemoBudgets(
   _demoCategories: Category[], // Categories info is derived from transactions
   demoTransactions: DemoTransaction[]
 ): DemoBudget[] {
-  const now = new Date().toISOString();
+  const now = nowISOString();
 
   // Calculate spending by category from demo transactions
   const spendingByCategory = new Map<number, number>();

@@ -21,6 +21,7 @@ import {
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import { getCurrentTimestamp } from '$lib/utils/dates';
 import { createBudgetValidationEngine } from '$lib/utils/wizard-validation';
 import {
   Building2,
@@ -223,7 +224,7 @@ $effect(() => {
     updateField('goalTargetDate', goalTargetDate);
   }
   if (isGoalBased && !goalStartDate) {
-    goalStartDate = new Date().toISOString().split('T')[0] ?? '';
+    goalStartDate = getCurrentTimestamp() ?? '';
     updateField('goalStartDate', goalStartDate);
   }
 });

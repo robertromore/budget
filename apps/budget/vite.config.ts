@@ -1,9 +1,10 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit()],
+  // Cast to PluginOption[] to handle type mismatch from monorepo vite resolution
+  plugins: [tailwindcss(), sveltekit()] as PluginOption[],
   server: {
     watch: {
       // Ignore database files to prevent constant rebuilds from DB operations

@@ -17,6 +17,7 @@ import {
   type NewTrustedContext,
 } from "$lib/schema/security";
 import type { RiskScore, RiskFactor, RiskFactorSettings } from "$lib/types/encryption";
+import { nowISOString } from "$lib/utils/dates";
 import { createHash } from "crypto";
 
 /**
@@ -320,7 +321,7 @@ export async function updateTrustedContext(
   label?: string
 ): Promise<void> {
   const hashedValue = hashValue(contextValue);
-  const now = new Date().toISOString();
+  const now = nowISOString();
 
   // Check if context exists
   const existing = await db
@@ -377,7 +378,7 @@ export async function trustDevice(
   label?: string
 ): Promise<void> {
   const hashedValue = hashValue(deviceFingerprint);
-  const now = new Date().toISOString();
+  const now = nowISOString();
 
   // Check if device exists
   const existing = await db
@@ -430,7 +431,7 @@ export async function revokeDeviceTrust(
   const result = await db
     .update(userTrustedContexts)
     .set({
-      revokedAt: new Date().toISOString(),
+      revokedAt: nowISOString(),
       explicitlyTrusted: false,
       trustScore: 0,
     })
@@ -513,7 +514,7 @@ export async function logAccessEvent(
     challengeType,
     challengePassed,
     keyUnlocked,
-    timestamp: new Date().toISOString(),
+    timestamp: nowISOString(),
   };
 
   await db.insert(accessLog).values(entry);

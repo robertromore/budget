@@ -1,6 +1,7 @@
 import { workspaceMembers } from "$lib/schema/workspace-members";
 import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
 import { publicProcedure, t } from "$lib/trpc";
+import { nowISOString } from "$lib/utils/dates";
 import { TRPCError } from "@trpc/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -166,7 +167,7 @@ export const workspaceRoutes = t.router({
         .update(workspaces)
         .set({
           preferences: JSON.stringify(input.preferences),
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowISOString(),
         })
         .where(eq(workspaces.id, input.workspaceId))
         .returning();
@@ -215,7 +216,7 @@ export const workspaceRoutes = t.router({
       await ctx.db
         .update(workspaces)
         .set({
-          deletedAt: new Date().toISOString(),
+          deletedAt: nowISOString(),
         })
         .where(eq(workspaces.id, input.workspaceId));
 

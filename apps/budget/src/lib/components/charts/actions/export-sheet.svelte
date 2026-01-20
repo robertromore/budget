@@ -7,6 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 	import { currencyFormatter } from '$lib/utils/formatters';
+	import { getCurrentTimestamp } from '$lib/utils/dates';
 	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Icons
@@ -68,7 +69,7 @@
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = `spending-comparison-${new Date().toISOString().split('T')[0]}.csv`;
+		a.download = `spending-comparison-${getCurrentTimestamp()}.csv`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);

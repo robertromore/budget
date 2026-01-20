@@ -23,6 +23,7 @@ import { schedules } from "$lib/schema/schedules";
 import type { Transaction } from "$lib/schema/transactions";
 import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
+import { isEmptyObject } from "$lib/utils";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import slugify from "@sindresorhus/slugify";
 import { logger } from "$lib/server/shared/logging";
@@ -230,7 +231,7 @@ export class BudgetService {
     }
 
     if (
-      Object.keys(updates).length === 0 &&
+      isEmptyObject(updates) &&
       input.accountIds === undefined &&
       input.categoryIds === undefined &&
       input.groupIds === undefined

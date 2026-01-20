@@ -5,6 +5,8 @@
  * Uses isotonic regression and Platt scaling for calibration.
  */
 
+import { nowISOString } from "$lib/utils/dates";
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -417,7 +419,7 @@ export function createConfidenceCalibrator(
 
       plattParams = fitPlattScaling(data, cfg);
       isotonicCalibrator = fitIsotonicRegression(data);
-      lastTrainedAt = new Date().toISOString();
+      lastTrainedAt = nowISOString();
     },
 
     getPersonalizedThreshold(

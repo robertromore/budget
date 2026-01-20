@@ -13,6 +13,7 @@ import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
+import { nowISOString } from "$lib/utils/dates";
 import { and, asc, desc, eq, sum } from "drizzle-orm";
 import {
   DeficitRecoveryService,
@@ -97,7 +98,7 @@ export class EnvelopeService {
         status: calculation.status,
         rolloverMode,
         metadata: input.metadata ?? {},
-        lastCalculated: new Date().toISOString(),
+        lastCalculated: nowISOString(),
       })
       .returning();
 
@@ -133,7 +134,7 @@ export class EnvelopeService {
         deficitAmount: calculation.deficitAmount,
         status: calculation.status,
         metadata: metadata ?? existing.metadata,
-        lastCalculated: new Date().toISOString(),
+        lastCalculated: nowISOString(),
       })
       .where(eq(envelopeAllocations.id, envelopeId))
       .returning();
@@ -155,7 +156,7 @@ export class EnvelopeService {
     const existing = await this.findEnvelopeById(envelopeId);
 
     const updateData: any = {
-      updatedAt: new Date().toISOString(),
+      updatedAt: nowISOString(),
     };
 
     if (settings.rolloverMode !== undefined) {
@@ -222,7 +223,7 @@ export class EnvelopeService {
             fromEnvelope.availableAmount - amount,
             fromEnvelope.deficitAmount
           ),
-          lastCalculated: new Date().toISOString(),
+          lastCalculated: nowISOString(),
         })
         .where(eq(envelopeAllocations.id, input.fromEnvelopeId));
 
@@ -234,7 +235,7 @@ export class EnvelopeService {
             toEnvelope.availableAmount + amount,
             toEnvelope.deficitAmount
           ),
-          lastCalculated: new Date().toISOString(),
+          lastCalculated: nowISOString(),
         })
         .where(eq(envelopeAllocations.id, input.toEnvelopeId));
 
@@ -437,7 +438,7 @@ export class EnvelopeService {
         availableAmount: calculation.availableAmount,
         deficitAmount: calculation.deficitAmount,
         status: calculation.status,
-        lastCalculated: new Date().toISOString(),
+        lastCalculated: nowISOString(),
       })
       .where(eq(envelopeAllocations.id, envelopeId))
       .returning();

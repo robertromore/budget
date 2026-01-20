@@ -1,6 +1,7 @@
 import type { ClaimStatus, HsaClaim } from "$lib/schema/hsa-claims";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
+import { nowISOString } from "$lib/utils/dates";
 import { ClaimRepository } from "./claim-repository";
 import { MedicalExpenseRepository } from "./repository";
 
@@ -121,7 +122,7 @@ export class ClaimService {
       ? InputSanitizer.sanitizeText(data.claimNumber)
       : undefined;
 
-    const submittedDate = data.submittedDate || new Date().toISOString();
+    const submittedDate = data.submittedDate || nowISOString();
 
     // Build update object conditionally to satisfy exactOptionalPropertyTypes
     const updateData: any = {
@@ -154,7 +155,7 @@ export class ClaimService {
 
     const updated = await this.claimRepository.update(id, {
       status: "in_review",
-      reviewDate: reviewDate || new Date().toISOString(),
+      reviewDate: reviewDate || nowISOString(),
     });
 
     return updated;
@@ -185,7 +186,7 @@ export class ClaimService {
     }
 
     const status: ClaimStatus = deniedAmount > 0 ? "partially_approved" : "approved";
-    const approvalDate = data.approvalDate || new Date().toISOString();
+    const approvalDate = data.approvalDate || nowISOString();
 
     const updated = await this.claimRepository.update(id, {
       status,
@@ -251,7 +252,7 @@ export class ClaimService {
       throw new ValidationError("Paid amount cannot exceed approved amount");
     }
 
-    const paymentDate = data.paymentDate || new Date().toISOString();
+    const paymentDate = data.paymentDate || nowISOString();
 
     const updated = await this.claimRepository.update(id, {
       status: "paid",

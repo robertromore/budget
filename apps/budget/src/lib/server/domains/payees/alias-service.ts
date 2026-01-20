@@ -232,7 +232,7 @@ export class PayeeAliasService {
     found: boolean;
     payeeId?: number;
     confidence: number;
-    matchedOn?: "exact" | "normalized";
+    matchedOn?: "exact" | "normalized" | "cleaned";
   }> {
     const match = await this.findPayeeByAlias(payeeName, workspaceId);
 

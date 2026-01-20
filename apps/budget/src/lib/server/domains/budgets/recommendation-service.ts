@@ -14,7 +14,7 @@ import {
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { BudgetRecommendationDraft } from "./budget-analysis-service";
 
@@ -392,7 +392,7 @@ export class RecommendationService {
       conditions.push(
         or(
           isNull(budgetRecommendations.expiresAt),
-          gte(budgetRecommendations.expiresAt, new Date().toISOString())
+          gte(budgetRecommendations.expiresAt, nowISOString())
         )!
       );
     }
@@ -555,7 +555,7 @@ export class RecommendationService {
    * Automatically called periodically to clean up old recommendations
    */
   async expireOldRecommendations(): Promise<number> {
-    const now = new Date().toISOString();
+    const now = nowISOString();
 
     const expired = await db
       .update(budgetRecommendations)
@@ -636,7 +636,7 @@ export class RecommendationService {
           eq(budgetRecommendations.status, "pending"),
           or(
             isNull(budgetRecommendations.expiresAt),
-            gte(budgetRecommendations.expiresAt, new Date().toISOString())
+            gte(budgetRecommendations.expiresAt, nowISOString())
           )!
         )
       );

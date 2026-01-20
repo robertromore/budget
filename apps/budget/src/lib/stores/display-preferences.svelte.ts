@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { isNotEmptyObject } from "$lib/utils";
 import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { queuePreferencesSync, loadPreferencesFromBackend } from "./preferences-sync";
 
@@ -222,7 +223,7 @@ class DisplayPreferencesStore {
 				if (backendPrefs.borderRadius) displayPrefs.borderRadius = backendPrefs.borderRadius;
 				if (backendPrefs.notificationMode) displayPrefs.notificationMode = backendPrefs.notificationMode;
 
-				if (Object.keys(displayPrefs).length > 0) {
+				if (isNotEmptyObject(displayPrefs)) {
 					this.preferences = { ...this.preferences, ...displayPrefs };
 					this.saveToStorage();
 					// Apply border radius if it was updated from backend

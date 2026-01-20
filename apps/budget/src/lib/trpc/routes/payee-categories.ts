@@ -6,6 +6,7 @@ import {
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { z } from "zod";
 
 const payeeCategoryService = serviceFactory.getPayeeCategoryService();
@@ -269,7 +270,7 @@ export const payeeCategoriesRoutes = t.router({
           .update(payees)
           .set({
             payeeCategoryId: input.categoryId,
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(
             and(

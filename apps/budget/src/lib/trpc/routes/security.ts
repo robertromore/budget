@@ -8,6 +8,7 @@ import { z } from "zod/v4";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, t, secureOperationProcedure } from "$lib/trpc";
 import { db } from "$lib/server/db";
+import { nowISOString } from "$lib/utils/dates";
 import {
   generateEncryptionKey,
   storeEncryptionKey,
@@ -425,7 +426,7 @@ export const securityRoutes = t.router({
         .update(workspaces)
         .set({
           preferences: JSON.stringify(updatedPreferences),
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowISOString(),
         })
         .where(eq(workspaces.id, input.workspaceId));
 
@@ -496,7 +497,7 @@ export const securityRoutes = t.router({
         .update(accounts)
         .set({
           encryptionLevel: input.encryptionLevel,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowISOString(),
         })
         .where(eq(accounts.id, input.accountId));
 

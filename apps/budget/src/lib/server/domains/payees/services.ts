@@ -12,12 +12,13 @@ import type {
 } from "$lib/schema";
 import { budgets, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
+import { compact, isEmptyObject, isNotEmptyObject } from "$lib/utils";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { extractMerchantName, merchantSimilarity } from "$lib/server/domains/ml/similarity/text-similarity";
 import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { currentDate, toISOString } from "$lib/utils/dates";
+import { currentDate, nowISOString, toISOString } from "$lib/utils/dates";
 import { normalize } from "$lib/utils/string-utilities";
 import { BudgetAllocationService } from "./budget-allocation";
 import { CategoryLearningService } from "./category-learning";
@@ -415,7 +416,7 @@ export class PayeeService {
       throw new ValidationError("Invalid email address");
     }
 
-    if (Object.keys(updateData).length === 0) {
+    if (isEmptyObject(updateData)) {
       throw new ValidationError("No valid fields to update");
     }
 
@@ -688,7 +689,7 @@ export class PayeeService {
           }
         }
 
-        if (Object.keys(updateData).length > 0) {
+        if (isNotEmptyObject(updateData)) {
           await this.updatePayee(id, updateData, workspaceId);
           updatedCount++;
         } else {
@@ -1055,7 +1056,7 @@ export class PayeeService {
       updateData.paymentFrequency = suggestions.suggestedFrequency;
     }
 
-    if (Object.keys(updateData).length === 0) {
+    if (isEmptyObject(updateData)) {
       throw new ValidationError("No intelligent defaults available to apply");
     }
 
@@ -1387,7 +1388,7 @@ export class PayeeService {
 
     // Apply updates if any
     let updated = false;
-    if (Object.keys(updateData).length > 0) {
+    if (isNotEmptyObject(updateData)) {
       await this.updatePayee(id, updateData, workspaceId);
       updated = true;
     }
@@ -1488,7 +1489,7 @@ export class PayeeService {
           }
 
           // Always include confidence metrics for any analysis
-          if (Object.keys(analysis).length > 0) {
+          if (isNotEmptyObject(analysis)) {
             analysis.confidence = await this.intelligenceService.calculateConfidenceScores(payeeId);
           }
 
@@ -3529,7 +3530,7 @@ export class PayeeService {
     // Convert SubscriptionMetadata to SubscriptionInfo format
     const subscriptionInfo: SubscriptionInfo = {
       monthlyCost: subscriptionMetadata.baseCost,
-      renewalDate: subscriptionMetadata.startDate || new Date().toISOString(),
+      renewalDate: subscriptionMetadata.startDate || nowISOString(),
       isActive: !subscriptionMetadata.endDate,
       billingCycle:
         subscriptionMetadata.billingCycle === "annual"
@@ -3581,7 +3582,7 @@ export class PayeeService {
     // Convert to SubscriptionInfo format
     const updatedSubscriptionInfo: SubscriptionInfo = {
       monthlyCost: updatedSubscriptionMetadata.baseCost,
-      renewalDate: updatedSubscriptionMetadata.startDate || new Date().toISOString(),
+      renewalDate: updatedSubscriptionMetadata.startDate || nowISOString(),
       isActive: false, // Subscription is now cancelled
       billingCycle:
         updatedSubscriptionMetadata.billingCycle === "annual"
@@ -3751,7 +3752,7 @@ export class PayeeService {
     // Convert to SubscriptionInfo format
     const updatedSubscriptionInfo: SubscriptionInfo = {
       monthlyCost: updatedSubscriptionMetadata.baseCost,
-      renewalDate: updatedSubscriptionMetadata.startDate || new Date().toISOString(),
+      renewalDate: updatedSubscriptionMetadata.startDate || nowISOString(),
       isActive: !updatedSubscriptionMetadata.endDate,
       billingCycle:
         updatedSubscriptionMetadata.billingCycle === "annual"
@@ -4267,7 +4268,7 @@ export class PayeeService {
         return {
           groups: [],
           llmLog: [{
-            timestamp: new Date().toISOString(),
+            timestamp: nowISOString(),
             batchIndex: 0,
             pairs: [],
             prompt: "",
@@ -4349,7 +4350,7 @@ export class PayeeService {
         return {
           groups: [],
           llmLog: [{
-            timestamp: new Date().toISOString(),
+            timestamp: nowISOString(),
             batchIndex: 0,
             pairs: [],
             prompt: "",
@@ -4384,7 +4385,7 @@ export class PayeeService {
         return {
           groups: duplicateGroups,
           llmLog: [{
-            timestamp: new Date().toISOString(),
+            timestamp: nowISOString(),
             batchIndex: 0,
             pairs: [],
             prompt: "",
@@ -4505,7 +4506,7 @@ export class PayeeService {
       return {
         groups: candidates,
         llmLog: [{
-          timestamp: new Date().toISOString(),
+          timestamp: nowISOString(),
           batchIndex: 0,
           pairs: [],
           prompt: "",
@@ -4580,7 +4581,7 @@ Respond in JSON format only:
 
       // Create log entry for this batch
       const logEntry: typeof llmLog[number] = {
-        timestamp: new Date().toISOString(),
+        timestamp: nowISOString(),
         batchIndex,
         pairs: batch.map((p) => ({
           primaryName: p.primary.name ?? "Unknown",
@@ -4761,7 +4762,7 @@ Respond in JSON format only:
       return {
         groups: [],
         llmLog: [{
-          timestamp: new Date().toISOString(),
+          timestamp: nowISOString(),
           batchIndex: 0,
           pairs: [],
           prompt: "",
@@ -4827,7 +4828,7 @@ Respond in JSON format only:
 }`;
 
       const logEntry: typeof llmLog[number] = {
-        timestamp: new Date().toISOString(),
+        timestamp: nowISOString(),
         batchIndex,
         pairs: batch.map((p) => ({
           primaryName: p.payeeA.name ?? "Unknown",
@@ -4919,7 +4920,7 @@ Respond in JSON format only:
     // Convert to output format
     const groups = Array.from(groupMap.values()).map(g => {
       const primary = payees.find(p => p.id === g.primaryPayeeId)!;
-      const duplicates = g.duplicatePayeeIds.map(id => payees.find(p => p.id === id)!).filter(Boolean);
+      const duplicates = compact(g.duplicatePayeeIds.map(id => payees.find(p => p.id === id)!));
 
       return {
         primaryPayeeId: g.primaryPayeeId,
@@ -5174,7 +5175,7 @@ Respond in JSON format only:
         if (!primaryPayee.notes && dup.notes) updateData.notes = dup.notes;
       }
 
-      if (Object.keys(updateData).length > 0) {
+      if (isNotEmptyObject(updateData)) {
         await this.updatePayee(primaryPayeeId, updateData, workspaceId);
       }
     }

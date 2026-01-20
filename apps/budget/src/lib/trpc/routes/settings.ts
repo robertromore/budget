@@ -12,6 +12,7 @@ import { db } from "$lib/server/db";
 import { encryptApiKey } from "$lib/server/shared/security/encryption";
 import { publicProcedure, secureOperationProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
+import { nowISOString } from "$lib/utils/dates";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
@@ -209,7 +210,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               ml: updatedML,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -249,7 +250,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               ml: updatedML,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -341,7 +342,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               webSearch: updatedWebSearch,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -386,7 +387,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               webSearch: updatedWebSearch,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -467,7 +468,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               intelligenceInput: updatedIntelligenceInput,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -507,7 +508,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               intelligenceInput: updatedIntelligenceInput,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 
@@ -555,7 +556,7 @@ export const settingsRoutes = t.router({
               ...currentPrefs,
               intelligenceInput: updatedIntelligenceInput,
             }),
-            updatedAt: new Date().toISOString(),
+            updatedAt: nowISOString(),
           })
           .where(eq(workspaces.id, ctx.workspaceId));
 

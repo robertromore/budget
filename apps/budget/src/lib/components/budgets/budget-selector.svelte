@@ -3,7 +3,7 @@ import Label from '$lib/components/ui/label/label.svelte';
 import * as Select from '$lib/components/ui/select';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { BudgetState } from '$lib/states/budgets.svelte';
-import { cn } from '$lib/utils';
+import { cn, compact } from '$lib/utils';
 
 interface Props {
   value?: string;
@@ -44,9 +44,8 @@ const groupedBudgets = $derived.by(() => {
 
   for (const budget of resolvedBudgets) {
     const groupLabel = budget.groupMemberships?.length
-      ? budget.groupMemberships
-          .map((membership) => membership.group?.name)
-          .filter(Boolean)
+      ? compact(budget.groupMemberships
+          .map((membership) => membership.group?.name))
           .join(' / ') || 'Ungrouped'
       : 'Ungrouped';
 

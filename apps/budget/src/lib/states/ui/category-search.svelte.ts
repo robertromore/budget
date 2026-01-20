@@ -1,4 +1,5 @@
 import type { Category } from "$lib/schema";
+import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 export interface CategorySearchFilters {
@@ -73,7 +74,7 @@ class CategorySearchStateManager {
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
-    return Object.keys(this.filters).length > 0;
+    return isNotEmptyObject(this.filters);
   });
 
   hasSearchTerm = $derived.by(() => {

@@ -7,6 +7,7 @@
  */
 
 import type { ChatContext } from "$lib/states/ui/ai-chat.svelte";
+import { isNotEmptyObject } from "$lib/utils";
 import { formatContextForPrompt, type FinancialContext } from "../financial-context";
 
 /**
@@ -157,7 +158,7 @@ export function buildContextualPrompt(
 	}
 
 	// Add any additional context data
-	if (pageContext?.data && Object.keys(pageContext.data).length > 0) {
+	if (pageContext?.data && isNotEmptyObject(pageContext.data)) {
 		prompt += `\n\nAdditional context: ${JSON.stringify(pageContext.data)}`;
 	}
 

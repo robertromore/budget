@@ -22,6 +22,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import type * as schema from "$lib/schema";
+import { nowISOString } from "$lib/utils/dates";
 import {
   encryptionKeys,
   type EncryptionKeyTargetType,
@@ -361,7 +362,7 @@ export async function storeEncryptionKey(
     keyType: generatedKey.keyType as EncryptionKeyTypeValue,
     keyVersion: 1,
     keyDerivationParams: generatedKey.keyDerivationParams,
-    createdAt: new Date().toISOString(),
+    createdAt: nowISOString(),
   };
 
   const result = await db.insert(encryptionKeys).values(newKey);
@@ -474,7 +475,7 @@ export async function rotateEncryptionKey(
   // Re-encrypt DEK with new key
   const newEncryptedDek = encryptDek(dek, derivedKey);
   const newVerificationHash = createVerificationHash(derivedKey, dek);
-  const now = new Date().toISOString();
+  const now = nowISOString();
 
   // Update database
   await db
@@ -511,7 +512,7 @@ export async function updateKeyLastUsed(
   await db
     .update(encryptionKeys)
     .set({
-      lastUsedAt: new Date().toISOString(),
+      lastUsedAt: nowISOString(),
     })
     .where(eq(encryptionKeys.id, keyId));
 }
