@@ -31,6 +31,7 @@ let {
 
 // svelte-ignore state_referenced_locally - intentionally capture initial prop values
 const _id = id;
+// svelte-ignore state_referenced_locally
 const _initialData = initialData;
 
 const isUpdate = $derived(_id !== undefined && _id > 0);

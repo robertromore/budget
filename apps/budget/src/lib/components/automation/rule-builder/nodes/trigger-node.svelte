@@ -28,7 +28,9 @@
 	const sourcePosition = $derived(isHorizontalLayout($layoutDirection) ? Position.Right : Position.Bottom);
 
 	// Local state to ensure reactivity with SvelteFlow
+	// svelte-ignore state_referenced_locally
 	let localEntityType = $state(data.entityType);
+	// svelte-ignore state_referenced_locally
 	let localEvent = $state(data.event);
 
 	// Sync local state with prop changes

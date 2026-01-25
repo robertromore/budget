@@ -26,6 +26,7 @@ let {
 
 let open = $state(false);
 let advancedOpen = $state(false);
+// svelte-ignore state_referenced_locally
 let customInput = $state(value || '#000000');
 let colorFormat = $state<string>('hex');
 

@@ -87,7 +87,7 @@
 					isHighlighted && 'scale-125'
 				)}
 				style="background-color: {item.color};"
-			/>
+			></div>
 
 			<span class={cn('select-none', isHidden && 'line-through')}>
 				{item.label}

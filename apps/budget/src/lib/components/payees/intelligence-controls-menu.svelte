@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-// Icons
+	// Icons
 	import Calendar from '@lucide/svelte/icons/calendar';
+	import Filter from '@lucide/svelte/icons/filter';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import MoreVertical from '@lucide/svelte/icons/more-vertical';
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
@@ -13,21 +14,25 @@
 	interface Props {
 		payeeId: number;
 		isLoading: boolean;
+		hasActiveProfile?: boolean;
 		onRefresh: () => void;
 		onDetectSubscription?: () => void;
 		onApplyAll?: () => void;
 		onExplain?: () => void;
 		onFindSimilar?: () => void;
+		onOpenProfileSettings?: () => void;
 	}
 
 	let {
 		payeeId,
 		isLoading,
+		hasActiveProfile = false,
 		onRefresh,
 		onDetectSubscription,
 		onApplyAll,
 		onExplain,
 		onFindSimilar,
+		onOpenProfileSettings,
 	}: Props = $props();
 </script>
 
@@ -73,6 +78,18 @@
 		<DropdownMenu.Separator />
 
 		<DropdownMenu.Group>
+			{#if onOpenProfileSettings}
+				<DropdownMenu.Item onclick={onOpenProfileSettings} disabled={isLoading}>
+					<Filter class="mr-2 h-4 w-4" />
+					Profile Settings
+					{#if hasActiveProfile}
+						<span class="ml-auto rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+							Active
+						</span>
+					{/if}
+				</DropdownMenu.Item>
+			{/if}
+
 			{#if onExplain}
 				<DropdownMenu.Item onclick={onExplain} disabled={isLoading}>
 					<Sparkles class="mr-2 h-4 w-4" />

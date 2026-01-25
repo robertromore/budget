@@ -55,11 +55,13 @@
 	let activeView = $state<ViewMode>('visual');
 
 	// Central state: RuleConfig is the source of truth
+	// svelte-ignore state_referenced_locally
 	let ruleConfig = $state<RuleConfig>(
 		initialRuleConfig ?? createDefaultRuleConfig(entityType)
 	);
 
 	// Flow state for the visual editor (derived from ruleConfig or provided)
+	// svelte-ignore state_referenced_locally
 	let flowState = $state<FlowState | null>(initialFlowState);
 
 	// Reference to the visual builder for imperative methods

@@ -135,7 +135,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
       }
       break;
     case '-':
-      if ((new_amount.length > 0 && new_amount !== '0.00') || new_amount?.startsWith('-')) {
+      // Allow minus only at the start (position 0) and if no minus already exists
+      if (new_amount?.startsWith('-') || start !== 0) {
         event.preventDefault();
       }
       break;

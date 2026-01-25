@@ -69,6 +69,7 @@ function handleSheetChange(sheetId: string) {
 }
 
 // Create sheets configuration
+// svelte-ignore state_referenced_locally
 const sheets = [
   {
     id: 'basic',

@@ -141,6 +141,7 @@ function computeInitialVisibility(): VisibilityState {
 }
 
 // Create table state once on mount using the factory
+// svelte-ignore state_referenced_locally
 const tableState = createTableState({
   initialSorting,
   initialPagination,

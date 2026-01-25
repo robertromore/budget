@@ -201,7 +201,7 @@
 						categoriesState.init(allCategories as Category[]);
 						// Find and select the existing category by name
 						const existing = allCategories.find(
-							(c) => c.name.toLowerCase() === data.name.toLowerCase()
+							(c) => c.name?.toLowerCase() === data.name.toLowerCase()
 						);
 						if (existing) {
 							handleCategorySelect(existing.id);

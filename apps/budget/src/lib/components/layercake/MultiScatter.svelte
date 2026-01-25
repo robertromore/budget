@@ -41,6 +41,7 @@
 </script>
 
 {#each $data as d, i}
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<circle
 		cx={$xGet(d)}
 		cy={$yScale(d[y])}

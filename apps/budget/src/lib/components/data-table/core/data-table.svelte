@@ -60,6 +60,7 @@ let {
 
 // Create the table instance with state getters - reactive by design
 // Following the transactions table pattern: state is accessed via getter functions
+// svelte-ignore state_referenced_locally
 const tableInstance = createSvelteTable<TData>({
   get data() {
     return data;

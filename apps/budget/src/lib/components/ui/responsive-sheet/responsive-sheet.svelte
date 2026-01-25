@@ -54,6 +54,7 @@ let {
 const isDesktop = new MediaQuery('(min-width: 768px)');
 
 // Resize state
+// svelte-ignore state_referenced_locally
 let sheetWidth = $state(defaultWidth);
 let isResizing = $state(false);
 

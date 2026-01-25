@@ -46,6 +46,7 @@ const activeIndex = $derived(sheets.findIndex((sheet) => sheet.id === activeShee
 // Track previous open state to detect transitions
 let previousOpen = $state(open);
 let internalOpen = $state(open);
+// svelte-ignore state_referenced_locally
 let previousActiveIndex = $state(activeIndex);
 let isNavigatingBack = $state(false);
 

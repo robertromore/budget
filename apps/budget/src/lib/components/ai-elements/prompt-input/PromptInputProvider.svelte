@@ -10,6 +10,7 @@
 
 	let { initialInput = "", accept, multiple = true, children }: Props = $props();
 
+	// svelte-ignore state_referenced_locally
 	let controller = new PromptInputController(initialInput, accept, multiple);
 
 	setPromptInputProvider(controller);

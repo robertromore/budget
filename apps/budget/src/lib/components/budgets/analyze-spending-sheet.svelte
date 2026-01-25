@@ -5,7 +5,7 @@ import { Label } from '$lib/components/ui/label';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
 import { clearAllRecommendations, generateRecommendations } from '$lib/query/budgets';
-import { LoaderCircle, Sparkles, TrendingUp } from '@lucide/svelte/icons';
+import { CheckCircle, LoaderCircle, Sparkles, TrendingUp, XCircle } from '@lucide/svelte/icons';
 
 interface Props {
   open: boolean;
@@ -21,11 +21,15 @@ let minTransactions = $state<string>('3');
 let minConfidence = $state<string>('40');
 let forceRegenerate = $state<boolean>(false);
 
+// Result state to show completion feedback before closing
+let analysisResult = $state<{ count: number; shown: boolean } | null>(null);
+
 const generateMutation = generateRecommendations.options();
 const clearMutation = clearAllRecommendations.options();
 const isAnalyzing = $derived(generateMutation.isPending || clearMutation.isPending);
 
 async function handleAnalyze() {
+  analysisResult = null;
   // If force regenerate is checked, clear first
   if (forceRegenerate) {
     clearMutation.mutate(undefined, {
@@ -48,13 +52,27 @@ function runGeneration() {
     },
     {
       onSuccess: (recommendations) => {
-        if (recommendations.length > 0) {
+        // Show result briefly before closing
+        analysisResult = { count: recommendations.length, shown: true };
+        // Close sheet after a brief delay so user sees the result
+        setTimeout(() => {
           onOpenChange(false);
-        }
+          // Reset result state after sheet closes
+          setTimeout(() => {
+            analysisResult = null;
+          }, 300);
+        }, 1500);
       },
     }
   );
 }
+
+// Reset state when sheet opens
+$effect(() => {
+  if (open) {
+    analysisResult = null;
+  }
+});
 </script>
 
 <ResponsiveSheet bind:open {onOpenChange} side="right" resizable={false}>
@@ -72,6 +90,28 @@ function runGeneration() {
   {/snippet}
 
   {#snippet content()}
+    {#if analysisResult?.shown}
+      <!-- Analysis Complete State -->
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        {#if analysisResult.count > 0}
+          <div class="bg-green-100 dark:bg-green-900/30 mb-4 rounded-full p-4">
+            <CheckCircle class="h-10 w-10 text-green-600 dark:text-green-400" />
+          </div>
+          <h3 class="text-lg font-semibold">Analysis Complete!</h3>
+          <p class="text-muted-foreground mt-2">
+            Found {analysisResult.count} recommendation{analysisResult.count !== 1 ? 's' : ''} based on your spending patterns.
+          </p>
+        {:else}
+          <div class="bg-muted mb-4 rounded-full p-4">
+            <XCircle class="text-muted-foreground h-10 w-10" />
+          </div>
+          <h3 class="text-lg font-semibold">Analysis Complete</h3>
+          <p class="text-muted-foreground mt-2">
+            No new recommendations found. Your budgets are already well-optimized, or try adjusting the analysis parameters.
+          </p>
+        {/if}
+      </div>
+    {:else}
     <div class="space-y-6">
       <!-- Account Selection - Skip for now, multi-select is complex -->
       <div class="space-y-2">
@@ -165,26 +205,31 @@ function runGeneration() {
         </div>
       </div>
     </div>
+    {/if}
   {/snippet}
 
   {#snippet footer()}
-    <div class="flex gap-2">
-      <Button
-        variant="outline"
-        onclick={() => onOpenChange(false)}
-        disabled={isAnalyzing}
-        class="flex-1">
-        Cancel
-      </Button>
-      <Button onclick={handleAnalyze} disabled={isAnalyzing} class="flex-1">
-        {#if isAnalyzing}
-          <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-          Analyzing...
-        {:else}
-          <Sparkles class="mr-2 h-4 w-4" />
-          Analyze & Generate
-        {/if}
-      </Button>
-    </div>
+    {#if analysisResult?.shown}
+      <p class="text-muted-foreground text-center text-sm">Closing automatically...</p>
+    {:else}
+      <div class="flex gap-2">
+        <Button
+          variant="outline"
+          onclick={() => onOpenChange(false)}
+          disabled={isAnalyzing}
+          class="flex-1">
+          Cancel
+        </Button>
+        <Button onclick={handleAnalyze} disabled={isAnalyzing} class="flex-1">
+          {#if isAnalyzing}
+            <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+            Analyzing...
+          {:else}
+            <Sparkles class="mr-2 h-4 w-4" />
+            Analyze & Generate
+          {/if}
+        </Button>
+      </div>
+    {/if}
   {/snippet}
 </ResponsiveSheet>

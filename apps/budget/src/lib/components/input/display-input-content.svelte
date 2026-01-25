@@ -46,13 +46,14 @@
 	);
 
 	const sorting = $derived(currentView?.view.getSorting() ?? []);
-	const visibility = $derived(currentView?.view.getVisibility() ?? {});
+	// Use table's actual visibility state which includes computed values (hiddenByDefault, etc.)
+	// rather than just the view's stored visibility settings
+	const visibility = $derived(table?.getState().columnVisibility ?? {});
 	const pinning = $derived(currentView?.view.getPinning() ?? { left: [], right: [] });
 	const columnOrder = $derived(currentView?.view.getColumnOrder() ?? []);
+	// A column is visible if it's NOT explicitly set to false in the visibility state
 	const visibleColumns = $derived(
-		visiableColumns.filter(
-			(column) => !Object.keys(visibility).includes(column.id) || visibility[column.id] === true
-		)
+		visiableColumns.filter((column) => visibility[column.id] !== false)
 	);
 
 	// All columns that are currently visible and should appear in the column order manager
@@ -63,8 +64,8 @@
 
 			// Columns that can't be hidden are always visible
 			if (!column.getCanHide()) return true;
-			// For columns that can be hidden, check visibility state
-			return !Object.keys(visibility).includes(column.id) || visibility[column.id] === true;
+			// For columns that can be hidden, check if NOT explicitly set to false
+			return visibility[column.id] !== false;
 		}) ?? []
 	);
 
@@ -141,10 +142,10 @@
 </script>
 
 <div class="grid gap-2">
-	<div class="grid grid-cols-3 items-center gap-4">
+	<div class="grid grid-cols-[auto_1fr] items-center gap-4">
 		<Label for="grouping">Grouping</Label>
 		<Select.Root type="multiple" name="grouping" bind:value={grouping.value}>
-			<Select.Trigger class="w-[180px]">
+			<Select.Trigger class="w-full">
 				{#if grouping.value.length === 0}
 					<Badge variant="secondary">none selected</Badge>
 				{:else}
@@ -174,12 +175,12 @@
 			</Select.Content>
 		</Select.Root>
 	</div>
-	<div class="grid grid-cols-3 items-center gap-4">
+	<div class="grid grid-cols-[auto_1fr] items-center gap-4">
 		<Label>Sorting</Label>
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger
 				class={cn(
-					'border-input text-muted-foreground ring-offset-background focus:ring-ring flex h-9 w-[180px] items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1'
+					'border-input text-muted-foreground ring-offset-background focus:ring-ring flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1'
 				)}>
 				{#if sorting.length === 0}
 					<Badge variant="secondary">none selected</Badge>
@@ -255,10 +256,10 @@
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</div>
-	<div class="grid grid-cols-3 items-center gap-4">
+	<div class="grid grid-cols-[auto_1fr] items-center gap-4">
 		<Label>Visibility</Label>
 		<Select.Root type="multiple" name="visibility" bind:value={visibilityValue.value}>
-			<Select.Trigger class="text-muted-foreground w-[180px]">
+			<Select.Trigger class="w-full">
 				{#if visibleColumns.length === 0}
 					<Badge variant="secondary">none selected</Badge>
 				{:else}

@@ -55,10 +55,15 @@
 	const sourcePosition = $derived(isHorizontal ? Position.Right : Position.Bottom);
 
 	// Local state to ensure reactivity with SvelteFlow
+	// svelte-ignore state_referenced_locally
 	let localField = $state(data.field);
+	// svelte-ignore state_referenced_locally
 	let localOperator = $state(data.operator);
+	// svelte-ignore state_referenced_locally
 	let localValue = $state(data.value);
+	// svelte-ignore state_referenced_locally
 	let localValue2 = $state(data.value2);
+	// svelte-ignore state_referenced_locally
 	let localNegate = $state(data.negate || false);
 
 	// Sync local state with prop changes

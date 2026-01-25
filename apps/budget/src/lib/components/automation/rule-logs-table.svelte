@@ -70,7 +70,7 @@
 	{#if isLoading && logs.length === 0}
 		<div class="space-y-2">
 			{#each { length: 5 } as _, i (i)}
-				<div class="h-12 animate-pulse rounded-md bg-muted" />
+				<div class="h-12 animate-pulse rounded-md bg-muted"></div>
 			{/each}
 		</div>
 	{:else if logs.length === 0}

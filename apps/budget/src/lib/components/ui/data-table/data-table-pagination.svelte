@@ -10,6 +10,7 @@ import { Button } from '$lib/components/ui/button';
 let { table }: { table: Table<TData> } = $props();
 
 // Initialize page size from table state to avoid overwriting view settings
+// svelte-ignore state_referenced_locally
 let pageSizeValue = $state(String(table.getState().pagination.pageSize));
 
 // Sync page size FROM table state TO local state (for display)

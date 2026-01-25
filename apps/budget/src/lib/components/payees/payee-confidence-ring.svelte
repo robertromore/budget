@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { RadialGauge } from '$lib/components/layercake';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	interface ConfidenceFactor {
@@ -19,28 +20,23 @@
 
 	// Ring dimensions
 	const size = 120;
-	const strokeWidth = 10;
-	const radius = (size - strokeWidth) / 2;
-	const circumference = 2 * Math.PI * radius;
-
-	// Calculate stroke offset based on confidence
-	const offset = $derived(circumference - confidence * circumference);
+	const thickness = 10;
 
 	// Color based on confidence level
-	const ringColor = $derived(() => {
-		if (confidence >= 0.7) return 'stroke-green-500';
-		if (confidence >= 0.4) return 'stroke-yellow-500';
-		return 'stroke-red-500';
+	const ringColor = $derived.by(() => {
+		if (confidence >= 0.7) return 'var(--green-500, #22c55e)';
+		if (confidence >= 0.4) return 'var(--yellow-500, #eab308)';
+		return 'var(--red-500, #ef4444)';
 	});
 
-	const bgRingColor = $derived(() => {
-		if (confidence >= 0.7) return 'stroke-green-100 dark:stroke-green-950';
-		if (confidence >= 0.4) return 'stroke-yellow-100 dark:stroke-yellow-950';
-		return 'stroke-red-100 dark:stroke-red-950';
+	const bgRingColor = $derived.by(() => {
+		if (confidence >= 0.7) return 'var(--green-200, #bbf7d0)';
+		if (confidence >= 0.4) return 'var(--yellow-200, #fef08a)';
+		return 'var(--red-200, #fecaca)';
 	});
 
 	// Confidence label
-	const confidenceLabel = $derived(() => {
+	const confidenceLabel = $derived.by(() => {
 		if (confidence >= 0.8) return 'High Confidence';
 		if (confidence >= 0.6) return 'Good Confidence';
 		if (confidence >= 0.4) return 'Moderate';
@@ -49,7 +45,7 @@
 	});
 
 	// Data quality colors
-	const qualityBadgeClass = $derived(() => {
+	const qualityBadgeClass = $derived.by(() => {
 		switch (dataQuality) {
 			case 'excellent':
 				return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
@@ -68,27 +64,15 @@
 	<Tooltip.Root>
 		<Tooltip.Trigger>
 			<div class="relative">
-				<svg width={size} height={size} class="-rotate-90">
-					<!-- Background ring -->
-					<circle
-						cx={size / 2}
-						cy={size / 2}
-						r={radius}
-						fill="none"
-						stroke-width={strokeWidth}
-						class={bgRingColor()}
-					/>
-					<!-- Confidence ring -->
-					<circle
-						cx={size / 2}
-						cy={size / 2}
-						r={radius}
-						fill="none"
-						stroke-width={strokeWidth}
-						stroke-linecap="round"
-						stroke-dasharray={circumference}
-						stroke-dashoffset={offset}
-						class="transition-all duration-500 ease-out {ringColor()}"
+				<svg width={size} height={size}>
+					<RadialGauge
+						value={confidence}
+						{size}
+						{thickness}
+						fill={ringColor}
+						backgroundFill={bgRingColor}
+						backgroundOpacity={0.4}
+						cornerRadius={thickness / 2}
 					/>
 				</svg>
 				<!-- Center text -->
@@ -103,7 +87,7 @@
 				<p class="font-medium">Confidence Factors</p>
 				{#if factors.length > 0}
 					<ul class="space-y-1 text-sm">
-						{#each factors as factor}
+						{#each factors as factor (factor.name)}
 							<li class="flex items-center justify-between gap-4">
 								<span>{factor.name}</span>
 								<span class="text-muted-foreground">{Math.round(factor.score * 100)}%</span>
@@ -119,9 +103,9 @@
 
 	<!-- Labels -->
 	<div class="text-center">
-		<p class="font-medium">{confidenceLabel()}</p>
+		<p class="font-medium">{confidenceLabel}</p>
 		<div class="mt-2 flex flex-wrap justify-center gap-2">
-			<span class="rounded-full px-2 py-0.5 text-xs {qualityBadgeClass()}">
+			<span class="rounded-full px-2 py-0.5 text-xs {qualityBadgeClass}">
 				{dataQuality.charAt(0).toUpperCase() + dataQuality.slice(1)} Data
 			</span>
 			<span class="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">

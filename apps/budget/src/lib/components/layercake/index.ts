@@ -28,6 +28,7 @@ export { default as Beeswarm } from './Beeswarm.svelte';
 // Specialized charts
 export { default as Radar } from './Radar.svelte';
 export { default as CalendarHeatmap } from './CalendarHeatmap.svelte';
+export { default as RadialGauge } from './RadialGauge.svelte';
 
 // Axes and utilities
 export { default as AxisX } from './AxisX.svelte';

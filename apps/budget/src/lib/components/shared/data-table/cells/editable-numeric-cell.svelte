@@ -11,6 +11,7 @@ interface Props {
 
 let { value = $bindable(), format = 'currency', onSave }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const formatter =
   format === 'currency'
     ? (amount: number) => currencyFormatter.format(amount)
