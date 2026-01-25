@@ -270,8 +270,8 @@
 			},
 			outliers: { count: 0, months: [] },
 			comparison: {
-				vsHistoricalAvg: historicalAverage !== null ? mean - historicalAverage : null,
-				vsHistoricalAvgPercent: historicalAverage !== null && historicalAverage > 0 ? ((mean - historicalAverage) / historicalAverage) * 100 : null,
+				vsHistoricalAvg: historicalAverage !== null ? basicStats.mean - historicalAverage : null,
+				vsHistoricalAvgPercent: historicalAverage !== null && historicalAverage > 0 ? ((basicStats.mean - historicalAverage) / historicalAverage) * 100 : null,
 				vsBudgetTarget: null,
 				vsBudgetTargetPercent: null,
 				vsLastYearTotal: null,

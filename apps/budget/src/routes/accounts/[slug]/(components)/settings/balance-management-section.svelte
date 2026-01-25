@@ -2,17 +2,18 @@
 import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button, buttonVariants } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Textarea } from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import type { Account } from '$lib/schema';
-import { type DateValue, parseDate } from '@internationalized/date';
+import { type DateValue, parseDate, getLocalTimeZone } from '@internationalized/date';
 import { timezone } from '$lib/utils/dates';
 import { currencyFormatter } from '$lib/utils/formatters';
+import { formatDate } from '$lib/utils/date-formatters';
 import { isDebtAccount } from '$lib/schema/accounts';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Archive from '@lucide/svelte/icons/archive';
@@ -44,7 +45,7 @@ let isLoadingInfo = $state(true);
 
 // Form states for Option 1: Balance Reset
 let resetDate = $state<DateValue | undefined>(undefined);
-let resetBalance = $state('');
+let resetBalance = $state<number>(0);
 let isSavingResetDate = $state(false);
 
 // Form states for Option 2: Archive
@@ -54,11 +55,11 @@ let archiveConfirmDialog = $state({ open: false });
 
 // Form states for Option 3: Reconciliation
 let reconcileDate = $state<DateValue | undefined>(undefined);
-let reconciledBalance = $state('');
+let reconciledBalance = $state<number>(0);
 let isSavingReconcile = $state(false);
 
 // Form states for Option 4: Balance Adjustment
-let targetBalance = $state('');
+let targetBalance = $state<number>(0);
 let adjustmentReason = $state('');
 let adjustmentDate = $state<DateValue | undefined>(undefined);
 let isCreatingAdjustment = $state(false);
@@ -66,10 +67,8 @@ let isCreatingAdjustment = $state(false);
 // Current balance for adjustment calculation
 let currentBalance = $state<number | null>(null);
 let adjustmentAmount = $derived.by(() => {
-	if (currentBalance === null || !targetBalance) return null;
-	const target = parseFloat(targetBalance);
-	if (isNaN(target)) return null;
-	return target - currentBalance;
+	if (currentBalance === null || targetBalance === 0) return null;
+	return targetBalance - currentBalance;
 });
 
 // Load balance management info
@@ -87,15 +86,15 @@ async function loadBalanceInfo() {
 		// Initialize form fields from current values
 		if (balanceInfo.balanceResetDate) {
 			resetDate = parseDate(balanceInfo.balanceResetDate);
-			resetBalance = String(balanceInfo.balanceAtResetDate || 0);
+			resetBalance = balanceInfo.balanceAtResetDate || 0;
 		}
 		if (balanceInfo.reconciledDate) {
 			reconcileDate = parseDate(balanceInfo.reconciledDate);
-			reconciledBalance = String(balanceInfo.reconciledBalance || 0);
+			reconciledBalance = balanceInfo.reconciledBalance || 0;
 		}
 
-		// Get current balance for adjustment calculation
-		currentBalance = account.balance ?? null;
+		// Get current balance for adjustment calculation (use API-calculated balance, not stale prop)
+		currentBalance = balanceInfo.currentBalance ?? account.balance ?? null;
 	} catch (error) {
 		console.error('Failed to load balance management info:', error);
 		toast.error('Failed to load balance info');
@@ -106,14 +105,8 @@ async function loadBalanceInfo() {
 
 // Option 1: Set Balance Reset Date
 async function handleSetResetDate() {
-	if (!resetDate || !resetBalance) {
-		toast.error('Please enter both a date and balance');
-		return;
-	}
-
-	const balance = parseFloat(resetBalance);
-	if (isNaN(balance)) {
-		toast.error('Please enter a valid balance');
+	if (!resetDate) {
+		toast.error('Please select a date');
 		return;
 	}
 
@@ -123,7 +116,7 @@ async function handleSetResetDate() {
 		await trpc().accountRoutes.setBalanceResetDate.mutate({
 			accountId: account.id,
 			resetDate: dateStr,
-			balanceAtDate: balance
+			balanceAtDate: resetBalance
 		});
 
 		toast.success('Balance reset date set');
@@ -147,7 +140,7 @@ async function handleClearResetDate() {
 
 		toast.success('Balance reset date cleared');
 		resetDate = undefined;
-		resetBalance = '';
+		resetBalance = 0;
 		await loadBalanceInfo();
 		await queryClient.invalidateQueries({ queryKey: ['accounts'] });
 		await queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -190,14 +183,8 @@ async function handleArchiveBeforeDate() {
 
 // Option 3: Set Reconciled Balance
 async function handleSetReconcile() {
-	if (!reconcileDate || !reconciledBalance) {
+	if (!reconcileDate || reconciledBalance === 0) {
 		toast.error('Please enter both a date and balance');
-		return;
-	}
-
-	const balance = parseFloat(reconciledBalance);
-	if (isNaN(balance)) {
-		toast.error('Please enter a valid balance');
 		return;
 	}
 
@@ -207,7 +194,7 @@ async function handleSetReconcile() {
 		await trpc().accountRoutes.setReconciledBalance.mutate({
 			accountId: account.id,
 			reconciledDate: dateStr,
-			reconciledBalance: balance
+			reconciledBalance: reconciledBalance
 		});
 
 		toast.success('Reconciled balance set');
@@ -231,7 +218,7 @@ async function handleClearReconcile() {
 
 		toast.success('Reconciled balance cleared');
 		reconcileDate = undefined;
-		reconciledBalance = '';
+		reconciledBalance = 0;
 		await loadBalanceInfo();
 		await queryClient.invalidateQueries({ queryKey: ['accounts'] });
 		await queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -245,14 +232,8 @@ async function handleClearReconcile() {
 
 // Option 4: Create Balance Adjustment
 async function handleCreateAdjustment() {
-	if (!targetBalance || !adjustmentReason.trim()) {
+	if (targetBalance === 0 || !adjustmentReason.trim()) {
 		toast.error('Please enter both a target balance and reason');
-		return;
-	}
-
-	const target = parseFloat(targetBalance);
-	if (isNaN(target)) {
-		toast.error('Please enter a valid target balance');
 		return;
 	}
 
@@ -263,13 +244,13 @@ async function handleCreateAdjustment() {
 			: undefined;
 		await trpc().transactionRoutes.createBalanceAdjustment.mutate({
 			accountId: account.id,
-			targetBalance: target,
+			targetBalance: targetBalance,
 			reason: adjustmentReason.trim(),
 			date: dateStr
 		});
 
 		toast.success('Balance adjustment created');
-		targetBalance = '';
+		targetBalance = 0;
 		adjustmentReason = '';
 		adjustmentDate = undefined;
 		await loadBalanceInfo();
@@ -286,6 +267,11 @@ async function handleCreateAdjustment() {
 function formatBalance(amount: number | null | undefined): string {
 	if (amount === null || amount === undefined) return '$0.00';
 	return currencyFormatter.format(amount);
+}
+
+function formatDateString(dateStr: string | null | undefined): string {
+	if (!dateStr) return '';
+	return formatDate(parseDate(dateStr).toDate(getLocalTimeZone()));
 }
 </script>
 
@@ -319,10 +305,10 @@ function formatBalance(amount: number | null | undefined): string {
 							<p class="font-medium text-blue-900 dark:text-blue-100">Active Balance Settings</p>
 							<ul class="text-blue-700 dark:text-blue-300 space-y-1">
 								{#if balanceInfo?.reconciledDate}
-									<li>Reconciled on {balanceInfo.reconciledDate} at {formatBalance(balanceInfo.reconciledBalance)}</li>
+									<li>Reconciled on {formatDateString(balanceInfo.reconciledDate)} at {formatBalance(balanceInfo.reconciledBalance)}</li>
 								{/if}
 								{#if balanceInfo?.balanceResetDate}
-									<li>Balance reset from {balanceInfo.balanceResetDate} ({balanceInfo.transactionsBeforeResetDate} transactions excluded)</li>
+									<li>Balance reset from {formatDateString(balanceInfo.balanceResetDate)} ({balanceInfo.transactionsBeforeResetDate} transactions excluded)</li>
 								{/if}
 								{#if (balanceInfo?.archivedTransactionCount ?? 0) > 0}
 									<li>{balanceInfo?.archivedTransactionCount} archived transactions excluded from balance</li>
@@ -358,19 +344,14 @@ function formatBalance(amount: number | null | undefined): string {
 					</div>
 					<div class="space-y-2">
 						<Label>Balance at Reset Date</Label>
-						<Input
-							type="number"
-							step="0.01"
-							bind:value={resetBalance}
-							placeholder={isDebt ? 'e.g., 1500.00 (amount owed)' : 'e.g., 5000.00'}
-						/>
+						<NumericInput bind:value={resetBalance} buttonClass="w-full" />
 					</div>
 				</div>
 
 				{#if balanceInfo?.balanceResetDate}
 					<div class="rounded-md bg-muted p-3 text-sm">
 						<p>
-							Currently set: Transactions before <strong>{balanceInfo.balanceResetDate}</strong> are excluded.
+							Currently set: Transactions before <strong>{formatDateString(balanceInfo.balanceResetDate)}</strong> are excluded.
 							Starting balance: <strong>{formatBalance(balanceInfo.balanceAtResetDate)}</strong>
 						</p>
 						<p class="text-muted-foreground mt-1">
@@ -392,7 +373,7 @@ function formatBalance(amount: number | null | undefined): string {
 					{/if}
 					<Button
 						onclick={handleSetResetDate}
-						disabled={isSavingResetDate || !resetDate || !resetBalance}
+						disabled={isSavingResetDate || !resetDate || resetBalance === 0}
 					>
 						{isSavingResetDate ? 'Saving...' : balanceInfo?.balanceResetDate ? 'Update Reset Date' : 'Set Reset Date'}
 					</Button>
@@ -467,19 +448,14 @@ function formatBalance(amount: number | null | undefined): string {
 					</div>
 					<div class="space-y-2">
 						<Label>Statement Balance</Label>
-						<Input
-							type="number"
-							step="0.01"
-							bind:value={reconciledBalance}
-							placeholder={isDebt ? 'e.g., 2500.00 (amount owed)' : 'e.g., 10000.00'}
-						/>
+						<NumericInput bind:value={reconciledBalance} buttonClass="w-full" />
 					</div>
 				</div>
 
 				{#if balanceInfo?.reconciledDate}
 					<div class="rounded-md bg-muted p-3 text-sm">
 						<p>
-							Last reconciled: <strong>{balanceInfo.reconciledDate}</strong> at{' '}
+							Last reconciled: <strong>{formatDateString(balanceInfo.reconciledDate)}</strong> at{' '}
 							<strong>{formatBalance(balanceInfo.reconciledBalance)}</strong>
 						</p>
 					</div>
@@ -498,7 +474,7 @@ function formatBalance(amount: number | null | undefined): string {
 					{/if}
 					<Button
 						onclick={handleSetReconcile}
-						disabled={isSavingReconcile || !reconcileDate || !reconciledBalance}
+						disabled={isSavingReconcile || !reconcileDate || reconciledBalance === 0}
 					>
 						{isSavingReconcile ? 'Saving...' : balanceInfo?.reconciledDate ? 'Update Reconciliation' : 'Set Reconciliation'}
 					</Button>
@@ -532,12 +508,7 @@ function formatBalance(amount: number | null | undefined): string {
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div class="space-y-2">
 						<Label>Target Balance</Label>
-						<Input
-							type="number"
-							step="0.01"
-							bind:value={targetBalance}
-							placeholder={isDebt ? 'e.g., 3000.00' : 'e.g., 8000.00'}
-						/>
+						<NumericInput bind:value={targetBalance} buttonClass="w-full" />
 					</div>
 					<div class="space-y-2">
 						<Label>Adjustment Date (optional)</Label>
@@ -566,7 +537,7 @@ function formatBalance(amount: number | null | undefined): string {
 				<div class="flex justify-end">
 					<Button
 						onclick={handleCreateAdjustment}
-						disabled={isCreatingAdjustment || !targetBalance || !adjustmentReason.trim()}
+						disabled={isCreatingAdjustment || targetBalance === 0 || !adjustmentReason.trim()}
 					>
 						{isCreatingAdjustment ? 'Creating...' : 'Create Adjustment'}
 					</Button>
@@ -586,7 +557,7 @@ function formatBalance(amount: number | null | undefined): string {
 			</AlertDialog.Title>
 			<AlertDialog.Description>
 				This will archive all transactions before{' '}
-				<strong>{archiveBeforeDate?.toDate(timezone).toLocaleDateString()}</strong>.
+				<strong>{archiveBeforeDate ? formatDate(archiveBeforeDate.toDate(timezone)) : ''}</strong>.
 				Archived transactions will be excluded from balance calculations but remain visible in
 				the transaction list.
 			</AlertDialog.Description>

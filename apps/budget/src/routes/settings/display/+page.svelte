@@ -10,7 +10,8 @@
 	  type DateFormat,
 	  type NumberFormat,
 	  type TableDisplayMode,
-	  type NotificationMode
+	  type NotificationMode,
+	  type NotificationVerbosity
 	} from '$lib/stores/display-preferences.svelte';
 	import {
 	  headerActionsMode,
@@ -26,6 +27,7 @@
 	const currentShowCents = $derived(displayPreferences.showCents);
 	const currentTableDisplayMode = $derived(displayPreferences.tableDisplayMode);
 	const currentNotificationMode = $derived(displayPreferences.notificationMode);
+	const currentNotificationVerbosity = $derived(displayPreferences.notificationVerbosity);
 	const currentHeaderActionsMode = $derived(headerActionsMode.value);
 	const currentHeaderActionsDisplay = $derived(headerActionsMode.displayMode);
 	const currentHeaderTabsMode = $derived(headerActionsMode.tabsMode);
@@ -85,6 +87,13 @@
 		{ value: 'popover', label: 'Notification center', description: 'Collect notifications in a bell icon popover for later review' }
 	] as const;
 
+	// Notification verbosity options
+	const notificationVerbosityOptions = [
+		{ value: 'all', label: 'All notifications', description: 'Show all success, warning, and error notifications' },
+		{ value: 'important', label: 'Important only', description: 'Show errors, warnings, and important operations only' },
+		{ value: 'errors-only', label: 'Errors only', description: 'Only show error notifications' }
+	] as const;
+
 	function handleDateFormatChange(value: string) {
 		displayPreferences.setDateFormat(value as DateFormat);
 	}
@@ -125,6 +134,10 @@
 
 	function handleNotificationModeChange(value: string) {
 		displayPreferences.setNotificationMode(value as NotificationMode);
+	}
+
+	function handleNotificationVerbosityChange(value: string) {
+		displayPreferences.setNotificationVerbosity(value as NotificationVerbosity);
 	}
 </script>
 
@@ -238,6 +251,33 @@
 						<Checkbox
 							checked={currentNotificationMode === option.value}
 							onCheckedChange={() => handleNotificationModeChange(option.value)}
+							class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+						/>
+						<div class="grid gap-1.5 font-normal">
+							<p class="text-sm font-medium leading-none">{option.label}</p>
+							<p class="text-muted-foreground text-sm">{option.description}</p>
+						</div>
+					</Label>
+				{/each}
+			</div>
+		</Card.Content>
+	</Card.Root>
+
+	<!-- Notification Verbosity -->
+	<Card.Root data-help-id="display-notification-verbosity" data-help-title="Notification Verbosity">
+		<Card.Header>
+			<Card.Title>Notification Verbosity</Card.Title>
+			<Card.Description>Control how many notifications you see</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<div class="space-y-3">
+				{#each notificationVerbosityOptions as option}
+					<Label
+						class="hover:bg-accent/50 flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-aria-checked:border-primary has-aria-checked:bg-primary/10"
+					>
+						<Checkbox
+							checked={currentNotificationVerbosity === option.value}
+							onCheckedChange={() => handleNotificationVerbosityChange(option.value)}
 							class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
 						/>
 						<div class="grid gap-1.5 font-normal">

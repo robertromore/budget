@@ -64,6 +64,7 @@ const isOutgoing = $derived(transaction.amount < 0);
 const absAmount = $derived(Math.abs(transaction.amount));
 
 // Get transaction ID (handles string IDs from scheduled transactions)
+// svelte-ignore state_referenced_locally
 const transactionId = typeof transaction.id === 'number'
   ? transaction.id
   : parseInt(transaction.id as string);

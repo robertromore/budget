@@ -1,7 +1,9 @@
-import { removeAccountSchema } from "$lib/schema";
+import { removeAccountSchema, type RemoveAccountData } from "$lib/schema";
 import {
   superformInsertAccountSchema,
   superformInsertTransactionSchema,
+  type SuperformInsertAccountData,
+  type SuperformInsertTransactionData,
 } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
@@ -24,7 +26,9 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).accountRoutes.save(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertAccountData;
+    const entity = await createCaller(await createContext(event)).accountRoutes.save(data);
     return {
       form,
       entity,
@@ -38,7 +42,9 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext(event)).accountRoutes.remove(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as RemoveAccountData;
+    await createCaller(await createContext(event)).accountRoutes.remove(data);
     return {
       form,
     };
@@ -51,9 +57,11 @@ export const actions: Actions = {
       });
     }
 
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertTransactionData;
     const entity = await createCaller(await createContext(event)).transactionRoutes.save({
-      ...form.data,
-      date: form.data.date || new Date().toISOString().split("T")[0]!,
+      ...data,
+      date: data.date || new Date().toISOString().split("T")[0]!,
     });
     return {
       form,

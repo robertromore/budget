@@ -171,7 +171,8 @@ $effect(() => {
 
 // Intercept visibility state to hide balance column when sorting by columns
 // other than id or date, and hide budget column when no budgets exist.
-const columnVisibility = () => {
+// Using $derived ensures reactivity when budgetCount, sorting, or visibility changes.
+const columnVisibility = $derived.by(() => {
   let visibleColumns = visibility();
   const sortingState = sorting();
   const firstSort = sortingState[0];
@@ -195,7 +196,7 @@ const columnVisibility = () => {
   }
 
   return visibleColumns;
-};
+});
 
 // Custom pagination handler that updates both local state and server state
 const handlePaginationChange = (updater: any) => {
@@ -218,6 +219,7 @@ const handlePaginationChange = (updater: any) => {
   }
 };
 
+// svelte-ignore state_referenced_locally
 table = createSvelteTable<TransactionsFormat>({
   get data() {
     return transactions || [];
@@ -228,7 +230,7 @@ table = createSvelteTable<TransactionsFormat>({
       return sorting();
     },
     get columnVisibility() {
-      return columnVisibility();
+      return columnVisibility;
     },
     get rowSelection() {
       return selection();
@@ -537,7 +539,10 @@ const canRender = $derived(isContextReady && isViewsInitialized);
       <TransactionBulkActions {table} allTransactions={transactions || []} {onBulkDelete} />
     {/if}
 
-    <div class="max-w-full overflow-x-auto rounded-md border" data-tour-id="transactions-table-header">
+    <div class={cn(
+      "max-w-full overflow-x-auto rounded-md border",
+      stickyHeader && "max-h-[calc(100vh-16rem)] overflow-y-auto"
+    )} data-tour-id="transactions-table-header">
       <DndContext
         {sensors}
         modifiers={[restrictToHorizontalAxis]}
@@ -572,16 +577,22 @@ const canRender = $derived(isContextReady && isViewsInitialized);
               {@const isTransfer = row.original.isTransfer === true}
               {@const isArchived = row.original.isArchived === true}
               {@const isAdjustment = row.original.isAdjustment === true}
+              {@const isReconciliationMarker = row.original.isReconciliationMarker === true}
+              {@const markerType = row.original.markerType}
               <Table.Row
                 data-state={row.getIsSelected() && 'selected'}
                 data-transfer={isTransfer || undefined}
                 data-archived={isArchived || undefined}
                 data-adjustment={isAdjustment || undefined}
+                data-reconciliation-marker={isReconciliationMarker || undefined}
+                data-marker-type={markerType || undefined}
                 class={cn(
                   'data-[state=selected]:border-l-primary data-[state=selected]:border-l-4',
                   isTransfer && 'border-l-2 border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20',
                   isArchived && 'border-l-2 border-l-gray-400 bg-gray-100/50 opacity-60 dark:bg-gray-800/30',
-                  isAdjustment && 'border-l-2 border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20'
+                  isAdjustment && 'border-l-2 border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20',
+                  isReconciliationMarker && markerType === 'reconciliation' && 'border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/30 font-medium',
+                  isReconciliationMarker && markerType === 'balance-reset' && 'border-l-4 border-l-purple-500 bg-purple-50/50 dark:bg-purple-950/30 font-medium'
                 )}>
                 {#each row.getVisibleCells() as cell (cell.id)}
                   {@const isActive = activeColumnId === cell.column.id}

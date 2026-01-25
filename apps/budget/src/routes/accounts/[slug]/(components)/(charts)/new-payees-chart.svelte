@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { Bar, AxisX, AxisY } from '$lib/components/layercake';
-	import { currencyFormatter } from '$lib/utils/formatters';
-	import type { TransactionsFormat } from '$lib/types';
-	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
-	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
-	import { LayerCake, Svg, Html } from 'layercake';
-	import { scaleBand, scaleLinear } from 'd3-scale';
 	import { AnalyticsChartShell } from '$lib/components/charts';
+	import { AxisX, AxisY, Bar } from '$lib/components/layercake';
+	import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
+	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
+	import type { TransactionsFormat } from '$lib/types';
+	import { median, standardDeviation } from '$lib/utils/chart-statistics';
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import { formatMonthYearShort, formatShortDate } from '$lib/utils/date-formatters';
-	import { median, standardDeviation } from '$lib/utils/chart-statistics';
+	import { currencyFormatter } from '$lib/utils/formatters';
+	import { scaleBand, scaleLinear } from 'd3-scale';
+	import { Html, LayerCake, Svg } from 'layercake';
 
 	interface Props {
 		transactions: TransactionsFormat[];
@@ -249,7 +249,7 @@
 
 	{#snippet chart({ data }: { data: typeof monthlyNewPayees })}
 		<div
-			class="h-[450px] w-full pb-20"
+			class="h-112.5 w-full pb-20"
 			bind:clientWidth={containerWidth}
 			bind:clientHeight={containerHeight}
 		>

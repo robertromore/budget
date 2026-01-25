@@ -28,6 +28,7 @@ const facets = $derived(column?.getFacetedUniqueValues());
 const operators = $derived<AvailableFilters>(column?.columnDef.meta?.availableFilters || []);
 
 let showAll = $state(false);
+// svelte-ignore state_referenced_locally
 let activeOperator = $state<string>(column.getFilterFn()?.name as keyof FilterFns);
 
 const optionsValues = $derived(options ? Array.from(options.values()) : []);

@@ -257,20 +257,22 @@ const totalMappings = $derived(incomingMappings.length + outgoingMappings.length
 			</Card.Content>
 		</Card.Root>
 	{:else if totalMappings === 0}
-		<Empty.Empty>
-			<Empty.Icon icon={ArrowRightLeft} />
+		<Empty.Root>
+			<Empty.Media>
+				<ArrowRightLeft class="h-12 w-12" />
+			</Empty.Media>
 			<Empty.Title>No transfer mappings</Empty.Title>
 			<Empty.Description>
 				No payee strings are configured to transfer to or from this account.
 				Create mappings by converting transactions to transfers during import.
 			</Empty.Description>
-			<Empty.Actions>
+			<Empty.Content>
 				<Button variant="outline" href="/settings/transfer-mappings">
 					<ExternalLink class="mr-2 h-4 w-4" />
 					Manage All Mappings
 				</Button>
-			</Empty.Actions>
-		</Empty.Empty>
+			</Empty.Content>
+		</Empty.Root>
 	{:else}
 		<Tabs.Root bind:value={activeTab}>
 			<div class="flex items-center justify-between gap-4 mb-4">

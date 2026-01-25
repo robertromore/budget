@@ -8,11 +8,13 @@ import { rpc } from '$lib/query';
 import FileText from '@lucide/svelte/icons/file-text';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
 import SquarePen from '@lucide/svelte/icons/square-pen';
+import Upload from '@lucide/svelte/icons/upload';
 import Wand from '@lucide/svelte/icons/wand';
 import ExpenseTableContainer from './(components)/expense-table-container.svelte';
 import ExpenseWizard from './(components)/expense-wizard.svelte';
 import HsaDashboard from './(components)/hsa-dashboard.svelte';
 import MedicalExpenseForm from './(components)/medical-expense-form.svelte';
+import { ImportTab } from '../../accounts/[slug]/(components)';
 
 // Get account slug from page data
 const accountSlug = $derived(page.data['accountSlug']);
@@ -63,6 +65,10 @@ function handleAddExpense() {
     <Tabs.List>
       <Tabs.Trigger value="dashboard">Dashboard</Tabs.Trigger>
       <Tabs.Trigger value="expenses">Expenses</Tabs.Trigger>
+      <Tabs.Trigger value="import" class="flex items-center gap-2">
+        <Upload class="h-4 w-4" />
+        Import
+      </Tabs.Trigger>
       <Tabs.Trigger value="analytics">Analytics</Tabs.Trigger>
     </Tabs.List>
 
@@ -77,6 +83,16 @@ function handleAddExpense() {
     <Tabs.Content value="expenses">
       {#if accountData}
         <ExpenseTableContainer hsaAccountId={accountData.id} onEdit={handleEditExpense} />
+      {/if}
+    </Tabs.Content>
+
+    <!-- Import Tab -->
+    <Tabs.Content value="import">
+      {#if accountData}
+        <ImportTab
+          accountId={accountData.id}
+          accountSlug={accountSlug || ''}
+          accountName={accountData.name || 'HSA Account'} />
       {/if}
     </Tabs.Content>
 

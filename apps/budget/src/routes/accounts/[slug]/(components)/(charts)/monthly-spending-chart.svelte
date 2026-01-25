@@ -39,12 +39,15 @@ let showPercentileBands = $state(false);
 let brushHoverX = $state<number | null>(null);
 
 // Fetch monthly spending aggregates from dedicated endpoint
+// svelte-ignore state_referenced_locally
 const monthlySpendingQuery = getMonthlySpendingAggregates(accountId).options();
 
 // Fetch budgets for this account to get monthly target
+// svelte-ignore state_referenced_locally
 const budgetsQuery = getByAccount(accountId).options();
 
 // Fetch forecast data (enabled when showForecast toggle is on)
+// svelte-ignore state_referenced_locally
 const forecastQuery = getMonthlySpendingForecast(accountId, 3).options(() => ({
   enabled: showForecast
 }));
@@ -917,7 +920,7 @@ const activeAnalysisCount = $derived(
                         <div
                           class="h-full rounded-full"
                           style="width: {Math.min(percentUsed, 100)}%; background-color: {getStatusColor(point)};"
-                        />
+                        ></div>
                       </div>
                       <span class="text-xs tabular-nums">{percentUsed}%</span>
                     </div>

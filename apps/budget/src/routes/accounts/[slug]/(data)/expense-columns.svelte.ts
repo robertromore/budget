@@ -205,19 +205,17 @@ export const columns = (
       filterFn: "dateIn" as any,
       meta: {
         label: "Date",
-        facetedFilter: (column: Column<ExpenseFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Date",
-            icon: CalendarDays,
-            column,
-            value,
-            component: () =>
-              renderComponent(DataTableFacetedFilterDateWithOperators as any, {
-                column,
-                title: "Date",
-              }),
-          };
-        },
+        facetedFilter: (column: Column<ExpenseFormat, unknown>) => ({
+          name: "Date",
+          icon: CalendarDays,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterDateWithOperators as any, {
+              column,
+              title: "Date",
+            }),
+        }),
         availableFilters: [
           { id: "dateIn", label: "in" },
           { id: "dateBefore", label: "before" },
@@ -408,19 +406,17 @@ export const columns = (
       filterFn: "amountFilter" as any,
       meta: {
         label: "Amount",
-        facetedFilter: (column: Column<ExpenseFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Amount",
-            icon: DollarSign,
-            column,
-            value,
-            component: () =>
-              renderComponent(DataTableFacetedFilterAmount as any, {
-                column,
-                title: "Amount",
-              }),
-          };
-        },
+        facetedFilter: (column: Column<ExpenseFormat, unknown>) => ({
+          name: "Amount",
+          icon: DollarSign,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterAmount as any, {
+              column,
+              title: "Amount",
+            }),
+        }),
       },
     },
 
@@ -520,7 +516,7 @@ export const columns = (
       },
       meta: {
         label: "Claim Status",
-        facetedFilter: (column: Column<ExpenseFormat, unknown>, value: unknown[]) => {
+        facetedFilter: (column: Column<ExpenseFormat, unknown>) => {
           const statusOptions = new SvelteMap(
             claimStatusKeys.map((key) => [
               key,
@@ -534,7 +530,7 @@ export const columns = (
             name: "Claim Status",
             icon: CircleCheckBig,
             column,
-            value,
+            value: [],
             component: () =>
               renderComponent(DataTableFacetedFilter as any, {
                 column,

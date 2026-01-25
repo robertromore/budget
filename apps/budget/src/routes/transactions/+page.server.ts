@@ -2,6 +2,9 @@ import {
   superformDeleteTransactionSchema,
   superformInsertTransactionSchema,
   superformUpdateTransactionSchema,
+  type SuperformInsertTransactionData,
+  type SuperformUpdateTransactionData,
+  type SuperformDeleteTransactionData,
 } from "$lib/schema/superforms/transactions";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
@@ -28,10 +31,13 @@ export const actions: Actions = {
       });
     }
 
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertTransactionData;
+
     try {
       // Manual security validation for notes field
-      if (form.data.notes !== undefined) {
-        const validation = validateAndSanitizeNotes(form.data.notes);
+      if (data.notes !== undefined) {
+        const validation = validateAndSanitizeNotes(data.notes);
         if (!validation.isValid) {
           console.error("Notes validation failed:", validation.error);
           return fail(400, {
@@ -42,7 +48,7 @@ export const actions: Actions = {
       }
 
       // Manual validation for amount field
-      if (form.data["amount"] === 0) {
+      if (data.amount === 0) {
         console.error("Amount validation failed: Amount cannot be zero");
         return fail(400, {
           form,
@@ -52,13 +58,13 @@ export const actions: Actions = {
 
       const caller = createCaller(await createContext(event));
       const entity = await caller.transactionRoutes.create({
-        accountId: form.data["accountId"] as number,
-        amount: form.data["amount"] as number,
-        date: (form.data["date"] as string) || currentDate.toString(),
-        notes: form.data["notes"] as string | null | undefined,
-        payeeId: form.data["payeeId"] as number | null | undefined,
-        categoryId: form.data["categoryId"] as number | null | undefined,
-        status: form.data["status"] as "cleared" | "pending" | "scheduled",
+        accountId: data.accountId,
+        amount: data.amount,
+        date: data.date || currentDate.toString(),
+        notes: data.notes,
+        payeeId: data.payeeId,
+        categoryId: data.categoryId,
+        status: data.status,
       });
 
       return {
@@ -86,11 +92,14 @@ export const actions: Actions = {
         });
       }
 
+      // Cast form data to proper type (zod4 adapter returns unknown)
+      const data = form.data as SuperformUpdateTransactionData;
+
       const caller = createCaller(await createContext(event));
 
       // Manual security validation for notes field
-      if (form.data["notes"] !== undefined) {
-        const validation = validateAndSanitizeNotes(form.data["notes"]);
+      if (data.notes !== undefined) {
+        const validation = validateAndSanitizeNotes(data.notes);
         if (!validation.isValid) {
           console.error("Notes validation failed:", validation.error);
           return fail(400, {
@@ -101,7 +110,7 @@ export const actions: Actions = {
       }
 
       // Manual validation for amount field
-      if (form.data["amount"] !== undefined && form.data["amount"] === 0) {
+      if (data.amount !== undefined && data.amount === 0) {
         console.error("Amount validation failed: Amount cannot be zero");
         return fail(400, {
           form,
@@ -111,16 +120,16 @@ export const actions: Actions = {
 
       // Build update data object with only fields accepted by tRPC schema
       const updateData: any = {};
-      if (form.data["amount"] !== undefined) updateData.amount = form.data["amount"];
-      if (form.data["date"] !== undefined) updateData.date = form.data["date"];
-      if (form.data["notes"] !== undefined) updateData.notes = form.data["notes"];
-      if (form.data["payeeId"] !== undefined) updateData.payeeId = form.data["payeeId"];
-      if (form.data["categoryId"] !== undefined) updateData.categoryId = form.data["categoryId"];
-      if (form.data["status"] !== undefined) updateData.status = form.data["status"];
+      if (data.amount !== undefined) updateData.amount = data.amount;
+      if (data.date !== undefined) updateData.date = data.date;
+      if (data.notes !== undefined) updateData.notes = data.notes;
+      if (data.payeeId !== undefined) updateData.payeeId = data.payeeId;
+      if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+      if (data.status !== undefined) updateData.status = data.status;
       // Note: accountId and parentId are not included as they're not accepted by tRPC updateTransactionSchema
 
       const entity = await caller.transactionRoutes.update({
-        id: form.data["id"] as number,
+        id: data.id,
         data: updateData,
       });
 
@@ -146,10 +155,13 @@ export const actions: Actions = {
       });
     }
 
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformDeleteTransactionData;
+
     try {
       const caller = createCaller(await createContext(event));
       await caller.transactionRoutes.delete({
-        id: form.data["id"] as number,
+        id: data.id,
       });
 
       return {

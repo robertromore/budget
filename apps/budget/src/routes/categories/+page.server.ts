@@ -1,5 +1,5 @@
-import { removeCategorySchema } from "$lib/schema";
-import { superformInsertCategorySchema } from "$lib/schema/superforms";
+import { removeCategorySchema, type RemoveCategoryData } from "$lib/schema";
+import { superformInsertCategorySchema, type SuperformInsertCategoryData } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
@@ -21,7 +21,9 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).categoriesRoutes.save(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertCategoryData;
+    const entity = await createCaller(await createContext(event)).categoriesRoutes.save(data);
     return {
       form,
       entity,
@@ -35,7 +37,9 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext(event)).categoriesRoutes.remove(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as RemoveCategoryData;
+    await createCaller(await createContext(event)).categoriesRoutes.remove(data);
     return {
       form,
     };

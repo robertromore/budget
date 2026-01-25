@@ -15,16 +15,16 @@
   ```
 -->
 <script lang="ts" generics="TData, TValue">
-import type { Column } from '@tanstack/table-core';
-import * as Popover from '$lib/components/ui/popover';
-import { Button } from '$lib/components/ui/button';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Popover from '$lib/components/ui/popover';
+import { currentViews } from '$lib/states/views';
+import type { AmountFilterValue } from '$lib/types/filter';
 import { cn } from '$lib/utils';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { currentViews } from '$lib/states/views';
 import X from '@lucide/svelte/icons/x';
-import type { AmountFilterValue } from '$lib/types/filter';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
+import type { Column } from '@tanstack/table-core';
 
 /**
  * Component props interface
@@ -68,10 +68,8 @@ let currentViewsState = $derived.by(() => {
   }
 });
 const activeView = $derived(currentViewsState?.activeView);
-const activeViewModel = $derived(activeView?.view);
 
 const currentFilter = $derived(column.getFilterValue() as AmountFilterValue | undefined);
-const hasFilter = $derived(currentFilter !== undefined);
 
 // Initialize filter with default operator when component mounts
 $effect(() => {
@@ -127,29 +125,6 @@ const clearFilter = () => {
     column.setFilterValue(undefined);
     activeView?.removeFilter(column.id);
   }
-};
-
-const formatFilterValue = (filter: AmountFilterValue | undefined) => {
-  if (!filter) return 'Select value';
-
-  if (filter.type === 'between') {
-    // Show placeholder if no values are set
-    if (filter.min === undefined && filter.max === undefined) {
-      return 'Select range';
-    }
-    // Show partial range if only one value is set
-    if (filter.min !== undefined && filter.max !== undefined) {
-      return `${currencyFormatter.format(filter.min)} - ${currencyFormatter.format(filter.max)}`;
-    }
-    return 'Select range';
-  }
-
-  // Show placeholder if no value is set
-  if (filter.value === undefined) {
-    return 'Select value';
-  }
-
-  return currencyFormatter.format(filter.value);
 };
 
 let inputValue = $state(0);

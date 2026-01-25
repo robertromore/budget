@@ -1,10 +1,10 @@
 <script lang="ts" generics="TData, TValue, TEntity">
-import type { Column } from '@tanstack/table-core';
-import { DataTableFacetedFilter } from '..';
-import type { Component } from 'svelte';
 import { currentViews } from '$lib/states/views';
-import { SvelteMap } from 'svelte/reactivity';
 import type { FacetedFilterOption } from '$lib/types';
+import type { Column } from '@tanstack/table-core';
+import type { Component } from 'svelte';
+import { SvelteMap } from 'svelte/reactivity';
+import { DataTableFacetedFilter } from '..';
 
 type EntityConfig<TEntity> = {
   // Data source for all entities
@@ -30,7 +30,6 @@ let { column, config }: Props<TData, TValue, TEntity> = $props();
 
 const activeView = $derived(currentViews.get().activeView);
 const activeViewModel = $derived(activeView.view);
-const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
 
 // Get faceted values with counts from TanStack Table
 const facets = $derived(column?.getFacetedUniqueValues?.() || new Map());

@@ -6,14 +6,13 @@
  */
 
 import type {
-	ImportFile,
-	ImportFileType,
-	MultiFileGlobalStep,
-	ParseResult,
-	ColumnMapping,
-	ImportRow,
-	EntityOverride,
-	ScheduleMatch
+  ColumnMapping,
+  EntityOverride,
+  ImportFile,
+  ImportFileType,
+  ImportRow,
+  MultiFileGlobalStep,
+  ParseResult
 } from '$lib/types/import';
 
 /**

@@ -90,6 +90,7 @@ $effect(() => {
   dateFiltersState.dateFilters = dateFilters;
 });
 
+// svelte-ignore state_referenced_locally
 table = createSvelteTable<ExpenseFormat>({
   get data() {
     return expenses || [];

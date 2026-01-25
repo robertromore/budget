@@ -1,5 +1,5 @@
-import { removePayeeSchema } from "$lib/schema";
-import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { removePayeeSchema, type RemovePayeeData } from "$lib/schema";
+import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import type { Actions } from "@sveltejs/kit";
@@ -35,7 +35,9 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).payeeRoutes.save(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertPayeeData;
+    const entity = await createCaller(await createContext(event)).payeeRoutes.save(data);
     return {
       form,
       entity,
@@ -50,7 +52,9 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext(event)).payeeRoutes.remove(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as RemovePayeeData;
+    await createCaller(await createContext(event)).payeeRoutes.remove(data);
     return {
       form,
     };

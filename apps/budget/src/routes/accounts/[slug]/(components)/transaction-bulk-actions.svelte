@@ -17,11 +17,16 @@ let { table, allTransactions, onBulkDelete }: Props = $props();
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);
 const selectedTransactions = $derived(selectedRows.map((row) => row.original));
-// Filter out scheduled transactions (those with string IDs)
-const realTransactions = $derived(allTransactions.filter((t) => typeof t.id === 'number'));
+// Filter out scheduled transactions (those with string IDs) but include reconciliation markers
+const realTransactions = $derived(
+  allTransactions.filter((t) => typeof t.id === 'number' || t.isReconciliationMarker)
+);
 const totalCount = $derived(realTransactions.length);
 const pageRowCount = $derived(
-  table.getRowModel().rows.filter((row) => typeof row.original.id === 'number').length
+  table
+    .getRowModel()
+    .rows.filter((row) => typeof row.original.id === 'number' || row.original.isReconciliationMarker)
+    .length
 );
 const allPageRowsSelected = $derived(table.getIsAllPageRowsSelected());
 const canSelectAll = $derived(allPageRowsSelected && totalCount > pageRowCount);
@@ -32,16 +37,17 @@ const selectedOrAllTransactions = $derived.by(() => {
   if (selectingAll && allPageRowsSelected) {
     return realTransactions;
   }
-  // Filter out scheduled transactions from selected (string IDs)
-  return selectedTransactions.filter((t) => typeof t.id === 'number');
+  // Filter out scheduled transactions from selected (string IDs) but include reconciliation markers
+  return selectedTransactions.filter((t) => typeof t.id === 'number' || t.isReconciliationMarker);
 });
 
 const displayCount = $derived.by(() => {
   if (selectingAll && allPageRowsSelected) {
     return totalCount;
   }
-  // Only count real transactions (exclude scheduled ones with string IDs)
-  return selectedTransactions.filter((t) => typeof t.id === 'number').length;
+  // Only count real transactions and markers (exclude scheduled ones with string IDs)
+  return selectedTransactions.filter((t) => typeof t.id === 'number' || t.isReconciliationMarker)
+    .length;
 });
 </script>
 

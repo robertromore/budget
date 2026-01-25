@@ -1,5 +1,5 @@
-import { superformInsertViewSchema } from "$lib/schema/superforms";
-import { removeViewSchema } from "$lib/schema/views";
+import { superformInsertViewSchema, type SuperformInsertViewData } from "$lib/schema/superforms";
+import { removeViewSchema, type RemoveViewData } from "$lib/schema/views";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { fail } from "@sveltejs/kit";
@@ -22,7 +22,9 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).viewsRoutes.save(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertViewData;
+    const entity = await createCaller(await createContext(event)).viewsRoutes.save(data);
     return {
       form,
       entity,
@@ -36,7 +38,9 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext(event)).viewsRoutes.remove(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as RemoveViewData;
+    await createCaller(await createContext(event)).viewsRoutes.remove(data);
     return {
       form,
     };

@@ -15,6 +15,7 @@ interface Props {
 
 let { value, placeholder = '', multiline = false, onSave }: Props = $props();
 let open = $state(false);
+// svelte-ignore state_referenced_locally
 let newValue = $state(value || '');
 
 const handleSubmit = async () => {
@@ -44,11 +45,11 @@ $effect(() => {
       </Button>
     {/snippet}
   </Popover.Trigger>
-  <Popover.Content class="grid w-[800px]! max-w-none gap-2 p-2" align="start">
+  <Popover.Content class="grid w-200! max-w-none gap-2 p-2" align="start">
     {#if multiline}
-      <Textarea {placeholder} bind:value={newValue} class="min-h-[150px] w-full" />
+      <Textarea {placeholder} bind:value={newValue} class="min-h-37.5 w-full" />
     {:else}
-      <Input {placeholder} bind:value={newValue} class="min-w-[200px]" />
+      <Input {placeholder} bind:value={newValue} class="min-w-50" />
     {/if}
     <Button onclick={handleSubmit}>Save</Button>
   </Popover.Content>

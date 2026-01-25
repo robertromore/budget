@@ -66,6 +66,7 @@ const budgetsLoading = $derived(isDemoView ? false : (budgetsQuery?.isLoading ??
 function demoBudgetToBudgetWithRelations(demoBudget: DemoBudget): BudgetWithRelations {
   return {
     id: demoBudget.id,
+    seq: demoBudget.id, // Use id as seq for demo data
     workspaceId: demoBudget.workspaceId,
     name: demoBudget.name,
     slug: demoBudget.slug,
@@ -86,14 +87,13 @@ function demoBudgetToBudgetWithRelations(demoBudget: DemoBudget): BudgetWithRela
       id: 0,
       budgetId: demoBudget.id,
       accountId: a.id,
-      createdAt: demoBudget.createdAt,
+      associationType: 'spending' as const,
       account: { id: a.id, name: a.name } as any,
     })),
     categories: demoBudget.categories.map(c => ({
       id: 0,
       budgetId: demoBudget.id,
       categoryId: c.id,
-      createdAt: demoBudget.createdAt,
       category: { id: c.id, name: c.name, categoryColor: c.color } as any,
     })),
     transactions: [],

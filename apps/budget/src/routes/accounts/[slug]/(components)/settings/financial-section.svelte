@@ -24,10 +24,15 @@ const queryClient = useQueryClient();
 const isDebt = $derived(isDebtAccount(account.accountType || 'checking'));
 
 // Form state
+// svelte-ignore state_referenced_locally
 let initialBalance = $state(account.initialBalance || 0);
+// svelte-ignore state_referenced_locally
 let debtLimit = $state((account as any).debtLimit || null);
+// svelte-ignore state_referenced_locally
 let minimumPayment = $state((account as any).minimumPayment || null);
+// svelte-ignore state_referenced_locally
 let paymentDueDay = $state((account as any).paymentDueDay || null);
+// svelte-ignore state_referenced_locally
 let interestRate = $state((account as any).interestRate || null);
 
 let isSaving = $state(false);

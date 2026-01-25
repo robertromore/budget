@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { AnalyticsChartShell } from '$lib/components/charts';
 	import { Radar } from '$lib/components/layercake';
 	import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 	import type { TransactionsFormat } from '$lib/types';
@@ -6,7 +7,6 @@
 	import type { ComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 	import { currencyFormatter } from '$lib/utils/formatters';
 	import { Html, LayerCake, Svg } from 'layercake';
-	import { AnalyticsChartShell } from '$lib/components/charts';
 
 	// Track hovered point for tooltip
 	let hoveredPoint = $state<{ key: string; value: number; x: number; y: number } | null>(null);
@@ -162,7 +162,7 @@
 	{#snippet chart({ data }: { data: typeof categoryData })}
 		{#if hasData}
 			<div
-				class="h-[450px] w-full pb-20"
+				class="h-112.5 w-full pb-20"
 				bind:clientWidth={containerWidth}
 				bind:clientHeight={containerHeight}
 			>

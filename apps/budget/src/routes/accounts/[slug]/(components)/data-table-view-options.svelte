@@ -9,6 +9,19 @@ import { currentViews } from '$lib/states/views';
 
 let { table }: { table: Table<TData> } = $props();
 
+// Get the reactive visibility state - this ensures checkboxes update when visibility changes
+// We need to explicitly track this because column.getIsVisible() doesn't establish Svelte reactive dependencies
+const columnVisibility = $derived(table.getState().columnVisibility);
+
+// Helper to check if a column is visible from the reactive state
+function isColumnVisible(columnId: string): boolean {
+  // Read from our reactive derived value to establish dependency
+  const visibility = columnVisibility;
+  // If column is explicitly set to false, it's hidden
+  // If column is not in the visibility object, TanStack Table treats it as visible
+  return visibility[columnId] !== false;
+}
+
 // Get context during component initialization
 const _currentViews = currentViews.get();
 
@@ -88,7 +101,7 @@ function getPinIcon(columnId: string) {
         .getAllColumns()
         .filter((col) => typeof col.accessorFn !== 'undefined' && col.getCanHide()) as column}
         <DropdownMenu.CheckboxItem
-          bind:checked={() => column.getIsVisible(), (v) => column.toggleVisibility(!!v)}
+          bind:checked={() => isColumnVisible(column.id), (v) => column.toggleVisibility(!!v)}
           class="capitalize"
           closeOnSelect={false}>
           {column.id}

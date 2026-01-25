@@ -44,14 +44,14 @@ const handleSubmit = (new_value: string) => {
     onclick={onScheduleClick}
     variant="ghost"
     class="hover:bg-primary/10 h-10 w-10 p-1 transition-colors">
-    <Calendar class="text-primary hover:text-primary/80 size-2 transition-colors" size={22} />
+    <Calendar class="text-primary hover:text-primary/80 size-5 transition-colors" />
   </Button>
 {:else}
   <div class="flex h-10 w-10 items-center justify-center">
     {#if value === 'scheduled'}
-      <Calendar class="text-primary size-2" size={22} />
+      <Calendar class="text-primary size-5" />
     {:else}
-      <CalendarClock class="text-muted-foreground size-2" size={22} />
+      <CalendarClock class="text-muted-foreground size-5" />
     {/if}
   </div>
 {/if}

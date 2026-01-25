@@ -28,12 +28,13 @@ let manageViewForm = $state(false);
 let editViewId = $state(0);
 let editViewsMode = $state(false);
 
+// svelte-ignore state_referenced_locally
 const columns = table.getAllColumns();
 let filterComponents: FilterInputOption[] = $derived.by(() => {
   return columns
     .filter((column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
     .map((column) => {
-      return column.columnDef.meta?.facetedFilter(column);
+      return column.columnDef.meta!.facetedFilter!(column);
     });
 });
 
@@ -185,25 +186,27 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
 </div>
 
 {#if manageViewForm}
-  <ManageViewForm
-    availableFilters={filterComponents}
-    onCancel={() => {
-      manageViewForm = false;
-      _currentViews?.activeView?.resetToInitialState();
-    }}
-    onDelete={() => {
-      manageViewForm = false;
-      _currentViews?.remove(editViewId);
-      currentViewValue = _currentViews?.activeView?.view.id?.toString() ?? '';
-    }}
-    onSave={(new_entity) => {
-      manageViewForm = false;
-      const viewState = new CurrentViewState(new_entity, table);
-      _currentViews?.add(viewState, true);
-    }}
-    bind:viewId={editViewId} />
+  <div class="mt-4">
+    <ManageViewForm
+      availableFilters={filterComponents}
+      onCancel={() => {
+        manageViewForm = false;
+        _currentViews?.activeView?.resetToInitialState();
+      }}
+      onDelete={() => {
+        manageViewForm = false;
+        _currentViews?.remove(editViewId);
+        currentViewValue = _currentViews?.activeView?.view.id?.toString() ?? '';
+      }}
+      onSave={(new_entity) => {
+        manageViewForm = false;
+        const viewState = new CurrentViewState(new_entity, table);
+        _currentViews?.add(viewState, true);
+      }}
+      bind:viewId={editViewId} />
+  </div>
 {:else}
-  <div class="mt-2 flex">
+  <div class="mt-4 flex">
     <div data-help-id="transaction-filters" data-help-title="Filter Transactions">
       <FilterInput availableFilters={filterComponents} />
     </div>

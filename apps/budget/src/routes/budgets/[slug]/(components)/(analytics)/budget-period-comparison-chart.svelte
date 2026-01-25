@@ -45,6 +45,12 @@ const isLoading = $derived(
 );
 const hasComparison = $derived(!!comparison);
 
+// Derived trend icons for comparison metrics
+const AllocatedTrendIcon = $derived(getTrendIcon(comparison?.changes.allocatedChange ?? 0));
+const SpentTrendIcon = $derived(getTrendIcon(comparison?.changes.spentChange ?? 0));
+const UtilizationTrendIcon = $derived(getTrendIcon(comparison?.changes.utilizationChange ?? 0));
+const PerformanceTrendIcon = $derived(getTrendIcon(comparison?.changes.performanceChange ?? 0));
+
 // Format percentage change
 function formatChange(value: number): string {
   const sign = value > 0 ? '+' : '';
@@ -115,7 +121,7 @@ function getPerformanceColor(score: number): string {
                 {currencyFormatter.format(comparison.currentPeriod.totalAllocated)}
               </span>
               <div class="flex items-center gap-1 {getTrendColor(comparison.changes.allocatedChange)}">
-                <svelte:component this={getTrendIcon(comparison.changes.allocatedChange)} class="h-4 w-4" />
+                <AllocatedTrendIcon class="h-4 w-4" />
                 <span class="text-sm">{formatChange(comparison.changes.allocatedChange)}</span>
               </div>
             </div>
@@ -132,7 +138,7 @@ function getPerformanceColor(score: number): string {
                 {currencyFormatter.format(Math.abs(comparison.currentPeriod.totalSpent))}
               </span>
               <div class="flex items-center gap-1 {getTrendColor(comparison.changes.spentChange)}">
-                <svelte:component this={getTrendIcon(comparison.changes.spentChange)} class="h-4 w-4" />
+                <SpentTrendIcon class="h-4 w-4" />
                 <span class="text-sm">{formatChange(comparison.changes.spentChange)}</span>
               </div>
             </div>
@@ -149,7 +155,7 @@ function getPerformanceColor(score: number): string {
                 {formatPercentRaw(comparison.currentPeriod.utilizationRate, 1)}
               </span>
               <div class="flex items-center gap-1 {getTrendColor(comparison.changes.utilizationChange)}">
-                <svelte:component this={getTrendIcon(comparison.changes.utilizationChange)} class="h-4 w-4" />
+                <UtilizationTrendIcon class="h-4 w-4" />
                 <span class="text-sm">{formatChange(comparison.changes.utilizationChange)}</span>
               </div>
             </div>
@@ -167,7 +173,7 @@ function getPerformanceColor(score: number): string {
                 {comparison.currentPeriod.performanceScore.toFixed(0)}
               </span>
               <div class="flex items-center gap-1 {getTrendColor(comparison.changes.performanceChange)}">
-                <svelte:component this={getTrendIcon(comparison.changes.performanceChange)} class="h-4 w-4" />
+                <PerformanceTrendIcon class="h-4 w-4" />
                 <span class="text-sm">{formatChange(comparison.changes.performanceChange)}</span>
               </div>
             </div>

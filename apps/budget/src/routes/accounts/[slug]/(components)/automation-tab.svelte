@@ -219,7 +219,7 @@ const initialFlowState = $derived.by(() => {
   {#if isLoading}
     <div class="grid gap-4 md:grid-cols-2">
       {#each { length: 3 } as _, i (i)}
-        <div class="h-40 animate-pulse rounded-lg bg-muted" />
+        <div class="h-40 animate-pulse rounded-lg bg-muted"></div>
       {/each}
     </div>
   {:else if rules.length === 0}

@@ -1,20 +1,20 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
 import * as Card from '$lib/components/ui/card';
-import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
-import { USAGE_UNIT_LABELS } from '$lib/schema/utility-usage';
+import { rpc } from '$lib/query';
 import type { Account } from '$lib/schema';
-import Zap from '@lucide/svelte/icons/zap';
-import Droplets from '@lucide/svelte/icons/droplets';
-import Flame from '@lucide/svelte/icons/flame';
-import Wifi from '@lucide/svelte/icons/wifi';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import { USAGE_UNIT_LABELS } from '$lib/schema/utility-usage';
+import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import Activity from '@lucide/svelte/icons/activity';
 import Calendar from '@lucide/svelte/icons/calendar';
-import UsageTrendsChart from './(charts)/usage-trends-chart.svelte';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Droplets from '@lucide/svelte/icons/droplets';
+import Flame from '@lucide/svelte/icons/flame';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Wifi from '@lucide/svelte/icons/wifi';
+import Zap from '@lucide/svelte/icons/zap';
 import CostTrendsChart from './(charts)/cost-trends-chart.svelte';
+import UsageTrendsChart from './(charts)/usage-trends-chart.svelte';
 
 interface Props {
   account: Account;
@@ -25,9 +25,11 @@ let { account }: Props = $props();
 const accountId = $derived(account.id);
 
 // Query data
+// svelte-ignore state_referenced_locally
 const analyticsQuery = rpc.utility.getUsageAnalytics(accountId).options();
 const analytics = $derived(analyticsQuery.data);
 
+// svelte-ignore state_referenced_locally
 const usageRecordsQuery = rpc.utility.getUsageRecords(accountId).options();
 const usageRecords = $derived(usageRecordsQuery.data ?? []);
 
@@ -35,7 +37,7 @@ const usageRecords = $derived(usageRecordsQuery.data ?? []);
 const latestRecord = $derived(usageRecords[0] ?? null);
 
 // Get utility subtype icon
-const utilityIcon = $derived.by(() => {
+const UtilityIcon = $derived.by(() => {
   switch (account.utilitySubtype) {
     case 'electric':
       return Zap;
@@ -58,19 +60,13 @@ function formatUsage(amount: number | null | undefined, unit: string | null | un
   return `${amount.toLocaleString()} ${unitLabel}`;
 }
 
-// Calculate usage change percentage
-const usageChange = $derived.by(() => {
-  if (!analytics?.averageDailyUsage || usageRecords.length < 2) return null;
-  const latest = usageRecords[0]?.usageAmount;
-  const previous = usageRecords[1]?.usageAmount;
-  if (!latest || !previous) return null;
-  return ((latest - previous) / previous) * 100;
-});
+// Get usage change from analytics (vs last period)
+const usageChangePercent = $derived(analytics?.usageChange?.vsLastPeriod ?? null);
 
 // Get trend direction
 const trendDirection = $derived.by(() => {
-  if (usageChange == null) return 'neutral';
-  return usageChange > 0 ? 'up' : usageChange < 0 ? 'down' : 'neutral';
+  if (usageChangePercent == null) return 'neutral';
+  return usageChangePercent > 0 ? 'up' : usageChangePercent < 0 ? 'down' : 'neutral';
 });
 </script>
 
@@ -81,7 +77,7 @@ const trendDirection = $derived.by(() => {
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Current Usage</Card.Title>
-        <svelte:component this={utilityIcon} class="text-muted-foreground h-4 w-4" />
+        <UtilityIcon class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">
@@ -90,10 +86,10 @@ const trendDirection = $derived.by(() => {
         <div class="text-muted-foreground flex items-center text-xs">
           {#if trendDirection === 'up'}
             <TrendingUp class="text-destructive mr-1 h-3 w-3" />
-            <span class="text-destructive">{formatPercentRaw(usageChange ?? 0, 1)} vs last period</span>
+            <span class="text-destructive">{formatPercentRaw(usageChangePercent ?? 0, 1)} vs last period</span>
           {:else if trendDirection === 'down'}
             <TrendingDown class="mr-1 h-3 w-3 text-green-500" />
-            <span class="text-green-500">{formatPercentRaw(Math.abs(usageChange ?? 0), 1)} vs last period</span>
+            <span class="text-green-500">{formatPercentRaw(Math.abs(usageChangePercent ?? 0), 1)} vs last period</span>
           {:else}
             <span>No previous data</span>
           {/if}
@@ -117,18 +113,18 @@ const trendDirection = $derived.by(() => {
       </Card.Content>
     </Card.Root>
 
-    <!-- Average Daily Usage -->
+    <!-- Average Monthly Usage -->
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-        <Card.Title class="text-sm font-medium">Daily Average</Card.Title>
+        <Card.Title class="text-sm font-medium">Monthly Average</Card.Title>
         <Activity class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">
-          {analytics?.averageDailyUsage?.toFixed(2) ?? 'N/A'}
+          {analytics?.yearToDate?.averageMonthlyUsage?.toFixed(2) ?? 'N/A'}
         </div>
         <p class="text-muted-foreground text-xs">
-          per day (12-month avg)
+          per month (YTD avg)
         </p>
       </Card.Content>
     </Card.Root>
@@ -141,10 +137,10 @@ const trendDirection = $derived.by(() => {
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">
-          {formatCurrency(analytics?.totalCost ?? 0)}
+          {formatCurrency(analytics?.yearToDate?.totalCost ?? 0)}
         </div>
         <p class="text-muted-foreground text-xs">
-          {analytics?.totalUsage?.toLocaleString() ?? 0} {latestRecord?.usageUnit ? USAGE_UNIT_LABELS[latestRecord.usageUnit as keyof typeof USAGE_UNIT_LABELS]?.shortLabel : 'units'} used
+          {analytics?.yearToDate?.totalUsage?.toLocaleString() ?? 0} {latestRecord?.usageUnit ? USAGE_UNIT_LABELS[latestRecord.usageUnit as keyof typeof USAGE_UNIT_LABELS]?.shortLabel : 'units'} used
         </p>
       </Card.Content>
     </Card.Root>
@@ -196,7 +192,7 @@ const trendDirection = $derived.by(() => {
     <Card.Content>
       {#if usageRecords.length === 0}
         <div class="text-muted-foreground py-8 text-center">
-          <svelte:component this={utilityIcon} class="mx-auto mb-2 h-8 w-8" />
+          <UtilityIcon class="mx-auto mb-2 h-8 w-8" />
           <p>No usage records yet</p>
           <p class="text-sm">Import your utility statements to start tracking usage</p>
         </div>

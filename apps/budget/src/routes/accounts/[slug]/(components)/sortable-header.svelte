@@ -16,6 +16,7 @@ interface Props {
 
 let { header, density, isDraggable, stickyHeader = false, onTransformChange }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const sortable = useSortable({
   id: header.id,
   disabled: !isDraggable,
@@ -26,8 +27,8 @@ function refCallback(node: HTMLTableCellElement | null) {
   if (node && sortable.setNodeRef) {
     if (typeof sortable.setNodeRef === 'function') {
       sortable.setNodeRef(node);
-    } else if ('current' in sortable.setNodeRef) {
-      sortable.setNodeRef.current = node;
+    } else if ('current' in (sortable.setNodeRef as object)) {
+      (sortable.setNodeRef as { current: HTMLTableCellElement | null }).current = node;
     }
   }
 }
@@ -54,14 +55,15 @@ const dragHandleProps = $derived(() => {
 
 // Report transform changes to parent
 $effect(() => {
-  if (onTransformChange) {
+  const headerId = header.id;
+  if (onTransformChange && headerId) {
     const transformValue = sortable.transform?.current;
 
     if (transformValue) {
-      const transformStr = CSS.Transform.toString(transformValue);
-      onTransformChange(header.id, transformStr);
+      const transformStr = CSS.Transform.toString(transformValue) ?? '';
+      onTransformChange(headerId, transformStr);
     } else {
-      onTransformChange(header.id, '');
+      onTransformChange(headerId, '');
     }
   }
 });

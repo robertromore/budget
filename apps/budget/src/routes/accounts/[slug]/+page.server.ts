@@ -1,5 +1,5 @@
 import type { View } from "$lib/schema";
-import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { currentDate } from "$lib/utils/dates";
@@ -281,7 +281,9 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).payeeRoutes.save(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertPayeeData;
+    const entity = await createCaller(await createContext(event)).payeeRoutes.save(data);
     return {
       form,
       entity,

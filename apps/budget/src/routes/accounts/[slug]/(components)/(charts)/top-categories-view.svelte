@@ -38,6 +38,7 @@ interface Props {
 let { transactions }: Props = $props();
 
 // Process the data
+// svelte-ignore state_referenced_locally
 const processor = createTopCategoriesProcessor(transactions);
 const topCategories = $derived(processor.data);
 

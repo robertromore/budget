@@ -15,6 +15,7 @@ interface Props {
 
 let { value, placeholder = '', multiline = false, onSave }: Props = $props();
 let open = $state(false);
+// svelte-ignore state_referenced_locally
 let newValue = $state(value || '');
 
 const handleSubmit = async () => {

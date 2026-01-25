@@ -183,7 +183,7 @@ $effect(() => {
         { id: 'automation', label: 'Automation', icon: Zap },
         { id: 'schedules', label: 'Schedules', icon: Calendar },
         { id: 'budgets', label: 'Budgets', icon: Wallet },
-        { id: 'import', label: 'Import', icon: Upload, condition: !isHsaAccount },
+        { id: 'import', label: 'Import', icon: Upload },
         { id: 'settings', label: 'Settings', icon: SlidersHorizontal },
       ],
       activeTab,
@@ -275,6 +275,10 @@ const bulkArchiveBudgetsMutation = rpc.budgets.bulkArchiveBudgets.options();
 
 // Schedule mutations
 const bulkDeleteSchedulesMutation = bulkRemoveSchedules.options();
+
+// Account balance management mutations
+const clearReconciledBalanceMutation = rpc.accounts.clearReconciledBalance.options();
+const clearBalanceResetDateMutation = rpc.accounts.clearBalanceResetDate.options();
 
 const queryClient = useQueryClient();
 
@@ -429,7 +433,7 @@ const formattedTransactions = $derived.by(() => {
     return [];
   }
 
-  return currentTransactions.map((t: Transaction) => {
+  const result: TransactionsFormat[] = currentTransactions.map((t: Transaction) => {
     const formatted: TransactionsFormat = {
       id: t.id ?? '',
       seq: (t as any).seq ?? null,
@@ -468,6 +472,85 @@ const formattedTransactions = $derived.by(() => {
 
     return formatted;
   });
+
+  // Inject reconciliation marker row if account has reconciliation checkpoint set
+  const account = accountData;
+  if (account?.reconciledDate && account.reconciledBalance != null) {
+    const reconciledDateValue = parseDate(account.reconciledDate);
+    const reconciledDateStr = account.reconciledDate;
+
+    // Create the reconciliation marker row
+    const reconciliationMarker: TransactionsFormat = {
+      id: 'reconciliation-marker',
+      seq: null,
+      date: reconciledDateValue,
+      amount: account.reconciledBalance,
+      notes: 'Reconciliation Checkpoint',
+      status: null,
+      accountId: Number(accountId),
+      payeeId: null,
+      payee: null,
+      categoryId: null,
+      category: null,
+      parentId: null,
+      balance: account.reconciledBalance,
+      isReconciliationMarker: true,
+      markerType: 'reconciliation',
+    };
+
+    // Find the correct position to insert the marker
+    // Transactions are sorted by date descending, so we find the first transaction
+    // that is ON or BEFORE the reconciled date
+    const insertIndex = result.findIndex((t) => {
+      const txnDateStr = t.date.toString();
+      return txnDateStr <= reconciledDateStr;
+    });
+
+    if (insertIndex === -1) {
+      // All transactions are after the reconciled date, add at end
+      result.push(reconciliationMarker);
+    } else {
+      // Insert before the first transaction that is on or before the reconciled date
+      result.splice(insertIndex, 0, reconciliationMarker);
+    }
+  }
+
+  // Inject balance reset marker row if account has balance reset date set (and no reconciliation)
+  if (!account?.reconciledDate && account?.balanceResetDate && account.balanceAtResetDate != null) {
+    const resetDateValue = parseDate(account.balanceResetDate);
+    const resetDateStr = account.balanceResetDate;
+
+    const resetMarker: TransactionsFormat = {
+      id: 'balance-reset-marker',
+      seq: null,
+      date: resetDateValue,
+      amount: account.balanceAtResetDate,
+      notes: 'Balance Reset Point',
+      status: null,
+      accountId: Number(accountId),
+      payeeId: null,
+      payee: null,
+      categoryId: null,
+      category: null,
+      parentId: null,
+      balance: account.balanceAtResetDate,
+      isReconciliationMarker: true,
+      markerType: 'balance-reset',
+    };
+
+    const insertIndex = result.findIndex((t) => {
+      const txnDateStr = t.date.toString();
+      return txnDateStr <= resetDateStr;
+    });
+
+    if (insertIndex === -1) {
+      result.push(resetMarker);
+    } else {
+      result.splice(insertIndex, 0, resetMarker);
+    }
+  }
+
+  return result;
 });
 
 // Initialize server account state (skip in demo mode - no real API calls needed)
@@ -708,33 +791,55 @@ const confirmBulkDelete = async () => {
 
   isDeletingBulk = true;
   try {
-    // If user wants to delete linked transfers, handle them first
-    if (alsoDeleteLinkedTransfers && hasTransfersToDelete) {
-      // Get unique transfer IDs to delete
-      const transferIds = [...new Set(transferTransactionsToDelete.map((t) => t.transferId!))];
+    // Handle reconciliation/balance reset markers first
+    const reconciliationMarkers = transactionsToDelete.filter(
+      (t) => t.isReconciliationMarker && t.markerType === 'reconciliation'
+    );
+    const balanceResetMarkers = transactionsToDelete.filter(
+      (t) => t.isReconciliationMarker && t.markerType === 'balance-reset'
+    );
+    const realTransactions = transactionsToDelete.filter((t) => !t.isReconciliationMarker);
 
-      // Delete all transfers (this deletes both sides)
-      for (const transferId of transferIds) {
-        await deleteTransferMutation.mutateAsync({ transferId });
-      }
+    // Clear reconciliation checkpoint if any reconciliation markers are selected
+    if (reconciliationMarkers.length > 0 && accountId) {
+      await clearReconciledBalanceMutation.mutateAsync({ accountId: Number(accountId) });
+    }
 
-      // Get remaining non-transfer transaction IDs
-      const nonTransferIds = transactionsToDelete
-        .filter((t) => typeof t.id === 'number' && !t.isTransfer)
-        .map((t) => t.id as number);
+    // Clear balance reset date if any balance reset markers are selected
+    if (balanceResetMarkers.length > 0 && accountId) {
+      await clearBalanceResetDateMutation.mutateAsync({ accountId: Number(accountId) });
+    }
 
-      if (nonTransferIds.length > 0) {
-        await bulkDeleteTransactionsMutation.mutateAsync(nonTransferIds);
-      }
-    } else {
-      // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
-      const idsToDelete = transactionsToDelete
-        .filter((t) => typeof t.id === 'number')
-        .map((t) => t.id as number);
+    // Only proceed with transaction deletion if there are real transactions
+    if (realTransactions.length > 0) {
+      // If user wants to delete linked transfers, handle them first
+      if (alsoDeleteLinkedTransfers && hasTransfersToDelete) {
+        // Get unique transfer IDs to delete
+        const transferIds = [...new Set(transferTransactionsToDelete.map((t) => t.transferId!))];
 
-      if (idsToDelete.length > 0) {
-        // Delete all transactions in a single batch request
-        await bulkDeleteTransactionsMutation.mutateAsync(idsToDelete);
+        // Delete all transfers (this deletes both sides)
+        for (const transferId of transferIds) {
+          await deleteTransferMutation.mutateAsync({ transferId });
+        }
+
+        // Get remaining non-transfer transaction IDs
+        const nonTransferIds = realTransactions
+          .filter((t) => typeof t.id === 'number' && !t.isTransfer)
+          .map((t) => t.id as number);
+
+        if (nonTransferIds.length > 0) {
+          await bulkDeleteTransactionsMutation.mutateAsync(nonTransferIds);
+        }
+      } else {
+        // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
+        const idsToDelete = realTransactions
+          .filter((t) => typeof t.id === 'number')
+          .map((t) => t.id as number);
+
+        if (idsToDelete.length > 0) {
+          // Delete all transactions in a single batch request
+          await bulkDeleteTransactionsMutation.mutateAsync(idsToDelete);
+        }
       }
     }
 
@@ -1043,12 +1148,10 @@ $effect(() => {
             <Wallet class="mr-2 h-4 w-4" />
             Budgets
           </Tabs.Trigger>
-          {#if !isHsaAccount}
-            <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab" data-tour-id="import-tab">
-              <Upload class="mr-2 h-4 w-4" />
-              Import
-            </Tabs.Trigger>
-          {/if}
+          <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab" data-tour-id="import-tab">
+            <Upload class="mr-2 h-4 w-4" />
+            Import
+          </Tabs.Trigger>
           <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-settings" data-help-title="Settings Tab" data-tour-id="settings-tab">
             <SlidersHorizontal class="mr-2 h-4 w-4" />
             Settings
@@ -1200,16 +1303,14 @@ $effect(() => {
       </Tabs.Content>
 
       <!-- Import Tab Content -->
-      {#if !isHsaAccount}
-        <Tabs.Content value="import" class="tabs-connected-content" data-help-id="import-tab" data-help-title="Import Tab">
-          {#if accountData && accountId && activeTab === 'import'}
-            <ImportTab
-              accountId={Number(accountId)}
-              accountSlug={accountSlug || ''}
-              accountName={accountData.name || 'Account'} />
-          {/if}
-        </Tabs.Content>
-      {/if}
+      <Tabs.Content value="import" class="tabs-connected-content" data-help-id="import-tab" data-help-title="Import Tab">
+        {#if accountData && accountId && activeTab === 'import'}
+          <ImportTab
+            accountId={Number(accountId)}
+            accountSlug={accountSlug || ''}
+            accountName={accountData.name || 'Account'} />
+        {/if}
+      </Tabs.Content>
 
       <!-- Intelligence Tab Content -->
       <Tabs.Content value="intelligence" class="tabs-connected-content" data-help-id="intelligence-tab" data-help-title="Intelligence Tab">
@@ -1344,7 +1445,7 @@ $effect(() => {
               <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
           {/if}
-        {:else if activeTab === 'import' && !isHsaAccount}
+        {:else if activeTab === 'import'}
           {#if accountData && accountId}
             <ImportTab
               accountId={Number(accountId)}

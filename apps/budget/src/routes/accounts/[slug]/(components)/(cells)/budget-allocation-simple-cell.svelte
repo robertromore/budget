@@ -99,7 +99,7 @@ function handleAllocationChanged() {
             <Tooltip.Trigger>
               <button
                 type="button"
-                class="group flex max-w-[140px] cursor-pointer items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50/80 px-2 py-1 text-xs transition-all hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
+                class="group flex max-w-35 cursor-pointer items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50/80 px-2 py-1 text-xs transition-all hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
                 onclick={handleManageClick}>
                 <div
                   class="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 transition-colors group-hover:bg-emerald-200 dark:bg-emerald-800 dark:group-hover:bg-emerald-700">

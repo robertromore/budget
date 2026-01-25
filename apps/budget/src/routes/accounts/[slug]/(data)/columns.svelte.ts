@@ -17,14 +17,9 @@ import { dateFormatter } from "$lib/utils/date-formatters";
 import { type DateValue, getLocalTimeZone } from "@internationalized/date";
 import type { CellContext, Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
 import type { Component } from "svelte";
-// Import shared cell components
-import {
-  EditableDateCell,
-  EditableNumericCell,
-} from "$lib/components/shared/data-table/cells";
-
 // Import route-specific cell components
-import DataTableEditableCell from "../(components)/(cells)/data-table-editable-cell.svelte";
+import EditableDateCell from "../(components)/(cells)/data-table-editable-date-cell.svelte";
+import EditableNumericCell from "../(components)/(cells)/data-table-editable-numeric-cell.svelte";
 import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
 import EditableEntityCell from "../(components)/(cells)/editable-entity-cell.svelte";
 import EditablePayeeCell from "../(components)/(cells)/editable-payee-cell.svelte";
@@ -36,6 +31,7 @@ import DataTableFacetedFilterDateWithOperators from "../(components)/(facets)/da
 import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
 import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
 import DataTableActions from "../(components)/data-table-actions.svelte";
+import MarkerActions from "../(components)/marker-actions.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 import EditableCategoryCell from "../(components)/(cells)/editable-category-cell.svelte";
@@ -73,16 +69,27 @@ export const columns = (
 
   /**
    * Helper function to render cells that are editable for normal transactions
-   * but read-only with icon for scheduled transactions
+   * but read-only with icon for scheduled transactions or reconciliation markers
    */
   const renderEditableCell = (
     info: CellContext<TransactionsFormat, unknown>,
     config: {
       scheduledRenderer: () => { value: string; icon?: Component };
       editableRenderer: () => { component: any; props: Record<string, unknown> };
+      markerRenderer?: () => { value: string; icon?: Component };
     }
   ) => {
     const transaction = info.row.original;
+
+    // Read-only for reconciliation markers
+    if (transaction.isReconciliationMarker) {
+      if (config.markerRenderer) {
+        const { value, icon } = config.markerRenderer();
+        return renderComponent(ReadOnlyCellWithIcon, { value, icon });
+      }
+      // Default: show dash for markers
+      return renderComponent(ReadOnlyCellWithIcon, { value: "—" });
+    }
 
     // Read-only for scheduled transactions
     if (transaction.status === "scheduled") {
@@ -176,8 +183,8 @@ export const columns = (
       accessorKey: "seq",
       cell: (info) => {
         const transaction = info.row.original;
-        // Show dash for upcoming scheduled transactions (no seq assigned)
-        if (transaction.status === "scheduled" || info.getValue() === null) {
+        // Show dash for upcoming scheduled transactions, markers, or no seq assigned
+        if (transaction.status === "scheduled" || transaction.isReconciliationMarker || info.getValue() === null) {
           return "—";
         }
         return info.getValue();
@@ -205,6 +212,10 @@ export const columns = (
 
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
+            value: dateValue ? dateFormatter.format(dateValue.toDate(getLocalTimeZone())) : "—",
+            icon: CalendarDays,
+          }),
+          markerRenderer: () => ({
             value: dateValue ? dateFormatter.format(dateValue.toDate(getLocalTimeZone())) : "—",
             icon: CalendarDays,
           }),
@@ -240,12 +251,11 @@ export const columns = (
       filterFn: "dateIn" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Date",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Date",
-            icon: CalendarDays,
-            column,
-            value,
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Date",
+          icon: CalendarDays,
+          column,
+          value: [],
             component: () =>
               renderComponent(
                 DataTableFacetedFilterDateWithOperators as any,
@@ -254,8 +264,7 @@ export const columns = (
                   title: "Date",
                 }
               ),
-          };
-        },
+        }),
         availableFilters: [
           {
             id: "dateIn",
@@ -282,6 +291,15 @@ export const columns = (
       cell: (info) => {
         const payee = payees.getById(info.getValue() as number);
         const transaction = info.row.original;
+
+        // If this is a reconciliation marker, show the marker label
+        if (transaction.isReconciliationMarker) {
+          const label =
+            transaction.markerType === "reconciliation"
+              ? "✓ Reconciliation Checkpoint"
+              : "◆ Balance Reset Point";
+          return renderComponent(ReadOnlyCellWithIcon, { value: label });
+        }
 
         // If this is a transfer, show the transfer destination instead of payee
         if (transaction.isTransfer) {
@@ -331,18 +349,16 @@ export const columns = (
       filterFn: "entityIsFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Payee",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Payee",
-            icon: HandCoins,
-            column,
-            value,
-            component: () =>
-              renderComponent(DataTableFacetedFilterPayee as any, {
-                column,
-              }),
-          };
-        },
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Payee",
+          icon: HandCoins,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterPayee as any, {
+              column,
+            }),
+        }),
         availableFilters: [
           {
             id: "entityIsFilter",
@@ -362,6 +378,18 @@ export const columns = (
         const notes = info.getValue() as string;
         const transaction = info.row.original;
 
+        // For reconciliation markers, show marker description
+        if (transaction.isReconciliationMarker) {
+          const description =
+            transaction.markerType === "reconciliation"
+              ? "Transactions before this date are excluded from balance"
+              : "Balance calculation starts from this point";
+          return renderComponent(ReadOnlyCellWithIcon, {
+            value: description,
+            icon: StickyNote,
+          });
+        }
+
         // For scheduled transactions, use read-only rendering
         if (transaction.status === "scheduled") {
           return renderComponent(ReadOnlyCellWithIcon, {
@@ -379,8 +407,8 @@ export const columns = (
               return updateData(id, "notes", new_value);
             }
           },
-          isArchived: transaction.isArchived,
-          isAdjustment: transaction.isAdjustment,
+          isArchived: transaction.isArchived ?? undefined,
+          isAdjustment: transaction.isAdjustment ?? undefined,
           adjustmentReason: transaction.adjustmentReason,
         });
       },
@@ -403,6 +431,11 @@ export const columns = (
       cell: (info) => {
         const category = categories.getById(info.getValue() as number);
         const transaction = info.row.original;
+
+        // Show dash for reconciliation markers
+        if (transaction.isReconciliationMarker) {
+          return renderComponent(ReadOnlyCellWithIcon, { value: "—" });
+        }
 
         // Read-only for scheduled transactions
         if (transaction.status === "scheduled") {
@@ -431,18 +464,16 @@ export const columns = (
       filterFn: "entityIsFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Category",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Category",
-            icon: SquareMousePointer,
-            column,
-            value,
-            component: () =>
-              renderComponent(DataTableFacetedFilterCategory as any, {
-                column,
-              }),
-          };
-        },
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Category",
+          icon: SquareMousePointer,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterCategory as any, {
+              column,
+            }),
+        }),
         availableFilters: [
           {
             id: "entityIsFilter",
@@ -460,6 +491,10 @@ export const columns = (
       id: "budget",
       cell: (info) => {
         const transaction = info.row.original;
+        // Show dash for reconciliation markers
+        if (transaction.isReconciliationMarker) {
+          return "—";
+        }
         return renderComponent(BudgetAllocationSimpleCell, {
           transaction,
         });
@@ -488,6 +523,9 @@ export const columns = (
           scheduledRenderer: () => ({
             value: currencyFormatter.format(amount || 0),
           }),
+          markerRenderer: () => ({
+            value: currencyFormatter.format(amount || 0),
+          }),
           editableRenderer: () => ({
             component: EditableNumericCell,
             props: {
@@ -514,19 +552,17 @@ export const columns = (
       filterFn: "amountFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Amount",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Amount",
-            icon: DollarSign,
-            column,
-            value,
-            component: () =>
-              renderComponent(DataTableFacetedFilterAmount as any, {
-                column,
-                title: "Amount",
-              }),
-          };
-        },
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Amount",
+          icon: DollarSign,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterAmount as any, {
+              column,
+              title: "Amount",
+            }),
+        }),
         availableFilters: [
           {
             id: "amountFilter",
@@ -570,33 +606,36 @@ export const columns = (
     {
       accessorKey: "status",
       id: "status",
-      cell: (info) =>
-        renderComponent(DataTableEditableStatusCell, {
+      cell: (info) => {
+        const transaction = info.row.original;
+        // For reconciliation markers, show no status cell
+        if (transaction.isReconciliationMarker) {
+          return "";
+        }
+        return renderComponent(DataTableEditableStatusCell, {
           value: info.getValue() as string,
           onUpdateValue: (new_value: unknown) => updateHandler(info, "status", new_value as string),
           onScheduleClick:
-            info.row.original.status === "scheduled" && onScheduleClick
-              ? () => onScheduleClick(info.row.original)
+            transaction.status === "scheduled" && onScheduleClick
+              ? () => onScheduleClick(transaction)
               : undefined,
-        }),
+        });
+      },
       aggregatedCell: () => {},
       header: "",
       filterFn: "equalsString" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Status",
-        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
-          return {
-            name: "Status",
-            icon: SquareCheck,
-            column,
-            value,
-            component: () => {
-              return renderComponent(DataTableFacetedFilterStatus as any, {
-                column,
-              });
-            },
-          };
-        },
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Status",
+          icon: SquareCheck,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterStatus as any, {
+              column,
+            }),
+        }),
         availableFilters: [
           {
             id: "equalsString",
@@ -620,6 +659,14 @@ export const columns = (
         // No actions for scheduled transactions
         if (transaction.status === "scheduled") {
           return "";
+        }
+
+        // Marker-specific actions (clear checkpoint)
+        if (transaction.isReconciliationMarker) {
+          return renderComponent(MarkerActions, {
+            transaction,
+            accountId: transaction.accountId,
+          });
         }
 
         return renderComponent(DataTableActions, {

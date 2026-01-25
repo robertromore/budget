@@ -26,7 +26,9 @@ interface Props {
 let { account }: Props = $props();
 
 // Queries
+// svelte-ignore state_referenced_locally
 const settingsQuery = getAccountEncryptionSettings(account.id).options();
+// svelte-ignore state_referenced_locally
 const effectiveLevelQuery = getEffectiveEncryptionLevel({ accountId: account.id }).options();
 
 // Mutations

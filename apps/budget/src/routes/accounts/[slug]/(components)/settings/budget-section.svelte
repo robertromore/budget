@@ -18,6 +18,7 @@ let { account }: Props = $props();
 const queryClient = useQueryClient();
 
 // Form state
+// svelte-ignore state_referenced_locally
 let onBudget = $state(account.onBudget ?? true);
 let isSaving = $state(false);
 

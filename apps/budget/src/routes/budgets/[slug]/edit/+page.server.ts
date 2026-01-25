@@ -1,4 +1,4 @@
-import { superformInsertBudgetSchema } from "$lib/schema/superforms";
+import { superformInsertBudgetSchema, type SuperformInsertBudgetData } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { fail, redirect } from "@sveltejs/kit";
@@ -88,6 +88,9 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertBudgetData;
+
     try {
       const context = await createContext(event);
       const caller = createCaller(context);
@@ -103,33 +106,33 @@ export const actions: Actions = {
       const metadata: Record<string, unknown> = {
         ...existingMetadata, // Preserve existing metadata (including scheduledExpense, goal, etc.)
         defaultPeriod: {
-          type: form.data.periodType || "monthly",
-          startDay: form.data.startDay || 1,
+          type: data.periodType || "monthly",
+          startDay: data.startDay || 1,
         },
       };
 
-      if (form.data.allocatedAmount !== undefined) {
-        metadata["allocatedAmount"] = form.data.allocatedAmount;
+      if (data.allocatedAmount !== undefined) {
+        metadata["allocatedAmount"] = data.allocatedAmount;
       }
 
       // Handle schedule linking for scheduled-expense budgets
-      if (form.data.type === "scheduled-expense" && form.data.linkedScheduleId) {
+      if (data.type === "scheduled-expense" && data.linkedScheduleId) {
         metadata["scheduledExpense"] = {
           ...(existingMetadata["scheduledExpense"] as Record<string, unknown> || {}),
-          linkedScheduleId: form.data.linkedScheduleId,
+          linkedScheduleId: data.linkedScheduleId,
           autoTrack: true,
         };
       }
 
       await caller.budgetRoutes.update({
         id: budget.id,
-        name: form.data.name,
-        description: form.data.description,
-        status: form.data.status,
-        enforcementLevel: form.data.enforcementLevel,
+        name: data.name,
+        description: data.description,
+        status: data.status,
+        enforcementLevel: data.enforcementLevel,
         metadata,
-        accountIds: form.data.accountIds,
-        categoryIds: form.data.categoryIds,
+        accountIds: data.accountIds,
+        categoryIds: data.categoryIds,
       });
 
       // Redirect after successful update (outside try-catch)

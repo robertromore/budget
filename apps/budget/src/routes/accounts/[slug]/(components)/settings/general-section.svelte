@@ -45,12 +45,19 @@ const notesIsEncrypted = $derived(isFieldEncrypted('accounts.notes'));
 const needsUnlock = $derived(nameState.needsUnlock || notesState.needsUnlock);
 
 // Form state - initialized from decrypted values or original
+// svelte-ignore state_referenced_locally
 let name = $state(account.name);
+// svelte-ignore state_referenced_locally
 let accountType = $state<AccountType>(account.accountType || 'checking');
+// svelte-ignore state_referenced_locally
 let institution = $state(account.institution || '');
+// svelte-ignore state_referenced_locally
 let accountNumberLast4 = $state(String((account as any).accountNumberLast4 || ''));
+// svelte-ignore state_referenced_locally
 let notes = $state(account.notes || '');
+// svelte-ignore state_referenced_locally
 let accountIcon = $state(account.accountIcon || '');
+// svelte-ignore state_referenced_locally
 let accountColor = $state(account.accountColor || '#3b82f6');
 
 let isSaving = $state(false);

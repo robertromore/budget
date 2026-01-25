@@ -1,5 +1,5 @@
-import { removeScheduleSchema } from "$lib/schema";
-import { superformInsertScheduleSchema } from "$lib/schema/superforms";
+import { removeScheduleSchema, type RemoveScheduleData } from "$lib/schema";
+import { superformInsertScheduleSchema, type SuperformInsertScheduleData } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { fail } from "@sveltejs/kit";
@@ -23,7 +23,9 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).scheduleRoutes.save(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as SuperformInsertScheduleData;
+    const entity = await createCaller(await createContext(event)).scheduleRoutes.save(data);
     return {
       form,
       entity,
@@ -37,7 +39,9 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext(event)).scheduleRoutes.remove(form.data);
+    // Cast form data to proper type (zod4 adapter returns unknown)
+    const data = form.data as RemoveScheduleData;
+    await createCaller(await createContext(event)).scheduleRoutes.remove(data);
     return {
       form,
     };

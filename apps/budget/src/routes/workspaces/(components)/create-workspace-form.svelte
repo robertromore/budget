@@ -3,14 +3,16 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Form from '$lib/components/ui/form';
 import { Input } from '$lib/components/ui/input';
-import { formInsertWorkspaceSchema, type FormInsertWorkspaceSchema } from '$lib/schema/workspaces';
+import { formInsertWorkspaceSchema } from '$lib/schema/workspaces';
 import { toast } from '$lib/utils/toast-interceptor';
 import type { SuperValidated } from 'sveltekit-superforms';
 import { superForm } from 'sveltekit-superforms';
 import { zod4Client } from 'sveltekit-superforms/adapters';
 
 interface Props {
-  data: SuperValidated<FormInsertWorkspaceSchema>;
+  // Accept any SuperValidated type - zod4 adapter doesn't infer types properly
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: SuperValidated<any>;
   onSuccess?: () => void;
 }
 

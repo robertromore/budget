@@ -14,12 +14,13 @@ interface Props {
 let { table }: Props = $props();
 
 // Get filter components from visible columns that have facetedFilter defined
+// svelte-ignore state_referenced_locally
 const columns = table.getAllColumns();
 let filterComponents: FilterInputOption[] = $derived.by(() => {
   return columns
     .filter((column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
     .map((column) => {
-      return column.columnDef.meta?.facetedFilter(column);
+      return column.columnDef.meta!.facetedFilter!(column);
     });
 });
 
@@ -47,6 +48,7 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
       onValueChange={(value) => {
         let newView: number;
         if (!value) {
+          if (!firstViewId) return;
           newView = firstViewId;
           currentViewValue = newView.toString();
         } else {
@@ -72,6 +74,7 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
         onValueChange={(value) => {
           let newView: number;
           if (!value) {
+            if (!firstViewId) return;
             newView = firstViewId;
             currentViewValue = newView.toString();
           } else {

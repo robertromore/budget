@@ -37,6 +37,7 @@ let {
 
 // Local state
 let activeTab = $state('overview');
+// svelte-ignore state_referenced_locally
 let selectedTimeframe = $state(timeframe);
 let isLoading = $state(false);
 let analytics = $state<any>(null);

@@ -38,6 +38,7 @@ let editableTiers = $state<
 >([]);
 
 // Query existing rate tiers
+// svelte-ignore state_referenced_locally
 const rateTiersQuery = rpc.utility.getRateTiers(account.id).options();
 const rateTiers = $derived(rateTiersQuery.data ?? []);
 
