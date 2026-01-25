@@ -49,10 +49,23 @@
 				aiChat.startNewConversation();
 			}
 		}
+
+		// Check for pending input (e.g., from openWithPrompt)
+		const pendingInput = aiChat.consumePendingInput();
+		if (pendingInput) {
+			inputValue = pendingInput;
+		}
 	});
 
 	// Local input state
 	let inputValue = $state("");
+
+	// Watch for pending input when chat opens (for subsequent opens after mount)
+	$effect(() => {
+		if (aiChat.isOpen && aiChat.pendingInput) {
+			inputValue = aiChat.consumePendingInput() ?? "";
+		}
+	});
 	let conversationsOpen = $state(false);
 	let autocompleteIndex = $state(0);
 

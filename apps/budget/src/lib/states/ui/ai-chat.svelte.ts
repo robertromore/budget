@@ -57,6 +57,9 @@ class AIChatState {
 	// Panel state
 	#isOpen = $state(false);
 
+	// Pending input (pre-filled when opening with a prompt)
+	#pendingInput = $state<string | null>(null);
+
 	// Messages
 	#messages = $state<ChatMessage[]>([]);
 
@@ -121,6 +124,10 @@ class AIChatState {
 		return this.#messages[this.#messages.length - 1] ?? null;
 	}
 
+	get pendingInput() {
+		return this.#pendingInput;
+	}
+
 	get currentConversationId() {
 		return this.#currentConversationId;
 	}
@@ -147,6 +154,28 @@ class AIChatState {
 
 	toggle() {
 		this.#isOpen = !this.#isOpen;
+	}
+
+	/**
+	 * Open the chat panel with a pre-filled prompt
+	 * The user can review and edit the prompt before sending
+	 */
+	openWithPrompt(prompt: string, context?: ChatContext) {
+		this.#pendingInput = prompt;
+		if (context) {
+			this.#context = context;
+		}
+		this.#isOpen = true;
+	}
+
+	/**
+	 * Consume the pending input (called by chat panel on mount/open)
+	 * Returns the pending input and clears it
+	 */
+	consumePendingInput(): string | null {
+		const input = this.#pendingInput;
+		this.#pendingInput = null;
+		return input;
 	}
 
 	// ==========================================================================

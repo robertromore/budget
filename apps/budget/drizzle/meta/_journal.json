@@ -22,6 +22,27 @@
       "when": 1767985763906,
       "tag": "0002_fine_crusher_hogan",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1737564900000,
+      "tag": "0003_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1769292580485,
+      "tag": "0004_reflective_black_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1769306582302,
+      "tag": "0005_living_may_parker",
+      "breakpoints": true
     }
   ]
 }

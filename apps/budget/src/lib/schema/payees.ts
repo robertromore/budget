@@ -30,11 +30,44 @@ export interface PayeeAddress {
   formatted?: string;
 }
 
+// Intelligence profile filters for controlling which transactions are analyzed
+export interface IntelligenceProfileFilters {
+  /** Include only transactions with these category types */
+  categoryTypes?: Array<"income" | "expense" | "transfer" | "savings">;
+  /** Filter by amount sign: positive (income), negative (expenses), or all */
+  amountSign?: "positive" | "negative" | "all";
+  /** Date range filter */
+  dateRange?: {
+    type: "all" | "last_n_months" | "last_n_years";
+    months?: number;
+  };
+  /** Exclude transfer transactions from analysis */
+  excludeTransfers?: boolean;
+  /** Minimum amount threshold (absolute value) */
+  minAmount?: number;
+  /** Maximum amount threshold (absolute value) */
+  maxAmount?: number;
+  /** Override prediction method for this payee (default inherits workspace setting) */
+  predictionMethod?: "default" | "statistical" | "ml" | "ai";
+}
+
+// Intelligence profile for configuring how payee analytics are calculated
+export interface IntelligenceProfile {
+  /** Whether the profile filters are active */
+  enabled: boolean;
+  /** Filter configuration */
+  filters: IntelligenceProfileFilters;
+  /** ISO timestamp of last profile update */
+  lastUpdated?: string;
+}
+
 // AI preferences type for tracking intelligence mode per field
 export interface PayeeAiPreferences {
   fieldModes?: Record<string, "none" | "ml" | "llm">;
   enhancedFields?: string[];
   lastEnhanced?: Record<string, string>; // ISO timestamps
+  /** Intelligence profile for filtering transactions in analytics */
+  intelligenceProfile?: IntelligenceProfile;
 }
 
 // SubscriptionInfo is a flexible type for the JSON column.
@@ -120,6 +153,10 @@ export const payees = sqliteTable(
     // Payment Processing Fields
     preferredPaymentMethods: text("preferred_payment_methods"),
     merchantCategoryCode: text("merchant_category_code"),
+
+    // AI Analysis Fields
+    aiExplanation: text("ai_explanation"),
+    aiExplanationUpdatedAt: text("ai_explanation_updated_at"),
 
     dateCreated: text("date_created")
       .notNull()
@@ -254,7 +291,9 @@ export type Payee = typeof payees.$inferSelect;
 export type NewPayee = typeof payees.$inferInsert;
 export type FormInsertPayeeSchema = typeof formInsertPayeeSchema;
 export type RemovePayeeSchema = typeof removePayeeSchema;
+export type RemovePayeeData = z.infer<typeof removePayeeSchema>;
 export type RemovePayesSchema = typeof removePayeesSchema;
+export type RemovePayeesData = z.infer<typeof removePayeesSchema>;
 export type HasPayees = {
   payees?: Payee[];
 };

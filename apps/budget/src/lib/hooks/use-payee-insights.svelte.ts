@@ -5,12 +5,12 @@
 
 import {
   classifySubscription,
-  getPayeeIntelligence,
-  getPayeeStats,
+  getIntelligenceWithProfile,
   getPayeeSuggestions,
   payeeKeys,
 } from '$lib/query/payees';
-import type { PayeeIntelligence, PayeeStats, PayeeSuggestions } from '$lib/query/payees-types';
+import type { PayeeSuggestions } from '$lib/query/payees-types';
+import type { IntelligenceProfile } from '$lib/schema/payees';
 import { useQueryClient } from '@tanstack/svelte-query';
 
 // Alert types for quick insights
@@ -55,6 +55,10 @@ export interface NextTransactionPrediction {
 	amountRange: [number, number];
 	confidence: number;
 	method: string;
+	/** Prediction tier: statistical (default), ml (enhanced), or ai (with explanation) */
+	tier?: 'statistical' | 'ml' | 'ai';
+	/** AI-generated explanation when tier is 'ai' */
+	aiExplanation?: string;
 }
 
 export interface BudgetSuggestion {
@@ -63,13 +67,40 @@ export interface BudgetSuggestion {
 	totalSuggested: number;
 	seasonalNote?: string;
 	confidence: number;
+	/** Prediction tier: statistical (default), ml (enhanced), or ai (with explanation) */
+	tier?: 'statistical' | 'ml' | 'ai';
+	/** AI-generated explanation when tier is 'ai' */
+	aiExplanation?: string;
+}
+
+// Stats derived from spending analysis (local type to avoid conflict with repository type)
+export interface InsightsStats {
+	transactionCount: number;
+	totalAmount: number;
+	avgAmount: number;
+	minAmount: number;
+	maxAmount: number;
+	monthlyAverage: number;
+	firstTransactionDate: string | null;
+	lastTransactionDate: string | null;
+}
+
+// Intelligence patterns derived from analysis (local type)
+export interface InsightsIntelligence {
+	patterns: {
+		averageDaysBetween: number | null;
+		isRegular: boolean;
+		mostCommonDay: number | null;
+		seasonalTrends: Array<{ month: number; avgAmount: number; count: number }>;
+	};
 }
 
 export interface PayeeInsightsData {
 	// Raw data from queries
-	intelligence: PayeeIntelligence | null;
+	intelligence: InsightsIntelligence | null;
 	suggestions: PayeeSuggestions | null;
-	stats: PayeeStats | null;
+	stats: InsightsStats | null;
+	profile: IntelligenceProfile | null;
 	subscriptionInfo: {
 		isLikelySubscription: boolean;
 		confidence: number;
@@ -84,6 +115,10 @@ export interface PayeeInsightsData {
 	budgetSuggestion: BudgetSuggestion | null;
 	alerts: QuickInsight[];
 
+	// AI Analysis (persisted)
+	aiExplanation: string | null;
+	aiExplanationUpdatedAt: string | null;
+
 	// State
 	isLoading: boolean;
 	isError: boolean;
@@ -94,8 +129,8 @@ export interface PayeeInsightsData {
  * Compute confidence metrics from stats and intelligence data
  */
 function computeConfidence(
-	stats: PayeeStats | null,
-	intelligence: PayeeIntelligence | null,
+	stats: InsightsStats | null,
+	intelligence: InsightsIntelligence | null,
 	suggestions: PayeeSuggestions | null
 ): ConfidenceMetrics {
 	const txnCount = stats?.transactionCount ?? 0;
@@ -173,7 +208,7 @@ function computeConfidence(
 /**
  * Compute spending trend from seasonal patterns
  */
-function computeTrend(intelligence: PayeeIntelligence | null): SpendingTrend | null {
+function computeTrend(intelligence: InsightsIntelligence | null): SpendingTrend | null {
 	const seasonalTrends = intelligence?.patterns.seasonalTrends;
 	if (!seasonalTrends || seasonalTrends.length < 2) return null;
 
@@ -203,8 +238,8 @@ function computeTrend(intelligence: PayeeIntelligence | null): SpendingTrend | n
  * Compute next transaction prediction
  */
 function computeNextTransaction(
-	intelligence: PayeeIntelligence | null,
-	stats: PayeeStats | null
+	intelligence: InsightsIntelligence | null,
+	stats: InsightsStats | null
 ): NextTransactionPrediction | null {
 	const patterns = intelligence?.patterns;
 	const avgAmount = stats?.avgAmount;
@@ -217,10 +252,19 @@ function computeNextTransaction(
 
 	// Calculate predicted next date
 	const lastTxnDate = new Date(lastDate);
-	const predictedDate = new Date(lastTxnDate);
+	let predictedDate = new Date(lastTxnDate);
 	predictedDate.setDate(predictedDate.getDate() + Math.round(avgDaysBetween));
 
 	const now = new Date();
+	// Reset time to start of day for accurate day comparison
+	now.setHours(0, 0, 0, 0);
+	predictedDate.setHours(0, 0, 0, 0);
+
+	// If predicted date is in the past, advance until it's in the future
+	while (predictedDate <= now) {
+		predictedDate.setDate(predictedDate.getDate() + Math.round(avgDaysBetween));
+	}
+
 	const daysUntil = Math.ceil((predictedDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
 	// Calculate amount range (±20% or based on min/max)
@@ -241,8 +285,8 @@ function computeNextTransaction(
 	}
 
 	return {
-		date: predictedDate.toISOString().split('T')[0],
-		daysUntil: Math.max(0, daysUntil),
+		date: predictedDate.toISOString().split('T')[0]!,
+		daysUntil,
 		amount: avgAmount,
 		amountRange: [minAmount, maxAmount],
 		confidence,
@@ -254,8 +298,8 @@ function computeNextTransaction(
  * Compute budget suggestion
  */
 function computeBudgetSuggestion(
-	intelligence: PayeeIntelligence | null,
-	stats: PayeeStats | null,
+	intelligence: InsightsIntelligence | null,
+	stats: InsightsStats | null,
 	confidenceScore: number
 ): BudgetSuggestion | null {
 	const monthlyAvg = stats?.monthlyAverage;
@@ -309,7 +353,7 @@ function computeBudgetSuggestion(
  * Compute quick insight alerts
  */
 function computeAlerts(
-	stats: PayeeStats | null,
+	stats: InsightsStats | null,
 	suggestions: PayeeSuggestions | null,
 	subscriptionInfo: PayeeInsightsData['subscriptionInfo']
 ): QuickInsight[] {
@@ -330,10 +374,10 @@ function computeAlerts(
 	if (suggestions?.suggestedCategoryId && suggestions.confidence > 0.75) {
 		insights.push({
 			type: 'category_mismatch',
-			title: 'Category Recommendation',
-			description: `We suggest categorizing as "${suggestions.suggestedCategoryName}" (${Math.round(suggestions.confidence * 100)}% confidence).`,
+			title: 'Default Category',
+			description: `Set "${suggestions.suggestedCategoryName}" as default for new transactions (${Math.round(suggestions.confidence * 100)}% confidence).`,
 			priority: 'low',
-			actionLabel: 'Apply Category',
+			actionLabel: 'Apply',
 			actionData: { categoryId: suggestions.suggestedCategoryId },
 		});
 	}
@@ -354,39 +398,96 @@ function computeAlerts(
 
 /**
  * Creates a payee insights hook for the intelligence dashboard
+ * Uses profile-aware intelligence query to apply user-configured filters
  */
 export function usePayeeInsights(payeeId: number | undefined) {
 	const queryClient = useQueryClient();
 
-	// Only create queries when payeeId is defined
-	// Use $derived to make queries reactive to payeeId changes
-	const intelligenceQuery = $derived(payeeId ? getPayeeIntelligence(payeeId).options() : null);
+	// Primary query - uses intelligence profile filters when enabled
+	const intelligenceWithProfileQuery = $derived(
+		payeeId ? getIntelligenceWithProfile(payeeId).options() : null
+	);
 	const suggestionsQuery = $derived(payeeId ? getPayeeSuggestions(payeeId).options() : null);
-	const statsQuery = $derived(payeeId ? getPayeeStats(payeeId).options() : null);
 	const subscriptionQuery = $derived(payeeId ? classifySubscription(payeeId).options() : null);
 
 	// Computed: Loading state
 	const isLoading = $derived(
-		Boolean(
-			intelligenceQuery?.isLoading || suggestionsQuery?.isLoading || statsQuery?.isLoading
-		)
+		Boolean(intelligenceWithProfileQuery?.isLoading || suggestionsQuery?.isLoading)
 	);
 
 	// Computed: Error state
 	const isError = $derived(
-		Boolean(intelligenceQuery?.isError || suggestionsQuery?.isError || statsQuery?.isError)
+		Boolean(intelligenceWithProfileQuery?.isError || suggestionsQuery?.isError)
 	);
 
 	const error = $derived(
-		intelligenceQuery?.error || suggestionsQuery?.error || statsQuery?.error || null
+		intelligenceWithProfileQuery?.error || suggestionsQuery?.error || null
 	);
 
-	// Computed: Raw data
-	const intelligence = $derived(
-		(intelligenceQuery?.data as PayeeIntelligence | undefined) ?? null
+	// Extract profile from response
+	const profile = $derived(intelligenceWithProfileQuery?.data?.profile ?? null);
+
+	// Extract AI explanation from payee data (persisted)
+	const aiExplanation = $derived(
+		(intelligenceWithProfileQuery?.data?.payee as { aiExplanation?: string | null })?.aiExplanation ?? null
 	);
+	const aiExplanationUpdatedAt = $derived(
+		(intelligenceWithProfileQuery?.data?.payee as { aiExplanationUpdatedAt?: string | null })?.aiExplanationUpdatedAt ?? null
+	);
+
+	// Map spendingAnalysis to InsightsStats interface
+	const stats = $derived.by((): InsightsStats | null => {
+		const analysis = intelligenceWithProfileQuery?.data?.spendingAnalysis;
+		if (!analysis) return null;
+
+		// Calculate monthly average from total and time span
+		const timeSpanMonths = analysis.timeSpanDays > 0 ? analysis.timeSpanDays / 30 : 1;
+		const monthlyAverage = analysis.totalAmount / Math.max(1, timeSpanMonths);
+
+		return {
+			transactionCount: analysis.transactionCount,
+			totalAmount: analysis.totalAmount,
+			avgAmount: analysis.averageAmount,
+			minAmount: analysis.minAmount,
+			maxAmount: analysis.maxAmount,
+			monthlyAverage,
+			firstTransactionDate: analysis.firstTransactionDate,
+			lastTransactionDate: analysis.lastTransactionDate,
+		};
+	});
+
+	// Map frequency and seasonal data to InsightsIntelligence interface
+	const intelligence = $derived.by((): InsightsIntelligence | null => {
+		const frequency = intelligenceWithProfileQuery?.data?.frequencyAnalysis;
+		const seasonal = intelligenceWithProfileQuery?.data?.seasonalPatterns;
+		const dayOfWeek = intelligenceWithProfileQuery?.data?.dayOfWeekPatterns;
+
+		if (!frequency && !seasonal) return null;
+
+		// Find most common day of week
+		let mostCommonDay: number | null = null;
+		if (dayOfWeek && dayOfWeek.length > 0) {
+			const maxDay = dayOfWeek.reduce((max, d) =>
+				d.transactionCount > max.transactionCount ? d : max
+			);
+			mostCommonDay = maxDay.dayOfWeek;
+		}
+
+		return {
+			patterns: {
+				averageDaysBetween: frequency?.averageDaysBetween ?? null,
+				isRegular: (frequency?.regularityScore ?? 0) > 0.7,
+				mostCommonDay,
+				seasonalTrends: (seasonal ?? []).map((s) => ({
+					month: s.month,
+					avgAmount: s.averageAmount,
+					count: s.transactionCount,
+				})),
+			},
+		};
+	});
+
 	const suggestions = $derived((suggestionsQuery?.data as PayeeSuggestions | undefined) ?? null);
-	const stats = $derived((statsQuery?.data as PayeeStats | undefined) ?? null);
 
 	// Computed: Subscription info
 	const subscriptionInfo = $derived.by((): PayeeInsightsData['subscriptionInfo'] => {
@@ -408,23 +509,142 @@ export function usePayeeInsights(payeeId: number | undefined) {
 		};
 	});
 
-	// Computed metrics using helper functions
-	const confidence = $derived(computeConfidence(stats, intelligence, suggestions));
-	const trend = $derived(computeTrend(intelligence));
-	const nextTransaction = $derived(computeNextTransaction(intelligence, stats));
-	const budgetSuggestion = $derived(
-		computeBudgetSuggestion(intelligence, stats, confidence.overall)
-	);
+	// Map confidence metrics from server response (already computed with profile filters)
+	const confidence = $derived.by((): ConfidenceMetrics => {
+		const metrics = intelligenceWithProfileQuery?.data?.confidenceMetrics;
+
+		if (!metrics) {
+			// Fallback to local computation if no server data
+			return computeConfidence(stats, intelligence, suggestions);
+		}
+
+		// Map server confidence metrics to our interface
+		const txnCount = stats?.transactionCount ?? 0;
+		const timeSpanMonths = Math.ceil((metrics.dataQuality.factors.timeSpanMonths ?? 0));
+
+		let dataQuality: ConfidenceMetrics['dataQuality'] = 'poor';
+		if (metrics.dataQuality.score >= 0.8) dataQuality = 'excellent';
+		else if (metrics.dataQuality.score >= 0.6) dataQuality = 'good';
+		else if (metrics.dataQuality.score >= 0.4) dataQuality = 'fair';
+
+		return {
+			overall: metrics.overall,
+			dataQuality,
+			transactionCount: txnCount,
+			timeSpanMonths,
+			factors: [
+				{
+					name: 'Data Quality',
+					score: metrics.dataQuality.score,
+					description: dataQuality === 'excellent' ? 'Excellent data quality' : `${Math.round(metrics.dataQuality.score * 100)}% quality`,
+				},
+				{
+					name: 'Pattern Reliability',
+					score: metrics.patternReliability?.score ?? 0.5,
+					description: (metrics.patternReliability?.score ?? 0) > 0.7 ? 'Reliable patterns' : 'Variable patterns',
+				},
+			],
+		};
+	});
+
+	// Use server-computed trend or fallback to local computation
+	const trend = $derived.by((): SpendingTrend | null => {
+		const analysis = intelligenceWithProfileQuery?.data?.spendingAnalysis;
+		if (!analysis) return computeTrend(intelligence);
+
+		// Use server-computed trend
+		let direction: SpendingTrend['direction'] = 'stable';
+		if (analysis.trendDirection === 'increasing') direction = 'up';
+		else if (analysis.trendDirection === 'decreasing') direction = 'down';
+
+		return {
+			direction,
+			percentChange: Math.round(analysis.trendStrength * 100),
+			period: 'Recent transactions',
+		};
+	});
+
+	// Use server-computed next transaction prediction (with profile filters applied)
+	const nextTransaction = $derived.by((): NextTransactionPrediction | null => {
+		const prediction = intelligenceWithProfileQuery?.data?.transactionPrediction;
+		if (!prediction || !prediction.nextTransactionDate) {
+			return computeNextTransaction(intelligence, stats);
+		}
+
+		const predictedDate = new Date(prediction.nextTransactionDate);
+		const now = new Date();
+		// Reset time to start of day for accurate day comparison
+		now.setHours(0, 0, 0, 0);
+		predictedDate.setHours(0, 0, 0, 0);
+
+		const daysUntil = Math.ceil((predictedDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+		// Determine method description - prefer the reasoning from server
+		let method = prediction.reasoning || 'Based on average pattern';
+		// Only use generic method names if no reasoning provided
+		if (!prediction.reasoning) {
+			if (prediction.predictionMethod === 'frequency_based') method = 'Frequency pattern';
+			else if (prediction.predictionMethod === 'seasonal_based') method = 'Seasonal pattern';
+			else if (prediction.predictionMethod === 'trend_based') method = 'Trend analysis';
+		}
+
+		return {
+			date: prediction.nextTransactionDate,
+			// Keep negative values to show "X days ago" for past predictions
+			daysUntil,
+			amount: prediction.predictedAmount ?? stats?.avgAmount ?? 0,
+			amountRange: prediction.amountRange
+				? [prediction.amountRange.min, prediction.amountRange.max]
+				: [stats?.minAmount ?? 0, stats?.maxAmount ?? 0],
+			confidence: prediction.confidence,
+			method,
+			tier: prediction.tier as 'statistical' | 'ml' | 'ai' | undefined,
+			aiExplanation: prediction.aiExplanation,
+		};
+	});
+
+	// Use server-computed budget suggestion (with profile filters applied)
+	const budgetSuggestion = $derived.by((): BudgetSuggestion | null => {
+		const suggestion = intelligenceWithProfileQuery?.data?.budgetSuggestion;
+		if (!suggestion) {
+			return computeBudgetSuggestion(intelligence, stats, confidence.overall);
+		}
+
+		// Find seasonal note from adjustments
+		let seasonalNote: string | undefined;
+		type SeasonalAdj = { month: number; monthName: string; suggestedAdjustment: number; adjustmentPercent: number; reason: string };
+		if (suggestion.seasonalAdjustments && suggestion.seasonalAdjustments.length > 0) {
+			const maxAdjustment = suggestion.seasonalAdjustments.reduce(
+				(max: SeasonalAdj, adj: SeasonalAdj) =>
+					adj.adjustmentPercent > max.adjustmentPercent ? adj : max
+			);
+			if (maxAdjustment.adjustmentPercent > 10) {
+				seasonalNote = `Higher in ${maxAdjustment.monthName}`;
+			}
+		}
+
+		return {
+			monthlyAmount: suggestion.suggestedMonthlyAllocation,
+			buffer: suggestion.allocationRange.max - suggestion.suggestedMonthlyAllocation,
+			totalSuggested: suggestion.allocationRange.max,
+			seasonalNote,
+			confidence: suggestion.confidence,
+			tier: suggestion.tier as 'statistical' | 'ml' | 'ai' | undefined,
+			aiExplanation: suggestion.aiExplanation,
+		};
+	});
+
 	const alerts = $derived(computeAlerts(stats, suggestions, subscriptionInfo));
 
 	// Refresh function
 	function refresh() {
 		if (!payeeId) return;
 
-		queryClient.invalidateQueries({ queryKey: payeeKeys.intelligence(payeeId) });
+		// Invalidate the profile-aware query (primary source of truth)
+		queryClient.invalidateQueries({ queryKey: payeeKeys.intelligenceWithProfile(payeeId) });
 		queryClient.invalidateQueries({ queryKey: payeeKeys.suggestions(payeeId) });
-		queryClient.invalidateQueries({ queryKey: payeeKeys.stats(payeeId) });
 		queryClient.invalidateQueries({ queryKey: payeeKeys.subscriptionDetection(payeeId) });
+		queryClient.invalidateQueries({ queryKey: payeeKeys.intelligenceProfile(payeeId) });
 	}
 
 	// Return reactive data
@@ -432,12 +652,15 @@ export function usePayeeInsights(payeeId: number | undefined) {
 		intelligence,
 		suggestions,
 		stats,
+		profile,
 		subscriptionInfo,
 		confidence,
 		trend,
 		nextTransaction,
 		budgetSuggestion,
 		alerts,
+		aiExplanation,
+		aiExplanationUpdatedAt,
 		isLoading,
 		isError,
 		error,

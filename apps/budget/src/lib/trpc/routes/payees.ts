@@ -5,11 +5,12 @@ import {
   learningMetricsSchema,
   recordCorrectionSchema,
   recordEnhancementSchema,
+  recordPredictionFeedbackSchema,
   removePayeeSchema,
   removePayeesSchema,
   updateEnhancementFeedbackSchema,
 } from "$lib/schema";
-import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { intelligenceProfileSchema, superformInsertPayeeSchema } from "$lib/schema/superforms";
 import { normalize } from "$lib/utils/string-utilities";
 import {
   advancedSearchPayeesSchema,
@@ -201,6 +202,110 @@ export const payeeRoutes = t.router({
     .query(
       withErrorHandler(async ({ input, ctx }) =>
         payeeService.getPayeeIntelligence(input.id, ctx.workspaceId)
+      )
+    ),
+
+  // =====================================
+  // Intelligence Profile Routes
+  // =====================================
+
+  getIntelligenceProfile: publicProcedure
+    .input(payeeIdSchema)
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getIntelligenceProfile(input.id, ctx.workspaceId)
+      )
+    ),
+
+  updateIntelligenceProfile: rateLimitedProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        profile: intelligenceProfileSchema,
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.updateIntelligenceProfile(
+          input.id,
+          ctx.workspaceId,
+          input.profile
+        )
+      )
+    ),
+
+  resetIntelligenceProfile: rateLimitedProcedure
+    .input(payeeIdSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.resetIntelligenceProfile(input.id, ctx.workspaceId)
+      )
+    ),
+
+  getIntelligenceWithProfile: publicProcedure
+    .input(payeeIdSchema)
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getComprehensiveIntelligenceWithProfile(
+          input.id,
+          ctx.workspaceId
+        )
+      )
+    ),
+
+  suggestIntelligenceProfileDefaults: publicProcedure
+    .input(payeeIdSchema)
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.suggestIntelligenceProfileDefaults(input.id, ctx.workspaceId)
+      )
+    ),
+
+  // =====================================
+  // Prediction Feedback Routes
+  // =====================================
+
+  recordPredictionFeedback: rateLimitedProcedure
+    .input(recordPredictionFeedbackSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.recordPredictionFeedback(input, ctx.workspaceId)
+      )
+    ),
+
+  getPredictionFeedbackHistory: publicProcedure
+    .input(
+      z.object({
+        payeeId: z.number().positive(),
+        predictionType: z.enum(["next_transaction", "budget_suggestion"]).optional(),
+        limit: z.number().positive().default(10),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getPredictionFeedbackHistory(
+          input.payeeId,
+          ctx.workspaceId,
+          input.predictionType,
+          input.limit
+        )
+      )
+    ),
+
+  getPredictionAccuracyMetrics: publicProcedure
+    .input(
+      z.object({
+        payeeId: z.number().positive().optional(),
+        predictionType: z.enum(["next_transaction", "budget_suggestion"]).optional(),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getPredictionAccuracyMetrics(
+          ctx.workspaceId,
+          input.payeeId,
+          input.predictionType
+        )
       )
     ),
 
@@ -1786,14 +1891,25 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
             maxOutputTokens: 400,
             temperature: 0.7,
           });
-          const text = result.text;
+          const explanation = result.text.trim();
+
+          // Save the explanation to the payee record
+          const { payees } = await import("$lib/schema/payees");
+          await db
+            .update(payees)
+            .set({
+              aiExplanation: explanation,
+              aiExplanationUpdatedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            .where(eq(payees.id, input.id));
 
           return {
             success: true,
             payeeId: input.id,
             payeeName: intelligence.payeeName,
             provider: strategy.llmProviderType,
-            explanation: text.trim(),
+            explanation,
           };
         } catch (error) {
           console.error("LLM explanation failed:", error);
