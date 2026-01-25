@@ -16,7 +16,6 @@
 	import NextTransactionCard from './next-transaction-card.svelte';
 	import PayeeAlertBadge from './payee-alert-badge.svelte';
 	import PayeeConfidenceRing from './payee-confidence-ring.svelte';
-	import SpendingPatternCard from './spending-pattern-card.svelte';
 	// Icons
 	import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 	import Bell from '@lucide/svelte/icons/bell';
@@ -144,6 +143,9 @@
 		const patterns = data.intelligence?.patterns;
 		const seasonalTrends = patterns?.seasonalTrends ?? [];
 
+		// Determine if this is an income or expense payee
+		const isIncome = data.stats.totalAmount > 0;
+
 		// Build seasonal patterns string
 		const seasonalStr = seasonalTrends.length > 0
 			? "- Seasonal patterns: " + seasonalTrends
@@ -152,11 +154,11 @@
 			: "";
 
 		const lines = [
-			"Analyze my spending patterns for this payee:",
+			isIncome ? "Analyze my income patterns for this payee:" : "Analyze my spending patterns for this payee:",
 			"",
 			"**Transaction Statistics:**",
 			"- Total transactions: " + data.stats.transactionCount,
-			"- Total spent: " + formatCurrency(data.stats.totalAmount),
+			"- " + (isIncome ? "Total received" : "Total spent") + ": " + formatCurrency(Math.abs(data.stats.totalAmount)),
 			"- Average transaction: " + formatCurrency(data.stats.avgAmount),
 			"- Range: " + formatCurrency(data.stats.minAmount) + " - " + formatCurrency(data.stats.maxAmount),
 			"- Monthly average: " + formatCurrency(data.stats.monthlyAverage),
@@ -602,20 +604,6 @@
 			{/if}
 		</section>
 
-		<!-- Spending Patterns Section -->
-		<section class="space-y-4">
-			<h3 class="text-muted-foreground text-sm font-medium">Spending Patterns</h3>
-			{#if data.isLoading}
-				<Skeleton class="h-40 w-full" />
-			{:else}
-				<SpendingPatternCard
-					stats={data.stats}
-					trend={data.trend}
-					patterns={data.intelligence?.patterns}
-					showStats={false}
-				/>
-			{/if}
-		</section>
 	</div>
 {:else}
 	<!-- Empty state for new payees -->

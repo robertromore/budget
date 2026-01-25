@@ -25,9 +25,11 @@
 		trend: SpendingTrend | null;
 		patterns?: Patterns | null;
 		showStats?: boolean;
+		/** Whether the component is visible (prevents LayerCake zero-height warnings) */
+		visible?: boolean;
 	}
 
-	let { stats, trend, patterns, showStats = true }: Props = $props();
+	let { stats, trend, patterns, showStats = true, visible = true }: Props = $props();
 
 	// Determine if this is primarily an income payee (positive amounts) or expense payee (negative amounts)
 	const isIncomePayee = $derived((stats?.totalAmount ?? 0) > 0);
@@ -181,28 +183,30 @@
 					<div>
 						<p class="text-muted-foreground mb-2 text-xs font-medium">Day Pattern</p>
 						<div class="h-24">
-							<LayerCake
-								data={dayChartData}
-								x="day"
-								y="value"
-								xScale={scaleBand().paddingInner(0.2).paddingOuter(0.1)}
-								yDomain={[0, 1]}
-								padding={{ bottom: 20 }}
-							>
-								<Svg>
-									<Bar
-										fill={(d) => d.isMax ? 'var(--chart-1)' : 'var(--chart-1)'}
-										opacity={(d) => d.isMax ? 1 : 0.4}
-										radius={3}
-										onhover={(d) => hoveredDay = d?.day ?? null}
-									/>
-									<AxisX
-										gridlines={false}
-										tickMarks={false}
-										format={(d) => d}
-									/>
-								</Svg>
-							</LayerCake>
+							{#if visible}
+								<LayerCake
+									data={dayChartData}
+									x="day"
+									y="value"
+									xScale={scaleBand().paddingInner(0.2).paddingOuter(0.1)}
+									yDomain={[0, 1]}
+									padding={{ bottom: 20 }}
+								>
+									<Svg>
+										<Bar
+											fill={(d) => d.isMax ? 'var(--chart-1)' : 'var(--chart-1)'}
+											opacity={(d) => d.isMax ? 1 : 0.4}
+											radius={3}
+											onhover={(d) => hoveredDay = d?.day ?? null}
+										/>
+										<AxisX
+											gridlines={false}
+											tickMarks={false}
+											format={(d) => d}
+										/>
+									</Svg>
+								</LayerCake>
+							{/if}
 						</div>
 						{#if patterns.mostCommonDay !== null}
 							<p class="text-muted-foreground mt-1 text-center text-xs">
@@ -217,33 +221,35 @@
 					<div>
 						<p class="text-muted-foreground mb-2 text-xs font-medium">Seasonality</p>
 						<div class="h-24">
-							<LayerCake
-								data={seasonalChartData}
-								x="month"
-								y="value"
-								xScale={scaleBand().paddingInner(0.15).paddingOuter(0.05)}
-								yDomain={[0, 1]}
-								padding={{ bottom: 20 }}
-							>
-								<Svg>
-									<Bar
-										fill={(d) => {
-											if (!d.hasData) return 'var(--muted)';
-											if (d.value > 0.7) return 'var(--chart-1)';
-											if (d.value > 0.4) return 'var(--chart-2)';
-											return 'var(--chart-3)';
-										}}
-										opacity={(d) => d.hasData ? 0.8 : 0.3}
-										radius={2}
-										onhover={(d) => hoveredMonth = d?.month ?? null}
-									/>
-									<AxisX
-										gridlines={false}
-										tickMarks={false}
-										format={(d) => d}
-									/>
-								</Svg>
-							</LayerCake>
+							{#if visible}
+								<LayerCake
+									data={seasonalChartData}
+									x="month"
+									y="value"
+									xScale={scaleBand().paddingInner(0.15).paddingOuter(0.05)}
+									yDomain={[0, 1]}
+									padding={{ bottom: 20 }}
+								>
+									<Svg>
+										<Bar
+											fill={(d) => {
+												if (!d.hasData) return 'var(--muted)';
+												if (d.value > 0.7) return 'var(--chart-1)';
+												if (d.value > 0.4) return 'var(--chart-2)';
+												return 'var(--chart-3)';
+											}}
+											opacity={(d) => d.hasData ? 0.8 : 0.3}
+											radius={2}
+											onhover={(d) => hoveredMonth = d?.month ?? null}
+										/>
+										<AxisX
+											gridlines={false}
+											tickMarks={false}
+											format={(d) => d}
+										/>
+									</Svg>
+								</LayerCake>
+							{/if}
 						</div>
 						<div class="mt-1 flex items-center justify-center gap-3 text-[10px]">
 							<span class="flex items-center gap-1">

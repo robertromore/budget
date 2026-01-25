@@ -2,6 +2,7 @@ import type { PaymentFrequency, IntelligenceProfile, WorkspacePreferences } from
 import { categories, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { formatDayOrdinal } from "$lib/utils/date-formatters";
+import { parseISOString, dateDifference } from "$lib/utils/dates";
 import { and, asc, count, desc, eq, gt, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import { createIntelligenceCoordinator, type StrategyResult } from "$lib/server/ai/intelligence-coordinator";
 import type { ProviderInstance } from "$lib/server/ai/providers";
@@ -344,7 +345,7 @@ export class PayeeIntelligenceService {
 
     // Join with categories if we need category filtering
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
     }
 
     const allConditions = categoryFilter
@@ -360,7 +361,6 @@ export class PayeeIntelligenceService {
     }
 
     const amounts = transactionData.map((t) => t.amount || 0);
-    const dates = transactionData.map((t) => new Date(t.date));
 
     // Calculate basic statistics
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0);
@@ -390,15 +390,13 @@ export class PayeeIntelligenceService {
       }))
       .sort((a, b) => b.deviationScore - a.deviationScore);
 
-    // Calculate time span
-    const firstDate = dates[0];
-    const lastDate = dates[dates.length - 1];
+    // Calculate time span using utility functions
+    const firstDateStr = transactionData[0]?.date;
+    const lastDateStr = transactionData[transactionData.length - 1]?.date;
+    const firstDate = firstDateStr ? parseISOString(firstDateStr) : null;
+    const lastDate = lastDateStr ? parseISOString(lastDateStr) : null;
     const timeSpanDays =
-      dates.length > 1
-        ? Math.round(
-            (dates[dates.length - 1]!.getTime() - dates[0]!.getTime()) / (1000 * 60 * 60 * 24)
-          )
-        : 0;
+      firstDate && lastDate ? dateDifference(lastDate, firstDate, "days") : 0;
 
     return {
       payeeId,
@@ -444,7 +442,7 @@ export class PayeeIntelligenceService {
       .from(transactions);
 
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
     }
 
     const allConditions = categoryFilter
@@ -526,7 +524,7 @@ export class PayeeIntelligenceService {
       .from(transactions);
 
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
     }
 
     const allConditions = categoryFilter
@@ -574,7 +572,7 @@ export class PayeeIntelligenceService {
       .from(transactions);
 
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
     }
 
     const allConditions = categoryFilter
@@ -609,11 +607,35 @@ export class PayeeIntelligenceService {
       const prevTransaction = transactionDates[i - 1];
       const currTransaction = transactionDates[i];
       if (prevTransaction && currTransaction) {
-        const prev = new Date(prevTransaction.date);
-        const curr = new Date(currTransaction.date);
-        const daysDiff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-        intervals.push(daysDiff);
+        const prevDate = parseISOString(prevTransaction.date);
+        const currDate = parseISOString(currTransaction.date);
+        if (prevDate && currDate) {
+          const daysDiff = dateDifference(currDate, prevDate, "days");
+          // Only include positive intervals (skip same-day transactions)
+          if (daysDiff > 0) {
+            intervals.push(daysDiff);
+          }
+        }
       }
+    }
+
+    // Guard against empty intervals (all transactions on same day)
+    if (intervals.length === 0) {
+      return {
+        detectedFrequency: null,
+        confidence: 0,
+        averageDaysBetween: 0,
+        standardDeviationDays: 0,
+        regularityScore: 0,
+        predictabilityScore: 0,
+        intervals: [],
+        monthlyPattern: null,
+        irregularPatterns: {
+          clusters: [],
+          hasSeasonalBreaks: false,
+          unusualGaps: [],
+        },
+      };
     }
 
     const averageDaysBetween =
@@ -1544,16 +1566,18 @@ Keep the tone helpful and actionable.`;
       const currTransaction = transactionDates[i];
       if (!prevTransaction || !currTransaction) continue;
 
-      const prev = new Date(prevTransaction.date);
-      const curr = new Date(currTransaction.date);
-      const gapDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+      const prevDate = parseISOString(prevTransaction.date);
+      const currDate = parseISOString(currTransaction.date);
+      if (!prevDate || !currDate) continue;
+
+      const gapDays = dateDifference(currDate, prevDate, "days");
 
       if (gapDays > threshold) {
         gaps.push({
           startDate: prevTransaction.date,
           endDate: currTransaction.date,
           gapDays,
-          reason: this.inferGapReason(gapDays, prev, curr),
+          reason: this.inferGapReason(gapDays, prevDate.month - 1, currDate.month - 1),
         });
       }
     }
@@ -1561,9 +1585,7 @@ Keep the tone helpful and actionable.`;
     return gaps.sort((a, b) => b.gapDays - a.gapDays);
   }
 
-  private inferGapReason(gapDays: number, startDate: Date, endDate: Date): string {
-    const startMonth = startDate.getMonth();
-    const endMonth = endDate.getMonth();
+  private inferGapReason(gapDays: number, startMonth: number, endMonth: number): string {
 
     if (gapDays >= 300) return "Extended hiatus or service cancellation";
     if (gapDays >= 150) return "Possible seasonal break or temporary suspension";
