@@ -239,7 +239,9 @@ export type NewCategory = typeof categories.$inferInsert;
 export type InsertCategorySchema = typeof insertCategorySchema;
 export type FormInsertCategorySchema = typeof formInsertCategorySchema;
 export type RemoveCategorySchema = typeof removeCategorySchema;
+export type RemoveCategoryData = z.infer<typeof removeCategorySchema>;
 export type RemoveCategoriesSchema = typeof removeCategoriesSchema;
+export type RemoveCategoriesData = z.infer<typeof removeCategoriesSchema>;
 export type HasCategories = {
   categories?: Category[];
 };

@@ -90,6 +90,7 @@ export interface UserPreferences {
 
   // Notification preferences
   notificationMode?: "toast" | "popover";
+  notificationVerbosity?: "all" | "important" | "errors-only";
 
   // Theme preferences
   theme?: string; // Preset name or 'custom'

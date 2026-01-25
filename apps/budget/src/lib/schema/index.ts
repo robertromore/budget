@@ -8,6 +8,7 @@ export * from "./category-groups";
 export * from "./detected-patterns";
 export * from "./import-profiles";
 export * from "./month-annotations";
+export * from "./notifications";
 export * from "./payee-ai-enhancements";
 export * from "./payee-aliases";
 export * from "./payee-categories";
@@ -16,6 +17,7 @@ export * from "./payees";
 export * from "./recommendations";
 export * from "./report-templates";
 export * from "./schedule-dates";
+export * from "./schedule-price-history";
 export * from "./schedule-skips";
 export * from "./schedules";
 export * from "./transactions";
@@ -44,11 +46,15 @@ export * from "./medical-expenses";
 // Utility-related schemas
 export * from "./utility-usage";
 
+// Subscription-related schemas
+export * from "./subscriptions-table";
+
 // Bank connection schemas
 export * from "./account-connections";
 
 // ML-related schemas
 export * from "./ml-models";
+export * from "./prediction-feedback";
 
 // Import table definitions for HSA relations
 import { relations } from "drizzle-orm";

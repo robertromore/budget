@@ -87,6 +87,8 @@ export const insertViewSchema = createInsertSchema(views, {
   ),
 }).omit({ workspaceId: true, isDefault: true });
 export const removeViewSchema = z.object({ id: z.number().nonnegative() });
+export type RemoveViewSchema = typeof removeViewSchema;
+export type RemoveViewData = z.infer<typeof removeViewSchema>;
 export const removeViewsSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type View = typeof views.$inferSelect;

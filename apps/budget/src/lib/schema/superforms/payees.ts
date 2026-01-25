@@ -1,5 +1,36 @@
 import { z } from "zod";
 
+// Category types from categories schema
+const categoryTypes = ["income", "expense", "transfer", "savings"] as const;
+
+// Prediction method options for intelligence profiles
+const predictionMethods = ["default", "statistical", "ml", "ai"] as const;
+
+// Intelligence profile filter schemas
+export const intelligenceProfileFiltersSchema = z.object({
+  categoryTypes: z.array(z.enum(categoryTypes)).optional(),
+  amountSign: z.enum(["positive", "negative", "all"]).optional(),
+  dateRange: z
+    .object({
+      type: z.enum(["all", "last_n_months", "last_n_years"]),
+      months: z.number().min(1).max(120).optional(),
+    })
+    .optional(),
+  excludeTransfers: z.boolean().optional(),
+  minAmount: z.number().nonnegative().optional(),
+  maxAmount: z.number().nonnegative().optional(),
+  predictionMethod: z.enum(predictionMethods).optional(),
+});
+
+export const intelligenceProfileSchema = z.object({
+  enabled: z.boolean().default(false),
+  filters: intelligenceProfileFiltersSchema.default({}),
+  lastUpdated: z.string().optional(),
+});
+
+export type IntelligenceProfileFilters = z.infer<typeof intelligenceProfileFiltersSchema>;
+export type IntelligenceProfile = z.infer<typeof intelligenceProfileSchema>;
+
 // Import enum types from main payee schema
 const payeeTypes = [
   "merchant",
@@ -262,4 +293,6 @@ export const superformUpdatePayeeSchema = z.object({
 });
 
 export type SuperformInsertPayeeSchema = typeof superformInsertPayeeSchema;
+export type SuperformInsertPayeeData = z.infer<typeof superformInsertPayeeSchema>;
 export type SuperformUpdatePayeeSchema = typeof superformUpdatePayeeSchema;
+export type SuperformUpdatePayeeData = z.infer<typeof superformUpdatePayeeSchema>;

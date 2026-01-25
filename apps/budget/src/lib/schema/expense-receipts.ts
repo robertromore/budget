@@ -3,8 +3,17 @@ import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
-import { formatFileSize } from "$lib/utils/formatters";
 import { medicalExpenses } from "./medical-expenses";
+
+// Inline formatFileSize to avoid importing from formatters.ts which has SvelteKit dependencies
+// that break drizzle-kit migrations
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
 
 export const receiptTypeEnum = {
   receipt: "Receipt",

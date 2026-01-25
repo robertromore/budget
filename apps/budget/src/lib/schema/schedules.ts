@@ -14,9 +14,36 @@ import { budgets } from "./budgets";
 import { categories } from "./categories";
 import { payees } from "./payees";
 import { scheduleDates } from "./schedule-dates";
+import { schedulePriceHistory } from "./schedule-price-history";
 import { scheduleSkips } from "./schedule-skips";
 import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
+
+// Subscription-related enums (for schedules that are subscriptions)
+export const scheduleSubscriptionTypes = [
+  "entertainment",
+  "utilities",
+  "software",
+  "membership",
+  "communication",
+  "finance",
+  "shopping",
+  "health",
+  "education",
+  "other",
+] as const;
+
+export const scheduleSubscriptionStatuses = [
+  "trial",
+  "active",
+  "paused",
+  "cancelled",
+  "expired",
+  "pending_cancellation",
+] as const;
+
+export type ScheduleSubscriptionType = (typeof scheduleSubscriptionTypes)[number];
+export type ScheduleSubscriptionStatus = (typeof scheduleSubscriptionStatuses)[number];
 
 export const schedules = sqliteTable(
   "schedules",
@@ -45,6 +72,24 @@ export const schedules = sqliteTable(
       .notNull()
       .references(() => accounts.id, { onDelete: "restrict" }),
     budgetId: integer("budget_id").references(() => budgets.id, { onDelete: "set null" }),
+
+    // Subscription tracking fields
+    isSubscription: integer("is_subscription", { mode: "boolean" }).default(false),
+    subscriptionType: text("subscription_type", { enum: scheduleSubscriptionTypes }),
+    subscriptionStatus: text("subscription_status", { enum: scheduleSubscriptionStatuses }),
+
+    // Price tracking
+    lastKnownAmount: real("last_known_amount"),
+    priceChangeDetectedAt: text("price_change_detected_at"),
+
+    // Detection metadata
+    detectionConfidence: real("detection_confidence"),
+    isUserConfirmed: integer("is_user_confirmed", { mode: "boolean" }).default(false),
+    detectedAt: text("detected_at"),
+
+    // Alert preferences (JSON string)
+    alertPreferences: text("alert_preferences"),
+
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -62,6 +107,8 @@ export const schedules = sqliteTable(
     index("schedule_status_idx").on(table.status),
     index("schedule_name_idx").on(table.name),
     index("schedule_slug_idx").on(table.slug),
+    index("schedule_is_subscription_idx").on(table.isSubscription),
+    index("schedule_subscription_status_idx").on(table.subscriptionStatus),
   ]
 );
 
@@ -72,6 +119,7 @@ export const schedulesRelations = relations(schedules, ({ many, one }) => ({
   }),
   transactions: many(transactions),
   skips: many(scheduleSkips),
+  priceHistory: many(schedulePriceHistory),
   account: one(accounts, {
     fields: [schedules.accountId],
     references: [accounts.id],
@@ -101,6 +149,8 @@ export const formInsertScheduleSchema = createInsertSchema(schedules, {
   name: (schema) => schema.min(2).max(30),
 });
 export const removeScheduleSchema = z.object({ id: z.number().nonnegative() });
+export type RemoveScheduleSchema = typeof removeScheduleSchema;
+export type RemoveScheduleData = z.infer<typeof removeScheduleSchema>;
 export const duplicateScheduleSchema = z.object({ id: z.number().nonnegative() });
 
 interface SchedulesExtraFields {
@@ -109,6 +159,12 @@ interface SchedulesExtraFields {
   account?: any;
   category?: any;
   budget?: any;
+  priceHistory?: typeof schedulePriceHistory.$inferSelect[];
 }
 
 export type Schedule = typeof schedules.$inferSelect & Partial<SchedulesExtraFields>;
+
+// Extended type for schedules with subscription features
+export interface ScheduleWithSubscription extends Schedule {
+  priceHistory?: typeof schedulePriceHistory.$inferSelect[];
+}

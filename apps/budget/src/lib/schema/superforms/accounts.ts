@@ -116,4 +116,6 @@ export const superformUpdateAccountSchema = z.object({
 });
 
 export type SuperformInsertAccountSchema = typeof superformInsertAccountSchema;
+export type SuperformInsertAccountData = z.infer<typeof superformInsertAccountSchema>;
 export type SuperformUpdateAccountSchema = typeof superformUpdateAccountSchema;
+export type SuperformUpdateAccountData = z.infer<typeof superformUpdateAccountSchema>;

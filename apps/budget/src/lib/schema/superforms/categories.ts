@@ -108,4 +108,6 @@ export const superformUpdateCategorySchema = z.object({
 });
 
 export type SuperformInsertCategorySchema = typeof superformInsertCategorySchema;
+export type SuperformInsertCategoryData = z.infer<typeof superformInsertCategorySchema>;
 export type SuperformUpdateCategorySchema = typeof superformUpdateCategorySchema;
+export type SuperformUpdateCategoryData = z.infer<typeof superformUpdateCategorySchema>;

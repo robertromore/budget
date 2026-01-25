@@ -122,7 +122,9 @@ export const superformUpdateBudgetSchema = z.object({
 });
 
 export type SuperformInsertBudgetSchema = typeof superformInsertBudgetSchema;
+export type SuperformInsertBudgetData = z.infer<typeof superformInsertBudgetSchema>;
 export type SuperformUpdateBudgetSchema = typeof superformUpdateBudgetSchema;
+export type SuperformUpdateBudgetData = z.infer<typeof superformUpdateBudgetSchema>;
 
 // Superform-compatible schema for creating budget period templates
 export const superformCreatePeriodTemplateSchema = z.object({

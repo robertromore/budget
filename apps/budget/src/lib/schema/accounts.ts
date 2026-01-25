@@ -376,6 +376,7 @@ export type NewAccount = typeof accounts.$inferInsert;
 export type InsertAccountSchema = typeof insertAccountSchema;
 export type FormInsertAccountSchema = typeof formInsertAccountSchema;
 export type RemoveAccountSchema = typeof removeAccountSchema;
+export type RemoveAccountData = z.infer<typeof removeAccountSchema>;
 
 // Helper functions for account classification
 export function isDebtAccount(accountType: AccountType): boolean {

@@ -78,4 +78,6 @@ export const superformUpdateScheduleSchema = z.object({
 });
 
 export type SuperformInsertScheduleSchema = typeof superformInsertScheduleSchema;
+export type SuperformInsertScheduleData = z.infer<typeof superformInsertScheduleSchema>;
 export type SuperformUpdateScheduleSchema = typeof superformUpdateScheduleSchema;
+export type SuperformUpdateScheduleData = z.infer<typeof superformUpdateScheduleSchema>;

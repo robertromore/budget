@@ -94,4 +94,6 @@ export const superformUpdateViewSchema = z.object({
 });
 
 export type SuperformInsertViewSchema = typeof superformInsertViewSchema;
+export type SuperformInsertViewData = z.infer<typeof superformInsertViewSchema>;
 export type SuperformUpdateViewSchema = typeof superformUpdateViewSchema;
+export type SuperformUpdateViewData = z.infer<typeof superformUpdateViewSchema>;

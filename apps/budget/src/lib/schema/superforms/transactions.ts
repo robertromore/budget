@@ -35,5 +35,8 @@ export const superformDeleteTransactionSchema = z.object({
 });
 
 export type SuperformInsertTransactionSchema = typeof superformInsertTransactionSchema;
+export type SuperformInsertTransactionData = z.infer<typeof superformInsertTransactionSchema>;
 export type SuperformUpdateTransactionSchema = typeof superformUpdateTransactionSchema;
+export type SuperformUpdateTransactionData = z.infer<typeof superformUpdateTransactionSchema>;
 export type SuperformDeleteTransactionSchema = typeof superformDeleteTransactionSchema;
+export type SuperformDeleteTransactionData = z.infer<typeof superformDeleteTransactionSchema>;
