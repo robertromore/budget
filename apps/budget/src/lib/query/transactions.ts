@@ -256,6 +256,7 @@ export const createTransaction = defineMutation({
   },
   successMessage: "Transaction created successfully",
   errorMessage: "Failed to create transaction",
+  importance: "important",
 });
 
 /**
@@ -298,11 +299,12 @@ export const updateTransactionWithBalance = defineMutation({
 
     // Update all queries that might contain these transactions
     // 1. Update getAllAccountTransactionsWithUpcoming queries
+    // Query key structure: ["transactions", "all", accountId, options, "with-upcoming"]
     cachePatterns.updateQueriesWithCondition(
       (queryKey) => {
         // Match queries for this specific account
         return (
-          JSON.stringify(queryKey).includes(`"account",${accountId}`) &&
+          JSON.stringify(queryKey).includes(`"all",${accountId}`) &&
           JSON.stringify(queryKey).includes('"with-upcoming"')
         );
       },
@@ -380,6 +382,7 @@ export const bulkDeleteTransactions = defineMutation<number[], { count: number }
   },
   successMessage: (result) => `${result.count} transactions deleted successfully`,
   errorMessage: "Failed to delete transactions",
+  importance: "critical",
 });
 
 /**
@@ -410,6 +413,7 @@ export const saveTransaction = defineMutation({
   },
   successMessage: "Transaction saved successfully",
   errorMessage: "Failed to save transaction",
+  importance: "important",
 });
 
 /**
@@ -470,13 +474,19 @@ export const createTransfer = defineMutation({
     return result;
   },
   onSuccess: (_data, variables) => {
-    cachePatterns.invalidateQueries(transactionKeys.byAccount(variables.fromAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.byAccount(variables.toAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.allByAccount(variables.fromAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.allByAccount(variables.toAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.summary(variables.fromAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.summary(variables.toAccountId));
+    // Use prefix matching to catch all query variations (with-upcoming, different options, etc.)
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.fromAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.toAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.fromAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.toAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "summary", variables.fromAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "summary", variables.toAccountId]);
+    // Update sidebar balances
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
   },
+  successMessage: "Transfer created successfully",
+  errorMessage: "Failed to create transfer",
+  importance: "important",
 });
 
 /**
@@ -496,14 +506,19 @@ export const updateTransfer = defineMutation({
   },
   onSuccess: (data) => {
     if (data.fromTransaction && data.toTransaction) {
-      cachePatterns.invalidateQueries(transactionKeys.byAccount(data.fromTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.byAccount(data.toTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.allByAccount(data.fromTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.allByAccount(data.toTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.summary(data.fromTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.summary(data.toTransaction.accountId));
+      // Use prefix matching to catch all query variations (with-upcoming, different options, etc.)
+      cachePatterns.invalidatePrefix(["transactions", "account", data.fromTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "account", data.toTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", data.fromTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", data.toTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "summary", data.fromTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "summary", data.toTransaction.accountId]);
+      // Update sidebar balances
+      cachePatterns.invalidatePrefix(["accounts", "list"]);
     }
   },
+  successMessage: "Transfer updated successfully",
+  errorMessage: "Failed to update transfer",
 });
 
 /**
@@ -521,6 +536,7 @@ export const deleteTransfer = defineMutation({
   },
   successMessage: "Transfer deleted successfully",
   errorMessage: "Failed to delete transfer",
+  importance: "important",
 });
 
 /**
@@ -638,6 +654,7 @@ export const convertToTransferBulk = defineMutation({
       ? `Converted ${result.converted} transaction${result.converted > 1 ? "s" : ""} to transfers`
       : "No transactions converted",
   errorMessage: "Failed to convert transactions to transfers",
+  importance: "important",
 });
 
 /**
@@ -848,6 +865,7 @@ export const archiveTransactionsBeforeDate = defineMutation<
   },
   successMessage: (result) => `${result.archivedCount} transactions archived`,
   errorMessage: "Failed to archive transactions",
+  importance: "important",
 });
 
 /**

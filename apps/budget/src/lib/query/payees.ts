@@ -1,4 +1,5 @@
-import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
+import type { IntelligenceProfile, Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
+import type { FeedbackRating, FeedbackType, PredictionFeedback, RecordPredictionFeedbackInput } from "$lib/schema/prediction-feedback";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
@@ -23,12 +24,17 @@ export const payeeKeys = createQueryKeys("payees", {
   detail: (id: number) => ["payees", "detail", id] as const,
   analytics: () => ["payees", "analytics"] as const,
   intelligence: (id: number) => ["payees", "intelligence", id] as const,
+  intelligenceProfile: (id: number) => ["payees", "intelligence-profile", id] as const,
+  intelligenceWithProfile: (id: number) => ["payees", "intelligence-with-profile", id] as const,
+  intelligenceProfileSuggestions: (id: number) => ["payees", "intelligence-profile-suggestions", id] as const,
   suggestions: (id: number) => ["payees", "suggestions", id] as const,
   stats: (id: number) => ["payees", "stats", id] as const,
   search: (query: string) => ["payees", "search", query] as const,
   mlInsights: () => ["payees", "ml-insights"] as const,
   contactValidation: (id: number) => ["payees", "contact-validation", id] as const,
   subscriptionDetection: (id: number) => ["payees", "subscription-detection", id] as const,
+  predictionFeedback: (id: number) => ["payees", "prediction-feedback", id] as const,
+  predictionAccuracy: () => ["payees", "prediction-accuracy"] as const,
 });
 
 // Basic CRUD operations
@@ -159,6 +165,83 @@ export const getPayeeStats = (id: number) =>
       staleTime: 60 * 1000, // 1 minute
     },
   });
+
+// Intelligence Profile queries
+export const getIntelligenceProfile = (id: number) =>
+  defineQuery<IntelligenceProfile | null>({
+    queryKey: payeeKeys.intelligenceProfile(id),
+    queryFn: () => trpc().payeeRoutes.getIntelligenceProfile.query({ id }),
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  });
+
+export const getIntelligenceWithProfile = (id: number) =>
+  defineQuery<{
+    payee: Payee;
+    profile: IntelligenceProfile | null;
+    spendingAnalysis: any;
+    seasonalPatterns: any[];
+    dayOfWeekPatterns: any[];
+    frequencyAnalysis: any;
+    transactionPrediction: any;
+    budgetSuggestion: any;
+    confidenceMetrics: any;
+  }>({
+    queryKey: payeeKeys.intelligenceWithProfile(id),
+    queryFn: () => trpc().payeeRoutes.getIntelligenceWithProfile.query({ id }),
+    options: {
+      staleTime: 2 * 60 * 1000, // 2 minutes
+    },
+  });
+
+export const suggestIntelligenceProfileDefaults = (id: number) =>
+  defineQuery<{
+    profile: IntelligenceProfile;
+    reasoning: string[];
+    confidence: number;
+  }>({
+    queryKey: payeeKeys.intelligenceProfileSuggestions(id),
+    queryFn: () => trpc().payeeRoutes.suggestIntelligenceProfileDefaults.query({ id }),
+    options: {
+      staleTime: 10 * 60 * 1000, // 10 minutes - suggestions don't change often
+    },
+  });
+
+// Intelligence Profile mutations
+export const updateIntelligenceProfile = defineMutation<
+  { id: number; profile: IntelligenceProfile },
+  Payee
+>({
+  mutationFn: (data) =>
+    trpc().payeeRoutes.updateIntelligenceProfile.mutate({
+      id: data.id,
+      profile: data.profile,
+    }),
+  onSuccess: (result, variables) => {
+    // Invalidate intelligence-related queries to refetch with new profile
+    cachePatterns.invalidatePrefix(payeeKeys.intelligenceProfile(variables.id));
+    cachePatterns.invalidatePrefix(payeeKeys.intelligenceWithProfile(variables.id));
+    cachePatterns.invalidatePrefix(payeeKeys.intelligence(variables.id));
+    cachePatterns.setQueryData(payeeKeys.detail(variables.id), result);
+  },
+  successMessage: "Intelligence profile updated",
+  errorMessage: "Failed to update intelligence profile",
+});
+
+export const resetIntelligenceProfile = defineMutation<{ id: number }, Payee>({
+  mutationFn: (data) =>
+    trpc().payeeRoutes.resetIntelligenceProfile.mutate({ id: data.id }),
+  onSuccess: (result, variables) => {
+    // Invalidate intelligence-related queries to refetch with default profile
+    cachePatterns.invalidatePrefix(payeeKeys.intelligenceProfile(variables.id));
+    cachePatterns.invalidatePrefix(payeeKeys.intelligenceWithProfile(variables.id));
+    cachePatterns.invalidatePrefix(payeeKeys.intelligence(variables.id));
+    cachePatterns.setQueryData(payeeKeys.detail(variables.id), result);
+  },
+  successMessage: "Intelligence profile reset to defaults",
+  errorMessage: "Failed to reset intelligence profile",
+});
 
 // ML and advanced features
 export const getUnifiedMLRecommendations = (
@@ -465,6 +548,7 @@ export const bulkDeletePayees = defineMutation<number[], { deletedCount: number;
   },
   successMessage: "Payees deleted",
   errorMessage: "Failed to delete payees",
+  importance: "critical",
 });
 
 export const applyIntelligentDefaults = () =>
@@ -983,3 +1067,89 @@ export const enrichPayeeContact = () =>
 //       staleTime: 30 * 1000, // 30 seconds
 //     },
 //   });
+
+// ========================================
+// Prediction Feedback
+// ========================================
+
+export interface RecordPredictionFeedbackInput {
+  payeeId: number;
+  predictionType: FeedbackType;
+  originalDate?: string;
+  originalAmount?: number;
+  originalConfidence?: number;
+  predictionTier?: string;
+  predictionMethod?: string;
+  transactionCount?: number;
+  correctedDate?: string;
+  correctedAmount?: number;
+  rating?: FeedbackRating;
+}
+
+export interface PredictionAccuracyMetrics {
+  totalFeedback: number;
+  positiveRatings: number;
+  negativeRatings: number;
+  corrections: number;
+  avgDateDeviation: number | null;
+  avgAmountDeviation: number | null;
+  accuracyRate: number;
+  feedbackByTier: Record<string, { count: number; positiveRate: number }>;
+}
+
+/**
+ * Record user feedback on a prediction (correction or rating)
+ */
+export const recordPredictionFeedback = () =>
+  defineMutation<RecordPredictionFeedbackInput, PredictionFeedback>({
+    mutationFn: (input) => trpc().payeeRoutes.recordPredictionFeedback.mutate(input),
+    onSuccess: (_result, variables) => {
+      // Invalidate prediction feedback history for this payee
+      cachePatterns.invalidatePrefix(payeeKeys.predictionFeedback(variables.payeeId));
+      // Also invalidate accuracy metrics
+      cachePatterns.invalidatePrefix(payeeKeys.predictionAccuracy());
+    },
+    successMessage: "Feedback recorded",
+    errorMessage: "Failed to record feedback",
+  });
+
+/**
+ * Get prediction feedback history for a payee
+ */
+export const getPredictionFeedbackHistory = (
+  payeeId: number,
+  predictionType?: FeedbackType,
+  limit = 10
+) =>
+  defineQuery<PredictionFeedback[]>({
+    queryKey: [...payeeKeys.predictionFeedback(payeeId), predictionType, limit],
+    queryFn: () =>
+      trpc().payeeRoutes.getPredictionFeedbackHistory.query({
+        payeeId,
+        predictionType,
+        limit,
+      }),
+    options: {
+      staleTime: 60 * 1000, // 1 minute
+      enabled: payeeId > 0,
+    },
+  });
+
+/**
+ * Get prediction accuracy metrics
+ */
+export const getPredictionAccuracyMetrics = (
+  payeeId?: number,
+  predictionType?: FeedbackType
+) =>
+  defineQuery<PredictionAccuracyMetrics>({
+    queryKey: [...payeeKeys.predictionAccuracy(), payeeId, predictionType],
+    queryFn: () =>
+      trpc().payeeRoutes.getPredictionAccuracyMetrics.query({
+        payeeId,
+        predictionType,
+      }),
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  });

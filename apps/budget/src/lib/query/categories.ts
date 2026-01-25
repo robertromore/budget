@@ -68,6 +68,7 @@ export const createCategory = defineMutation<FormCategoryInput, Category>({
   },
   successMessage: "Category created",
   errorMessage: "Failed to create category",
+  importance: "important",
 });
 
 export const updateCategory = defineMutation<FormCategoryInput, Category>({
@@ -95,6 +96,7 @@ export const deleteCategory = defineMutation<number, Category>({
     }
     return "Failed to delete category";
   },
+  importance: "important",
 });
 
 export const bulkDeleteCategories = defineMutation<
@@ -107,6 +109,7 @@ export const bulkDeleteCategories = defineMutation<
   },
   successMessage: "Categories deleted",
   errorMessage: "Failed to delete categories",
+  importance: "critical",
 });
 
 export const reorderCategories = defineMutation<
@@ -208,4 +211,5 @@ export const seedDefaultCategories = defineMutation<
     return "No new categories to add";
   },
   errorMessage: "Failed to add default categories",
+  importance: "important",
 });

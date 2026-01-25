@@ -5,6 +5,14 @@ import { toast } from "$lib/utils/toast-interceptor";
 import { queryClient } from "./_client";
 
 /**
+ * Notification importance level for filtering based on user verbosity settings
+ * - critical: Always shown (e.g., account deletion, bulk operations)
+ * - important: Shown in "all" and "important" modes (e.g., transaction created)
+ * - normal: Only shown in "all" mode (e.g., view saved, preferences updated)
+ */
+export type NotificationImportance = "critical" | "important" | "normal";
+
+/**
  * Configuration for defineQuery wrapper
  */
 export interface DefineQueryConfig<TData, TError = Error> {
@@ -33,6 +41,8 @@ export interface DefineMutationConfig<TVariables, TData, TError = Error> {
   onError?: (error: TError, variables: TVariables) => void;
   successMessage?: string | ((data: TData, variables: TVariables) => string);
   errorMessage?: string | ((error: TError, variables: TVariables) => string);
+  /** Notification importance for verbosity filtering (defaults to "normal") */
+  importance?: NotificationImportance;
 }
 
 /**
@@ -248,7 +258,7 @@ export function defineQuery<TParams, TData, TError = Error>(
 export function defineMutation<TVariables, TData, TError = Error>(
   config: DefineMutationConfig<TVariables, TData, TError>
 ): MutationWrapper<TVariables, TData, TError> {
-  const { mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage } = config;
+  const { mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage, importance = "normal" } = config;
 
   // Create the mutation with enhanced error handling and notifications
   const createMutationWithConfig = () =>
@@ -270,7 +280,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
         if (successMessage) {
           const message =
             typeof successMessage === "function" ? successMessage(data, variables) : successMessage;
-          toast.success(message);
+          toast.success(message, { importance });
         }
 
         // Call original onSuccess from options
@@ -322,7 +332,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
         if (successMessage) {
           const message =
             typeof successMessage === "function" ? successMessage(result, variables) : successMessage;
-          toast.success(message);
+          toast.success(message, { importance });
         }
 
         return result;

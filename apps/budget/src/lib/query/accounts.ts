@@ -72,6 +72,7 @@ export const seedDefaultAccounts = defineMutation<{ slugs: string[] }, Account[]
     return "No new accounts to add";
   },
   errorMessage: "Failed to add default accounts",
+  importance: "important",
 });
 
 export const deleteAccount = defineMutation<{ id: number }, any>({
@@ -84,6 +85,7 @@ export const deleteAccount = defineMutation<{ id: number }, any>({
   },
   successMessage: "Account deleted successfully",
   errorMessage: "Failed to delete account",
+  importance: "critical",
 });
 
 /**
@@ -100,6 +102,7 @@ export const saveAccount = defineMutation({
   },
   successMessage: "Account saved",
   errorMessage: "Failed to save account",
+  importance: "important",
 });
 
 // ==================== Balance Management Queries ====================

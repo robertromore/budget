@@ -200,6 +200,7 @@ export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelati
   },
   successMessage: "Budget created",
   errorMessage: "Failed to create budget",
+  importance: "important",
 });
 
 export const updateBudget = defineMutation<
@@ -254,6 +255,7 @@ export const deleteBudget = defineMutation<
   },
   successMessage: "Budget deleted",
   errorMessage: "Failed to delete budget",
+  importance: "important",
 });
 
 export const duplicateBudget = defineMutation<
@@ -318,6 +320,7 @@ export const bulkDeleteBudgets = defineMutation<
   successMessage: (result) =>
     `${result.success} budget(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
   errorMessage: "Failed to delete budgets",
+  importance: "critical",
 });
 
 export const ensurePeriodInstance = defineMutation<

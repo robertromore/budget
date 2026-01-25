@@ -9,6 +9,7 @@
 
 import { trpc } from "$lib/trpc/client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
+import { queryClient } from "./_client";
 
 // Query keys for similarity operations
 export const similarityKeys = createQueryKeys("similarity", {
@@ -93,13 +94,9 @@ export const previewNormalization = (descriptions: string[]) =>
 export const getCanonicalGroups = () =>
   defineQuery<{
     groups: Array<{
-      canonical: string;
-      variants: Array<{
-        name: string;
-        payeeId: number;
-        transactionCount: number;
-      }>;
-      totalTransactions: number;
+      canonicalName: string;
+      variants: string[];
+      payeeIds: number[];
     }>;
     total: number;
   }>({
@@ -117,9 +114,12 @@ export const findSimilarPayees = (query: string, options?: { limit?: number; min
   defineQuery<{
     query: string;
     results: Array<{
-      payee: { id: number; name: string };
-      score: number;
-      matchType: "exact" | "semantic" | "fuzzy";
+      payeeId: number;
+      payeeName: string;
+      similarityScore: number;
+      matchType: "exact" | "fuzzy" | "semantic" | "lsh";
+      category?: { id: number; name: string };
+      transactionCount: number;
     }>;
     total: number;
   }>({
@@ -141,10 +141,10 @@ export const findSimilarPayees = (query: string, options?: { limit?: number; min
  */
 export const getSimilarityStats = () =>
   defineQuery<{
-    payeeCount: number;
-    indexedPayees: number;
-    lastIndexUpdate: string | null;
-    cacheHitRate: number;
+    payeesIndexed: number;
+    categoriesIndexed: number;
+    canonicalGroups: number;
+    lshIndexSize: number;
   }>({
     queryKey: similarityKeys.stats(),
     queryFn: () => trpc().similarityRoutes.getStats.query(),
@@ -167,12 +167,15 @@ export const initializeSimilarityIndex = () =>
       success: boolean;
       message: string;
       stats: {
-        payeeCount: number;
-        indexedPayees: number;
-        lastIndexUpdate: string | null;
+        payeesIndexed: number;
+        categoriesIndexed: number;
+        canonicalGroups: number;
+        lshIndexSize: number;
       };
     }
   >({
     mutationFn: () => trpc().similarityRoutes.initializeIndex.mutate(),
-    invalidateQueries: [[...similarityKeys.stats()]],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: similarityKeys.stats() });
+    },
   });

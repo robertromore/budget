@@ -3,6 +3,11 @@ import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 import { transactionKeys } from "./transactions";
 
+import type {
+  ScheduleSubscriptionStatus,
+  ScheduleSubscriptionType,
+} from "$lib/schema/schedules";
+
 /**
  * Query Keys for schedule operations
  */
@@ -13,7 +18,17 @@ export const scheduleKeys = createQueryKeys("schedules", {
   details: () => ["schedules", "detail"] as const,
   detail: (id: number) => ["schedules", "detail", id] as const,
   skipHistory: (scheduleId: number) => ["schedules", "skips", scheduleId] as const,
+  // Subscription-specific keys
+  subscriptions: (filters?: SubscriptionFilters) => ["schedules", "subscriptions", filters] as const,
+  subscriptionAnalytics: () => ["schedules", "subscription-analytics"] as const,
+  priceHistory: (scheduleId: number) => ["schedules", "price-history", scheduleId] as const,
 });
+
+interface SubscriptionFilters {
+  status?: ScheduleSubscriptionStatus;
+  type?: ScheduleSubscriptionType;
+  accountId?: number;
+}
 
 /**
  * Get all schedules
@@ -182,6 +197,7 @@ export const bulkRemove = defineMutation<
   successMessage: (result) =>
     `${result.success} schedule(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
   errorMessage: "Failed to delete schedules",
+  importance: "critical",
 });
 
 /**
@@ -211,4 +227,107 @@ export const save = defineMutation({
   },
   successMessage: "Schedule saved",
   errorMessage: "Failed to save schedule",
+  importance: "important",
+});
+
+// ==================== SUBSCRIPTION QUERIES ====================
+
+/**
+ * Get all schedules that are subscriptions
+ */
+export const getSubscriptions = (filters?: SubscriptionFilters) =>
+  defineQuery({
+    queryKey: scheduleKeys.subscriptions(filters),
+    queryFn: () => trpc().scheduleRoutes.getSubscriptions.query(filters),
+  });
+
+/**
+ * Get subscription analytics (totals, by type, etc.)
+ */
+export const getSubscriptionAnalytics = () =>
+  defineQuery({
+    queryKey: scheduleKeys.subscriptionAnalytics(),
+    queryFn: () => trpc().scheduleRoutes.getSubscriptionAnalytics.query(),
+  });
+
+/**
+ * Get price history for a schedule
+ */
+export const getPriceHistory = (scheduleId: number) =>
+  defineQuery({
+    queryKey: scheduleKeys.priceHistory(scheduleId),
+    queryFn: () => trpc().scheduleRoutes.getPriceHistory.query({ scheduleId }),
+  });
+
+// ==================== SUBSCRIPTION MUTATIONS ====================
+
+/**
+ * Create a new schedule (used by detection UI)
+ */
+export const create = defineMutation({
+  mutationFn: (data: Parameters<ReturnType<typeof trpc>["scheduleRoutes"]["create"]["mutate"]>[0]) =>
+    trpc().scheduleRoutes.create.mutate(data),
+  onSuccess: (newSchedule) => {
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptions() });
+    if (newSchedule?.id) {
+      queryClient.setQueryData(scheduleKeys.detail(newSchedule.id), newSchedule);
+    }
+  },
+  successMessage: "Schedule created",
+  errorMessage: "Failed to create schedule",
+  importance: "important",
+});
+
+/**
+ * Update subscription status
+ */
+export const updateSubscriptionStatus = defineMutation({
+  mutationFn: (data: { scheduleId: number; status: ScheduleSubscriptionStatus }) =>
+    trpc().scheduleRoutes.updateSubscriptionStatus.mutate(data),
+  onSuccess: (updated, variables) => {
+    queryClient.setQueryData(scheduleKeys.detail(variables.scheduleId), updated);
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptions() });
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptionAnalytics() });
+  },
+  successMessage: "Subscription status updated",
+  errorMessage: "Failed to update subscription status",
+});
+
+/**
+ * Record a price change for a subscription
+ */
+export const recordPriceChange = defineMutation({
+  mutationFn: (data: {
+    scheduleId: number;
+    newAmount: number;
+    effectiveDate?: string;
+    transactionId?: number;
+  }) => trpc().scheduleRoutes.recordPriceChange.mutate(data),
+  onSuccess: (_data, variables) => {
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.detail(variables.scheduleId) });
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.priceHistory(variables.scheduleId) });
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptionAnalytics() });
+  },
+  successMessage: "Price change recorded",
+  errorMessage: "Failed to record price change",
+});
+
+/**
+ * Convert an existing schedule to a subscription
+ */
+export const convertToSubscription = defineMutation({
+  mutationFn: (data: {
+    scheduleId: number;
+    subscriptionType: ScheduleSubscriptionType;
+    subscriptionStatus?: ScheduleSubscriptionStatus;
+  }) => trpc().scheduleRoutes.convertToSubscription.mutate(data),
+  onSuccess: (updated, variables) => {
+    queryClient.setQueryData(scheduleKeys.detail(variables.scheduleId), updated);
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptions() });
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptionAnalytics() });
+  },
+  successMessage: "Schedule converted to subscription",
+  errorMessage: "Failed to convert schedule",
 });

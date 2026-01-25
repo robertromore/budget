@@ -174,6 +174,7 @@ export const createSimplefinConnection = defineMutation<
   },
   successMessage: "Bank account connected via SimpleFIN",
   errorMessage: "Failed to connect bank account",
+  importance: "important",
 });
 
 /**
@@ -200,6 +201,7 @@ export const createTellerConnection = defineMutation<
   },
   successMessage: "Bank account connected via Teller",
   errorMessage: "Failed to connect bank account",
+  importance: "important",
 });
 
 /**
@@ -237,6 +239,7 @@ export const disconnectConnection = defineMutation<number, { success: boolean }>
   },
   successMessage: "Bank account disconnected",
   errorMessage: "Failed to disconnect bank account",
+  importance: "important",
 });
 
 /**

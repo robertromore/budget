@@ -15,13 +15,16 @@ import * as connections from "./connections";
 import * as importProfiles from "./import-profiles";
 import * as llmSettings from "./llm-settings";
 import * as medicalExpenses from "./medical-expenses";
+import * as notifications from "./notifications";
 import * as onboarding from "./onboarding";
 import * as patterns from "./patterns";
 import * as payeeAliases from "./payee-aliases";
+import * as recurring from "./recurring";
 import * as payeeCategories from "./payee-categories";
 import * as payees from "./payees";
 import * as schedules from "./schedules";
 import * as security from "./security";
+import * as subscriptions from "./subscriptions";
 import * as settings from "./settings";
 import * as transactions from "./transactions";
 import * as transferMappings from "./transfer-mappings";
@@ -48,14 +51,17 @@ export const rpc = {
   importProfiles,
   llmSettings,
   medicalExpenses,
+  notifications,
   onboarding,
   patterns,
   payeeAliases,
   payeeCategories,
   payees,
+  recurring,
   schedules,
   security,
   settings,
+  subscriptions,
   transactions,
   transferMappings,
   utility,
@@ -89,14 +95,17 @@ export type ConnectionQueries = typeof connections;
 export type ImportProfileQueries = typeof importProfiles;
 export type LLMSettingsQueries = typeof llmSettings;
 export type MedicalExpenseQueries = typeof medicalExpenses;
+export type NotificationQueries = typeof notifications;
 export type OnboardingQueries = typeof onboarding;
 export type PatternQueries = typeof patterns;
 export type PayeeAliasQueries = typeof payeeAliases;
 export type PayeeCategoryQueries = typeof payeeCategories;
 export type PayeeQueries = typeof payees;
+export type RecurringQueries = typeof recurring;
 export type ScheduleQueries = typeof schedules;
 export type SecurityQueries = typeof security;
 export type SettingsQueries = typeof settings;
+export type SubscriptionQueries = typeof subscriptions;
 export type TransactionQueries = typeof transactions;
 export type TransferMappingQueries = typeof transferMappings;
 export type UtilityQueries = typeof utility;
@@ -119,13 +128,16 @@ export { connectionKeys, providerSettingsKeys } from "./connections";
 export { importProfileKeys } from "./import-profiles";
 export { LLMSettings, llmSettingsKeys } from "./llm-settings";
 export { medicalExpenseKeys } from "./medical-expenses";
+export { notificationKeys } from "./notifications";
 export { onboardingKeys } from "./onboarding";
 export { patternKeys } from "./patterns";
 export { payeeAliasKeys } from "./payee-aliases";
 export { payeeCategoryKeys } from "./payee-categories";
 export { payeeKeys } from "./payees";
+export { recurringKeys } from "./recurring";
 export { scheduleKeys } from "./schedules";
 export { securityKeys } from "./security";
+export { subscriptionKeys } from "./subscriptions";
 export { transactionKeys } from "./transactions";
 export { transferMappingKeys } from "./transfer-mappings";
 export { utilityKeys } from "./utility";
