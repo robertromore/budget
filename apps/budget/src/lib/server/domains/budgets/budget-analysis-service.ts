@@ -20,6 +20,10 @@ import { logger } from "$lib/server/shared/logging";
 import { median, mean, standardDeviation } from "$lib/utils/chart-statistics";
 import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
+import {
+  getRecurringDetectionService,
+  type RecurringPattern,
+} from "$lib/server/domains/shared/recurring-detection";
 
 export interface AnalysisParams {
   accountIds?: number[];
@@ -704,6 +708,7 @@ export class BudgetAnalysisService {
 
   /**
    * Detect recurring expenses for scheduled-expense budget recommendations
+   * Uses the unified RecurringDetectionService for pattern analysis
    */
   async detectScheduledExpenses(params: {
     accountIds?: number[];
@@ -714,162 +719,87 @@ export class BudgetAnalysisService {
   }): Promise<RecurringExpense[]> {
     const { accountIds, workspaceId, startDate, endDate, minTransactions } = params;
 
-    // Build query conditions
-    const conditions = [
-      gte(transactions.date, startDate),
-      lte(transactions.date, endDate),
-      isNull(transactions.deletedAt),
-    ];
-
-    // Filter by workspace using account IDs
-    if (workspaceId) {
-      // Get account IDs for this workspace
-      const workspaceAccounts = await db
-        .select({ id: accounts.id })
-        .from(accounts)
-        .where(eq(accounts.workspaceId, workspaceId));
-
-      const workspaceAccountIds = workspaceAccounts.map((a) => a.id);
-
-      if (workspaceAccountIds.length === 0) {
-        // No accounts in this workspace, return empty
-        return [];
-      }
-
-      // If specific accountIds provided, intersect with workspace accounts
-      if (accountIds && accountIds.length > 0) {
-        const filteredAccountIds = accountIds.filter((id) => workspaceAccountIds.includes(id));
-        if (filteredAccountIds.length === 0) {
-          return [];
-        }
-        conditions.push(inArray(transactions.accountId, filteredAccountIds));
-      } else {
-        conditions.push(inArray(transactions.accountId, workspaceAccountIds));
-      }
-    } else if (accountIds && accountIds.length > 0) {
-      conditions.push(inArray(transactions.accountId, accountIds));
+    if (!workspaceId) {
+      logger.warn("detectScheduledExpenses called without workspaceId");
+      return [];
     }
 
-    // Get transactions grouped by payee
-    const txnsByPayee = await db
-      .select({
-        id: transactions.id,
-        payeeId: transactions.payeeId,
-        payeeName: payees.name,
-        categoryId: transactions.categoryId,
-        categoryName: categories.name,
-        accountId: transactions.accountId,
-        amount: transactions.amount,
-        date: transactions.date,
-      })
-      .from(transactions)
-      .leftJoin(payees, eq(transactions.payeeId, payees.id))
-      .leftJoin(categories, eq(transactions.categoryId, categories.id))
-      .where(and(...conditions))
-      .orderBy(transactions.date);
+    // Calculate months from date range
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const months = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)));
 
-    // Group by payee + account combination
-    const payeeMap = new Map<
-      string,
-      {
-        payeeId: number;
-        payeeName: string;
-        categoryId: number | null;
-        categoryName: string | null;
-        accountId: number;
-        amounts: number[];
-        dates: string[];
-        transactionIds: number[];
-      }
-    >();
+    // Use unified detection service
+    const detectionService = getRecurringDetectionService();
+    const patterns = await detectionService.detectPatterns(workspaceId, {
+      accountIds,
+      months,
+      minTransactions,
+      minConfidence: 40, // Lower threshold for budget recommendations
+      minPredictability: 60,
+      patternTypes: ["subscription", "bill", "other"], // Exclude income and transfers
+    });
 
-    for (const txn of txnsByPayee) {
-      if (!txn.payeeId) continue;
+    // Query for raw transaction data to populate amounts/dates arrays
+    const allTransactionIds = patterns.flatMap((p) => p.transactionIds);
+    const transactionData = allTransactionIds.length > 0
+      ? await db
+          .select({
+            id: transactions.id,
+            amount: transactions.amount,
+            date: transactions.date,
+            payeeId: transactions.payeeId,
+            accountId: transactions.accountId,
+          })
+          .from(transactions)
+          .where(inArray(transactions.id, allTransactionIds))
+      : [];
 
+    // Group transaction data by payee+account for quick lookup
+    const txnByPattern = new Map<string, { amounts: number[]; dates: string[] }>();
+    for (const txn of transactionData) {
       const key = `${txn.payeeId}-${txn.accountId}`;
-      if (!payeeMap.has(key)) {
-        payeeMap.set(key, {
-          payeeId: txn.payeeId,
-          payeeName: txn.payeeName || "Unknown",
-          categoryId: txn.categoryId,
-          categoryName: txn.categoryName,
-          accountId: txn.accountId,
-          amounts: [],
-          dates: [],
-          transactionIds: [],
-        });
+      if (!txnByPattern.has(key)) {
+        txnByPattern.set(key, { amounts: [], dates: [] });
       }
-
-      const data = payeeMap.get(key)!;
+      const data = txnByPattern.get(key)!;
       data.amounts.push(Math.abs(txn.amount));
       data.dates.push(txn.date);
-      data.transactionIds.push(txn.id);
     }
 
-    // Analyze for recurring patterns
-    const recurringExpenses: RecurringExpense[] = [];
+    // Map RecurringPattern to RecurringExpense
+    return patterns.map((pattern): RecurringExpense => {
+      const key = `${pattern.payeeId}-${pattern.accountId}`;
+      const txnData = txnByPattern.get(key) ?? { amounts: [], dates: [] };
 
-    for (const [_, data] of payeeMap.entries()) {
-      if (data.amounts.length < minTransactions) continue;
-
-      // Calculate interval consistency
-      const intervals: number[] = [];
-      for (let i = 1; i < data.dates.length; i++) {
-        const days =
-          (new Date(data.dates[i]!).getTime() - new Date(data.dates[i - 1]!).getTime()) /
-          (1000 * 60 * 60 * 24);
-        intervals.push(days);
+      // Map frequency to budget's expected format
+      let frequency: "weekly" | "monthly" | "quarterly";
+      if (pattern.frequency === "weekly" || pattern.frequency === "biweekly") {
+        frequency = "weekly";
+      } else if (pattern.frequency === "quarterly" || pattern.frequency === "semi_annual" || pattern.frequency === "annual") {
+        frequency = "quarterly";
+      } else {
+        frequency = "monthly";
       }
 
-      if (intervals.length === 0) continue;
-
-      const avgInterval = mean(intervals);
-      const intervalStdDev = standardDeviation(intervals);
-
-      // Check if intervals are consistent (recurring pattern)
-      // Allow 20% variance in intervals
-      const isRecurring = intervalStdDev / avgInterval < 0.2;
-      if (!isRecurring) continue;
-
-      // Determine frequency from interval
-      let frequency: "weekly" | "monthly" | "quarterly";
-      if (avgInterval <= 10) frequency = "weekly";
-      else if (avgInterval <= 35) frequency = "monthly";
-      else frequency = "quarterly";
-
-      // Calculate amount predictability
-      const sorted = [...data.amounts].sort((a, b) => a - b);
-      const medianVal = median(sorted);
-      const meanVal = mean(data.amounts);
-      const stdDev = standardDeviation(data.amounts);
-
-      // Predictability: lower variance = higher predictability
-      const varianceCoefficient = stdDev / meanVal;
-      const predictability = Math.max(0, Math.min(100, 100 - varianceCoefficient * 100));
-
-      // Only include if amounts are relatively consistent (>60% predictability)
-      if (predictability < 60) continue;
-
-      recurringExpenses.push({
-        payeeId: data.payeeId,
-        payeeName: data.payeeName,
-        categoryId: data.categoryId,
-        categoryName: data.categoryName,
-        accountId: data.accountId,
-        amounts: data.amounts,
-        dates: data.dates,
-        transactionIds: data.transactionIds,
-        median: medianVal,
-        mean: meanVal,
-        stdDev,
-        predictability,
-        intervalDays: avgInterval,
+      return {
+        payeeId: pattern.payeeId,
+        payeeName: pattern.payeeName,
+        categoryId: pattern.categoryId,
+        categoryName: pattern.categoryName,
+        accountId: pattern.accountId,
+        amounts: txnData.amounts,
+        dates: txnData.dates,
+        transactionIds: pattern.transactionIds,
+        median: pattern.amount.median,
+        mean: pattern.amount.mean,
+        stdDev: (pattern.amount.max - pattern.amount.min) / 4, // Approximate stdDev
+        predictability: pattern.amount.predictability,
+        intervalDays: pattern.intervalDays,
         frequency,
-        transactionCount: data.amounts.length,
-      });
-    }
-
-    return recurringExpenses;
+        transactionCount: pattern.transactionCount,
+      };
+    });
   }
 
   /**

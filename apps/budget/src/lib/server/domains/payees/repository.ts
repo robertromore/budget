@@ -1,4 +1,4 @@
-import type { NewPayee, Payee, PayeeType, PaymentFrequency } from "$lib/schema";
+import type { IntelligenceProfile, NewPayee, Payee, PayeeAiPreferences, PayeeType, PaymentFrequency } from "$lib/schema";
 import { budgets, categories, payees, transactions } from "$lib/schema";
 import { DATABASE_CONFIG } from "$lib/server/config/database";
 import { db } from "$lib/server/db";
@@ -985,5 +985,78 @@ export class PayeeRepository extends BaseRepository<
       .where(isNull(transactions.deletedAt));
 
     return Number(result[0]?.count || 0);
+  }
+
+  /**
+   * Get intelligence profile for a payee
+   */
+  async getIntelligenceProfile(
+    id: number,
+    workspaceId: number
+  ): Promise<IntelligenceProfile | null> {
+    const payee = await this.findById(id, workspaceId);
+    if (!payee) {
+      throw new NotFoundError("Payee", id);
+    }
+
+    return payee.aiPreferences?.intelligenceProfile ?? null;
+  }
+
+  /**
+   * Update intelligence profile for a payee
+   */
+  async updateIntelligenceProfile(
+    id: number,
+    workspaceId: number,
+    profile: IntelligenceProfile
+  ): Promise<Payee> {
+    const payee = await this.findById(id, workspaceId);
+    if (!payee) {
+      throw new NotFoundError("Payee", id);
+    }
+
+    const updatedAiPreferences: PayeeAiPreferences = {
+      ...(payee.aiPreferences || {}),
+      intelligenceProfile: {
+        ...profile,
+        lastUpdated: new Date().toISOString(),
+      },
+    };
+
+    const [updated] = await db
+      .update(payees)
+      .set({
+        aiPreferences: updatedAiPreferences,
+        updatedAt: getCurrentTimestamp(),
+      })
+      .where(
+        and(
+          eq(payees.id, id),
+          eq(payees.workspaceId, workspaceId),
+          isNull(payees.deletedAt)
+        )
+      )
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundError("Payee", id);
+    }
+
+    return updated;
+  }
+
+  /**
+   * Reset intelligence profile to defaults (disabled)
+   */
+  async resetIntelligenceProfile(
+    id: number,
+    workspaceId: number
+  ): Promise<Payee> {
+    const defaultProfile: IntelligenceProfile = {
+      enabled: false,
+      filters: {},
+    };
+
+    return this.updateIntelligenceProfile(id, workspaceId, defaultProfile);
   }
 }

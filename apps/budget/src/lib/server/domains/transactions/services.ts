@@ -502,6 +502,60 @@ export class TransactionService {
     // Update transaction
     const updatedTransaction = await this.repository.update(id, updateData, workspaceId);
 
+    // Sync linked transfer transaction if this is part of a transfer
+    // This ensures that when editing one side of a transfer, the other side stays in sync
+    if (existingTransaction.transferTransactionId && existingTransaction.isTransfer) {
+      const linkedUpdateData: Partial<NewTransaction> = {};
+
+      // Sync amount (inverted sign for the paired transaction)
+      if (updateData.amount !== undefined) {
+        linkedUpdateData.amount = -updateData.amount;
+      }
+
+      // Sync date (both sides should have the same date)
+      if (updateData.date !== undefined) {
+        linkedUpdateData.date = updateData.date;
+      }
+
+      // Sync status (both sides should have the same status)
+      if (updateData.status !== undefined) {
+        linkedUpdateData.status = updateData.status;
+      }
+
+      // Update linked transaction if there are fields to sync
+      if (Object.keys(linkedUpdateData).length > 0) {
+        try {
+          await this.repository.update(
+            existingTransaction.transferTransactionId,
+            linkedUpdateData,
+            workspaceId
+          );
+
+          // Get the linked transaction to invalidate its account cache
+          const linkedTransaction = await this.repository.findById(
+            existingTransaction.transferTransactionId,
+            workspaceId
+          );
+          if (linkedTransaction) {
+            invalidateAccountCache(linkedTransaction.accountId);
+          }
+
+          logger.debug("Synced linked transfer transaction", {
+            sourceTransactionId: id,
+            linkedTransactionId: existingTransaction.transferTransactionId,
+            syncedFields: Object.keys(linkedUpdateData),
+          });
+        } catch (transferSyncError) {
+          // Log but don't fail the main update
+          logger.warn("Failed to sync linked transfer transaction", {
+            error: transferSyncError,
+            sourceTransactionId: id,
+            linkedTransactionId: existingTransaction.transferTransactionId,
+          });
+        }
+      }
+    }
+
     // Handle budget allocations
     if (data.budgetAllocations !== undefined) {
       try {
@@ -2047,6 +2101,9 @@ export class TransactionService {
     );
 
     // Create paired transaction in target account
+    // Note: We don't copy categoryId or payeeId for transfers since:
+    // 1. Transfers between accounts aren't actual income/expenses, so categories don't apply
+    // 2. The payee context is specific to the source transaction's account
     const targetTransaction = await this.repository.create(
       {
         accountId: targetAccountId,
@@ -2057,8 +2114,8 @@ export class TransactionService {
           (targetAmount < 0
             ? `Transfer to ${sourceAccount?.name || "Unknown Account"}`
             : `Transfer from ${sourceAccount?.name || "Unknown Account"}`),
-        categoryId: existingTransaction.categoryId,
-        payeeId: existingTransaction.payeeId,
+        categoryId: null,
+        payeeId: null,
         transferId,
         transferAccountId: existingTransaction.accountId,
         isTransfer: true,

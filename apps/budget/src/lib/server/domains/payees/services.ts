@@ -5,12 +5,17 @@ import type {
   CorrectionContext,
   CorrectionPattern,
   CorrectionTrigger,
+  FeedbackType,
+  IntelligenceProfile,
   LearningMetrics,
   NewPayee,
   Payee,
   PayeeType,
+  PredictionFeedback,
+  RecordPredictionFeedbackInput,
+  WorkspacePreferences,
 } from "$lib/schema";
-import { budgets, transactions } from "$lib/schema";
+import { budgets, predictionFeedback, transactions, workspaces } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { compact, isEmptyObject, isNotEmptyObject } from "$lib/utils";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
@@ -74,6 +79,8 @@ import type {
   PayeeIntelligenceSummary,
   PayeeTags, PaymentMethodReference, SubscriptionInfo,
 } from "./types";
+import { createIntelligenceCoordinator } from "$lib/server/ai/intelligence-coordinator";
+import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$lib/schema/workspaces";
 
 export interface CreatePayeeData {
   name: string;
@@ -923,6 +930,289 @@ export class PayeeService {
    */
   async getPayeeIntelligence(id: number, workspaceId: number): Promise<PayeeIntelligence> {
     return await this.repository.getIntelligence(id, workspaceId);
+  }
+
+  // ==================== INTELLIGENCE PROFILE METHODS ====================
+
+  /**
+   * Get the intelligence profile for a payee
+   */
+  async getIntelligenceProfile(
+    id: number,
+    workspaceId: number
+  ): Promise<IntelligenceProfile | null> {
+    return await this.repository.getIntelligenceProfile(id, workspaceId);
+  }
+
+  /**
+   * Update the intelligence profile for a payee
+   */
+  async updateIntelligenceProfile(
+    id: number,
+    workspaceId: number,
+    profile: IntelligenceProfile
+  ): Promise<Payee> {
+    return await this.repository.updateIntelligenceProfile(id, workspaceId, profile);
+  }
+
+  /**
+   * Reset the intelligence profile to defaults
+   */
+  async resetIntelligenceProfile(id: number, workspaceId: number): Promise<Payee> {
+    return await this.repository.resetIntelligenceProfile(id, workspaceId);
+  }
+
+  /**
+   * Get comprehensive intelligence analysis with profile filters applied
+   * Supports ML and AI enhancement based on workspace preferences and per-payee overrides
+   */
+  async getComprehensiveIntelligenceWithProfile(id: number, workspaceId: number): Promise<{
+    payee: Payee;
+    profile: IntelligenceProfile | null;
+    spendingAnalysis: SpendingAnalysis;
+    seasonalPatterns: SeasonalPattern[];
+    dayOfWeekPatterns: DayOfWeekPattern[];
+    frequencyAnalysis: FrequencyAnalysis;
+    transactionPrediction: TransactionPrediction;
+    budgetSuggestion: BudgetAllocationSuggestion;
+    confidenceMetrics: ConfidenceMetrics;
+  }> {
+    const payee = await this.getPayeeById(id, workspaceId);
+    const profile = await this.repository.getIntelligenceProfile(id, workspaceId);
+
+    // Get workspace preferences for prediction tier determination
+    const workspacePreferences = await this.getWorkspacePreferences(workspaceId);
+
+    // Determine prediction tier based on workspace settings and per-payee override
+    const { tier, strategy, useML, useAI } = this.intelligenceService.determinePredictionTier(
+      workspacePreferences,
+      profile?.filters?.predictionMethod
+    );
+
+    // Run all base intelligence analysis in parallel with profile applied
+    const [
+      spendingAnalysis,
+      seasonalPatterns,
+      dayOfWeekPatterns,
+      frequencyAnalysis,
+      baseTransactionPrediction,
+      baseBudgetSuggestion,
+      confidenceMetrics,
+    ] = await Promise.all([
+      this.intelligenceService.analyzeSpendingPatterns(id, profile),
+      this.intelligenceService.detectSeasonality(id, profile),
+      this.intelligenceService.analyzeDayOfWeekPatterns(id, profile),
+      this.intelligenceService.analyzeFrequencyPattern(id, profile),
+      this.intelligenceService.predictNextTransaction(id, profile),
+      this.intelligenceService.suggestBudgetAllocation(id, profile),
+      this.intelligenceService.calculateConfidenceScores(id),
+    ]);
+
+    // Apply ML/AI enhancements based on tier
+    let transactionPrediction: TransactionPrediction = {
+      ...baseTransactionPrediction,
+      tier: "statistical",
+    };
+    let budgetSuggestion: BudgetAllocationSuggestion = {
+      ...baseBudgetSuggestion,
+      tier: "statistical",
+    };
+
+    // Enhance with ML if enabled
+    if (useML) {
+      transactionPrediction = await this.intelligenceService.enhanceWithML(
+        transactionPrediction,
+        workspaceId,
+        id
+      );
+    }
+
+    // Enhance with AI if enabled and LLM is available
+    if (useAI && strategy.llmProvider) {
+      transactionPrediction = await this.intelligenceService.enhanceWithAI(
+        transactionPrediction,
+        strategy.llmProvider,
+        payee.name ?? "Unknown"
+      );
+
+      budgetSuggestion = await this.intelligenceService.enhanceBudgetSuggestionWithAI(
+        budgetSuggestion,
+        strategy.llmProvider,
+        payee.name ?? "Unknown"
+      );
+    }
+
+    return {
+      payee,
+      profile,
+      spendingAnalysis,
+      seasonalPatterns,
+      dayOfWeekPatterns,
+      frequencyAnalysis,
+      transactionPrediction,
+      budgetSuggestion,
+      confidenceMetrics,
+    };
+  }
+
+  /**
+   * Get workspace preferences for ML/LLM configuration
+   */
+  private async getWorkspacePreferences(workspaceId: number): Promise<WorkspacePreferences> {
+    try {
+      const workspace = await db
+        .select({ preferences: workspaces.preferences })
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
+        .limit(1);
+
+      if (workspace[0]?.preferences) {
+        return workspace[0].preferences as WorkspacePreferences;
+      }
+    } catch (error) {
+      console.warn("Failed to get workspace preferences:", error);
+    }
+
+    // Return default preferences for ML/LLM coordination
+    return {
+      ml: DEFAULT_ML_PREFERENCES,
+      llm: DEFAULT_LLM_PREFERENCES,
+    };
+  }
+
+  /**
+   * Suggest smart defaults for an intelligence profile based on payee characteristics
+   */
+  async suggestIntelligenceProfileDefaults(
+    id: number,
+    workspaceId: number
+  ): Promise<{
+    profile: IntelligenceProfile;
+    reasoning: string[];
+    confidence: number;
+  }> {
+    const payee = await this.getPayeeById(id, workspaceId);
+    const stats = await this.repository.getStats(id, workspaceId);
+
+    const reasoning: string[] = [];
+    const filters: IntelligenceProfile["filters"] = {};
+
+    // Analyze payee type to determine defaults
+    const payeeType = payee.payeeType;
+
+    // Determine amount sign based on payee type
+    if (payeeType === "employer") {
+      filters.amountSign = "positive";
+      reasoning.push("Employer payees typically represent income (positive amounts)");
+    } else if (payeeType === "merchant" || payeeType === "utility") {
+      filters.amountSign = "negative";
+      reasoning.push(`${payeeType === "merchant" ? "Merchant" : "Utility"} payees typically represent expenses (negative amounts)`);
+    } else if (payeeType === "financial_institution") {
+      // Analyze transaction history to determine if primarily income or expense
+      if (stats) {
+        const avgAmount = stats.avgAmount;
+        if (avgAmount > 0) {
+          filters.amountSign = "positive";
+          reasoning.push("Transaction history shows primarily positive amounts (likely interest/dividends)");
+        } else if (avgAmount < 0) {
+          filters.amountSign = "negative";
+          reasoning.push("Transaction history shows primarily negative amounts (likely payments/fees)");
+        }
+      }
+    } else if (payeeType === "government") {
+      // Could be tax payments (negative) or refunds (positive) - analyze history
+      if (stats) {
+        const avgAmount = stats.avgAmount;
+        if (avgAmount > 0) {
+          filters.amountSign = "positive";
+          reasoning.push("Transaction history suggests refunds or benefits (positive amounts)");
+        } else if (avgAmount < 0) {
+          filters.amountSign = "negative";
+          reasoning.push("Transaction history suggests payments or fees (negative amounts)");
+        }
+      }
+    }
+
+    // For payees with mixed transaction types (no clear type), analyze the data
+    if (!filters.amountSign && stats && stats.transactionCount >= 3) {
+      // Query to get transaction amount distribution
+      const txnData = await db
+        .select({
+          positiveCount: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN 1 ELSE 0 END)`.as("positive_count"),
+          negativeCount: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN 1 ELSE 0 END)`.as("negative_count"),
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.payeeId, id),
+            isNull(transactions.deletedAt)
+          )
+        );
+
+      if (txnData[0]) {
+        const positiveCount = Number(txnData[0].positiveCount) || 0;
+        const negativeCount = Number(txnData[0].negativeCount) || 0;
+        const total = positiveCount + negativeCount;
+
+        if (total > 0) {
+          const positiveRatio = positiveCount / total;
+
+          if (positiveRatio >= 0.8) {
+            filters.amountSign = "positive";
+            reasoning.push(`${Math.round(positiveRatio * 100)}% of transactions are positive (income)`);
+          } else if (positiveRatio <= 0.2) {
+            filters.amountSign = "negative";
+            reasoning.push(`${Math.round((1 - positiveRatio) * 100)}% of transactions are negative (expenses)`);
+          } else {
+            reasoning.push("Mixed transaction types detected - no amount filter recommended");
+          }
+        }
+      }
+    }
+
+    // Suggest category type based on payee type
+    if (payeeType === "employer") {
+      filters.categoryTypes = ["income"];
+      reasoning.push("Filtering to income category type for employer");
+    } else if (payeeType === "merchant" || payeeType === "utility") {
+      filters.categoryTypes = ["expense"];
+      reasoning.push("Filtering to expense category type");
+    }
+
+    // Exclude transfers by default for cleaner analysis
+    filters.excludeTransfers = true;
+    reasoning.push("Excluding internal transfers for cleaner analysis");
+
+    // Calculate confidence based on data quality
+    let confidence = 0.5; // Base confidence
+
+    if (stats && stats.transactionCount >= 12) {
+      confidence += 0.3; // Good transaction history
+    } else if (stats && stats.transactionCount >= 6) {
+      confidence += 0.15;
+    }
+
+    if (payeeType && payeeType !== "other") {
+      confidence += 0.2; // Known payee type
+    }
+
+    confidence = Math.min(confidence, 1.0);
+
+    // Build the profile
+    const profile: IntelligenceProfile = {
+      enabled: true,
+      filters,
+    };
+
+    if (reasoning.length === 0) {
+      reasoning.push("No specific patterns detected - using general defaults");
+    }
+
+    return {
+      profile,
+      reasoning,
+      confidence,
+    };
   }
 
   /**
@@ -5207,6 +5497,201 @@ Respond in JSON format only:
       deletedPayeeIds: deletedIds,
       transactionsUpdated,
       warnings,
+    };
+  }
+
+  // ========================================
+  // Prediction Feedback Methods
+  // ========================================
+
+  /**
+   * Record user feedback on a prediction (correction or rating).
+   * This data is used to improve ML prediction accuracy over time.
+   */
+  async recordPredictionFeedback(
+    input: RecordPredictionFeedbackInput,
+    workspaceId: number
+  ): Promise<PredictionFeedback> {
+    // Verify the payee belongs to this workspace
+    const payee = await this.repository.findById(input.payeeId, workspaceId);
+    if (!payee) {
+      throw new NotFoundError("Payee not found");
+    }
+
+    // Insert the feedback record
+    const [feedback] = await db
+      .insert(predictionFeedback)
+      .values({
+        workspaceId,
+        payeeId: input.payeeId,
+        predictionType: input.predictionType,
+        originalDate: input.originalDate ?? null,
+        originalAmount: input.originalAmount ?? null,
+        originalConfidence: input.originalConfidence ?? null,
+        predictionTier: input.predictionTier ?? null,
+        correctedDate: input.correctedDate ?? null,
+        correctedAmount: input.correctedAmount ?? null,
+        rating: input.rating ?? null,
+        predictionMethod: input.predictionMethod ?? null,
+        transactionCount: input.transactionCount ?? null,
+      })
+      .returning();
+
+    logger.info("Recorded prediction feedback", {
+      payeeId: input.payeeId,
+      predictionType: input.predictionType,
+      hasCorrection: !!(input.correctedDate || input.correctedAmount),
+      rating: input.rating,
+    });
+
+    return feedback!;
+  }
+
+  /**
+   * Get prediction feedback history for a payee.
+   */
+  async getPredictionFeedbackHistory(
+    payeeId: number,
+    workspaceId: number,
+    predictionType?: FeedbackType,
+    limit = 10
+  ): Promise<PredictionFeedback[]> {
+    const conditions = [
+      eq(predictionFeedback.workspaceId, workspaceId),
+      eq(predictionFeedback.payeeId, payeeId),
+    ];
+
+    if (predictionType) {
+      conditions.push(eq(predictionFeedback.predictionType, predictionType));
+    }
+
+    const feedback = await db
+      .select()
+      .from(predictionFeedback)
+      .where(and(...conditions))
+      .orderBy(sql`${predictionFeedback.createdAt} DESC`)
+      .limit(limit);
+
+    return feedback;
+  }
+
+  /**
+   * Get prediction accuracy metrics based on user feedback.
+   * Used to assess and improve ML model performance.
+   */
+  async getPredictionAccuracyMetrics(
+    workspaceId: number,
+    payeeId?: number,
+    predictionType?: FeedbackType
+  ): Promise<{
+    totalFeedback: number;
+    positiveRatings: number;
+    negativeRatings: number;
+    corrections: number;
+    avgDateDeviation: number | null;
+    avgAmountDeviation: number | null;
+    accuracyRate: number;
+    feedbackByTier: Record<string, { count: number; positiveRate: number }>;
+  }> {
+    const conditions = [eq(predictionFeedback.workspaceId, workspaceId)];
+
+    if (payeeId) {
+      conditions.push(eq(predictionFeedback.payeeId, payeeId));
+    }
+
+    if (predictionType) {
+      conditions.push(eq(predictionFeedback.predictionType, predictionType));
+    }
+
+    const feedback = await db
+      .select()
+      .from(predictionFeedback)
+      .where(and(...conditions));
+
+    if (feedback.length === 0) {
+      return {
+        totalFeedback: 0,
+        positiveRatings: 0,
+        negativeRatings: 0,
+        corrections: 0,
+        avgDateDeviation: null,
+        avgAmountDeviation: null,
+        accuracyRate: 0,
+        feedbackByTier: {},
+      };
+    }
+
+    // Calculate metrics
+    const positiveRatings = feedback.filter((f) => f.rating === "positive").length;
+    const negativeRatings = feedback.filter((f) => f.rating === "negative").length;
+    const corrections = feedback.filter(
+      (f) => f.correctedDate !== null || f.correctedAmount !== null
+    ).length;
+
+    // Calculate average deviations for corrections
+    const dateDeviations: number[] = [];
+    const amountDeviations: number[] = [];
+
+    for (const f of feedback) {
+      if (f.originalDate && f.correctedDate) {
+        const origDate = new Date(f.originalDate);
+        const corrDate = new Date(f.correctedDate);
+        const daysDiff = Math.abs(
+          (corrDate.getTime() - origDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        dateDeviations.push(daysDiff);
+      }
+
+      if (f.originalAmount !== null && f.correctedAmount !== null) {
+        const pctDiff =
+          Math.abs(f.correctedAmount - f.originalAmount) /
+          Math.max(Math.abs(f.originalAmount), 1);
+        amountDeviations.push(pctDiff * 100);
+      }
+    }
+
+    const avgDateDeviation =
+      dateDeviations.length > 0
+        ? dateDeviations.reduce((a, b) => a + b, 0) / dateDeviations.length
+        : null;
+
+    const avgAmountDeviation =
+      amountDeviations.length > 0
+        ? amountDeviations.reduce((a, b) => a + b, 0) / amountDeviations.length
+        : null;
+
+    // Calculate accuracy rate (positive ratings vs negative, excluding neutral)
+    const ratedFeedback = positiveRatings + negativeRatings;
+    const accuracyRate = ratedFeedback > 0 ? positiveRatings / ratedFeedback : 0;
+
+    // Group by prediction tier
+    const feedbackByTier: Record<string, { count: number; positiveRate: number }> = {};
+    const tiers = ["statistical", "ml", "ai"];
+
+    for (const tier of tiers) {
+      const tierFeedback = feedback.filter((f) => f.predictionTier === tier);
+      const tierPositive = tierFeedback.filter((f) => f.rating === "positive").length;
+      const tierRated = tierFeedback.filter(
+        (f) => f.rating === "positive" || f.rating === "negative"
+      ).length;
+
+      if (tierFeedback.length > 0) {
+        feedbackByTier[tier] = {
+          count: tierFeedback.length,
+          positiveRate: tierRated > 0 ? tierPositive / tierRated : 0,
+        };
+      }
+    }
+
+    return {
+      totalFeedback: feedback.length,
+      positiveRatings,
+      negativeRatings,
+      corrections,
+      avgDateDeviation,
+      avgAmountDeviation,
+      accuracyRate,
+      feedbackByTier,
     };
   }
 }

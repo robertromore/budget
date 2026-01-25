@@ -1,7 +1,11 @@
-import type { PaymentFrequency } from "$lib/schema";
+import type { PaymentFrequency, IntelligenceProfile, WorkspacePreferences } from "$lib/schema";
 import { categories, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { formatDayOrdinal } from "$lib/utils/date-formatters";
+import { and, asc, count, desc, eq, gt, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
+import { createIntelligenceCoordinator, type StrategyResult } from "$lib/server/ai/intelligence-coordinator";
+import type { ProviderInstance } from "$lib/server/ai/providers";
+import { generateText } from "ai";
 
 // Comprehensive analysis interfaces for payee intelligence
 export interface SpendingAnalysis {
@@ -48,6 +52,28 @@ export interface DayOfWeekPattern {
   preference: number; // 0-1 scale relative to other days
 }
 
+export interface DayOfMonthPattern {
+  dayOfMonth: number; // 1-31
+  transactionCount: number;
+  totalAmount: number;
+  averageAmount: number;
+  percentOfTransactions: number;
+  preference: number; // 0-1 scale relative to other days
+}
+
+export interface MonthlyPattern {
+  /** Days of the month that commonly have transactions (e.g., [10, 25] for bi-monthly) */
+  commonDays: number[];
+  /** Whether this is a regular bi-monthly pattern (e.g., 1st and 15th, 10th and 25th) */
+  isBiMonthly: boolean;
+  /** Whether this is a monthly pattern on a specific day */
+  isMonthly: boolean;
+  /** The primary day of month for monthly patterns */
+  primaryDayOfMonth: number | null;
+  /** Confidence in the detected pattern */
+  confidence: number;
+}
+
 export interface FrequencyAnalysis {
   detectedFrequency: PaymentFrequency | null;
   confidence: number; // 0-1 confidence in the detection
@@ -56,6 +82,8 @@ export interface FrequencyAnalysis {
   regularityScore: number; // 0-1, how regular the transactions are
   predictabilityScore: number; // 0-1, how predictable next transaction is
   intervals: number[]; // All intervals between transactions in days
+  /** Day-of-month pattern analysis for monthly/bi-monthly payees */
+  monthlyPattern: MonthlyPattern | null;
   irregularPatterns: {
     clusters: Array<{
       averageInterval: number;
@@ -85,6 +113,10 @@ export interface TransactionPrediction {
     amount: number;
     probability: number;
   }>;
+  /** Prediction tier: statistical, ml, or ai */
+  tier?: "statistical" | "ml" | "ai";
+  /** AI-generated explanation (only present when tier is 'ai') */
+  aiExplanation?: string;
 }
 
 export interface BudgetAllocationSuggestion {
@@ -110,6 +142,10 @@ export interface BudgetAllocationSuggestion {
       confidence: number;
     }>;
   };
+  /** Prediction tier: statistical, ml, or ai */
+  tier?: "statistical" | "ml" | "ai";
+  /** AI-generated explanation (only present when tier is 'ai') */
+  aiExplanation?: string;
 }
 
 export interface ConfidenceMetrics {
@@ -196,17 +232,127 @@ export interface AmountClustering {
  */
 export class PayeeIntelligenceService {
   /**
+   * Build SQL filter conditions based on intelligence profile settings
+   */
+  private buildFilterConditions(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): SQL[] {
+    const conditions: SQL[] = [
+      eq(transactions.payeeId, payeeId),
+      isNull(transactions.deletedAt),
+    ];
+
+    // If profile is not enabled or doesn't exist, return base conditions
+    if (!profile?.enabled || !profile?.filters) {
+      return conditions;
+    }
+
+    const filters = profile.filters;
+
+    // Amount sign filter
+    if (filters.amountSign === "positive") {
+      conditions.push(gt(transactions.amount, 0));
+    } else if (filters.amountSign === "negative") {
+      conditions.push(lt(transactions.amount, 0));
+    }
+
+    // Date range filter
+    if (filters.dateRange && filters.dateRange.type !== "all") {
+      const now = new Date();
+      let startDate: Date | null = null;
+
+      if (filters.dateRange.type === "last_n_months" && filters.dateRange.months) {
+        startDate = new Date(now);
+        startDate.setMonth(startDate.getMonth() - filters.dateRange.months);
+      } else if (filters.dateRange.type === "last_n_years" && filters.dateRange.months) {
+        // months field stores the total months for years too
+        startDate = new Date(now);
+        startDate.setMonth(startDate.getMonth() - filters.dateRange.months);
+      }
+
+      if (startDate) {
+        conditions.push(gte(transactions.date, startDate.toISOString().split("T")[0]!));
+      }
+    }
+
+    // Amount threshold filters
+    if (filters.minAmount !== undefined) {
+      conditions.push(sql`ABS(${transactions.amount}) >= ${filters.minAmount}`);
+    }
+    if (filters.maxAmount !== undefined) {
+      conditions.push(sql`ABS(${transactions.amount}) <= ${filters.maxAmount}`);
+    }
+
+    return conditions;
+  }
+
+  /**
+   * Build category type filter conditions (requires join with categories)
+   * Returns null if no category filtering is needed
+   */
+  private buildCategoryFilter(profile?: IntelligenceProfile | null): SQL | null {
+    if (!profile?.enabled || !profile?.filters) {
+      return null;
+    }
+
+    const filters = profile.filters;
+    const categoryConditions: SQL[] = [];
+
+    // Category type filter
+    if (filters.categoryTypes && filters.categoryTypes.length > 0) {
+      categoryConditions.push(inArray(categories.categoryType, filters.categoryTypes));
+    }
+
+    // Exclude transfers filter
+    if (filters.excludeTransfers) {
+      categoryConditions.push(
+        or(
+          isNull(categories.categoryType),
+          sql`${categories.categoryType} != 'transfer'`
+        )!
+      );
+    }
+
+    if (categoryConditions.length === 0) {
+      return null;
+    }
+
+    return categoryConditions.length === 1
+      ? categoryConditions[0]!
+      : and(...categoryConditions)!;
+  }
+
+  /**
    * Analyze comprehensive spending patterns for a payee
    */
-  async analyzeSpendingPatterns(payeeId: number): Promise<SpendingAnalysis> {
+  async analyzeSpendingPatterns(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): Promise<SpendingAnalysis> {
+    // Build filter conditions from profile
+    const baseConditions = this.buildFilterConditions(payeeId, profile);
+    const categoryFilter = this.buildCategoryFilter(profile);
+
     // Get all transaction data for analysis
-    const transactionData = await db
+    let query = db
       .select({
         date: transactions.date,
         amount: transactions.amount,
       })
-      .from(transactions)
-      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
+      .from(transactions);
+
+    // Join with categories if we need category filtering
+    if (categoryFilter) {
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+    }
+
+    const allConditions = categoryFilter
+      ? [...baseConditions, categoryFilter]
+      : baseConditions;
+
+    const transactionData = await query
+      .where(and(...allConditions))
       .orderBy(asc(transactions.date));
 
     if (transactionData.length === 0) {
@@ -281,16 +427,32 @@ export class PayeeIntelligenceService {
   /**
    * Detect seasonal spending patterns
    */
-  async detectSeasonality(payeeId: number): Promise<SeasonalPattern[]> {
-    const monthlyData = await db
+  async detectSeasonality(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): Promise<SeasonalPattern[]> {
+    const baseConditions = this.buildFilterConditions(payeeId, profile);
+    const categoryFilter = this.buildCategoryFilter(profile);
+
+    let query = db
       .select({
         month: sql<number>`CAST(strftime('%m', ${transactions.date}) AS INTEGER)`,
         transactionCount: count(transactions.id),
         totalAmount: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
         averageAmount: sql<number>`COALESCE(AVG(${transactions.amount}), 0)`,
       })
-      .from(transactions)
-      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
+      .from(transactions);
+
+    if (categoryFilter) {
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+    }
+
+    const allConditions = categoryFilter
+      ? [...baseConditions, categoryFilter]
+      : baseConditions;
+
+    const monthlyData = await query
+      .where(and(...allConditions))
       .groupBy(sql`strftime('%m', ${transactions.date})`)
       .orderBy(sql`CAST(strftime('%m', ${transactions.date}) AS INTEGER)`);
 
@@ -347,16 +509,32 @@ export class PayeeIntelligenceService {
   /**
    * Analyze day-of-week spending patterns
    */
-  async analyzeDayOfWeekPatterns(payeeId: number): Promise<DayOfWeekPattern[]> {
-    const dayOfWeekData = await db
+  async analyzeDayOfWeekPatterns(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): Promise<DayOfWeekPattern[]> {
+    const baseConditions = this.buildFilterConditions(payeeId, profile);
+    const categoryFilter = this.buildCategoryFilter(profile);
+
+    let query = db
       .select({
         dayOfWeek: sql<number>`CAST(strftime('%w', ${transactions.date}) AS INTEGER)`,
         transactionCount: count(transactions.id),
         totalAmount: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
         averageAmount: sql<number>`COALESCE(AVG(${transactions.amount}), 0)`,
       })
-      .from(transactions)
-      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
+      .from(transactions);
+
+    if (categoryFilter) {
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+    }
+
+    const allConditions = categoryFilter
+      ? [...baseConditions, categoryFilter]
+      : baseConditions;
+
+    const dayOfWeekData = await query
+      .where(and(...allConditions))
       .groupBy(sql`strftime('%w', ${transactions.date})`)
       .orderBy(sql`CAST(strftime('%w', ${transactions.date}) AS INTEGER)`);
 
@@ -384,11 +562,27 @@ export class PayeeIntelligenceService {
   /**
    * Advanced frequency pattern analysis with irregular pattern support
    */
-  async analyzeFrequencyPattern(payeeId: number): Promise<FrequencyAnalysis> {
-    const transactionDates = await db
+  async analyzeFrequencyPattern(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): Promise<FrequencyAnalysis> {
+    const baseConditions = this.buildFilterConditions(payeeId, profile);
+    const categoryFilter = this.buildCategoryFilter(profile);
+
+    let query = db
       .select({ date: transactions.date })
-      .from(transactions)
-      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
+      .from(transactions);
+
+    if (categoryFilter) {
+      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as typeof query;
+    }
+
+    const allConditions = categoryFilter
+      ? [...baseConditions, categoryFilter]
+      : baseConditions;
+
+    const transactionDates = await query
+      .where(and(...allConditions))
       .orderBy(asc(transactions.date));
 
     if (transactionDates.length < 2) {
@@ -400,6 +594,7 @@ export class PayeeIntelligenceService {
         regularityScore: 0,
         predictabilityScore: 0,
         intervals: [],
+        monthlyPattern: null,
         irregularPatterns: {
           clusters: [],
           hasSeasonalBreaks: false,
@@ -448,6 +643,9 @@ export class PayeeIntelligenceService {
     // Calculate predictability score
     const predictabilityScore = this.calculatePredictabilityScore(intervals, detectedFrequency);
 
+    // Analyze day-of-month patterns for monthly/bi-monthly detection
+    const monthlyPattern = this.analyzeDayOfMonthPattern(transactionDates.map((t) => t.date));
+
     return {
       detectedFrequency,
       confidence,
@@ -456,6 +654,7 @@ export class PayeeIntelligenceService {
       regularityScore,
       predictabilityScore,
       intervals,
+      monthlyPattern,
       irregularPatterns: {
         clusters,
         hasSeasonalBreaks,
@@ -467,10 +666,13 @@ export class PayeeIntelligenceService {
   /**
    * Predict next transaction timing and amount
    */
-  async predictNextTransaction(payeeId: number): Promise<TransactionPrediction> {
-    const spendingAnalysis = await this.analyzeSpendingPatterns(payeeId);
-    const frequencyAnalysis = await this.analyzeFrequencyPattern(payeeId);
-    const seasonalPatterns = await this.detectSeasonality(payeeId);
+  async predictNextTransaction(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): Promise<TransactionPrediction> {
+    const spendingAnalysis = await this.analyzeSpendingPatterns(payeeId, profile);
+    const frequencyAnalysis = await this.analyzeFrequencyPattern(payeeId, profile);
+    const seasonalPatterns = await this.detectSeasonality(payeeId, profile);
 
     if (spendingAnalysis.transactionCount < 2) {
       return {
@@ -494,11 +696,51 @@ export class PayeeIntelligenceService {
     let confidence = 0;
     let reasoning = "";
 
-    // Method 1: Frequency-based prediction
-    if (frequencyAnalysis.detectedFrequency && frequencyAnalysis.confidence > 0.5) {
+    const now = new Date();
+    // Set to start of today for comparison
+    now.setHours(0, 0, 0, 0);
+
+    // Method 1: Day-of-month pattern (for bi-monthly or monthly payees like payroll)
+    const monthlyPattern = frequencyAnalysis.monthlyPattern;
+    if (monthlyPattern && monthlyPattern.confidence > 0.4) {
+      let predictedDate: Date;
+
+      if (monthlyPattern.isBiMonthly && monthlyPattern.commonDays.length >= 2) {
+        // Bi-monthly pattern (e.g., 10th and 25th)
+        predictedDate = this.getNextBiMonthlyDate(now, monthlyPattern.commonDays);
+        predictionMethod = "frequency_based";
+        confidence = monthlyPattern.confidence * 0.95;
+        reasoning = `Bi-monthly pattern detected: transactions typically occur on the ${monthlyPattern.commonDays.map(d => formatDayOrdinal(d)).join(" and ")}`;
+      } else if (monthlyPattern.isMonthly && monthlyPattern.primaryDayOfMonth) {
+        // Monthly pattern (single day)
+        predictedDate = this.getNextDayOfMonthDate(now, monthlyPattern.primaryDayOfMonth);
+        predictionMethod = "frequency_based";
+        confidence = monthlyPattern.confidence * 0.95;
+        const dayDesc = monthlyPattern.primaryDayOfMonth === 31
+          ? "end of month"
+          : formatDayOrdinal(monthlyPattern.primaryDayOfMonth);
+        reasoning = `Monthly pattern detected: transactions typically occur on the ${dayDesc}`;
+      } else {
+        // Fall through to interval-based
+        predictedDate = new Date(now);
+      }
+
+      // Ensure it's in the future
+      if (predictedDate > now) {
+        nextTransactionDate = predictedDate.toISOString().split("T")[0] ?? null;
+      }
+    }
+
+    // Method 2: Frequency-based prediction (fallback or when day-of-month pattern not detected)
+    if (!nextTransactionDate && frequencyAnalysis.detectedFrequency && frequencyAnalysis.confidence > 0.5) {
       const lastDate = new Date(lastTransactionDate);
-      const predictedDate = new Date(lastDate);
+      let predictedDate = new Date(lastDate);
       predictedDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
+
+      // If predicted date is in the past, advance to future
+      while (predictedDate <= now) {
+        predictedDate.setDate(predictedDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
+      }
 
       nextTransactionDate = predictedDate.toISOString().split("T")[0] ?? null;
       predictionMethod = "frequency_based";
@@ -506,7 +748,7 @@ export class PayeeIntelligenceService {
       reasoning = `Based on ${frequencyAnalysis.detectedFrequency} payment pattern with ${Math.round(frequencyAnalysis.averageDaysBetween)} day average interval`;
     }
 
-    // Method 2: Seasonal adjustment
+    // Method 3: Seasonal adjustment
     if (seasonalPatterns.length > 0 && nextTransactionDate) {
       const predictedMonth = new Date(nextTransactionDate).getMonth() + 1;
       const seasonalData = seasonalPatterns.find((sp) => sp.month === predictedMonth);
@@ -520,11 +762,14 @@ export class PayeeIntelligenceService {
     }
 
     // Predict amount with range
-    const predictedAmount = spendingAnalysis.averageAmount;
-    const amountStdDev = spendingAnalysis.standardDeviation;
+    // Use median for predicted amount (more robust to outliers/bimodal distributions)
+    const predictedAmount = spendingAnalysis.medianAmount;
+    // Use actual min/max from transaction history for the range
+    // This is more useful than mean±stddev for bimodal distributions
+    // (e.g., regular payments of $3500 plus occasional $50 fees)
     const amountRange = {
-      min: Math.max(0, predictedAmount - amountStdDev),
-      max: predictedAmount + amountStdDev,
+      min: spendingAnalysis.minAmount,
+      max: spendingAnalysis.maxAmount,
     };
 
     // Generate alternative scenarios
@@ -548,10 +793,13 @@ export class PayeeIntelligenceService {
   /**
    * Suggest optimal budget allocation
    */
-  async suggestBudgetAllocation(payeeId: number): Promise<BudgetAllocationSuggestion> {
-    const spendingAnalysis = await this.analyzeSpendingPatterns(payeeId);
-    const seasonalPatterns = await this.detectSeasonality(payeeId);
-    const categoryConsistency = await this.analyzeCategoryConsistency(payeeId);
+  async suggestBudgetAllocation(
+    payeeId: number,
+    profile?: IntelligenceProfile | null
+  ): Promise<BudgetAllocationSuggestion> {
+    const spendingAnalysis = await this.analyzeSpendingPatterns(payeeId, profile);
+    const seasonalPatterns = await this.detectSeasonality(payeeId, profile);
+    const categoryConsistency = await this.analyzeCategoryConsistency(payeeId, profile);
 
     if (spendingAnalysis.transactionCount === 0) {
       return this.createEmptyBudgetSuggestion();
@@ -601,6 +849,208 @@ export class PayeeIntelligenceService {
     };
   }
 
+  // ==========================================================================
+  // ML and AI Enhancement Methods
+  // ==========================================================================
+
+  /**
+   * Enhance a prediction with ML-based forecasting
+   * Uses time-series forecasting to improve prediction accuracy
+   */
+  async enhanceWithML(
+    prediction: TransactionPrediction,
+    workspaceId: number,
+    payeeId: number
+  ): Promise<TransactionPrediction> {
+    try {
+      // Import the forecasting service dynamically to avoid circular dependencies
+      const { getUnifiedMLCoordinator } = await import("../ml/unified-coordinator");
+      const mlCoordinator = getUnifiedMLCoordinator();
+
+      // Get ML-based spending forecast for this payee
+      const forecast = await mlCoordinator.getCashFlowForecast(workspaceId, {
+        horizon: 3,
+        granularity: "monthly",
+      });
+
+      if (!forecast || forecast.predictions.length === 0) {
+        // ML couldn't improve prediction, return with tier marker
+        return {
+          ...prediction,
+          tier: "statistical",
+        };
+      }
+
+      // Use ML forecast to refine prediction
+      const mlPredictedAmount = forecast.predictions[0]?.value ?? prediction.predictedAmount;
+      const mlConfidence = forecast.confidence ?? 0;
+
+      // Blend ML prediction with statistical prediction
+      // Weight ML higher when it has good confidence
+      const mlWeight = Math.min(0.7, mlConfidence);
+      const blendedAmount = prediction.predictedAmount !== null
+        ? (prediction.predictedAmount * (1 - mlWeight)) + ((mlPredictedAmount ?? 0) * mlWeight)
+        : mlPredictedAmount;
+
+      // Adjust confidence based on ML
+      const blendedConfidence = Math.min(1, (prediction.confidence + mlConfidence) / 1.5);
+
+      return {
+        ...prediction,
+        predictedAmount: blendedAmount,
+        confidence: blendedConfidence,
+        reasoning: `${prediction.reasoning}. ML forecasting ${mlConfidence > 0.6 ? "confirms" : "suggests adjustments to"} this prediction.`,
+        tier: "ml",
+      };
+    } catch (error) {
+      // ML enhancement failed, return original with statistical tier
+      console.warn("ML enhancement failed:", error);
+      return {
+        ...prediction,
+        tier: "statistical",
+      };
+    }
+  }
+
+  /**
+   * Enhance a prediction with AI-generated natural language explanation
+   * Uses LLM to provide user-friendly context and insights
+   */
+  async enhanceWithAI(
+    prediction: TransactionPrediction,
+    llmProvider: ProviderInstance,
+    payeeName: string
+  ): Promise<TransactionPrediction> {
+    try {
+      const prompt = `You are a financial advisor analyzing payment predictions for a budget app. Based on the following prediction data, provide a brief (2-3 sentences) explanation that helps the user understand what to expect and why.
+
+Payee: ${payeeName}
+Predicted Next Transaction Date: ${prediction.nextTransactionDate ?? "Unknown"}
+Predicted Amount: ${prediction.predictedAmount !== null ? `$${Math.abs(prediction.predictedAmount / 100).toFixed(2)}` : "Unknown"}
+Prediction Method: ${prediction.predictionMethod}
+Confidence Level: ${Math.round(prediction.confidence * 100)}%
+Statistical Reasoning: ${prediction.reasoning}
+
+Write a helpful, conversational explanation of this prediction. Focus on:
+1. When and why they should expect this transaction
+2. Any factors that could affect the timing or amount
+3. If confidence is low, what the user might want to consider
+
+Keep the tone helpful and reassuring, not alarming. Do not repeat the exact numbers, instead provide context.`;
+
+      const result = await generateText({
+        model: llmProvider.provider(llmProvider.model),
+        prompt,
+        maxOutputTokens: 200,
+        temperature: 0.7,
+      });
+
+      return {
+        ...prediction,
+        tier: "ai",
+        aiExplanation: result.text.trim(),
+      };
+    } catch (error) {
+      // AI enhancement failed, return with ML tier (or statistical if no ML)
+      console.warn("AI enhancement failed:", error);
+      return {
+        ...prediction,
+        tier: prediction.tier === "ml" ? "ml" : "statistical",
+      };
+    }
+  }
+
+  /**
+   * Enhance a budget suggestion with AI-generated explanation
+   */
+  async enhanceBudgetSuggestionWithAI(
+    suggestion: BudgetAllocationSuggestion,
+    llmProvider: ProviderInstance,
+    payeeName: string
+  ): Promise<BudgetAllocationSuggestion> {
+    try {
+      const prompt = `You are a financial advisor helping with budget planning. Based on the following budget allocation suggestion, provide a brief (2-3 sentences) explanation that helps the user understand the recommendation.
+
+Payee: ${payeeName}
+Suggested Monthly Allocation: $${Math.abs(suggestion.suggestedMonthlyAllocation / 100).toFixed(2)}
+Allocation Range: $${Math.abs(suggestion.allocationRange.min / 100).toFixed(2)} - $${Math.abs(suggestion.allocationRange.max / 100).toFixed(2)}
+Confidence: ${Math.round(suggestion.confidence * 100)}%
+Statistical Reasoning: ${suggestion.reasoning}
+${suggestion.seasonalAdjustments.length > 0 ? `Seasonal Adjustments: ${suggestion.seasonalAdjustments.map(a => `${a.monthName}: ${a.adjustmentPercent > 0 ? "+" : ""}${Math.round(a.adjustmentPercent)}%`).join(", ")}` : ""}
+
+Write a helpful explanation of this budget recommendation. Focus on:
+1. Why this amount makes sense based on their history
+2. Any seasonal patterns they should plan for
+3. Practical advice for managing this expense
+
+Keep the tone helpful and actionable.`;
+
+      const result = await generateText({
+        model: llmProvider.provider(llmProvider.model),
+        prompt,
+        maxOutputTokens: 200,
+        temperature: 0.7,
+      });
+
+      return {
+        ...suggestion,
+        tier: "ai",
+        aiExplanation: result.text.trim(),
+      };
+    } catch (error) {
+      console.warn("AI enhancement for budget suggestion failed:", error);
+      return {
+        ...suggestion,
+        tier: suggestion.tier === "ml" ? "ml" : "statistical",
+      };
+    }
+  }
+
+  /**
+   * Get prediction tier based on workspace preferences and per-payee override
+   */
+  determinePredictionTier(
+    workspacePreferences: WorkspacePreferences,
+    profilePredictionMethod?: "default" | "statistical" | "ml" | "ai" | null
+  ): {
+    tier: "statistical" | "ml" | "ai";
+    strategy: StrategyResult;
+    useML: boolean;
+    useAI: boolean;
+  } {
+    // Check for per-payee override first
+    if (profilePredictionMethod && profilePredictionMethod !== "default") {
+      const coordinator = createIntelligenceCoordinator(workspacePreferences);
+      const strategy = coordinator.getStrategy("forecasting");
+
+      return {
+        tier: profilePredictionMethod,
+        strategy,
+        useML: profilePredictionMethod === "ml" || profilePredictionMethod === "ai",
+        useAI: profilePredictionMethod === "ai",
+      };
+    }
+
+    // Use global workspace settings via intelligence coordinator
+    const coordinator = createIntelligenceCoordinator(workspacePreferences);
+    const strategy = coordinator.getStrategy("forecasting");
+
+    // Determine tier based on strategy
+    let tier: "statistical" | "ml" | "ai" = "statistical";
+    if (strategy.useLLM) {
+      tier = "ai";
+    } else if (strategy.useML) {
+      tier = "ml";
+    }
+
+    return {
+      tier,
+      strategy,
+      useML: strategy.useML,
+      useAI: strategy.useLLM,
+    };
+  }
+
   /**
    * Calculate comprehensive confidence scores
    */
@@ -644,8 +1094,16 @@ export class PayeeIntelligenceService {
    * Analyze category usage consistency
    */
   private async analyzeCategoryConsistency(
-    payeeId: number
+    payeeId: number,
+    profile?: IntelligenceProfile | null
   ): Promise<BudgetAllocationSuggestion["budgetCategory"]> {
+    const baseConditions = this.buildFilterConditions(payeeId, profile);
+    const categoryFilter = this.buildCategoryFilter(profile);
+
+    const allConditions = categoryFilter
+      ? [...baseConditions, categoryFilter]
+      : baseConditions;
+
     const categoryData = await db
       .select({
         categoryId: transactions.categoryId,
@@ -655,7 +1113,7 @@ export class PayeeIntelligenceService {
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
-      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
+      .where(and(...allConditions))
       .groupBy(transactions.categoryId, categories.name)
       .orderBy(desc(count(transactions.id)));
 
@@ -828,6 +1286,249 @@ export class PayeeIntelligenceService {
     if (days <= 186) return "Semi-annually";
     if (days <= 380) return "Annually";
     return "Very infrequent";
+  }
+
+  /**
+   * Analyze day-of-month patterns to detect monthly/bi-monthly payment schedules
+   * (e.g., payroll on 10th and 25th, rent on the 1st)
+   * Uses fuzzy clustering to handle transactions that occur "around" certain dates
+   */
+  private analyzeDayOfMonthPattern(dates: string[]): MonthlyPattern | null {
+    if (dates.length < 3) return null;
+
+    // Count occurrences of each day of month
+    const dayCounts: Map<number, number> = new Map();
+    for (const dateStr of dates) {
+      const day = new Date(dateStr).getDate();
+      dayCounts.set(day, (dayCounts.get(day) || 0) + 1);
+    }
+
+    const totalTransactions = dates.length;
+
+    // First, try fuzzy clustering to group nearby days
+    // Use ±3 day tolerance to handle real-world variance (bank processing, weekends, etc.)
+    const clusters = this.clusterDaysOfMonth(dayCounts, 3);
+
+    // Sort clusters by total count
+    const sortedClusters = clusters
+      .map(cluster => ({
+        centerDay: cluster.centerDay,
+        count: cluster.count,
+        days: cluster.days,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    if (sortedClusters.length === 0) return null;
+
+    const topCluster = sortedClusters[0]!;
+    const secondCluster = sortedClusters[1];
+
+    // Calculate percentages using clusters
+    const topClusterPercent = topCluster.count / totalTransactions;
+    const topTwoClustersPercent = secondCluster
+      ? (topCluster.count + secondCluster.count) / totalTransactions
+      : topClusterPercent;
+
+    // Detect bi-monthly pattern using clusters
+    if (
+      secondCluster &&
+      topTwoClustersPercent >= 0.5 && // At least 50% on two clusters (forgiving for real-world data)
+      topCluster.count >= 2 && secondCluster.count >= 2
+    ) {
+      const days = [topCluster.centerDay, secondCluster.centerDay].sort((a, b) => a - b);
+
+      // Check if the clusters are roughly half-month apart (typical bi-monthly patterns)
+      const dayDiff = Math.abs(days[1]! - days[0]!);
+      const isSemiMonthly = dayDiff >= 10 && dayDiff <= 20; // Relaxed range for fuzzy
+
+      return {
+        commonDays: days,
+        isBiMonthly: true,
+        isMonthly: false,
+        primaryDayOfMonth: days[0]!,
+        confidence: Math.min(1, topTwoClustersPercent * (isSemiMonthly ? 1.0 : 0.85)),
+      };
+    }
+
+    // Detect monthly pattern using clusters
+    if (topClusterPercent >= 0.4 && topCluster.count >= 3) { // Forgiving threshold for real-world data
+      return {
+        commonDays: [topCluster.centerDay],
+        isBiMonthly: false,
+        isMonthly: true,
+        primaryDayOfMonth: topCluster.centerDay,
+        confidence: Math.min(1, topClusterPercent),
+      };
+    }
+
+    // Check for end-of-month patterns (days 28-31 should be grouped)
+    const endOfMonthDays = [28, 29, 30, 31];
+    const endOfMonthCount = endOfMonthDays.reduce(
+      (sum, day) => sum + (dayCounts.get(day) || 0),
+      0
+    );
+    const endOfMonthPercent = endOfMonthCount / totalTransactions;
+
+    if (endOfMonthPercent >= 0.4 && endOfMonthCount >= 3) {
+      return {
+        commonDays: [31], // Use 31 to represent "end of month"
+        isBiMonthly: false,
+        isMonthly: true,
+        primaryDayOfMonth: 31, // Convention: 31 means end of month
+        confidence: Math.min(1, endOfMonthPercent * 0.9),
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Cluster days of month together based on proximity
+   * Groups days within ±tolerance of each other into a single cluster
+   */
+  private clusterDaysOfMonth(
+    dayCounts: Map<number, number>,
+    tolerance: number
+  ): Array<{ centerDay: number; count: number; days: number[] }> {
+    // Sort days by count (descending) to start with most frequent
+    const sortedDays = Array.from(dayCounts.entries())
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+
+    const clusters: Array<{ centerDay: number; count: number; days: number[] }> = [];
+    const usedDays = new Set<number>();
+
+    for (const [day, count] of sortedDays) {
+      if (usedDays.has(day)) continue;
+
+      // Start a new cluster centered on this day
+      const clusterDays: number[] = [day];
+      let totalCount = count;
+      usedDays.add(day);
+
+      // Find nearby days within tolerance
+      for (let offset = 1; offset <= tolerance; offset++) {
+        // Check day - offset
+        const lowerDay = day - offset;
+        if (lowerDay >= 1 && !usedDays.has(lowerDay) && dayCounts.has(lowerDay)) {
+          clusterDays.push(lowerDay);
+          totalCount += dayCounts.get(lowerDay)!;
+          usedDays.add(lowerDay);
+        }
+
+        // Check day + offset
+        const upperDay = day + offset;
+        if (upperDay <= 31 && !usedDays.has(upperDay) && dayCounts.has(upperDay)) {
+          clusterDays.push(upperDay);
+          totalCount += dayCounts.get(upperDay)!;
+          usedDays.add(upperDay);
+        }
+      }
+
+      // Calculate weighted center day
+      let weightedSum = 0;
+      let weightTotal = 0;
+      for (const d of clusterDays) {
+        const c = dayCounts.get(d) || 0;
+        weightedSum += d * c;
+        weightTotal += c;
+      }
+      const centerDay = Math.round(weightedSum / weightTotal);
+
+      clusters.push({
+        centerDay,
+        count: totalCount,
+        days: clusterDays.sort((a, b) => a - b),
+      });
+    }
+
+    return clusters;
+  }
+
+  /**
+   * Calculate the next occurrence of a day-of-month pattern from a given date
+   */
+  private getNextDayOfMonthDate(fromDate: Date, dayOfMonth: number): Date {
+    const result = new Date(fromDate);
+    const currentDay = result.getDate();
+
+    // Handle end-of-month (day 31 convention)
+    if (dayOfMonth >= 28) {
+      // Move to next month and get the last day
+      result.setMonth(result.getMonth() + 1, 0); // Day 0 = last day of previous month
+      const lastDayOfMonth = result.getDate();
+
+      if (dayOfMonth === 31) {
+        // End of month pattern - use actual last day
+        result.setDate(lastDayOfMonth);
+      } else {
+        // Specific day (28, 29, 30) - use min of target day and last day
+        result.setMonth(result.getMonth(), Math.min(dayOfMonth, lastDayOfMonth));
+      }
+
+      // If this date is still in the past or today, move to next month
+      if (result <= fromDate) {
+        result.setMonth(result.getMonth() + 1);
+        const nextLastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+        result.setDate(dayOfMonth === 31 ? nextLastDay : Math.min(dayOfMonth, nextLastDay));
+      }
+      return result;
+    }
+
+    // For days 1-27
+    if (currentDay >= dayOfMonth) {
+      // Move to next month
+      result.setMonth(result.getMonth() + 1, dayOfMonth);
+    } else {
+      // Use this month
+      result.setDate(dayOfMonth);
+    }
+
+    // Verify the result is in the future
+    if (result <= fromDate) {
+      result.setMonth(result.getMonth() + 1, dayOfMonth);
+    }
+
+    return result;
+  }
+
+  /**
+   * Get the next predicted date based on bi-monthly pattern
+   */
+  private getNextBiMonthlyDate(fromDate: Date, days: number[]): Date {
+    if (days.length < 2) {
+      return this.getNextDayOfMonthDate(fromDate, days[0] || 1);
+    }
+
+    const sortedDays = [...days].sort((a, b) => a - b);
+    const [firstDay, secondDay] = sortedDays as [number, number];
+    const currentDay = fromDate.getDate();
+
+    const result = new Date(fromDate);
+
+    // Find the next occurrence
+    if (currentDay < firstDay) {
+      // Next occurrence is first day of current month
+      result.setDate(firstDay);
+    } else if (currentDay < secondDay) {
+      // Next occurrence is second day of current month
+      result.setDate(secondDay);
+    } else {
+      // Next occurrence is first day of next month
+      result.setMonth(result.getMonth() + 1, firstDay);
+    }
+
+    // Verify the result is in the future
+    if (result <= fromDate) {
+      // If still not in future, advance to next occurrence
+      if (result.getDate() === firstDay) {
+        result.setDate(secondDay);
+      } else {
+        result.setMonth(result.getMonth() + 1, firstDay);
+      }
+    }
+
+    return result;
   }
 
   private findUnusualGaps(
