@@ -8,9 +8,9 @@
 		size?: number;
 		/** Thickness of the arc stroke */
 		thickness?: number;
-		/** Start angle in degrees (default: -90, top) */
+		/** Start angle in degrees (default: 0, top/12 o'clock) */
 		startAngle?: number;
-		/** End angle in degrees (default: 270, full circle minus start) */
+		/** End angle in degrees (default: 360, full circle) */
 		endAngle?: number;
 		/** Fill color for the value arc */
 		fill?: string;
@@ -28,8 +28,8 @@
 		value,
 		size = 120,
 		thickness = 10,
-		startAngle = -90,
-		endAngle = 270,
+		startAngle = 0,
+		endAngle = 360,
 		fill = 'currentColor',
 		backgroundFill = 'currentColor',
 		backgroundOpacity = 0.2,
