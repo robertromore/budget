@@ -21,6 +21,7 @@
   "[svelte]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
+  "svelte.plugin.css.diagnostics.enable": false,
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -56,5 +57,7 @@
   },
   "tailwindCSS.includeLanguages": {
     "svelte": "html"
-  }
+  },
+  "css.customData": [],
+  "css.lint.unknownAtRules": "ignore"
 }
