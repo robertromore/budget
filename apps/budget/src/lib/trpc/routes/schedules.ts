@@ -2,7 +2,10 @@ import {
   duplicateScheduleSchema,
   removeScheduleSchema,
   scheduleDates,
+  schedulePriceHistory,
   schedules,
+  scheduleSubscriptionStatuses,
+  scheduleSubscriptionTypes,
   transactions,
 } from "$lib/schema";
 import { superformInsertScheduleSchema } from "$lib/schema/superforms";
@@ -616,4 +619,410 @@ export const scheduleRoutes = t.router({
 
       return results;
     }),
+
+  // ==================== SUBSCRIPTION ENDPOINTS ====================
+
+  /**
+   * Create a new schedule (possibly with subscription tracking).
+   * This is used by the unified detection UI to create schedules from detected patterns.
+   */
+  create: rateLimitedProcedure
+    .input(
+      z.object({
+        workspaceId: z.number(),
+        name: z.string().min(1),
+        slug: z.string().min(1),
+        status: z.enum(["active", "inactive"]).optional(),
+        amount: z.number(),
+        amount_2: z.number().optional(),
+        amount_type: z.enum(["exact", "approximate", "range"]).optional(),
+        recurring: z.boolean().optional(),
+        auto_add: z.boolean().optional(),
+        payeeId: z.number(),
+        accountId: z.number(),
+        categoryId: z.number().optional(),
+        budgetId: z.number().optional(),
+        // Subscription fields
+        isSubscription: z.boolean().optional(),
+        subscriptionType: z.enum(scheduleSubscriptionTypes).optional(),
+        subscriptionStatus: z.enum(scheduleSubscriptionStatuses).optional(),
+        detectionConfidence: z.number().min(0).max(1).optional(),
+        isUserConfirmed: z.boolean().optional(),
+        detectedAt: z.string().optional(),
+        alertPreferences: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Generate unique slug
+      const finalSlug = await generateUniqueSlugForDB(
+        ctx.db,
+        "schedules",
+        schedules.slug,
+        slugify(input.slug || input.name)
+      );
+
+      const insertResult = await ctx.db
+        .insert(schedules)
+        .values({
+          workspaceId: ctx.workspaceId,
+          name: input.name,
+          slug: finalSlug,
+          status: input.status ?? "active",
+          amount: input.amount,
+          amount_2: input.amount_2 ?? 0,
+          amount_type: input.amount_type ?? "exact",
+          recurring: input.recurring ?? true,
+          auto_add: input.auto_add ?? false,
+          payeeId: input.payeeId,
+          accountId: input.accountId,
+          categoryId: input.categoryId,
+          budgetId: input.budgetId,
+          isSubscription: input.isSubscription ?? false,
+          subscriptionType: input.subscriptionType,
+          subscriptionStatus: input.subscriptionStatus,
+          detectionConfidence: input.detectionConfidence,
+          isUserConfirmed: input.isUserConfirmed ?? false,
+          detectedAt: input.detectedAt,
+          alertPreferences: input.alertPreferences,
+          lastKnownAmount: input.amount,
+        })
+        .returning();
+
+      if (!insertResult[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create schedule",
+        });
+      }
+
+      // If this is a subscription, record initial price history
+      if (input.isSubscription && insertResult[0]) {
+        await ctx.db.insert(schedulePriceHistory).values({
+          scheduleId: insertResult[0].id,
+          amount: input.amount,
+          previousAmount: null,
+          effectiveDate: new Date().toISOString().split("T")[0],
+          changeType: "initial",
+          changePercentage: null,
+        });
+      }
+
+      return insertResult[0];
+    }),
+
+  /**
+   * Get all schedules that are marked as subscriptions
+   */
+  getSubscriptions: publicProcedure
+    .input(
+      z
+        .object({
+          status: z.enum(scheduleSubscriptionStatuses).optional(),
+          type: z.enum(scheduleSubscriptionTypes).optional(),
+          accountId: z.number().optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.query.schedules.findMany({
+        where: (schedules, { eq, and }) => {
+          const conditions = [
+            eq(schedules.workspaceId, ctx.workspaceId),
+            eq(schedules.isSubscription, true),
+          ];
+
+          if (input?.status) {
+            conditions.push(eq(schedules.subscriptionStatus, input.status));
+          }
+          if (input?.type) {
+            conditions.push(eq(schedules.subscriptionType, input.type));
+          }
+          if (input?.accountId) {
+            conditions.push(eq(schedules.accountId, input.accountId));
+          }
+
+          return and(...conditions);
+        },
+        with: {
+          payee: true,
+          category: true,
+          account: true,
+          priceHistory: {
+            orderBy: (ph, { desc }) => [desc(ph.effectiveDate)],
+            limit: 5,
+          },
+        },
+        orderBy: (schedules, { asc }) => [asc(schedules.name)],
+      });
+    }),
+
+  /**
+   * Get subscription analytics (monthly totals, by type, etc.)
+   */
+  getSubscriptionAnalytics: publicProcedure.query(async ({ ctx }) => {
+    const subscriptions = await ctx.db.query.schedules.findMany({
+      where: (schedules, { eq, and }) =>
+        and(
+          eq(schedules.workspaceId, ctx.workspaceId),
+          eq(schedules.isSubscription, true),
+          eq(schedules.subscriptionStatus, "active")
+        ),
+      with: {
+        scheduleDate: true,
+        priceHistory: {
+          orderBy: (ph, { desc }) => [desc(ph.effectiveDate)],
+          limit: 2,
+        },
+      },
+    });
+
+    // Calculate monthly total
+    let monthlyTotal = 0;
+    let annualTotal = 0;
+
+    // Group by type
+    const byType: Record<string, { count: number; monthlyTotal: number }> = {};
+
+    for (const sub of subscriptions) {
+      // Estimate monthly amount based on schedule frequency
+      const frequency = sub.scheduleDate?.frequency ?? "monthly";
+      const monthlyAmount = normalizeAmountToMonthly(sub.amount, frequency);
+
+      monthlyTotal += monthlyAmount;
+      annualTotal += monthlyAmount * 12;
+
+      const type = sub.subscriptionType ?? "other";
+      if (!byType[type]) {
+        byType[type] = { count: 0, monthlyTotal: 0 };
+      }
+      byType[type].count++;
+      byType[type].monthlyTotal += monthlyAmount;
+    }
+
+    // Count price increases in the last 12 months
+    const priceIncreases = subscriptions.filter((sub) => {
+      const recentHistory = sub.priceHistory?.[0];
+      if (!recentHistory) return false;
+      const historyDate = new Date(recentHistory.effectiveDate);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      return recentHistory.changeType === "increase" && historyDate > oneYearAgo;
+    }).length;
+
+    return {
+      totalSubscriptions: subscriptions.length,
+      monthlyTotal,
+      annualTotal,
+      byType,
+      recentPriceIncreases: priceIncreases,
+    };
+  }),
+
+  /**
+   * Update subscription status (active, paused, cancelled, etc.)
+   */
+  updateSubscriptionStatus: rateLimitedProcedure
+    .input(
+      z.object({
+        scheduleId: z.number(),
+        status: z.enum(scheduleSubscriptionStatuses),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .update(schedules)
+        .set({
+          subscriptionStatus: input.status,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(
+          and(
+            eq(schedules.id, input.scheduleId),
+            eq(schedules.workspaceId, ctx.workspaceId),
+            eq(schedules.isSubscription, true)
+          )
+        )
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscription not found",
+        });
+      }
+
+      return result[0];
+    }),
+
+  /**
+   * Get price history for a schedule
+   */
+  getPriceHistory: publicProcedure
+    .input(z.object({ scheduleId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      // First verify the schedule belongs to this workspace
+      const schedule = await ctx.db.query.schedules.findFirst({
+        where: (schedules, { eq, and }) =>
+          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
+      });
+
+      if (!schedule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Schedule not found",
+        });
+      }
+
+      return ctx.db.query.schedulePriceHistory.findMany({
+        where: (ph, { eq }) => eq(ph.scheduleId, input.scheduleId),
+        orderBy: (ph, { desc }) => [desc(ph.effectiveDate)],
+      });
+    }),
+
+  /**
+   * Record a price change for a subscription schedule
+   */
+  recordPriceChange: rateLimitedProcedure
+    .input(
+      z.object({
+        scheduleId: z.number(),
+        newAmount: z.number().positive(),
+        effectiveDate: z.string().optional(),
+        transactionId: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Get the current schedule
+      const schedule = await ctx.db.query.schedules.findFirst({
+        where: (schedules, { eq, and }) =>
+          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
+      });
+
+      if (!schedule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Schedule not found",
+        });
+      }
+
+      const previousAmount = schedule.lastKnownAmount ?? schedule.amount;
+      const changePercentage =
+        previousAmount > 0 ? ((input.newAmount - previousAmount) / previousAmount) * 100 : null;
+      const changeType =
+        input.newAmount > previousAmount
+          ? "increase"
+          : input.newAmount < previousAmount
+            ? "decrease"
+            : "initial";
+
+      // Insert price history record
+      const historyResult = await ctx.db
+        .insert(schedulePriceHistory)
+        .values({
+          scheduleId: input.scheduleId,
+          amount: input.newAmount,
+          previousAmount,
+          effectiveDate: input.effectiveDate ?? new Date().toISOString().split("T")[0],
+          changeType,
+          changePercentage,
+          detectedFromTransactionId: input.transactionId,
+        })
+        .returning();
+
+      // Update the schedule's lastKnownAmount and priceChangeDetectedAt
+      await ctx.db
+        .update(schedules)
+        .set({
+          lastKnownAmount: input.newAmount,
+          amount: input.newAmount,
+          priceChangeDetectedAt: getCurrentTimestamp(),
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(
+          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+        );
+
+      return historyResult[0];
+    }),
+
+  /**
+   * Convert an existing schedule to a subscription
+   */
+  convertToSubscription: rateLimitedProcedure
+    .input(
+      z.object({
+        scheduleId: z.number(),
+        subscriptionType: z.enum(scheduleSubscriptionTypes),
+        subscriptionStatus: z.enum(scheduleSubscriptionStatuses).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const schedule = await ctx.db.query.schedules.findFirst({
+        where: (schedules, { eq, and }) =>
+          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
+      });
+
+      if (!schedule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Schedule not found",
+        });
+      }
+
+      // Update schedule to be a subscription
+      const result = await ctx.db
+        .update(schedules)
+        .set({
+          isSubscription: true,
+          subscriptionType: input.subscriptionType,
+          subscriptionStatus: input.subscriptionStatus ?? "active",
+          isUserConfirmed: true,
+          lastKnownAmount: schedule.amount,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(
+          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+        )
+        .returning();
+
+      // Record initial price history
+      if (result[0]) {
+        await ctx.db.insert(schedulePriceHistory).values({
+          scheduleId: input.scheduleId,
+          amount: schedule.amount,
+          previousAmount: null,
+          effectiveDate: new Date().toISOString().split("T")[0],
+          changeType: "initial",
+          changePercentage: null,
+        });
+      }
+
+      return result[0];
+    }),
 });
+
+/**
+ * Helper to normalize amounts to monthly based on frequency
+ */
+function normalizeAmountToMonthly(
+  amount: number,
+  frequency: string
+): number {
+  switch (frequency) {
+    case "daily":
+      return amount * 30;
+    case "weekly":
+      return amount * 4.33;
+    case "biweekly":
+      return amount * 2.17;
+    case "monthly":
+      return amount;
+    case "quarterly":
+      return amount / 3;
+    case "yearly":
+    case "annual":
+      return amount / 12;
+    default:
+      return amount;
+  }
+}

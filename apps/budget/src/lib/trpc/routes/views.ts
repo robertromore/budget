@@ -72,14 +72,8 @@ export const viewsRoutes = t.router({
         input: { id, entityType, name, description, icon, filters, display, dirty },
         ctx,
       }) => {
-        // Transform display object to match database schema
-        const transformedDisplay = display
-          ? {
-              ...display,
-              expanded: display.expanded === true ? {} : display.expanded,
-              visibility: display.visibility === true ? {} : display.visibility,
-            }
-          : display;
+        // Preserve display state as-is (expanded: true means "all rows expanded")
+        const transformedDisplay = display;
         let entities;
         if (id) {
           entities = await ctx.db

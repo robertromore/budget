@@ -33,11 +33,14 @@ import { importCleanupRoutes } from "./routes/import-cleanup";
 import { importProfileRoutes } from "./routes/import-profiles";
 import { llmSettingsRoutes } from "./routes/llm-settings";
 import { medicalExpensesRouter } from "./routes/medical-expenses";
+import { notificationRoutes } from "./routes/notifications";
 import { onboardingRoutes } from "./routes/onboarding";
 import { patternRoutes } from "./routes/patterns";
+import { recurringRoutes } from "./routes/recurring";
 import { reportRoutes } from "./routes/reports";
 import { scheduleRoutes } from "./routes/schedules";
 import { securityRoutes } from "./routes/security";
+import { subscriptionRoutes } from "./routes/subscriptions";
 import { settingsRoutes } from "./routes/settings";
 import { utilityRoutes } from "./routes/utility";
 import { viewsRoutes } from "./routes/views";
@@ -66,6 +69,8 @@ export const router = t.router({
   payeeCategoriesRoutes,
   payeeRoutes,
   scheduleRoutes,
+  subscriptionRoutes,
+  recurringRoutes,
   transactionRoutes,
   transferMappingRoutes,
   viewsRoutes,
@@ -73,6 +78,7 @@ export const router = t.router({
   patternRoutes,
   reportRoutes,
   medicalExpensesRouter,
+  notificationRoutes,
   utilityRoutes,
   importProfileRoutes,
   importCleanupRoutes,

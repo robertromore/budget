@@ -146,6 +146,89 @@ export interface AccountRecordWithTransactionAmounts extends AccountRecord {
   transactions: TransactionOnlyAmount[];
 }
 
+/**
+ * Calculate account balance and running balances for transactions.
+ * Supports balance management options:
+ * - Priority 1: Reconciled balance checkpoint (reconciledBalance + reconciledDate)
+ * - Priority 2: Balance reset date (balanceResetDate + balanceAtResetDate)
+ * - Default: Initial balance + all non-archived transactions
+ * - Archived transactions are always excluded from balance calculation
+ */
+function calculateAccountBalance<
+  T extends { amount: number; date: string; isArchived?: boolean | null; id?: number },
+>(
+  account: {
+    initialBalance?: number | null;
+    balanceResetDate?: string | null;
+    balanceAtResetDate?: number | null;
+    reconciledBalance?: number | null;
+    reconciledDate?: string | null;
+    accountType?: string | null;
+  },
+  transactionsList: T[]
+): { balance: number; transactionsWithBalance: (T & { balance: number })[] } {
+  // Check if debt account by checking the type directly (credit_card or loan)
+  const isDebt = account.accountType === "credit_card" || account.accountType === "loan";
+
+  // Determine starting balance and cutoff date based on balance management settings
+  let startingBalance: number;
+  let cutoffDate: string | null = null;
+
+  // Priority 1: Reconciled balance checkpoint
+  if (account.reconciledDate && account.reconciledBalance != null) {
+    startingBalance = isDebt ? -account.reconciledBalance : account.reconciledBalance;
+    cutoffDate = account.reconciledDate;
+  }
+  // Priority 2: Balance reset date
+  else if (account.balanceResetDate && account.balanceAtResetDate != null) {
+    startingBalance = isDebt ? -account.balanceAtResetDate : account.balanceAtResetDate;
+    cutoffDate = account.balanceResetDate;
+  }
+  // Default: Use initial balance
+  else {
+    const initialBalance = Number(account.initialBalance ?? 0);
+    startingBalance = isDebt ? -initialBalance : initialBalance;
+  }
+
+  // Sort transactions by date ascending, then by id for stable ordering
+  const sortedTransactions = [...transactionsList].sort((a, b) => {
+    if (a.date !== b.date) {
+      return a.date.localeCompare(b.date);
+    }
+    // Secondary sort by id if available
+    if (a.id !== undefined && b.id !== undefined) {
+      return a.id - b.id;
+    }
+    return 0;
+  });
+
+  let runningBalance = startingBalance;
+  const transactionsWithBalance = sortedTransactions.map((t) => {
+    const amount = Number(t.amount);
+    const isArchived = t.isArchived === true;
+    const isBeforeCutoff = Boolean(cutoffDate && t.date <= cutoffDate);
+    const isExcludedFromBalance = isArchived || isBeforeCutoff;
+
+    // Only add to running balance if not excluded
+    if (!isExcludedFromBalance) {
+      runningBalance += amount;
+    }
+
+    return {
+      ...t,
+      balance: runningBalance,
+    };
+  });
+
+  // Reverse to get descending order (most recent first) for display
+  transactionsWithBalance.reverse();
+
+  return {
+    balance: runningBalance,
+    transactionsWithBalance,
+  };
+}
+
 export const accountRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
     // Simplified query using standard Drizzle methods
@@ -165,22 +248,13 @@ export const accountRoutes = t.router({
       orderBy: [accounts.name],
     });
 
-    // Calculate balance for each account and running balance for each transaction
+    // Calculate balance for each account using balance management options
     return accountsData.map((account) => {
-      // Start with initial balance as the base
-      const initialBalance = account.initialBalance || 0;
-      let runningBalance = initialBalance;
-      const transactionsWithBalance = account.transactions.map((transaction) => {
-        runningBalance += transaction.amount;
-        return {
-          ...transaction,
-          balance: runningBalance,
-        };
-      });
+      const { balance, transactionsWithBalance } = calculateAccountBalance(account, account.transactions);
 
       return {
         ...account,
-        balance: runningBalance,
+        balance,
         transactions: transactionsWithBalance,
       };
     }) as Account[];
@@ -212,20 +286,12 @@ export const accountRoutes = t.router({
       });
     }
 
-    // Calculate running balance for each transaction, starting with initial balance
-    const initialBalance = account.initialBalance || 0;
-    let runningBalance = initialBalance;
-    const transactionsWithBalance = account.transactions.map((transaction) => {
-      runningBalance += transaction.amount;
-      return {
-        ...transaction,
-        balance: runningBalance,
-      };
-    });
+    // Calculate balance using balance management options
+    const { balance, transactionsWithBalance } = calculateAccountBalance(account, account.transactions);
 
     const accountWithBalance = {
       ...account,
-      balance: runningBalance,
+      balance,
       transactions: transactionsWithBalance,
     };
 
@@ -254,16 +320,12 @@ export const accountRoutes = t.router({
       });
     }
 
-    // Calculate running balance from all transactions, starting with initial balance
-    const initialBalance = account.initialBalance || 0;
-    let runningBalance = initialBalance;
-    account.transactions.forEach((transaction) => {
-      runningBalance += transaction.amount;
-    });
+    // Calculate balance using balance management options
+    const { balance } = calculateAccountBalance(account, account.transactions);
 
     const accountWithBalance = {
       ...account,
-      balance: runningBalance,
+      balance,
     };
 
     return accountWithBalance as Account;
@@ -403,20 +465,16 @@ export const accountRoutes = t.router({
         });
       }
 
-      // Calculate balance from transactions plus initial balance
-      const [balanceResult] = await ctx.db
-        .select({
-          balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
-        })
-        .from(transactions)
-        .where(and(eq(transactions.accountId, input.id!), isNull(transactions.deletedAt)));
+      // Fetch transactions to calculate balance using balance management options
+      const accountTransactions = await ctx.db.query.transactions.findMany({
+        where: and(eq(transactions.accountId, input.id!), isNull(transactions.deletedAt)),
+      });
 
-      const transactionBalance = balanceResult?.balance || 0;
-      const initialBalance = result[0].initialBalance || 0;
+      const { balance } = calculateAccountBalance(result[0], accountTransactions);
 
       return {
         ...result[0],
-        balance: transactionBalance + initialBalance,
+        balance,
       };
     }
 
@@ -525,20 +583,15 @@ export const accountRoutes = t.router({
           });
         }
 
-        // Calculate running balance for each transaction, starting with initial balance
-        const initialBalance = accountWithBalance.initialBalance || 0;
-        let runningBalance = initialBalance;
-        const transactionsWithBalance = accountWithBalance.transactions.map((transaction) => {
-          runningBalance += transaction.amount;
-          return {
-            ...transaction,
-            balance: runningBalance,
-          };
-        });
+        // Calculate balance using balance management options
+        const { balance, transactionsWithBalance } = calculateAccountBalance(
+          accountWithBalance,
+          accountWithBalance.transactions
+        );
 
         return {
           ...accountWithBalance,
-          balance: runningBalance,
+          balance,
           transactions: transactionsWithBalance,
         } as Account;
       }
@@ -570,20 +623,15 @@ export const accountRoutes = t.router({
         });
       }
 
-      // Calculate running balance for each transaction, starting with initial balance
-      const initialBalance = accountWithBalance.initialBalance || 0;
-      let runningBalance = initialBalance;
-      const transactionsWithBalance = accountWithBalance.transactions.map((transaction) => {
-        runningBalance += transaction.amount;
-        return {
-          ...transaction,
-          balance: runningBalance,
-        };
-      });
+      // Calculate balance using balance management options
+      const { balance, transactionsWithBalance } = calculateAccountBalance(
+        accountWithBalance,
+        accountWithBalance.transactions
+      );
 
       return {
         ...accountWithBalance,
-        balance: runningBalance,
+        balance,
         transactions: transactionsWithBalance,
       } as Account;
     } catch (error) {
@@ -1276,6 +1324,13 @@ export const accountRoutes = t.router({
         transactionsBeforeResetDate = Number(beforeCount?.count || 0);
       }
 
+      // Calculate current balance using balance management options
+      const accountTransactions = await ctx.db.query.transactions.findMany({
+        where: (txns, { eq, and, isNull }) =>
+          and(eq(txns.accountId, input.accountId), isNull(txns.deletedAt)),
+      });
+      const { balance: currentBalance } = calculateAccountBalance(account, accountTransactions);
+
       return {
         balanceResetDate: account.balanceResetDate,
         balanceAtResetDate: account.balanceAtResetDate,
@@ -1283,6 +1338,7 @@ export const accountRoutes = t.router({
         reconciledDate: account.reconciledDate,
         archivedTransactionCount: Number(archivedCount?.count || 0),
         transactionsBeforeResetDate,
+        currentBalance,
       };
     }),
 

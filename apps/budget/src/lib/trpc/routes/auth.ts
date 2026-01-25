@@ -137,6 +137,10 @@ export const authRoutes = t.router({
         showCents: z.boolean().optional(),
         tableDisplayMode: z.enum(["popover", "sheet"]).optional(),
 
+        // Notification preferences
+        notificationMode: z.enum(["toast", "popover"]).optional(),
+        notificationVerbosity: z.enum(["all", "important", "errors-only"]).optional(),
+
         // Theme preferences
         theme: z.string().max(50).optional(),
         customThemeColor: z.string().max(20).optional().nullable(),
