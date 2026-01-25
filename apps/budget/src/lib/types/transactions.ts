@@ -32,6 +32,9 @@ export type TransactionsFormat = {
   isArchived?: boolean | null; // Transaction is archived (excluded from balance)
   isAdjustment?: boolean | null; // Transaction is a balance adjustment
   adjustmentReason?: string | null; // Reason for balance adjustment
+  // Reconciliation marker (virtual row, not a real transaction)
+  isReconciliationMarker?: boolean; // True if this is a reconciliation checkpoint row
+  markerType?: "reconciliation" | "balance-reset"; // Type of balance management marker
   // Schedule metadata (only present for scheduled transactions)
   scheduleId?: number;
   scheduleName?: string;

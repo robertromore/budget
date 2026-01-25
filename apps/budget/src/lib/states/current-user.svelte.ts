@@ -5,7 +5,7 @@ import { Context } from "runed";
  * State class representing the currently active user workspace
  */
 export class CurrentUserState {
-  userId = $state<number | null>(null);
+  userId = $state<string | null>(null);
   user = $state<User | null>(null);
   preferences = $state<UserPreferences | null>(null);
 

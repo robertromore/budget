@@ -20,7 +20,7 @@ interface PdfOptions {
   orientation?: "portrait" | "landscape";
 }
 
-interface Html2PdfOptions {
+interface Html2PdfInternalOptions {
   margin: number;
   filename: string;
   image: { type: string; quality: number };
@@ -61,7 +61,7 @@ export async function generatePdf(
   // Dynamically import html2pdf.js to avoid SSR issues
   const html2pdf = (await import("html2pdf.js")).default;
 
-  const pdfOptions: Html2PdfOptions = {
+  const pdfOptions: Html2PdfInternalOptions = {
     margin,
     filename: `${filename}.pdf`,
     image: { type: "jpeg", quality: imageQuality },
@@ -77,7 +77,7 @@ export async function generatePdf(
     },
   };
 
-  await html2pdf().set(pdfOptions).from(element).save();
+  await html2pdf().set(pdfOptions as any).from(element).save();
 }
 
 /**
@@ -101,7 +101,7 @@ export async function generatePdfBlob(
 
   const html2pdf = (await import("html2pdf.js")).default;
 
-  const pdfOptions: Html2PdfOptions = {
+  const pdfOptions: Html2PdfInternalOptions = {
     margin,
     filename: "temp.pdf",
     image: { type: "jpeg", quality: imageQuality },
@@ -117,7 +117,7 @@ export async function generatePdfBlob(
     },
   };
 
-  return html2pdf().set(pdfOptions).from(element).outputPdf("blob");
+  return html2pdf().set(pdfOptions as any).from(element).outputPdf("blob");
 }
 
 /**

@@ -10,6 +10,7 @@ export type NumberFormat = "en-US" | "de-DE" | "fr-FR";
 export type TableDisplayMode = "popover" | "sheet";
 export type BorderRadius = "none" | "sm" | "md" | "lg" | "xl";
 export type NotificationMode = "toast" | "popover";
+export type NotificationVerbosity = "all" | "important" | "errors-only";
 
 // Maps radius setting to CSS value
 const radiusValues: Record<BorderRadius, string> = {
@@ -28,6 +29,7 @@ interface DisplayPreferencesData {
 	tableDisplayMode: TableDisplayMode;
 	borderRadius: BorderRadius;
 	notificationMode: NotificationMode;
+	notificationVerbosity: NotificationVerbosity;
 }
 
 const defaults: DisplayPreferencesData = {
@@ -38,6 +40,7 @@ const defaults: DisplayPreferencesData = {
 	tableDisplayMode: "popover",
 	borderRadius: "lg",
 	notificationMode: "toast",
+	notificationVerbosity: "all",
 };
 
 /**
@@ -87,6 +90,10 @@ class DisplayPreferencesStore {
 		return this.preferences.notificationMode;
 	}
 
+	get notificationVerbosity(): NotificationVerbosity {
+		return this.preferences.notificationVerbosity;
+	}
+
 	setDateFormat(format: DateFormat) {
 		this.preferences.dateFormat = format;
 		this.saveToStorage();
@@ -128,6 +135,12 @@ class DisplayPreferencesStore {
 		this.preferences.notificationMode = mode;
 		this.saveToStorage();
 		this.syncToBackend({ notificationMode: mode });
+	}
+
+	setNotificationVerbosity(verbosity: NotificationVerbosity) {
+		this.preferences.notificationVerbosity = verbosity;
+		this.saveToStorage();
+		this.syncToBackend({ notificationVerbosity: verbosity });
 	}
 
 	/**
@@ -222,6 +235,7 @@ class DisplayPreferencesStore {
 				if (backendPrefs.tableDisplayMode) displayPrefs.tableDisplayMode = backendPrefs.tableDisplayMode;
 				if (backendPrefs.borderRadius) displayPrefs.borderRadius = backendPrefs.borderRadius;
 				if (backendPrefs.notificationMode) displayPrefs.notificationMode = backendPrefs.notificationMode;
+				if (backendPrefs.notificationVerbosity) displayPrefs.notificationVerbosity = backendPrefs.notificationVerbosity;
 
 				if (isNotEmptyObject(displayPrefs)) {
 					this.preferences = { ...this.preferences, ...displayPrefs };

@@ -406,6 +406,6 @@ export default class View {
   }
 
   async deleteView() {
-    await rpc.views.deleteViews.execute([this.view.id]);
+    await rpc.views.deleteViews.execute({ entities: [this.view.id] });
   }
 }
