@@ -13,6 +13,10 @@
  *   factory.override('TransactionService', mockService);
  */
 
+import { AccountDocumentRepository } from "$lib/server/domains/account-documents/repository";
+import { AccountDocumentService } from "$lib/server/domains/account-documents/services";
+import { MetricAlertRepository } from "$lib/server/domains/metric-alerts/repository";
+import { MetricAlertService } from "$lib/server/domains/metric-alerts/services";
 import { AccountRepository } from "$lib/server/domains/accounts/repository";
 import { AnnotationRepository } from "$lib/server/domains/annotations/repository";
 import { ReportTemplateRepository } from "$lib/server/domains/reports/repository";
@@ -202,6 +206,14 @@ export class ServiceFactory {
       this.instances.set(key, new SequenceRepository());
     }
     return this.instances.get(key) as SequenceRepository;
+  }
+
+  getAccountDocumentRepository(): AccountDocumentRepository {
+    const key = "AccountDocumentRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new AccountDocumentRepository());
+    }
+    return this.instances.get(key) as AccountDocumentRepository;
   }
 
   // ==================== Services ====================
@@ -543,6 +555,20 @@ export class ServiceFactory {
     return this.instances.get(key) as ReceiptService;
   }
 
+  getAccountDocumentService(): AccountDocumentService {
+    const key = "AccountDocumentService";
+    if (!this.instances.has(key)) {
+      this.instances.set(
+        key,
+        new AccountDocumentService(
+          this.getAccountDocumentRepository(),
+          this.getAccountRepository()
+        )
+      );
+    }
+    return this.instances.get(key) as AccountDocumentService;
+  }
+
   // Category Groups Repositories
   getCategoryGroupRepository(): CategoryGroupRepository {
     const key = "CategoryGroupRepository";
@@ -679,6 +705,23 @@ export class ServiceFactory {
       this.instances.set(key, new SequenceService(this.getSequenceRepository()));
     }
     return this.instances.get(key) as SequenceService;
+  }
+
+  // Metric Alert Repository & Service
+  getMetricAlertRepository(): MetricAlertRepository {
+    const key = "MetricAlertRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new MetricAlertRepository());
+    }
+    return this.instances.get(key) as MetricAlertRepository;
+  }
+
+  getMetricAlertService(): MetricAlertService {
+    const key = "MetricAlertService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new MetricAlertService(this.getMetricAlertRepository()));
+    }
+    return this.instances.get(key) as MetricAlertService;
   }
 
   // ==================== Testing Utilities ====================
