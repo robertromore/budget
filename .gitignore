@@ -49,3 +49,9 @@ apps/budget/training-data/*.jsonl
 apps/budget/training-data/*.json
 apps/budget/training-data/budget-assistant-*/
 apps/budget/training-data/personal/
+
+# OCR training data (download as dependency)
+*.traineddata
+
+# User uploads
+apps/budget/uploads/
