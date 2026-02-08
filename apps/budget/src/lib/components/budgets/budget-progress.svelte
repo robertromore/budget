@@ -11,6 +11,7 @@ interface Props {
   enforcementLevel?: BudgetEnforcementLevel;
   formatter?: (value: number) => string;
   label?: string;
+  consumedLabel?: string;
   showStatus?: boolean;
   showRemaining?: boolean;
   class?: string;
@@ -27,6 +28,7 @@ let {
   enforcementLevel = 'warning',
   formatter = defaultFormatter,
   label = 'Budget Progress',
+  consumedLabel = 'Spent',
   showStatus = true,
   showRemaining = true,
   class: className,
@@ -152,7 +154,7 @@ function handleStatusClick() {
 
     <div class="grid gap-1 text-xs">
       <div class="text-muted-foreground flex items-center justify-between">
-        <span>Spent</span>
+        <span>{consumedLabel}</span>
         <span class="text-card-foreground font-medium">{formatter(consumed)}</span>
       </div>
 

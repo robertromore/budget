@@ -185,6 +185,7 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
           allocated,
           status,
           enforcementLevel: enforcement,
+          consumedLabel: budget.type === 'goal-based' ? 'Saved' : 'Spent',
           label: '',
         });
       },

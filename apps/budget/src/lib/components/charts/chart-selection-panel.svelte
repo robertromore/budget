@@ -3,7 +3,6 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { chartSelection, type ChartSelectionAction } from '$lib/states/ui/chart-selection.svelte';
 	import { currencyFormatter } from '$lib/utils/formatters';
-	import { toast } from '$lib/utils/toast-interceptor';
 
 	// Action sheets
 	import AnnotationSheet from './actions/annotation-sheet.svelte';
@@ -15,6 +14,7 @@
 	import StatisticsSheet from './actions/statistics-sheet.svelte';
 	import TrendAnalysisSheet from './actions/trend-analysis-sheet.svelte';
 	import OutlierAnalysisSheet from './actions/outlier-analysis-sheet.svelte';
+	import AlertSheet from './actions/alert-sheet.svelte';
 	import SeasonalAnalysisSheet from './actions/seasonal-analysis-sheet.svelte';
 
 	// Icons
@@ -50,6 +50,7 @@
 	let drillDownOpen = $state(false);
 	let budgetActionOpen = $state(false);
 	let annotationOpen = $state(false);
+	let alertSheetOpen = $state(false);
 	let annotationMode = $state<'note' | 'flag'>('note');
 	let reportBuilderOpen = $state(false);
 
@@ -113,10 +114,7 @@
 				reportBuilderOpen = true;
 				break;
 			case 'create-alert':
-				// This feature will be implemented later
-				toast.info('Coming soon', {
-					description: 'This feature is under development'
-				});
+				alertSheetOpen = true;
 				break;
 		}
 	}
@@ -262,5 +260,6 @@
 <ExportSheet bind:open={exportOpen} />
 <DrillDownSheet bind:open={drillDownOpen} />
 <BudgetActionSheet bind:open={budgetActionOpen} />
+<AlertSheet bind:open={alertSheetOpen} />
 <AnnotationSheet bind:open={annotationOpen} mode={annotationMode} />
 <ReportBuilderSheet bind:open={reportBuilderOpen} />

@@ -48,6 +48,7 @@ import { onDestroy } from 'svelte';
 import {
   AddTransactionDialog,
   AutomationTab,
+  DocumentsTab,
   ExpenseTableContainer,
   ExpenseWizard,
   HsaDashboard,
@@ -58,6 +59,7 @@ import {
   SubscriptionsTab,
   TransactionTableContainer,
 } from './(components)';
+import FolderOpen from '@lucide/svelte/icons/folder-open';
 import UtilityDashboard from './(components)/utility-dashboard.svelte';
 import AccountBudgetsGrouped from './(components)/account-budgets-grouped.svelte';
 import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
@@ -112,6 +114,7 @@ const tabValues = [
   'automation',
   'schedules',
   'budgets',
+  'documents',
   'import',
   'settings',
 ] as const;
@@ -1148,6 +1151,10 @@ $effect(() => {
             <Wallet class="mr-2 h-4 w-4" />
             Budgets
           </Tabs.Trigger>
+          <Tabs.Trigger value="documents" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-documents" data-help-title="Documents Tab" data-tour-id="documents-tab">
+            <FolderOpen class="mr-2 h-4 w-4" />
+            Documents
+          </Tabs.Trigger>
           <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab" data-tour-id="import-tab">
             <Upload class="mr-2 h-4 w-4" />
             Import
@@ -1326,6 +1333,13 @@ $effect(() => {
         {/if}
       </Tabs.Content>
 
+      <!-- Documents Tab Content -->
+      <Tabs.Content value="documents" class="tabs-connected-content" data-help-id="account-documents-tab" data-help-title="Documents Tab">
+        {#if accountId && accountData && activeTab === 'documents'}
+          <DocumentsTab accountId={Number(accountId)} accountName={accountData.name || 'Account'} />
+        {/if}
+      </Tabs.Content>
+
       <!-- Settings Tab Content -->
       <Tabs.Content value="settings" class="tabs-connected-content" data-help-id="account-settings-tab" data-help-title="Account Settings">
         {#if accountData && activeTab === 'settings'}
@@ -1444,6 +1458,10 @@ $effect(() => {
               </div>
               <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
+          {/if}
+        {:else if activeTab === 'documents'}
+          {#if accountId && accountData}
+            <DocumentsTab accountId={Number(accountId)} accountName={accountData.name || 'Account'} />
           {/if}
         {:else if activeTab === 'import'}
           {#if accountData && accountId}

@@ -1,7 +1,7 @@
 import type { Payee, PaymentFrequency } from "$lib/schema/payees";
 import { formatTimeAgo } from "$lib/utils/dates";
 import { debounce } from "$lib/utils/search";
-import type { GroupStrategy, PayeeGroup, PayeeWithMetadata } from "./types";
+import type { GroupStrategy, PayeeGroup, PayeeWithMetadata, TransactionContext } from "./types";
 
 export { debounce };
 
@@ -330,6 +330,82 @@ export function getFrequentPayees(allPayees: Payee[], limit: number = 10): Payee
       return rankB - rankA;
     })
     .slice(0, limit);
+}
+
+/**
+ * Get suggested payees based on transaction context signals
+ */
+export function getSuggestedPayees(
+	allPayees: Payee[],
+	context: TransactionContext | undefined,
+	excludeIds: Set<number>,
+	limit: number = 5
+): Payee[] {
+	if (!allPayees.length || !context) return [];
+
+	const { categoryId, amount, description } = context;
+	if (!categoryId && !amount && !description) return [];
+
+	const now = Date.now();
+	const normalizedDesc = description?.toLowerCase().trim() ?? "";
+	const descTokens = normalizedDesc ? normalizedDesc.split(/\s+/) : [];
+
+	const scored: Array<{ payee: Payee; score: number }> = [];
+
+	for (const payee of allPayees) {
+		if (excludeIds.has(payee.id)) continue;
+
+		let score = 0;
+
+		// Category match (0-40)
+		if (categoryId && payee.defaultCategoryId === categoryId) {
+			score += 40;
+		}
+
+		// Description match (0-30)
+		if (normalizedDesc && payee.name) {
+			const normalizedName = payee.name.toLowerCase().trim();
+			if (normalizedName.includes(normalizedDesc) || normalizedDesc.includes(normalizedName)) {
+				score += 30;
+			} else if (descTokens.length > 0) {
+				const nameTokens = normalizedName.split(/\s+/);
+				const allTokens = new Set([...descTokens, ...nameTokens]);
+				const shared = descTokens.filter((t) =>
+					nameTokens.some((n) => n.includes(t) || t.includes(n))
+				);
+				if (shared.length > 0) {
+					score += Math.round((shared.length / allTokens.size) * 30);
+				}
+			}
+		}
+
+		// Amount similarity (0-15)
+		if (amount && payee.avgAmount) {
+			const maxVal = Math.max(Math.abs(amount), Math.abs(payee.avgAmount));
+			if (maxVal > 0) {
+				const ratio = 1 - Math.abs(Math.abs(amount) - Math.abs(payee.avgAmount)) / maxVal;
+				score += Math.round(Math.max(0, ratio) * 15);
+			}
+		}
+
+		// Recency (0-15)
+		if (payee.lastTransactionDate) {
+			const daysSince =
+				(now - new Date(payee.lastTransactionDate).getTime()) / (1000 * 60 * 60 * 24);
+			if (daysSince < 365) {
+				score += Math.round(15 * (1 - daysSince / 365));
+			}
+		}
+
+		if (score >= 15) {
+			scored.push({ payee, score });
+		}
+	}
+
+	return scored
+		.sort((a, b) => b.score - a.score)
+		.slice(0, limit)
+		.map((s) => s.payee);
 }
 
 /**

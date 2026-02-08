@@ -1,9 +1,9 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { Label } from '$lib/components/ui/label';
-import Progress from '$lib/components/ui/progress/progress.svelte';
+import { AllocationProgress } from '$lib/components/ui/progress';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
 import * as Tooltip from '$lib/components/ui/tooltip';
@@ -17,7 +17,7 @@ import {
 import type { TransactionsFormat } from '$lib/types';
 import { cn, formatPercent } from '$lib/utils';
 import { toISOString } from '$lib/utils/dates';
-import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
+import { currencyFormatter } from '$lib/utils/formatters';
 import {
   ArrowRightLeft,
   CircleDollarSign,
@@ -64,7 +64,7 @@ const topSuggestion = $derived.by((): BudgetSuggestion | null => {
 
 // Form state for adding new allocation
 let selectedBudgetId = $state('');
-let allocationAmount = $state('');
+let allocationAmount = $state<number | undefined>(undefined);
 let isSubmitting = $state(false);
 
 // Validation state
@@ -93,8 +93,8 @@ const hasUnallocatedAmount = $derived.by(() => Math.abs(remainingAmount) > 0.01)
 
 // Real-time validation for allocation amount
 const proposedAmount = $derived.by(() => {
-  const amount = Number(allocationAmount);
-  return isNaN(amount) ? 0 : Math.abs(amount);
+  if (allocationAmount === undefined || allocationAmount === null) return 0;
+  return Math.abs(allocationAmount);
 });
 
 const wouldBeOverAllocated = $derived.by(() => {
@@ -104,27 +104,6 @@ const wouldBeOverAllocated = $derived.by(() => {
 const selectedBudget = $derived.by(() => {
   if (!selectedBudgetId) return null;
   return availableBudgets.find((b) => b.id === Number(selectedBudgetId));
-});
-
-// Simulated budget limits for validation (this would come from real budget data)
-const budgetLimit = $derived.by(() => {
-  if (!selectedBudget) return null;
-  // Simulate budget limits based on metadata or default values
-  const allocatedAmount = selectedBudget.metadata?.allocatedAmount as number | undefined;
-  return allocatedAmount || 1000; // Default limit for demo
-});
-
-const budgetUtilization = $derived.by(() => {
-  if (!selectedBudget || !budgetLimit) return 0;
-  // Simulate current budget usage (this would come from real data)
-  return budgetLimit * 0.3; // 30% used for demo
-});
-
-const wouldExceedBudgetLimit = $derived.by(() => {
-  if (!budgetLimit) return false;
-  const currentUsage = budgetUtilization;
-  const newTotal = currentUsage + proposedAmount;
-  return newTotal > budgetLimit;
 });
 
 // Reset form when transaction changes or dialog opens
@@ -146,7 +125,7 @@ $effect(() => {
   validationError = '';
   validationWarning = '';
 
-  if (!allocationAmount || !selectedBudgetId) return;
+  if (allocationAmount === undefined || allocationAmount === 0 || !selectedBudgetId) return;
 
   if (proposedAmount <= 0) {
     validationError = 'Amount must be greater than zero';
@@ -156,20 +135,6 @@ $effect(() => {
   if (wouldBeOverAllocated) {
     validationError = `Cannot allocate more than remaining amount (${currencyFormatter.format(Math.abs(remainingAmount))})`;
     return;
-  }
-
-  if (wouldExceedBudgetLimit && budgetLimit) {
-    const availableInBudget = budgetLimit - budgetUtilization;
-    validationError = `This would exceed the budget limit. Available in budget: ${currencyFormatter.format(availableInBudget)}`;
-    return;
-  }
-
-  // Show warnings for potentially problematic allocations
-  if (selectedBudget && budgetLimit) {
-    const utilizationAfter = ((budgetUtilization + proposedAmount) / budgetLimit) * 100;
-    if (utilizationAfter > 80) {
-      validationWarning = `This allocation will use ${formatPercentRaw(utilizationAfter, 1)} of the budget`;
-    }
   }
 
   if (
@@ -183,25 +148,24 @@ $effect(() => {
 
 // Form is valid if there are no errors
 const isFormValid = $derived.by(() => {
-  return selectedBudgetId && allocationAmount && proposedAmount > 0 && !validationError;
+  return selectedBudgetId && allocationAmount !== undefined && proposedAmount > 0 && !validationError;
 });
 
 function resetForm() {
   selectedBudgetId = '';
-  allocationAmount = String(Math.abs(remainingAmount));
+  allocationAmount = Math.abs(remainingAmount);
   isSubmitting = false;
 }
 
 async function handleAddAllocation() {
-  if (!selectedBudgetId || !allocationAmount || !transaction || typeof transaction.id !== 'number')
+  if (!selectedBudgetId || allocationAmount === undefined || !transaction || typeof transaction.id !== 'number')
     return;
 
   try {
     isSubmitting = true;
-    const amount = Number(allocationAmount);
 
     // Ensure allocation has the same sign as the transaction
-    const signedAmount = transactionAmount >= 0 ? Math.abs(amount) : -Math.abs(amount);
+    const signedAmount = transactionAmount >= 0 ? Math.abs(allocationAmount) : -Math.abs(allocationAmount);
 
     // Create the allocation using the real API
     await createAllocationMutation.mutateAsync({
@@ -289,23 +253,11 @@ const availableBudgetOptions = $derived.by(() => {
               </div>
 
               <!-- Progress bar showing allocation progress -->
-              <div class="relative">
-                <Progress
-                  value={Math.min(100, (totalAllocated / Math.abs(transactionAmount)) * 100)}
-                  aria-label="Allocation progress: {currencyFormatter.format(totalAllocated)} of {currencyFormatter.format(Math.abs(transactionAmount))} allocated"
-                  class="h-2" />
-                {#if totalAllocated > Math.abs(transactionAmount)}
-                  <div
-                    class="bg-destructive absolute top-0 left-0 h-2 rounded-full"
-                    style="width: {Math.min(
-                      100,
-                      ((totalAllocated - Math.abs(transactionAmount)) /
-                        Math.abs(transactionAmount)) *
-                        100
-                    )}%">
-                  </div>
-                {/if}
-              </div>
+              <AllocationProgress
+                value={totalAllocated}
+                projected={proposedAmount}
+                max={Math.abs(transactionAmount)}
+                class="h-2" />
 
               <div class="flex items-center justify-between text-xs">
                 <span
@@ -335,6 +287,14 @@ const availableBudgetOptions = $derived.by(() => {
                   {currencyFormatter.format(Math.abs(remainingAmount))}
                 </span>
               </div>
+              {#if proposedAmount > 0 && !wouldBeOverAllocated}
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-primary/70 font-medium">Projected</span>
+                  <span class="text-primary/70 font-mono font-medium">
+                    +{currencyFormatter.format(proposedAmount)}
+                  </span>
+                </div>
+              {/if}
             </div>
           </div>
         </div>
@@ -425,36 +385,32 @@ const availableBudgetOptions = $derived.by(() => {
             <div
               class="border-primary/30 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 space-y-4 rounded-lg border-2 border-dashed p-4 transition-all">
               {#if topSuggestion}
-                <div
-                  class="flex items-center gap-2 rounded-lg border border-amber-200 bg-linear-to-r from-amber-50 to-yellow-50 p-3 dark:border-amber-800 dark:from-amber-950/20 dark:to-yellow-950/20">
-                  <Lightbulb class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                  <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                      <span class="text-sm font-medium text-amber-900 dark:text-amber-100"
-                        >Suggested:</span>
-                      <Badge variant="secondary" class="text-xs">
-                        {topSuggestion.budgetName}
-                      </Badge>
-                    </div>
-                    <div class="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                      {topSuggestion.confidence}% confident - {topSuggestion.reasonText}
-                    </div>
-                  </div>
+                <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
+                  <Lightbulb class="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    Suggested: <span class="text-foreground font-medium">{topSuggestion.budgetName}</span>
+                    <span class="text-muted-foreground/70">({topSuggestion.confidence}% confident)</span>
+                  </span>
                 </div>
               {/if}
 
               <div class="space-y-2">
                 <Label for="budget-select" class="text-xs">Budget</Label>
                 <Select.Root type="single" bind:value={selectedBudgetId}>
-                  <Select.Trigger id="budget-select" class="h-10 border-2 hover:bg-accent/50">
-                    <div class="flex items-center gap-2">
+                  <Select.Trigger id="budget-select" class="h-auto! w-full whitespace-normal border-2 border-primary/40 bg-card shadow-sm hover:border-primary/60 hover:bg-accent/50">
+                    <div class="flex items-center gap-2 py-1.5">
                       <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
                         <Target class="h-4 w-4 text-primary" />
                       </div>
                       {#if selectedBudgetId && selectedBudget}
                         <div class="flex min-w-0 flex-col items-start">
                           <span class="truncate text-sm font-medium">{selectedBudget.name}</span>
-                          <span class="text-xs text-muted-foreground capitalize">{selectedBudget.type}</span>
+                          <span class="text-muted-foreground text-xs">
+                            <span class="capitalize">{selectedBudget.type.replace('-', ' ')}</span>
+                            {#if selectedBudget.metadata?.allocatedAmount}
+                              · {currencyFormatter.format(selectedBudget.metadata.allocatedAmount as number)} budgeted
+                            {/if}
+                          </span>
                         </div>
                       {:else}
                         <span class="text-muted-foreground">Select budget...</span>
@@ -506,16 +462,12 @@ const availableBudgetOptions = $derived.by(() => {
               </div>
 
               <div class="space-y-2">
-                <Label for="amount-input" class="text-xs">Amount</Label>
-                <Input
-                  id="amount-input"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
+                <Label class="text-xs">Amount</Label>
+                <NumericInput
                   bind:value={allocationAmount}
-                  aria-describedby={validationError ? 'amount-error' : validationWarning ? 'amount-warning' : undefined}
-                  aria-invalid={!!validationError}
-                  class={cn('h-9', validationError ? 'border-red-500 focus:border-red-500' : '')} />
+                  onSubmit={handleAddAllocation}
+                  buttonClass={cn('w-full h-9', validationError ? 'border-red-500' : '')}
+                />
 
                 <!-- Real-time validation feedback -->
                 {#if validationError}
@@ -530,15 +482,6 @@ const availableBudgetOptions = $derived.by(() => {
                   </div>
                 {/if}
 
-                <!-- Budget utilization info -->
-                {#if selectedBudget && budgetLimit}
-                  <div class="text-muted-foreground text-xs">
-                    Budget usage: {currencyFormatter.format(budgetUtilization)} / {currencyFormatter.format(
-                      budgetLimit
-                    )}
-                    ({formatPercent(budgetUtilization / budgetLimit, 1)})
-                  </div>
-                {/if}
               </div>
 
               <!-- Quick allocation buttons -->
@@ -549,7 +492,7 @@ const availableBudgetOptions = $derived.by(() => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onclick={() => (allocationAmount = String(Math.abs(remainingAmount)))}
+                      onclick={() => (allocationAmount = Math.abs(remainingAmount))}
                       class="text-xs">
                       <ArrowRightLeft class="mr-1 h-3 w-3" />
                       All ({currencyFormatter.format(Math.abs(remainingAmount))})
@@ -558,7 +501,7 @@ const availableBudgetOptions = $derived.by(() => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onclick={() => (allocationAmount = String(Math.abs(remainingAmount) / 2))}
+                        onclick={() => (allocationAmount = Math.abs(remainingAmount) / 2)}
                         class="text-xs">
                         Half ({currencyFormatter.format(Math.abs(remainingAmount) / 2)})
                       </Button>
@@ -567,12 +510,45 @@ const availableBudgetOptions = $derived.by(() => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onclick={() => (allocationAmount = String(Math.abs(remainingAmount) / 4))}
+                        onclick={() => (allocationAmount = Math.abs(remainingAmount) / 4)}
                         class="text-xs">
                         Quarter ({currencyFormatter.format(Math.abs(remainingAmount) / 4)})
                       </Button>
                     {/if}
                   </div>
+                  {#if selectedBudget?.metadata?.allocatedAmount}
+                    {@const budgetTotal = selectedBudget.metadata.allocatedAmount as number}
+                    {@const cap = Math.abs(remainingAmount)}
+                    <div class="flex flex-wrap gap-2">
+                      {#if budgetTotal <= cap}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onclick={() => (allocationAmount = budgetTotal)}
+                          class="text-xs">
+                          Full Budget ({currencyFormatter.format(budgetTotal)})
+                        </Button>
+                      {/if}
+                      {#if budgetTotal / 2 >= 0.01 && budgetTotal / 2 <= cap}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onclick={() => (allocationAmount = budgetTotal / 2)}
+                          class="text-xs">
+                          Half Budget ({currencyFormatter.format(budgetTotal / 2)})
+                        </Button>
+                      {/if}
+                      {#if budgetTotal / 4 >= 0.01 && budgetTotal / 4 <= cap}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onclick={() => (allocationAmount = budgetTotal / 4)}
+                          class="text-xs">
+                          Quarter Budget ({currencyFormatter.format(budgetTotal / 4)})
+                        </Button>
+                      {/if}
+                    </div>
+                  {/if}
                 </div>
               {/if}
 

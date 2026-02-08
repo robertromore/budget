@@ -10,17 +10,23 @@
     SavingsOpportunityCard,
     SimilarPayeeCard,
   } from "$lib/components/ml";
+  import { PatternList, CategoryPatternsSection } from "$lib/components/patterns";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { Skeleton } from "$lib/components/ui/skeleton";
   import { ML } from "$lib/query/ml";
+  import { deleteAllPatterns, detectPatterns, listPatterns } from "$lib/query/patterns";
+  import { SchedulesState } from "$lib/states/entities";
+  import { trpc } from "$lib/trpc/client";
   import { formatPercent } from "$lib/utils";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import Brain from "@lucide/svelte/icons/brain";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
   import Repeat from "@lucide/svelte/icons/repeat";
+  import RotateCw from "@lucide/svelte/icons/rotate-cw";
   import Settings from "@lucide/svelte/icons/settings";
+  import Sparkles from "@lucide/svelte/icons/sparkles";
   import TrendingUp from "@lucide/svelte/icons/trending-up";
   import Users from "@lucide/svelte/icons/users";
 
@@ -80,6 +86,34 @@
 
   function handleRetrain() {
     retrainMutation.mutate(undefined);
+  }
+
+  // Schedule Pattern Detection
+  const detectMutation = detectPatterns.options();
+  const deleteAllMutation = deleteAllPatterns.options();
+  const schedulePatternsQuery = listPatterns().options();
+  const schedulePatterns = $derived(schedulePatternsQuery.data || []);
+  const schedulesState = SchedulesState.get();
+
+  async function runPatternDetection() {
+    await detectMutation.mutateAsync({});
+    await schedulePatternsQuery.refetch();
+  }
+
+  async function clearAndRegeneratePatterns() {
+    await deleteAllMutation.mutateAsync({});
+    await detectMutation.mutateAsync({});
+    await schedulePatternsQuery.refetch();
+  }
+
+  async function handlePatternConvert(scheduleId: number) {
+    await schedulePatternsQuery.refetch();
+    const newSchedule = await trpc().scheduleRoutes.load.query({ id: scheduleId });
+    schedulesState.addSchedule(newSchedule as any);
+  }
+
+  async function handlePatternDismiss() {
+    await schedulePatternsQuery.refetch();
   }
 </script>
 
@@ -346,6 +380,75 @@
       {/if}
     </div>
   </div>
+
+  <!-- Schedule Patterns -->
+  <Card.Root>
+    <Card.Header>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="bg-primary/10 rounded-lg p-2">
+            <RotateCw class="text-primary h-5 w-5" />
+          </div>
+          <div>
+            <Card.Title class="text-lg">Schedule Patterns</Card.Title>
+            <Card.Description>
+              Discover recurring transactions and convert them to schedules
+            </Card.Description>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={clearAndRegeneratePatterns}
+            disabled={detectMutation.isPending || deleteAllMutation.isPending}
+          >
+            <RotateCw class="mr-2 h-4 w-4" />
+            {detectMutation.isPending || deleteAllMutation.isPending
+              ? 'Regenerating...'
+              : 'Regenerate'}
+          </Button>
+          <Button size="sm" onclick={runPatternDetection} disabled={detectMutation.isPending}>
+            <Sparkles class="mr-2 h-4 w-4" />
+            {detectMutation.isPending ? 'Detecting...' : 'Detect Patterns'}
+          </Button>
+        </div>
+      </div>
+    </Card.Header>
+    <Card.Content class="pt-0">
+      {#if schedulePatternsQuery.isLoading}
+        <div class="p-8 text-center">
+          <div
+            class="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"
+          ></div>
+          <p class="text-muted-foreground text-sm">Loading patterns...</p>
+        </div>
+      {:else if schedulePatterns.length === 0 && !detectMutation.isPending}
+        <div class="p-8 text-center">
+          <TrendingUp class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+          <h3 class="mb-2 text-lg font-semibold">No patterns detected yet</h3>
+          <p class="text-muted-foreground mb-4">
+            Run pattern detection to analyze your transaction history and discover recurring
+            patterns
+          </p>
+          <Button onclick={runPatternDetection} disabled={detectMutation.isPending}>
+            <Sparkles class="mr-2 h-4 w-4" />
+            {detectMutation.isPending ? 'Detecting...' : 'Detect Patterns'}
+          </Button>
+        </div>
+      {:else}
+        <PatternList
+          patterns={schedulePatterns}
+          isLoading={schedulePatternsQuery.isLoading}
+          onConvert={handlePatternConvert}
+          onDismiss={handlePatternDismiss}
+        />
+      {/if}
+    </Card.Content>
+  </Card.Root>
+
+  <!-- Category Patterns -->
+  <CategoryPatternsSection />
 
   <!-- User Profile Section -->
   {#if userProfileQuery.data}

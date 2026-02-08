@@ -279,6 +279,16 @@ export const filters = {
   ) => {
     return !filterValue.has(row.original[columnId as keyof TransactionsFormat] as string);
   },
+  typeFilter: (
+    row: Row<TransactionsFormat>,
+    columnId: string,
+    filterValue: Set<string>,
+    addMeta: (meta: any) => void
+  ) => {
+    if (filterValue.size === 0) return true;
+    const isTransfer = row.original.isTransfer === true;
+    return filterValue.has(isTransfer ? "transfer" : "regular");
+  },
   amountFilter: (
     row: Row<TransactionsFormat>,
     columnId: string,

@@ -231,6 +231,7 @@ function formatBudgetType(type: string) {
           {allocated}
           status={budgetStatus}
           enforcementLevel={b.enforcementLevel ?? 'warning'}
+          consumedLabel={b.type === 'goal-based' ? 'Saved' : 'Spent'}
           label="" />
       {/snippet}
 

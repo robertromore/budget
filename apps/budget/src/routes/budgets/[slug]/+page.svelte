@@ -795,6 +795,7 @@ async function toggleBudgetStatus() {
               allocated={allocatedAmount}
               status={getStatus()}
               enforcementLevel={budget.enforcementLevel || 'warning'}
+              consumedLabel={budget.type === 'goal-based' ? 'Saved' : 'Spent'}
               label="Overall Budget Progress" />
 
             <!-- 2. Primary Action Card (Context-Aware) -->

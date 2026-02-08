@@ -151,7 +151,7 @@ function cancelDelete() {
         <CalendarDays class="mr-2 h-4 w-4" />
         Calendar
       </Button>
-      <Button variant="outline" href="/patterns" data-tour-id="schedules-patterns-button">
+      <Button variant="outline" href="/intelligence" data-tour-id="schedules-patterns-button">
         <Sparkles class="mr-2 h-4 w-4" />
         Patterns
       </Button>

@@ -4,3 +4,4 @@ export { default as DataTableFacetedFilterCategory } from "./data-table-faceted-
 export { default as DataTableFacetedFilterDate } from "./data-table-faceted-filter-date.svelte";
 export { default as DataTableFacetedFilterPayee } from "./data-table-faceted-filter-payee.svelte";
 export { default as DataTableFacetedFilterStatus } from "./data-table-faceted-filter-status.svelte";
+export { default as DataTableFacetedFilterType } from "./data-table-faceted-filter-type.svelte";

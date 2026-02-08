@@ -23,6 +23,7 @@ import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Download from '@lucide/svelte/icons/download';
 import Ellipsis from '@lucide/svelte/icons/ellipsis';
+import FileText from '@lucide/svelte/icons/file-text';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import LogOut from '@lucide/svelte/icons/log-out';
@@ -144,6 +145,16 @@ const _deleteAccountId = $derived(deleteAccountId);
                 <a href="/import" {...props} class="flex items-center gap-3">
                   <Download class="h-4 w-4"></Download>
                   <span class="font-medium">Import</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
+                <a href="/documents" {...props} class="flex items-center gap-3">
+                  <FileText class="h-4 w-4"></FileText>
+                  <span class="font-medium">Documents</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>

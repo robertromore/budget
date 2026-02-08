@@ -1,3 +1,4 @@
+import ArrowRightLeft from "@lucide/svelte/icons/arrow-right-left";
 import CalendarDays from "@lucide/svelte/icons/calendar-days";
 import DollarSign from "@lucide/svelte/icons/dollar-sign";
 import HandCoins from "@lucide/svelte/icons/hand-coins";
@@ -30,6 +31,7 @@ import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-
 import DataTableFacetedFilterDateWithOperators from "../(components)/(facets)/data-table-faceted-filter-date-with-operators.svelte";
 import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
 import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
+import DataTableFacetedFilterType from "../(components)/(facets)/data-table-faceted-filter-type.svelte";
 import DataTableActions from "../(components)/data-table-actions.svelte";
 import MarkerActions from "../(components)/marker-actions.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
@@ -601,6 +603,36 @@ export const columns = (
       enableSorting: false,
       meta: {
         label: "Balance",
+      },
+    },
+    {
+      id: "type",
+      accessorFn: (row) => (row.isTransfer ? "transfer" : "regular"),
+      header: "",
+      cell: () => {},
+      aggregatedCell: () => {},
+      enableSorting: false,
+      enableGrouping: false,
+      enableHiding: true,
+      filterFn: "typeFilter" as FilterFnOption<TransactionsFormat>,
+      meta: {
+        label: "Type",
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Type",
+          icon: ArrowRightLeft,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterType as any, {
+              column,
+            }),
+        }),
+        availableFilters: [
+          {
+            id: "typeFilter",
+            label: "is",
+          },
+        ],
       },
     },
     {

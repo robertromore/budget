@@ -4,6 +4,7 @@ import { Calendar } from '$lib/components/ui/calendar/index.js';
 import { Label } from '$lib/components/ui/label';
 import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 import type { FacetedFilterOption } from '$lib/types';
+import { displayPreferences } from '$lib/stores/display-preferences.svelte';
 import { dayFmt } from '$lib/utils/date-formatters';
 import { currentDate, timezone } from '$lib/utils/dates';
 import { CalendarDate, DateFormatter } from '@internationalized/date';
@@ -27,20 +28,19 @@ const YEARS_TO_SHOW = 6;
 
 const todayDate = currentDate;
 
-// Localization support - can be enhanced with proper i18n store
-const userLocale = 'en-US'; // TODO: Replace with actual locale from i18n store
+const userLocale = $derived(displayPreferences.numberFormat);
 
-const monthFmt = new DateFormatter(userLocale, {
+const monthFmt = $derived(new DateFormatter(userLocale, {
   month: 'long',
-});
+}));
 
-const monthOptions = Array.from({ length: 12 }, (_, i) => {
+const monthOptions = $derived(Array.from({ length: 12 }, (_, i) => {
   const month = currentDate.set({ month: i + 1 });
   return {
     value: month.month,
     label: monthFmt.format(month.toDate(timezone)),
   };
-});
+}));
 
 const quarterOptions = Array.from({ length: 4 }, (_, i) => {
   const month = currentDate.set({ month: i * MONTHS_PER_QUARTER + 1 });

@@ -7,6 +7,7 @@
 	import Brain from '@lucide/svelte/icons/brain';
 	import Building2 from '@lucide/svelte/icons/building-2';
 	import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
+	import FileText from '@lucide/svelte/icons/file-text';
 	import Link from '@lucide/svelte/icons/link';
 	import Monitor from '@lucide/svelte/icons/monitor';
 	import Palette from '@lucide/svelte/icons/palette';
@@ -47,6 +48,10 @@
 				{ href: '/settings/transfer-mappings', label: 'Transfer Mappings', icon: ArrowRightLeft },
 				{ href: '/settings/connections', label: 'Bank Connections', icon: Building2 }
 			]
+		},
+		{
+			title: 'Documents',
+			items: [{ href: '/settings/documents', label: 'Text Extraction', icon: FileText }]
 		},
 		{
 			title: 'Intelligence',

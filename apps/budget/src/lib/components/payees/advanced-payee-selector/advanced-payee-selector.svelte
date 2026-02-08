@@ -15,6 +15,7 @@ import type { AdvancedPayeeSelectorProps, PayeeGroup, QuickAccessSections } from
 import {
   getFrequentPayees,
   getRecentPayees,
+  getSuggestedPayees,
   groupPayees,
   saveToRecentPayees
 } from './utils';
@@ -69,7 +70,15 @@ const filteredPayees = $derived.by(() => {
 const quickAccessSections = $derived.by((): QuickAccessSections => {
   const recent = showQuickAccess ? getRecentPayees(allPayees, 5) : [];
   const frequent = showQuickAccess ? getFrequentPayees(allPayees, 5) : [];
-  const suggested: Payee[] = []; // TODO: Implement ML suggestions
+
+  const excludeIds = new Set([
+    ...recent.map((p) => p.id),
+    ...frequent.map((p) => p.id),
+  ]);
+
+  const suggested = enableMLSuggestions
+    ? getSuggestedPayees(allPayees, transactionContext, excludeIds, 5)
+    : [];
 
   return { recent, frequent, suggested };
 });

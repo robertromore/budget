@@ -34,3 +34,6 @@ export { default as AutomationTab } from "./automation-tab.svelte";
 
 // Subscriptions Tab
 export { default as SubscriptionsTab } from "./subscriptions-tab.svelte";
+
+// Documents Tab
+export { default as DocumentsTab } from "./documents-tab.svelte";
