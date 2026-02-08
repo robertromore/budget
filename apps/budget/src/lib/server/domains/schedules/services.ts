@@ -8,6 +8,26 @@ import { TransactionService, type CreateTransactionData } from "../transactions/
 import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
 import { ScheduleSkipRepository } from "./skip-repository";
 
+/**
+ * Parse a YYYY-MM-DD string into a Date using local timezone components,
+ * avoiding the UTC interpretation that `new Date("YYYY-MM-DD")` uses.
+ */
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * Format a Date as YYYY-MM-DD using local timezone components,
+ * avoiding the UTC shift that `toISOString()` introduces.
+ */
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export interface AutoAddResult {
   scheduleId: number;
   scheduleName: string;
@@ -168,9 +188,10 @@ export class ScheduleService {
     }
 
     const today = new Date();
-    const todayString = today.toISOString().split("T")[0];
-    const startDate = new Date(schedule.scheduleDate.start);
-    const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
+    today.setHours(0, 0, 0, 0);
+    const todayString = formatLocalDate(today);
+    const startDate = parseLocalDate(schedule.scheduleDate.start);
+    const endDate = schedule.scheduleDate.end ? parseLocalDate(schedule.scheduleDate.end) : null;
     const frequency = schedule.scheduleDate.frequency;
     const interval = schedule.scheduleDate.interval || 1;
 
@@ -191,7 +212,7 @@ export class ScheduleService {
     }
 
     // Only include today's date if it matches the schedule
-    const currentDateString = currentDate.toISOString().split("T")[0];
+    const currentDateString = formatLocalDate(currentDate);
     if (
       currentDateString &&
       currentDateString === todayString &&
@@ -212,8 +233,9 @@ export class ScheduleService {
     }
 
     const today = new Date();
-    const startDate = new Date(schedule.scheduleDate.start);
-    const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
+    today.setHours(0, 0, 0, 0);
+    const startDate = parseLocalDate(schedule.scheduleDate.start);
+    const endDate = schedule.scheduleDate.end ? parseLocalDate(schedule.scheduleDate.end) : null;
     const frequency = schedule.scheduleDate.frequency;
     const interval = schedule.scheduleDate.interval || 1;
 
@@ -235,7 +257,7 @@ export class ScheduleService {
       return null;
     }
 
-    return nextDate.toISOString().split("T")[0] || null;
+    return formatLocalDate(nextDate);
   }
 
   /**
@@ -384,11 +406,11 @@ export class ScheduleService {
         // Apply push_forward offset: shift all dates forward by (offset × interval)
         if (pushForwardOffset > 0 && schedule.scheduleDate?.frequency) {
           upcomingDates = upcomingDates.map((dateStr) => {
-            const date = new Date(dateStr);
+            const date = parseLocalDate(dateStr);
             for (let i = 0; i < pushForwardOffset; i++) {
               this.addInterval(date, schedule.scheduleDate!.frequency!, schedule.scheduleDate!.interval || 1);
             }
-            return date.toISOString().split("T")[0]!;
+            return formatLocalDate(date);
           });
         }
 
@@ -519,12 +541,13 @@ export class ScheduleService {
     maxOccurrences?: number
   ): string[] {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + daysAhead);
 
-    const startDate = new Date(schedule.scheduleDate!.start);
+    const startDate = parseLocalDate(schedule.scheduleDate!.start);
     const scheduleEndDate = schedule.scheduleDate!.end
-      ? new Date(schedule.scheduleDate!.end)
+      ? parseLocalDate(schedule.scheduleDate!.end)
       : null;
     const interval = schedule.scheduleDate!.interval || 1;
     const days = schedule.scheduleDate!.days as number[];
@@ -562,10 +585,7 @@ export class ScheduleService {
           return upcomingDates;
         }
 
-        const dateString = candidateDate.toISOString().split("T")[0];
-        if (dateString) {
-          upcomingDates.push(dateString);
-        }
+        upcomingDates.push(formatLocalDate(candidateDate));
       }
 
       // Move to next month (respecting interval)
@@ -590,12 +610,13 @@ export class ScheduleService {
     maxOccurrences?: number
   ): string[] {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + daysAhead);
 
-    const startDate = new Date(schedule.scheduleDate!.start);
+    const startDate = parseLocalDate(schedule.scheduleDate!.start);
     const scheduleEndDate = schedule.scheduleDate!.end
-      ? new Date(schedule.scheduleDate!.end)
+      ? parseLocalDate(schedule.scheduleDate!.end)
       : null;
     const frequency = schedule.scheduleDate!.frequency;
     const interval = schedule.scheduleDate!.interval || 1;
@@ -638,10 +659,7 @@ export class ScheduleService {
         break;
       }
 
-      const dateString = currentDate.toISOString().split("T")[0];
-      if (dateString) {
-        upcomingDates.push(dateString);
-      }
+      upcomingDates.push(formatLocalDate(currentDate));
 
       // Move to next occurrence
       if (!frequency) break;

@@ -9,7 +9,7 @@
  * - Name keyword similarity
  */
 
-import { budgets } from "$lib/schema/budgets";
+import { budgetGroups, budgets } from "$lib/schema/budgets";
 import type { RecommendationMetadata, RecommendationPriority } from "$lib/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
@@ -667,23 +667,211 @@ export class BudgetGroupAnalysisService {
   private async generateGroupAssignmentRecommendations(
     params: AnalysisParams
   ): Promise<BudgetRecommendationDraft[]> {
-    // TODO: Implement in next iteration
-    return [];
+    const { minSimilarityScore = 70 } = params;
+    const recommendations: BudgetRecommendationDraft[] = [];
+
+    const allBudgets = await db.query.budgets.findMany({
+      where: eq(budgets.status, "active"),
+      with: {
+        categories: { with: { category: true } },
+        accounts: { with: { account: true } },
+        groupMemberships: { with: { group: true } },
+        transactions: { with: { transaction: true } },
+        periodTemplates: { with: { periods: true } },
+      },
+    });
+
+    const ungrouped = allBudgets.filter(
+      (b) => !b.groupMemberships || b.groupMemberships.length === 0
+    );
+
+    const groups = await db.query.budgetGroups.findMany({
+      with: { memberships: { with: { budget: true } } },
+    });
+
+    for (const budget of ungrouped) {
+      for (const group of groups) {
+        if (group.memberships.length === 0) continue;
+
+        const memberBudgets = group.memberships
+          .map((m) => allBudgets.find((b) => b.id === m.budgetId))
+          .filter(Boolean) as BudgetWithRelations[];
+
+        if (memberBudgets.length === 0) continue;
+
+        let totalSim = 0;
+        for (const member of memberBudgets) {
+          totalSim += this.calculateBudgetSimilarity(budget as BudgetWithRelations, member).overall;
+        }
+        const avgSim = totalSim / memberBudgets.length;
+
+        if (avgSim >= minSimilarityScore) {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30);
+
+          recommendations.push({
+            type: "add_to_budget_group",
+            priority: avgSim >= 85 ? "high" : "medium",
+            title: `Add "${budget.name}" to "${group.name}"`,
+            description: `Budget "${budget.name}" is similar to budgets in the "${group.name}" group (${Math.round(avgSim)}% match).`,
+            confidence: Math.round(avgSim),
+            metadata: {
+              suggestedGroupMembers: [budget.id],
+              parentGroupId: group.id,
+              groupSimilarityScore: avgSim,
+              suggestedGroupName: group.name,
+            },
+            budgetId: budget.id,
+            expiresAt: expiresAt.toISOString(),
+          });
+        }
+      }
+    }
+
+    return recommendations;
   }
 
   /**
    * Generate recommendations to merge similar groups
    */
   private async generateGroupMergeRecommendations(): Promise<BudgetRecommendationDraft[]> {
-    // TODO: Implement in next iteration
-    return [];
+    const recommendations: BudgetRecommendationDraft[] = [];
+
+    const allBudgets = await db.query.budgets.findMany({
+      where: eq(budgets.status, "active"),
+      with: {
+        categories: { with: { category: true } },
+        accounts: { with: { account: true } },
+        groupMemberships: { with: { group: true } },
+        transactions: { with: { transaction: true } },
+        periodTemplates: { with: { periods: true } },
+      },
+    });
+
+    const groups = await db.query.budgetGroups.findMany({
+      with: { memberships: true },
+    });
+
+    const groupsWithBudgets = groups
+      .filter((g) => g.memberships.length > 0)
+      .map((g) => ({
+        ...g,
+        budgets: g.memberships
+          .map((m) => allBudgets.find((b) => b.id === m.budgetId))
+          .filter(Boolean) as BudgetWithRelations[],
+      }));
+
+    for (let i = 0; i < groupsWithBudgets.length; i++) {
+      for (let j = i + 1; j < groupsWithBudgets.length; j++) {
+        const g1 = groupsWithBudgets[i]!;
+        const g2 = groupsWithBudgets[j]!;
+
+        let totalSim = 0;
+        let comparisons = 0;
+        for (const b1 of g1.budgets) {
+          for (const b2 of g2.budgets) {
+            totalSim += this.calculateBudgetSimilarity(b1, b2).overall;
+            comparisons++;
+          }
+        }
+
+        if (comparisons === 0) continue;
+        const avgSim = totalSim / comparisons;
+
+        if (avgSim >= 75) {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30);
+
+          // Merge into the larger group
+          const [target, source] =
+            g1.budgets.length >= g2.budgets.length ? [g1, g2] : [g2, g1];
+
+          recommendations.push({
+            type: "merge_budget_groups",
+            priority: avgSim >= 85 ? "high" : "medium",
+            title: `Merge "${source.name}" into "${target.name}"`,
+            description: `Groups "${source.name}" and "${target.name}" have ${Math.round(avgSim)}% similarity. Merge ${source.budgets.length} budgets into "${target.name}".`,
+            confidence: Math.round(avgSim),
+            metadata: {
+              parentGroupId: target.id,
+              suggestedGroupName: target.name,
+              suggestedGroupMembers: source.memberships.map((m) => m.budgetId),
+              budgetIdsToGroup: [
+                ...target.memberships.map((m) => m.budgetId),
+                ...source.memberships.map((m) => m.budgetId),
+              ],
+              groupSimilarityScore: avgSim,
+            },
+            expiresAt: expiresAt.toISOString(),
+          });
+        }
+      }
+    }
+
+    return recommendations;
   }
 
   /**
    * Generate recommendations to adjust group spending limits
    */
   private async generateGroupLimitRecommendations(): Promise<BudgetRecommendationDraft[]> {
-    // TODO: Implement in next iteration
-    return [];
+    const recommendations: BudgetRecommendationDraft[] = [];
+
+    const groups = await db.query.budgetGroups.findMany({
+      with: {
+        memberships: {
+          with: { budget: true },
+        },
+      },
+    });
+
+    for (const group of groups) {
+      if (!group.spendingLimit || group.memberships.length === 0) continue;
+
+      const totalAllocated = group.memberships.reduce((sum, m) => {
+        const metadata = m.budget.metadata as Record<string, unknown>;
+        return sum + Math.abs((metadata?.allocatedAmount as number) ?? 0);
+      }, 0);
+
+      if (totalAllocated === 0) continue;
+
+      const ratio = totalAllocated / group.spendingLimit;
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      if (ratio > 1.2) {
+        const suggestedLimit = Math.ceil(totalAllocated * 1.1);
+        recommendations.push({
+          type: "adjust_group_limit",
+          priority: ratio > 1.5 ? "high" : "medium",
+          title: `Increase "${group.name}" spending limit`,
+          description: `Member budgets total ${Math.round(totalAllocated)} but group limit is ${group.spendingLimit}. Suggest increasing to ${suggestedLimit}.`,
+          confidence: Math.min(95, Math.round(60 + (ratio - 1) * 40)),
+          metadata: {
+            parentGroupId: group.id,
+            suggestedGroupName: group.name,
+            groupSpendingLimit: suggestedLimit,
+          },
+          expiresAt: expiresAt.toISOString(),
+        });
+      } else if (ratio < 0.5 && group.spendingLimit > 100) {
+        const suggestedLimit = Math.ceil(totalAllocated * 1.2);
+        recommendations.push({
+          type: "adjust_group_limit",
+          priority: "low",
+          title: `Decrease "${group.name}" spending limit`,
+          description: `Member budgets total ${Math.round(totalAllocated)} but group limit is ${group.spendingLimit}. Suggest decreasing to ${suggestedLimit}.`,
+          confidence: Math.round(50 + (1 - ratio) * 30),
+          metadata: {
+            parentGroupId: group.id,
+            suggestedGroupName: group.name,
+            groupSpendingLimit: suggestedLimit,
+          },
+          expiresAt: expiresAt.toISOString(),
+        });
+      }
+    }
+
+    return recommendations;
   }
 }

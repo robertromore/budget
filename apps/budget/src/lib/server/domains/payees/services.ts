@@ -15,7 +15,7 @@ import type {
   RecordPredictionFeedbackInput,
   WorkspacePreferences,
 } from "$lib/schema";
-import { budgets, predictionFeedback, transactions, workspaces } from "$lib/schema";
+import { budgets, categories, predictionFeedback, transactions, workspaces } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { compact, isEmptyObject, isNotEmptyObject } from "$lib/utils";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
@@ -24,7 +24,7 @@ import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { currentDate, nowISOString, toISOString } from "$lib/utils/dates";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize, toTitleCase } from "$lib/utils/string-utilities";
 import { BudgetAllocationService } from "./budget-allocation";
 import { CategoryLearningService } from "./category-learning";
 import {
@@ -778,8 +778,10 @@ export class PayeeService {
           break;
         }
         case "fix_data": {
-          // Placeholder - data fixing would be specific to your needs
-          result.details.push("Data fixing not yet implemented");
+          const fixResult = await this.fixPayeeData(workspaceId, dryRun);
+          result.affectedCount = fixResult.affectedCount;
+          result.details = fixResult.details;
+          affectedPayees.push(...fixResult.affectedPayeeIds);
           break;
         }
         case "merge_duplicates": {
@@ -797,6 +799,202 @@ export class PayeeService {
       operationResults,
       canUndo: !dryRun && affectedPayees.length > 0,
     };
+  }
+
+  /**
+   * Fix payee data integrity issues
+   */
+  private async fixPayeeData(
+    workspaceId: number,
+    dryRun: boolean
+  ): Promise<{
+    affectedCount: number;
+    details: string[];
+    affectedPayeeIds: number[];
+  }> {
+    const details: string[] = [];
+    const affectedPayeeIds: number[] = [];
+    let affectedCount = 0;
+
+    const allPayees = await this.repository.findAllPayees(workspaceId);
+
+    // 1. Recalculate derived fields (avgAmount, paymentFrequency, lastTransactionDate)
+    for (const payee of allPayees) {
+      try {
+        if (dryRun) continue;
+        await this.repository.updateCalculatedFields(payee.id, workspaceId);
+      } catch (error) {
+        details.push(
+          `Error recalculating fields for "${payee.name}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }
+    if (dryRun) {
+      details.push(`Would recalculate derived fields for ${allPayees.length} payees`);
+    } else {
+      details.push(`Recalculated derived fields for ${allPayees.length} payees`);
+    }
+
+    // 2. Fix orphaned foreign keys (defaultCategoryId, defaultBudgetId)
+    const validCategoryIds = new Set(
+      (
+        await db
+          .select({ id: categories.id })
+          .from(categories)
+          .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)))
+      ).map((c) => c.id)
+    );
+    const validBudgetIds = new Set(
+      (
+        await db
+          .select({ id: budgets.id })
+          .from(budgets)
+          .where(and(eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)))
+      ).map((b) => b.id)
+    );
+
+    for (const payee of allPayees) {
+      try {
+        const fixes: Record<string, null> = {};
+        const fixDescriptions: string[] = [];
+
+        if (payee.defaultCategoryId && !validCategoryIds.has(payee.defaultCategoryId)) {
+          fixes.defaultCategoryId = null;
+          fixDescriptions.push(`orphaned defaultCategoryId=${payee.defaultCategoryId}`);
+        }
+        if (payee.defaultBudgetId && !validBudgetIds.has(payee.defaultBudgetId)) {
+          fixes.defaultBudgetId = null;
+          fixDescriptions.push(`orphaned defaultBudgetId=${payee.defaultBudgetId}`);
+        }
+
+        if (fixDescriptions.length > 0) {
+          if (!dryRun) {
+            await this.updatePayee(payee.id, fixes, workspaceId);
+          }
+          affectedCount++;
+          affectedPayeeIds.push(payee.id);
+          details.push(
+            `${dryRun ? "Would fix" : "Fixed"} "${payee.name}": ${fixDescriptions.join(", ")}`
+          );
+        }
+      } catch (error) {
+        details.push(
+          `Error fixing FKs for "${payee.name}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }
+
+    // 3. Normalize names (trim whitespace, fix ALL CAPS / all lowercase)
+    for (const payee of allPayees) {
+      try {
+        if (!payee.name) continue;
+
+        let normalizedName = payee.name.trim().replace(/\s+/g, " ");
+        if (
+          normalizedName.length > 1 &&
+          (normalizedName === normalizedName.toUpperCase() ||
+            normalizedName === normalizedName.toLowerCase())
+        ) {
+          normalizedName = toTitleCase(normalizedName);
+        }
+
+        if (normalizedName !== payee.name) {
+          if (!dryRun) {
+            await this.updatePayee(payee.id, { name: normalizedName }, workspaceId);
+          }
+          affectedCount++;
+          if (!affectedPayeeIds.includes(payee.id)) {
+            affectedPayeeIds.push(payee.id);
+          }
+          details.push(
+            `${dryRun ? "Would normalize" : "Normalized"} name: "${payee.name}" -> "${normalizedName}"`
+          );
+        }
+      } catch (error) {
+        details.push(
+          `Error normalizing name for "${payee.name}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }
+
+    // 4. Regenerate missing/empty slugs
+    for (const payee of allPayees) {
+      try {
+        if (payee.slug && payee.slug.trim() !== "") continue;
+        if (!payee.name) continue;
+
+        let baseSlug = this.generateSlug(payee.name);
+        let slug = baseSlug;
+        let counter = 1;
+
+        while (await this.repository.findBySlug(slug, workspaceId)) {
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+
+        if (!dryRun) {
+          await this.repository.updateSlug(payee.id, slug, workspaceId);
+        }
+        affectedCount++;
+        if (!affectedPayeeIds.includes(payee.id)) {
+          affectedPayeeIds.push(payee.id);
+        }
+        details.push(
+          `${dryRun ? "Would regenerate" : "Regenerated"} slug for "${payee.name}": "${slug}"`
+        );
+      } catch (error) {
+        details.push(
+          `Error fixing slug for "${payee.name}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }
+
+    // 5. Clean malformed tags
+    for (const payee of allPayees) {
+      try {
+        if (!payee.tags) continue;
+
+        let cleanedTags: string[];
+        try {
+          const parsed = JSON.parse(payee.tags as string);
+          if (!Array.isArray(parsed)) {
+            cleanedTags = [];
+          } else {
+            cleanedTags = [
+              ...new Set(
+                parsed
+                  .map((t: unknown) => String(t).trim().toLowerCase())
+                  .filter((t: string) => t.length > 0)
+              ),
+            ];
+          }
+        } catch {
+          cleanedTags = [];
+        }
+
+        const serialized = JSON.stringify(cleanedTags);
+        if (serialized !== payee.tags) {
+          if (!dryRun) {
+            await this.updatePayee(payee.id, { tags: cleanedTags }, workspaceId);
+          }
+          affectedCount++;
+          if (!affectedPayeeIds.includes(payee.id)) {
+            affectedPayeeIds.push(payee.id);
+          }
+          details.push(
+            `${dryRun ? "Would clean" : "Cleaned"} tags for "${payee.name}"`
+          );
+        }
+      } catch (error) {
+        details.push(
+          `Error cleaning tags for "${payee.name}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }
+
+    details.push(`Fix data summary: ${affectedCount} fixes across ${affectedPayeeIds.length} payees`);
+
+    return { affectedCount, details, affectedPayeeIds };
   }
 
   /**

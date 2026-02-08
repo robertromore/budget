@@ -21,7 +21,7 @@ import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { BudgetService } from "./services";
 
 export interface AutomationResult {
@@ -293,11 +293,36 @@ export class BudgetGroupAutomationService {
     recommendation: BudgetRecommendation,
     activityId: number
   ): Promise<AutomationResult> {
-    // TODO: Implement in next iteration
+    const groupId = recommendation.metadata.parentGroupId;
+    const budgetIds = recommendation.metadata.suggestedGroupMembers;
+
+    if (typeof groupId !== "number" || !Array.isArray(budgetIds) || budgetIds.length === 0) {
+      return { success: false, activityId, error: "Missing required metadata for group assignment" };
+    }
+
+    const group = await db.query.budgetGroups.findFirst({
+      where: eq(budgetGroups.id, groupId),
+    });
+    if (!group) {
+      return { success: false, activityId, error: `Group ${groupId} not found` };
+    }
+
+    for (const budgetId of budgetIds) {
+      await db
+        .insert(budgetGroupMemberships)
+        .values({ budgetId, groupId })
+        .onConflictDoNothing();
+    }
+
+    await db
+      .update(budgetAutomationActivity)
+      .set({ groupId })
+      .where(eq(budgetAutomationActivity.id, activityId));
+
     return {
-      success: false,
+      success: true,
       activityId,
-      error: "Not yet implemented",
+      message: `Assigned ${budgetIds.length} budget(s) to group "${group.name}"`,
     };
   }
 
@@ -308,11 +333,39 @@ export class BudgetGroupAutomationService {
     recommendation: BudgetRecommendation,
     activityId: number
   ): Promise<AutomationResult> {
-    // TODO: Implement in next iteration
+    const groupId = recommendation.metadata.parentGroupId;
+    const newLimit = recommendation.metadata.groupSpendingLimit;
+
+    if (typeof groupId !== "number" || typeof newLimit !== "number") {
+      return { success: false, activityId, error: "Missing required metadata for limit adjustment" };
+    }
+
+    const group = await db.query.budgetGroups.findFirst({
+      where: eq(budgetGroups.id, groupId),
+    });
+    if (!group) {
+      return { success: false, activityId, error: `Group ${groupId} not found` };
+    }
+
+    const oldLimit = group.spendingLimit;
+
+    await db
+      .update(budgetGroups)
+      .set({ spendingLimit: newLimit, updatedAt: getCurrentTimestamp() })
+      .where(eq(budgetGroups.id, groupId));
+
+    await db
+      .update(budgetAutomationActivity)
+      .set({
+        groupId,
+        metadata: { previousSpendingLimit: oldLimit, newSpendingLimit: newLimit },
+      })
+      .where(eq(budgetAutomationActivity.id, activityId));
+
     return {
-      success: false,
+      success: true,
       activityId,
-      error: "Not yet implemented",
+      message: `Adjusted "${group.name}" limit from ${oldLimit ?? "none"} to ${newLimit}`,
     };
   }
 
@@ -323,11 +376,69 @@ export class BudgetGroupAutomationService {
     recommendation: BudgetRecommendation,
     activityId: number
   ): Promise<AutomationResult> {
-    // TODO: Implement in next iteration
+    const targetGroupId = recommendation.metadata.parentGroupId;
+    const sourceBudgetIds = recommendation.metadata.suggestedGroupMembers;
+
+    if (typeof targetGroupId !== "number" || !Array.isArray(sourceBudgetIds)) {
+      return { success: false, activityId, error: "Missing required metadata for group merge" };
+    }
+
+    const targetGroup = await db.query.budgetGroups.findFirst({
+      where: eq(budgetGroups.id, targetGroupId),
+    });
+    if (!targetGroup) {
+      return { success: false, activityId, error: `Target group ${targetGroupId} not found` };
+    }
+
+    // Find the source group (the group these budgets currently belong to)
+    const sourceMembership = await db.query.budgetGroupMemberships.findFirst({
+      where: eq(budgetGroupMemberships.budgetId, sourceBudgetIds[0]!),
+      with: { group: true },
+    });
+
+    const sourceGroup = sourceMembership?.group;
+    if (!sourceGroup || sourceGroup.id === targetGroupId) {
+      return { success: false, activityId, error: "Could not identify source group for merge" };
+    }
+
+    // Move memberships to target group
+    for (const budgetId of sourceBudgetIds) {
+      await db
+        .delete(budgetGroupMemberships)
+        .where(
+          and(
+            eq(budgetGroupMemberships.budgetId, budgetId),
+            eq(budgetGroupMemberships.groupId, sourceGroup.id)
+          )
+        );
+      await db
+        .insert(budgetGroupMemberships)
+        .values({ budgetId, groupId: targetGroupId })
+        .onConflictDoNothing();
+    }
+
+    // Store source group info for rollback before deleting
+    await db
+      .update(budgetAutomationActivity)
+      .set({
+        groupId: targetGroupId,
+        metadata: {
+          mergedFromGroupId: sourceGroup.id,
+          mergedFromGroupName: sourceGroup.name,
+          mergedFromGroupDescription: sourceGroup.description,
+          mergedFromGroupSpendingLimit: sourceGroup.spendingLimit,
+          mergedBudgetIds: sourceBudgetIds,
+        },
+      })
+      .where(eq(budgetAutomationActivity.id, activityId));
+
+    // Delete the now-empty source group
+    await this.service.deleteBudgetGroup(sourceGroup.id);
+
     return {
-      success: false,
+      success: true,
       activityId,
-      error: "Not yet implemented",
+      message: `Merged "${sourceGroup.name}" into "${targetGroup.name}" (${sourceBudgetIds.length} budgets moved)`,
     };
   }
 
@@ -519,8 +630,23 @@ export class BudgetGroupAutomationService {
   private async rollbackGroupAssignment(
     activity: typeof budgetAutomationActivity.$inferSelect
   ): Promise<void> {
-    // TODO: Implement in next iteration
-    throw new Error("Rollback for group assignment not yet implemented");
+    const budgetIds = activity.budgetIds;
+    const groupId = activity.groupId;
+
+    if (!groupId || !Array.isArray(budgetIds) || budgetIds.length === 0) {
+      throw new Error("Missing data to rollback group assignment");
+    }
+
+    for (const budgetId of budgetIds) {
+      await db
+        .delete(budgetGroupMemberships)
+        .where(
+          and(
+            eq(budgetGroupMemberships.budgetId, budgetId),
+            eq(budgetGroupMemberships.groupId, groupId)
+          )
+        );
+    }
   }
 
   /**
@@ -529,8 +655,17 @@ export class BudgetGroupAutomationService {
   private async rollbackLimitAdjustment(
     activity: typeof budgetAutomationActivity.$inferSelect
   ): Promise<void> {
-    // TODO: Implement in next iteration
-    throw new Error("Rollback for limit adjustment not yet implemented");
+    if (!activity.groupId) {
+      throw new Error("No group ID found in activity");
+    }
+
+    const metadata = activity.metadata as Record<string, unknown>;
+    const previousLimit = metadata?.previousSpendingLimit as number | null;
+
+    await db
+      .update(budgetGroups)
+      .set({ spendingLimit: previousLimit ?? null, updatedAt: getCurrentTimestamp() })
+      .where(eq(budgetGroups.id, activity.groupId));
   }
 
   /**
@@ -539,8 +674,39 @@ export class BudgetGroupAutomationService {
   private async rollbackGroupMerge(
     activity: typeof budgetAutomationActivity.$inferSelect
   ): Promise<void> {
-    // TODO: Implement in next iteration
-    throw new Error("Rollback for group merge not yet implemented");
+    const metadata = activity.metadata as Record<string, unknown>;
+    const mergedFromName = metadata?.mergedFromGroupName as string;
+    const mergedFromDesc = metadata?.mergedFromGroupDescription as string | null;
+    const mergedFromLimit = metadata?.mergedFromGroupSpendingLimit as number | null;
+    const mergedBudgetIds = metadata?.mergedBudgetIds as number[];
+    const targetGroupId = activity.groupId;
+
+    if (!mergedFromName || !Array.isArray(mergedBudgetIds) || !targetGroupId) {
+      throw new Error("Missing data to rollback group merge");
+    }
+
+    // Recreate the source group
+    const restoredGroup = await this.service.createBudgetGroup({
+      name: mergedFromName,
+      description: mergedFromDesc,
+      spendingLimit: mergedFromLimit,
+    });
+
+    // Move budgets back from target to restored source
+    for (const budgetId of mergedBudgetIds) {
+      await db
+        .delete(budgetGroupMemberships)
+        .where(
+          and(
+            eq(budgetGroupMemberships.budgetId, budgetId),
+            eq(budgetGroupMemberships.groupId, targetGroupId)
+          )
+        );
+      await db
+        .insert(budgetGroupMemberships)
+        .values({ budgetId, groupId: restoredGroup.id })
+        .onConflictDoNothing();
+    }
   }
 
   /**

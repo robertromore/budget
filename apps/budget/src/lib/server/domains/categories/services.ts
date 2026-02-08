@@ -12,7 +12,10 @@ import { isEmptyObject } from "$lib/utils";
 import { defaultCategories } from "./default-categories";
 import {
   CategoryRepository,
+  type CategoryDetailedStats,
+  type CategoryMonthlySpending,
   type CategoryStats,
+  type CategoryTopPayee,
   type CategoryWithGroup,
   type CategoryWithStats,
   type UpdateCategoryData,
@@ -475,6 +478,47 @@ export class CategoryService {
   }
 
   /**
+   * Get detailed category statistics including monthly average and amount range
+   */
+  async getCategoryDetailedStats(
+    id: number,
+    workspaceId: number
+  ): Promise<CategoryDetailedStats> {
+    await this.getCategoryById(id, workspaceId); // Verify exists
+    return await this.repository.getDetailedStats(id, workspaceId);
+  }
+
+  /**
+   * Get top payees for a category by transaction amount
+   */
+  async getCategoryTopPayees(
+    categoryId: number,
+    limit: number,
+    workspaceId: number
+  ): Promise<CategoryTopPayee[]> {
+    if (limit <= 0 || limit > 100) {
+      throw new ValidationError("Limit must be between 1 and 100");
+    }
+    await this.getCategoryById(categoryId, workspaceId); // Verify exists
+    return await this.repository.getTopPayeesForCategory(categoryId, limit, workspaceId);
+  }
+
+  /**
+   * Get monthly spending history for a category
+   */
+  async getCategoryMonthlySpending(
+    categoryId: number,
+    months: number,
+    workspaceId: number
+  ): Promise<CategoryMonthlySpending[]> {
+    if (months <= 0 || months > 60) {
+      throw new ValidationError("Months must be between 1 and 60");
+    }
+    await this.getCategoryById(categoryId, workspaceId); // Verify exists
+    return await this.repository.getMonthlySpendingHistory(categoryId, months, workspaceId);
+  }
+
+  /**
    * Get category analytics with trends
    */
   async getCategoryAnalytics(id: number, workspaceId: number): Promise<CategoryAnalytics> {
@@ -509,12 +553,19 @@ export class CategoryService {
     }
 
     // Verify both categories exist
-    await this.getCategoryById(sourceId, workspaceId);
-    await this.getCategoryById(targetId, workspaceId);
+    const source = await this.getCategoryById(sourceId, workspaceId);
+    const target = await this.getCategoryById(targetId, workspaceId);
 
-    // Note: Transaction reassignment would be handled by TransactionService
-    // This is a placeholder for the merge operation business logic
-    throw new Error("Category merge functionality not yet implemented");
+    // Reassign all references from source to target
+    await this.repository.reassignTransactions(sourceId, targetId, workspaceId);
+    await this.repository.reassignSchedules(sourceId, targetId, workspaceId);
+    await this.repository.reassignPayeeDefaults(sourceId, targetId, workspaceId);
+    await this.repository.reassignChildren(sourceId, target.parentId, workspaceId);
+    await this.repository.reassignBudgetCategories(sourceId, targetId, workspaceId);
+    await this.repository.reassignEnvelopeAllocations(sourceId, targetId, workspaceId);
+
+    // Soft-delete the source category
+    await this.repository.softDelete(sourceId, workspaceId);
   }
 
   /**

@@ -334,6 +334,16 @@ export class PayeeRepository extends BaseRepository<
   }
 
   /**
+   * Update payee slug directly (used by data fixing operations)
+   */
+  async updateSlug(id: number, slug: string, workspaceId: number): Promise<void> {
+    await db
+      .update(payees)
+      .set({ slug, updatedAt: getCurrentTimestamp() })
+      .where(and(eq(payees.id, id), eq(payees.workspaceId, workspaceId)));
+  }
+
+  /**
    * Bulk soft delete payees with slug archiving
    */
   override async bulkDelete(ids: number[], workspaceId?: number): Promise<void> {

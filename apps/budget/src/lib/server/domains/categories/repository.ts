@@ -1,5 +1,5 @@
-import { categories, transactions } from "$lib/schema";
-import { budgets } from "$lib/schema/budgets";
+import { categories, payees, schedules, transactions } from "$lib/schema";
+import { budgetCategories, budgets } from "$lib/schema/budgets";
 import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
 import type {
   Category,
@@ -15,7 +15,7 @@ import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import type { CategoryTreeNode } from "$lib/types/categories";
 import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
@@ -77,6 +77,26 @@ export interface CategoryWithGroup extends Category {
   groupName: string | null;
   groupColor: string | null;
   groupIcon: string | null;
+}
+
+export interface CategoryDetailedStats extends CategoryStats {
+  monthlyAverage: number;
+  minAmount: number;
+  maxAmount: number;
+}
+
+export interface CategoryTopPayee {
+  payeeId: number;
+  payeeName: string;
+  payeeSlug: string;
+  transactionCount: number;
+  totalAmount: number;
+}
+
+export interface CategoryMonthlySpending {
+  month: string;
+  amount: number;
+  transactionCount: number;
 }
 
 /**
@@ -738,5 +758,300 @@ export class CategoryRepository extends BaseRepository<
       groupColor: row.groupColor,
       groupIcon: row.groupIcon,
     }));
+  }
+
+  /**
+   * Get detailed category statistics including monthly average and amount range
+   */
+  async getDetailedStats(id: number, workspaceId: number): Promise<CategoryDetailedStats> {
+    // Get basic stats
+    const basicStats = await this.getStats(id, workspaceId);
+
+    // Get min/max amounts
+    const [amountRange] = await db
+      .select({
+        minAmount: sql<number>`COALESCE(MIN(ABS(${transactions.amount})), 0)`,
+        maxAmount: sql<number>`COALESCE(MAX(ABS(${transactions.amount})), 0)`,
+      })
+      .from(transactions)
+      .where(and(eq(transactions.categoryId, id), isNull(transactions.deletedAt)));
+
+    // Calculate monthly average (based on distinct months with transactions)
+    const [monthlyData] = await db
+      .select({
+        monthCount: sql<number>`COUNT(DISTINCT strftime('%Y-%m', ${transactions.date}))`,
+        totalAmount: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+      })
+      .from(transactions)
+      .where(and(eq(transactions.categoryId, id), isNull(transactions.deletedAt)));
+
+    const monthCount = monthlyData?.monthCount || 1;
+    const monthlyAverage =
+      monthCount > 0 ? (monthlyData?.totalAmount || 0) / monthCount : 0;
+
+    return {
+      ...basicStats,
+      monthlyAverage,
+      minAmount: amountRange?.minAmount || 0,
+      maxAmount: amountRange?.maxAmount || 0,
+    };
+  }
+
+  /**
+   * Get top payees for a category by transaction amount
+   */
+  async getTopPayeesForCategory(
+    categoryId: number,
+    limit: number,
+    workspaceId: number
+  ): Promise<CategoryTopPayee[]> {
+    const results = await db
+      .select({
+        payeeId: payees.id,
+        payeeName: payees.name,
+        payeeSlug: payees.slug,
+        transactionCount: count(transactions.id),
+        totalAmount: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+      })
+      .from(transactions)
+      .innerJoin(payees, eq(transactions.payeeId, payees.id))
+      .where(
+        and(
+          eq(transactions.categoryId, categoryId),
+          isNull(transactions.deletedAt),
+          isNull(payees.deletedAt)
+        )
+      )
+      .groupBy(payees.id, payees.name, payees.slug)
+      .orderBy(sql`ABS(SUM(${transactions.amount})) DESC`)
+      .limit(limit);
+
+    return results.map((row) => ({
+      payeeId: row.payeeId,
+      payeeName: row.payeeName ?? "Unknown Payee",
+      payeeSlug: row.payeeSlug,
+      transactionCount: row.transactionCount,
+      totalAmount: row.totalAmount,
+    }));
+  }
+
+  /**
+   * Get monthly spending history for a category
+   */
+  async getMonthlySpendingHistory(
+    categoryId: number,
+    months: number,
+    workspaceId: number
+  ): Promise<CategoryMonthlySpending[]> {
+    // Calculate the cutoff date
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - months);
+    const cutoffDateStr = cutoffDate.toISOString().split("T")[0];
+
+    const results = await db
+      .select({
+        month: sql<string>`strftime('%Y-%m', ${transactions.date})`,
+        amount: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+        transactionCount: count(transactions.id),
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.categoryId, categoryId),
+          isNull(transactions.deletedAt),
+          gte(transactions.date, cutoffDateStr)
+        )
+      )
+      .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)
+      .orderBy(sql`strftime('%Y-%m', ${transactions.date})`);
+
+    return results.map((row) => ({
+      month: row.month,
+      amount: row.amount,
+      transactionCount: row.transactionCount,
+    }));
+  }
+
+  /**
+   * Reassign all transactions from one category to another
+   */
+  async reassignTransactions(
+    sourceCategoryId: number,
+    targetCategoryId: number,
+    workspaceId: number
+  ): Promise<void> {
+    await db
+      .update(transactions)
+      .set({ categoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
+      .where(
+        and(eq(transactions.categoryId, sourceCategoryId), isNull(transactions.deletedAt))
+      );
+  }
+
+  /**
+   * Reassign all schedules from one category to another
+   */
+  async reassignSchedules(
+    sourceCategoryId: number,
+    targetCategoryId: number,
+    workspaceId: number
+  ): Promise<void> {
+    await db
+      .update(schedules)
+      .set({ categoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
+      .where(eq(schedules.categoryId, sourceCategoryId));
+  }
+
+  /**
+   * Reassign payee default category references from one category to another
+   */
+  async reassignPayeeDefaults(
+    sourceCategoryId: number,
+    targetCategoryId: number,
+    workspaceId: number
+  ): Promise<void> {
+    await db
+      .update(payees)
+      .set({ defaultCategoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
+      .where(
+        and(
+          eq(payees.defaultCategoryId, sourceCategoryId),
+          eq(payees.workspaceId, workspaceId),
+          isNull(payees.deletedAt)
+        )
+      );
+  }
+
+  /**
+   * Reassign child categories to a new parent
+   */
+  async reassignChildren(
+    sourceCategoryId: number,
+    targetParentId: number | null,
+    workspaceId: number
+  ): Promise<void> {
+    await db
+      .update(categories)
+      .set({ parentId: targetParentId, updatedAt: getCurrentTimestamp() })
+      .where(
+        and(
+          eq(categories.parentId, sourceCategoryId),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
+        )
+      );
+  }
+
+  /**
+   * Reassign budget_category entries from one category to another.
+   * Deletes source entries where target already has an entry for the same budget (unique constraint).
+   */
+  async reassignBudgetCategories(
+    sourceCategoryId: number,
+    targetCategoryId: number,
+    workspaceId: number
+  ): Promise<void> {
+    // Find existing target entries to detect conflicts
+    const existingTargetBudgetIds = new Set(
+      (
+        await db
+          .select({ budgetId: budgetCategories.budgetId })
+          .from(budgetCategories)
+          .where(eq(budgetCategories.categoryId, targetCategoryId))
+      ).map((r) => r.budgetId)
+    );
+
+    // Find source entries
+    const sourceEntries = await db
+      .select({ id: budgetCategories.id, budgetId: budgetCategories.budgetId })
+      .from(budgetCategories)
+      .where(eq(budgetCategories.categoryId, sourceCategoryId));
+
+    if (sourceEntries.length === 0) return;
+
+    const toDelete: number[] = [];
+    const toReassign: number[] = [];
+
+    for (const entry of sourceEntries) {
+      if (existingTargetBudgetIds.has(entry.budgetId)) {
+        toDelete.push(entry.id);
+      } else {
+        toReassign.push(entry.id);
+      }
+    }
+
+    // Delete conflicting entries
+    if (toDelete.length > 0) {
+      await db.delete(budgetCategories).where(inArray(budgetCategories.id, toDelete));
+    }
+
+    // Reassign non-conflicting entries
+    if (toReassign.length > 0) {
+      await db
+        .update(budgetCategories)
+        .set({ categoryId: targetCategoryId })
+        .where(inArray(budgetCategories.id, toReassign));
+    }
+
+  }
+
+  /**
+   * Reassign envelope_allocation entries from one category to another.
+   * Deletes source entries where target already has an entry for the same budget+period (unique constraint).
+   */
+  async reassignEnvelopeAllocations(
+    sourceCategoryId: number,
+    targetCategoryId: number,
+    workspaceId: number
+  ): Promise<void> {
+    // Find existing target entries to detect conflicts (unique on budgetId+categoryId+periodInstanceId)
+    const existingTargetKeys = new Set(
+      (
+        await db
+          .select({
+            budgetId: envelopeAllocations.budgetId,
+            periodInstanceId: envelopeAllocations.periodInstanceId,
+          })
+          .from(envelopeAllocations)
+          .where(eq(envelopeAllocations.categoryId, targetCategoryId))
+      ).map((r) => `${r.budgetId}:${r.periodInstanceId}`)
+    );
+
+    // Find source entries
+    const sourceEntries = await db
+      .select({
+        id: envelopeAllocations.id,
+        budgetId: envelopeAllocations.budgetId,
+        periodInstanceId: envelopeAllocations.periodInstanceId,
+      })
+      .from(envelopeAllocations)
+      .where(eq(envelopeAllocations.categoryId, sourceCategoryId));
+
+    if (sourceEntries.length === 0) return;
+
+    const toDelete: number[] = [];
+    const toReassign: number[] = [];
+
+    for (const entry of sourceEntries) {
+      const key = `${entry.budgetId}:${entry.periodInstanceId}`;
+      if (existingTargetKeys.has(key)) {
+        toDelete.push(entry.id);
+      } else {
+        toReassign.push(entry.id);
+      }
+    }
+
+    // Delete conflicting entries
+    if (toDelete.length > 0) {
+      await db.delete(envelopeAllocations).where(inArray(envelopeAllocations.id, toDelete));
+    }
+
+    // Reassign non-conflicting entries
+    if (toReassign.length > 0) {
+      await db
+        .update(envelopeAllocations)
+        .set({ categoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
+        .where(inArray(envelopeAllocations.id, toReassign));
+    }
   }
 }
