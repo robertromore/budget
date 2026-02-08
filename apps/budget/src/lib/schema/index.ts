@@ -52,19 +52,81 @@ export * from "./subscriptions-table";
 // Bank connection schemas
 export * from "./account-connections";
 
+// Account documents schemas
+export * from "./account-documents";
+
+// Metric alert schemas
+export * from "./metric-alerts";
+
 // ML-related schemas
 export * from "./ml-models";
 export * from "./prediction-feedback";
 
-// Import table definitions for HSA relations
+// Import table definitions for relations that need to be defined here
+// to avoid circular dependencies between schema files
 import { relations } from "drizzle-orm";
 import { accounts } from "./accounts";
+import { budgetAutomationSettings } from "./budget-automation-settings";
+import { budgets } from "./budgets";
+import { categories } from "./categories";
+import { categoryGroups } from "./category-groups";
+import { detectedPatterns } from "./detected-patterns";
 import { expenseReceipts } from "./expense-receipts";
 import { hsaClaims } from "./hsa-claims";
+import { importProfiles } from "./import-profiles";
 import { medicalExpenses } from "./medical-expenses";
+import { payeeCategoryCorrections } from "./payee-category-corrections";
+import { payees } from "./payees";
+import { schedules } from "./schedules";
 import { transactions } from "./transactions";
+import { users } from "./users";
+import { views } from "./views";
+import { workspaces } from "./workspaces";
 
-// Define HSA-related relations here to avoid circular dependencies
+// Accounts relations (defined here to break accounts ↔ transactions cycle)
+export const accountsRelations = relations(accounts, ({ one, many }) => ({
+  workspace: one(workspaces, {
+    fields: [accounts.workspaceId],
+    references: [workspaces.id],
+  }),
+  transactions: many(transactions, { relationName: "transactionAccount" }),
+  transferTransactions: many(transactions, { relationName: "transactionTransferAccount" }),
+}));
+
+// Workspace relations (defined here to break workspaces ↔ accounts cycle)
+export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [workspaces.ownerId],
+    references: [users.id],
+  }),
+  accounts: many(accounts),
+  categories: many(categories),
+  categoryGroups: many(categoryGroups),
+  payees: many(payees),
+  budgets: many(budgets),
+  schedules: many(schedules),
+  views: many(views),
+  budgetAutomationSettings: many(budgetAutomationSettings),
+  detectedPatterns: many(detectedPatterns),
+  payeeCategoryCorrections: many(payeeCategoryCorrections),
+  importProfiles: many(importProfiles),
+}));
+
+// User relations (defined here to break accounts → workspaces → users → accounts cycle)
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  categories: many(categories),
+  categoryGroups: many(categoryGroups),
+  payees: many(payees),
+  budgets: many(budgets),
+  schedules: many(schedules),
+  views: many(views),
+  budgetAutomationSettings: many(budgetAutomationSettings),
+  detectedPatterns: many(detectedPatterns),
+  payeeCategoryCorrections: many(payeeCategoryCorrections),
+}));
+
+// HSA-related relations (defined here to break multi-way cycles)
 export const medicalExpensesRelations = relations(medicalExpenses, ({ one, many }) => ({
   transaction: one(transactions, {
     fields: [medicalExpenses.transactionId],

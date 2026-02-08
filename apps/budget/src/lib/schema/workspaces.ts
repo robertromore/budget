@@ -1,22 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import type { EncryptionLevel, RiskFactorSettings } from "../types/encryption";
 import type { OnboardingFormData, OnboardingStatus } from "../types/onboarding";
-import { accounts } from "./accounts";
-import { budgetAutomationSettings } from "./budget-automation-settings";
-import { budgets } from "./budgets";
-import { categories } from "./categories";
-import { categoryGroups } from "./category-groups";
-import { detectedPatterns } from "./detected-patterns";
-import { importProfiles } from "./import-profiles";
-import { payeeCategoryCorrections } from "./payee-category-corrections";
-import { payees } from "./payees";
-import { schedules } from "./schedules";
 import { users } from "./users";
-import { views } from "./views";
 
 export const workspaces = sqliteTable(
   "workspace",
@@ -177,6 +166,31 @@ export const DEFAULT_WEB_SEARCH_PREFERENCES: WebSearchPreferences = {
   provider: "duckduckgo",
 };
 
+// Document Extraction Method types
+export type DocumentExtractionMethod = "auto" | "pdf-parse" | "tesseract" | "ai-vision";
+
+// Document Extraction preferences interface
+export interface DocumentExtractionPreferences {
+  enabled: boolean; // Master toggle for extraction
+  method: DocumentExtractionMethod; // Selected extraction method
+  autoExtractOnUpload: boolean; // Trigger extraction after upload
+  aiVisionProvider: LLMProvider | null; // Provider for AI vision (null = use default)
+  fallbackToOcr: boolean; // If pdf-parse fails, try OCR
+  fallbackToAi: boolean; // If OCR fails, try AI vision
+  tesseractLanguage: string; // OCR language (default: 'eng')
+}
+
+// Default Document Extraction preferences
+export const DEFAULT_DOCUMENT_EXTRACTION_PREFERENCES: DocumentExtractionPreferences = {
+  enabled: true,
+  method: "auto", // Auto selects based on file type
+  autoExtractOnUpload: true,
+  aiVisionProvider: null, // Use workspace default LLM provider
+  fallbackToOcr: true,
+  fallbackToAi: false, // Disabled by default (cost consideration)
+  tesseractLanguage: "eng",
+};
+
 // Intelligence Input Mode preferences
 export interface IntelligenceInputPreferences {
   enabled: boolean; // Whether intelligence input mode is available
@@ -266,6 +280,7 @@ export interface WorkspacePreferences {
   onboardingData?: OnboardingFormData; // Financial profile data from onboarding wizard
   encryption?: WorkspaceEncryptionPreferences; // Encryption settings for this workspace
   connectionProviders?: ConnectionProviderPreferences; // Bank connection provider settings
+  documentExtraction?: DocumentExtractionPreferences; // Document text extraction settings
 }
 
 // Zod schemas
@@ -310,29 +325,8 @@ export const formInsertWorkspaceSchema = insertWorkspaceSchema.omit({
   deletedAt: true,
 });
 
-// Import workspace member types for relations (avoid circular dependency)
-// Note: workspaceMembers and workspaceInvitations imported dynamically in relations
-
-// Relations
-export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
-  // Ownership
-  owner: one(users, {
-    fields: [workspaces.ownerId],
-    references: [users.id],
-  }),
-  // Entity relations
-  accounts: many(accounts),
-  categories: many(categories),
-  categoryGroups: many(categoryGroups),
-  payees: many(payees),
-  budgets: many(budgets),
-  schedules: many(schedules),
-  views: many(views),
-  budgetAutomationSettings: many(budgetAutomationSettings),
-  detectedPatterns: many(detectedPatterns),
-  payeeCategoryCorrections: many(payeeCategoryCorrections),
-  importProfiles: many(importProfiles),
-}));
+// NOTE: workspacesRelations is defined in src/lib/schema/index.ts to avoid
+// circular dependency with accounts.ts (workspaces ↔ accounts)
 
 export type Workspace = typeof workspaces.$inferSelect;
 export type NewWorkspace = typeof workspaces.$inferInsert;

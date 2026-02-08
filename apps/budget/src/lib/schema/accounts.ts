@@ -4,12 +4,11 @@
 
 import { isValidIconName } from "../utils/icon-validation";
 import { createId } from "@paralleldrive/cuid2";
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import type { Transaction } from "./transactions";
-import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
 import type { EncryptionLevel } from "../types/encryption";
 
@@ -119,14 +118,8 @@ export const accounts = sqliteTable(
   ]
 );
 
-export const accountsRelations = relations(accounts, ({ one, many }) => ({
-  workspace: one(workspaces, {
-    fields: [accounts.workspaceId],
-    references: [workspaces.id],
-  }),
-  transactions: many(transactions, { relationName: "transactionAccount" }),
-  transferTransactions: many(transactions, { relationName: "transactionTransferAccount" }),
-}));
+// NOTE: accountsRelations is defined in src/lib/schema/index.ts to avoid
+// circular dependency with transactions.ts (accounts ↔ transactions)
 
 export const selectAccountSchema = createSelectSchema(accounts);
 export const insertAccountSchema = createInsertSchema(accounts);

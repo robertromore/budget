@@ -1,19 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
-import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import type { EncryptionKeyType, EncryptionLevel, RiskFactorSettings } from "../types/encryption";
-import { accounts } from "./accounts";
-import { budgetAutomationSettings } from "./budget-automation-settings";
-import { budgets } from "./budgets";
-import { categories } from "./categories";
-import { categoryGroups } from "./category-groups";
-import { detectedPatterns } from "./detected-patterns";
-import { payeeCategoryCorrections } from "./payee-category-corrections";
-import { payees } from "./payees";
-import { schedules } from "./schedules";
-import { views } from "./views";
 
 export const users = sqliteTable(
   "user",
@@ -159,19 +148,8 @@ export const formInsertUserSchema = insertUserSchema.omit({
   deletedAt: true,
 });
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-  categories: many(categories),
-  categoryGroups: many(categoryGroups),
-  payees: many(payees),
-  budgets: many(budgets),
-  schedules: many(schedules),
-  views: many(views),
-  budgetAutomationSettings: many(budgetAutomationSettings),
-  detectedPatterns: many(detectedPatterns),
-  payeeCategoryCorrections: many(payeeCategoryCorrections),
-}));
+// NOTE: usersRelations is defined in src/lib/schema/index.ts to avoid
+// circular dependency with accounts.ts (accounts → workspaces → users → accounts)
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
