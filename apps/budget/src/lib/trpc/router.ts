@@ -8,6 +8,8 @@ import { savingsOpportunityRoutes } from "$lib/server/domains/ml/savings-opportu
 import { similarityRoutes } from "$lib/server/domains/ml/similarity";
 import { smartCategoryRoutes } from "$lib/server/domains/ml/smart-categories";
 import { userBehaviorRoutes } from "$lib/server/domains/ml/user-behavior";
+import { accountDocumentsRouter } from "$lib/trpc/routes/account-documents";
+import { documentExtractionRouter } from "$lib/trpc/routes/document-extraction";
 import { accountRoutes } from "$lib/trpc/routes/accounts";
 import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { aiRoutes } from "$lib/trpc/routes/ai";
@@ -29,6 +31,7 @@ import { t } from "$lib/trpc/t";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
 import { forecastingRoutes } from "./routes/forecasting";
+import { metricAlertRoutes } from "./routes/metric-alerts";
 import { importCleanupRoutes } from "./routes/import-cleanup";
 import { importProfileRoutes } from "./routes/import-profiles";
 import { llmSettingsRoutes } from "./routes/llm-settings";
@@ -56,6 +59,8 @@ export const router = t.router({
   securityRoutes,
 
   // Core domain routes
+  accountDocumentsRouter,
+  documentExtractionRouter,
   accountRoutes,
   serverAccountsRoutes,
   aiRoutes,
@@ -84,6 +89,7 @@ export const router = t.router({
   importCleanupRoutes,
   settingsRoutes,
   forecastingRoutes,
+  metricAlertRoutes,
 
   // ML routes
   anomalyDetectionRoutes,

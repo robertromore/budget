@@ -4,6 +4,7 @@
  * Based on Epicenter's RPC pattern for better developer experience
  */
 
+import * as accountDocuments from "./account-documents";
 import * as accounts from "./accounts";
 import * as auth from "./auth";
 import * as automation from "./automation";
@@ -12,9 +13,11 @@ import * as categories from "./categories";
 import * as categoryAliases from "./category-aliases";
 import * as categoryGroups from "./category-groups";
 import * as connections from "./connections";
+import * as documentExtraction from "./document-extraction";
 import * as importProfiles from "./import-profiles";
 import * as llmSettings from "./llm-settings";
 import * as medicalExpenses from "./medical-expenses";
+import * as metricAlerts from "./metric-alerts";
 import * as notifications from "./notifications";
 import * as onboarding from "./onboarding";
 import * as patterns from "./patterns";
@@ -40,6 +43,7 @@ import * as workspaces from "./workspaces";
  * Then: rpc.transactions.getAllAccountTransactions(accountId).options()
  */
 export const rpc = {
+  accountDocuments,
   accounts,
   auth,
   automation,
@@ -48,9 +52,11 @@ export const rpc = {
   categoryAliases,
   categoryGroups,
   connections,
+  documentExtraction,
   importProfiles,
   llmSettings,
   medicalExpenses,
+  metricAlerts,
   notifications,
   onboarding,
   patterns,
@@ -84,6 +90,7 @@ import { queryClient } from "./_client";
  * Type helpers for better TypeScript experience
  */
 export type RPC = typeof rpc;
+export type AccountDocumentQueries = typeof accountDocuments;
 export type AccountQueries = typeof accounts;
 export type AuthQueries = typeof auth;
 export type AutomationQueries = typeof automation;
@@ -92,9 +99,11 @@ export type CategoryQueries = typeof categories;
 export type CategoryAliasQueries = typeof categoryAliases;
 export type CategoryGroupQueries = typeof categoryGroups;
 export type ConnectionQueries = typeof connections;
+export type DocumentExtractionQueries = typeof documentExtraction;
 export type ImportProfileQueries = typeof importProfiles;
 export type LLMSettingsQueries = typeof llmSettings;
 export type MedicalExpenseQueries = typeof medicalExpenses;
+export type MetricAlertQueries = typeof metricAlerts;
 export type NotificationQueries = typeof notifications;
 export type OnboardingQueries = typeof onboarding;
 export type PatternQueries = typeof patterns;
@@ -117,6 +126,7 @@ export type WorkspaceQueries = typeof workspaces;
 /**
  * Convenience re-exports for specific domains
  */
+export { accountDocumentKeys } from "./account-documents";
 export { accountKeys } from "./accounts";
 export { authKeys } from "./auth";
 export { automationKeys } from "./automation";
@@ -125,9 +135,11 @@ export { categoryKeys } from "./categories";
 export { categoryAliasKeys } from "./category-aliases";
 export { categoryGroupKeys } from "./category-groups";
 export { connectionKeys, providerSettingsKeys } from "./connections";
+export { DocumentExtraction, documentExtractionKeys } from "./document-extraction";
 export { importProfileKeys } from "./import-profiles";
 export { LLMSettings, llmSettingsKeys } from "./llm-settings";
 export { medicalExpenseKeys } from "./medical-expenses";
+export { metricAlertKeys } from "./metric-alerts";
 export { notificationKeys } from "./notifications";
 export { onboardingKeys } from "./onboarding";
 export { patternKeys } from "./patterns";

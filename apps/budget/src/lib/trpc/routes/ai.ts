@@ -421,6 +421,20 @@ export const aiRoutes = t.router({
 			if (error instanceof TRPCError) {
 				throw error;
 			}
+
+			// Provide helpful error messages for common LLM failures
+			const errMsg = error instanceof Error ? error.message : String(error);
+			if (
+				errMsg.includes("ECONNREFUSED") ||
+				errMsg.includes("fetch failed") ||
+				errMsg.includes("connect ETIMEDOUT")
+			) {
+				throw new TRPCError({
+					code: "PRECONDITION_FAILED",
+					message: `Cannot connect to LLM provider. Please ensure your provider (e.g. Ollama) is running and accessible.`,
+				});
+			}
+
 			throw translateDomainError(error);
 		}
 	}),
@@ -669,5 +683,138 @@ export const aiRoutes = t.router({
 				);
 
 			return { success: true };
+		}),
+
+	// =========================================================================
+	// Document Explanation
+	// =========================================================================
+
+	/**
+	 * Generate an AI explanation of a document's contents
+	 */
+	explainDocument: publicProcedure
+		.input(
+			z.object({
+				documentId: z.number().positive(),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			try {
+				// Get workspace preferences
+				const [workspace] = await db
+					.select({ preferences: workspaces.preferences })
+					.from(workspaces)
+					.where(eq(workspaces.id, ctx.workspaceId))
+					.limit(1);
+
+				const parsed = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+				const llm = parsed.llm ?? DEFAULT_LLM_PREFERENCES;
+
+				if (!llm.enabled) {
+					throw new TRPCError({
+						code: "PRECONDITION_FAILED",
+						message:
+							"AI features are not enabled. Please configure an LLM provider in Settings > Intelligence.",
+					});
+				}
+
+				const provider = getActiveProvider(llm);
+
+				if (!provider) {
+					throw new TRPCError({
+						code: "PRECONDITION_FAILED",
+						message:
+							"No LLM provider is configured. Please set up a provider in Settings > Intelligence.",
+					});
+				}
+
+				// Fetch the document
+				const { serviceFactory } = await import("$lib/server/shared/container/service-factory");
+				const documentService = serviceFactory.getAccountDocumentService();
+				const document = await documentService.getDocument(input.documentId);
+
+				if (!document) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Document not found",
+					});
+				}
+
+				// Build prompt based on document content
+				const documentInfo = [
+					`Document: ${document.title || document.fileName}`,
+					`Type: ${document.documentType || "Unknown"}`,
+					`Tax Year: ${document.taxYear}`,
+				];
+
+				if (document.description) {
+					documentInfo.push(`Description: ${document.description}`);
+				}
+
+				let contentToAnalyze = "";
+				if (document.extractedText) {
+					contentToAnalyze = document.extractedText;
+				} else if (document.extractedData) {
+					contentToAnalyze = `Extracted data: ${document.extractedData}`;
+				}
+
+				if (!contentToAnalyze) {
+					throw new TRPCError({
+						code: "PRECONDITION_FAILED",
+						message: "This document has no extracted text content to analyze. Please ensure OCR has been run on this document.",
+					});
+				}
+
+				const systemPrompt = `You are a helpful financial document analyst. Your task is to explain the contents of financial documents in clear, understandable terms.
+
+When analyzing a document:
+1. Summarize the key information (amounts, dates, parties involved)
+2. Explain what the document type means and its purpose
+3. Highlight any important tax implications or action items
+4. Use simple language accessible to non-experts
+5. If there are specific numbers or values, clearly explain what they represent
+
+Keep your explanation concise but comprehensive. Format using markdown for readability.`;
+
+				const userMessage = `Please explain the following document:
+
+${documentInfo.join("\n")}
+
+Document Content:
+${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Content truncated...]" : ""}`;
+
+				// Generate the explanation
+				const result = await generateText({
+					model: provider.provider(provider.model),
+					system: systemPrompt,
+					prompt: userMessage,
+				});
+
+				return {
+					explanation: result.text,
+					documentTitle: document.title || document.fileName,
+					documentType: document.documentType,
+					taxYear: document.taxYear,
+				};
+			} catch (error) {
+				if (error instanceof TRPCError) {
+					throw error;
+				}
+
+				// Provide helpful error messages for common LLM failures
+				const errMsg = error instanceof Error ? error.message : String(error);
+				if (
+					errMsg.includes("ECONNREFUSED") ||
+					errMsg.includes("fetch failed") ||
+					errMsg.includes("connect ETIMEDOUT")
+				) {
+					throw new TRPCError({
+						code: "PRECONDITION_FAILED",
+						message: `Cannot connect to LLM provider. Please ensure your provider (e.g. Ollama) is running and accessible.`,
+					});
+				}
+
+				throw translateDomainError(error);
+			}
 		}),
 });

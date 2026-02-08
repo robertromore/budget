@@ -1,6 +1,9 @@
 import type { Category } from "$lib/schema/categories";
 import { formInsertCategorySchema } from "$lib/schema/categories";
 import type {
+  CategoryDetailedStats,
+  CategoryMonthlySpending,
+  CategoryTopPayee,
   CategoryWithBudgets,
   CategoryWithChildren,
   CategoryWithGroup,
@@ -17,6 +20,11 @@ export const categoryKeys = createQueryKeys("categories", {
   allWithStats: () => ["categories", "all", "stats"] as const,
   allWithGroups: () => ["categories", "all", "groups"] as const,
   detail: (id: number) => ["categories", "detail", id] as const,
+  detailedStats: (id: number) => ["categories", "detail", id, "stats", "detailed"] as const,
+  topPayees: (id: number, limit: number) =>
+    ["categories", "detail", id, "topPayees", limit] as const,
+  monthlySpending: (id: number, months: number) =>
+    ["categories", "detail", id, "monthlySpending", months] as const,
   search: (query: string) => ["categories", "search", query] as const,
   allWithBudgets: () => ["categories", "all", "budgets"] as const,
   detailWithBudgets: (id: number) => ["categories", "detail", id, "budgets"] as const,
@@ -142,6 +150,24 @@ export const getCategoryBySlugWithBudgets = (slug: string) =>
     queryFn: () => trpc().categoriesRoutes.getBySlugWithBudgets.query({ slug }),
   });
 
+export const getCategoryDetailedStats = (id: number) =>
+  defineQuery<CategoryDetailedStats>({
+    queryKey: categoryKeys.detailedStats(id),
+    queryFn: () => trpc().categoriesRoutes.getDetailedStats.query({ id }),
+  });
+
+export const getCategoryTopPayees = (categoryId: number, limit: number = 10) =>
+  defineQuery<CategoryTopPayee[]>({
+    queryKey: categoryKeys.topPayees(categoryId, limit),
+    queryFn: () => trpc().categoriesRoutes.getTopPayees.query({ categoryId, limit }),
+  });
+
+export const getCategoryMonthlySpending = (categoryId: number, months: number = 12) =>
+  defineQuery<CategoryMonthlySpending[]>({
+    queryKey: categoryKeys.monthlySpending(categoryId, months),
+    queryFn: () => trpc().categoriesRoutes.getMonthlySpending.query({ categoryId, months }),
+  });
+
 export const listRootCategories = () =>
   defineQuery<Category[]>({
     queryKey: categoryKeys.rootCategories(),
@@ -194,6 +220,16 @@ export const getDefaultCategoriesStatus = () =>
     queryKey: categoryKeys.defaultCategoriesStatus(),
     queryFn: () => trpc().categoriesRoutes.defaultCategoriesStatus.query(),
   });
+
+export const mergeCategories = defineMutation<{ sourceId: number; targetId: number }, void>({
+  mutationFn: (input) => trpc().categoriesRoutes.merge.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+  },
+  successMessage: "Categories merged",
+  errorMessage: "Failed to merge categories",
+  importance: "important",
+});
 
 export const seedDefaultCategories = defineMutation<
   { slugs?: string[] },

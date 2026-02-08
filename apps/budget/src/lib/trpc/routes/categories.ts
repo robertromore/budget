@@ -3,7 +3,7 @@ import {
   removeCategoriesSchema,
   removeCategorySchema,
 } from "$lib/schema";
-import { categoryIdSchema, searchCategoriesSchema } from "$lib/server/domains/categories";
+import { categoryIdSchema, mergeCategoriesSchema, searchCategoriesSchema } from "$lib/server/domains/categories";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
@@ -168,6 +168,14 @@ export const categoriesRoutes = t.router({
       })
     ),
 
+  merge: rateLimitedProcedure
+    .input(mergeCategoriesSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        categoryService.mergeCategories(input.sourceId, input.targetId, ctx.workspaceId)
+      )
+    ),
+
   allWithBudgets: publicProcedure.query(
     withErrorHandler(async ({ ctx }) =>
       categoryService.getAllCategoriesWithBudgets(ctx.workspaceId)
@@ -179,6 +187,40 @@ export const categoriesRoutes = t.router({
     .query(
       withErrorHandler(async ({ input, ctx }) =>
         categoryService.getCategoryByIdWithBudgets(input.id, ctx.workspaceId)
+      )
+    ),
+
+  getDetailedStats: publicProcedure
+    .input(categoryIdSchema)
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        categoryService.getCategoryDetailedStats(input.id, ctx.workspaceId)
+      )
+    ),
+
+  getTopPayees: publicProcedure
+    .input(
+      z.object({
+        categoryId: z.number().positive(),
+        limit: z.number().min(1).max(100).default(10),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        categoryService.getCategoryTopPayees(input.categoryId, input.limit, ctx.workspaceId)
+      )
+    ),
+
+  getMonthlySpending: publicProcedure
+    .input(
+      z.object({
+        categoryId: z.number().positive(),
+        months: z.number().min(1).max(60).default(12),
+      })
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        categoryService.getCategoryMonthlySpending(input.categoryId, input.months, ctx.workspaceId)
       )
     ),
 
