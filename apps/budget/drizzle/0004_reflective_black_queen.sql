@@ -57,7 +57,7 @@ CREATE TABLE `schedule_price_history` (
 CREATE INDEX `schedule_price_history_schedule_id_idx` ON `schedule_price_history` (`schedule_id`);--> statement-breakpoint
 CREATE INDEX `schedule_price_history_effective_date_idx` ON `schedule_price_history` (`effective_date`);--> statement-breakpoint
 CREATE INDEX `schedule_price_history_transaction_idx` ON `schedule_price_history` (`detected_from_transaction_id`);--> statement-breakpoint
-CREATE TABLE `subscription_alerts` (
+CREATE TABLE IF NOT EXISTS `subscription_alerts` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`subscription_id` integer NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -71,12 +71,12 @@ CREATE TABLE `subscription_alerts` (
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `subscription_alerts_subscription_id_idx` ON `subscription_alerts` (`subscription_id`);--> statement-breakpoint
-CREATE INDEX `subscription_alerts_workspace_id_idx` ON `subscription_alerts` (`workspace_id`);--> statement-breakpoint
-CREATE INDEX `subscription_alerts_type_idx` ON `subscription_alerts` (`alert_type`);--> statement-breakpoint
-CREATE INDEX `subscription_alerts_trigger_date_idx` ON `subscription_alerts` (`trigger_date`);--> statement-breakpoint
-CREATE INDEX `subscription_alerts_workspace_dismissed_idx` ON `subscription_alerts` (`workspace_id`,`is_dismissed`);--> statement-breakpoint
-CREATE TABLE `subscription_price_history` (
+CREATE INDEX IF NOT EXISTS `subscription_alerts_subscription_id_idx` ON `subscription_alerts` (`subscription_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscription_alerts_workspace_id_idx` ON `subscription_alerts` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscription_alerts_type_idx` ON `subscription_alerts` (`alert_type`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscription_alerts_trigger_date_idx` ON `subscription_alerts` (`trigger_date`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscription_alerts_workspace_dismissed_idx` ON `subscription_alerts` (`workspace_id`,`is_dismissed`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `subscription_price_history` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`subscription_id` integer NOT NULL,
 	`amount` real NOT NULL,
@@ -90,10 +90,10 @@ CREATE TABLE `subscription_price_history` (
 	FOREIGN KEY (`detected_from_transaction_id`) REFERENCES `transaction`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE INDEX `subscription_price_history_subscription_id_idx` ON `subscription_price_history` (`subscription_id`);--> statement-breakpoint
-CREATE INDEX `subscription_price_history_effective_date_idx` ON `subscription_price_history` (`effective_date`);--> statement-breakpoint
-CREATE INDEX `subscription_price_history_transaction_idx` ON `subscription_price_history` (`detected_from_transaction_id`);--> statement-breakpoint
-CREATE TABLE `subscriptions` (
+CREATE INDEX IF NOT EXISTS `subscription_price_history_subscription_id_idx` ON `subscription_price_history` (`subscription_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscription_price_history_effective_date_idx` ON `subscription_price_history` (`effective_date`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscription_price_history_transaction_idx` ON `subscription_price_history` (`detected_from_transaction_id`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `subscriptions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
 	`payee_id` integer,
@@ -122,13 +122,13 @@ CREATE TABLE `subscriptions` (
 	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE INDEX `subscriptions_workspace_id_idx` ON `subscriptions` (`workspace_id`);--> statement-breakpoint
-CREATE INDEX `subscriptions_payee_id_idx` ON `subscriptions` (`payee_id`);--> statement-breakpoint
-CREATE INDEX `subscriptions_account_id_idx` ON `subscriptions` (`account_id`);--> statement-breakpoint
-CREATE INDEX `subscriptions_status_idx` ON `subscriptions` (`status`);--> statement-breakpoint
-CREATE INDEX `subscriptions_type_idx` ON `subscriptions` (`type`);--> statement-breakpoint
-CREATE INDEX `subscriptions_renewal_date_idx` ON `subscriptions` (`renewal_date`);--> statement-breakpoint
-CREATE INDEX `subscriptions_workspace_status_idx` ON `subscriptions` (`workspace_id`,`status`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_workspace_id_idx` ON `subscriptions` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_payee_id_idx` ON `subscriptions` (`payee_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_account_id_idx` ON `subscriptions` (`account_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_status_idx` ON `subscriptions` (`status`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_type_idx` ON `subscriptions` (`type`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_renewal_date_idx` ON `subscriptions` (`renewal_date`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `subscriptions_workspace_status_idx` ON `subscriptions` (`workspace_id`,`status`);--> statement-breakpoint
 ALTER TABLE `schedules` ADD `is_subscription` integer DEFAULT false;--> statement-breakpoint
 ALTER TABLE `schedules` ADD `subscription_type` text;--> statement-breakpoint
 ALTER TABLE `schedules` ADD `subscription_status` text;--> statement-breakpoint

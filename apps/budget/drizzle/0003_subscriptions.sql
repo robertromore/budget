@@ -23,7 +23,7 @@ CREATE TABLE `subscriptions` (
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`deleted_at` text,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspaces`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`payee_id`) REFERENCES `payee`(`id`) ON UPDATE no action ON DELETE set null,
 	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE set null
 );--> statement-breakpoint
@@ -65,7 +65,7 @@ CREATE TABLE `subscription_alerts` (
 	`metadata` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspaces`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
 );--> statement-breakpoint
 CREATE INDEX `subscription_alerts_subscription_id_idx` ON `subscription_alerts` (`subscription_id`);--> statement-breakpoint
 CREATE INDEX `subscription_alerts_workspace_id_idx` ON `subscription_alerts` (`workspace_id`);--> statement-breakpoint
