@@ -22,15 +22,21 @@ interface Props {
 let { data }: Props = $props();
 
 // State
-let selectedTaxYear = $state(data.defaultTaxYear);
+let selectedTaxYear = $state(new Date().getFullYear());
 let showUpload = $state(false);
 let filterAccountId = $state<number | undefined>(undefined);
 let activeTab = $state('documents');
 
+$effect(() => {
+  selectedTaxYear = data.defaultTaxYear;
+});
+
 // Generate tax year options (include years with documents + last 5 years)
 const currentYear = new Date().getFullYear();
 const recentYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
-const allYears = [...new Set([...data.availableTaxYears, ...recentYears])].sort((a, b) => b - a);
+const allYears = $derived(
+  [...new Set([...data.availableTaxYears, ...recentYears])].sort((a, b) => b - a)
+);
 
 // Query documents for selected tax year - use $derived to react to year changes
 const documentsQuery = $derived(rpc.accountDocuments.getDocumentsByTaxYear(selectedTaxYear).options());

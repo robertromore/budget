@@ -38,31 +38,41 @@
   // ============================================================================
   // Spending Patterns Tab Queries (lazy loaded via enabled option)
   // ============================================================================
-  const incomeExpenseQuery = ML.getIncomeExpenseBreakdown({ accountId }).options(
-    () => ({ enabled: activeTab === "spending" })
+  const incomeExpenseQuery = $derived(
+    ML.getIncomeExpenseBreakdown({ accountId }).options(
+      () => ({ enabled: activeTab === "spending" })
+    )
   );
 
-  const incomeExpenseHistory = ML.getIncomeExpenseHistory(6, accountId).options(
-    () => ({ enabled: activeTab === "spending" })
+  const incomeExpenseHistory = $derived(
+    ML.getIncomeExpenseHistory(6, accountId).options(
+      () => ({ enabled: activeTab === "spending" })
+    )
   );
 
   const anomalyAlertsQuery = ML.getAnomalyAlerts({ limit: 3, minRiskLevel: "medium" }).options(
     () => ({ enabled: activeTab === "spending" })
   );
 
-  const recurringPatternsQuery = ML.getRecurringPatterns({ accountId }).options(
-    () => ({ enabled: activeTab === "spending" })
+  const recurringPatternsQuery = $derived(
+    ML.getRecurringPatterns({ accountId }).options(
+      () => ({ enabled: activeTab === "spending" })
+    )
   );
 
-  const recurringSummaryQuery = ML.getRecurringSummary({ accountId }).options(
-    () => ({ enabled: activeTab === "spending" })
+  const recurringSummaryQuery = $derived(
+    ML.getRecurringSummary({ accountId }).options(
+      () => ({ enabled: activeTab === "spending" })
+    )
   );
 
   // ============================================================================
   // Predictive Alerts Tab Queries (lazy loaded via enabled option)
   // ============================================================================
-  const forecastQuery = ML.getCashFlowForecast({ horizon: 30, granularity: "daily", accountId }).options(
-    () => ({ enabled: activeTab === "alerts" })
+  const forecastQuery = $derived(
+    ML.getCashFlowForecast({ horizon: 30, granularity: "daily", accountId }).options(
+      () => ({ enabled: activeTab === "alerts" })
+    )
   );
 
   const budgetRiskQuery = ML.getBudgetsAtRisk("medium").options(

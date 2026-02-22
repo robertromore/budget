@@ -59,12 +59,12 @@
 	let editedDateValue = $state<DateValue | undefined>(undefined);
 	let editedAmount = $state<number | undefined>(undefined);
 
-	// Corrected values (persist after editing to show user their correction)
-	let correctedDate = $state<string | null>(initialCorrectedDate);
-	let correctedAmount = $state<number | null>(initialCorrectedAmount);
+		// Corrected values (persist after editing to show user their correction)
+		let correctedDate = $state<string | null>(null);
+		let correctedAmount = $state<number | null>(null);
 
-	// Rating feedback state - initialized from persisted feedback
-	let submittedRating = $state<FeedbackRating | null>(initialRating);
+		// Rating feedback state - initialized from persisted feedback
+		let submittedRating = $state<FeedbackRating | null>(null);
 
 	// Sync with initial values when they change (e.g., on data load)
 	$effect(() => {

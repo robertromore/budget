@@ -94,24 +94,16 @@
 		predictionMethod = suggested.filters?.predictionMethod ?? 'default';
 	}
 
-	// Form state - initialize from profile
-	let enabled = $state(profile?.enabled ?? false);
-	let categoryTypes = $state<Array<'income' | 'expense' | 'transfer' | 'savings'>>(
-		profile?.filters?.categoryTypes ?? []
-	);
-	let amountSign = $state<'positive' | 'negative' | 'all'>(
-		profile?.filters?.amountSign ?? 'all'
-	);
-	let dateRangeType = $state<'all' | 'last_n_months' | 'last_n_years'>(
-		profile?.filters?.dateRange?.type ?? 'all'
-	);
-	let dateRangeMonths = $state(String(profile?.filters?.dateRange?.months ?? 12));
-	let excludeTransfers = $state(profile?.filters?.excludeTransfers ?? false);
-	let minAmount = $state(profile?.filters?.minAmount ? String(profile.filters.minAmount) : '');
-	let maxAmount = $state(profile?.filters?.maxAmount ? String(profile.filters.maxAmount) : '');
-	let predictionMethod = $state<'default' | 'statistical' | 'ml' | 'ai'>(
-		profile?.filters?.predictionMethod ?? 'default'
-	);
+		// Form state - synced from profile in the effect below
+		let enabled = $state(false);
+		let categoryTypes = $state<Array<'income' | 'expense' | 'transfer' | 'savings'>>([]);
+		let amountSign = $state<'positive' | 'negative' | 'all'>('all');
+		let dateRangeType = $state<'all' | 'last_n_months' | 'last_n_years'>('all');
+		let dateRangeMonths = $state('12');
+		let excludeTransfers = $state(false);
+		let minAmount = $state('');
+		let maxAmount = $state('');
+		let predictionMethod = $state<'default' | 'statistical' | 'ml' | 'ai'>('default');
 
 	// Reset form when profile changes
 	$effect(() => {

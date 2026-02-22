@@ -328,34 +328,46 @@
 					/>
 				{/if}
 
-				<!-- Main cell -->
-				<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-				<rect
-					x={cell.x}
-					y={cell.y}
+					<!-- Main cell -->
+					<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+					<rect
+						x={cell.x}
+						y={cell.y}
 					width={layout.cellSize}
 					height={layout.cellSize}
 					fill={cell.color}
 					fill-opacity={hasValue ? (isHovered ? 1 : 0.9) : 0.25}
 					rx={cellRadius}
-					stroke={isHovered ? 'var(--foreground)' : 'none'}
-					stroke-width={isHovered ? 1.5 : 0}
-					class="calendar-cell"
-					style="cursor: {hasValue || onclick ? 'pointer' : 'default'}; transition: fill-opacity 0.15s, stroke 0.15s;"
-					onmouseenter={() => {
-						hoveredIndex = cell.globalIndex;
-						onhover?.({ date: cell.date, value: cell.value });
+						stroke={isHovered ? 'var(--foreground)' : 'none'}
+						stroke-width={isHovered ? 1.5 : 0}
+						class="calendar-cell"
+						style="cursor: {hasValue || onclick ? 'pointer' : 'default'}; transition: fill-opacity 0.15s, stroke 0.15s;"
+						role={onclick ? 'button' : undefined}
+						tabindex={onclick ? 0 : undefined}
+						aria-label={onclick
+							? `${toLocalDateStr(cell.date)}: ${cell.value === null ? 'no value' : cell.value}`
+							: undefined}
+						onmouseenter={() => {
+							hoveredIndex = cell.globalIndex;
+							onhover?.({ date: cell.date, value: cell.value });
 					}}
 					onmouseleave={() => {
 						hoveredIndex = null;
 						onhover?.(null);
 					}}
-					onclick={() => {
-						if (onclick) {
-							onclick({ date: cell.date, value: cell.value });
-						}
-					}}
-				/>
+						onclick={() => {
+							if (onclick) {
+								onclick({ date: cell.date, value: cell.value });
+							}
+						}}
+						onkeydown={(event) => {
+							if (!onclick) return;
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								onclick({ date: cell.date, value: cell.value });
+							}
+						}}
+					/>
 
 				<!-- Today indicator ring -->
 				{#if showTodayIndicator && cell.isToday}

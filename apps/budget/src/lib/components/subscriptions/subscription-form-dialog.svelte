@@ -25,18 +25,19 @@ let {
 } = $props();
 
 const isEditing = $derived(!!subscription?.id);
+const getTodayIsoDate = () => new Date().toISOString().split('T')[0];
 
 // Form state
-let name = $state(subscription?.name ?? '');
-let type = $state(subscription?.type ?? 'other');
-let billingCycle = $state(subscription?.billingCycle ?? 'monthly');
-let amount = $state(subscription?.amount ?? 0);
-let status = $state(subscription?.status ?? 'active');
-let payeeId = $state<number | null>(subscription?.payeeId ?? null);
-let renewalDate = $state(subscription?.renewalDate ?? '');
-let startDate = $state(subscription?.startDate ?? new Date().toISOString().split('T')[0]);
-let autoRenewal = $state(subscription?.autoRenewal ?? true);
-let trialEndsAt = $state(subscription?.trialEndsAt ?? '');
+let name = $state('');
+let type = $state<(typeof subscriptionTypes)[number]>('other');
+let billingCycle = $state<(typeof billingCycles)[number]>('monthly');
+let amount = $state(0);
+let status = $state<(typeof subscriptionStatuses)[number]>('active');
+let payeeId = $state<number | null>(null);
+let renewalDate = $state('');
+let startDate = $state(getTodayIsoDate());
+let autoRenewal = $state(true);
+let trialEndsAt = $state('');
 
 // Reset form when subscription changes
 $effect(() => {
@@ -48,7 +49,7 @@ $effect(() => {
     status = subscription.status ?? 'active';
     payeeId = subscription.payeeId ?? null;
     renewalDate = subscription.renewalDate ?? '';
-    startDate = subscription.startDate ?? new Date().toISOString().split('T')[0];
+    startDate = subscription.startDate ?? getTodayIsoDate();
     autoRenewal = subscription.autoRenewal ?? true;
     trialEndsAt = subscription.trialEndsAt ?? '';
   } else {
@@ -59,7 +60,7 @@ $effect(() => {
     status = 'active';
     payeeId = null;
     renewalDate = '';
-    startDate = new Date().toISOString().split('T')[0];
+    startDate = getTodayIsoDate();
     autoRenewal = true;
     trialEndsAt = '';
   }

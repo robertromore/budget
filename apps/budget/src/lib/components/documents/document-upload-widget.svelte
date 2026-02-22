@@ -40,11 +40,21 @@ let {
 }: Props = $props();
 
 // Form state
-let selectedAccountId = $state<number | undefined>(defaultAccountId ?? accounts[0]?.id);
-let selectedTaxYear = $state(defaultTaxYear);
+let selectedAccountId = $state<number | undefined>(undefined);
+let selectedTaxYear = $state(new Date().getFullYear());
 let documentType = $state<DocumentType>('other');
 let title = $state('');
 let description = $state('');
+
+$effect(() => {
+  if (selectedAccountId === undefined) {
+    selectedAccountId = defaultAccountId ?? accounts[0]?.id;
+  }
+});
+
+$effect(() => {
+  selectedTaxYear = defaultTaxYear;
+});
 
 // Upload state
 let selectedFile = $state<File | null>(null);
