@@ -4,6 +4,7 @@ export { createContext, type Context } from "./context";
 export { router } from "./router";
 export {
   bulkOperationProcedure,
+  openProcedure,
   protectedProcedure,
   publicProcedure,
   rateLimitedProcedure,

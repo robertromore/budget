@@ -3,17 +3,20 @@ import {
   MAX_DOCUMENT_SIZE,
   documentTypeKeys,
 } from "$lib/schema/account-documents";
+import { accounts } from "$lib/schema/accounts";
+import { workspaceMembers } from "$lib/schema/workspace-members";
 import {
   DEFAULT_DOCUMENT_EXTRACTION_PREFERENCES,
   DEFAULT_LLM_PREFERENCES,
   workspaces,
 } from "$lib/schema/workspaces";
+import { auth } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { DocumentExtractionService } from "$lib/server/domains/document-extraction";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { formatFileSize } from "$lib/utils/formatters";
 import { error, json } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { RequestHandler } from "./$types";
 
 /**
@@ -69,6 +72,15 @@ async function triggerExtractionAsync(documentId: number, accountId: number): Pr
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    if (!session?.user?.id) {
+      throw error(401, "Authentication required");
+    }
+
+    const userId = session.user.id;
+
     // Parse multipart form data
     const formData = await request.formData();
 
@@ -97,6 +109,29 @@ export const POST: RequestHandler = async ({ request }) => {
     const parsedAccountId = parseInt(accountId.toString(), 10);
     if (isNaN(parsedAccountId) || parsedAccountId <= 0) {
       throw error(400, "Invalid account ID");
+    }
+
+    const [account] = await db
+      .select({ workspaceId: accounts.workspaceId })
+      .from(accounts)
+      .where(and(eq(accounts.id, parsedAccountId), isNull(accounts.deletedAt)))
+      .limit(1);
+    if (!account) {
+      throw error(404, "Account not found");
+    }
+
+    const [membership] = await db
+      .select({ id: workspaceMembers.id })
+      .from(workspaceMembers)
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.workspaceId, account.workspaceId)
+        )
+      )
+      .limit(1);
+    if (!membership) {
+      throw error(403, "You do not have access to this account");
     }
 
     // Parse tax year
@@ -128,14 +163,17 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // Upload document
     const documentService = serviceFactory.getAccountDocumentService();
-    const document = await documentService.uploadDocument({
-      accountId: parsedAccountId,
-      taxYear: parsedTaxYear,
-      documentType: parsedDocumentType,
-      file,
-      title: title?.toString() || undefined,
-      description: description?.toString() || undefined,
-    });
+    const document = await documentService.uploadDocument(
+      {
+        accountId: parsedAccountId,
+        taxYear: parsedTaxYear,
+        documentType: parsedDocumentType,
+        file,
+        title: title?.toString() || undefined,
+        description: description?.toString() || undefined,
+      },
+      account.workspaceId
+    );
 
     // Trigger extraction asynchronously (non-blocking)
     triggerExtractionAsync(document.id, parsedAccountId).catch((err) => {

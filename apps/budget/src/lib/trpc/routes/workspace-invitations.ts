@@ -3,17 +3,14 @@ import {
   WorkspaceInvitationService,
 } from "$lib/server/domains/workspace-invitations";
 import { WorkspaceMemberRepository } from "$lib/server/domains/workspace-members";
-import { publicProcedure, t } from "$lib/trpc";
+import { openProcedure, publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 // Create service instances
 const invitationRepository = new WorkspaceInvitationRepository();
 const memberRepository = new WorkspaceMemberRepository();
-const invitationService = new WorkspaceInvitationService(
-  invitationRepository,
-  memberRepository
-);
+const invitationService = new WorkspaceInvitationService(invitationRepository, memberRepository);
 
 export const workspaceInvitationsRoutes = t.router({
   /**
@@ -28,10 +25,7 @@ export const workspaceInvitationsRoutes = t.router({
     }
 
     // Check if user has permission to view invitations (owner or admin)
-    const membership = await memberRepository.findMembership(
-      ctx.workspaceId,
-      ctx.userId
-    );
+    const membership = await memberRepository.findMembership(ctx.workspaceId, ctx.userId);
     if (!membership || !["owner", "admin"].includes(membership.role)) {
       throw new TRPCError({
         code: "FORBIDDEN",
@@ -161,31 +155,29 @@ export const workspaceInvitationsRoutes = t.router({
   /**
    * Get invitation by token (public - for invitation acceptance page)
    */
-  getByToken: publicProcedure
-    .input(z.object({ token: z.string() }))
-    .query(async ({ input }) => {
-      try {
-        const invitation = await invitationService.getInvitationByToken(input.token);
-        // Return limited info for public view
-        return {
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          status: invitation.status,
-          expiresAt: invitation.expiresAt,
-          message: invitation.message,
-          workspace: invitation.workspace,
-          inviter: {
-            displayName: invitation.inviter.displayName,
-          },
-        };
-      } catch (error) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Invitation not found or has expired",
-        });
-      }
-    }),
+  getByToken: openProcedure.input(z.object({ token: z.string() })).query(async ({ input }) => {
+    try {
+      const invitation = await invitationService.getInvitationByToken(input.token);
+      // Return limited info for public view
+      return {
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+        message: invitation.message,
+        workspace: invitation.workspace,
+        inviter: {
+          displayName: invitation.inviter.displayName,
+        },
+      };
+    } catch (error) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Invitation not found or has expired",
+      });
+    }
+  }),
 
   /**
    * Accept an invitation
@@ -228,24 +220,22 @@ export const workspaceInvitationsRoutes = t.router({
   /**
    * Decline an invitation
    */
-  decline: publicProcedure
-    .input(z.object({ token: z.string() }))
-    .mutation(async ({ input }) => {
-      try {
-        await invitationService.declineInvitation(input.token);
-        return { success: true };
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.message.includes("already")) {
-            throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
-          }
+  decline: openProcedure.input(z.object({ token: z.string() })).mutation(async ({ input }) => {
+    try {
+      await invitationService.declineInvitation(input.token);
+      return { success: true };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("already")) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
         }
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Invitation not found",
-        });
       }
-    }),
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Invitation not found",
+      });
+    }
+  }),
 
   /**
    * Get current user's pending invitations

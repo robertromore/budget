@@ -1,6 +1,12 @@
 import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
 import type { CategoryDismissal, ImportProgress } from "$lib/server/import/import-orchestrator";
 import { json } from "@sveltejs/kit";
+import {
+  isImportApiError,
+  parseRequiredPositiveInt,
+  requireImportAccountAccess,
+  requireImportUserId,
+} from "../auth";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request, url }) => {
@@ -8,8 +14,19 @@ export const POST: RequestHandler = async ({ request, url }) => {
   const wantsStream = url.searchParams.get("stream") === "true";
 
   try {
+    const userId = await requireImportUserId(request);
     const body = await request.json();
-    const { accountId, data, rows, selectedEntities, options, scheduleMatches, categoryDismissals } = body;
+    const {
+      accountId: rawAccountId,
+      data,
+      rows,
+      selectedEntities,
+      options,
+      scheduleMatches,
+      categoryDismissals,
+    } = body;
+    const accountId = parseRequiredPositiveInt(rawAccountId, "account ID");
+    await requireImportAccountAccess(userId, accountId);
 
     // Support both 'data' (legacy) and 'rows' (multi-file) field names
     const importRows = rows || data;
@@ -115,6 +132,10 @@ export const POST: RequestHandler = async ({ request, url }) => {
     return json({ result });
   } catch (error) {
     console.error("Import processing error:", error);
+    if (isImportApiError(error)) {
+      return json({ error: error.message }, { status: error.status });
+    }
+
     return json(
       {
         error: error instanceof Error ? error.message : "Failed to process import",

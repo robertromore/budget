@@ -1,11 +1,25 @@
+import { accounts } from "$lib/schema/accounts";
+import { workspaceMembers } from "$lib/schema/workspace-members";
+import { auth } from "$lib/server/auth";
+import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { error } from "@sveltejs/kit";
+import { and, eq, isNull } from "drizzle-orm";
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ params }) => {
+export const GET: RequestHandler = async ({ params, request }) => {
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    if (!session?.user?.id) {
+      throw error(401, "Authentication required");
+    }
+
+    const userId = session.user.id;
+
     const documentId = parseInt(params.id, 10);
 
     if (isNaN(documentId) || documentId <= 0) {
@@ -18,6 +32,29 @@ export const GET: RequestHandler = async ({ params }) => {
 
     if (!document) {
       throw error(404, "Document not found");
+    }
+
+    const [account] = await db
+      .select({ workspaceId: accounts.workspaceId })
+      .from(accounts)
+      .where(and(eq(accounts.id, document.accountId), isNull(accounts.deletedAt)))
+      .limit(1);
+    if (!account) {
+      throw error(404, "Account not found");
+    }
+
+    const [membership] = await db
+      .select({ id: workspaceMembers.id })
+      .from(workspaceMembers)
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.workspaceId, account.workspaceId)
+        )
+      )
+      .limit(1);
+    if (!membership) {
+      throw error(403, "You do not have access to this document");
     }
 
     // Get file path

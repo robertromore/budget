@@ -1,13 +1,28 @@
+import { accounts } from "$lib/schema/accounts";
+import { medicalExpenses } from "$lib/schema/medical-expenses";
+import { workspaceMembers } from "$lib/schema/workspace-members";
+import { auth } from "$lib/server/auth";
+import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { error } from "@sveltejs/kit";
+import { and, eq, isNull } from "drizzle-orm";
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 import type { RequestHandler } from "./$types";
 
 const receiptService = serviceFactory.getReceiptService();
 
-export const GET: RequestHandler = async ({ params }) => {
+export const GET: RequestHandler = async ({ params, request }) => {
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    if (!session?.user?.id) {
+      throw error(401, "Authentication required");
+    }
+
+    const userId = session.user.id;
+
     const receiptId = parseInt(params.id, 10);
 
     if (isNaN(receiptId) || receiptId <= 0) {
@@ -19,6 +34,36 @@ export const GET: RequestHandler = async ({ params }) => {
 
     if (!receipt) {
       throw error(404, "Receipt not found");
+    }
+
+    const [expense] = await db
+      .select({ workspaceId: accounts.workspaceId })
+      .from(medicalExpenses)
+      .innerJoin(accounts, eq(medicalExpenses.hsaAccountId, accounts.id))
+      .where(
+        and(
+          eq(medicalExpenses.id, receipt.medicalExpenseId),
+          isNull(medicalExpenses.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
+      .limit(1);
+    if (!expense) {
+      throw error(404, "Medical expense not found");
+    }
+
+    const [membership] = await db
+      .select({ id: workspaceMembers.id })
+      .from(workspaceMembers)
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.workspaceId, expense.workspaceId)
+        )
+      )
+      .limit(1);
+    if (!membership) {
+      throw error(403, "You do not have access to this receipt");
     }
 
     // Get file path
@@ -51,6 +96,10 @@ export const GET: RequestHandler = async ({ params }) => {
 
     if (err.statusCode === 404 || err.status === 404) {
       throw error(404, err.message || "Receipt not found");
+    }
+
+    if (err.status) {
+      throw err;
     }
 
     throw error(500, err.message || "Failed to download receipt");

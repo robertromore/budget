@@ -10,21 +10,43 @@ import type {
   PayeePreview,
 } from "$lib/types/import";
 import { json } from "@sveltejs/kit";
-import { isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
+import {
+  isImportApiError,
+  parseRequiredPositiveInt,
+  requireImportAccountAccess,
+  requireImportUserId,
+} from "../auth";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { rows } = (await request.json()) as { rows: ImportRow[] };
+    const userId = await requireImportUserId(request);
+    const { rows, accountId: rawAccountId } = (await request.json()) as {
+      rows: ImportRow[];
+      accountId?: number | string;
+    };
+    const accountId = parseRequiredPositiveInt(rawAccountId, "account ID");
+    const account = await requireImportAccountAccess(userId, accountId);
 
     if (!rows || !Array.isArray(rows)) {
       return json({ error: "Invalid request: rows array required" }, { status: 400 });
     }
 
-    // Get all existing payees and categories
+    // Get all existing payees and categories in the same workspace as the selected account
     const [existingPayees, existingCategories] = await Promise.all([
-      db.select().from(payeeTable).where(isNull(payeeTable.deletedAt)),
-      db.select().from(categoryTable).where(isNull(categoryTable.deletedAt)),
+      db
+        .select()
+        .from(payeeTable)
+        .where(
+          and(eq(payeeTable.workspaceId, account.workspaceId), isNull(payeeTable.deletedAt))
+        ),
+      db
+        .select()
+        .from(categoryTable)
+        .where(
+          and(eq(categoryTable.workspaceId, account.workspaceId), isNull(categoryTable.deletedAt))
+        ),
     ]);
 
     // Initialize matchers
@@ -168,6 +190,10 @@ export const POST: RequestHandler = async ({ request }) => {
     return json(previewData);
   } catch (error) {
     console.error("Entity preview error:", error);
+    if (isImportApiError(error)) {
+      return json({ error: error.message }, { status: error.status });
+    }
+
     return json(
       {
         error: error instanceof Error ? error.message : "Failed to generate entity preview",

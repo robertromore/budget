@@ -3,6 +3,7 @@ import { workspaceMembers } from "$lib/schema/workspace-members";
 import { users } from "$lib/schema/users";
 import { db } from "$lib/server/db";
 import { auth } from "$lib/server/auth";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import type { RequestEvent } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
 
@@ -19,11 +20,7 @@ interface SessionInfo {
  * This handles cases where session data refers to a deleted user
  */
 async function verifyUserExists(userId: string): Promise<boolean> {
-  const [user] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
 
   return !!user;
 }
@@ -61,83 +58,62 @@ async function getSessionInfo(event: RequestEvent): Promise<SessionInfo> {
 
 /**
  * Get the current workspace ID from the request
- * Uses session-based membership or falls back to cookie for backward compatibility
+ * Uses session-based membership and never provisions workspace access for unauthenticated users.
  */
-async function getCurrentWorkspaceId(
-  event: RequestEvent,
-  userId: string | null
-): Promise<number> {
+async function getCurrentWorkspaceId(event: RequestEvent, userId: string | null): Promise<number> {
+  // Unauthenticated requests should never get workspace access.
+  if (!userId) {
+    return 0;
+  }
+
   // First, check cookie for workspace selection
-  const workspaceIdCookie = event.cookies.get("workspaceId") || event.cookies.get("userId");
+  const workspaceIdCookie = event.cookies.get("workspaceId");
 
   if (workspaceIdCookie) {
     const workspaceId = parseInt(workspaceIdCookie);
     if (!isNaN(workspaceId)) {
-      // If user is logged in, verify they have membership
-      if (userId) {
-        const [membership] = await db
-          .select()
-          .from(workspaceMembers)
-          .where(
-            and(
-              eq(workspaceMembers.userId, userId),
-              eq(workspaceMembers.workspaceId, workspaceId)
-            )
-          )
-          .limit(1);
+      const [membership] = await db
+        .select()
+        .from(workspaceMembers)
+        .where(
+          and(eq(workspaceMembers.userId, userId), eq(workspaceMembers.workspaceId, workspaceId))
+        )
+        .limit(1);
 
-        if (membership) {
-          return workspaceId;
-        }
-        // User doesn't have access to this workspace, try to find their default
-      } else {
-        // No user logged in - verify workspace exists (backward compatibility)
-        const [workspace] = await db
-          .select()
-          .from(workspaces)
-          .where(eq(workspaces.id, workspaceId))
-          .limit(1);
-
-        if (workspace) {
-          return workspaceId;
-        }
+      if (membership) {
+        return workspaceId;
       }
     }
   }
 
-  // If user is logged in, get their default workspace
-  if (userId) {
-    // Try to get user's default workspace
-    const [defaultMembership] = await db
-      .select()
-      .from(workspaceMembers)
-      .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-      .where(
-        and(
-          eq(workspaceMembers.userId, userId),
-          eq(workspaceMembers.isDefault, true),
-          isNull(workspaces.deletedAt)
-        )
+  // Try to get user's default workspace
+  const [defaultMembership] = await db
+    .select()
+    .from(workspaceMembers)
+    .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
+    .where(
+      and(
+        eq(workspaceMembers.userId, userId),
+        eq(workspaceMembers.isDefault, true),
+        isNull(workspaces.deletedAt)
       )
-      .limit(1);
+    )
+    .limit(1);
 
-    if (defaultMembership) {
-      return defaultMembership.workspace_member.workspaceId;
-    }
+  if (defaultMembership) {
+    return defaultMembership.workspace_member.workspaceId;
+  }
 
-    // Get first available workspace for user
-    const [anyMembership] = await db
-      .select()
-      .from(workspaceMembers)
-      .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-      .where(
-        and(eq(workspaceMembers.userId, userId), isNull(workspaces.deletedAt))
-      )
-      .limit(1);
+  // Get first available workspace for user
+  const [anyMembership] = await db
+    .select()
+    .from(workspaceMembers)
+    .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
+    .where(and(eq(workspaceMembers.userId, userId), isNull(workspaces.deletedAt)))
+    .limit(1);
 
-    if (anyMembership) {
-      return anyMembership.workspace_member.workspaceId;
-    }
+  if (anyMembership) {
+    return anyMembership.workspace_member.workspaceId;
   }
 
   // No valid workspace found - get or create default workspace
@@ -147,61 +123,59 @@ async function getCurrentWorkspaceId(
 /**
  * Get or create a default workspace
  * Used for initial setup or when no workspace is selected
- * Note: userId is already validated in getSessionInfo, so we can trust it here
+ * Note: userId is already validated in getCurrentWorkspaceId, so we can trust it here
  */
-async function getOrCreateDefaultWorkspace(userId: string | null): Promise<number> {
-  // Try to find existing default workspace
-  const existingWorkspaces = await db
+async function getOrCreateDefaultWorkspace(userId: string): Promise<number> {
+  // First, prefer a workspace explicitly owned by this user (if any).
+  const [ownedWorkspace] = await db
     .select()
     .from(workspaces)
-    .where(isNull(workspaces.deletedAt))
+    .where(and(eq(workspaces.ownerId, userId), isNull(workspaces.deletedAt)))
     .limit(1);
 
-  if (existingWorkspaces.length > 0) {
-    const workspace = existingWorkspaces[0];
-
-    // If user is logged in, ensure they have membership
-    if (userId) {
-      const [existingMembership] = await db
-        .select()
-        .from(workspaceMembers)
-        .where(
-          and(
-            eq(workspaceMembers.userId, userId),
-            eq(workspaceMembers.workspaceId, workspace.id)
-          )
+  if (ownedWorkspace) {
+    const [existingMembership] = await db
+      .select()
+      .from(workspaceMembers)
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.workspaceId, ownedWorkspace.id)
         )
-        .limit(1);
+      )
+      .limit(1);
 
-      if (!existingMembership) {
-        // Add user as owner of existing workspace
-        await db.insert(workspaceMembers).values({
-          workspaceId: workspace.id,
-          userId: userId,
-          role: "owner",
-          isDefault: true,
-        });
-
-        // Update workspace owner if not set
-        if (!workspace.ownerId) {
-          await db
-            .update(workspaces)
-            .set({ ownerId: userId })
-            .where(eq(workspaces.id, workspace.id));
-        }
-      }
+    if (!existingMembership) {
+      await db.insert(workspaceMembers).values({
+        workspaceId: ownedWorkspace.id,
+        userId,
+        role: "owner",
+        isDefault: true,
+      });
     }
 
-    return workspace.id;
+    return ownedWorkspace.id;
   }
 
-  // Create default workspace (without owner if no user)
+  // Create a user-specific personal workspace rather than assigning ownership
+  // of an arbitrary existing workspace.
+  const userSuffix = userId
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 12);
+  const baseSlug = userSuffix ? `personal-${userSuffix}` : "personal";
+  const slug = await generateUniqueSlugForDB(db, "workspaces", workspaces.slug, baseSlug, {
+    deletedAtColumn: workspaces.deletedAt,
+  });
+
   const [newWorkspace] = await db
     .insert(workspaces)
     .values({
       displayName: "Personal",
-      slug: "personal",
-      ownerId: userId, // Will be null if no user
+      slug,
+      ownerId: userId,
       preferences: JSON.stringify({
         locale: "en-US",
         currency: "USD",
@@ -211,15 +185,12 @@ async function getOrCreateDefaultWorkspace(userId: string | null): Promise<numbe
     })
     .returning();
 
-  // If user exists, add them as owner
-  if (userId) {
-    await db.insert(workspaceMembers).values({
-      workspaceId: newWorkspace.id,
-      userId: userId,
-      role: "owner",
-      isDefault: true,
-    });
-  }
+  await db.insert(workspaceMembers).values({
+    workspaceId: newWorkspace.id,
+    userId,
+    role: "owner",
+    isDefault: true,
+  });
 
   return newWorkspace.id;
 }

@@ -971,7 +971,8 @@ async function applySmartCategorization() {
 			},
 			body: JSON.stringify({
 				rows: parseResults.rows,
-				workspaceId  // Pass workspaceId explicitly for payee alias matching
+				workspaceId, // Pass workspaceId explicitly for payee alias matching
+				accountId
 			})
 		});
 
@@ -996,7 +997,8 @@ async function applySmartCategorizationToFile(fileId: string, rows: ImportRow[])
 			},
 			body: JSON.stringify({
 				rows,
-				workspaceId
+				workspaceId,
+				accountId
 			})
 		});
 

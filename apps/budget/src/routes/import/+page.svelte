@@ -1012,6 +1012,7 @@ async function applySmartCategorization() {
   try {
     // Get workspaceId from layout data for alias lookups
     const workspaceId = data.currentWorkspace?.id;
+    const accountId = selectedAccountId ? parseInt(selectedAccountId, 10) : undefined;
 
     const response = await fetch('/api/import/infer-categories', {
       method: 'POST',
@@ -1021,6 +1022,7 @@ async function applySmartCategorization() {
       body: JSON.stringify({
         rows: parseResults.rows,
         workspaceId, // Include workspaceId to enable payee alias matching
+        accountId,
       }),
     });
 
@@ -1230,7 +1232,10 @@ async function proceedToEntityReview() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ rows: selectedRowsData }),
+      body: JSON.stringify({
+        rows: selectedRowsData,
+        accountId: parseInt(selectedAccountId, 10),
+      }),
     });
 
     const result = await response.json();
@@ -1482,13 +1487,20 @@ async function processImport() {
       // This records raw string → category mappings for future imports
       if (result.result.createdCategoryMappings && result.result.createdCategoryMappings.length > 0) {
         try {
-          const categoryAliasesToCreate = result.result.createdCategoryMappings.map((mapping) => ({
-            rawString: mapping.rawString,
-            categoryId: mapping.categoryId,
-            payeeId: mapping.payeeId,
-            sourceAccountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
-            wasAiSuggested: mapping.wasAiSuggested,
-          }));
+          const categoryAliasesToCreate = result.result.createdCategoryMappings.map(
+            (mapping: {
+              rawString: string;
+              categoryId: number;
+              payeeId?: number;
+              wasAiSuggested?: boolean;
+            }) => ({
+              rawString: mapping.rawString,
+              categoryId: mapping.categoryId,
+              payeeId: mapping.payeeId,
+              sourceAccountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
+              wasAiSuggested: mapping.wasAiSuggested,
+            })
+          );
 
           await createCategoryAliasesMutation.mutateAsync({ aliases: categoryAliasesToCreate });
         } catch (categoryAliasError) {

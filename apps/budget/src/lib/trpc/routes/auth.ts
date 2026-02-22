@@ -1,7 +1,13 @@
 import { AuthService } from "$lib/server/domains/auth";
 import { sendEmail } from "$lib/server/email";
 import { passwordResetEmail } from "$lib/server/email/templates";
-import { protectedProcedure, publicProcedure, secureProtectedProcedure, t } from "$lib/trpc";
+import {
+  openProcedure,
+  protectedProcedure,
+  publicProcedure,
+  secureProtectedProcedure,
+  t,
+} from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
@@ -11,7 +17,7 @@ export const authRoutes = t.router({
   /**
    * Get current authenticated user
    */
-  me: publicProcedure.query(async ({ ctx }) => {
+  me: openProcedure.query(async ({ ctx }) => {
     if (!ctx.userId) {
       return null;
     }
@@ -23,7 +29,7 @@ export const authRoutes = t.router({
   /**
    * Validate password strength
    */
-  validatePassword: publicProcedure
+  validatePassword: openProcedure
     .input(z.object({ password: z.string() }))
     .mutation(async ({ input }) => {
       return authService.validatePassword(input.password);
@@ -32,7 +38,7 @@ export const authRoutes = t.router({
   /**
    * Check if email is available for registration
    */
-  checkEmailAvailable: publicProcedure
+  checkEmailAvailable: openProcedure
     .input(z.object({ email: z.string().email() }))
     .query(async ({ input }) => {
       const isRegistered = await authService.isEmailRegistered(input.email);
@@ -42,7 +48,7 @@ export const authRoutes = t.router({
   /**
    * Initiate password reset
    */
-  forgotPassword: publicProcedure
+  forgotPassword: openProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ input }) => {
       const result = await authService.initiatePasswordReset(input.email);
@@ -69,7 +75,7 @@ export const authRoutes = t.router({
   /**
    * Reset password with token
    */
-  resetPassword: publicProcedure
+  resetPassword: openProcedure
     .input(
       z.object({
         token: z.string(),
@@ -178,17 +184,14 @@ export const authRoutes = t.router({
     .mutation(async ({ ctx, input }) => {
       try {
         // ctx.userId is guaranteed non-null by secureProtectedProcedure middleware
-        await authService.changePassword(
-          ctx.userId!,
-          input.currentPassword,
-          input.newPassword
-        );
+        await authService.changePassword(ctx.userId!, input.currentPassword, input.newPassword);
         return { success: true };
       } catch (error) {
         throw new TRPCError({
-          code: error instanceof Error && error.message.includes("incorrect")
-            ? "UNAUTHORIZED"
-            : "BAD_REQUEST",
+          code:
+            error instanceof Error && error.message.includes("incorrect")
+              ? "UNAUTHORIZED"
+              : "BAD_REQUEST",
           message: error instanceof Error ? error.message : "Password change failed",
         });
       }
@@ -267,19 +270,17 @@ export const authRoutes = t.router({
   /**
    * Verify email with token
    */
-  verifyEmail: publicProcedure
-    .input(z.object({ token: z.string() }))
-    .mutation(async ({ input }) => {
-      try {
-        await authService.verifyEmail(input.token);
-        return { success: true };
-      } catch (error) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: error instanceof Error ? error.message : "Email verification failed",
-        });
-      }
-    }),
+  verifyEmail: openProcedure.input(z.object({ token: z.string() })).mutation(async ({ input }) => {
+    try {
+      await authService.verifyEmail(input.token);
+      return { success: true };
+    } catch (error) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: error instanceof Error ? error.message : "Email verification failed",
+      });
+    }
+  }),
 
   /**
    * Delete account (requires password confirmation)
@@ -293,9 +294,10 @@ export const authRoutes = t.router({
         return { success: true };
       } catch (error) {
         throw new TRPCError({
-          code: error instanceof Error && error.message.includes("incorrect")
-            ? "UNAUTHORIZED"
-            : "BAD_REQUEST",
+          code:
+            error instanceof Error && error.message.includes("incorrect")
+              ? "UNAUTHORIZED"
+              : "BAD_REQUEST",
           message: error instanceof Error ? error.message : "Account deletion failed",
         });
       }

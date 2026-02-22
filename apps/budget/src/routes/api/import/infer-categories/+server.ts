@@ -8,6 +8,13 @@ import { payees, categories, accounts } from "$lib/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import type { ImportRow } from "$lib/types/import";
 import { json } from "@sveltejs/kit";
+import {
+  isImportApiError,
+  parseOptionalPositiveInt,
+  requireImportAccountAccess,
+  requireImportUserId,
+  requireImportWorkspaceAccess,
+} from "../auth";
 import type { RequestHandler } from "./$types";
 
 // Minimum confidence threshold for using a category alias
@@ -16,34 +23,51 @@ const CATEGORY_ALIAS_MIN_CONFIDENCE = 0.9;
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { rows, workspaceId } = (await request.json()) as {
+    const userId = await requireImportUserId(request);
+    const { rows, workspaceId: rawWorkspaceId, accountId: rawAccountId } = (await request.json()) as {
       rows: ImportRow[];
-      workspaceId?: number;
+      workspaceId?: number | string;
+      accountId?: number | string;
     };
+    const requestedWorkspaceId = parseOptionalPositiveInt(rawWorkspaceId, "workspace ID");
+    const accountId = parseOptionalPositiveInt(rawAccountId, "account ID");
 
-    // console.log(`[CategoryInfer] Received request: ${rows?.length || 0} rows, workspaceId=${workspaceId}`);
+    // console.log(`[CategoryInfer] Received request: ${rows?.length || 0} rows`);
 
     if (!rows || !Array.isArray(rows)) {
       return json({ error: "Invalid request: rows array required" }, { status: 400 });
     }
 
-    if (!workspaceId) {
-      // console.warn("[CategoryInfer] No workspaceId provided - category alias checks will be skipped!");
+    let authorizedWorkspaceId: number | null = null;
+    if (accountId !== null) {
+      const account = await requireImportAccountAccess(userId, accountId);
+      authorizedWorkspaceId = account.workspaceId;
+
+      if (requestedWorkspaceId !== null && requestedWorkspaceId !== account.workspaceId) {
+        return json({ error: "Workspace ID does not match account workspace" }, { status: 400 });
+      }
+    } else if (requestedWorkspaceId !== null) {
+      await requireImportWorkspaceAccess(userId, requestedWorkspaceId);
+      authorizedWorkspaceId = requestedWorkspaceId;
+    }
+
+    if (!authorizedWorkspaceId) {
+      // console.warn("[CategoryInfer] No authorized workspace found - alias checks will be skipped!");
     }
 
     // Initialize matchers and services
     const categoryMatcher = new CategoryMatcher();
     const payeeMatcher = new PayeeMatcher();
-    const aliasService = workspaceId ? new PayeeAliasService() : null;
-    const categoryAliasService = workspaceId ? getCategoryAliasService() : null;
-    const transferMappingService = workspaceId ? getTransferMappingService() : null;
+    const aliasService = authorizedWorkspaceId ? new PayeeAliasService() : null;
+    const categoryAliasService = authorizedWorkspaceId ? getCategoryAliasService() : null;
+    const transferMappingService = authorizedWorkspaceId ? getTransferMappingService() : null;
 
-    // Pre-fetch payees, categories, and accounts for the workspace if workspaceId is provided
+    // Pre-fetch payees, categories, and accounts for the workspace when available
     let payeeMap = new Map<number, { name: string; defaultCategoryId: number | null }>();
     let categoryMap = new Map<number, string>();
     let accountMap = new Map<number, string>(); // accountId -> name
 
-    if (workspaceId) {
+    if (authorizedWorkspaceId) {
       // Fetch all active accounts for transfer mapping lookups
       const workspaceAccounts = await db
         .select({
@@ -51,7 +75,7 @@ export const POST: RequestHandler = async ({ request }) => {
           name: accounts.name,
         })
         .from(accounts)
-        .where(and(eq(accounts.workspaceId, workspaceId), isNull(accounts.deletedAt)));
+        .where(and(eq(accounts.workspaceId, authorizedWorkspaceId), isNull(accounts.deletedAt)));
 
       for (const a of workspaceAccounts) {
         if (a.name) {
@@ -66,7 +90,7 @@ export const POST: RequestHandler = async ({ request }) => {
           defaultCategoryId: payees.defaultCategoryId,
         })
         .from(payees)
-        .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
+        .where(and(eq(payees.workspaceId, authorizedWorkspaceId), isNull(payees.deletedAt)));
 
       for (const p of workspacePayees) {
         if (p.name) {
@@ -81,7 +105,7 @@ export const POST: RequestHandler = async ({ request }) => {
           name: categories.name,
         })
         .from(categories)
-        .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)));
+        .where(and(eq(categories.workspaceId, authorizedWorkspaceId), isNull(categories.deletedAt)));
 
       for (const c of workspaceCategories) {
         if (c.name) {
@@ -131,13 +155,13 @@ export const POST: RequestHandler = async ({ request }) => {
           let aliasMatch: { payeeId: number; payeeName: string; defaultCategoryId: number | null } | null =
             null;
 
-          if (aliasService && workspaceId) {
+          if (aliasService && authorizedWorkspaceId) {
             // Check cache first
             if (aliasMatchCache.has(originalPayee)) {
               aliasMatch = aliasMatchCache.get(originalPayee)!;
             } else {
               // Look up alias
-              const match = await aliasService.matchWithAlias(originalPayee, workspaceId);
+              const match = await aliasService.matchWithAlias(originalPayee, authorizedWorkspaceId);
               if (match.found && match.payeeId) {
                 const payeeInfo = payeeMap.get(match.payeeId);
                 if (payeeInfo) {
@@ -200,12 +224,15 @@ export const POST: RequestHandler = async ({ request }) => {
         const rawPayeeForTransfer = (updates["originalPayee"] || data["originalPayee"] || originalPayee) as string | undefined;
         let isTransfer = false;
 
-        if (transferMappingService && workspaceId && rawPayeeForTransfer) {
+        if (transferMappingService && authorizedWorkspaceId && rawPayeeForTransfer) {
           // Check cache first
           let transferMatch = transferMappingCache.get(rawPayeeForTransfer);
           if (transferMatch === undefined) {
             // Not in cache, look up
-            const match = await transferMappingService.findTransferMapping(rawPayeeForTransfer, workspaceId);
+            const match = await transferMappingService.findTransferMapping(
+              rawPayeeForTransfer,
+              authorizedWorkspaceId
+            );
             if (match) {
               const accountName = accountMap.get(match.targetAccountId);
               if (accountName) {
@@ -270,12 +297,15 @@ export const POST: RequestHandler = async ({ request }) => {
             // First time seeing this payee - check category aliases first (respects dismissals)
             let foundCategoryFromAlias = false;
 
-            if (categoryAliasService && workspaceId && rawPayeeString) {
+            if (categoryAliasService && authorizedWorkspaceId && rawPayeeString) {
               // Check cache first
               let aliasMatch = categoryAliasCache.get(rawPayeeString);
               if (aliasMatch === undefined) {
                 // Not in cache, look up
-                const match = await categoryAliasService.matchWithAlias(rawPayeeString, workspaceId);
+                const match = await categoryAliasService.matchWithAlias(
+                  rawPayeeString,
+                  authorizedWorkspaceId
+                );
                 if (match.found && match.categoryId) {
                   if (match.confidence >= CATEGORY_ALIAS_MIN_CONFIDENCE) {
                     const categoryName = categoryMap.get(match.categoryId);
@@ -390,11 +420,11 @@ export const POST: RequestHandler = async ({ request }) => {
               if (suggestedCategoryName && suggestedCategoryId) {
                 // Check if user has dismissed this category for this payee string
                 let isDismissed = false;
-                if (categoryAliasService && workspaceId && rawPayeeString) {
+                if (categoryAliasService && authorizedWorkspaceId && rawPayeeString) {
                   isDismissed = await categoryAliasService.isCategoryDismissed(
                     rawPayeeString,
                     suggestedCategoryId,
-                    workspaceId,
+                    authorizedWorkspaceId,
                     CATEGORY_ALIAS_MIN_CONFIDENCE
                   );
                   // if (isDismissed) {
@@ -439,6 +469,10 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ rows: updatedRows });
   } catch (error) {
     console.error("Data enrichment error:", error);
+    if (isImportApiError(error)) {
+      return json({ error: error.message }, { status: error.status });
+    }
+
     return json(
       {
         error: error instanceof Error ? error.message : "Failed to enrich import data",

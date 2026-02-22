@@ -36,23 +36,33 @@ const isAuthenticated = t.middleware(({ ctx, next }) => {
 // Base procedure with security logging
 const baseProcedure = t.procedure.use(securityLogging);
 
-// Public procedures with input sanitization and standard limits
-export const publicProcedure = baseProcedure.use(standardLimits).use(inputSanitization);
+// Open procedures that do not require authentication
+// Use sparingly for flows like password reset and invitation token lookup.
+export const openProcedure = baseProcedure.use(standardLimits).use(inputSanitization);
+
+// Authenticated procedures with input sanitization and standard limits
+export const publicProcedure = baseProcedure
+  .use(isAuthenticated)
+  .use(standardLimits)
+  .use(inputSanitization);
 
 // Rate-limited procedures for mutations with enhanced security
 export const rateLimitedProcedure = baseProcedure
+  .use(isAuthenticated)
   .use(mutationRateLimit)
   .use(standardLimits)
   .use(inputSanitization);
 
 // Bulk operation procedures with specialized limits
 export const bulkOperationProcedure = baseProcedure
+  .use(isAuthenticated)
   .use(bulkOperationRateLimit)
   .use(bulkOperationLimits)
   .use(strictInputSanitization);
 
 // High-security procedures for sensitive operations
 export const secureOperationProcedure = baseProcedure
+  .use(isAuthenticated)
   .use(strictRateLimit)
   .use(strictLimits)
   .use(strictInputSanitization);
