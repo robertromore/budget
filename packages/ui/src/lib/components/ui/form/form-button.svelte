@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Button from '$ui/lib/components/ui/button';
+import * as Button from '$lib/components/ui/button';
 
 let {ref = $bindable(null), ...restProps}: Button.Props = $props();
 </script>

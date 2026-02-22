@@ -10,7 +10,7 @@ import {
   removePayeesSchema,
   updateEnhancementFeedbackSchema,
 } from "$lib/schema";
-import { intelligenceProfileSchema, superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { intelligenceProfileSchema, superformInsertPayeeSchema } from "$lib/schema/superforms/payees";
 import { normalize } from "$lib/utils/string-utilities";
 import {
   advancedSearchPayeesSchema,
@@ -25,11 +25,12 @@ import {
   updatePayeeSchema
 } from "$lib/server/domains/payees";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";
 
-const payeeService = serviceFactory.getPayeeService();
+const payeeService = lazyService(() => serviceFactory.getPayeeService());
 
 export const payeeRoutes = t.router({
   all: publicProcedure.query(

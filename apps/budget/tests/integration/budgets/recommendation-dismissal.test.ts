@@ -10,6 +10,7 @@ import {setupTestDb} from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
 import {eq, and} from "drizzle-orm";
 import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import type {RecommendationMetadata} from "../../../src/lib/schema/recommendations";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -72,6 +73,12 @@ async function setupTestContext(): Promise<TestContext> {
 async function createRecommendation(ctx: TestContext, status: string = "pending") {
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const metadata: RecommendationMetadata = {
+    suggestedType: "scheduled-expense",
+    suggestedAmount: 15.99,
+    detectedFrequency: "monthly",
+    payeeIds: [ctx.payeeId],
+  };
 
   const [recommendation] = await ctx.db
     .insert(schema.budgetRecommendations)
@@ -85,12 +92,7 @@ async function createRecommendation(ctx: TestContext, status: string = "pending"
       status: status as "pending" | "dismissed" | "applied" | "expired",
       accountId: ctx.accountId,
       categoryId: ctx.categoryId,
-      metadata: JSON.stringify({
-        suggestedType: "scheduled-expense",
-        suggestedAmount: 15.99,
-        detectedFrequency: "monthly",
-        payeeIds: [ctx.payeeId],
-      }),
+      metadata,
       expiresAt,
       createdAt: now,
       updatedAt: now,
@@ -525,16 +527,18 @@ describe("Recommendation Dismissal", () => {
     it("should store dismissal reason in metadata", async () => {
       const recommendation = await createRecommendation(ctx);
 
-      const metadata = JSON.parse(recommendation.metadata as string);
-      metadata.dismissalReason = "not_relevant";
-      metadata.dismissalFeedback = "I don't use Netflix anymore";
+      const metadata: RecommendationMetadata = {
+        ...recommendation.metadata,
+        dismissalReason: "not_relevant",
+        dismissalFeedback: "I don't use Netflix anymore",
+      };
 
       await ctx.db
         .update(schema.budgetRecommendations)
         .set({
           status: "dismissed",
           dismissedAt: new Date().toISOString(),
-          metadata: JSON.stringify(metadata),
+          metadata,
         })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
@@ -542,7 +546,7 @@ describe("Recommendation Dismissal", () => {
         where: eq(schema.budgetRecommendations.id, recommendation.id),
       });
 
-      const updatedMetadata = JSON.parse(updated!.metadata as string);
+      const updatedMetadata = updated!.metadata as RecommendationMetadata;
       expect(updatedMetadata.dismissalReason).toBe("not_relevant");
       expect(updatedMetadata.dismissalFeedback).toBe("I don't use Netflix anymore");
     });
@@ -553,7 +557,7 @@ describe("Recommendation Dismissal", () => {
       const rec1 = await createRecommendation(ctx);
 
       // Create second recommendation with different data
-      const rec2Data = {
+      const rec2Data: typeof schema.budgetRecommendations.$inferInsert = {
         workspaceId: ctx.workspaceId,
         type: "create_budget" as const,
         priority: "low" as const,
@@ -563,7 +567,7 @@ describe("Recommendation Dismissal", () => {
         status: "pending" as const,
         accountId: ctx.accountId,
         categoryId: null,
-        metadata: JSON.stringify({suggestedType: "account-monthly"}),
+        metadata: {suggestedType: "account-monthly"},
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

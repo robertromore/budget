@@ -294,6 +294,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
       <EntitySearchToolbar
         bind:searchQuery={search.query}
         bind:viewMode={search.viewMode}
+        filters={search.filters}
         searchPlaceholder="Search categories..."
         onSearchChange={(query) => search.updateQuery(query)}
         onViewModeChange={(mode) => (search.viewMode = mode)}

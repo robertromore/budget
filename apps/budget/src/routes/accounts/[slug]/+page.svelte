@@ -99,7 +99,7 @@ function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
       interval: demoSchedule.interval,
       nextOccurrence: demoSchedule.nextOccurrence,
     } as any,
-  } as Schedule;
+	} as unknown as Schedule;
 }
 
 // Define valid tab values

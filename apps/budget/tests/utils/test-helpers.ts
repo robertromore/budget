@@ -1,4 +1,4 @@
-import {expect} from "vitest";
+import {expect, vi} from "vitest";
 import type {MockedFunction} from "vitest";
 
 export interface TestUser {
@@ -10,7 +10,7 @@ export interface TestUser {
 export interface TestAccount {
   id: number;
   name: string;
-  type: string;
+  accountType: string;
   balance: number;
 }
 
@@ -39,7 +39,7 @@ export class TestDataFactory {
     return {
       id: 1,
       name: "Test Account",
-      type: "checking",
+      accountType: "checking",
       balance: 1000,
       ...overrides,
     };
@@ -164,7 +164,7 @@ export class TestMocks {
     returnValues: ReturnType<T>[]
   ): MockedFunction<T> {
     const mockFn = vi.fn() as MockedFunction<T>;
-    returnValues.forEach((value) => mockFn.mockReturnValueOnce(value));
+    returnValues.forEach((value) => mockFn.mockReturnValueOnce(value as any));
     return mockFn;
   }
 
@@ -179,13 +179,13 @@ export class TestMocks {
     const mockFn = vi.fn() as MockedFunction<T>;
     let callCount = 0;
 
-    mockFn.mockImplementation(() => {
+    mockFn.mockImplementation((() => {
       callCount++;
       if (failOnCalls.includes(callCount)) {
         throw error;
       }
       return successValue;
-    });
+    }) as any);
 
     return mockFn;
   }
@@ -198,10 +198,10 @@ export class TestMocks {
     delayMs = 100
   ): MockedFunction<T> {
     const mockFn = vi.fn() as MockedFunction<T>;
-    mockFn.mockImplementation(async () => {
+    mockFn.mockImplementation((async () => {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
       return returnValue;
-    });
+    }) as any);
     return mockFn;
   }
 }

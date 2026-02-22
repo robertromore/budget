@@ -8,8 +8,9 @@ import {
   scheduleSubscriptionTypes,
   transactions,
 } from "$lib/schema";
-import { superformInsertScheduleSchema } from "$lib/schema/superforms";
+import { superformInsertScheduleSchema } from "$lib/schema/superforms/schedules";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
@@ -19,7 +20,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-const scheduleService = serviceFactory.getScheduleService();
+const scheduleService = lazyService(() => serviceFactory.getScheduleService());
 
 export const scheduleRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {

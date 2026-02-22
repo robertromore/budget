@@ -10,8 +10,8 @@ describe("Schedule Creation with Repeating Dates", () => {
   beforeEach(async () => {
     ctx = await createTestContext();
     caller = createCaller(ctx);
-    await clearTestDb(ctx.db);
-    testData = await seedTestData(ctx.db);
+    await clearTestDb(ctx.db as any);
+    testData = await seedTestData(ctx.db as any);
   });
 
   it("should create a schedule with repeating date", async () => {

@@ -2,20 +2,28 @@ import * as schema from "$lib/schema/index";
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 
-// Support both SvelteKit context ($env) and standalone scripts (process.env)
-let DATABASE_URL: string;
+let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-try {
-	// Try SvelteKit's $env first (dynamic import to avoid build errors)
-	const { env } = await import('$env/dynamic/private');
-	DATABASE_URL = env.DATABASE_URL || '';
-} catch {
-	// Fallback to process.env for scripts running outside SvelteKit
-	DATABASE_URL = process.env.DATABASE_URL || '';
+function createDb() {
+  const DATABASE_URL = process.env.DATABASE_URL || Bun.env?.DATABASE_URL || '';
+  if (!DATABASE_URL) throw new Error('DATABASE_URL is not set');
+
+  const client = createClient({ url: DATABASE_URL });
+  return drizzle(client, { schema });
 }
 
-if (!DATABASE_URL) throw new Error('DATABASE_URL is not set');
+function getDb() {
+  if (!dbInstance) {
+    dbInstance = createDb();
+  }
+  return dbInstance;
+}
 
-const client = createClient({ url: DATABASE_URL });
-
-export const db = drizzle(client, { schema });
+// Lazily initialize the DB to avoid module-evaluation order issues during build workers.
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(_target, prop, receiver) {
+    const instance = getDb();
+    const value = Reflect.get(instance, prop, receiver);
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});

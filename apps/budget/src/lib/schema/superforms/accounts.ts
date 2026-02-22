@@ -1,5 +1,26 @@
 import { z } from "zod";
-import { accountTypeEnum, utilitySubtypeEnum } from "../accounts";
+
+const accountTypeEnum = [
+  "checking",
+  "savings",
+  "investment",
+  "credit_card",
+  "loan",
+  "cash",
+  "hsa",
+  "utility",
+  "other",
+] as const;
+
+const utilitySubtypeEnum = [
+  "electric",
+  "gas",
+  "water",
+  "internet",
+  "sewer",
+  "trash",
+  "other",
+] as const;
 
 // Superform-compatible schemas for accounts (not using drizzle-zod)
 export const superformInsertAccountSchema = z.object({

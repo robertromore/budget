@@ -10,6 +10,7 @@ import {setupTestDb} from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
 import {eq, and} from "drizzle-orm";
 import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import type {RecommendationPriority, RecommendationType} from "../../../src/lib/schema/recommendations";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -20,6 +21,8 @@ interface TestContext {
   payeeId: number;
   categoryId: number;
 }
+
+type RecommendationDraft = typeof schema.budgetRecommendations.$inferInsert;
 
 async function setupTestContext(): Promise<TestContext> {
   const db = await setupTestDb();
@@ -75,7 +78,7 @@ async function setupTestContext(): Promise<TestContext> {
 function createRecommendationDraft(
   ctx: TestContext,
   options: {
-    type?: string;
+    type?: RecommendationType;
     suggestedType?: string;
     amount?: number;
     frequency?: string;
@@ -83,9 +86,9 @@ function createRecommendationDraft(
     categoryId?: number | null;
     accountId?: number | null;
     confidence?: number;
-    priority?: string;
+    priority?: RecommendationPriority;
   } = {}
-) {
+): RecommendationDraft {
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -103,12 +106,12 @@ function createRecommendationDraft(
     status: "pending" as const,
     accountId,
     categoryId,
-    metadata: JSON.stringify({
+    metadata: {
       suggestedType: options.suggestedType ?? "scheduled-expense",
       suggestedAmount: options.amount ?? 15.99,
       detectedFrequency: options.frequency ?? "monthly",
       payeeIds: options.payeeIds ?? [ctx.payeeId],
-    }),
+    },
     expiresAt,
     createdAt: now,
     updatedAt: now,
@@ -142,7 +145,7 @@ describe("Budget Recommendation Generation", () => {
       expect(recommendation.accountId).toBe(ctx.accountId);
       expect(recommendation.categoryId).toBe(ctx.categoryId);
 
-      const metadata = JSON.parse(recommendation.metadata as string);
+      const metadata = recommendation.metadata ?? {};
       expect(metadata.suggestedAmount).toBe(25.0);
     });
 
@@ -172,7 +175,7 @@ describe("Budget Recommendation Generation", () => {
         .values(draft)
         .returning();
 
-      const metadata = JSON.parse(recommendation.metadata as string);
+      const metadata = recommendation.metadata ?? {};
       expect(metadata.suggestedType).toBe("goal");
       expect(metadata.suggestedAmount).toBe(500);
       expect(metadata.detectedFrequency).toBe("weekly");
@@ -199,7 +202,7 @@ describe("Budget Recommendation Generation", () => {
       const recommendations = await ctx.db.insert(schema.budgetRecommendations).values(drafts).returning();
 
       expect(recommendations).toHaveLength(3);
-      expect(recommendations.map((r) => JSON.parse(r.metadata as string).suggestedAmount)).toEqual([10, 20, 30]);
+      expect(recommendations.map((r) => r.metadata?.suggestedAmount)).toEqual([10, 20, 30]);
     });
 
     it("should not create duplicate recommendations with same key properties", async () => {
@@ -266,7 +269,7 @@ describe("Budget Recommendation Generation", () => {
         );
 
       expect(pending).toHaveLength(1);
-      expect(JSON.parse(pending[0].metadata as string).suggestedAmount).toBe(10);
+      expect(pending[0].metadata?.suggestedAmount).toBe(10);
     });
 
     it("should filter recommendations by priority", async () => {
@@ -346,7 +349,7 @@ describe("Budget Recommendation Generation", () => {
       });
 
       const [rec] = await ctx.db.insert(schema.budgetRecommendations).values(draft).returning();
-      const metadata = JSON.parse(rec.metadata as string);
+      const metadata = rec.metadata ?? {};
 
       expect(metadata.suggestedType).toBe("scheduled-expense");
       expect(metadata.detectedFrequency).toBe("monthly");
@@ -359,7 +362,7 @@ describe("Budget Recommendation Generation", () => {
       });
 
       const [rec] = await ctx.db.insert(schema.budgetRecommendations).values(draft).returning();
-      const metadata = JSON.parse(rec.metadata as string);
+      const metadata = rec.metadata ?? {};
 
       expect(metadata.suggestedType).toBe("account-monthly");
       expect(rec.categoryId).toBeNull();
@@ -373,7 +376,7 @@ describe("Budget Recommendation Generation", () => {
       });
 
       const [rec] = await ctx.db.insert(schema.budgetRecommendations).values(draft).returning();
-      const metadata = JSON.parse(rec.metadata as string);
+      const metadata = rec.metadata ?? {};
 
       expect(metadata.suggestedType).toBe("goal");
       expect(metadata.suggestedAmount).toBe(1000);

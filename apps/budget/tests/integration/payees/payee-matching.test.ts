@@ -216,7 +216,7 @@ describe("Payee Matching", () => {
       let bestScore = 0;
 
       for (const payee of payees) {
-        const score = levenshteinSimilarity(incoming, payee.name);
+        const score = levenshteinSimilarity(incoming, payee.name ?? "");
         if (score > bestScore) {
           bestScore = score;
           bestMatch = payee;
@@ -241,7 +241,7 @@ describe("Payee Matching", () => {
       let bestScore = 0;
 
       for (const payee of payees) {
-        const score = levenshteinSimilarity(cleaned, payee.name);
+        const score = levenshteinSimilarity(cleaned, payee.name ?? "");
         if (score > bestScore) {
           bestScore = score;
           bestMatch = payee;
@@ -263,7 +263,7 @@ describe("Payee Matching", () => {
       let bestScore = 0;
 
       for (const payee of payees) {
-        const score = levenshteinSimilarity(incoming, payee.name);
+        const score = levenshteinSimilarity(incoming, payee.name ?? "");
         if (score > bestScore) {
           bestScore = score;
         }
@@ -323,7 +323,7 @@ describe("Payee Matching", () => {
       const matches = payees
         .map((payee) => ({
           payee,
-          score: levenshteinSimilarity(incoming, payee.name),
+          score: levenshteinSimilarity(incoming, payee.name ?? ""),
         }))
         .filter((m) => m.score >= minScore)
         .sort((a, b) => b.score - a.score)

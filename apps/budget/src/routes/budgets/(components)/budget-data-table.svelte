@@ -26,8 +26,11 @@ let columnFilters = $state<ColumnFiltersState>([]);
 function getAvailableFilters(tableInstance: TTable<BudgetWithRelations>) {
   return tableInstance
     .getAllColumns()
-    .filter((column) => column.columnDef.meta?.facetedFilter)
-    .map((column) => column.columnDef.meta?.facetedFilter(column) as FilterInputOption);
+    .map((column) => {
+      const facetedFilter = column.columnDef.meta?.facetedFilter;
+      return facetedFilter ? (facetedFilter(column) as FilterInputOption) : null;
+    })
+    .filter((filter): filter is FilterInputOption => filter !== null);
 }
 </script>
 

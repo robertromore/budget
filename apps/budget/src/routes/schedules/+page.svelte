@@ -52,7 +52,7 @@ function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
       interval: demoSchedule.interval,
       nextOccurrence: demoSchedule.nextOccurrence,
     } as any,
-  } as Schedule;
+  } as unknown as Schedule;
 }
 
 // Get existing schedules state from layout context

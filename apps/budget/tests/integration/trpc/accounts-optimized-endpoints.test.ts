@@ -1,7 +1,7 @@
 import {describe, test, expect, beforeEach, afterEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
 import {setupTestDb, clearTestDb} from "../setup/test-db";
-import {accounts, transactions, categories, payees} from "$lib/schema";
+import {accounts, transactions, categories, payees, users, workspaces, workspaceMembers} from "$lib/schema";
 import {queryCache} from "$lib/utils/cache";
 
 describe("Optimized Account Endpoints Integration Tests", () => {
@@ -10,10 +10,43 @@ describe("Optimized Account Endpoints Integration Tests", () => {
   let testAccount: any;
   let testCategory: any;
   let testPayee: any;
+  let workspaceId: number;
 
   beforeEach(async () => {
     db = await setupTestDb();
-    const ctx = {db, isTest: true};
+    const testUserId = "test-user";
+    await db.insert(users).values({
+      id: testUserId,
+      name: "Test User",
+      displayName: "Test User",
+      email: "test@example.com",
+    });
+
+    const [workspace] = await db
+      .insert(workspaces)
+      .values({
+        displayName: "Optimized Test Workspace",
+        slug: "optimized-test-workspace",
+        ownerId: testUserId,
+      })
+      .returning();
+    workspaceId = workspace.id;
+
+    await db.insert(workspaceMembers).values({
+      workspaceId,
+      userId: testUserId,
+      role: "owner",
+      isDefault: true,
+    });
+
+    const ctx = {
+      db: db as any,
+      userId: testUserId,
+      sessionId: "test-session",
+      workspaceId,
+      event: {} as any,
+      isTest: true,
+    };
     caller = createCaller(ctx);
 
     // Clear cache from previous tests
@@ -29,23 +62,27 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     [testAccount] = await db
       .insert(accounts)
       .values({
+        workspaceId,
         name: "Optimized Test Account",
         slug: "optimized-test-account",
-        type: "checking",
       })
       .returning();
 
     [testCategory] = await db
       .insert(categories)
       .values({
+        workspaceId,
         name: "Test Category",
+        slug: "test-category",
       })
       .returning();
 
     [testPayee] = await db
       .insert(payees)
       .values({
+        workspaceId,
         name: "Test Payee",
+        slug: "test-payee",
       })
       .returning();
   });
@@ -78,7 +115,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
         },
       ]);
 
-      const summary = await caller.optimizedAccountsRoutes.loadSummary({
+      const summary = await caller.serverAccountsRoutes.loadSummary({
         id: testAccount.id,
       });
 
@@ -92,7 +129,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should handle account with no transactions", async () => {
-      const summary = await caller.optimizedAccountsRoutes.loadSummary({
+      const summary = await caller.serverAccountsRoutes.loadSummary({
         id: testAccount.id,
       });
 
@@ -101,20 +138,20 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should throw error for non-existent account", async () => {
-      await expect(caller.optimizedAccountsRoutes.loadSummary({id: 99999})).rejects.toThrow(
+      await expect(caller.serverAccountsRoutes.loadSummary({id: 99999})).rejects.toThrow(
         "Account not found"
       );
     });
 
     test("should use caching for repeated requests", async () => {
       const startTime1 = performance.now();
-      const summary1 = await caller.optimizedAccountsRoutes.loadSummary({
+      const summary1 = await caller.serverAccountsRoutes.loadSummary({
         id: testAccount.id,
       });
       const endTime1 = performance.now();
 
       const startTime2 = performance.now();
-      const summary2 = await caller.optimizedAccountsRoutes.loadSummary({
+      const summary2 = await caller.serverAccountsRoutes.loadSummary({
         id: testAccount.id,
       });
       const endTime2 = performance.now();
@@ -131,9 +168,9 @@ describe("Optimized Account Endpoints Integration Tests", () => {
       const [secondAccount] = await db
         .insert(accounts)
         .values({
+          workspaceId,
           name: "Second Account",
           slug: "second-account",
-          type: "savings",
         })
         .returning();
 
@@ -157,7 +194,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
         },
       ]);
 
-      const summaries = await caller.optimizedAccountsRoutes.loadAllSummaries();
+      const summaries = await caller.serverAccountsRoutes.loadAllSummaries();
 
       expect(summaries).toHaveLength(2);
 
@@ -177,7 +214,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should handle accounts with no transactions", async () => {
-      const summaries = await caller.optimizedAccountsRoutes.loadAllSummaries();
+      const summaries = await caller.serverAccountsRoutes.loadAllSummaries();
 
       expect(summaries).toHaveLength(1);
       expect(summaries[0].balance).toBe(0);
@@ -208,7 +245,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should load first page of transactions", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 0,
         pageSize: 10,
@@ -224,7 +261,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should load second page of transactions", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 1,
         pageSize: 10,
@@ -237,7 +274,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should load last page of transactions", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 2,
         pageSize: 10,
@@ -250,7 +287,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should sort transactions by different fields", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 0,
         pageSize: 10, // Must be >= 10 per schema validation
@@ -266,7 +303,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should calculate running balance for first page chronological", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 0,
         pageSize: 10,
@@ -280,7 +317,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should not calculate running balance for non-chronological pages", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 1, // Not first page
         pageSize: 10,
@@ -326,7 +363,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should search transactions by notes", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         searchQuery: "grocery",
       });
@@ -337,7 +374,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should search transactions by amount", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         searchQuery: "85", // Search for partial amount match
       });
@@ -347,7 +384,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should filter transactions by date range", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         dateFrom: "2024-01-01T00:00:00.000Z",
         dateTo: "2024-01-02T23:59:59.999Z",
@@ -357,7 +394,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should combine search and date filtering", async () => {
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         searchQuery: "grocery",
         dateFrom: "2024-01-03T00:00:00.000Z",
@@ -390,7 +427,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
       }
       await Promise.all(transactionPromises);
 
-      const recent = await caller.optimizedAccountsRoutes.loadRecentTransactions({
+      const recent = await caller.serverAccountsRoutes.loadRecentTransactions({
         accountId: testAccount.id,
         limit: 5,
       });
@@ -430,7 +467,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
       }
       await Promise.all(transactionPromises);
 
-      const recent = await caller.optimizedAccountsRoutes.loadRecentTransactions({
+      const recent = await caller.serverAccountsRoutes.loadRecentTransactions({
         accountId: testAccount.id,
       });
 
@@ -470,7 +507,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should group balance history by day", async () => {
-      const history = await caller.optimizedAccountsRoutes.getBalanceHistory({
+      const history = await caller.serverAccountsRoutes.getBalanceHistory({
         accountId: testAccount.id,
         groupBy: "day",
       });
@@ -488,7 +525,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should filter balance history by date range", async () => {
-      const history = await caller.optimizedAccountsRoutes.getBalanceHistory({
+      const history = await caller.serverAccountsRoutes.getBalanceHistory({
         accountId: testAccount.id,
         fromDate: "2024-01-01T00:00:00.000Z",
         toDate: "2024-01-01T23:59:59.999Z",
@@ -501,7 +538,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should group balance history by month", async () => {
-      const history = await caller.optimizedAccountsRoutes.getBalanceHistory({
+      const history = await caller.serverAccountsRoutes.getBalanceHistory({
         accountId: testAccount.id,
         groupBy: "month",
       });
@@ -539,7 +576,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
 
       // Test paginated loading performance
       const startTime = performance.now();
-      const result = await caller.optimizedAccountsRoutes.loadTransactions({
+      const result = await caller.serverAccountsRoutes.loadTransactions({
         accountId: testAccount.id,
         page: 0,
         pageSize: 20,
@@ -577,7 +614,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
 
       // Time optimized summary endpoint
       const summaryStart = performance.now();
-      const summary = await caller.optimizedAccountsRoutes.loadSummary({
+      const summary = await caller.serverAccountsRoutes.loadSummary({
         id: testAccount.id,
       });
       const summaryEnd = performance.now();

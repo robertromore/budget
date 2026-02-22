@@ -34,11 +34,13 @@ function createTestActions(): ActionConfig[] {
 
 describe("Automation Repository Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
+  let repoDb: ConstructorParameters<typeof AutomationRepository>[0];
   let workspaceId: number;
   let repo: AutomationRepository;
 
   beforeEach(async () => {
     db = await setupTestDb();
+    repoDb = db as unknown as ConstructorParameters<typeof AutomationRepository>[0];
 
     // Create a test workspace
     const [workspace] = await db
@@ -51,7 +53,7 @@ describe("Automation Repository Integration Tests", () => {
     workspaceId = workspace.id;
 
     // Initialize repository
-    repo = new AutomationRepository(db, workspaceId);
+    repo = new AutomationRepository(repoDb, workspaceId);
   });
 
   afterEach(async () => {
@@ -107,7 +109,7 @@ describe("Automation Repository Integration Tests", () => {
         const flowState = {
           nodes: [{ id: "node-1", type: "trigger", position: { x: 0, y: 0 }, data: {} }],
           edges: [],
-        };
+        } as any;
 
         const rule = await repo.create({
           name: "Rule with Flow State",
@@ -182,7 +184,7 @@ describe("Automation Repository Integration Tests", () => {
             slug: "other-workspace",
           })
           .returning();
-        const otherRepo = new AutomationRepository(db, otherWorkspace.id);
+        const otherRepo = new AutomationRepository(repoDb, otherWorkspace.id);
 
         // Should not find the rule from the other workspace
         const found = await otherRepo.findById(rule.id);
@@ -259,7 +261,7 @@ describe("Automation Repository Integration Tests", () => {
             slug: "other-workspace",
           })
           .returning();
-        const otherRepo = new AutomationRepository(db, otherWorkspace.id);
+        const otherRepo = new AutomationRepository(repoDb, otherWorkspace.id);
         await otherRepo.create({
           name: "Other Workspace Rule",
           trigger: createTestTrigger(),
@@ -431,7 +433,7 @@ describe("Automation Repository Integration Tests", () => {
             slug: "other-workspace-update",
           })
           .returning();
-        const otherRepo = new AutomationRepository(db, otherWorkspace.id);
+        const otherRepo = new AutomationRepository(repoDb, otherWorkspace.id);
 
         const updated = await otherRepo.update(rule.id, { name: "Hacked" });
         expect(updated).toBeUndefined();
@@ -473,7 +475,7 @@ describe("Automation Repository Integration Tests", () => {
             slug: "other-workspace-delete",
           })
           .returning();
-        const otherRepo = new AutomationRepository(db, otherWorkspace.id);
+        const otherRepo = new AutomationRepository(repoDb, otherWorkspace.id);
 
         await otherRepo.delete(rule.id);
 
@@ -636,7 +638,7 @@ describe("Automation Repository Integration Tests", () => {
           entityId: 123,
           status: "success",
           conditionsMatched: true,
-          actionsExecuted: [{ actionType: "setCategory", success: true }],
+          actionsExecuted: [{ actionId: "action-1", actionType: "setCategory", success: true }],
           executionTimeMs: 15,
         });
 
@@ -792,7 +794,7 @@ describe("Automation Repository Integration Tests", () => {
             slug: "other-workspace-logs",
           })
           .returning();
-        const otherRepo = new AutomationRepository(db, otherWorkspace.id);
+        const otherRepo = new AutomationRepository(repoDb, otherWorkspace.id);
         const otherRule = await otherRepo.create({
           name: "Other Rule",
           trigger: createTestTrigger(),

@@ -38,7 +38,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "HSA Account",
       slug: "hsa-account",
-      type: "hsa",
+      accountType: "hsa",
     })
     .returning();
 
@@ -48,7 +48,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Checking",
       slug: "checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 
@@ -634,7 +634,7 @@ describe("Medical Expenses", () => {
           workspaceId: ctx.workspaceId,
           name: "HSA Account 2",
           slug: "hsa-account-2",
-          type: "hsa",
+          accountType: "hsa",
         })
         .returning();
 

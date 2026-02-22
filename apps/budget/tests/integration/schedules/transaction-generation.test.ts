@@ -9,8 +9,8 @@ describe("Transaction Generation from Schedules Tests", () => {
   let testCategoryId: number;
 
   beforeEach(async () => {
-    const ctx = await createContext();
-    caller = createCaller({...ctx, isTest: true});
+    const ctx = await createContext({} as any);
+    caller = createCaller({...ctx, isTest: true} as any);
 
     // Create test dependencies
     const account = await caller.accountRoutes.save({

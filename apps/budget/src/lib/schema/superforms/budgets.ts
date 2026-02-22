@@ -1,12 +1,17 @@
-import {
-  budgetAssociationTypes,
-  budgetEnforcementLevels,
-  budgetScopes,
-  budgetStatuses,
-  budgetTypes,
-  periodTemplateTypes,
-} from "../budgets";
 import { z } from "zod";
+
+const budgetTypes = [
+  "account-monthly",
+  "category-envelope",
+  "goal-based",
+  "scheduled-expense",
+] as const;
+
+const budgetScopes = ["account", "category", "global", "mixed"] as const;
+const budgetStatuses = ["active", "inactive", "archived"] as const;
+const budgetEnforcementLevels = ["none", "warning", "strict"] as const;
+const periodTemplateTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
+const budgetAssociationTypes = ["spending", "savings", "source", "primary"] as const;
 
 // Schema for account associations with types (for goal-based budgets)
 export const accountAssociationSchema = z.object({

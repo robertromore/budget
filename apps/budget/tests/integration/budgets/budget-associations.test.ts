@@ -584,9 +584,9 @@ describe("Budget Associations", () => {
           scope: "account",
           status: "active",
           enforcementLevel: "warning",
-          metadata: JSON.stringify({
+          metadata: {
             scheduledExpense: {linkedScheduleId: schedule.id},
-          }),
+          },
         })
         .returning();
 

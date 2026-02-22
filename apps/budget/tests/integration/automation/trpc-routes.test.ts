@@ -29,6 +29,7 @@ import {
   cleanupOldLogs,
   testRule,
   type AutomationContext,
+  type CreateRuleInput,
 } from "../../../src/lib/server/domains/automation/services";
 import {
   entityTypes,
@@ -85,7 +86,7 @@ const createRuleSchema = z.object({
 });
 
 // Test helpers
-function createValidRuleInput() {
+function createValidRuleInput(): CreateRuleInput {
   return {
     name: "Test Rule",
     trigger: {
@@ -119,7 +120,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
       .returning();
     workspaceId = workspace.id;
 
-    context = { db, workspaceId };
+    context = { db: db as unknown as AutomationContext["db"], workspaceId };
   });
 
   afterEach(async () => {
@@ -135,7 +136,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
   describe("Metadata Routes", () => {
     describe("getEntityTypes", () => {
       it("should return all entity types", () => {
-        expect(entityTypes).toBeArray();
+        expect(Array.isArray(entityTypes)).toBe(true);
         expect(entityTypes.length).toBeGreaterThanOrEqual(6);
         expect(entityTypes.map((t) => t.value)).toContain("transaction");
         expect(entityTypes.map((t) => t.value)).toContain("account");
@@ -146,7 +147,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
       it("should return events for transaction entity", () => {
         const events = triggerEvents.transaction;
 
-        expect(events).toBeArray();
+        expect(Array.isArray(events)).toBe(true);
         expect(events.map((e) => e.event)).toContain("created");
         expect(events.map((e) => e.event)).toContain("updated");
       });
@@ -154,7 +155,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
       it("should return events for account entity", () => {
         const events = triggerEvents.account;
 
-        expect(events).toBeArray();
+        expect(Array.isArray(events)).toBe(true);
         expect(events.map((e) => e.event)).toContain("created");
         expect(events.map((e) => e.event)).toContain("balanceChanged");
       });
@@ -164,7 +165,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
       it("should return fields for transaction entity", () => {
         const fields = conditionFields.transaction;
 
-        expect(fields).toBeArray();
+        expect(Array.isArray(fields)).toBe(true);
         expect(fields.map((f) => f.field)).toContain("amount");
         expect(fields.map((f) => f.field)).toContain("date");
         expect(fields.map((f) => f.field)).toContain("status");
@@ -175,7 +176,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
       it("should return actions for transaction entity", () => {
         const actions = getActionsForEntity("transaction");
 
-        expect(actions).toBeArray();
+        expect(Array.isArray(actions)).toBe(true);
         expect(actions.map((a) => a.type)).toContain("setCategory");
         expect(actions.map((a) => a.type)).toContain("setPayee");
       });
@@ -192,7 +193,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
 
     describe("getAllActions", () => {
       it("should return all action definitions", () => {
-        expect(actionDefinitions).toBeArray();
+        expect(Array.isArray(actionDefinitions)).toBe(true);
         expect(actionDefinitions.length).toBeGreaterThan(10);
         expect(actionDefinitions[0]).toHaveProperty("type");
         expect(actionDefinitions[0]).toHaveProperty("label");
@@ -438,7 +439,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
       ruleId = rule.id;
 
       // Add some logs directly via repository
-      const repo = new AutomationRepository(db, workspaceId);
+      const repo = new AutomationRepository(context.db, workspaceId);
       await repo.createLog({
         ruleId,
         triggerEvent: "created",

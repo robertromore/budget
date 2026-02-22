@@ -50,10 +50,10 @@ const accountMap = $derived(new Map(accounts.map((a) => [a.id, a])));
 // Filter out closed accounts for the selector
 const openAccounts = $derived(accounts.filter((a) => !a.closed));
 
-// Filter state
-let searchQuery = $state('');
-let triggerFilter = $state<TransferMappingTrigger | 'all'>('all');
-let accountFilter = $state<number | 'all'>('all');
+	// Filter state
+	let searchQuery = $state('');
+	let triggerFilter = $state<TransferMappingTrigger | 'all'>('all');
+	let accountFilter = $state<string | 'all'>('all');
 
 // Filtered mappings
 const filteredMappings = $derived.by(() => {
@@ -74,30 +74,30 @@ const filteredMappings = $derived.by(() => {
     result = result.filter((mapping) => mapping.trigger === triggerFilter);
   }
 
-  // Filter by target account
-  if (accountFilter !== 'all') {
-    result = result.filter((mapping) => mapping.targetAccountId === accountFilter);
-  }
+	// Filter by target account
+	if (accountFilter !== 'all') {
+		result = result.filter((mapping) => String(mapping.targetAccountId) === accountFilter);
+	}
 
   return result;
 });
 
 // Create mapping dialog state
-let createDialog = $state({
-  open: false,
-  rawPayeeString: '',
-  targetAccountId: null as number | null,
-  isSaving: false,
-});
+	let createDialog = $state({
+		open: false,
+		rawPayeeString: '',
+		targetAccountId: undefined as string | undefined,
+		isSaving: false,
+	});
 
 // Edit dialog state
-let editDialog = $state({
-  open: false,
-  mapping: null as TransferMappingWithAccount | null,
-  rawPayeeString: '',
-  targetAccountId: null as number | null,
-  isSaving: false,
-});
+	let editDialog = $state({
+		open: false,
+		mapping: null as TransferMappingWithAccount | null,
+		rawPayeeString: '',
+		targetAccountId: undefined as string | undefined,
+		isSaving: false,
+	});
 
 // Delete dialog state
 let deleteDialog = $state({
@@ -106,14 +106,14 @@ let deleteDialog = $state({
   isDeleting: false,
 });
 
-function openCreateDialog() {
-  createDialog = {
-    open: true,
-    rawPayeeString: '',
-    targetAccountId: null,
-    isSaving: false,
-  };
-}
+	function openCreateDialog() {
+		createDialog = {
+			open: true,
+			rawPayeeString: '',
+			targetAccountId: undefined,
+			isSaving: false,
+		};
+	}
 
 function closeCreateDialog() {
   createDialog.open = false;
@@ -124,11 +124,11 @@ async function saveNewMapping() {
 
   createDialog.isSaving = true;
 
-  try {
-    await trpc().transferMappingRoutes.create.mutate({
-      rawPayeeString: createDialog.rawPayeeString.trim(),
-      targetAccountId: createDialog.targetAccountId,
-    });
+		try {
+			await trpc().transferMappingRoutes.create.mutate({
+				rawPayeeString: createDialog.rawPayeeString.trim(),
+				targetAccountId: Number(createDialog.targetAccountId),
+			});
 
     toast.success('Transfer mapping created');
     createDialog.open = false;
@@ -141,15 +141,15 @@ async function saveNewMapping() {
   }
 }
 
-function openEditDialog(mapping: TransferMappingWithAccount) {
-  editDialog = {
-    open: true,
-    mapping,
-    rawPayeeString: mapping.rawPayeeString,
-    targetAccountId: mapping.targetAccountId,
-    isSaving: false,
-  };
-}
+	function openEditDialog(mapping: TransferMappingWithAccount) {
+		editDialog = {
+			open: true,
+			mapping,
+			rawPayeeString: mapping.rawPayeeString,
+			targetAccountId: String(mapping.targetAccountId),
+			isSaving: false,
+		};
+	}
 
 function closeEditDialog() {
   editDialog.open = false;
@@ -160,12 +160,12 @@ async function saveMapping() {
 
   editDialog.isSaving = true;
 
-  try {
-    await trpc().transferMappingRoutes.update.mutate({
-      id: editDialog.mapping.id,
-      rawPayeeString: editDialog.rawPayeeString.trim(),
-      targetAccountId: editDialog.targetAccountId,
-    });
+		try {
+			await trpc().transferMappingRoutes.update.mutate({
+				id: editDialog.mapping.id,
+				rawPayeeString: editDialog.rawPayeeString.trim(),
+				targetAccountId: Number(editDialog.targetAccountId),
+			});
 
     toast.success('Transfer mapping updated');
     editDialog.open = false;
@@ -353,50 +353,58 @@ function formatDate(dateString: string | null): string {
       </Select.Content>
     </Select.Root>
 
-    <Select.Root type="single" bind:value={accountFilter}>
-      <Select.Trigger class="w-[200px]">
-        {#if accountFilter === 'all'}
-          All Accounts
-        {:else}
-          {accountMap.get(accountFilter)?.name ?? 'Unknown'}
-        {/if}
-      </Select.Trigger>
-      <Select.Content>
-        <Select.Item value="all">All Accounts</Select.Item>
-        {#each openAccounts as account}
-          <Select.Item value={account.id}>{account.name}</Select.Item>
-        {/each}
-      </Select.Content>
-    </Select.Root>
-  </div>
+	    <Select.Root type="single" bind:value={accountFilter}>
+	      <Select.Trigger class="w-[200px]">
+	        {#if accountFilter === 'all'}
+	          All Accounts
+	        {:else}
+	          {accountMap.get(Number(accountFilter))?.name ?? 'Unknown'}
+	        {/if}
+	      </Select.Trigger>
+	      <Select.Content>
+	        <Select.Item value="all">All Accounts</Select.Item>
+	        {#each openAccounts as account}
+	          <Select.Item value={String(account.id)}>{account.name}</Select.Item>
+	        {/each}
+	      </Select.Content>
+	    </Select.Root>
+	  </div>
 
   <!-- Data Table -->
-  {#if filteredMappings.length === 0}
-    {#if mappings.length === 0}
-      <Empty.Empty>
-        <Empty.Icon icon={ArrowRightLeft} />
-        <Empty.Title>No transfer mappings yet</Empty.Title>
-        <Empty.Description>
-          Transfer mappings are created when you convert transactions to transfers during import.
-          You can also create them manually.
-        </Empty.Description>
-        <Empty.Actions>
-          <Button onclick={openCreateDialog}>
-            <Plus class="mr-2 h-4 w-4" />
-            Add Mapping
-          </Button>
-        </Empty.Actions>
-      </Empty.Empty>
-    {:else}
-      <Empty.Empty>
-        <Empty.Icon icon={Search} />
-        <Empty.Title>No matching mappings</Empty.Title>
-        <Empty.Description>
-          Try adjusting your search or filters.
-        </Empty.Description>
-      </Empty.Empty>
-    {/if}
-  {:else}
+	  {#if filteredMappings.length === 0}
+	    {#if mappings.length === 0}
+	      <Empty.Empty>
+	        <Empty.EmptyMedia variant="icon">
+	          <ArrowRightLeft class="size-6" />
+	        </Empty.EmptyMedia>
+	        <Empty.EmptyHeader>
+	          <Empty.EmptyTitle>No transfer mappings yet</Empty.EmptyTitle>
+	          <Empty.EmptyDescription>
+	            Transfer mappings are created when you convert transactions to transfers during import.
+	            You can also create them manually.
+	          </Empty.EmptyDescription>
+	        </Empty.EmptyHeader>
+	        <Empty.EmptyContent>
+	          <Button onclick={openCreateDialog}>
+	            <Plus class="mr-2 h-4 w-4" />
+	            Add Mapping
+	          </Button>
+	        </Empty.EmptyContent>
+	      </Empty.Empty>
+	    {:else}
+	      <Empty.Empty>
+	        <Empty.EmptyMedia variant="icon">
+	          <Search class="size-6" />
+	        </Empty.EmptyMedia>
+	        <Empty.EmptyHeader>
+	          <Empty.EmptyTitle>No matching mappings</Empty.EmptyTitle>
+	          <Empty.EmptyDescription>
+	            Try adjusting your search or filters.
+	          </Empty.EmptyDescription>
+	        </Empty.EmptyHeader>
+	      </Empty.Empty>
+	    {/if}
+	  {:else}
     <Card.Root>
       <Table.Root>
         <Table.Header>
@@ -492,20 +500,20 @@ function formatDate(dateString: string | null): string {
 
       <div class="space-y-2">
         <Label for="create-target-account">Target Account</Label>
-        <Select.Root type="single" bind:value={createDialog.targetAccountId}>
-          <Select.Trigger id="create-target-account">
-            {#if createDialog.targetAccountId}
-              {accountMap.get(createDialog.targetAccountId)?.name ?? 'Select account'}
-            {:else}
-              Select account
-            {/if}
-          </Select.Trigger>
-          <Select.Content>
-            {#each openAccounts as account}
-              <Select.Item value={account.id}>{account.name}</Select.Item>
-            {/each}
-          </Select.Content>
-        </Select.Root>
+	        <Select.Root type="single" bind:value={createDialog.targetAccountId}>
+	          <Select.Trigger id="create-target-account">
+	            {#if createDialog.targetAccountId}
+	              {accountMap.get(Number(createDialog.targetAccountId))?.name ?? 'Select account'}
+	            {:else}
+	              Select account
+	            {/if}
+	          </Select.Trigger>
+	          <Select.Content>
+	            {#each openAccounts as account}
+	              <Select.Item value={String(account.id)}>{account.name}</Select.Item>
+	            {/each}
+	          </Select.Content>
+	        </Select.Root>
       </div>
     </div>
 
@@ -542,20 +550,20 @@ function formatDate(dateString: string | null): string {
 
       <div class="space-y-2">
         <Label for="edit-target-account">Target Account</Label>
-        <Select.Root type="single" bind:value={editDialog.targetAccountId}>
-          <Select.Trigger id="edit-target-account">
-            {#if editDialog.targetAccountId}
-              {accountMap.get(editDialog.targetAccountId)?.name ?? 'Select account'}
-            {:else}
-              Select account
-            {/if}
-          </Select.Trigger>
-          <Select.Content>
-            {#each openAccounts as account}
-              <Select.Item value={account.id}>{account.name}</Select.Item>
-            {/each}
-          </Select.Content>
-        </Select.Root>
+	        <Select.Root type="single" bind:value={editDialog.targetAccountId}>
+	          <Select.Trigger id="edit-target-account">
+	            {#if editDialog.targetAccountId}
+	              {accountMap.get(Number(editDialog.targetAccountId))?.name ?? 'Select account'}
+	            {:else}
+	              Select account
+	            {/if}
+	          </Select.Trigger>
+	          <Select.Content>
+	            {#each openAccounts as account}
+	              <Select.Item value={String(account.id)}>{account.name}</Select.Item>
+	            {/each}
+	          </Select.Content>
+	        </Select.Root>
       </div>
     </div>
 

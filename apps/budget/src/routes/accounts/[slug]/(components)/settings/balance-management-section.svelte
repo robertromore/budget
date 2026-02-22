@@ -33,14 +33,15 @@ const queryClient = useQueryClient();
 const isDebt = $derived(account.accountType ? isDebtAccount(account.accountType) : false);
 
 // Balance management info state
-let balanceInfo = $state<{
-	balanceResetDate: string | null;
-	balanceAtResetDate: number | null;
-	reconciledBalance: number | null;
-	reconciledDate: string | null;
-	archivedTransactionCount: number;
-	transactionsBeforeResetDate: number;
-} | null>(null);
+	let balanceInfo = $state<{
+		balanceResetDate: string | null;
+		balanceAtResetDate: number | null;
+		reconciledBalance: number | null;
+		reconciledDate: string | null;
+		archivedTransactionCount: number;
+		transactionsBeforeResetDate: number;
+		currentBalance: number | null;
+	} | null>(null);
 let isLoadingInfo = $state(true);
 
 // Form states for Option 1: Balance Reset

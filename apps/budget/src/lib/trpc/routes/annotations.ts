@@ -1,9 +1,10 @@
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { z } from "zod";
 
-const annotationService = serviceFactory.getAnnotationService();
+const annotationService = lazyService(() => serviceFactory.getAnnotationService());
 
 // Input schemas
 const annotationIdSchema = z.object({

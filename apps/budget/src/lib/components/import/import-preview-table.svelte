@@ -1,14 +1,10 @@
 <script lang="ts">
 import { AdvancedDataTable } from "$lib/components/data-table/core";
-import type { DataTableState, DataTableStateHandlers } from "$lib/components/data-table/state/types";
+import { createTableState } from "$lib/components/data-table/state";
 import type { CleanupState, ImportRow } from "$lib/types/import";
 import type {
-  ColumnFiltersState,
-  PaginationState,
   RowSelectionState,
-  SortingState,
   Table,
-  VisibilityState,
 } from "@tanstack/table-core";
 import {
   createImportPreviewColumns,
@@ -81,11 +77,9 @@ let {
 }: Props = $props();
 
 // Manage table state
-let rowSelection = $state<RowSelectionState>({});
-let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 25 });
-let sorting = $state<SortingState>([]);
-let columnFilters = $state<ColumnFiltersState>([]);
-let columnVisibility = $state<VisibilityState>({});
+const tableState = createTableState({
+  initialPagination: { pageIndex: 0, pageSize: 25 },
+});
 
 
 // Initialize selection with valid, pending, and transfer_match rows
@@ -105,12 +99,13 @@ $effect(() => {
         initialSelection[String(row.rowIndex)] = true;
       }
     });
-    rowSelection = initialSelection;
+    tableState.setValues.rowSelection(initialSelection);
   }
 });
 
 // Sync rowSelection → selectedRows (key values are rowIndex values)
 $effect(() => {
+  const rowSelection = tableState.rowSelection();
   const newSelection = new Set<number>();
   Object.keys(rowSelection).forEach((key) => {
     if (rowSelection[key]) {
@@ -119,34 +114,6 @@ $effect(() => {
   });
   selectedRows = newSelection;
 });
-
-// Create state object to pass to the table
-const tableState: DataTableState = $derived({
-  rowSelection,
-  pagination,
-  sorting,
-  columnFilters,
-  columnVisibility,
-});
-
-// Create handlers to update state
-const tableHandlers: DataTableStateHandlers = {
-  onRowSelectionChange: (updater) => {
-    rowSelection = typeof updater === "function" ? updater(rowSelection) : updater;
-  },
-  onPaginationChange: (updater) => {
-    pagination = typeof updater === "function" ? updater(pagination) : updater;
-  },
-  onSortingChange: (updater) => {
-    sorting = typeof updater === "function" ? updater(sorting) : updater;
-  },
-  onColumnFiltersChange: (updater) => {
-    columnFilters = typeof updater === "function" ? updater(columnFilters) : updater;
-  },
-  onColumnVisibilityChange: (updater) => {
-    columnVisibility = typeof updater === "function" ? updater(columnVisibility) : updater;
-  },
-};
 
 // Create column actions object
 const columnActions: ImportPreviewColumnActions = $derived({
@@ -202,7 +169,6 @@ const filterFns = {
   bind:table
   getRowId={(row) => String(row.rowIndex)}
   state={tableState}
-  handlers={tableHandlers}
   features={{
     sorting: true,
     filtering: true,

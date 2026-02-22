@@ -18,7 +18,7 @@ import { automationEvents } from "./event-emitter";
 import { AutomationRepository } from "./repository";
 
 // Database connection type derived from the actual db export
-type DatabaseConnection = typeof db;
+type DatabaseConnection = Omit<typeof db, "batch">;
 
 // Re-export ActionExecutionContext for use by other modules
 export type { ActionExecutionContext };

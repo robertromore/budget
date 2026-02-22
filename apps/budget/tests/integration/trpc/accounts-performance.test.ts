@@ -1,19 +1,52 @@
 import {describe, test, expect, beforeEach, afterEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
 import {setupTestDb, clearTestDb} from "../setup/test-db";
-import {accounts, transactions, categories, payees} from "$lib/schema";
+import {accounts, transactions, categories, payees, users, workspaces, workspaceMembers} from "$lib/schema";
+import {createId} from "@paralleldrive/cuid2";
 
 describe("Accounts Performance Testing Concepts", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
   let caller: ReturnType<typeof createCaller>;
+  let workspaceId: number;
   let testAccount: any;
   let testCategory: any;
   let testPayee: any;
 
   beforeEach(async () => {
     db = await setupTestDb();
-    const ctx = {db, isTest: true};
-    caller = createCaller(ctx);
+    const userId = createId();
+    await db.insert(users).values({
+      id: userId,
+      name: "Performance User",
+      email: "performance@example.com",
+    });
+
+    const [workspace] = await db
+      .insert(workspaces)
+      .values({
+        displayName: "Performance Workspace",
+        slug: "performance-workspace",
+        ownerId: userId,
+      })
+      .returning();
+    workspaceId = workspace.id;
+
+    await db.insert(workspaceMembers).values({
+      workspaceId,
+      userId,
+      role: "owner",
+      isDefault: true,
+    });
+
+    const ctx = {
+      db: db as any,
+      userId,
+      sessionId: "test-session",
+      workspaceId,
+      event: {} as any,
+      isTest: true,
+    };
+    caller = createCaller(ctx as any);
 
     // Clean up from previous tests
     await db.delete(transactions);
@@ -25,23 +58,28 @@ describe("Accounts Performance Testing Concepts", () => {
     [testAccount] = await db
       .insert(accounts)
       .values({
+        workspaceId,
         name: "Test Account",
         slug: "test-account",
-        type: "checking",
+        accountType: "checking",
       })
       .returning();
 
     [testCategory] = await db
       .insert(categories)
       .values({
+        workspaceId,
         name: "Test Category",
+        slug: "test-category",
       })
       .returning();
 
     [testPayee] = await db
       .insert(payees)
       .values({
+        workspaceId,
         name: "Test Payee",
+        slug: "test-payee",
       })
       .returning();
   });

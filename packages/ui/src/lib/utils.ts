@@ -16,8 +16,8 @@ export type WithChild<T = Record<string, never>> = T & {
   children?: Snippet;
 };
 
-export type WithoutChild<T> = Omit<T, "children">;
-
-export type WithoutChildren<T> = Omit<T, "children">;
-
-export type WithoutChildrenOrChild<T> = Omit<T, "children" | "child">;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, "child"> : T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "children"> : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;

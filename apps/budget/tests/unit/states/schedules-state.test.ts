@@ -2,7 +2,7 @@ import {describe, test, expect, beforeEach} from "vitest";
 import type {Schedule} from "$lib/schema";
 
 // Mock schedules data for testing
-const mockSchedules: Schedule[] = [
+const mockSchedules = [
   {
     id: 1,
     name: "Monthly Salary",
@@ -18,7 +18,6 @@ const mockSchedules: Schedule[] = [
     accountId: 1,
     createdAt: "2023-01-01T10:00:00Z",
     updatedAt: "2023-01-01T10:00:00Z",
-    transactions: [],
     account: null,
     payee: null,
     scheduleDate: null,
@@ -38,7 +37,6 @@ const mockSchedules: Schedule[] = [
     accountId: 1,
     createdAt: "2023-02-01T12:00:00Z",
     updatedAt: "2023-02-01T12:00:00Z",
-    transactions: [],
     account: null,
     payee: null,
     scheduleDate: null,
@@ -58,7 +56,6 @@ const mockSchedules: Schedule[] = [
     accountId: 2,
     createdAt: "2022-12-01T08:00:00Z",
     updatedAt: "2023-01-15T14:30:00Z",
-    transactions: [],
     account: null,
     payee: null,
     scheduleDate: null,
@@ -78,7 +75,6 @@ const mockSchedules: Schedule[] = [
     accountId: 1,
     createdAt: "2023-03-01T16:45:00Z",
     updatedAt: "2023-03-01T16:45:00Z",
-    transactions: [],
     account: null,
     payee: null,
     scheduleDate: null,
@@ -98,12 +94,11 @@ const mockSchedules: Schedule[] = [
     accountId: 2,
     createdAt: "2023-04-01T11:20:00Z",
     updatedAt: "2023-04-01T11:20:00Z",
-    transactions: [],
     account: null,
     payee: null,
     scheduleDate: null,
   },
-];
+] as unknown as Schedule[];
 
 // Simple test implementation that doesn't use Svelte runes for unit testing
 class TestSchedulesState {
@@ -327,7 +322,7 @@ describe("SchedulesState", () => {
 
   describe("CRUD Operations", () => {
     test("should add new schedule", () => {
-      const newSchedule: Schedule = {
+      const newSchedule = {
         id: 6,
         name: "New Schedule",
         slug: "new-schedule",
@@ -342,11 +337,10 @@ describe("SchedulesState", () => {
         accountId: 1,
         createdAt: "2023-05-01T10:00:00Z",
         updatedAt: "2023-05-01T10:00:00Z",
-        transactions: [],
         account: null,
         payee: null,
         scheduleDate: null,
-      };
+      } as Schedule;
 
       schedulesState.addSchedule(newSchedule);
 
@@ -373,7 +367,7 @@ describe("SchedulesState", () => {
     });
 
     test("should add new schedule when updating non-existent ID", () => {
-      const newSchedule: Schedule = {
+      const newSchedule = {
         id: 999,
         name: "New Via Update",
         slug: "new-via-update",
@@ -388,11 +382,10 @@ describe("SchedulesState", () => {
         accountId: 1,
         createdAt: "2023-05-01T10:00:00Z",
         updatedAt: "2023-05-01T10:00:00Z",
-        transactions: [],
         account: null,
         payee: null,
         scheduleDate: null,
-      };
+      } as Schedule;
 
       schedulesState.updateSchedule(newSchedule);
 
@@ -491,8 +484,8 @@ describe("SchedulesState", () => {
     });
 
     test("should handle recurring and non-recurring schedules", () => {
-      const recurringSchedules = schedulesState.filterBy((s) => s.recurring);
-      const nonRecurringSchedules = schedulesState.filterBy((s) => !s.recurring);
+      const recurringSchedules = schedulesState.filterBy((s) => Boolean(s.recurring));
+      const nonRecurringSchedules = schedulesState.filterBy((s) => !Boolean(s.recurring));
 
       expect(recurringSchedules).toHaveLength(4);
       expect(nonRecurringSchedules).toHaveLength(1);
@@ -500,8 +493,8 @@ describe("SchedulesState", () => {
     });
 
     test("should handle auto_add flags correctly", () => {
-      const autoAddSchedules = schedulesState.filterBy((s) => s.auto_add);
-      const manualSchedules = schedulesState.filterBy((s) => !s.auto_add);
+      const autoAddSchedules = schedulesState.filterBy((s) => Boolean(s.auto_add));
+      const manualSchedules = schedulesState.filterBy((s) => !Boolean(s.auto_add));
 
       expect(autoAddSchedules).toHaveLength(2);
       expect(manualSchedules).toHaveLength(3);
@@ -527,7 +520,7 @@ describe("SchedulesState", () => {
   describe("Data Integrity", () => {
     test("should maintain data consistency after multiple operations", () => {
       // Perform multiple operations
-      const newSchedule: Schedule = {
+      const newSchedule = {
         id: 10,
         name: "Test Schedule",
         slug: "test-schedule",
@@ -542,11 +535,10 @@ describe("SchedulesState", () => {
         accountId: 1,
         createdAt: "2023-05-01T10:00:00Z",
         updatedAt: "2023-05-01T10:00:00Z",
-        transactions: [],
         account: null,
         payee: null,
         scheduleDate: null,
-      };
+      } as Schedule;
 
       schedulesState.addSchedule(newSchedule);
       schedulesState.removeSchedule(3);

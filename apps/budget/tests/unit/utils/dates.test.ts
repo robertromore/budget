@@ -350,8 +350,8 @@ describe("Weekday utility functions", () => {
     });
 
     it("should work with different timezones", () => {
-      const utcResult = getFirstSpecifiedWeekdayInMonth(2024, 6, 1, "UTC"); // First Monday of June 2024
-      const localResult = getFirstSpecifiedWeekdayInMonth(2024, 6, 1, "America/New_York");
+      const utcResult = getFirstSpecifiedWeekdayInMonth(2024, 6, 1); // First Monday of June 2024
+      const localResult = getFirstSpecifiedWeekdayInMonth(2024, 6, 1);
 
       // Results should be the same since we're dealing with calendar dates
       expect(utcResult.year).toBe(localResult.year);

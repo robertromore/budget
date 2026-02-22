@@ -8,7 +8,7 @@ type TestTransactionFormat = TransactionsFormat & {
 };
 
 // Mock transaction data with proper typing
-const mockTransactions: TestTransactionFormat[] = [
+const mockTransactions = [
   {
     id: 1,
     date: new CalendarDate(2024, 1, 1),
@@ -71,7 +71,7 @@ const mockTransactions: TestTransactionFormat[] = [
     parentId: null,
     balance: 50.25,
   },
-];
+] as unknown as TestTransactionFormat[];
 
 describe("ServerDataTable Component Logic", () => {
   describe("Data Processing", () => {

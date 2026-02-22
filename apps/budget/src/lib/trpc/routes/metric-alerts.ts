@@ -4,10 +4,11 @@ import {
   updateMetricAlertSchema,
 } from "$lib/schema/metric-alerts";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 
-const metricAlertService = serviceFactory.getMetricAlertService();
+const metricAlertService = lazyService(() => serviceFactory.getMetricAlertService());
 
 export const metricAlertRoutes = t.router({
   all: publicProcedure.query(

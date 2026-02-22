@@ -164,7 +164,7 @@ describe("Category Suggestions", () => {
           workspaceId: ctx.workspaceId,
           name: "Checking",
           slug: "checking",
-          type: "checking",
+          accountType: "checking",
         })
         .returning();
 
@@ -218,7 +218,7 @@ describe("Category Suggestions", () => {
           workspaceId: ctx.workspaceId,
           name: "Checking",
           slug: "checking",
-          type: "checking",
+          accountType: "checking",
         })
         .returning();
 
@@ -266,7 +266,7 @@ describe("Category Suggestions", () => {
           workspaceId: ctx.workspaceId,
           name: "Checking",
           slug: "checking",
-          type: "checking",
+          accountType: "checking",
         })
         .returning();
 
@@ -434,7 +434,7 @@ describe("Category Suggestions", () => {
         categoryId: ctx.groceriesId,
         rawString: "GROCERY",
         normalizedString: "grocery",
-        trigger: "import",
+        trigger: "bulk_import",
       });
 
       const alias = await ctx.db.query.categoryAliases.findFirst({
@@ -449,9 +449,9 @@ describe("Category Suggestions", () => {
 
     it("should handle multiple aliases for same category", async () => {
       await ctx.db.insert(schema.categoryAliases).values([
-        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "GROCERY", normalizedString: "grocery", trigger: "import"},
-        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "FOOD", normalizedString: "food", trigger: "import"},
-        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "SUPERMARKET", normalizedString: "supermarket", trigger: "import"},
+        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "GROCERY", normalizedString: "grocery", trigger: "bulk_import"},
+        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "FOOD", normalizedString: "food", trigger: "bulk_import"},
+        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "SUPERMARKET", normalizedString: "supermarket", trigger: "bulk_import"},
       ]);
 
       const aliases = await ctx.db

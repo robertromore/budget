@@ -11,10 +11,10 @@ interface RateLimitOptions {
   keyGenerator?: (ctx: any) => string;
 }
 
-const defaultKeyGenerator = (ctx: any) => {
+const defaultKeyGenerator = (ctx: Context) => {
   // In a real app, use user ID or IP address
   // For now, use a simple identifier
-  return ctx.user?.id || ctx.ip || "anonymous";
+  return ctx.userId || ctx.sessionId || (ctx as any).ip || "anonymous";
 };
 
 // Initialize tRPC instance for middleware creation

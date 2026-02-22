@@ -5,11 +5,12 @@ import {
   rateLimitedProcedure
 } from "$lib/server/shared/trpc/procedures";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { t } from "$lib/trpc/t";
 import { z } from "zod";
 
 // Get service from factory (handles dependency injection)
-const accountService = serviceFactory.getAccountService();
+const accountService = lazyService(() => serviceFactory.getAccountService());
 
 // Input schemas
 const createAccountSchema = z.object({

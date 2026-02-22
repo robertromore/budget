@@ -15,7 +15,7 @@ describe("ServerDataTableToolbar Logic", () => {
       timeoutIds.forEach((id) => clearTimeout(id));
     });
 
-    it("should debounce search calls with 300ms delay", (done) => {
+    it("should debounce search calls with 300ms delay", async () => {
       const mockSearch = (query: string) => {
         searchCalls.push(query);
       };
@@ -49,15 +49,13 @@ describe("ServerDataTableToolbar Logic", () => {
       // Should not have called search yet
       expect(searchCalls).toHaveLength(0);
 
-      setTimeout(() => {
-        // After delay, should have called search once with final value
-        expect(searchCalls).toHaveLength(1);
-        expect(searchCalls[0]).toBe("test");
-        done();
-      }, 350);
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      // After delay, should have called search once with final value
+      expect(searchCalls).toHaveLength(1);
+      expect(searchCalls[0]).toBe("test");
     });
 
-    it("should cancel previous timeout when new input is received", (done) => {
+    it("should cancel previous timeout when new input is received", async () => {
       const mockSearch = (query: string) => {
         searchCalls.push(query);
       };
@@ -85,17 +83,14 @@ describe("ServerDataTableToolbar Logic", () => {
       // First input
       debouncedSearch("first");
 
-      setTimeout(() => {
-        // Second input before first timeout completes
-        debouncedSearch("second");
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Second input before first timeout completes
+      debouncedSearch("second");
 
-        setTimeout(() => {
-          // Should only have called search once with the final value
-          expect(searchCalls).toHaveLength(1);
-          expect(searchCalls[0]).toBe("second");
-          done();
-        }, 350);
-      }, 200);
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      // Should only have called search once with the final value
+      expect(searchCalls).toHaveLength(1);
+      expect(searchCalls[0]).toBe("second");
     });
 
     it("should not trigger search if value hasn't changed", () => {

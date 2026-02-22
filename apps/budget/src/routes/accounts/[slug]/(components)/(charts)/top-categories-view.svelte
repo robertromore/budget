@@ -1,10 +1,7 @@
 <script lang="ts">
-import type {
-  DataTableFeatures,
-  DataTableState,
-  DataTableStateHandlers,
-} from '$lib/components/data-table';
+import type { DataTableFeatures } from '$lib/components/data-table';
 import { AdvancedDataTable } from '$lib/components/data-table';
+import type { TableState } from '$lib/components/data-table/state';
 import { categoryFilters } from '$lib/components/data-table/filters';
 import { GenericToolbar } from '$lib/components/data-table/toolbar';
 import * as Card from '$lib/components/ui/card';
@@ -24,7 +21,9 @@ import type {
   ExpandedState,
   GroupingState,
   PaginationState,
+  RowSelectionState,
   SortingState,
+  Updater,
   VisibilityState,
 } from '@tanstack/table-core';
 import { onMount } from 'svelte';
@@ -83,7 +82,7 @@ let sorting = $state<SortingState>([]);
 let columnVisibility = $state<VisibilityState>({});
 let columnFilters = $state<ColumnFiltersState>([]);
 let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
-let rowSelection = $state<Record<string, boolean>>({});
+let rowSelection = $state<RowSelectionState>({});
 let columnPinning = $state<ColumnPinningState>({});
 let columnOrder = $state<string[]>([]);
 let globalFilter = $state<string>('');
@@ -92,51 +91,94 @@ let expanded = $state<ExpandedState>({});
 let density = $state<'normal' | 'dense'>('normal');
 let stickyHeader = $state<boolean>(false);
 
-// Create reactive state object
-const tableState = $derived<DataTableState>({
-  sorting,
-  columnVisibility,
-  columnFilters,
-  pagination,
-  rowSelection,
-  columnPinning,
-  columnOrder,
-  globalFilter,
-  grouping,
-  expanded,
-});
+function applyUpdater<T>(current: T, updater: Updater<T>): T {
+  return typeof updater === 'function' ? (updater as (old: T) => T)(current) : updater;
+}
 
-// State change handlers
-const handlers: DataTableStateHandlers = {
-  onSortingChange: (updater) => {
-    sorting = typeof updater === 'function' ? updater(sorting) : updater;
+const tableState: TableState = {
+  sorting: () => sorting,
+  pagination: () => pagination,
+  columnVisibility: () => columnVisibility,
+  columnFilters: () => columnFilters,
+  rowSelection: () => rowSelection,
+  columnPinning: () => columnPinning,
+  expanded: () => expanded,
+  grouping: () => grouping,
+  globalFilter: () => globalFilter,
+  columnOrder: () => columnOrder,
+  setSorting: (updater) => {
+    sorting = applyUpdater(sorting, updater);
   },
-  onColumnVisibilityChange: (updater) => {
-    columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
+  setPagination: (updater) => {
+    pagination = applyUpdater(pagination, updater);
   },
-  onColumnFiltersChange: (updater) => {
-    columnFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
+  setColumnVisibility: (updater) => {
+    columnVisibility = applyUpdater(columnVisibility, updater);
   },
-  onPaginationChange: (updater) => {
-    pagination = typeof updater === 'function' ? updater(pagination) : updater;
+  setColumnFilters: (updater) => {
+    columnFilters = applyUpdater(columnFilters, updater);
   },
-  onRowSelectionChange: (updater) => {
-    rowSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
+  setRowSelection: (updater) => {
+    rowSelection = applyUpdater(rowSelection, updater);
   },
-  onColumnPinningChange: (updater) => {
-    columnPinning = typeof updater === 'function' ? updater(columnPinning) : updater;
+  setColumnPinning: (updater) => {
+    columnPinning = applyUpdater(columnPinning, updater);
   },
-  onColumnOrderChange: (updater) => {
-    columnOrder = typeof updater === 'function' ? updater(columnOrder) : updater;
+  setExpanded: (updater) => {
+    expanded = applyUpdater(expanded, updater);
   },
-  onGlobalFilterChange: (updater) => {
-    globalFilter = typeof updater === 'function' ? updater(globalFilter) : updater;
+  setGrouping: (updater) => {
+    grouping = applyUpdater(grouping, updater);
   },
-  onGroupingChange: (updater) => {
-    grouping = typeof updater === 'function' ? updater(grouping) : updater;
+  setGlobalFilter: (updater) => {
+    globalFilter = applyUpdater(globalFilter, updater);
   },
-  onExpandedChange: (updater) => {
-    expanded = typeof updater === 'function' ? updater(expanded) : updater;
+  setColumnOrder: (updater) => {
+    columnOrder = applyUpdater(columnOrder, updater);
+  },
+  setValues: {
+    sorting: (val) => {
+      sorting = val;
+    },
+    pagination: (val) => {
+      pagination = val;
+    },
+    columnVisibility: (val) => {
+      columnVisibility = val;
+    },
+    columnFilters: (val) => {
+      columnFilters = val;
+    },
+    rowSelection: (val) => {
+      rowSelection = val;
+    },
+    columnPinning: (val) => {
+      columnPinning = val;
+    },
+    expanded: (val) => {
+      expanded = val;
+    },
+    grouping: (val) => {
+      grouping = val;
+    },
+    globalFilter: (val) => {
+      globalFilter = val;
+    },
+    columnOrder: (val) => {
+      columnOrder = val;
+    },
+  },
+  reset: () => {
+    sorting = [];
+    pagination = { pageIndex: 0, pageSize: 10 };
+    columnVisibility = {};
+    columnFilters = [];
+    rowSelection = {};
+    columnPinning = {};
+    expanded = {};
+    grouping = [];
+    globalFilter = '';
+    columnOrder = [];
   },
 };
 
@@ -301,7 +343,6 @@ let viewMode = $state<'table' | 'cards'>('cards');
           {columns}
           {features}
           state={tableState}
-          {handlers}
           filterFns={categoryFilters}
           showPagination={true}
           showSelection={true}

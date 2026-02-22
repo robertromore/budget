@@ -10,7 +10,7 @@ describe("Accounts Integration Tests", () => {
   beforeEach(async () => {
     db = await setupTestDb();
     const ctx = {db, isTest: true};
-    caller = createCaller(ctx);
+    caller = createCaller(ctx as any);
   });
 
   afterEach(async () => {

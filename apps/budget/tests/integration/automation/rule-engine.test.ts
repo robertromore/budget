@@ -74,12 +74,14 @@ function createTestActions(): ActionConfig[] {
 
 describe("Rule Engine Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
+  let engineDb: Parameters<typeof createRuleEngine>[0];
   let workspaceId: number;
   let repo: AutomationRepository;
   let mockServices: ActionExecutionContext["services"];
 
   beforeEach(async () => {
     db = await setupTestDb();
+    engineDb = db as unknown as Parameters<typeof createRuleEngine>[0];
 
     // Create a test workspace
     const [workspace] = await db
@@ -91,7 +93,7 @@ describe("Rule Engine Integration Tests", () => {
       .returning();
     workspaceId = workspace.id;
 
-    repo = new AutomationRepository(db, workspaceId);
+    repo = new AutomationRepository(engineDb, workspaceId);
     mockServices = createMockServices();
 
     // Clean up any existing engines
@@ -111,27 +113,27 @@ describe("Rule Engine Integration Tests", () => {
 
   describe("Engine Lifecycle", () => {
     it("should create a new engine instance", () => {
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       expect(engine).toBeDefined();
       expect(engine).toBeInstanceOf(RuleEngine);
     });
 
     it("should initialize engine and subscribe to events", async () => {
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
       // No error means success
       engine.destroy();
     });
 
     it("should not initialize twice", async () => {
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
       await engine.initialize(); // Should not throw
       engine.destroy();
     });
 
     it("should destroy engine and clean up subscriptions", async () => {
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
       engine.destroy();
       // Engine should no longer process events
@@ -144,8 +146,8 @@ describe("Rule Engine Integration Tests", () => {
 
   describe("Engine Registry", () => {
     it("should get or create engine for workspace", () => {
-      const engine1 = getRuleEngine(db, workspaceId, mockServices);
-      const engine2 = getRuleEngine(db, workspaceId, mockServices);
+      const engine1 = getRuleEngine(engineDb, workspaceId, mockServices);
+      const engine2 = getRuleEngine(engineDb, workspaceId, mockServices);
       expect(engine1).toBe(engine2); // Same instance
     });
 
@@ -158,16 +160,16 @@ describe("Rule Engine Integration Tests", () => {
         })
         .returning();
 
-      const engine1 = getRuleEngine(db, workspaceId, mockServices);
-      const engine2 = getRuleEngine(db, workspace2.id, mockServices);
+      const engine1 = getRuleEngine(engineDb, workspaceId, mockServices);
+      const engine2 = getRuleEngine(engineDb, workspace2.id, mockServices);
       expect(engine1).not.toBe(engine2);
     });
 
     it("should destroy specific workspace engine", () => {
-      const engine = getRuleEngine(db, workspaceId, mockServices);
+      const engine = getRuleEngine(engineDb, workspaceId, mockServices);
       destroyRuleEngine(workspaceId);
       // Getting engine again should create a new one
-      const newEngine = getRuleEngine(db, workspaceId, mockServices);
+      const newEngine = getRuleEngine(engineDb, workspaceId, mockServices);
       expect(newEngine).not.toBe(engine);
     });
 
@@ -180,14 +182,14 @@ describe("Rule Engine Integration Tests", () => {
         })
         .returning();
 
-      getRuleEngine(db, workspaceId, mockServices);
-      getRuleEngine(db, workspace2.id, mockServices);
+      getRuleEngine(engineDb, workspaceId, mockServices);
+      getRuleEngine(engineDb, workspace2.id, mockServices);
 
       destroyAllRuleEngines();
 
       // New engines should be created
-      const newEngine1 = getRuleEngine(db, workspaceId, mockServices);
-      const newEngine2 = getRuleEngine(db, workspace2.id, mockServices);
+      const newEngine1 = getRuleEngine(engineDb, workspaceId, mockServices);
+      const newEngine2 = getRuleEngine(engineDb, workspace2.id, mockServices);
       expect(newEngine1).toBeDefined();
       expect(newEngine2).toBeDefined();
     });
@@ -206,7 +208,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: createTestActions(),
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       const entity = { amount: 150 };
 
       const result = await engine.testRule(rule, entity, "transaction");
@@ -225,7 +227,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: createTestActions(),
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       const entity = { amount: 50 };
 
       const result = await engine.testRule(rule, entity, "transaction");
@@ -249,7 +251,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: createTestActions(),
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
 
       // Both conditions match
       const result1 = await engine.testRule(
@@ -283,7 +285,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: createTestActions(),
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
 
       // First condition matches
       const result1 = await engine.testRule(
@@ -322,7 +324,7 @@ describe("Rule Engine Integration Tests", () => {
         ],
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       const result = await engine.testRule(rule, { amount: 150 }, "transaction");
 
       expect(result.actions).toHaveLength(3);
@@ -348,7 +350,7 @@ describe("Rule Engine Integration Tests", () => {
       });
 
       // Simulate processing a rule
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       // Emit an event to trigger the rule
@@ -378,7 +380,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: createTestActions(),
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       // Emit an event that doesn't match conditions
@@ -415,7 +417,7 @@ describe("Rule Engine Integration Tests", () => {
       expect(rule.triggerCount).toBe(0);
       expect(rule.lastTriggeredAt).toBeNull();
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       // Emit matching event
@@ -451,7 +453,7 @@ describe("Rule Engine Integration Tests", () => {
 
       expect(rule.isEnabled).toBe(true);
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       await automationEvents.emit("transaction", "created", {
@@ -477,7 +479,7 @@ describe("Rule Engine Integration Tests", () => {
         runOnce: true,
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       await automationEvents.emit("transaction", "created", {
@@ -519,7 +521,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: [{ id: "action-2", type: "setPayee", params: { payeeId: 2 } }],
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       await automationEvents.emit("transaction", "created", {
@@ -560,7 +562,7 @@ describe("Rule Engine Integration Tests", () => {
         actions: createTestActions(),
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServices);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServices);
       await engine.initialize();
 
       // Emit event for workspace 2
@@ -615,7 +617,7 @@ describe("Rule Engine Integration Tests", () => {
         stopOnMatch: false,
       });
 
-      const engine = createRuleEngine(db, workspaceId, mockServicesWithTracking);
+      const engine = createRuleEngine(engineDb, workspaceId, mockServicesWithTracking);
       await engine.initialize();
 
       await automationEvents.emit("transaction", "created", {

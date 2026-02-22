@@ -157,7 +157,7 @@ export function createTestAccount(
   return {
     id: 1,
     name: "Checking Account",
-    type: "checking",
+    accountType: "checking",
     balance: 1500.00,
     isClosed: false,
     ...overrides,

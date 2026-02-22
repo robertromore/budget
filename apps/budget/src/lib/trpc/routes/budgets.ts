@@ -9,13 +9,10 @@ import {
 } from "$lib/schema/budgets";
 import { scheduleDates } from "$lib/schema/schedule-dates";
 import { schedules } from "$lib/schema/schedules";
-import {
-  newScheduleSchema,
-  scheduleCreationModes,
-} from "$lib/schema/superforms/budgets";
 import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
@@ -39,6 +36,26 @@ const budgetSlugSchema = z.object({
 });
 
 const metadataSchema = z.record(z.string(), z.unknown());
+
+const scheduleCreationModes = ["link", "create"] as const;
+
+const scheduleFrequencies = [
+  "weekly",
+  "bi-weekly",
+  "monthly",
+  "quarterly",
+  "yearly",
+] as const;
+
+const newScheduleSchema = z.object({
+  name: z.string().min(2).max(80),
+  amount: z.number().positive(),
+  accountId: z.number().int().positive(),
+  payeeId: z.number().int().positive().optional().nullable(),
+  categoryId: z.number().int().positive().optional().nullable(),
+  frequency: z.enum(scheduleFrequencies),
+  startDate: z.string().min(1),
+});
 
 // Schema for account associations with per-account types
 const accountAssociationSchema = z.object({
@@ -224,14 +241,14 @@ const listPeriodTemplatesSchema = z.object({
   budgetId: z.number().int().positive(),
 });
 
-const budgetService = serviceFactory.getBudgetService();
-const forecastService = serviceFactory.getBudgetForecastService();
-const periodService = serviceFactory.getBudgetPeriodService();
-const transactionService = serviceFactory.getBudgetTransactionService();
-const periodManager = serviceFactory.getPeriodManager();
-const templateService = serviceFactory.getBudgetTemplateService();
-const intelligenceService = serviceFactory.getBudgetDetectionService();
-const automationService = serviceFactory.getBudgetGroupAutomationService();
+const budgetService = lazyService(() => serviceFactory.getBudgetService());
+const forecastService = lazyService(() => serviceFactory.getBudgetForecastService());
+const periodService = lazyService(() => serviceFactory.getBudgetPeriodService());
+const transactionService = lazyService(() => serviceFactory.getBudgetTransactionService());
+const periodManager = lazyService(() => serviceFactory.getPeriodManager());
+const templateService = lazyService(() => serviceFactory.getBudgetTemplateService());
+const intelligenceService = lazyService(() => serviceFactory.getBudgetDetectionService());
+const automationService = lazyService(() => serviceFactory.getBudgetGroupAutomationService());
 
 /**
  * Helper to create a period template from budget metadata.defaultPeriod

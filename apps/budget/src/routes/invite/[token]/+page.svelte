@@ -6,19 +6,19 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { rpc } from '$lib/query';
-	import { createMutation } from '@tanstack/svelte-query';
 	import Building from '@lucide/svelte/icons/building';
 	import Check from '@lucide/svelte/icons/check';
 	import Loader from '@lucide/svelte/icons/loader';
 	import User from '@lucide/svelte/icons/user';
 	import X from '@lucide/svelte/icons/x';
 
-	const token = $derived(page.params.token);
-	const session = useSession();
+	const token = $derived(page.params.token ?? '');
+	const sessionStore = useSession();
+	const session = $derived($sessionStore);
 
 	// Fetch invitation details - wrap in $derived for reactivity
 	const invitationQuery = $derived(
-		rpc.workspaceInvitations.getInvitationByToken.options({ token })
+		token ? rpc.workspaceInvitations.getInvitationByToken.options({ token }) : null
 	);
 
 	// Use reactive mutations

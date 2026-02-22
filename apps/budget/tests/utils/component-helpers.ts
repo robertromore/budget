@@ -1,5 +1,5 @@
 import {tick} from "svelte";
-import {expect} from "vitest";
+import {expect, vi} from "vitest";
 
 /**
  * Component testing utilities for Svelte 5
@@ -70,7 +70,7 @@ export class ComponentTestHelpers {
    */
   static createMockStore<T>(initialValue: T): {
     subscribe: (handler: (value: T) => void) => () => void;
-    set: (value: T) => void;
+    set: (value: unknown) => void;
     update: (updater: (value: T) => T) => void;
     get: () => T;
   } {
@@ -87,8 +87,8 @@ export class ComponentTestHelpers {
         handler(value); // Immediate call with current value
         return () => subscribers.delete(handler);
       },
-      set: (newValue: T) => {
-        value = newValue;
+      set: (newValue: unknown) => {
+        value = newValue as T;
         notify();
       },
       update: (updater: (value: T) => T) => {
@@ -149,7 +149,7 @@ export class ComponentTestHelpers {
 
     let callback: (entries: any[]) => void = () => {};
 
-    const MockIntersectionObserver = vi.fn().mockImplementation((cb) => {
+    const MockIntersectionObserver = vi.fn().mockImplementation((cb: (entries: any[]) => void) => {
       callback = cb;
       return mockObserver;
     });

@@ -37,7 +37,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Checking",
       slug: "checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 
@@ -47,7 +47,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Savings",
       slug: "savings",
-      type: "savings",
+      accountType: "savings",
     })
     .returning();
 
@@ -509,7 +509,7 @@ describe("Transfer Detector", () => {
           workspaceId: ctx.workspaceId,
           name: "Chase Sapphire",
           slug: "chase-sapphire",
-          type: "credit_card",
+          accountType: "credit_card",
         })
         .returning();
 

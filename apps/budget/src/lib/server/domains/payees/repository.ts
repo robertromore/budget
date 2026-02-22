@@ -556,6 +556,8 @@ export class PayeeRepository extends BaseRepository<
         tags: payees.tags,
         preferredPaymentMethods: payees.preferredPaymentMethods,
         merchantCategoryCode: payees.merchantCategoryCode,
+        aiExplanation: payees.aiExplanation,
+        aiExplanationUpdatedAt: payees.aiExplanationUpdatedAt,
         payeeCategoryId: payees.payeeCategoryId,
         dateCreated: payees.dateCreated,
         createdAt: payees.createdAt,

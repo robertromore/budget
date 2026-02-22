@@ -9,7 +9,7 @@ import type { db } from "$lib/server/db";
 import { actionDefinitions, type ActionConfig, type ActionResult, type EntityType } from "$lib/types/automation";
 
 // Database connection type derived from the actual db export
-type DatabaseConnection = typeof db;
+type DatabaseConnection = Omit<typeof db, "batch">;
 
 /**
  * Execute a list of actions

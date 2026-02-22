@@ -149,7 +149,7 @@ describe("Onboarding Flow", () => {
         onboarding: {
           wizardCompleted: false,
           tourCompleted: false,
-          currentStep: 1,
+          tourSkipped: false,
         },
       };
 
@@ -358,7 +358,7 @@ describe("Onboarding Flow", () => {
         onboarding: {
           wizardCompleted: false,
           tourCompleted: false,
-          currentStep: 1,
+          tourSkipped: false,
         },
       };
 
@@ -377,7 +377,7 @@ describe("Onboarding Flow", () => {
         onboarding: {
           wizardCompleted: false,
           tourCompleted: false,
-          currentStep: 2,
+          tourSkipped: true,
         },
       };
 
@@ -391,7 +391,7 @@ describe("Onboarding Flow", () => {
       });
 
       const storedPrefs = JSON.parse(updated?.preferences || "{}") as WorkspacePreferences;
-      expect(storedPrefs.onboarding?.currentStep).toBe(2);
+      expect(storedPrefs.onboarding?.tourSkipped).toBe(true);
     });
 
     it("should mark wizard as completed", async () => {
@@ -416,8 +416,8 @@ describe("Onboarding Flow", () => {
         onboarding: {
           wizardCompleted: true,
           tourCompleted: false,
-          currentStep: 5,
-          completedAt: new Date().toISOString(),
+          tourSkipped: false,
+          wizardCompletedAt: new Date().toISOString(),
         },
       };
 
@@ -456,7 +456,7 @@ describe("Onboarding Flow", () => {
         onboarding: {
           wizardCompleted: true,
           tourCompleted: true,
-          currentStep: 5,
+          tourSkipped: false,
         },
       };
 
@@ -591,7 +591,7 @@ describe("Onboarding Flow", () => {
           preferences: JSON.stringify({
             locale: "en-US",
             currency: "USD",
-            onboarding: {wizardCompleted: false, tourCompleted: false, currentStep: 1},
+            onboarding: {wizardCompleted: false, tourCompleted: false, tourSkipped: false},
           }),
         })
         .returning();
@@ -631,8 +631,8 @@ describe("Onboarding Flow", () => {
             onboarding: {
               wizardCompleted: true,
               tourCompleted: false,
-              currentStep: 5,
-              completedAt: new Date().toISOString(),
+              tourSkipped: false,
+              wizardCompletedAt: new Date().toISOString(),
             },
           }),
         })

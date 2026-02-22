@@ -36,7 +36,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Electric Company",
       slug: "electric-company",
-      type: "utility",
+      accountType: "utility",
       utilitySubtype: "electric",
     })
     .returning();
@@ -363,7 +363,7 @@ describe("Utility Rate Tiers", () => {
           workspaceId: ctx.workspaceId,
           name: "Water Company",
           slug: "water-company",
-          type: "utility",
+          accountType: "utility",
           utilitySubtype: "water",
         })
         .returning();

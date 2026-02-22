@@ -59,7 +59,7 @@ async function setupTestContext(): Promise<TestContext> {
       accountId: checkingAccount.id,
       date: "2024-01-15",
       amount: -250.0,
-      description: "City Medical Center - Annual checkup",
+      notes: "City Medical Center - Annual checkup",
     })
     .returning();
 
@@ -344,7 +344,7 @@ describe("Expense Receipts", () => {
           accountId: checkingAccount.id,
           date: "2024-02-15",
           amount: -150.0,
-          description: "Dental Clinic - Dental cleaning",
+          notes: "Dental Clinic - Dental cleaning",
         })
         .returning();
 

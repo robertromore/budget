@@ -172,7 +172,9 @@ describe("Expense Views and Filters - Unit Tests", () => {
       expect(recentView.filters[0].filter).toBe("dateAfter");
 
       // Check the date is approximately 30 days ago
-      const filterDate = new Date(recentView.filters[0].value[0]);
+      const filterValue = recentView.filters[0].value[0];
+      expect(typeof filterValue).toBe("string");
+      const filterDate = new Date(filterValue as string);
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const diffInDays = Math.abs((filterDate.getTime() - thirtyDaysAgo.getTime()) / (24 * 60 * 60 * 1000));
       expect(diffInDays).toBeLessThan(1); // Should be within 1 day

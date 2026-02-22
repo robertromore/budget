@@ -4,13 +4,14 @@ import {
   formUpdateCategoryGroupSettingsSchema,
 } from "$lib/schema/category-groups";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";
 
-const categoryGroupService = serviceFactory.getCategoryGroupService();
-const recommendationService = serviceFactory.getCategoryGroupRecommendationService();
-const settingsService = serviceFactory.getCategoryGroupSettingsService();
+const categoryGroupService = lazyService(() => serviceFactory.getCategoryGroupService());
+const recommendationService = lazyService(() => serviceFactory.getCategoryGroupRecommendationService());
+const settingsService = lazyService(() => serviceFactory.getCategoryGroupSettingsService());
 
 export const categoryGroupsRoutes = t.router({
   // ================================================================================

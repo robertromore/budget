@@ -1,5 +1,7 @@
 import {describe, it, expect} from "vitest";
 
+type NavigationCommand = "first" | "previous" | "next" | "last";
+
 describe("ServerDataTablePagination Logic", () => {
   describe("Page Size Management", () => {
     it("should validate page size options", () => {

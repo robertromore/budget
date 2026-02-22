@@ -17,7 +17,7 @@ describe("Advanced Test Patterns Examples", () => {
       const transactions = TestDataFactory.createMultipleTransactions(account.id, 3);
 
       TestAssertions.expectObjectShape(user, ["id", "name", "email"]);
-      TestAssertions.expectObjectShape(account, ["id", "name", "type", "balance"]);
+      TestAssertions.expectObjectShape(account, ["id", "name", "accountType", "balance"]);
       TestAssertions.expectArrayLength(transactions, 3);
       TestAssertions.expectAllItemsMatch(
         transactions,

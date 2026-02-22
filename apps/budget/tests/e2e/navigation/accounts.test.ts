@@ -1,5 +1,5 @@
 import {test, expect} from "@playwright/test";
-import {setupTestDb, seedTestData} from "../setup/test-db-node";
+import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
 
 test.describe("Accounts Navigation Tests", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;

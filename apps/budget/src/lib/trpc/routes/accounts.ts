@@ -25,7 +25,7 @@ import { and, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzle-orm
 import validator from "validator";
 import { z } from "zod";
 
-const accountService = serviceFactory.getAccountService();
+const getAccountService = () => serviceFactory.getAccountService();
 
 // Custom schema for account save operation (handles both create and update)
 const accountSaveSchema = z
@@ -488,7 +488,7 @@ export const accountRoutes = t.router({
 
     // Use AccountService to create account with initial balance transaction
     try {
-      const createdAccount = await accountService.createAccount(
+      const createdAccount = await getAccountService().createAccount(
         {
           name: input.name,
           ...(input.notes && { notes: input.notes }),
@@ -714,7 +714,7 @@ export const accountRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const createdAccounts = await accountService.seedDefaultAccounts(
+        const createdAccounts = await getAccountService().seedDefaultAccounts(
           input.slugs,
           ctx.workspaceId
         );
@@ -729,7 +729,7 @@ export const accountRoutes = t.router({
     }),
   defaultAccountsStatus: publicProcedure.query(async () => {
     try {
-      return await accountService.getDefaultAccountsStatus();
+      return await getAccountService().getDefaultAccountsStatus();
     } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -740,7 +740,7 @@ export const accountRoutes = t.router({
   }),
   availableDefaultAccounts: publicProcedure.query(async () => {
     try {
-      const status = await accountService.getDefaultAccountsStatus();
+      const status = await getAccountService().getDefaultAccountsStatus();
       return status.accounts.filter((a) => !a.installed);
     } catch (error) {
       throw new TRPCError({

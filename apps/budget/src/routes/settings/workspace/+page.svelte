@@ -27,7 +27,7 @@
 		myMembership?.role === 'owner' || myMembership?.role === 'admin'
 	);
 
-	let memberToRemove = $state<{ id: number; name: string } | null>(null);
+		let memberToRemove = $state<{ id: string; name: string | null } | null>(null);
 	const isRemoving = $derived(removeMemberMutation.isPending);
 
 	function getRoleIcon(role: string) {

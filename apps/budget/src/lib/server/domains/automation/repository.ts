@@ -17,7 +17,7 @@ import type { EntityType } from "$lib/types/automation";
 import { and, desc, eq, sql } from "drizzle-orm";
 
 // Database connection type derived from the actual db export
-type DatabaseConnection = typeof db;
+type DatabaseConnection = Omit<typeof db, "batch">;
 
 export class AutomationRepository {
   constructor(

@@ -16,7 +16,7 @@ import { executeActions, type ActionExecutionContext } from "./action-executor";
 import type { NewAutomationRuleLog } from "$lib/schema/automation-rules";
 import { logger } from "$lib/server/shared/logging";
 
-type DatabaseConnection = typeof dbType;
+type DatabaseConnection = Omit<typeof dbType, "batch">;
 
 interface TriggerOptions {
   db: DatabaseConnection;

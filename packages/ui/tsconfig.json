@@ -2,6 +2,7 @@
   "extends": "@budget/config/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
+    "exactOptionalPropertyTypes": false,
     "paths": {
       "$lib": ["./src/lib"],
       "$lib/*": ["./src/lib/*"]

@@ -45,7 +45,7 @@ function sortAccounts(
 }
 
 // Mock accounts data for testing
-const mockAccounts: Account[] = [
+const mockAccounts = [
   {
     id: 1,
     name: "Checking Account",
@@ -91,7 +91,7 @@ const mockAccounts: Account[] = [
     createdAt: "2023-05-01T11:20:00Z",
     updatedAt: "2023-05-01T11:20:00Z",
   },
-];
+] as unknown as Account[];
 
 describe("Account Sorting Logic", () => {
   describe("Name Sorting", () => {
@@ -212,7 +212,7 @@ describe("Account Sorting Logic", () => {
 
   describe("Edge Cases", () => {
     test("should handle accounts with null/undefined values", () => {
-      const accountsWithNulls: Account[] = [
+      const accountsWithNulls = [
         {
           id: 1,
           name: "",
@@ -223,7 +223,7 @@ describe("Account Sorting Logic", () => {
           updatedAt: null as any,
         },
         ...mockAccounts,
-      ];
+      ] as unknown as Account[];
 
       // Should not throw errors
       expect(() => sortAccounts(accountsWithNulls, "name", "asc")).not.toThrow();

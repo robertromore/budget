@@ -8,8 +8,8 @@ describe("Schedule Date Integration Tests", () => {
   let testPayeeId: number;
 
   beforeEach(async () => {
-    const ctx = await createContext();
-    caller = createCaller({...ctx, isTest: true});
+    const ctx = await createContext({} as any);
+    caller = createCaller({...ctx, isTest: true} as any);
 
     // Create test dependencies
     const account = await caller.accountRoutes.save({
@@ -322,7 +322,11 @@ describe("Schedule Date Integration Tests", () => {
       expect(results[1]).toBeDefined(); // Second schedule
       expect(Array.isArray(results[2])).toBe(true); // All schedules query
 
-      const [scheduleA, scheduleB, allSchedules] = results;
+      const [scheduleA, scheduleB, allSchedules] = results as [
+        Awaited<ReturnType<typeof caller.scheduleRoutes.save>>,
+        Awaited<ReturnType<typeof caller.scheduleRoutes.save>>,
+        Awaited<ReturnType<typeof caller.scheduleRoutes.all>>,
+      ];
       expect(scheduleA.name).toBe("Concurrent Schedule A");
       expect(scheduleB.name).toBe("Concurrent Schedule B");
       expect(allSchedules.length).toBeGreaterThanOrEqual(2);

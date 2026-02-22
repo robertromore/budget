@@ -200,6 +200,16 @@
 			.join(' ');
 	};
 
+	const isBusinessPayeeType = (type: string | null | undefined) => {
+		return (
+			type === 'merchant' ||
+			type === 'utility' ||
+			type === 'employer' ||
+			type === 'financial_institution' ||
+			type === 'government'
+		);
+	};
+
 	// Intelligence action handlers
 	function handleApplyCategory(categoryId: number) {
 		if (payee) {
@@ -248,9 +258,9 @@
 							<div
 								class="bg-primary/10 text-primary flex h-24 w-24 items-center justify-center rounded-full"
 							>
-								{#if payee.payeeType === 'business' || payee.payeeType === 'vendor'}
-									<Building2 class="h-12 w-12" />
-								{:else}
+									{#if isBusinessPayeeType(payee.payeeType)}
+										<Building2 class="h-12 w-12" />
+									{:else}
 									<User class="h-12 w-12" />
 								{/if}
 							</div>

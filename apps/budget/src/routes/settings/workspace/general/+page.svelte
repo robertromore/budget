@@ -23,22 +23,22 @@
 	const isOwner = $derived(myMembership?.role === 'owner');
 	const otherMembers = $derived(members.filter((m) => m.userId !== myMembership?.userId));
 
-	// Transfer ownership state
-	let showTransferDialog = $state(false);
-	let newOwnerId = $state<number | null>(null);
-	const isTransferring = $derived(transferOwnershipMutation.isPending);
+		// Transfer ownership state
+		let showTransferDialog = $state(false);
+		let newOwnerId = $state<string | null>(null);
+		const isTransferring = $derived(transferOwnershipMutation.isPending);
 
 	// Leave workspace state
 	let showLeaveDialog = $state(false);
 	const isLeaving = $derived(leaveWorkspaceMutation.isPending);
 
-	async function handleTransferOwnership() {
-		if (!newOwnerId) return;
+		async function handleTransferOwnership() {
+			if (!newOwnerId) return;
 
 		try {
-			await transferOwnershipMutation.mutateAsync({ newOwnerId });
-			showTransferDialog = false;
-			newOwnerId = null;
+				await transferOwnershipMutation.mutateAsync({ newOwnerId });
+				showTransferDialog = false;
+				newOwnerId = null;
 		} catch {
 			// Error handled by mutation
 		}
@@ -119,10 +119,10 @@
 		</AlertDialog.Header>
 
 		<div class="py-4">
-			<Select.Root
-				type="single"
-				onValueChange={(v) => (newOwnerId = v ? Number(v) : null)}
-			>
+				<Select.Root
+					type="single"
+					onValueChange={(v) => (newOwnerId = v ?? null)}
+				>
 				<Select.Trigger class="w-full">
 					{#if newOwnerId}
 						{@const selected = otherMembers.find((m) => m.userId === newOwnerId)}

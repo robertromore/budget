@@ -37,7 +37,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Checking",
       slug: "checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 
@@ -380,7 +380,7 @@ describe("Connection Sync Flow", () => {
           workspaceId: ctx.workspaceId,
           name: "Savings",
           slug: "savings",
-          type: "savings",
+          accountType: "savings",
         })
         .returning();
 
@@ -419,7 +419,7 @@ describe("Connection Sync Flow", () => {
           workspaceId: ctx.workspaceId,
           name: "Savings",
           slug: "savings",
-          type: "savings",
+          accountType: "savings",
         })
         .returning();
 

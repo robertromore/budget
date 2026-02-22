@@ -13,11 +13,11 @@ describe("Rate Limiting Integration Tests", () => {
 
     // Create caller with rate limiting (for testing rate limits)
     const ctx = {db};
-    caller = createCaller(ctx);
+    caller = createCaller(ctx as any);
 
     // Create caller without rate limiting (for setup operations)
     const testCtx = {db, isTest: true};
-    callerWithoutRateLimit = createCaller(testCtx);
+    callerWithoutRateLimit = createCaller(testCtx as any);
   });
 
   afterEach(async () => {

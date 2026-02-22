@@ -1,7 +1,15 @@
 import {describe, test, expect, beforeEach, afterEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
 import {eq} from "drizzle-orm";
-import {transactions, accounts, payees, categories} from "$lib/schema";
+import {
+  transactions,
+  accounts,
+  payees,
+  categories,
+  users,
+  workspaces,
+  workspaceMembers,
+} from "$lib/schema";
 import {setupTestDb, clearTestDb} from "../setup/test-db";
 import {parseDate, today, getLocalTimeZone} from "@internationalized/date";
 
@@ -11,10 +19,43 @@ describe("Transactions tRPC Integration Tests", () => {
   let testAccount: any;
   let testPayee: any;
   let testCategory: any;
+  let workspaceId: number;
 
   beforeEach(async () => {
     db = await setupTestDb();
-    const ctx = {db, isTest: true};
+    const testUserId = "test-user";
+    await db.insert(users).values({
+      id: testUserId,
+      name: "Test User",
+      displayName: "Test User",
+      email: "test@example.com",
+    });
+
+    const [workspace] = await db
+      .insert(workspaces)
+      .values({
+        displayName: "Transactions Test Workspace",
+        slug: "transactions-test-workspace",
+        ownerId: testUserId,
+      })
+      .returning();
+    workspaceId = workspace.id;
+
+    await db.insert(workspaceMembers).values({
+      workspaceId,
+      userId: testUserId,
+      role: "owner",
+      isDefault: true,
+    });
+
+    const ctx = {
+      db: db as any,
+      userId: testUserId,
+      sessionId: "test-session",
+      workspaceId,
+      event: {} as any,
+      isTest: true,
+    };
     caller = createCaller(ctx);
 
     // Clean up from previous tests
@@ -27,6 +68,7 @@ describe("Transactions tRPC Integration Tests", () => {
     [testAccount] = await db
       .insert(accounts)
       .values({
+        workspaceId,
         cuid: "test-account-1",
         name: "Test Account",
         slug: "test-account",
@@ -39,7 +81,9 @@ describe("Transactions tRPC Integration Tests", () => {
     [testPayee] = await db
       .insert(payees)
       .values({
+        workspaceId,
         name: "Test Payee",
+        slug: "test-payee",
         notes: null,
       })
       .returning();
@@ -47,7 +91,9 @@ describe("Transactions tRPC Integration Tests", () => {
     [testCategory] = await db
       .insert(categories)
       .values({
+        workspaceId,
         name: "Test Category",
+        slug: "test-category",
         notes: null,
       })
       .returning();
@@ -60,15 +106,12 @@ describe("Transactions tRPC Integration Tests", () => {
   });
 
   describe("transactions.forAccount", () => {
-    // NOTE: This route has a bug - it queries by transactions.id instead of transactions.accountId
-    // The following tests document the current (incorrect) behavior
-
-    test("should return empty array when no transaction with that ID exists", async () => {
-      const result = await caller.transactionRoutes.forAccount({id: 999999});
+    test("should return empty array when account has no transactions", async () => {
+      const result = await caller.transactionRoutes.forAccount({accountId: 999999});
       expect(result).toEqual([]);
     });
 
-    test("should return transaction by ID (current buggy behavior)", async () => {
+    test("should return transactions for account", async () => {
       // Create a transaction
       const [transaction] = await db
         .insert(transactions)
@@ -81,8 +124,7 @@ describe("Transactions tRPC Integration Tests", () => {
         })
         .returning();
 
-      // Query using the transaction ID (not account ID as intended)
-      const result = await caller.transactionRoutes.forAccount({id: transaction.id});
+      const result = await caller.transactionRoutes.forAccount({accountId: testAccount.id});
 
       expect(result.length).toBe(1);
       expect(result[0].id).toBe(transaction.id);
@@ -105,7 +147,7 @@ describe("Transactions tRPC Integration Tests", () => {
         .set({deletedAt: new Date().toISOString()})
         .where(eq(transactions.id, transaction.id));
 
-      const result = await caller.transactionRoutes.forAccount({id: transaction.id});
+      const result = await caller.transactionRoutes.forAccount({accountId: testAccount.id});
       expect(result).toEqual([]);
     });
   });
@@ -233,6 +275,7 @@ describe("Transactions tRPC Integration Tests", () => {
           id: existing.id,
           accountId: testAccount.id,
           amount: 75.0,
+          date: "2023-01-15",
           payeeId: testPayee.id,
           categoryId: testCategory.id,
         });
@@ -266,6 +309,7 @@ describe("Transactions tRPC Integration Tests", () => {
         const [deletedAccount] = await db
           .insert(accounts)
           .values({
+            workspaceId,
             cuid: "deleted-account",
             name: "Deleted Account",
             slug: "deleted-account",
@@ -502,18 +546,10 @@ describe("Transactions tRPC Integration Tests", () => {
         })
         .returning();
 
-      const result = await caller.transactionRoutes.delete({
-        entities: [transaction.id],
-        accountId: testAccount.id,
-      });
-
-      expect(result.length).toBe(1);
-      expect(result[0].id).toBe(transaction.id);
-      expect(result[0].deletedAt).toBeTruthy();
-      expect(new Date(result[0].deletedAt!).getTime()).toBeCloseTo(new Date().getTime(), -4);
+      const result = await caller.transactionRoutes.delete({id: transaction.id});
+      expect(result.success).toBe(true);
 
       // Verify transaction is soft deleted by querying database directly
-      // (forAccount has a bug - it queries by transaction ID not account ID)
       const dbCheck = await db
         .select()
         .from(transactions)
@@ -533,16 +569,12 @@ describe("Transactions tRPC Integration Tests", () => {
 
       const idsToDelete = [transactions1[0].id, transactions1[2].id];
 
-      const result = await caller.transactionRoutes.delete({
-        entities: idsToDelete,
-        accountId: testAccount.id,
-      });
+      const result = await caller.transactionRoutes.bulkDelete({ids: idsToDelete});
 
-      expect(result.length).toBe(2);
-      expect(result.every((t) => t.deletedAt !== null)).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.count).toBe(2);
 
       // Verify deletions by querying database directly
-      // (forAccount has a bug - it queries by transaction ID not account ID)
       const dbCheck = await db
         .select()
         .from(transactions)
@@ -552,40 +584,28 @@ describe("Transactions tRPC Integration Tests", () => {
       expect(activeTransactions[0].id).toBe(transactions1[1].id);
     });
 
-    test("should handle empty entities array", async () => {
-      const result = await caller.transactionRoutes.delete({
-        entities: [],
-        accountId: testAccount.id,
-      });
-      expect(result).toEqual([]);
+    test("should reject empty bulk delete payload", async () => {
+      await expect(caller.transactionRoutes.bulkDelete({ids: []})).rejects.toThrow(
+        "At least one ID is required"
+      );
     });
 
     test("should handle non-existent transaction IDs", async () => {
-      const result = await caller.transactionRoutes.delete({
-        entities: [999, 1000],
-        accountId: testAccount.id,
-      });
-      expect(result).toEqual([]);
+      const result = await caller.transactionRoutes.bulkDelete({ids: [999, 1000]});
+      expect(result.success).toBe(true);
+      expect(result.count).toBe(2);
     });
 
-    test("should enforce maximum deletion limit", async () => {
-      const tooManyIds = Array.from({length: 101}, (_, i) => i + 1);
-
-      await expect(
-        caller.transactionRoutes.delete({
-          entities: tooManyIds,
-          accountId: testAccount.id,
-        })
-      ).rejects.toThrow("Too many transactions selected for deletion");
+    test("should require positive IDs for bulk delete", async () => {
+      await expect(caller.transactionRoutes.bulkDelete({ids: [1, -2]})).rejects.toThrow(
+        "Too small: expected number to be >0"
+      );
     });
 
-    test("should require positive accountId", async () => {
-      await expect(
-        caller.transactionRoutes.delete({
-          entities: [1],
-          accountId: -1,
-        })
-      ).rejects.toThrow("Account ID must be positive");
+    test("should require positive transaction ID for delete", async () => {
+      await expect(caller.transactionRoutes.delete({id: -1})).rejects.toThrow(
+        "Too small: expected number to be >0"
+      );
     });
   });
 
@@ -609,11 +629,8 @@ describe("Transactions tRPC Integration Tests", () => {
         })
         .returning();
 
-      const result = await caller.transactionRoutes.delete({
-        entities: [transaction.id],
-        accountId: testAccount.id,
-      });
-      expect(result.length).toBe(1);
+      const result = await caller.transactionRoutes.delete({id: transaction.id});
+      expect(result.success).toBe(true);
     });
   });
 

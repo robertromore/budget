@@ -17,7 +17,7 @@ function sanitizeString(input: string): string {
     .replace(/<[^>]*>/g, "") // Remove HTML tags
     .replace(/javascript:/gi, "") // Remove javascript: protocols
     .replace(/on\w+\s*=/gi, "") // Remove event handlers like onclick=
-    .replace(/\x00-\x1F/g, "") // Remove control characters
+    .replace(/[\x00-\x1F\x7F]/g, "") // Remove ASCII control characters
     .trim();
 
   return sanitized;

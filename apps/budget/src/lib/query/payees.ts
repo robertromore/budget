@@ -1072,20 +1072,6 @@ export const enrichPayeeContact = () =>
 // Prediction Feedback
 // ========================================
 
-export interface RecordPredictionFeedbackInput {
-  payeeId: number;
-  predictionType: FeedbackType;
-  originalDate?: string;
-  originalAmount?: number;
-  originalConfidence?: number;
-  predictionTier?: string;
-  predictionMethod?: string;
-  transactionCount?: number;
-  correctedDate?: string;
-  correctedAmount?: number;
-  rating?: FeedbackRating;
-}
-
 export interface PredictionAccuracyMetrics {
   totalFeedback: number;
   positiveRatings: number;

@@ -1,5 +1,6 @@
 import { insertViewSchema, removeViewSchema, removeViewsSchema, views } from "$lib/schema";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import type { ViewDisplayState } from "$lib/types";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -72,8 +73,13 @@ export const viewsRoutes = t.router({
         input: { id, entityType, name, description, icon, filters, display, dirty },
         ctx,
       }) => {
-        // Preserve display state as-is (expanded: true means "all rows expanded")
-        const transformedDisplay = display;
+        // Normalize legacy `visibility: true` values into explicit visibility map.
+        const transformedDisplay: ViewDisplayState | null | undefined = display
+          ? {
+              ...display,
+              visibility: display.visibility === true ? {} : display.visibility,
+            }
+          : display;
         let entities;
         if (id) {
           entities = await ctx.db

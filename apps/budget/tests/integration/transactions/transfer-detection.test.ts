@@ -39,13 +39,13 @@ async function setupTestContext(): Promise<TestContext> {
         workspaceId: workspace.id,
         name: "Checking",
         slug: "checking",
-        type: "checking",
+        accountType: "checking",
       },
       {
         workspaceId: workspace.id,
         name: "Savings",
         slug: "savings",
-        type: "savings",
+        accountType: "savings",
       },
     ])
     .returning();

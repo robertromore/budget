@@ -1,17 +1,65 @@
 import {describe, test, expect, beforeEach, afterEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
 import {eq} from "drizzle-orm";
-import {views} from "$lib/schema";
+import {views, users, workspaces, workspaceMembers} from "$lib/schema";
 import {setupTestDb, clearTestDb} from "../setup/test-db";
 import type {ViewFilter, ViewDisplayState} from "$lib/types";
 
 describe("Views tRPC Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
   let caller: ReturnType<typeof createCaller>;
+  let workspaceId: number;
+
+  function buildView(values: {
+    name: string;
+    description?: string | null;
+    icon?: string | null;
+    filters?: ViewFilter[] | null;
+    display?: ViewDisplayState | null;
+    dirty?: boolean;
+    entityType?: "transactions" | "top_categories";
+  }) {
+    return {
+      workspaceId,
+      ...values,
+    };
+  }
 
   beforeEach(async () => {
     db = await setupTestDb();
-    const ctx = {db, isTest: true};
+    const testUserId = "test-user";
+    await db.insert(users).values({
+      id: testUserId,
+      name: "Test User",
+      displayName: "Test User",
+      email: "test@example.com",
+    });
+
+    const [workspace] = await db
+      .insert(workspaces)
+      .values({
+        displayName: "Views Test Workspace",
+        slug: "views-test-workspace",
+        ownerId: testUserId,
+      })
+      .returning();
+    workspaceId = workspace.id;
+
+    await db.insert(workspaceMembers).values({
+      workspaceId,
+      userId: testUserId,
+      role: "owner",
+      isDefault: true,
+    });
+
+    const ctx = {
+      db: db as any,
+      userId: testUserId,
+      sessionId: "test-session",
+      workspaceId,
+      event: {} as any,
+      isTest: true,
+    };
     caller = createCaller(ctx);
 
     // Clean up views from previous tests
@@ -33,22 +81,22 @@ describe("Views tRPC Integration Tests", () => {
     test("should return all views", async () => {
       // Create test views
       await db.insert(views).values([
-        {
+        buildView({
           name: "Default View",
           description: "Default account view",
           icon: "table",
-        },
-        {
+        }),
+        buildView({
           name: "Filtered View",
           description: "View with filters",
           icon: "filter",
-          filters: JSON.stringify([{column: "status", filter: "equals", value: ["cleared"]}]),
-        },
-        {
+          filters: [{column: "status", filter: "equals", value: ["cleared"]}],
+        }),
+        buildView({
           name: "Custom View",
           description: null,
           icon: null,
-        },
+        }),
       ]);
 
       const result = await caller.viewsRoutes.all();
@@ -60,11 +108,11 @@ describe("Views tRPC Integration Tests", () => {
     });
 
     test("should include all required view fields", async () => {
-      await db.insert(views).values({
+      await db.insert(views).values(buildView({
         name: "Test View",
         description: "Test description",
         icon: "test-icon",
-      });
+      }));
 
       const result = await caller.viewsRoutes.all();
 
@@ -92,17 +140,17 @@ describe("Views tRPC Integration Tests", () => {
         visibility: {amount: true, notes: false},
       };
 
-      await db.insert(views).values({
+      await db.insert(views).values(buildView({
         name: "Complex View",
-        filters: JSON.stringify(testFilters),
-        display: JSON.stringify(testDisplay),
-      });
+        filters: testFilters,
+        display: testDisplay,
+      }));
 
       const result = await caller.viewsRoutes.all();
       const view = result[0];
 
-      expect(JSON.parse(view.filters as string)).toEqual(testFilters);
-      expect(JSON.parse(view.display as string)).toEqual(testDisplay);
+      expect(view.filters).toEqual(testFilters);
+      expect(view.display).toEqual(testDisplay);
     });
   });
 
@@ -110,11 +158,7 @@ describe("Views tRPC Integration Tests", () => {
     test("should load specific view by ID", async () => {
       const [inserted] = await db
         .insert(views)
-        .values({
-          name: "Budget Overview",
-          description: "Monthly budget overview",
-          icon: "chart",
-        })
+        .values(buildView({name: "Budget Overview", description: "Monthly budget overview", icon: "chart"}))
         .returning();
 
       const result = await caller.viewsRoutes.load({id: inserted.id});
@@ -132,9 +176,7 @@ describe("Views tRPC Integration Tests", () => {
     test("should handle string ID input (coercion)", async () => {
       const [inserted] = await db
         .insert(views)
-        .values({
-          name: "Coercion Test",
-        })
+        .values(buildView({name: "Coercion Test"}))
         .returning();
 
       const result = await caller.viewsRoutes.load({id: inserted.id.toString() as any});
@@ -149,14 +191,11 @@ describe("Views tRPC Integration Tests", () => {
 
       const [inserted] = await db
         .insert(views)
-        .values({
-          name: "Complex JSON View",
-          filters: JSON.stringify(complexFilters),
-        })
+        .values(buildView({name: "Complex JSON View", filters: complexFilters}))
         .returning();
 
       const result = await caller.viewsRoutes.load({id: inserted.id});
-      expect(JSON.parse(result.filters as string)).toEqual(complexFilters);
+      expect(result.filters).toEqual(complexFilters);
     });
   });
 
@@ -184,11 +223,11 @@ describe("Views tRPC Integration Tests", () => {
       test("should create view with all optional fields", async () => {
         const filters: ViewFilter[] = [{column: "status", filter: "equals", value: ["cleared"]}];
 
-        const display: ViewDisplayState = {
+        const display = {
           sort: [{id: "date", desc: true}],
           expanded: true,
           visibility: true,
-        };
+        } as any;
 
         const viewData = {
           name: "Complete View",
@@ -229,11 +268,7 @@ describe("Views tRPC Integration Tests", () => {
       test("should update existing view", async () => {
         const [existing] = await db
           .insert(views)
-          .values({
-            name: "Original View",
-            description: "Original description",
-            icon: "original",
-          })
+          .values(buildView({name: "Original View", description: "Original description", icon: "original"}))
           .returning();
 
         const result = await caller.viewsRoutes.save({
@@ -257,9 +292,7 @@ describe("Views tRPC Integration Tests", () => {
       test("should update JSON fields", async () => {
         const [existing] = await db
           .insert(views)
-          .values({
-            name: "JSON Update Test",
-          })
+          .values(buildView({name: "JSON Update Test"}))
           .returning();
 
         const newFilters: ViewFilter[] = [
@@ -292,11 +325,7 @@ describe("Views tRPC Integration Tests", () => {
       test("should clear optional fields when set to null", async () => {
         const [existing] = await db
           .insert(views)
-          .values({
-            name: "Clear Fields Test",
-            description: "Original description",
-            icon: "original",
-          })
+          .values(buildView({name: "Clear Fields Test", description: "Original description", icon: "original"}))
           .returning();
 
         const result = await caller.viewsRoutes.save({
@@ -420,10 +449,7 @@ describe("Views tRPC Integration Tests", () => {
     test("should hard delete view", async () => {
       const [view] = await db
         .insert(views)
-        .values({
-          name: "To Be Deleted",
-          description: "This will be deleted",
-        })
+        .values(buildView({name: "To Be Deleted", description: "This will be deleted"}))
         .returning();
 
       const result = await caller.viewsRoutes.remove({id: view.id});
@@ -456,9 +482,9 @@ describe("Views tRPC Integration Tests", () => {
       const views1 = await db
         .insert(views)
         .values([
-          {name: "View 1", description: "First view"},
-          {name: "View 2", description: "Second view"},
-          {name: "View 3", description: "Third view"},
+          buildView({name: "View 1", description: "First view"}),
+          buildView({name: "View 2", description: "Second view"}),
+          buildView({name: "View 3", description: "Third view"}),
         ])
         .returning();
 
@@ -492,9 +518,7 @@ describe("Views tRPC Integration Tests", () => {
     test("should handle mix of valid and invalid IDs", async () => {
       const [validView] = await db
         .insert(views)
-        .values({
-          name: "Valid View",
-        })
+        .values(buildView({name: "Valid View"}))
         .returning();
 
       const result = await caller.viewsRoutes.delete({
@@ -519,9 +543,7 @@ describe("Views tRPC Integration Tests", () => {
     test("should apply rate limiting to remove operation", async () => {
       const [view] = await db
         .insert(views)
-        .values({
-          name: "Rate Limited Delete",
-        })
+        .values(buildView({name: "Rate Limited Delete"}))
         .returning();
 
       const result = await caller.viewsRoutes.remove({id: view.id});
@@ -531,9 +553,7 @@ describe("Views tRPC Integration Tests", () => {
     test("should apply rate limiting to bulk delete operation", async () => {
       const [view] = await db
         .insert(views)
-        .values({
-          name: "Rate Limited Bulk Delete",
-        })
+        .values(buildView({name: "Rate Limited Bulk Delete"}))
         .returning();
 
       const result = await caller.viewsRoutes.delete({entities: [view.id]});
@@ -669,10 +689,10 @@ describe("Views tRPC Integration Tests", () => {
     });
 
     test("should handle boolean and literal types in display", async () => {
-      const displayWithLiterals: ViewDisplayState = {
+      const displayWithLiterals = {
         expanded: true, // Literal true
         visibility: true, // Literal true
-      };
+      } as any;
 
       const result1 = await caller.viewsRoutes.save({
         name: "Literal True Test",

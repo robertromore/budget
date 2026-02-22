@@ -21,7 +21,7 @@ import { AutomationRepository } from "./repository";
 import { getRuleEngine } from "./rule-engine";
 
 // Database connection type derived from the actual db export
-type DatabaseConnection = typeof db;
+type DatabaseConnection = Omit<typeof db, "batch">;
 
 /**
  * Service context for automation operations

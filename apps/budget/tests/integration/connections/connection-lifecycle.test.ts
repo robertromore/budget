@@ -36,7 +36,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       name: "Checking",
       slug: "checking",
-      type: "checking",
+      accountType: "checking",
     })
     .returning();
 
@@ -434,7 +434,7 @@ describe("Connection Lifecycle", () => {
           workspaceId: ctx.workspaceId,
           name: "Savings",
           slug: "savings",
-          type: "savings",
+          accountType: "savings",
         })
         .returning();
 
@@ -469,7 +469,7 @@ describe("Connection Lifecycle", () => {
           workspaceId: ctx.workspaceId,
           name: "Savings",
           slug: "savings",
-          type: "savings",
+          accountType: "savings",
         })
         .returning();
 
@@ -479,7 +479,7 @@ describe("Connection Lifecycle", () => {
           workspaceId: ctx.workspaceId,
           name: "Credit Card",
           slug: "credit-card",
-          type: "credit_card",
+          accountType: "credit_card",
         })
         .returning();
 

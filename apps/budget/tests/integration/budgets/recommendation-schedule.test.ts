@@ -12,8 +12,13 @@ import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
 import { eq, and } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type { BudgetMetadata } from "../../../src/lib/schema/budgets";
+import type { RecommendationMetadata } from "../../../src/lib/schema/recommendations";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
+type ScheduledExpenseFrequency = NonNullable<
+  NonNullable<BudgetMetadata["scheduledExpense"]>["frequency"]
+>;
 
 // Test context
 interface TestContext {
@@ -93,6 +98,13 @@ async function createScheduledExpenseRecommendation(
   const { db, workspaceId, accountId, payeeId, categoryId } = ctx;
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const metadata: RecommendationMetadata = {
+    suggestedType: "scheduled-expense",
+    suggestedAmount: options.amount ?? 15.99,
+    detectedFrequency: options.frequency ?? "monthly",
+    payeeIds: [payeeId],
+    transactionIds: options.transactionIds ?? [],
+  };
 
   const [recommendation] = await db
     .insert(schema.budgetRecommendations)
@@ -106,13 +118,7 @@ async function createScheduledExpenseRecommendation(
       status: "pending",
       accountId,
       categoryId,
-      metadata: JSON.stringify({
-        suggestedType: "scheduled-expense",
-        suggestedAmount: options.amount ?? 15.99,
-        detectedFrequency: options.frequency ?? "monthly",
-        payeeIds: [payeeId],
-        transactionIds: options.transactionIds ?? [],
-      }),
+      metadata,
       expiresAt,
       createdAt: now,
       updatedAt: now,
@@ -130,7 +136,7 @@ async function simulateScheduleCreationFromRecommendation(
   ctx: TestContext,
   recommendationId: number
 ) {
-  const { db, workspaceId } = ctx;
+  const { db, workspaceId, payeeId: defaultPayeeId } = ctx;
 
   // Get recommendation
   const recommendation = await db.query.budgetRecommendations.findFirst({
@@ -141,8 +147,8 @@ async function simulateScheduleCreationFromRecommendation(
     throw new Error("Recommendation not found");
   }
 
-  const metadata = JSON.parse(recommendation.metadata as string);
-  const payeeId = metadata.payeeIds?.[0];
+  const metadata = recommendation.metadata as RecommendationMetadata;
+  const payeeId = metadata.payeeIds?.[0] ?? defaultPayeeId;
   const accountId = recommendation.accountId;
 
   if (!accountId) {
@@ -158,9 +164,17 @@ async function simulateScheduleCreationFromRecommendation(
     throw new Error("Payee not found");
   }
 
-  const budgetName = payee.name;
-  const suggestedAmount = metadata.suggestedAmount || 0;
-  const detectedFrequency = metadata.detectedFrequency || "monthly";
+  const budgetName = payee.name ?? "Scheduled Expense";
+  const suggestedAmount = metadata.suggestedAmount ?? 0;
+  const detectedFrequency = metadata.detectedFrequency ?? "monthly";
+  const budgetFrequencyMap: Record<string, ScheduledExpenseFrequency> = {
+    weekly: "weekly",
+    "bi-weekly": "bi-weekly",
+    monthly: "monthly",
+    quarterly: "quarterly",
+    yearly: "yearly",
+  };
+  const budgetFrequency = budgetFrequencyMap[detectedFrequency] ?? "monthly";
 
   // Map frequency to schedule config
   const frequencyMap: Record<
@@ -236,16 +250,16 @@ async function simulateScheduleCreationFromRecommendation(
       scope: "account",
       status: "active",
       enforcementLevel: "warning",
-      metadata: JSON.stringify({
+      metadata: {
         allocatedAmount: suggestedAmount,
         scheduledExpense: {
           linkedScheduleId: createdSchedule.id,
           payeeId,
           expectedAmount: suggestedAmount,
-          frequency: detectedFrequency,
+          frequency: budgetFrequency,
           autoTrack: true,
         },
-      }),
+      },
     })
     .returning();
 
@@ -387,9 +401,10 @@ describe("Budget Schedule Creation from Recommendations", () => {
       expect(result.budget.name).toBe("Netflix");
 
       // Verify budget metadata contains linkedScheduleId
-      const budgetMetadata = JSON.parse(result.budget.metadata as string);
-      expect(budgetMetadata.scheduledExpense.linkedScheduleId).toBe(result.schedule.id);
-      expect(budgetMetadata.scheduledExpense.autoTrack).toBe(true);
+      const budgetMetadata = result.budget.metadata as BudgetMetadata;
+      expect(budgetMetadata.scheduledExpense).toBeDefined();
+      expect(budgetMetadata.scheduledExpense?.linkedScheduleId).toBe(result.schedule.id);
+      expect(budgetMetadata.scheduledExpense?.autoTrack).toBe(true);
 
       // Verify schedule.budgetId points back to budget
       const updatedSchedule = await ctx.db.query.schedules.findFirst({

@@ -10,7 +10,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
   beforeEach(async () => {
     db = await setupTestDb();
     const ctx = {db, isTest: true};
-    caller = createCaller(ctx);
+    caller = createCaller(ctx as any);
   });
 
   afterEach(async () => {
@@ -393,7 +393,7 @@ Final line`;
       it("should handle database connection failures", async () => {
         // Create a caller with invalid database
         const invalidDb = null as any;
-        const invalidCaller = createCaller({db: invalidDb});
+        const invalidCaller = createCaller({db: invalidDb} as any);
 
         await expect(invalidCaller.accountRoutes.all()).rejects.toThrow();
       });

@@ -57,14 +57,14 @@ const filteredAliases = $derived.by(() => {
   let result = aliases;
 
   // Filter by search query
-  if (searchQuery.trim()) {
-    const query = searchQuery.toLowerCase().trim();
-    result = result.filter(
-      (alias) =>
-        alias.rawString.toLowerCase().includes(query) ||
-        alias.payee.name.toLowerCase().includes(query)
-    );
-  }
+	if (searchQuery.trim()) {
+		const query = searchQuery.toLowerCase().trim();
+		result = result.filter(
+			(alias) =>
+				alias.rawString.toLowerCase().includes(query) ||
+				(alias.payee.name ?? '').toLowerCase().includes(query)
+		);
+	}
 
   // Filter by trigger
   if (triggerFilter !== 'all') {

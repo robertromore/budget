@@ -76,7 +76,7 @@
 		}
 	}
 
-	function handleFlowChange(newFlowState: FlowState) {
+	function handleFlowChange(_ruleConfig: unknown, newFlowState: FlowState) {
 		flowState = newFlowState;
 	}
 

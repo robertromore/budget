@@ -1,10 +1,11 @@
 import { columnMappingSchema } from "$lib/schema/import-profiles";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { z } from "zod";
 
-const importProfileService = serviceFactory.getImportProfileService();
+const importProfileService = lazyService(() => serviceFactory.getImportProfileService());
 
 // Input schemas
 const profileIdSchema = z.object({

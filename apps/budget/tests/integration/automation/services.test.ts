@@ -47,6 +47,7 @@ function createValidInput(): CreateRuleInput {
 
 describe("Automation Services Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
+  let automationDb: ConstructorParameters<typeof AutomationRepository>[0];
   let workspaceId: number;
   let context: AutomationContext;
 
@@ -62,8 +63,9 @@ describe("Automation Services Integration Tests", () => {
       })
       .returning();
     workspaceId = workspace.id;
+    automationDb = db as unknown as ConstructorParameters<typeof AutomationRepository>[0];
 
-    context = { db, workspaceId };
+    context = { db: automationDb as AutomationContext["db"], workspaceId };
   });
 
   afterEach(async () => {
@@ -410,7 +412,7 @@ describe("Automation Services Integration Tests", () => {
       const rule = await createRule(input, context);
 
       // Create logs directly via repository
-      const repo = new AutomationRepository(db, workspaceId);
+      const repo = new AutomationRepository(automationDb, workspaceId);
       await repo.createLog({
         ruleId: rule.id,
         triggerEvent: "created",
@@ -434,7 +436,7 @@ describe("Automation Services Integration Tests", () => {
       const input = createValidInput();
       const rule = await createRule(input, context);
 
-      const repo = new AutomationRepository(db, workspaceId);
+      const repo = new AutomationRepository(automationDb, workspaceId);
       for (let i = 0; i < 5; i++) {
         await repo.createLog({
           ruleId: rule.id,
@@ -455,7 +457,7 @@ describe("Automation Services Integration Tests", () => {
       const rule1 = await createRule(createValidInput(), context);
       const rule2 = await createRule({ ...createValidInput(), name: "Rule 2" }, context);
 
-      const repo = new AutomationRepository(db, workspaceId);
+      const repo = new AutomationRepository(automationDb, workspaceId);
       await repo.createLog({
         ruleId: rule1.id,
         triggerEvent: "created",
@@ -481,7 +483,7 @@ describe("Automation Services Integration Tests", () => {
       const input = createValidInput();
       const rule = await createRule(input, context);
 
-      const repo = new AutomationRepository(db, workspaceId);
+      const repo = new AutomationRepository(automationDb, workspaceId);
       await repo.createLog({
         ruleId: rule.id,
         triggerEvent: "created",
@@ -527,7 +529,7 @@ describe("Automation Services Integration Tests", () => {
       const rule = await createRule(input, context);
 
       // Create a recent log
-      const repo = new AutomationRepository(db, workspaceId);
+      const repo = new AutomationRepository(automationDb, workspaceId);
       await repo.createLog({
         ruleId: rule.id,
         triggerEvent: "created",

@@ -59,7 +59,7 @@ async function setupTestContext(): Promise<TestContext> {
       accountId: checkingAccount.id,
       date: "2024-01-15",
       amount: -350.0,
-      description: "City Medical Center - Lab work",
+      notes: "City Medical Center - Lab work",
     })
     .returning();
 
@@ -352,8 +352,8 @@ describe("HSA Claims", () => {
       const transactions = await ctx.db
         .insert(schema.transactions)
         .values([
-          {accountId: checkingAccount.id, date: "2024-02-01", amount: -50.0, description: "Pharmacy"},
-          {accountId: checkingAccount.id, date: "2024-03-01", amount: -200.0, description: "Eye Doctor"},
+          {accountId: checkingAccount.id, date: "2024-02-01", amount: -50.0, notes: "Pharmacy"},
+          {accountId: checkingAccount.id, date: "2024-03-01", amount: -200.0, notes: "Eye Doctor"},
         ])
         .returning();
 

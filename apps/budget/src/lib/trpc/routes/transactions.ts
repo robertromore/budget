@@ -9,13 +9,14 @@ import {
   updateTransactionSchema,
 } from "$lib/server/domains/transactions";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-const transactionService = serviceFactory.getTransactionService();
+const transactionService = lazyService(() => serviceFactory.getTransactionService());
 
 export const transactionRoutes = t.router({
   // Get all transactions for an account

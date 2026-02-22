@@ -5,12 +5,13 @@ import { workspaceMembers } from "$lib/schema/workspace-members";
 import { auth } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { formatFileSize } from "$lib/utils/formatters";
 import { error, json } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
 import type { RequestHandler } from "./$types";
 
-const receiptService = serviceFactory.getReceiptService();
+const receiptService = lazyService(() => serviceFactory.getReceiptService());
 
 export const POST: RequestHandler = async ({ request }) => {
   try {

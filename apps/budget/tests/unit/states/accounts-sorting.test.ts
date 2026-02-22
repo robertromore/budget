@@ -3,7 +3,7 @@ import {AccountsState} from "$lib/states/entities/accounts.svelte";
 import type {Account} from "$lib/schema";
 
 // Mock accounts data for testing
-const mockAccounts: Account[] = [
+const mockAccounts = [
   {
     id: 1,
     cuid: "clx1234567890",
@@ -74,7 +74,7 @@ const mockAccounts: Account[] = [
     deletedAt: null,
     transactions: [],
   },
-];
+] as unknown as Account[];
 
 describe("AccountsState Sorting", () => {
   let accountsState: AccountsState;
@@ -273,7 +273,7 @@ describe("AccountsState Sorting", () => {
 
   describe("Edge Cases", () => {
     test("should handle accounts with null/undefined values", () => {
-      const accountsWithNulls: Account[] = [
+      const accountsWithNulls = [
         {
           id: 99, // Use different id to avoid duplicates
           cuid: null,
@@ -289,7 +289,7 @@ describe("AccountsState Sorting", () => {
           transactions: [],
         },
         ...mockAccounts,
-      ];
+      ] as unknown as Account[];
 
       const stateWithNulls = new AccountsState(accountsWithNulls);
 

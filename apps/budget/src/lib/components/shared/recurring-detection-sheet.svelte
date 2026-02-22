@@ -1,27 +1,25 @@
 <script lang="ts">
-  import { createQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { Badge } from "$ui/lib/components/ui/badge";
-  import { Button } from "$ui/lib/components/ui/button";
-  import * as Card from "$ui/lib/components/ui/card";
-  import * as RadioGroup from "$ui/lib/components/ui/radio-group";
-  import * as Sheet from "$ui/lib/components/ui/sheet";
-  import { ScrollArea } from "$ui/lib/components/ui/scroll-area";
-  import { Separator } from "$ui/lib/components/ui/separator";
+  import { useQueryClient } from "@tanstack/svelte-query";
+  import { Badge } from "$lib/components/ui/badge";
+  import { Button } from "$lib/components/ui/button";
+  import * as Card from "$lib/components/ui/card";
+  import * as RadioGroup from "$lib/components/ui/radio-group";
+  import * as Sheet from "$lib/components/ui/sheet";
+  import { ScrollArea } from "$lib/components/ui/scroll-area";
+  import { Separator } from "$lib/components/ui/separator";
   import { toast } from "svelte-sonner";
-  import {
-    AlertCircle,
-    Calendar,
-    CheckCircle,
-    CreditCard,
-    Loader2,
-    RefreshCw,
-    TrendingUp,
-    XCircle,
-  } from "@nickschwabby/lucide-svelte";
+  import AlertCircle from "@lucide/svelte/icons/alert-circle";
+  import Calendar from "@lucide/svelte/icons/calendar";
+  import CheckCircle from "@lucide/svelte/icons/check-circle";
+  import CreditCard from "@lucide/svelte/icons/credit-card";
+  import Loader2 from "@lucide/svelte/icons/loader-2";
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
+  import TrendingUp from "@lucide/svelte/icons/trending-up";
+  import XCircle from "@lucide/svelte/icons/x-circle";
   import { trpc } from "$lib/trpc/client";
-  import { rpc, scheduleKeys, subscriptionKeys } from "$lib/query";
+  import { scheduleKeys } from "$lib/query";
   import type { RecurringPattern } from "$lib/server/domains/shared/recurring-detection";
-  import { formatCurrency } from "$lib/utils/formatting/currency";
+  import { formatCurrency } from "$lib/utils/formatters";
 
   // Props
   interface Props {
@@ -110,7 +108,7 @@
           auto_add: false,
           payeeId: pattern.payeeId,
           accountId: pattern.accountId,
-          categoryId: pattern.categoryId,
+          categoryId: pattern.categoryId ?? undefined,
           isSubscription: action === "subscription",
           subscriptionType: action === "subscription" ? pattern.subscriptionType : undefined,
           subscriptionStatus: action === "subscription" ? "active" : undefined,

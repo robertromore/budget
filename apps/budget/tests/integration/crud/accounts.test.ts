@@ -11,7 +11,7 @@ describe("Accounts CRUD Integration Tests", () => {
     testDb = await setupTestDb();
     await seedTestData(testDb);
     const ctx = {db: testDb, isTest: true};
-    caller = createCaller(ctx);
+    caller = createCaller(ctx as any);
   });
 
   afterEach(async () => {
