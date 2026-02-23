@@ -87,16 +87,16 @@ export class CategoryGroupRecommendationService {
   /**
    * Get all pending recommendations with category names
    */
-  async getPendingRecommendations(): Promise<
+  async getPendingRecommendations(workspaceId: number): Promise<
     (CategoryGroupRecommendation & { categoryName: string | null })[]
   > {
-    return await this.recommendationRepository.findPending();
+    return await this.recommendationRepository.findPending(workspaceId);
   }
 
   /**
    * Get ungrouped categories (categories not in any group)
    */
-  private async getUngroupedCategories(): Promise<Category[]> {
+  private async getUngroupedCategories(workspaceId: number): Promise<Category[]> {
     // Find all active categories that are NOT in any group
     const ungrouped = await db
       .select()
@@ -104,6 +104,7 @@ export class CategoryGroupRecommendationService {
       .leftJoin(categoryGroupMemberships, eq(categories.id, categoryGroupMemberships.categoryId))
       .where(
         and(
+          eq(categories.workspaceId, workspaceId),
           eq(categories.isActive, true),
           isNull(categoryGroupMemberships.id),
           isNull(categories.deletedAt)
@@ -120,7 +121,7 @@ export class CategoryGroupRecommendationService {
   /**
    * Generate recommendations for ungrouped categories using rule-based patterns
    */
-  async generateRecommendations(): Promise<CategoryGroupRecommendation[]> {
+  async generateRecommendations(workspaceId: number): Promise<CategoryGroupRecommendation[]> {
     // Check if recommendations are enabled
     const settings = await this.settingsRepository.getSettings();
     if (!settings.recommendationsEnabled) {
@@ -128,19 +129,22 @@ export class CategoryGroupRecommendationService {
     }
 
     // Clear old pending recommendations
-    const oldPending = await this.recommendationRepository.findPending();
+    const oldPending = await this.recommendationRepository.findPending(workspaceId);
     for (const rec of oldPending) {
-      await this.recommendationRepository.delete(rec.id);
+      await this.recommendationRepository.deleteByIdInWorkspace(rec.id, workspaceId);
     }
 
     // Fetch ungrouped categories
-    const ungroupedCategories = await this.getUngroupedCategories();
+    const ungroupedCategories = await this.getUngroupedCategories(workspaceId);
     if (ungroupedCategories.length === 0) {
       return []; // No categories to process
     }
 
     // Fetch all existing groups
-    const existingGroups = await db.select().from(categoryGroups);
+    const existingGroups = await db
+      .select()
+      .from(categoryGroups)
+      .where(eq(categoryGroups.workspaceId, workspaceId));
 
     // Define grouping rules
     const groupingRules = [
@@ -340,7 +344,10 @@ export class CategoryGroupRecommendationService {
    */
   async approveRecommendation(recommendationId: number, workspaceId: number): Promise<void> {
     // Get recommendation
-    const recommendation = await this.recommendationRepository.findById(recommendationId);
+    const recommendation = await this.recommendationRepository.findByIdInWorkspace(
+      recommendationId,
+      workspaceId
+    );
     if (!recommendation) {
       throw new NotFoundError("CategoryGroupRecommendation", recommendationId);
     }
@@ -388,7 +395,10 @@ export class CategoryGroupRecommendationService {
 
         if (isUniqueConstraint) {
           // A group with this name or slug already exists, find it by name
-          const existingGroups = await db.select().from(categoryGroups);
+          const existingGroups = await db
+            .select()
+            .from(categoryGroups)
+            .where(eq(categoryGroups.workspaceId, workspaceId));
           const existingGroup = existingGroups.find(
             (g) => g.name.toLowerCase() === recommendation.suggestedGroupName!.toLowerCase()
           );
@@ -410,50 +420,55 @@ export class CategoryGroupRecommendationService {
     }
 
     // Update recommendation status to 'approved'
-    await this.recommendationRepository.updateStatus(recommendationId, "approved");
+    await this.recommendationRepository.updateStatus(recommendationId, "approved", workspaceId);
   }
 
   /**
    * Dismiss a recommendation (user doesn't want to apply it)
    */
-  async dismissRecommendation(recommendationId: number): Promise<void> {
-    const recommendation = await this.recommendationRepository.findById(recommendationId);
+  async dismissRecommendation(recommendationId: number, workspaceId: number): Promise<void> {
+    const recommendation = await this.recommendationRepository.findByIdInWorkspace(
+      recommendationId,
+      workspaceId
+    );
     if (!recommendation) {
       throw new NotFoundError("CategoryGroupRecommendation", recommendationId);
     }
 
-    await this.recommendationRepository.updateStatus(recommendationId, "dismissed");
+    await this.recommendationRepository.updateStatus(recommendationId, "dismissed", workspaceId);
   }
 
   /**
    * Reject a recommendation (user actively disagrees with it)
    */
-  async rejectRecommendation(recommendationId: number): Promise<void> {
-    const recommendation = await this.recommendationRepository.findById(recommendationId);
+  async rejectRecommendation(recommendationId: number, workspaceId: number): Promise<void> {
+    const recommendation = await this.recommendationRepository.findByIdInWorkspace(
+      recommendationId,
+      workspaceId
+    );
     if (!recommendation) {
       throw new NotFoundError("CategoryGroupRecommendation", recommendationId);
     }
 
-    await this.recommendationRepository.updateStatus(recommendationId, "rejected");
+    await this.recommendationRepository.updateStatus(recommendationId, "rejected", workspaceId);
   }
 
   /**
    * Clear old recommendations (30+ days old, not pending)
    */
-  async clearOldRecommendations(): Promise<void> {
+  async clearOldRecommendations(workspaceId: number): Promise<void> {
     // Delete non-pending recommendations older than 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const allRecommendations = await this.recommendationRepository.findByStatus("dismissed");
-    for (const rec of allRecommendations) {
-      const createdDate = new Date(rec.createdAt);
-      if (createdDate < thirtyDaysAgo) {
-        await db
-          .delete(require("$lib/schema/category-groups").categoryGroupRecommendations)
-          .where(
-            eq(require("$lib/schema/category-groups").categoryGroupRecommendations.id, rec.id)
-          );
+    const staleStatuses = ["approved", "dismissed", "rejected"] as const;
+    for (const status of staleStatuses) {
+      const recommendations = await this.recommendationRepository.findByStatus(status, workspaceId);
+      for (const rec of recommendations) {
+        const createdDate = new Date(rec.createdAt);
+        if (createdDate < thirtyDaysAgo) {
+          await this.recommendationRepository.deleteByIdInWorkspace(rec.id, workspaceId);
+        }
       }
     }
   }

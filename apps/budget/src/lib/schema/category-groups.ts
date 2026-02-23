@@ -17,8 +17,8 @@ export const categoryGroups = sqliteTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    name: text("name").notNull().unique(),
-    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
     description: text("description"),
     groupIcon: text("group_icon"),
     groupColor: text("group_color"),
@@ -32,6 +32,8 @@ export const categoryGroups = sqliteTable(
   },
   (table) => [
     index("category_groups_workspace_id_idx").on(table.workspaceId),
+    uniqueIndex("category_groups_workspace_name_unique").on(table.workspaceId, table.name),
+    uniqueIndex("category_groups_workspace_slug_unique").on(table.workspaceId, table.slug),
     index("idx_category_groups_slug").on(table.slug),
     index("idx_category_groups_sort_order").on(table.sortOrder),
   ]

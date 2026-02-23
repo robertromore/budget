@@ -18,7 +18,7 @@ import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 
 // ================================================================================
 // Types
@@ -406,19 +406,55 @@ export class CategoryGroupRecommendationRepository extends BaseRepository<
   }
 
   /**
+   * Find recommendation by ID scoped to a workspace
+   */
+  async findByIdInWorkspace(
+    id: number,
+    workspaceId: number
+  ): Promise<CategoryGroupRecommendation | null> {
+    const [result] = await db
+      .select({
+        recommendation: categoryGroupRecommendations,
+      })
+      .from(categoryGroupRecommendations)
+      .innerJoin(categories, eq(categoryGroupRecommendations.categoryId, categories.id))
+      .where(
+        and(
+          eq(categoryGroupRecommendations.id, id),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
+        )
+      )
+      .limit(1);
+
+    return result?.recommendation || null;
+  }
+
+  /**
    * Update recommendation status
    */
   async updateStatus(
     id: number,
-    status: CategoryGroupRecommendationStatus
+    status: CategoryGroupRecommendationStatus,
+    workspaceId: number
   ): Promise<CategoryGroupRecommendation> {
+    const workspaceCategoryIds = db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)));
+
     const [recommendation] = await db
       .update(categoryGroupRecommendations)
       .set({
         status,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(eq(categoryGroupRecommendations.id, id))
+      .where(
+        and(
+          eq(categoryGroupRecommendations.id, id),
+          inArray(categoryGroupRecommendations.categoryId, workspaceCategoryIds)
+        )
+      )
       .returning();
 
     if (!recommendation) {
@@ -431,15 +467,23 @@ export class CategoryGroupRecommendationRepository extends BaseRepository<
   /**
    * Find all pending recommendations with category names
    */
-  async findPending(): Promise<(CategoryGroupRecommendation & { categoryName: string | null })[]> {
+  async findPending(
+    workspaceId: number
+  ): Promise<(CategoryGroupRecommendation & { categoryName: string | null })[]> {
     const results = await db
       .select({
         recommendation: categoryGroupRecommendations,
         categoryName: categories.name,
       })
       .from(categoryGroupRecommendations)
-      .leftJoin(categories, eq(categoryGroupRecommendations.categoryId, categories.id))
-      .where(eq(categoryGroupRecommendations.status, "pending"))
+      .innerJoin(categories, eq(categoryGroupRecommendations.categoryId, categories.id))
+      .where(
+        and(
+          eq(categoryGroupRecommendations.status, "pending"),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
+        )
+      )
       .orderBy(
         desc(categoryGroupRecommendations.confidenceScore),
         categoryGroupRecommendations.createdAt
@@ -454,30 +498,66 @@ export class CategoryGroupRecommendationRepository extends BaseRepository<
   /**
    * Find pending recommendations for a specific category
    */
-  async findPendingForCategory(categoryId: number): Promise<CategoryGroupRecommendation[]> {
-    return await db
-      .select()
+  async findPendingForCategory(
+    categoryId: number,
+    workspaceId: number
+  ): Promise<CategoryGroupRecommendation[]> {
+    const results = await db
+      .select({
+        recommendation: categoryGroupRecommendations,
+      })
       .from(categoryGroupRecommendations)
+      .innerJoin(categories, eq(categoryGroupRecommendations.categoryId, categories.id))
       .where(
         and(
           eq(categoryGroupRecommendations.categoryId, categoryId),
-          eq(categoryGroupRecommendations.status, "pending")
+          eq(categoryGroupRecommendations.status, "pending"),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
         )
       )
       .orderBy(desc(categoryGroupRecommendations.confidenceScore));
+
+    return results.map((row) => row.recommendation);
   }
 
   /**
    * Find recommendations by status
    */
   async findByStatus(
-    status: CategoryGroupRecommendationStatus
+    status: CategoryGroupRecommendationStatus,
+    workspaceId: number
   ): Promise<CategoryGroupRecommendation[]> {
-    return await db
-      .select()
+    const results = await db
+      .select({
+        recommendation: categoryGroupRecommendations,
+      })
       .from(categoryGroupRecommendations)
-      .where(eq(categoryGroupRecommendations.status, status))
+      .innerJoin(categories, eq(categoryGroupRecommendations.categoryId, categories.id))
+      .where(
+        and(
+          eq(categoryGroupRecommendations.status, status),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
+        )
+      )
       .orderBy(desc(categoryGroupRecommendations.createdAt));
+
+    return results.map((row) => row.recommendation);
+  }
+
+  /**
+   * Delete recommendation by ID scoped to workspace
+   */
+  async deleteByIdInWorkspace(id: number, workspaceId: number): Promise<void> {
+    const recommendation = await this.findByIdInWorkspace(id, workspaceId);
+    if (!recommendation) {
+      throw new NotFoundError("CategoryGroupRecommendation", id);
+    }
+
+    await db
+      .delete(categoryGroupRecommendations)
+      .where(eq(categoryGroupRecommendations.id, recommendation.id));
   }
 
   /**

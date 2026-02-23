@@ -1,4 +1,4 @@
-import type { Category } from "$lib/schema/categories";
+import { categories, type Category } from "$lib/schema/categories";
 import type { CategoryGroup, NewCategoryGroup } from "$lib/schema/category-groups";
 import {
   categoryGroupMemberships,
@@ -7,7 +7,7 @@ import {
 import { db } from "$lib/server/db";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   CategoryGroupMembershipRepository,
   CategoryGroupRepository,
@@ -54,6 +54,27 @@ export class CategoryGroupService {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
       .trim();
+  }
+
+  /**
+   * Ensure a category exists and belongs to the workspace.
+   */
+  private async validateCategoryOwnership(categoryId: number, workspaceId: number): Promise<void> {
+    const [category] = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(
+        and(
+          eq(categories.id, categoryId),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (!category) {
+      throw new NotFoundError("Category", categoryId);
+    }
   }
 
   // ================================================================================
@@ -269,11 +290,29 @@ export class CategoryGroupService {
       return; // Nothing to add
     }
 
+    const uniqueCategoryIds = [...new Set(categoryIds)];
+    const workspaceCategories = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(
+        and(
+          eq(categories.workspaceId, workspaceId),
+          inArray(categories.id, uniqueCategoryIds),
+          isNull(categories.deletedAt)
+        )
+      );
+
+    if (workspaceCategories.length !== uniqueCategoryIds.length) {
+      const workspaceCategoryIds = new Set(workspaceCategories.map((c) => c.id));
+      const missing = uniqueCategoryIds.filter((id) => !workspaceCategoryIds.has(id));
+      throw new NotFoundError("Category", missing.join(","));
+    }
+
     // Check if any categories are already in ANY group (due to unique constraint)
     const existingMemberships = await db
       .select()
       .from(categoryGroupMemberships)
-      .where(inArray(categoryGroupMemberships.categoryId, categoryIds));
+      .where(inArray(categoryGroupMemberships.categoryId, uniqueCategoryIds));
 
     if (existingMemberships.length > 0) {
       const conflictIds = existingMemberships.map((m) => m.categoryId).join(", ");
@@ -283,8 +322,8 @@ export class CategoryGroupService {
     }
 
     // Add categories to the group
-    for (let i = 0; i < categoryIds.length; i++) {
-      const categoryId = categoryIds[i];
+    for (let i = 0; i < uniqueCategoryIds.length; i++) {
+      const categoryId = uniqueCategoryIds[i];
       if (categoryId !== undefined) {
         await this.membershipRepository.addCategoryToGroup(categoryId, groupId, i);
       }
@@ -294,7 +333,8 @@ export class CategoryGroupService {
   /**
    * Remove a category from its group
    */
-  async removeCategoryFromGroup(categoryId: number): Promise<void> {
+  async removeCategoryFromGroup(categoryId: number, workspaceId: number): Promise<void> {
+    await this.validateCategoryOwnership(categoryId, workspaceId);
     await this.membershipRepository.removeCategoryFromGroup(categoryId);
   }
 
@@ -311,6 +351,8 @@ export class CategoryGroupService {
     if (!group) {
       throw new NotFoundError("CategoryGroup", newGroupId);
     }
+
+    await this.validateCategoryOwnership(categoryId, workspaceId);
 
     // Move category (this removes from old group and adds to new)
     await this.membershipRepository.moveCategoryToGroup(categoryId, newGroupId, 0);

@@ -407,6 +407,36 @@ describe("Category Group Service", () => {
   });
 
   describe("workspace isolation", () => {
+    it("should allow same group name and slug in different workspaces", async () => {
+      const [workspace2] = await ctx.db
+        .insert(schema.workspaces)
+        .values({
+          displayName: "Second Workspace",
+          slug: "second-workspace-dupe-test",
+        })
+        .returning();
+
+      await ctx.db.insert(schema.categoryGroups).values([
+        {workspaceId: ctx.workspaceId, name: "Shared Group", slug: "shared-group", sortOrder: 0},
+        {workspaceId: workspace2.id, name: "Shared Group", slug: "shared-group", sortOrder: 0},
+      ]);
+
+      const workspace1Groups = await ctx.db
+        .select()
+        .from(schema.categoryGroups)
+        .where(eq(schema.categoryGroups.workspaceId, ctx.workspaceId));
+
+      const workspace2Groups = await ctx.db
+        .select()
+        .from(schema.categoryGroups)
+        .where(eq(schema.categoryGroups.workspaceId, workspace2.id));
+
+      expect(workspace1Groups).toHaveLength(1);
+      expect(workspace2Groups).toHaveLength(1);
+      expect(workspace1Groups[0].name).toBe("Shared Group");
+      expect(workspace2Groups[0].name).toBe("Shared Group");
+    });
+
     it("should isolate category groups between workspaces", async () => {
       // Create second workspace
       const [workspace2] = await ctx.db
@@ -417,7 +447,7 @@ describe("Category Group Service", () => {
         })
         .returning();
 
-      // Create groups in both workspaces (unique names required)
+      // Create groups in both workspaces
       await ctx.db.insert(schema.categoryGroups).values([
         {workspaceId: ctx.workspaceId, name: "Group WS1", slug: "group-ws1", sortOrder: 0},
         {workspaceId: workspace2.id, name: "Group WS2", slug: "group-ws2", sortOrder: 0},

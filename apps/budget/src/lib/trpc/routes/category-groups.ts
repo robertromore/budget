@@ -85,8 +85,8 @@ export const categoryGroupsRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({ input }) => {
-        await categoryGroupService.removeCategoryFromGroup(input.categoryId);
+      withErrorHandler(async ({ input, ctx }) => {
+        await categoryGroupService.removeCategoryFromGroup(input.categoryId, ctx.workspaceId);
         return { success: true };
       })
     ),
@@ -132,14 +132,14 @@ export const categoryGroupsRoutes = t.router({
   // ================================================================================
 
   recommendationsList: publicProcedure.query(
-    withErrorHandler(async () => {
-      return await recommendationService.getPendingRecommendations();
+    withErrorHandler(async ({ ctx }) => {
+      return await recommendationService.getPendingRecommendations(ctx.workspaceId);
     })
   ),
 
   recommendationsGenerate: rateLimitedProcedure.mutation(
-    withErrorHandler(async () => {
-      return await recommendationService.generateRecommendations();
+    withErrorHandler(async ({ ctx }) => {
+      return await recommendationService.generateRecommendations(ctx.workspaceId);
     })
   ),
 
@@ -151,15 +151,15 @@ export const categoryGroupsRoutes = t.router({
   ),
 
   recommendationsDismiss: rateLimitedProcedure.input(z.object({ id: z.number() })).mutation(
-    withErrorHandler(async ({ input }) => {
-      await recommendationService.dismissRecommendation(input.id);
+    withErrorHandler(async ({ input, ctx }) => {
+      await recommendationService.dismissRecommendation(input.id, ctx.workspaceId);
       return { success: true };
     })
   ),
 
   recommendationsReject: rateLimitedProcedure.input(z.object({ id: z.number() })).mutation(
-    withErrorHandler(async ({ input }) => {
-      await recommendationService.rejectRecommendation(input.id);
+    withErrorHandler(async ({ input, ctx }) => {
+      await recommendationService.rejectRecommendation(input.id, ctx.workspaceId);
       return { success: true };
     })
   ),
