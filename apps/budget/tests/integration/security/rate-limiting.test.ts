@@ -49,6 +49,33 @@ describe("Rate Limiting Integration Tests", () => {
       expect(results.length).toBe(35);
     });
 
+    it("should allow rapid account writes when isTest flag is set", async () => {
+      const batches = 4;
+      const perBatch = 6;
+      let created = 0;
+
+      for (let batch = 0; batch < batches; batch++) {
+        const operations = Array.from({length: perBatch}, (_, index) => {
+          const i = batch * perBatch + index;
+          return callerWithoutRateLimit.accountRoutes.save({
+            name: `Bypass Account ${i}`,
+          });
+        });
+
+        const results = await Promise.allSettled(operations);
+        results.forEach((result, index) => {
+          expect(result.status).toBe("fulfilled");
+          if (result.status === "fulfilled") {
+            expect(result.value.name).toBe(`Bypass Account ${batch * perBatch + index}`);
+          }
+        });
+
+        created += results.length;
+      }
+
+      expect(created).toBe(batches * perBatch);
+    });
+
     it("should enforce rate limits when not in test mode", async () => {
       // This test verifies rate limiting is working for non-test contexts
       // We'll create a reasonable number of operations and expect some to fail

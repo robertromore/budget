@@ -165,6 +165,12 @@ export const createCaller = (context: Context) => {
   return wrapCallerWithTestDb(caller, normalizedContext);
 };
 
+export const __testables = {
+  normalizeTestContext,
+  isPromiseLike,
+  wrapCallerWithTestDb,
+};
+
 export type Router = typeof router;
 
 // 👇 type helpers 💡

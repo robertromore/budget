@@ -1,13 +1,15 @@
 import { accountKeys, cachePatterns, rpc } from "$lib/query";
 import type { Account } from "$lib/schema";
+import {
+  sortAccounts,
+  type AccountSortField,
+  type SortDirection,
+} from "$lib/states/entities/accounts-sorting";
 import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("accounts");
-
-export type AccountSortField = "name" | "balance" | "dateOpened" | "status" | "createdAt";
-export type SortDirection = "asc" | "desc";
 
 export class AccountsState {
   accounts = $state(new SvelteMap<number, Account>()) as SvelteMap<number, Account>;
@@ -43,7 +45,7 @@ export class AccountsState {
     return Array.from(this.accounts.values());
   }
 
-  sorted = $derived(this.sortAccounts(this.all, this.sortField, this.sortDirection));
+  sorted = $derived(sortAccounts(this.all, this.sortField, this.sortDirection));
 
   get count(): number {
     return this.accounts.size;
@@ -204,53 +206,12 @@ export class AccountsState {
     return ["asc", "desc"].includes(direction);
   }
 
-  private sortAccounts(
-    accounts: Account[],
-    field: AccountSortField,
-    direction: SortDirection
-  ): Account[] {
-    return [...accounts].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (field) {
-        case "name":
-          aValue = a.name?.toLowerCase() || "";
-          bValue = b.name?.toLowerCase() || "";
-          break;
-        case "balance":
-          aValue = a.balance || 0;
-          bValue = b.balance || 0;
-          break;
-        case "dateOpened":
-          aValue = a.dateOpened ? new Date(a.dateOpened).getTime() : 0;
-          bValue = b.dateOpened ? new Date(b.dateOpened).getTime() : 0;
-          break;
-        case "status":
-          aValue = a.closed ? 1 : 0; // Active accounts first when asc
-          bValue = b.closed ? 1 : 0;
-          break;
-        case "createdAt":
-          aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          break;
-        default:
-          aValue = a.name?.toLowerCase() || "";
-          bValue = b.name?.toLowerCase() || "";
-      }
-
-      if (aValue < bValue) return direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  }
-
   getSortedActiveAccounts(): Account[] {
-    return this.sortAccounts(this.getActiveAccounts(), this.sortField, this.sortDirection);
+    return sortAccounts(this.getActiveAccounts(), this.sortField, this.sortDirection);
   }
 
   getSortedClosedAccounts(): Account[] {
-    return this.sortAccounts(this.getClosedAccounts(), this.sortField, this.sortDirection);
+    return sortAccounts(this.getClosedAccounts(), this.sortField, this.sortDirection);
   }
 
   // Utility methods

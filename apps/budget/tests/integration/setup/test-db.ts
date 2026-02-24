@@ -14,7 +14,7 @@ const DEFAULT_TEST_EMAIL = "system-test@example.invalid";
 const DEFAULT_TEST_WORKSPACE_SLUG = "__system-test-workspace__";
 const CURRENT_FILE_DIR = path.dirname(fileURLToPath(import.meta.url));
 
-function resolveMigrationsFolder() {
+export function resolveMigrationsFolder() {
   const candidates = [
     path.join(process.cwd(), "drizzle"),
     path.join(process.cwd(), "apps", "budget", "drizzle"),
