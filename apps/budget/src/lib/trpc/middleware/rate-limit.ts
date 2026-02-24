@@ -6,6 +6,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 interface RateLimitOptions {
+  name?: string;
   windowMs: number;
   maxRequests: number;
   keyGenerator?: (ctx: any) => string;
@@ -25,7 +26,7 @@ const t = initTRPC.context<Context>().create();
  * @param options - Configuration options for rate limiting
  */
 export const rateLimit = (options: RateLimitOptions) => {
-  const { windowMs, maxRequests, keyGenerator = defaultKeyGenerator } = options;
+  const { name, windowMs, maxRequests, keyGenerator = defaultKeyGenerator } = options;
 
   return t.middleware(async ({ ctx, next, type }) => {
     // Skip rate limiting for tests
@@ -38,7 +39,7 @@ export const rateLimit = (options: RateLimitOptions) => {
       return next({ ctx });
     }
 
-    const key = keyGenerator(ctx);
+    const key = `${name ?? `${windowMs}:${maxRequests}`}:${keyGenerator(ctx)}`;
     const now = Date.now();
 
     // Clean up expired entries
@@ -73,16 +74,19 @@ export const rateLimit = (options: RateLimitOptions) => {
 
 // Predefined rate limiters for different operation types
 export const mutationRateLimit = rateLimit({
+  name: "mutation",
   windowMs: RATE_LIMIT.WINDOW_MS,
   maxRequests: RATE_LIMIT.MUTATION_MAX_REQUESTS,
 });
 
 export const bulkOperationRateLimit = rateLimit({
+  name: "bulk-operation",
   windowMs: RATE_LIMIT.WINDOW_MS,
   maxRequests: RATE_LIMIT.BULK_OPERATION_MAX_REQUESTS,
 });
 
 export const strictRateLimit = rateLimit({
+  name: "strict",
   windowMs: RATE_LIMIT.WINDOW_MS,
   maxRequests: RATE_LIMIT.STRICT_MAX_REQUESTS,
 });

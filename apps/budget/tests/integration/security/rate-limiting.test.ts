@@ -119,6 +119,41 @@ describe("Rate Limiting Integration Tests", () => {
       expect(successCount + rateLimitCount).toBe(35);
     });
 
+    it("should keep strict limiter separate from standard mutation limiter", async () => {
+      const isolatedCaller = createCaller({
+        db,
+        userId: `limiter-scope-user-${Date.now()}-${Math.random()}`,
+        sessionId: `limiter-scope-session-${Date.now()}-${Math.random()}`,
+        workspaceId: 1,
+      } as any);
+
+      // Burn several standard mutation slots but stay below the 30 req/min threshold.
+      const standardMutations = [];
+      for (let i = 0; i < 6; i++) {
+        standardMutations.push(
+          isolatedCaller.viewsRoutes
+            .save({
+              name: `Limiter Scope Test ${i}`,
+            })
+            .catch((error) => error)
+        );
+      }
+
+      const standardResults = await Promise.all(standardMutations);
+      const standardRateLimitHits = standardResults.filter(
+        (result) => result instanceof TRPCError && result.code === "TOO_MANY_REQUESTS"
+      );
+      expect(standardRateLimitHits).toHaveLength(0);
+
+      // Strict-limited endpoint should not inherit the standard mutation counter.
+      try {
+        await isolatedCaller.securityRoutes.revokeDeviceTrust({deviceId: 999999});
+      } catch (error) {
+        expect(error).toBeInstanceOf(TRPCError);
+        expect((error as TRPCError).code).not.toBe("TOO_MANY_REQUESTS");
+      }
+    });
+
     it("should not rate limit query operations", async () => {
       // Make many query operations - should not be rate limited
       const queryOperations = [];
