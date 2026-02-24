@@ -14,7 +14,7 @@
     "test:coverage": "bunx vitest run --coverage",
     "test:watch": "bunx vitest watch",
     "test:ui": "bunx vitest --ui",
-    "test:bun": "bun test tests/integration/trpc tests/integration/validation tests/integration/security tests/unit/balance-calculation.test.ts tests/unit/components tests/unit/filters tests/unit/trpc tests/unit/utils",
+    "test:bun": "bun test tests/integration/trpc tests/integration/validation tests/integration/security tests/unit/balance-calculation.test.ts tests/unit/components tests/unit/filters tests/unit/trpc tests/unit/utils && bunx vitest run tests/unit/states/accounts-sorting.test.ts",
     "test:bun:watch": "bun test --watch tests/integration/trpc tests/integration/validation tests/integration/security tests/unit/balance-calculation.test.ts tests/unit/components tests/unit/filters tests/unit/trpc tests/unit/utils",
     "test:playwright": "npx playwright test",
     "test:playwright:ui": "bunx playwright test --ui",

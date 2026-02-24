@@ -2,7 +2,7 @@ import {describe, test, expect, beforeEach} from "vitest";
 import {AccountsState} from "$lib/states/entities/accounts.svelte";
 import type {Account} from "$lib/schema";
 
-const describeAccountsStateSorting = typeof Bun === "undefined" ? describe : describe.skip;
+const describeAccountsStateSorting = describe;
 
 // Mock accounts data for testing
 const mockAccounts = [
