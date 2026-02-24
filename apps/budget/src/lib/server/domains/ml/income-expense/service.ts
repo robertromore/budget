@@ -193,14 +193,19 @@ export function createIncomeExpenseService(): IncomeExpenseService {
     months: number,
     accountId?: number
   ): Promise<Array<{ period: string; income: number; expenses: number }>> {
+    const workspaceAccountIds = await getWorkspaceAccountIds(workspaceId);
+    if (workspaceAccountIds.length === 0) {
+      return [];
+    }
+
     let accountIds: number[];
     if (accountId !== undefined) {
-      accountIds = [accountId];
-    } else {
-      accountIds = await getWorkspaceAccountIds(workspaceId);
-      if (accountIds.length === 0) {
+      if (!workspaceAccountIds.includes(accountId)) {
         return [];
       }
+      accountIds = [accountId];
+    } else {
+      accountIds = workspaceAccountIds;
     }
 
     const cutoff = new Date();
@@ -211,7 +216,7 @@ export function createIncomeExpenseService(): IncomeExpenseService {
     const incomeResult = await db
       .select({
         period: sql<string>`strftime('%Y-%m', ${transactions.date})`,
-        total: sql<number>`SUM(${transactions.amount}) / 100.0`,
+        total: sql<number>`SUM(${transactions.amount})`,
       })
       .from(transactions)
       .where(
@@ -228,7 +233,7 @@ export function createIncomeExpenseService(): IncomeExpenseService {
     const expenseResult = await db
       .select({
         period: sql<string>`strftime('%Y-%m', ${transactions.date})`,
-        total: sql<number>`SUM(ABS(${transactions.amount})) / 100.0`,
+        total: sql<number>`SUM(ABS(${transactions.amount}))`,
       })
       .from(transactions)
       .where(
@@ -386,8 +391,8 @@ export function createIncomeExpenseService(): IncomeExpenseService {
 
     const result = await db
       .select({
-        income: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END) / 100.0`,
-        expenses: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END) / 100.0`,
+        income: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END)`,
+        expenses: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END)`,
       })
       .from(transactions)
       .where(

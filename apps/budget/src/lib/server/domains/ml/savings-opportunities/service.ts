@@ -262,27 +262,42 @@ export interface SavingsOpportunityService {
   /**
    * Detect unused subscriptions
    */
-  detectUnusedSubscriptions(workspaceId: number): Promise<SavingsOpportunity[]>;
+  detectUnusedSubscriptions(
+    workspaceId: number,
+    options?: Partial<SavingsOpportunityConfig>
+  ): Promise<SavingsOpportunity[]>;
 
   /**
    * Detect price increases on recurring bills
    */
-  detectPriceIncreases(workspaceId: number): Promise<SavingsOpportunity[]>;
+  detectPriceIncreases(
+    workspaceId: number,
+    options?: Partial<SavingsOpportunityConfig>
+  ): Promise<SavingsOpportunity[]>;
 
   /**
    * Detect duplicate subscriptions
    */
-  detectDuplicates(workspaceId: number): Promise<SavingsOpportunity[]>;
+  detectDuplicates(
+    workspaceId: number,
+    options?: Partial<SavingsOpportunityConfig>
+  ): Promise<SavingsOpportunity[]>;
 
   /**
    * Detect significant spending increases
    */
-  detectSpendingIncreases(workspaceId: number): Promise<SavingsOpportunity[]>;
+  detectSpendingIncreases(
+    workspaceId: number,
+    options?: Partial<SavingsOpportunityConfig>
+  ): Promise<SavingsOpportunity[]>;
 
   /**
    * Detect bills that could be negotiated for better rates
    */
-  detectNegotiationCandidates(workspaceId: number): Promise<SavingsOpportunity[]>;
+  detectNegotiationCandidates(
+    workspaceId: number,
+    options?: Partial<SavingsOpportunityConfig>
+  ): Promise<SavingsOpportunity[]>;
 
   /**
    * Get quick summary for dashboard
@@ -335,6 +350,12 @@ export function createSavingsOpportunityService(
     if (monthlySavings >= 50) return "high";
     if (monthlySavings >= 20) return "medium";
     return "low";
+  }
+
+  function resolveConfig(
+    overrides: Partial<SavingsOpportunityConfig> = {}
+  ): SavingsOpportunityConfig {
+    return { ...cfg, ...overrides };
   }
 
   /**
@@ -442,16 +463,16 @@ export function createSavingsOpportunityService(
 
   return {
     async getOpportunities(workspaceId, options = {}): Promise<SavingsOpportunitySummary> {
-      const mergedConfig = { ...cfg, ...options };
+      const mergedConfig = resolveConfig(options);
 
       // Gather all opportunities in parallel
       const [unused, priceIncreases, duplicates, spendingIncreases, negotiationCandidates] =
         await Promise.all([
-          this.detectUnusedSubscriptions(workspaceId),
-          this.detectPriceIncreases(workspaceId),
-          this.detectDuplicates(workspaceId),
-          this.detectSpendingIncreases(workspaceId),
-          this.detectNegotiationCandidates(workspaceId),
+          this.detectUnusedSubscriptions(workspaceId, mergedConfig),
+          this.detectPriceIncreases(workspaceId, mergedConfig),
+          this.detectDuplicates(workspaceId, mergedConfig),
+          this.detectSpendingIncreases(workspaceId, mergedConfig),
+          this.detectNegotiationCandidates(workspaceId, mergedConfig),
         ]);
 
       const opportunities = [
@@ -506,12 +527,16 @@ export function createSavingsOpportunityService(
       };
     },
 
-    async detectUnusedSubscriptions(workspaceId): Promise<SavingsOpportunity[]> {
+    async detectUnusedSubscriptions(
+      workspaceId,
+      options = {}
+    ): Promise<SavingsOpportunity[]> {
+      const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
       // Get recurring patterns
       const { patterns } = await recurringService.detectPatterns(workspaceId, {
-        lookbackMonths: cfg.lookbackMonths,
+        lookbackMonths: activeConfig.lookbackMonths,
         minConfidence: 0.5,
       });
 
@@ -520,7 +545,7 @@ export function createSavingsOpportunityService(
         const monthlyValue = getMonthlyValue(p);
         return (
           p.averageAmount < 0 && // Expenses
-          monthlyValue >= cfg.minSubscriptionAmount &&
+          monthlyValue >= activeConfig.minSubscriptionAmount &&
           monthlyValue <= 500 && // Not large bills
           (p.amountType === "exact" || p.amountType === "approximate")
         );
@@ -535,7 +560,7 @@ export function createSavingsOpportunityService(
         );
 
         // Check if subscription seems unused (no recent transactions)
-        if (daysSince >= cfg.unusedDaysThreshold && !sub.isActive) {
+        if (daysSince >= activeConfig.unusedDaysThreshold && !sub.isActive) {
           const monthlyAmount = getMonthlyValue(sub);
 
           opportunities.push({
@@ -570,12 +595,16 @@ export function createSavingsOpportunityService(
       return opportunities;
     },
 
-    async detectPriceIncreases(workspaceId): Promise<SavingsOpportunity[]> {
+    async detectPriceIncreases(
+      workspaceId,
+      options = {}
+    ): Promise<SavingsOpportunity[]> {
+      const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
       // Get recurring patterns
       const { patterns } = await recurringService.detectPatterns(workspaceId, {
-        lookbackMonths: cfg.lookbackMonths,
+        lookbackMonths: activeConfig.lookbackMonths,
         minConfidence: 0.6,
       });
 
@@ -601,7 +630,7 @@ export function createSavingsOpportunityService(
 
         const increasePercent = ((recentAvg - earlierAvg) / earlierAvg) * 100;
 
-        if (increasePercent >= cfg.priceIncreaseThresholdPercent) {
+        if (increasePercent >= activeConfig.priceIncreaseThresholdPercent) {
           const monthlyIncrease = (recentAvg - earlierAvg) * (30 / bill.interval);
 
           // Find when the increase happened
@@ -648,12 +677,16 @@ export function createSavingsOpportunityService(
       return opportunities;
     },
 
-    async detectDuplicates(workspaceId): Promise<SavingsOpportunity[]> {
+    async detectDuplicates(
+      workspaceId,
+      options = {}
+    ): Promise<SavingsOpportunity[]> {
+      const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
       // Get recurring patterns
       const { patterns } = await recurringService.detectPatterns(workspaceId, {
-        lookbackMonths: cfg.lookbackMonths,
+        lookbackMonths: activeConfig.lookbackMonths,
         minConfidence: 0.5,
       });
 
@@ -730,7 +763,11 @@ export function createSavingsOpportunityService(
       return opportunities;
     },
 
-    async detectSpendingIncreases(workspaceId): Promise<SavingsOpportunity[]> {
+    async detectSpendingIncreases(
+      workspaceId,
+      options = {}
+    ): Promise<SavingsOpportunity[]> {
+      const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
       const accountIds = await getWorkspaceAccountIds(workspaceId);
@@ -739,9 +776,9 @@ export function createSavingsOpportunityService(
       // Get spending by payee for recent vs earlier period
       const now = new Date();
       const recentStart = new Date();
-      recentStart.setMonth(now.getMonth() - cfg.recentMonths);
+      recentStart.setMonth(now.getMonth() - activeConfig.recentMonths);
       const earlierStart = new Date();
-      earlierStart.setMonth(now.getMonth() - cfg.lookbackMonths);
+      earlierStart.setMonth(now.getMonth() - activeConfig.lookbackMonths);
 
       // Get payee spending grouped by period
       const result = await db
@@ -754,7 +791,7 @@ export function createSavingsOpportunityService(
             WHEN ${transactions.date} >= ${recentStart.toISOString().split("T")[0]} THEN 'recent'
             ELSE 'earlier'
           END`,
-          totalAmount: sql<number>`SUM(ABS(${transactions.amount})) / 100.0`,
+          totalAmount: sql<number>`SUM(ABS(${transactions.amount}))`,
           txnCount: sql<number>`COUNT(*)`,
         })
         .from(transactions)
@@ -789,6 +826,7 @@ export function createSavingsOpportunityService(
           payeeName: string;
           categoryId: number | null;
           categoryName: string | null;
+          hasMultipleCategories: boolean;
           recent: { total: number; count: number; months: number };
           earlier: { total: number; count: number; months: number };
         }
@@ -803,18 +841,29 @@ export function createSavingsOpportunityService(
             payeeName: row.payeeName,
             categoryId: row.categoryId,
             categoryName: row.categoryName,
-            recent: { total: 0, count: 0, months: cfg.recentMonths },
-            earlier: { total: 0, count: 0, months: cfg.lookbackMonths - cfg.recentMonths },
+            hasMultipleCategories: false,
+            recent: { total: 0, count: 0, months: activeConfig.recentMonths },
+            earlier: { total: 0, count: 0, months: activeConfig.lookbackMonths - activeConfig.recentMonths },
           });
         }
 
         const data = payeeSpending.get(row.payeeId)!;
+        if (
+          data.categoryId !== null &&
+          row.categoryId !== null &&
+          row.categoryId !== data.categoryId
+        ) {
+          data.hasMultipleCategories = true;
+          data.categoryId = null;
+          data.categoryName = null;
+        }
+
         if (row.period === "recent") {
-          data.recent.total = row.totalAmount ?? 0;
-          data.recent.count = row.txnCount ?? 0;
+          data.recent.total += row.totalAmount ?? 0;
+          data.recent.count += row.txnCount ?? 0;
         } else {
-          data.earlier.total = row.totalAmount ?? 0;
-          data.earlier.count = row.txnCount ?? 0;
+          data.earlier.total += row.totalAmount ?? 0;
+          data.earlier.count += row.txnCount ?? 0;
         }
       }
 
@@ -824,11 +873,11 @@ export function createSavingsOpportunityService(
         const recentMonthlyAvg = data.recent.total / data.recent.months;
         const earlierMonthlyAvg = data.earlier.total / data.earlier.months;
 
-        if (earlierMonthlyAvg < cfg.spendingIncreaseMinAmount) continue;
+        if (earlierMonthlyAvg < activeConfig.spendingIncreaseMinAmount) continue;
 
         const changePercent = ((recentMonthlyAvg - earlierMonthlyAvg) / earlierMonthlyAvg) * 100;
 
-        if (changePercent >= cfg.spendingIncreaseThresholdPercent) {
+        if (changePercent >= activeConfig.spendingIncreaseThresholdPercent) {
           const monthlyIncrease = recentMonthlyAvg - earlierMonthlyAvg;
 
           opportunities.push({
@@ -842,8 +891,8 @@ export function createSavingsOpportunityService(
             confidence: 0.6,
             payeeId: data.payeeId,
             payeeName: data.payeeName,
-            categoryId: data.categoryId ?? undefined,
-            categoryName: data.categoryName ?? undefined,
+            categoryId: data.hasMultipleCategories ? undefined : (data.categoryId ?? undefined),
+            categoryName: data.hasMultipleCategories ? undefined : (data.categoryName ?? undefined),
             evidence: {
               previousMonthlyAvg: earlierMonthlyAvg,
               currentMonthlyAvg: recentMonthlyAvg,
@@ -867,12 +916,16 @@ export function createSavingsOpportunityService(
       return opportunities.slice(0, 10);
     },
 
-    async detectNegotiationCandidates(workspaceId): Promise<SavingsOpportunity[]> {
+    async detectNegotiationCandidates(
+      workspaceId,
+      options = {}
+    ): Promise<SavingsOpportunity[]> {
+      const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
       // Get recurring patterns
       const { patterns } = await recurringService.detectPatterns(workspaceId, {
-        lookbackMonths: cfg.lookbackMonths,
+        lookbackMonths: activeConfig.lookbackMonths,
         minConfidence: 0.6,
       });
 
@@ -974,8 +1027,8 @@ export function createSavingsOpportunityService(
           categoryName: pattern.categoryName ?? undefined,
           evidence: {
             monthlyAmount: monthlyValue,
-            previousAmount: olderAvg / 100, // Convert from cents
-            currentAmount: recentAvg / 100, // Convert from cents
+            previousAmount: olderAvg,
+            currentAmount: recentAvg,
             increasePercent: hasIncreased ? increasePercent : undefined,
             transactionCount: pattern.occurrenceCount,
           },

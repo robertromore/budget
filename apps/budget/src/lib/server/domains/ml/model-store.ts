@@ -416,10 +416,21 @@ export class MLModelStore {
    * Update alert status
    */
   async updateAlertStatus(
+    workspaceId: number,
     alertId: number,
     status: "reviewed" | "dismissed" | "confirmed",
     notes?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
+    const [existing] = await db
+      .select({ id: anomalyAlerts.id })
+      .from(anomalyAlerts)
+      .where(and(eq(anomalyAlerts.id, alertId), eq(anomalyAlerts.workspaceId, workspaceId)))
+      .limit(1);
+
+    if (!existing) {
+      return false;
+    }
+
     await db
       .update(anomalyAlerts)
       .set({
@@ -427,7 +438,9 @@ export class MLModelStore {
         reviewedAt: nowISOString(),
         notes,
       })
-      .where(eq(anomalyAlerts.id, alertId));
+      .where(and(eq(anomalyAlerts.id, alertId), eq(anomalyAlerts.workspaceId, workspaceId)));
+
+    return true;
   }
 
   // ==========================================================================

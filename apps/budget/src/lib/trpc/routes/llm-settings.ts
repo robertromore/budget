@@ -30,6 +30,7 @@ import { z } from "zod/v4";
 // Zod schemas for validation
 const llmProviderSchema = z.enum(["openai", "anthropic", "google", "ollama"]);
 const llmFeatureModeSchema = z.enum(["disabled", "enhance", "override"]);
+const OLLAMA_LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
 const providerConfigSchema = z.object({
   enabled: z.boolean(),
@@ -104,6 +105,32 @@ function getMaskedProviderConfig(
     encryptedApiKey: maskedApiKey, // Return masked version for display
     hasApiKey,
   };
+}
+
+function normalizeOllamaEndpoint(rawEndpoint?: string): { ok: true; endpoint: string } | { ok: false; error: string } {
+  const raw = (rawEndpoint?.trim() || "http://localhost:11434").replace(/\/+$/, "");
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return { ok: false, error: "Invalid Ollama endpoint URL" };
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { ok: false, error: "Ollama endpoint must use http:// or https://" };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { ok: false, error: "Ollama endpoint must not include credentials" };
+  }
+
+  const normalizedHost = parsed.hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
+  if (!OLLAMA_LOOPBACK_HOSTS.has(normalizedHost)) {
+    return { ok: false, error: "Ollama endpoint must use localhost or loopback address" };
+  }
+
+  return { ok: true, endpoint: parsed.origin };
 }
 
 export const llmSettingsRoutes = t.router({
@@ -419,7 +446,15 @@ export const llmSettingsRoutes = t.router({
   getOllamaModels: publicProcedure
     .input(z.object({ endpoint: z.string().optional() }))
     .query(async ({ input }) => {
-      const endpoint = input.endpoint || "http://localhost:11434";
+      const normalized = normalizeOllamaEndpoint(input.endpoint);
+      if (!normalized.ok) {
+        return {
+          success: false,
+          error: normalized.error,
+          models: [],
+        };
+      }
+      const endpoint = normalized.endpoint;
 
       try {
         const response = await fetch(`${endpoint}/api/tags`, {

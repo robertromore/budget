@@ -696,7 +696,7 @@ export class TimeSeriesForecastingService {
     const result = await db
       .select({
         period: sql<string>`strftime('${sql.raw(dateFormat)}', ${transactions.date})`,
-        total: sql<number>`SUM(${transactions.amount}) / 100.0`,
+        total: sql<number>`SUM(${transactions.amount})`,
       })
       .from(transactions)
       .where(
@@ -787,7 +787,7 @@ export class TimeSeriesForecastingService {
     const result = await db
       .select({
         period: sql<string>`strftime('%Y-%m', ${transactions.date})`,
-        total: sql<number>`SUM(ABS(${transactions.amount})) / 100.0`,
+        total: sql<number>`SUM(ABS(${transactions.amount}))`,
       })
       .from(transactions)
       .where(
@@ -825,7 +825,7 @@ export class TimeSeriesForecastingService {
     const result = await db
       .select({
         period: sql<string>`strftime('%Y-%m', ${transactions.date})`,
-        total: sql<number>`SUM(ABS(${transactions.amount})) / 100.0`,
+        total: sql<number>`SUM(ABS(${transactions.amount}))`,
       })
       .from(transactions)
       .where(
@@ -884,7 +884,7 @@ export class TimeSeriesForecastingService {
     const incomeResult = await db
       .select({
         period: sql<string>`strftime('${sql.raw(dateFormat)}', ${transactions.date})`,
-        total: sql<number>`SUM(${transactions.amount}) / 100.0`,
+        total: sql<number>`SUM(${transactions.amount})`,
       })
       .from(transactions)
       .where(
@@ -901,7 +901,7 @@ export class TimeSeriesForecastingService {
     const expenseResult = await db
       .select({
         period: sql<string>`strftime('${sql.raw(dateFormat)}', ${transactions.date})`,
-        total: sql<number>`SUM(ABS(${transactions.amount})) / 100.0`,
+        total: sql<number>`SUM(ABS(${transactions.amount}))`,
       })
       .from(transactions)
       .where(

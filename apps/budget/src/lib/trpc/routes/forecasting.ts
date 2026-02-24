@@ -225,10 +225,25 @@ export const forecastingRoutes = t.router({
     .mutation(async ({ input, ctx }) => {
       try {
         const modelStore = createMLModelStore();
-        await modelStore.updateAlertStatus(input.alertId, input.status, input.notes);
+        const updated = await modelStore.updateAlertStatus(
+          ctx.workspaceId,
+          input.alertId,
+          input.status,
+          input.notes
+        );
+
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Alert with ID ${input.alertId} not found`,
+          });
+        }
 
         return { success: true };
       } catch (error: unknown) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

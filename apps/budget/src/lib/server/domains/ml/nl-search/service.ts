@@ -670,40 +670,39 @@ export class NaturalLanguageSearchService {
     }
 
     // Amount range (handle transaction type)
-    // Note: amounts are stored in cents, so multiply user amounts by 100
-    const minAmountCents = parsed.minAmount !== undefined ? Math.round(parsed.minAmount * 100) : undefined;
-    const maxAmountCents = parsed.maxAmount !== undefined ? Math.round(parsed.maxAmount * 100) : undefined;
+    const minAmount = parsed.minAmount;
+    const maxAmount = parsed.maxAmount;
 
     if (parsed.transactionType === "expense") {
       conditions.push(lte(transactions.amount, 0));
-      if (minAmountCents !== undefined) {
-        // For expenses, amounts are negative, so minAmount of 50 means <= -5000 cents
-        conditions.push(lte(transactions.amount, -minAmountCents));
+      if (minAmount !== undefined) {
+        // For expenses, amounts are negative, so minAmount of 50 means <= -50
+        conditions.push(lte(transactions.amount, -minAmount));
       }
-      if (maxAmountCents !== undefined) {
-        conditions.push(gte(transactions.amount, -maxAmountCents));
+      if (maxAmount !== undefined) {
+        conditions.push(gte(transactions.amount, -maxAmount));
       }
     } else if (parsed.transactionType === "income") {
       conditions.push(gte(transactions.amount, 0));
-      if (minAmountCents !== undefined) {
-        conditions.push(gte(transactions.amount, minAmountCents));
+      if (minAmount !== undefined) {
+        conditions.push(gte(transactions.amount, minAmount));
       }
-      if (maxAmountCents !== undefined) {
-        conditions.push(lte(transactions.amount, maxAmountCents));
+      if (maxAmount !== undefined) {
+        conditions.push(lte(transactions.amount, maxAmount));
       }
     } else {
       // For "all" or unspecified, use absolute value comparison
-      if (minAmountCents !== undefined) {
+      if (minAmount !== undefined) {
         const orCondition = or(
-          gte(transactions.amount, minAmountCents),
-          lte(transactions.amount, -minAmountCents)
+          gte(transactions.amount, minAmount),
+          lte(transactions.amount, -minAmount)
         );
         if (orCondition) conditions.push(orCondition);
       }
-      if (maxAmountCents !== undefined) {
+      if (maxAmount !== undefined) {
         const andCondition = and(
-          lte(transactions.amount, maxAmountCents),
-          gte(transactions.amount, -maxAmountCents)
+          lte(transactions.amount, maxAmount),
+          gte(transactions.amount, -maxAmount)
         );
         if (andCondition) conditions.push(andCondition);
       }
@@ -799,7 +798,7 @@ export class NaturalLanguageSearchService {
       transactions: results.map((r) => ({
         id: r.id,
         date: r.date,
-        amount: r.amount / 100, // Convert from cents
+        amount: r.amount,
         notes: r.notes,
         payeeName: r.payeeName,
         categoryName: r.categoryName,

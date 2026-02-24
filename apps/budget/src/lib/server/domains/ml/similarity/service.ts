@@ -456,9 +456,11 @@ export function createSimilarityService(
 
     async initializeLSHIndex(workspaceId: number): Promise<void> {
       const lshIndex = getLSHIndex(workspaceId);
+      const canonicalizer = getCanonicalizer(workspaceId);
 
       // Clear existing index
       lshIndex.clear();
+      await canonicalizer.refreshVectorizer(workspaceId);
 
       // Load all payees
       const workspacePayees = await db
@@ -501,7 +503,7 @@ export function createSimilarityService(
         });
       }
 
-      // Also invalidate vectorizer cache
+      // Also invalidate service-level vectorizer cache
       vectorizers.delete(workspaceId);
     },
 

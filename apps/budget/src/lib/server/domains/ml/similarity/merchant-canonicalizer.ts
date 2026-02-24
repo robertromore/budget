@@ -7,7 +7,7 @@
 
 import { payees } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { MerchantCanonical, PayeeSimilarityMatch } from "../types";
 import {
   computeCompositeSimilarity,
@@ -110,8 +110,15 @@ export function createMerchantCanonicalizer(
 ): MerchantCanonicalizer {
   const cfg = { ...DEFAULT_CONFIG, ...config };
 
+  type PayeeCacheStamp = {
+    count: number;
+    maxUpdatedAt: string | null;
+    maxDeletedAt: string | null;
+  };
+
   // Cache for TF-IDF vectorizers per workspace
   const vectorizerCache = new Map<number, TFIDFVectorizer>();
+  const vectorizerStampCache = new Map<number, PayeeCacheStamp>();
   const payeeCache = new Map<
     number,
     Array<{
@@ -121,13 +128,41 @@ export function createMerchantCanonicalizer(
       transactionCount: number;
     }>
   >();
+  const payeeStampCache = new Map<number, PayeeCacheStamp>();
+
+  function hasSameStamp(a: PayeeCacheStamp, b: PayeeCacheStamp): boolean {
+    return (
+      a.count === b.count &&
+      a.maxUpdatedAt === b.maxUpdatedAt &&
+      a.maxDeletedAt === b.maxDeletedAt
+    );
+  }
+
+  async function getWorkspacePayeeStamp(workspaceId: number): Promise<PayeeCacheStamp> {
+    const [stamp] = await db
+      .select({
+        count: sql<number>`COUNT(*)`,
+        maxUpdatedAt: sql<string | null>`MAX(${payees.updatedAt})`,
+        maxDeletedAt: sql<string | null>`MAX(${payees.deletedAt})`,
+      })
+      .from(payees)
+      .where(eq(payees.workspaceId, workspaceId));
+
+    return {
+      count: stamp?.count ?? 0,
+      maxUpdatedAt: stamp?.maxUpdatedAt ?? null,
+      maxDeletedAt: stamp?.maxDeletedAt ?? null,
+    };
+  }
 
   /**
    * Load payees for a workspace
    */
-  async function loadWorkspacePayees(workspaceId: number) {
+  async function loadWorkspacePayees(workspaceId: number, stamp?: PayeeCacheStamp) {
+    const currentStamp = stamp ?? (await getWorkspacePayeeStamp(workspaceId));
     const cached = payeeCache.get(workspaceId);
-    if (cached) {
+    const cachedStamp = payeeStampCache.get(workspaceId);
+    if (cached && cachedStamp && hasSameStamp(cachedStamp, currentStamp)) {
       return cached;
     }
 
@@ -149,6 +184,7 @@ export function createMerchantCanonicalizer(
       }));
 
     payeeCache.set(workspaceId, mapped);
+    payeeStampCache.set(workspaceId, currentStamp);
     return mapped;
   }
 
@@ -156,16 +192,19 @@ export function createMerchantCanonicalizer(
    * Get or build TF-IDF vectorizer for workspace
    */
   async function getVectorizer(workspaceId: number): Promise<TFIDFVectorizer> {
+    const currentStamp = await getWorkspacePayeeStamp(workspaceId);
     const cached = vectorizerCache.get(workspaceId);
-    if (cached) {
+    const cachedStamp = vectorizerStampCache.get(workspaceId);
+    if (cached && cachedStamp && hasSameStamp(cachedStamp, currentStamp)) {
       return cached;
     }
 
-    const workspacePayees = await loadWorkspacePayees(workspaceId);
+    const workspacePayees = await loadWorkspacePayees(workspaceId, currentStamp);
     const documents = workspacePayees.map((p) => p.normalizedName);
     const vectorizer = createTFIDFVectorizer(documents);
 
     vectorizerCache.set(workspaceId, vectorizer);
+    vectorizerStampCache.set(workspaceId, currentStamp);
     return vectorizer;
   }
 
@@ -453,11 +492,12 @@ export function createMerchantCanonicalizer(
     async refreshVectorizer(workspaceId: number): Promise<void> {
       // Clear caches to force refresh
       vectorizerCache.delete(workspaceId);
+      vectorizerStampCache.delete(workspaceId);
       payeeCache.delete(workspaceId);
+      payeeStampCache.delete(workspaceId);
 
       // Rebuild
       await getVectorizer(workspaceId);
     },
   };
 }
-

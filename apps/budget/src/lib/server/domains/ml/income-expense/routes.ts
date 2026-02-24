@@ -9,6 +9,7 @@ import { rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createIncomeExpenseService } from "./service";
+import { getWorkspaceAccountIds } from "../utils";
 
 // Lazy initialization of service (singleton pattern)
 let incomeExpenseService: ReturnType<typeof createIncomeExpenseService> | null = null;
@@ -18,6 +19,19 @@ function getIncomeExpenseService() {
     incomeExpenseService = createIncomeExpenseService();
   }
   return incomeExpenseService;
+}
+
+async function assertWorkspaceAccount(workspaceId: number, accountId?: number): Promise<void> {
+  if (accountId === undefined) {
+    return;
+  }
+  const accountIds = await getWorkspaceAccountIds(workspaceId);
+  if (!accountIds.includes(accountId)) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Account with ID ${accountId} not found`,
+    });
+  }
 }
 
 export const incomeExpenseRoutes = t.router({
@@ -34,6 +48,7 @@ export const incomeExpenseRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       try {
+        await assertWorkspaceAccount(ctx.workspaceId, input.accountId);
         const service = getIncomeExpenseService();
 
         const breakdown = await service.getBreakdown(ctx.workspaceId, {
@@ -47,6 +62,9 @@ export const incomeExpenseRoutes = t.router({
           success: true,
         };
       } catch (error: unknown) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -121,6 +139,9 @@ export const incomeExpenseRoutes = t.router({
           success: true,
         };
       } catch (error: unknown) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -141,6 +162,7 @@ export const incomeExpenseRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       try {
+        await assertWorkspaceAccount(ctx.workspaceId, input.accountId);
         const service = getIncomeExpenseService();
 
         const history = await service.getHistory(
@@ -155,6 +177,9 @@ export const incomeExpenseRoutes = t.router({
           success: true,
         };
       } catch (error: unknown) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
