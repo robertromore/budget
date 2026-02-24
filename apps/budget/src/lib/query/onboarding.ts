@@ -78,6 +78,13 @@ export const skipTour = defineMutation<void, { success: boolean }>({
 });
 
 /**
+ * Skip the onboarding wizard for now
+ */
+export const skipWizard = defineMutation<void, { success: boolean }>({
+  mutationFn: () => trpc().onboardingRoutes.skipWizard.mutate(),
+});
+
+/**
  * Reset onboarding to allow re-running the wizard
  */
 export const resetOnboarding = defineMutation<void, { success: boolean }>({
@@ -94,5 +101,6 @@ export const Onboarding = {
   completeWizard,
   completeTour,
   skipTour,
+  skipWizard,
   resetOnboarding,
 };

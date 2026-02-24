@@ -121,6 +121,7 @@ export interface OnboardingFormData {
  */
 export interface OnboardingStatus {
   wizardCompleted: boolean;
+  wizardSkipped?: boolean;
   wizardCompletedAt?: string;
   tourCompleted: boolean;
   tourCompletedAt?: string;
@@ -151,6 +152,7 @@ export const DEFAULT_ONBOARDING_FORM: OnboardingFormData = {
  */
 export const DEFAULT_ONBOARDING_STATUS: OnboardingStatus = {
   wizardCompleted: false,
+  wizardSkipped: false,
   tourCompleted: false,
   tourSkipped: false,
 };

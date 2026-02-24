@@ -57,7 +57,7 @@ export class OnboardingService {
   async shouldShowOnboarding(workspaceId: number): Promise<boolean> {
     const prefs = await this.workspaceRepository.getWorkspacePreferences(workspaceId);
     const status = prefs?.onboarding || DEFAULT_ONBOARDING_STATUS;
-    return !status.wizardCompleted;
+    return !status.wizardCompleted && !status.wizardSkipped;
   }
 
   /**
@@ -76,7 +76,10 @@ export class OnboardingService {
    */
   async getOnboardingStatus(workspaceId: number): Promise<OnboardingStatus> {
     const prefs = await this.workspaceRepository.getWorkspacePreferences(workspaceId);
-    return prefs?.onboarding || DEFAULT_ONBOARDING_STATUS;
+    return {
+      ...DEFAULT_ONBOARDING_STATUS,
+      ...(prefs?.onboarding || {}),
+    };
   }
 
   /**
@@ -142,6 +145,25 @@ export class OnboardingService {
       onboarding: {
         ...currentOnboarding,
         tourSkipped: true,
+      },
+    };
+
+    await this.workspaceRepository.updateWorkspacePreferences(workspaceId, updatedPrefs);
+  }
+
+  /**
+   * Skip the onboarding wizard for now.
+   * Users can still manually revisit /onboarding later.
+   */
+  async skipWizard(workspaceId: number): Promise<void> {
+    const prefs = await this.workspaceRepository.getWorkspacePreferences(workspaceId);
+    const currentOnboarding = prefs?.onboarding || DEFAULT_ONBOARDING_STATUS;
+
+    const updatedPrefs: WorkspacePreferences = {
+      ...prefs,
+      onboarding: {
+        ...currentOnboarding,
+        wizardSkipped: true,
       },
     };
 
@@ -239,6 +261,7 @@ export class OnboardingService {
       onboarding: {
         ...(prefs?.onboarding || DEFAULT_ONBOARDING_STATUS),
         wizardCompleted: true,
+        wizardSkipped: false,
         wizardCompletedAt: nowISOString(),
       },
     };

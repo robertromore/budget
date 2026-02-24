@@ -48,7 +48,8 @@ function needsOnboarding(workspace: { preferences?: string | null } | null): boo
       ? JSON.parse(workspace.preferences)
       : workspace.preferences;
 
-    return !prefs?.onboarding?.wizardCompleted;
+    const onboarding = prefs?.onboarding;
+    return !(onboarding?.wizardCompleted || onboarding?.wizardSkipped);
   } catch {
     return true;
   }

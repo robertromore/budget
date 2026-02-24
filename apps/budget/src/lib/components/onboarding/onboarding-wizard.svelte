@@ -85,10 +85,23 @@ async function handleComplete() {
   }
 }
 
-function handleSkipWizard() {
-  // Allow skipping but still redirect to app
-  onboardingWizardStore.clearSavedProgress();
-  goto('/');
+async function handleSkipWizard() {
+  if (isSubmitting) return;
+
+  try {
+    isSubmitting = true;
+    submitError = null;
+
+    await trpc().onboardingRoutes.skipWizard.mutate();
+    onboardingWizardStore.clearSavedProgress();
+    await goto('/');
+  } catch (error) {
+    console.error('Failed to skip onboarding wizard:', error);
+    submitError = error instanceof Error ? error.message : 'Failed to skip setup';
+    toast.error('Could not skip setup', { description: submitError });
+  } finally {
+    isSubmitting = false;
+  }
 }
 </script>
 

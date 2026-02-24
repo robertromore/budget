@@ -33,7 +33,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.46",
     "@ai-sdk/google": "^3.0.30",
-    "@ai-sdk/openai": "^3.0.30",
+    "@ai-sdk/openai": "^3.0.31",
     "@ai-sdk/svelte": "^4.0.97",
     "ai": "^6.0.97",
     "ollama": "^0.6.3"

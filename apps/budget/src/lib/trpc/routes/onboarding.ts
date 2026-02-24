@@ -194,6 +194,17 @@ export const onboardingRoutes = t.router({
   ),
 
   /**
+   * Skip the onboarding wizard for now
+   */
+  skipWizard: publicProcedure.mutation(
+    withErrorHandler(async ({ ctx }) => {
+      const service = getOnboardingService(ctx.db);
+      await service.skipWizard(ctx.workspaceId);
+      return { success: true };
+    })
+  ),
+
+  /**
    * Reset onboarding to allow re-running the wizard
    */
   resetOnboarding: publicProcedure.mutation(
