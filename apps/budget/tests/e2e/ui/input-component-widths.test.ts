@@ -1,10 +1,15 @@
 import {test, expect} from "@playwright/test";
 
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
 /**
  * Integration tests for input component width fixes from PR #44
  * Tests that input components in transaction dialog have proper widths
  */
-test.describe("Input Component Widths", () => {
+describeE2E("Input Component Widths", () => {
   test.beforeEach(async ({page}) => {
     await page.goto("/accounts");
     await expect(page).toHaveTitle(/Budget/);

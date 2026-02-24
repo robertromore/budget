@@ -1,6 +1,11 @@
 import {test, expect} from "@playwright/test";
 
-test.describe("Schedule Workflows - End-to-End Tests", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Schedule Workflows - End-to-End Tests", () => {
   test.beforeEach(async ({page}) => {
     await page.goto("/");
 

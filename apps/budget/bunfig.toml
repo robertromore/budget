@@ -3,4 +3,7 @@
 
 [test]
 # Preload test database setup
-preload = ["./tests/integration/setup/test-db.ts"]
+preload = [
+  "./tests/integration/setup/sveltekit-mocks.ts",
+  "./tests/integration/setup/test-db.ts",
+]

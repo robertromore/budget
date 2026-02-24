@@ -1,7 +1,12 @@
 import {test, expect} from "@playwright/test";
 import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
 
-test.describe("Individual Account Page Integration Tests", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Individual Account Page Integration Tests", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
 
   test.beforeEach(async ({page}) => {
@@ -18,7 +23,7 @@ test.describe("Individual Account Page Integration Tests", () => {
     // In-memory DB will be garbage collected
   });
 
-  test.describe("Individual Account Page Deep Integration", () => {
+  describeE2E("Individual Account Page Deep Integration", () => {
     test("should display complete account header with all metadata", async ({page}) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");

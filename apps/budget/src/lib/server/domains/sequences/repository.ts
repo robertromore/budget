@@ -19,33 +19,27 @@ export class SequenceRepository {
    * creates one and returns 1.
    */
   async getNextSeq(workspaceId: number, entityType: SequencedEntityType): Promise<number> {
-    // First, try to atomically increment and return the sequence
-    const result = await db
-      .update(workspaceCounters)
-      .set({
-        nextSeq: sql`${workspaceCounters.nextSeq} + 1`,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
+    const [result] = await db
+      .insert(workspaceCounters)
+      .values({
+        workspaceId,
+        entityType,
+        nextSeq: 2, // First issued seq is 1
       })
-      .where(
-        and(
-          eq(workspaceCounters.workspaceId, workspaceId),
-          eq(workspaceCounters.entityType, entityType)
-        )
-      )
+      .onConflictDoUpdate({
+        target: [workspaceCounters.workspaceId, workspaceCounters.entityType],
+        set: {
+          nextSeq: sql`${workspaceCounters.nextSeq} + 1`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
       .returning({ currentSeq: sql<number>`${workspaceCounters.nextSeq} - 1` });
 
-    if (result.length > 0) {
-      return result[0].currentSeq;
+    if (!result) {
+      throw new Error("Failed to allocate sequence number");
     }
 
-    // No counter exists, create one and return 1
-    await db.insert(workspaceCounters).values({
-      workspaceId,
-      entityType,
-      nextSeq: 2, // Start at 2 because we're returning 1
-    });
-
-    return 1;
+    return result.currentSeq;
   }
 
   /**
@@ -61,33 +55,27 @@ export class SequenceRepository {
       throw new Error("Count must be positive");
     }
 
-    // Try to atomically increment by count and return the starting sequence
-    const result = await db
-      .update(workspaceCounters)
-      .set({
-        nextSeq: sql`${workspaceCounters.nextSeq} + ${count}`,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
+    const [result] = await db
+      .insert(workspaceCounters)
+      .values({
+        workspaceId,
+        entityType,
+        nextSeq: count + 1, // Batch starts at 1 when counter is first created
       })
-      .where(
-        and(
-          eq(workspaceCounters.workspaceId, workspaceId),
-          eq(workspaceCounters.entityType, entityType)
-        )
-      )
+      .onConflictDoUpdate({
+        target: [workspaceCounters.workspaceId, workspaceCounters.entityType],
+        set: {
+          nextSeq: sql`${workspaceCounters.nextSeq} + ${count}`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
       .returning({ startSeq: sql<number>`${workspaceCounters.nextSeq} - ${count}` });
 
-    if (result.length > 0) {
-      return result[0].startSeq;
+    if (!result) {
+      throw new Error("Failed to allocate sequence batch");
     }
 
-    // No counter exists, create one
-    await db.insert(workspaceCounters).values({
-      workspaceId,
-      entityType,
-      nextSeq: count + 1,
-    });
-
-    return 1;
+    return result.startSeq;
   }
 
   /**

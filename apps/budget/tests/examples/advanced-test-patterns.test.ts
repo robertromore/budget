@@ -221,7 +221,7 @@ describe("Advanced Test Patterns Examples", () => {
     it("should mock intersection observer", () => {
       const {mockIntersect, restore} = ComponentTestHelpers.mockIntersectionObserver();
 
-      const mockElement = document.createElement("div");
+      const mockElement = {} as Element;
       const observer = new IntersectionObserver(() => {});
 
       expect(observer.observe).toBeDefined();

@@ -2,15 +2,6 @@ import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {ContactManagementService} from '../../src/lib/server/domains/payees/contact-management';
 import {ValidationError} from '../../src/lib/server/shared/types/errors';
 
-// Mock InputSanitizer
-vi.mock('../../src/lib/server/shared/validation', () => ({
-  InputSanitizer: {
-    sanitizeEmail: vi.fn((email) => email),
-    sanitizePhone: vi.fn((phone) => phone),
-    sanitizeUrl: vi.fn((url) => url),
-  }
-}));
-
 // Mock logger
 vi.mock('../../src/lib/server/shared/logging', () => ({
   logger: {

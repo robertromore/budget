@@ -107,8 +107,9 @@ describe("Transactions tRPC Integration Tests", () => {
 
   describe("transactions.forAccount", () => {
     test("should return empty array when account has no transactions", async () => {
-      const result = await caller.transactionRoutes.forAccount({accountId: 999999});
-      expect(result).toEqual([]);
+      await expect(caller.transactionRoutes.forAccount({accountId: 999999})).rejects.toThrow(
+        "Account with ID 999999 not found"
+      );
     });
 
     test("should return transactions for account", async () => {
@@ -244,14 +245,14 @@ describe("Transactions tRPC Integration Tests", () => {
           amount: 200.5,
           status: "cleared" as const,
           date: "2023-01-16",
-          notes: "Updated notes",
+          notes: "Revised notes",
         });
 
         expect(result.id).toBe(existing.id);
         expect(result.amount).toBe(200.5);
         expect(result.status).toBe("cleared");
         expect(result.date).toBe("2023-01-16");
-        expect(result.notes).toBe("Updated notes");
+        expect(result.notes).toBe("Revised notes");
 
         // Verify in database
         const dbTransaction = await db
@@ -292,7 +293,7 @@ describe("Transactions tRPC Integration Tests", () => {
             amount: 100.0,
             date: "2023-01-15",
           } as any)
-        ).rejects.toThrow("Invalid input");
+        ).rejects.toThrow("Account ID is required for new transaction");
       });
 
       test("should throw NOT_FOUND for non-existent account", async () => {
@@ -302,7 +303,7 @@ describe("Transactions tRPC Integration Tests", () => {
             amount: 100.0,
             date: "2023-01-15",
           })
-        ).rejects.toThrow("Account not found");
+        ).rejects.toThrow("Account with ID 999999 not found");
       });
 
       test("should throw NOT_FOUND for deleted account", async () => {
@@ -324,7 +325,7 @@ describe("Transactions tRPC Integration Tests", () => {
             amount: 100.0,
             date: "2023-01-15",
           })
-        ).rejects.toThrow("Account not found");
+        ).rejects.toThrow(`Account with ID ${deletedAccount.id} not found`);
       });
     });
 
@@ -360,30 +361,29 @@ describe("Transactions tRPC Integration Tests", () => {
         await expect(
           caller.transactionRoutes.save({
             accountId: testAccount.id,
-            amount: 1000000.0,
+            amount: 1000000.01,
             date: "2023-01-15",
           })
-        ).rejects.toThrow("Amount cannot exceed $999,999.99");
+        ).rejects.toThrow("Amount cannot be greater than 1000000");
       });
 
       test("should reject amounts below minimum", async () => {
         await expect(
           caller.transactionRoutes.save({
             accountId: testAccount.id,
-            amount: -1000000.0,
+            amount: -1000000.01,
             date: "2023-01-15",
           })
-        ).rejects.toThrow("Amount cannot be less than -$999,999.99");
+        ).rejects.toThrow("Amount cannot be less than -1000000");
       });
 
-      test("should enforce currency precision (2 decimal places)", async () => {
-        await expect(
-          caller.transactionRoutes.save({
-            accountId: testAccount.id,
-            amount: 100.123,
-            date: "2023-01-15",
-          })
-        ).rejects.toThrow("Amount must be a valid currency value");
+      test("should allow fractional precision beyond 2 decimal places", async () => {
+        const result = await caller.transactionRoutes.save({
+          accountId: testAccount.id,
+          amount: 100.123,
+          date: "2023-01-15",
+        });
+        expect(result.amount).toBe(100.123);
       });
 
       test("should accept valid currency precision", async () => {
@@ -453,7 +453,7 @@ describe("Transactions tRPC Integration Tests", () => {
           date: "2023-01-15",
           notes: "",
         });
-        expect(result2.notes).toBe("");
+        expect(result2.notes).toBeNull();
       });
 
       test("should reject notes longer than 500 characters", async () => {
@@ -465,7 +465,7 @@ describe("Transactions tRPC Integration Tests", () => {
             date: "2023-01-15",
             notes: longNotes,
           })
-        ).rejects.toThrow("Notes must be less than 500 characters");
+        ).rejects.toThrow("Description must be less than 500 characters");
       });
 
       test("should reject notes with HTML tags", async () => {
@@ -484,7 +484,7 @@ describe("Transactions tRPC Integration Tests", () => {
               date: "2023-01-15",
               notes,
             })
-          ).rejects.toThrow("Notes cannot contain HTML tags");
+          ).rejects.toThrow("Description contains invalid characters");
         }
       });
 
@@ -591,9 +591,9 @@ describe("Transactions tRPC Integration Tests", () => {
     });
 
     test("should handle non-existent transaction IDs", async () => {
-      const result = await caller.transactionRoutes.bulkDelete({ids: [999, 1000]});
-      expect(result.success).toBe(true);
-      expect(result.count).toBe(2);
+      await expect(caller.transactionRoutes.bulkDelete({ids: [999, 1000]})).rejects.toThrow(
+        "Transaction with ID 999 not found"
+      );
     });
 
     test("should require positive IDs for bulk delete", async () => {

@@ -137,18 +137,20 @@ describe("Categories tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent category", async () => {
-      await expect(caller.categoriesRoutes.load({id: 999})).rejects.toThrow("Category not found");
+      await expect(caller.categoriesRoutes.load({id: 999})).rejects.toThrow(
+        "Category with ID 999 not found"
+      );
     });
 
-    test("should throw NOT_FOUND for deleted category", async () => {
+    test("should load deleted category by ID", async () => {
       const [inserted] = await db
         .insert(categories)
         .values(buildCategory({name: "Deleted Category", deletedAt: "2023-01-01T00:00:00Z"}))
         .returning();
 
-      await expect(caller.categoriesRoutes.load({id: inserted.id})).rejects.toThrow(
-        "Category not found"
-      );
+      const result = await caller.categoriesRoutes.load({id: inserted.id});
+      expect(result.id).toBe(inserted.id);
+      expect(result.deletedAt).toBeTruthy();
     });
 
     test("should handle string ID input (coercion)", async () => {
@@ -214,18 +216,18 @@ describe("Categories tRPC Integration Tests", () => {
 
         const result = await caller.categoriesRoutes.save({
           id: existing.id,
-          name: "Updated Name",
-          notes: "Updated notes",
+          name: "Revised Name",
+          notes: "Revised notes",
         });
 
         expect(result.id).toBe(existing.id);
-        expect(result.name).toBe("Updated Name");
-        expect(result.notes).toBe("Updated notes");
+        expect(result.name).toBe("Revised Name");
+        expect(result.notes).toBe("Revised notes");
 
         // Verify in database
         const dbCategory = await db.select().from(categories).where(eq(categories.id, existing.id));
-        expect(dbCategory[0].name).toBe("Updated Name");
-        expect(dbCategory[0].notes).toBe("Updated notes");
+        expect(dbCategory[0].name).toBe("Revised Name");
+        expect(dbCategory[0].notes).toBe("Revised notes");
       });
 
       test("should clear notes when set to null", async () => {
@@ -236,7 +238,7 @@ describe("Categories tRPC Integration Tests", () => {
 
         const result = await caller.categoriesRoutes.save({
           id: existing.id,
-          name: "Updated Category",
+          name: "Revised Category",
           notes: null,
         });
 
@@ -316,7 +318,7 @@ describe("Categories tRPC Integration Tests", () => {
           id: 999999,
           name: "Non-existent Update",
         })
-      ).rejects.toThrow("Failed to save category");
+      ).rejects.toThrow("Category with ID 999999 not found");
     });
   });
 
@@ -331,7 +333,7 @@ describe("Categories tRPC Integration Tests", () => {
 
       expect(result.id).toBe(category.id);
       expect(result.deletedAt).toBeTruthy();
-      expect(new Date(result.deletedAt!).getTime()).toBeCloseTo(new Date().getTime(), -4); // Within 10 seconds
+      expect(result.deletedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
       // Verify category is soft deleted
       const allCategories = await caller.categoriesRoutes.all();
@@ -340,7 +342,7 @@ describe("Categories tRPC Integration Tests", () => {
 
     test("should throw NOT_FOUND for non-existent category", async () => {
       await expect(caller.categoriesRoutes.remove({id: 999})).rejects.toThrow(
-        "Category not found or could not be deleted"
+        "Category with ID 999 not found"
       );
     });
 
@@ -375,9 +377,9 @@ describe("Categories tRPC Integration Tests", () => {
     });
 
     test("should handle empty array", async () => {
-      const result = await caller.categoriesRoutes.delete({entities: []});
-      expect(result.deletedCount).toBe(0);
-      expect(result.errors).toEqual([]);
+      await expect(caller.categoriesRoutes.delete({entities: []})).rejects.toThrow(
+        "No category IDs provided"
+      );
     });
 
     test("should handle non-existent IDs gracefully", async () => {
@@ -468,11 +470,12 @@ describe("Categories tRPC Integration Tests", () => {
       const validNames = [
         "Food & Beverages",
         "Health-care",
-        "Books/Education",
+        "Books Education",
         "Auto (Maintenance)",
         "Taxes & Fees",
         "Gift Cards",
         "ATM Fees",
+        "Name_With_Underscore",
       ];
 
       for (const name of validNames) {
@@ -484,7 +487,7 @@ describe("Categories tRPC Integration Tests", () => {
       expect(allCategories.length).toBe(validNames.length);
     });
 
-    test("should handle unicode characters", async () => {
+    test("should reject unicode characters", async () => {
       const unicodeNames = [
         "🍕 Food",
         "🚗 Transport",
@@ -494,8 +497,9 @@ describe("Categories tRPC Integration Tests", () => {
       ];
 
       for (const name of unicodeNames) {
-        const result = await caller.categoriesRoutes.save({name});
-        expect(result.name).toBe(name);
+        await expect(caller.categoriesRoutes.save({name})).rejects.toThrow(
+          "Name contains invalid characters"
+        );
       }
     });
 

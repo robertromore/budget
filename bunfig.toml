@@ -1,0 +1,5 @@
+[test]
+preload = [
+  "./apps/budget/tests/integration/setup/sveltekit-mocks.ts",
+  "./apps/budget/tests/integration/setup/test-db.ts",
+]

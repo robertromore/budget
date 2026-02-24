@@ -1,10 +1,15 @@
 import {test, expect} from "@playwright/test";
 
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
 /**
  * Integration tests for filter URL persistence from PR #42
  * Tests that filter states are properly saved to and restored from URL parameters
  */
-test.describe("Filter URL Persistence", () => {
+describeE2E("Filter URL Persistence", () => {
   test.beforeEach(async ({page}) => {
     // Navigate to accounts page to start
     await page.goto("/accounts");

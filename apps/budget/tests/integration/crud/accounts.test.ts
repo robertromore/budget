@@ -319,21 +319,24 @@ describe("Accounts CRUD Integration Tests", () => {
       expect(accountWithTransactions).toBeDefined();
 
       if (accountWithTransactions) {
-        let expectedRunningBalance = 0;
+        let expectedRunningBalance = accountWithTransactions.balance;
 
         accountWithTransactions.transactions.forEach((transaction, index) => {
-          expectedRunningBalance += transaction.amount;
+          const expectedAtTransaction = expectedRunningBalance;
 
-          // Each transaction's balance should equal the running sum up to that point
-          expect(transaction.balance).toBe(expectedRunningBalance);
+          // Transactions are returned newest-first; balance reflects the
+          // account total immediately after each transaction.
+          expect(transaction.balance).toBe(expectedAtTransaction);
+
+          expectedRunningBalance -= transaction.amount;
 
           console.log(
-            `Transaction ${index + 1}: amount = $${transaction.amount}, expected = $${expectedRunningBalance}, actual = $${transaction.balance}`
+            `Transaction ${index + 1}: amount = $${transaction.amount}, expected = $${expectedAtTransaction}, actual = $${transaction.balance}`
           );
         });
 
-        // Final running balance should match account balance
-        expect(accountWithTransactions.balance).toBe(expectedRunningBalance);
+        // After walking all transactions, running balance should resolve to initial balance.
+        expect(expectedRunningBalance).toBe(accountWithTransactions.initialBalance ?? 0);
       }
     });
 
@@ -443,12 +446,12 @@ describe("Accounts CRUD Integration Tests", () => {
       // Update
       const updated = await caller.accountRoutes.save({
         id: created.id,
-        name: "Updated Lifecycle Account",
-        notes: "Updated notes",
+        name: "Revised Lifecycle Account",
+        notes: "Revised notes",
       });
 
-      expect(updated.name).toBe("Updated Lifecycle Account");
-      expect(updated.notes).toBe("Updated notes");
+      expect(updated.name).toBe("Revised Lifecycle Account");
+      expect(updated.notes).toBe("Revised notes");
 
       // Delete
       const deleted = await caller.accountRoutes.remove({id: created.id});
@@ -463,7 +466,7 @@ describe("Accounts CRUD Integration Tests", () => {
       const testData = {
         name: "Data Integrity Test",
         slug: "data-integrity-test",
-        notes: 'Special characters: àéîõü & quotes "\'" and symbols',
+        notes: "Special chars safe symbols & ()-._,!?: $/%",
       };
 
       // Create with special characters
@@ -473,15 +476,15 @@ describe("Accounts CRUD Integration Tests", () => {
       expect(created.slug).toBe(testData.slug);
       expect(created.notes).toBe(testData.notes);
 
-      // Update with more special characters (but no HTML or forbidden symbols)
-      const updatedNotes = testData.notes + " - Updated with safe symbols: ()+-=_";
+      // Update with additional allowed symbols
+      const revisedNotes = `${testData.notes} and more safe symbols ()-._,&!? $/%`;
       const updated = await caller.accountRoutes.save({
         id: created.id,
         name: testData.name,
-        notes: updatedNotes,
+        notes: revisedNotes,
       });
 
-      expect(updated.notes).toBe(updatedNotes);
+      expect(updated.notes).toBe(revisedNotes);
     });
 
     it("should handle concurrent operations", async () => {
@@ -506,14 +509,14 @@ describe("Accounts CRUD Integration Tests", () => {
         caller.accountRoutes.save({
           id: account.id,
           name: account.name,
-          notes: `Updated concurrently: ${account.id}`,
+          notes: `Revised concurrently ${account.id}`,
         })
       );
 
       const updatedResults = await Promise.all(updatePromises);
 
       updatedResults.forEach((result) => {
-        expect(result.notes).toBe(`Updated concurrently: ${result.id}`);
+        expect(result.notes).toBe(`Revised concurrently ${result.id}`);
       });
     });
   });

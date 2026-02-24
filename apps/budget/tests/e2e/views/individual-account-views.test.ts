@@ -1,7 +1,12 @@
 import {test, expect} from "@playwright/test";
 import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
 
-test.describe("Individual Account Views and Displays", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Individual Account Views and Displays", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
 
   test.beforeEach(async ({page}) => {
@@ -19,7 +24,7 @@ test.describe("Individual Account Views and Displays", () => {
     // In-memory DB will be garbage collected
   });
 
-  test.describe("Account Header Display", () => {
+  describeE2E("Account Header Display", () => {
     test("should display account title with proper typography", async ({page}) => {
       // Check main account title
       const accountTitle = page.locator("h1, [data-testid='account-title']");
@@ -174,7 +179,7 @@ test.describe("Individual Account Views and Displays", () => {
     });
   });
 
-  test.describe("Transaction List Display", () => {
+  describeE2E("Transaction List Display", () => {
     test("should display transactions table with proper column headers", async ({page}) => {
       const transactionsTable =
         page.locator("[data-testid='transactions-table']") ||
@@ -335,7 +340,7 @@ test.describe("Individual Account Views and Displays", () => {
     });
   });
 
-  test.describe("Filtering and Search Display", () => {
+  describeE2E("Filtering and Search Display", () => {
     test("should display filter controls with clear labels", async ({page}) => {
       // Date filters
       const startDateFilter =
@@ -476,7 +481,7 @@ test.describe("Individual Account Views and Displays", () => {
     });
   });
 
-  test.describe("Statistics and Charts Display", () => {
+  describeE2E("Statistics and Charts Display", () => {
     test("should display account summary statistics with clear metrics", async ({page}) => {
       const statsSection =
         page.locator("[data-testid='account-statistics']") ||
@@ -608,7 +613,7 @@ test.describe("Individual Account Views and Displays", () => {
     });
   });
 
-  test.describe("Responsive Design Display", () => {
+  describeE2E("Responsive Design Display", () => {
     test("should adapt header layout for mobile viewport", async ({page}) => {
       await page.setViewportSize({width: 375, height: 667});
       await page.reload();
@@ -752,7 +757,7 @@ test.describe("Individual Account Views and Displays", () => {
     });
   });
 
-  test.describe("Loading and Error States Display", () => {
+  describeE2E("Loading and Error States Display", () => {
     test("should display loading indicators during data fetch", async ({page}) => {
       // Simulate slow network to see loading states
       await page.route("**/api/trpc/**", (route) => {
@@ -870,7 +875,7 @@ test.describe("Individual Account Views and Displays", () => {
     });
   });
 
-  test.describe("Accessibility Display Features", () => {
+  describeE2E("Accessibility Display Features", () => {
     test("should have proper focus indicators for interactive elements", async ({page}) => {
       // Test keyboard navigation and focus indicators
       await page.keyboard.press("Tab");

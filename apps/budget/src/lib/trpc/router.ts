@@ -28,6 +28,8 @@ import { transferMappingRoutes } from "$lib/trpc/routes/transfer-mappings";
 import { workspaceInvitationsRoutes } from "$lib/trpc/routes/workspace-invitations";
 import { workspaceMembersRoutes } from "$lib/trpc/routes/workspace-members";
 import { t } from "$lib/trpc/t";
+import type { Context } from "$lib/trpc/context";
+import { runWithDbForTesting } from "$lib/server/db";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
 import { forecastingRoutes } from "./routes/forecasting";
@@ -105,7 +107,63 @@ export const router = t.router({
   llmSettingsRoutes,
 });
 
-export const createCaller = t.createCallerFactory(router);
+const createCallerFactory = t.createCallerFactory(router);
+
+function normalizeTestContext(context: Context): Context {
+  if (!context.isTest) return context;
+
+  return {
+    ...context,
+    userId: context.userId ?? "system-test-user",
+    sessionId: context.sessionId ?? "test-session",
+    workspaceId: context.workspaceId ?? 1,
+  };
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return !!value && typeof (value as PromiseLike<unknown>).then === "function";
+}
+
+function invokeWithTestDb<T>(
+  testDb: Parameters<typeof runWithDbForTesting>[0],
+  fn: () => T
+): T {
+  try {
+    const result = runWithDbForTesting(testDb, fn);
+    if (isPromiseLike(result)) return result as T;
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+function wrapCallerWithTestDb<T>(value: T, context: Context): T {
+  const isWrappable =
+    value !== null && (typeof value === "object" || typeof value === "function");
+  if (!context.isTest || !context.db || !isWrappable) {
+    return value;
+  }
+
+  const testDb = context.db as Parameters<typeof runWithDbForTesting>[0];
+
+  return new Proxy(value as object, {
+    apply(target, thisArg, argArray) {
+      return invokeWithTestDb(testDb, () =>
+        Reflect.apply(target as (...args: unknown[]) => unknown, thisArg, argArray)
+      );
+    },
+    get(target, prop, receiver) {
+      const nextValue = Reflect.get(target, prop, receiver);
+      return wrapCallerWithTestDb(nextValue, context);
+    },
+  }) as T;
+}
+
+export const createCaller = (context: Context) => {
+  const normalizedContext = normalizeTestContext(context);
+  const caller = createCallerFactory(normalizedContext);
+  return wrapCallerWithTestDb(caller, normalizedContext);
+};
 
 export type Router = typeof router;
 

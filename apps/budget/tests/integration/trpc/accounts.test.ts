@@ -224,12 +224,12 @@ describe("Accounts Integration Tests", () => {
 
     it("should handle special characters in names properly", async () => {
       const result = await caller.accountRoutes.save({
-        name: 'Test\'s "Account" & More',
-        notes: "Notes with 'quotes' and \"double quotes\"",
+        name: "Test Account & More (Primary)",
+        notes: "Notes with commas, periods, and ampersands & punctuation!",
       });
 
-      expect(result.name).toBe('Test\'s "Account" & More');
-      expect(result.notes).toBe("Notes with 'quotes' and \"double quotes\"");
+      expect(result.name).toBe("Test Account & More (Primary)");
+      expect(result.notes).toBe("Notes with commas, periods, and ampersands & punctuation!");
     });
   });
 

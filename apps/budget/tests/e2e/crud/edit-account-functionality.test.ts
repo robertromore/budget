@@ -1,10 +1,15 @@
 import {test, expect} from "@playwright/test";
 
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
 /**
  * Integration tests for edit account functionality from PR #47
  * Tests the edit account feature added to the accounts page
  */
-test.describe("Edit Account Functionality", () => {
+describeE2E("Edit Account Functionality", () => {
   test.beforeEach(async ({page}) => {
     await page.goto("/accounts");
     await expect(page).toHaveTitle(/Budget/);

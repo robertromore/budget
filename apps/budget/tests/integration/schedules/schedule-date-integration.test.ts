@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
-import {createContext} from "../../../src/lib/trpc/context";
+import {createTestContext} from "../setup/test-db";
 
 describe("Schedule Date Integration Tests", () => {
   let caller: ReturnType<typeof createCaller>;
@@ -8,8 +8,8 @@ describe("Schedule Date Integration Tests", () => {
   let testPayeeId: number;
 
   beforeEach(async () => {
-    const ctx = await createContext({} as any);
-    caller = createCaller({...ctx, isTest: true} as any);
+    const ctx = await createTestContext();
+    caller = createCaller(ctx as any);
 
     // Create test dependencies
     const account = await caller.accountRoutes.save({
@@ -313,19 +313,18 @@ describe("Schedule Date Integration Tests", () => {
           payeeId: testPayeeId,
           accountId: testAccountId,
         }),
-        caller.scheduleRoutes.all(),
       ];
 
       const results = await Promise.all(concurrentOperations);
+      const allSchedules = await caller.scheduleRoutes.all();
 
       expect(results[0]).toBeDefined(); // First schedule
       expect(results[1]).toBeDefined(); // Second schedule
-      expect(Array.isArray(results[2])).toBe(true); // All schedules query
+      expect(Array.isArray(allSchedules)).toBe(true); // All schedules query
 
-      const [scheduleA, scheduleB, allSchedules] = results as [
+      const [scheduleA, scheduleB] = results as [
         Awaited<ReturnType<typeof caller.scheduleRoutes.save>>,
         Awaited<ReturnType<typeof caller.scheduleRoutes.save>>,
-        Awaited<ReturnType<typeof caller.scheduleRoutes.all>>,
       ];
       expect(scheduleA.name).toBe("Concurrent Schedule A");
       expect(scheduleB.name).toBe("Concurrent Schedule B");

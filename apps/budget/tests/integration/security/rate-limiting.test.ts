@@ -12,7 +12,12 @@ describe("Rate Limiting Integration Tests", () => {
     db = await setupTestDb();
 
     // Create caller with rate limiting (for testing rate limits)
-    const ctx = {db};
+    const ctx = {
+      db,
+      userId: "system-test-user",
+      sessionId: `rate-limit-session-${Date.now()}-${Math.random()}`,
+      workspaceId: 1,
+    };
     caller = createCaller(ctx as any);
 
     // Create caller without rate limiting (for setup operations)
@@ -28,29 +33,19 @@ describe("Rate Limiting Integration Tests", () => {
 
   describe("Rate Limiting Bypass for Tests", () => {
     it("should allow operations without rate limits when isTest flag is set", async () => {
-      // Test with rate limit bypass to ensure basic functionality works
-      const operations = [];
-
-      // Create many operations that would normally trigger rate limiting
+      // Run many mutation operations that would normally trigger rate limiting.
+      // Keep writes sequential to avoid SQLite lock contention in full-suite runs.
+      const results = [];
       for (let i = 0; i < 35; i++) {
-        operations.push(
-          callerWithoutRateLimit.accountRoutes.save({
-            name: `Test Account ${i}`,
-            slug: `test-account-${i}`,
-          })
-        );
+        const result = await callerWithoutRateLimit.viewsRoutes.save({
+          name: `Bypass View ${i}`,
+        });
+        results.push(result);
       }
 
-      // All operations should complete successfully with test bypass
-      const results = await Promise.allSettled(operations);
-
       results.forEach((result, index) => {
-        expect(result.status).toBe("fulfilled");
-        if (result.status === "fulfilled") {
-          expect(result.value.name).toBe(`Test Account ${index}`);
-        }
+        expect(result.name).toBe(`Bypass View ${index}`);
       });
-
       expect(results.length).toBe(35);
     });
 
@@ -62,10 +57,9 @@ describe("Rate Limiting Integration Tests", () => {
       // Create operations that will likely exceed the rate limit (30 per minute)
       for (let i = 0; i < 35; i++) {
         operations.push(
-          caller.accountRoutes
+          caller.viewsRoutes
             .save({
-              name: `Rate Limited Account ${i}`,
-              slug: `rate-limited-account-${i}`,
+              name: `Rate Limited View ${i}`,
             })
             .catch((error) => ({error, index: i}))
         );
@@ -99,12 +93,10 @@ describe("Rate Limiting Integration Tests", () => {
     });
 
     it("should not rate limit query operations", async () => {
-      await seedTestData(db);
-
       // Make many query operations - should not be rate limited
       const queryOperations = [];
       for (let i = 0; i < 50; i++) {
-        queryOperations.push(caller.accountRoutes.all());
+        queryOperations.push(caller.viewsRoutes.all());
       }
 
       const results = await Promise.allSettled(queryOperations);
@@ -122,10 +114,9 @@ describe("Rate Limiting Integration Tests", () => {
       const operations = [];
       for (let i = 0; i < 35; i++) {
         operations.push(
-          caller.accountRoutes
+          caller.viewsRoutes
             .save({
               name: `Rate Limit Test ${i}`,
-              slug: `rate-limit-test-${i}`,
             })
             .catch((error) => error)
         );

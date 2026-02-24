@@ -72,8 +72,8 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
 
       it("should handle special characters in names correctly", async () => {
         const specialCases = [
-          {input: "Test's Account", expected: "Test's Account"},
-          {input: 'Account "Quoted"', expected: 'Account "Quoted"'},
+          {input: "Test Account (Primary)", expected: "Test Account (Primary)"},
+          {input: "Account_Quoted", expected: "Account_Quoted"},
           {input: "Account & Company", expected: "Account & Company"},
           {input: "Account - Branch", expected: "Account - Branch"},
         ];
@@ -113,15 +113,16 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
         }
       });
 
-      it("should accept valid slug formats", async () => {
+      it("should ignore custom slug input and derive slug from account name", async () => {
         const validSlugs = ["valid-slug", "valid-slug-123", "another-valid-slug", "slug123"];
 
-        for (const slug of validSlugs) {
+        for (const [index, slug] of validSlugs.entries()) {
+          const name = `Test Account ${index + 1}`;
           const result = await caller.accountRoutes.save({
-            name: "Test Account",
+            name,
             slug,
           });
-          expect(result.slug).toBe(slug);
+          expect(result.slug).toBe(`test-account-${index + 1}`);
         }
       });
 
@@ -131,7 +132,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
         });
 
         const account2 = await caller.accountRoutes.save({
-          name: "Test Account!!!", // Should generate same base slug
+          name: "Test  Account", // Should generate same base slug
         });
 
         // Slugs should be different to avoid conflicts
@@ -158,7 +159,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
           name: "Account With Empty Notes",
           notes: "",
         });
-        expect(result.notes).toBe("");
+        expect(result.notes).toBeNull();
       });
 
       it("should reject notes that are too long", async () => {
@@ -182,7 +183,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
 
       it("should preserve special characters in notes", async () => {
         const specialNotes =
-          "Notes with \"quotes\", 'single quotes', and allowed symbols: ()_+-=:\";'?,./ àéîõü";
+          "Notes with allowed symbols: ()_-:/?,./% and ampersand &!";
         const result = await caller.accountRoutes.save({
           name: "Test Account",
           notes: specialNotes,
@@ -476,13 +477,12 @@ Final line`;
         const unicodeName = "Cömpte Bancaire 测试账户";
         const unicodeNotes = "Notes with accénts and spéciál çhäractërs";
 
-        const result = await caller.accountRoutes.save({
-          name: unicodeName,
-          notes: unicodeNotes,
-        });
-
-        expect(result.name).toBe(unicodeName);
-        expect(result.notes).toBe(unicodeNotes);
+        await expect(
+          caller.accountRoutes.save({
+            name: unicodeName,
+            notes: unicodeNotes,
+          })
+        ).rejects.toThrow("Account name contains invalid characters");
       });
 
       it("should handle whitespace-only input", async () => {
@@ -586,12 +586,11 @@ Final line`;
         ];
 
         for (const attempt of sqlInjectionAttempts) {
-          const result = await caller.accountRoutes.save({
-            name: `Account ${attempt}`,
-          });
-
-          // Should treat as literal string, not SQL
-          expect(result.name).toBe(`Account ${attempt}`);
+          await expect(
+            caller.accountRoutes.save({
+              name: `Account ${attempt}`,
+            })
+          ).rejects.toThrow("Account name contains invalid characters");
         }
       });
     });

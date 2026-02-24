@@ -192,10 +192,10 @@ describe("Accounts Performance Testing Concepts", () => {
       expect(account.balance).toBe(expectedFinalBalance);
 
       // Verify running balances are calculated correctly
-      let expectedRunningBalance = 0;
+      let expectedRunningBalance = expectedFinalBalance;
       account.transactions.forEach((transaction) => {
-        expectedRunningBalance += transaction.amount;
         expect(transaction.balance).toBe(expectedRunningBalance);
+        expectedRunningBalance -= transaction.amount;
       });
     });
   });

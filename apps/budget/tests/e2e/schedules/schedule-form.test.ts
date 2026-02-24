@@ -1,12 +1,17 @@
 import {test, expect} from "@playwright/test";
 
-test.describe("Schedule Form Integration", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Schedule Form Integration", () => {
   test.beforeEach(async ({page}) => {
     await page.goto("/schedules");
     await page.waitForLoadState("networkidle");
   });
 
-  test.describe("Add Schedule Dialog", () => {
+  describeE2E("Add Schedule Dialog", () => {
     test("should open add schedule dialog", async ({page}) => {
       // Click the "Add Schedule" button in sidebar
       await page.click('[title="Add Schedule"]');
@@ -39,7 +44,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Schedule Form Validation", () => {
+  describeE2E("Schedule Form Validation", () => {
     test.beforeEach(async ({page}) => {
       await page.click('[title="Add Schedule"]');
       await page.waitForSelector('[data-testid="add-schedule-dialog"]');
@@ -96,7 +101,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Schedule Form Functionality", () => {
+  describeE2E("Schedule Form Functionality", () => {
     test.beforeEach(async ({page}) => {
       await page.click('[title="Add Schedule"]');
       await page.waitForSelector('[data-testid="add-schedule-dialog"]');
@@ -202,7 +207,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Recurring Date Configuration", () => {
+  describeE2E("Recurring Date Configuration", () => {
     test.beforeEach(async ({page}) => {
       await page.click('[title="Add Schedule"]');
       await page.waitForSelector('[data-testid="add-schedule-dialog"]');
@@ -297,7 +302,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Edit Schedule", () => {
+  describeE2E("Edit Schedule", () => {
     test.beforeEach(async ({page}) => {
       // Create a test schedule first
       await page.click('[title="Add Schedule"]');
@@ -360,7 +365,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Delete Schedule", () => {
+  describeE2E("Delete Schedule", () => {
     test.beforeEach(async ({page}) => {
       // Create a test schedule to delete
       await page.click('[title="Add Schedule"]');
@@ -413,7 +418,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Schedule Status Management", () => {
+  describeE2E("Schedule Status Management", () => {
     test.beforeEach(async ({page}) => {
       // Create active and inactive schedules for testing
       await page.click('[title="Add Schedule"]');
@@ -468,7 +473,7 @@ test.describe("Schedule Form Integration", () => {
     });
   });
 
-  test.describe("Accessibility", () => {
+  describeE2E("Accessibility", () => {
     test("add schedule dialog should be accessible", async ({page}) => {
       await page.click('[title="Add Schedule"]');
 

@@ -141,6 +141,10 @@ export class ComponentTestHelpers {
     mockIntersect: (entries: Array<{target: Element; isIntersecting: boolean}>) => void;
     restore: () => void;
   } {
+    const globalScope = globalThis as typeof globalThis & {
+      IntersectionObserver?: typeof IntersectionObserver;
+    };
+
     const mockObserver = {
       observe: vi.fn(),
       disconnect: vi.fn(),
@@ -154,13 +158,17 @@ export class ComponentTestHelpers {
       return mockObserver;
     });
 
-    const originalIntersectionObserver = window.IntersectionObserver;
-    window.IntersectionObserver = MockIntersectionObserver;
+    const originalIntersectionObserver = globalScope.IntersectionObserver;
+    globalScope.IntersectionObserver = MockIntersectionObserver as typeof IntersectionObserver;
 
     return {
       mockIntersect: (entries) => callback(entries),
       restore: () => {
-        window.IntersectionObserver = originalIntersectionObserver;
+        if (originalIntersectionObserver) {
+          globalScope.IntersectionObserver = originalIntersectionObserver;
+        } else {
+          delete globalScope.IntersectionObserver;
+        }
       },
     };
   }

@@ -1,6 +1,11 @@
 import {test, expect} from "@playwright/test";
 
-test.describe("Widget Drag and Drop - Manual Testing", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Widget Drag and Drop - Manual Testing", () => {
   test("should demonstrate widget drag and drop functionality", async ({page}) => {
     // Navigate to the account page
     await page.goto("http://localhost:3000/accounts/1");

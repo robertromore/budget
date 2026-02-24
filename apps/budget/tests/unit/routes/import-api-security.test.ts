@@ -1,30 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => {
-  class MockImportApiError extends Error {
-    status: number;
+class MockImportApiError extends Error {
+  status: number;
 
-    constructor(status: number, message: string) {
-      super(message);
-      this.status = status;
-      this.name = "MockImportApiError";
-    }
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "MockImportApiError";
   }
+}
 
-  return {
-    MockImportApiError,
-    requireImportUserId: vi.fn(),
-    parseOptionalPositiveInt: vi.fn(),
-    parseRequiredPositiveInt: vi.fn(),
-    requireImportAccountAccess: vi.fn(),
-    requireImportWorkspaceAccess: vi.fn(),
-    processImport: vi.fn(),
-  };
-});
-
-vi.mock("$lib/server/db", () => ({
-  db: {},
-}));
+const mocks = {
+  MockImportApiError,
+  requireImportUserId: vi.fn(),
+  parseOptionalPositiveInt: vi.fn(),
+  parseRequiredPositiveInt: vi.fn(),
+  requireImportAccountAccess: vi.fn(),
+  requireImportWorkspaceAccess: vi.fn(),
+  processImport: vi.fn(),
+};
 
 vi.mock("../../../src/routes/api/import/auth", () => ({
   ImportApiError: mocks.MockImportApiError,
@@ -62,32 +56,39 @@ function defaultParseRequired(value: unknown): number {
   return parsed;
 }
 
+function maybeResetModules() {
+  const resetModules = (vi as unknown as { resetModules?: () => void }).resetModules;
+  if (typeof resetModules === "function") {
+    resetModules();
+  }
+}
+
 async function loadUploadHandler() {
-  vi.resetModules();
+  maybeResetModules();
   const mod = await import("../../../src/routes/api/import/upload/+server");
   return mod.POST;
 }
 
 async function loadRemapHandler() {
-  vi.resetModules();
+  maybeResetModules();
   const mod = await import("../../../src/routes/api/import/remap/+server");
   return mod.POST;
 }
 
 async function loadPreviewEntitiesHandler() {
-  vi.resetModules();
+  maybeResetModules();
   const mod = await import("../../../src/routes/api/import/preview-entities/+server");
   return mod.POST;
 }
 
 async function loadInferCategoriesHandler() {
-  vi.resetModules();
+  maybeResetModules();
   const mod = await import("../../../src/routes/api/import/infer-categories/+server");
   return mod.POST;
 }
 
 async function loadProcessHandler() {
-  vi.resetModules();
+  maybeResetModules();
   const mod = await import("../../../src/routes/api/import/process/+server");
   return mod.POST;
 }

@@ -1,7 +1,12 @@
 import {test, expect} from "@playwright/test";
 import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
 
-test.describe("Accounts Navigation Tests", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Accounts Navigation Tests", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
 
   test.beforeEach(async ({page}) => {
@@ -18,7 +23,7 @@ test.describe("Accounts Navigation Tests", () => {
     // In-memory DB will be garbage collected
   });
 
-  test.describe("Accounts Page Navigation", () => {
+  describeE2E("Accounts Page Navigation", () => {
     test("should navigate to accounts page from main navigation", async ({page}) => {
       // Click on accounts navigation link
       await page.click('[href="/accounts"]');
@@ -71,7 +76,7 @@ test.describe("Accounts Navigation Tests", () => {
     });
   });
 
-  test.describe("Individual Account Page Navigation", () => {
+  describeE2E("Individual Account Page Navigation", () => {
     test("should navigate to individual account page", async ({page}) => {
       await page.goto("/accounts");
 
@@ -1031,7 +1036,7 @@ test.describe("Accounts Navigation Tests", () => {
     });
   });
 
-  test.describe("Account Management Navigation", () => {
+  describeE2E("Account Management Navigation", () => {
     test("should open add account dialog", async ({page}) => {
       await page.goto("/accounts");
 
@@ -1120,7 +1125,7 @@ test.describe("Accounts Navigation Tests", () => {
     });
   });
 
-  test.describe("Responsive Navigation", () => {
+  describeE2E("Responsive Navigation", () => {
     test("should work on mobile viewport", async ({page}) => {
       await page.setViewportSize({width: 375, height: 667});
       await page.goto("/");
@@ -1156,7 +1161,7 @@ test.describe("Accounts Navigation Tests", () => {
     });
   });
 
-  test.describe("Accessibility Navigation", () => {
+  describeE2E("Accessibility Navigation", () => {
     test("should be keyboard navigable", async ({page}) => {
       await page.goto("/");
 

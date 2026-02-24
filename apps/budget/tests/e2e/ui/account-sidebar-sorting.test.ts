@@ -1,6 +1,11 @@
 import {test, expect} from "@playwright/test";
 
-test.describe("Account Sidebar Sorting", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Account Sidebar Sorting", () => {
   test.beforeEach(async ({page}) => {
     await page.goto("/accounts");
     await page.waitForLoadState("networkidle");

@@ -9,6 +9,19 @@ describe("Views tRPC Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
   let caller: ReturnType<typeof createCaller>;
   let workspaceId: number;
+  const defaultDisplayState = {
+    density: "normal",
+    stickyHeader: false,
+    pageSize: 25,
+    viewMode: "table",
+  } as const;
+
+  function withDefaultDisplay(display: Record<string, unknown>) {
+    return {
+      ...defaultDisplayState,
+      ...display,
+    };
+  }
 
   function buildView(values: {
     name: string;
@@ -244,11 +257,11 @@ describe("Views tRPC Integration Tests", () => {
         expect(result.description).toBe("View with all fields");
         expect(result.icon).toBe("complete");
         expect(result.filters).toEqual(filters);
-        expect(result.display).toEqual({
+        expect(result.display).toEqual(withDefaultDisplay({
           sort: [{id: "date", desc: true}],
-          expanded: {},
+          expanded: true,
           visibility: {},
-        });
+        }));
         expect(result.dirty).toBe(true);
       });
 
@@ -314,12 +327,12 @@ describe("Views tRPC Integration Tests", () => {
         });
 
         expect(result.filters).toEqual(newFilters);
-        expect(result.display).toEqual(newDisplay);
+        expect(result.display).toEqual(withDefaultDisplay(newDisplay as unknown as Record<string, unknown>));
 
         // Verify in database
         const dbView = await db.select().from(views).where(eq(views.id, existing.id));
         expect(dbView[0].filters).toEqual(newFilters);
-        expect(dbView[0].display).toEqual(newDisplay);
+        expect(dbView[0].display).toEqual(withDefaultDisplay(newDisplay as unknown as Record<string, unknown>));
       });
 
       test("should clear optional fields when set to null", async () => {
@@ -430,7 +443,9 @@ describe("Views tRPC Integration Tests", () => {
           display: validDisplay,
         });
 
-        expect(result.display).toEqual(validDisplay);
+        expect(result.display).toEqual(
+          withDefaultDisplay(validDisplay as unknown as Record<string, unknown>)
+        );
       });
     });
 
@@ -601,7 +616,9 @@ describe("Views tRPC Integration Tests", () => {
       const loaded = await caller.viewsRoutes.load({id: result.id});
 
       expect(loaded.filters).toEqual(complexData.filters);
-      expect(loaded.display).toEqual(complexData.display);
+      expect(loaded.display).toEqual(
+        withDefaultDisplay(complexData.display as unknown as Record<string, unknown>)
+      );
     });
   });
 
@@ -661,11 +678,15 @@ describe("Views tRPC Integration Tests", () => {
         display: deeplyNestedDisplay,
       });
 
-      expect(result.display).toEqual(deeplyNestedDisplay);
+      expect(result.display).toEqual(
+        withDefaultDisplay(deeplyNestedDisplay as unknown as Record<string, unknown>)
+      );
 
       // Verify persistence
       const loaded = await caller.viewsRoutes.load({id: result.id});
-      expect(loaded.display).toEqual(deeplyNestedDisplay);
+      expect(loaded.display).toEqual(
+        withDefaultDisplay(deeplyNestedDisplay as unknown as Record<string, unknown>)
+      );
     });
 
     test("should handle array values in filters", async () => {
@@ -699,7 +720,9 @@ describe("Views tRPC Integration Tests", () => {
         display: displayWithLiterals,
       });
 
-      expect(result1.display).toEqual({expanded: {}, visibility: {}});
+      expect(result1.display).toEqual(
+        withDefaultDisplay({expanded: true, visibility: {}})
+      );
 
       const displayWithRecords: ViewDisplayState = {
         expanded: {group1: true, group2: false},
@@ -711,7 +734,9 @@ describe("Views tRPC Integration Tests", () => {
         display: displayWithRecords,
       });
 
-      expect(result2.display).toEqual(displayWithRecords);
+      expect(result2.display).toEqual(
+        withDefaultDisplay(displayWithRecords as unknown as Record<string, unknown>)
+      );
     });
 
     test("should handle empty arrays and objects", async () => {
@@ -811,12 +836,12 @@ describe("Views tRPC Integration Tests", () => {
 
       // Verify template structure is preserved
       expect(result.filters).toEqual(templateView.filters);
-      expect(result.display).toEqual({
+      expect(result.display).toEqual(withDefaultDisplay({
         grouping: ["category"],
         sort: [{id: "amount", desc: true}],
-        expanded: {},
+        expanded: true,
         visibility: {notes: false, id: false},
-      });
+      }));
     });
   });
 });

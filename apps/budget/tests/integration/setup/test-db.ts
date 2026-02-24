@@ -3,9 +3,35 @@ import {drizzle} from "drizzle-orm/bun-sqlite";
 import {migrate} from "drizzle-orm/bun-sqlite/migrator";
 import * as schema from "../../../src/lib/schema";
 import {sql} from "drizzle-orm";
+import {eq} from "drizzle-orm";
 import path from "path";
 import fs from "fs";
+import {fileURLToPath} from "url";
 import type {Context} from "../../../src/lib/trpc/context";
+
+const DEFAULT_TEST_USER_ID = "system-test-user";
+const DEFAULT_TEST_EMAIL = "system-test@example.invalid";
+const DEFAULT_TEST_WORKSPACE_SLUG = "__system-test-workspace__";
+const CURRENT_FILE_DIR = path.dirname(fileURLToPath(import.meta.url));
+
+function resolveMigrationsFolder() {
+  const candidates = [
+    path.join(process.cwd(), "drizzle"),
+    path.join(process.cwd(), "apps", "budget", "drizzle"),
+    path.resolve(CURRENT_FILE_DIR, "../../../drizzle"),
+  ];
+
+  for (const candidate of candidates) {
+    const journalPath = path.join(candidate, "meta", "_journal.json");
+    if (fs.existsSync(journalPath)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `Could not locate drizzle migrations folder. Tried: ${candidates.join(", ")}`
+  );
+}
 
 // Create a unique test database for each test run
 export function createTestDb() {
@@ -18,7 +44,48 @@ export async function setupTestDb() {
   const db = createTestDb();
 
   // Run migrations
-  await migrate(db, {migrationsFolder: path.join(process.cwd(), "drizzle")});
+  await migrate(db, {migrationsFolder: resolveMigrationsFolder()});
+
+  // Bootstrap a default authenticated context for integration tests that only
+  // provide `{ db, isTest: true }` to createCaller.
+  await db
+    .insert(schema.users)
+    .values({
+      id: DEFAULT_TEST_USER_ID,
+      name: "System Test User",
+      displayName: "System Test User",
+      email: DEFAULT_TEST_EMAIL,
+    })
+    .onConflictDoNothing();
+
+  let [workspace] = await db
+    .select({id: schema.workspaces.id})
+    .from(schema.workspaces)
+    .where(eq(schema.workspaces.slug, DEFAULT_TEST_WORKSPACE_SLUG))
+    .limit(1);
+
+  if (!workspace) {
+    [workspace] = await db
+      .insert(schema.workspaces)
+      .values({
+        displayName: "System Test Workspace",
+        slug: DEFAULT_TEST_WORKSPACE_SLUG,
+        ownerId: DEFAULT_TEST_USER_ID,
+      })
+      .returning({id: schema.workspaces.id});
+  }
+
+  if (workspace) {
+    await db
+      .insert(schema.workspaceMembers)
+      .values({
+        workspaceId: workspace.id,
+        userId: DEFAULT_TEST_USER_ID,
+        role: "owner",
+        isDefault: true,
+      })
+      .onConflictDoNothing();
+  }
 
   return db;
 }
@@ -128,12 +195,15 @@ export async function createTestContext() {
   const db = await setupTestDb();
   const testUserId = "test-user";
 
-  await db.insert(schema.users).values({
-    id: testUserId,
-    name: "Test User",
-    displayName: "Test User",
-    email: "test@example.com",
-  });
+  await db
+    .insert(schema.users)
+    .values({
+      id: testUserId,
+      name: "Test User",
+      displayName: "Test User",
+      email: "test@example.com",
+    })
+    .onConflictDoNothing();
 
   const [workspace] = await db
     .insert(schema.workspaces)
@@ -164,13 +234,22 @@ export async function createTestContext() {
 
 // Seed minimal test data
 export async function seedTestData(db: ReturnType<typeof createTestDb>) {
-  const [workspace] = await db
-    .insert(schema.workspaces)
-    .values({
-      displayName: "Seed Workspace",
-      slug: `seed-workspace-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    })
-    .returning();
+  let [workspace] = await db
+    .select()
+    .from(schema.workspaces)
+    .where(eq(schema.workspaces.slug, DEFAULT_TEST_WORKSPACE_SLUG))
+    .limit(1);
+
+  if (!workspace) {
+    [workspace] = await db
+      .insert(schema.workspaces)
+      .values({
+        displayName: "System Test Workspace",
+        slug: DEFAULT_TEST_WORKSPACE_SLUG,
+        ownerId: DEFAULT_TEST_USER_ID,
+      })
+      .returning();
+  }
 
   // Insert test categories
   await db.insert(schema.categories).values([

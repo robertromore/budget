@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach} from "vitest";
 import {createCaller} from "../../../src/lib/trpc/router";
-import {createContext} from "../../../src/lib/trpc/context";
+import {createTestContext} from "../setup/test-db";
 
 describe("Transaction Generation from Schedules Tests", () => {
   let caller: ReturnType<typeof createCaller>;
@@ -9,8 +9,8 @@ describe("Transaction Generation from Schedules Tests", () => {
   let testCategoryId: number;
 
   beforeEach(async () => {
-    const ctx = await createContext({} as any);
-    caller = createCaller({...ctx, isTest: true} as any);
+    const ctx = await createTestContext();
+    caller = createCaller(ctx as any);
 
     // Create test dependencies
     const account = await caller.accountRoutes.save({
@@ -60,7 +60,7 @@ describe("Transaction Generation from Schedules Tests", () => {
 
       // Current implementation may not support scheduleId field
       // This test validates the baseline functionality works
-      expect(transaction.scheduleId).toBeNull();
+      expect(transaction.scheduleId).toBeUndefined();
     });
 
     it("should support scheduled transaction status for recurring schedules", async () => {
@@ -558,7 +558,7 @@ describe("Transaction Generation from Schedules Tests", () => {
         date: "2024-10-15",
       });
 
-      expect(transaction.scheduleId).toBeNull();
+      expect(transaction.scheduleId).toBeUndefined();
       expect(transaction.amount).toBe(175.0);
       expect(transaction.status).toBe("pending");
       expect(transaction.accountId).toBe(testAccountId);

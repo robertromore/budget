@@ -1,6 +1,11 @@
 import {test, expect} from "@playwright/test";
 
-test.describe("Filter Display Navigation Bug #30", () => {
+const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
+  ? test.describe.bind(test)
+  : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
+
+
+describeE2E("Filter Display Navigation Bug #30", () => {
   test.beforeEach(async ({page}) => {
     await page.goto("/accounts/1");
     await page.waitForLoadState("networkidle");
