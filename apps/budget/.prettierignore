@@ -2,6 +2,7 @@
 templates/
 docs/
 backups/
+.claude/commands/
 .svelte-kit/
 build/
 *.d.ts
@@ -11,3 +12,5 @@ drizzle/
 test-results/
 playwright-report/
 coverage/
+venv/
+training-data/

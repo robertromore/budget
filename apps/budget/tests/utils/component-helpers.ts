@@ -167,7 +167,7 @@ export class ComponentTestHelpers {
         if (originalIntersectionObserver) {
           globalScope.IntersectionObserver = originalIntersectionObserver;
         } else {
-          delete globalScope.IntersectionObserver;
+          Reflect.deleteProperty(globalScope, "IntersectionObserver");
         }
       },
     };

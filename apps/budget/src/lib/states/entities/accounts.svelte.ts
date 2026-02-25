@@ -5,6 +5,7 @@ import {
   type AccountSortField,
   type SortDirection,
 } from "$lib/states/entities/accounts-sorting";
+export type { AccountSortField, SortDirection } from "$lib/states/entities/accounts-sorting";
 import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
