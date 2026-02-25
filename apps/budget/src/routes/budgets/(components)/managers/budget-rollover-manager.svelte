@@ -130,13 +130,10 @@ function resolveRolloverConfig(saved?: Partial<RolloverConfig>): RolloverConfig 
     enabled: saved?.enabled ?? defaultRolloverConfig.enabled,
     maxRolloverPercentage:
       saved?.maxRolloverPercentage ?? defaultRolloverConfig.maxRolloverPercentage,
-    rolloverLimitMonths:
-      saved?.rolloverLimitMonths ?? defaultRolloverConfig.rolloverLimitMonths,
-    deficitRecoveryMode:
-      saved?.deficitRecoveryMode ?? defaultRolloverConfig.deficitRecoveryMode,
+    rolloverLimitMonths: saved?.rolloverLimitMonths ?? defaultRolloverConfig.rolloverLimitMonths,
+    deficitRecoveryMode: saved?.deficitRecoveryMode ?? defaultRolloverConfig.deficitRecoveryMode,
     autoTransition: saved?.autoTransition ?? defaultRolloverConfig.autoTransition,
-    notificationEnabled:
-      saved?.notificationEnabled ?? defaultRolloverConfig.notificationEnabled,
+    notificationEnabled: saved?.notificationEnabled ?? defaultRolloverConfig.notificationEnabled,
   };
 }
 

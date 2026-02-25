@@ -16,14 +16,7 @@ import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { cn } from '$lib/utils';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { CalendarDate } from '@internationalized/date';
-import {
-  Calendar,
-  CircleCheck,
-  Clock,
-  Info,
-  Settings,
-  TriangleAlert
-} from '@lucide/svelte/icons';
+import { Calendar, CircleCheck, Clock, Info, Settings, TriangleAlert } from '@lucide/svelte/icons';
 
 interface Props {
   budget: BudgetWithRelations;

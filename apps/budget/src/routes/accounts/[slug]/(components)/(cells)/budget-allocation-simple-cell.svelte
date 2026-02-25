@@ -120,7 +120,8 @@ function handleAllocationChanged() {
                 </p>
                 <p class="text-xs">
                   Percentage: {formatPercent(
-                    Math.abs(allocation.allocatedAmount) / Math.abs(transaction.amount), 1
+                    Math.abs(allocation.allocatedAmount) / Math.abs(transaction.amount),
+                    1
                   )}
                 </p>
                 <p class="text-xs opacity-75">

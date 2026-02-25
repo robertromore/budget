@@ -803,7 +803,9 @@ const selectedIcon = $derived(() => {
             oninput={(e) => updateField('initialBalance', parseFloat(e.currentTarget.value) || 0)}
             placeholder="0.00"
             class="w-full" />
-          <p class="text-muted-foreground text-xs">The current balance of this account (optional)</p>
+          <p class="text-muted-foreground text-xs">
+            The current balance of this account (optional)
+          </p>
         </div>
       {/if}
 
@@ -816,7 +818,9 @@ const selectedIcon = $derived(() => {
           id="account-last4"
           value={formData['accountNumberLast4'] || ''}
           oninput={(e) => updateField('accountNumberLast4', e.currentTarget.value)}
-          placeholder={formData['accountType'] === 'utility' ? 'Your utility account number' : '1234'}
+          placeholder={formData['accountType'] === 'utility'
+            ? 'Your utility account number'
+            : '1234'}
           pattern={formData['accountType'] === 'utility' ? undefined : '[0-9]{4}'}
           maxlength={formData['accountType'] === 'utility' ? 50 : 4}
           class="w-full" />
@@ -1173,7 +1177,9 @@ const selectedIcon = $derived(() => {
         {#if formData['initialBalance'] !== undefined && formData['initialBalance'] !== 0 && formData['accountType'] !== 'utility'}
           <div class="space-y-1">
             <p class="text-sm font-medium">Starting Balance</p>
-            <p class="text-muted-foreground text-sm">{formatCurrency(formData['initialBalance'] ?? 0)}</p>
+            <p class="text-muted-foreground text-sm">
+              {formatCurrency(formData['initialBalance'] ?? 0)}
+            </p>
           </div>
         {/if}
 
@@ -1234,7 +1240,9 @@ const selectedIcon = $derived(() => {
               <p class="text-sm font-medium">
                 {formData['accountType'] === 'credit_card' ? 'Credit Limit' : 'Loan Amount'}
               </p>
-              <p class="text-muted-foreground text-sm">{formatCurrency(formData['debtLimit'] ?? 0)}</p>
+              <p class="text-muted-foreground text-sm">
+                {formatCurrency(formData['debtLimit'] ?? 0)}
+              </p>
             </div>
           {/if}
 
@@ -1248,7 +1256,9 @@ const selectedIcon = $derived(() => {
           {#if formData['minimumPayment']}
             <div class="space-y-1">
               <p class="text-sm font-medium">Minimum Payment</p>
-              <p class="text-muted-foreground text-sm">{formatCurrency(formData['minimumPayment'] ?? 0)}</p>
+              <p class="text-muted-foreground text-sm">
+                {formatCurrency(formData['minimumPayment'] ?? 0)}
+              </p>
             </div>
           {/if}
 

@@ -25,29 +25,24 @@ function handleExitTourMode() {
   <div
     class="fixed bottom-4 left-1/2 z-10000 -translate-x-1/2 transform"
     role="status"
-    aria-live="polite"
-  >
+    aria-live="polite">
     <div
-      class="bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg"
-    >
-      <Info class="text-amber-600 dark:text-amber-400 h-5 w-5 flex-shrink-0" />
+      class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 shadow-lg dark:border-amber-700 dark:bg-amber-950">
+      <Info class="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
 
       <div class="flex items-center gap-2">
-        <span class="text-amber-800 dark:text-amber-200 font-medium">Demo Mode</span>
-        <span class="text-amber-700 dark:text-amber-300 hidden sm:inline">
+        <span class="font-medium text-amber-800 dark:text-amber-200">Demo Mode</span>
+        <span class="hidden text-amber-700 sm:inline dark:text-amber-300">
           — This is demonstration data. Changes won't be saved.
         </span>
-        <span class="text-amber-700 dark:text-amber-300 sm:hidden">
-          — Demo data only
-        </span>
+        <span class="text-amber-700 sm:hidden dark:text-amber-300"> — Demo data only </span>
       </div>
 
       <Button
         variant="ghost"
         size="sm"
-        class="text-amber-700 hover:text-amber-900 hover:bg-amber-100 dark:text-amber-300 dark:hover:text-amber-100 dark:hover:bg-amber-900 ml-2"
-        onclick={handleExitTourMode}
-      >
+        class="ml-2 text-amber-700 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-300 dark:hover:bg-amber-900 dark:hover:text-amber-100"
+        onclick={handleExitTourMode}>
         <X class="mr-1 h-4 w-4" />
         Exit Tour Mode
       </Button>

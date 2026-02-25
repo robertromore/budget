@@ -12,7 +12,7 @@ import {
   periodTemplateTypes,
   type BudgetEnforcementLevel,
   type BudgetType,
-  type PeriodTemplateType
+  type PeriodTemplateType,
 } from '$lib/schema/budgets';
 import type { Category } from '$lib/schema/categories';
 import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
@@ -33,7 +33,7 @@ import {
   PiggyBank,
   Shield,
   Tag,
-  Target
+  Target,
 } from '@lucide/svelte/icons';
 import WizardStep from './wizard-step.svelte';
 
@@ -237,10 +237,16 @@ $effect(() => {
   if (formData['goalStartDate'] !== undefined && formData['goalStartDate'] !== goalStartDate) {
     goalStartDate = formData['goalStartDate'] || '';
   }
-  if (formData['goalContributionFrequency'] !== undefined && formData['goalContributionFrequency'] !== goalContributionFrequency) {
+  if (
+    formData['goalContributionFrequency'] !== undefined &&
+    formData['goalContributionFrequency'] !== goalContributionFrequency
+  ) {
     goalContributionFrequency = formData['goalContributionFrequency'] || 'monthly';
   }
-  if (formData['goalAutoContribute'] !== undefined && formData['goalAutoContribute'] !== goalAutoContribute) {
+  if (
+    formData['goalAutoContribute'] !== undefined &&
+    formData['goalAutoContribute'] !== goalAutoContribute
+  ) {
     goalAutoContribute = formData['goalAutoContribute'] || false;
   }
 });
@@ -638,8 +644,10 @@ const selectedCategories = $derived.by(() => {
 
     <!-- Goal-specific fields -->
     {#if isGoalBased}
-      <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
-        <h4 class="mb-4 flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100">
+      <div
+        class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+        <h4
+          class="mb-4 flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100">
           <Target class="h-4 w-4" />
           Goal Settings
         </h4>
@@ -683,7 +691,8 @@ const selectedCategories = $derived.by(() => {
               }
             }}>
             <Select.Trigger id="contribution-frequency">
-              {goalContributionFrequency.charAt(0).toUpperCase() + goalContributionFrequency.slice(1)}
+              {goalContributionFrequency.charAt(0).toUpperCase() +
+                goalContributionFrequency.slice(1)}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="weekly">Weekly</Select.Item>
@@ -972,7 +981,8 @@ const selectedCategories = $derived.by(() => {
             </div>
             <div class="text-right">
               <p class="text-sm">
-                {goalContributionFrequency.charAt(0).toUpperCase() + goalContributionFrequency.slice(1)}
+                {goalContributionFrequency.charAt(0).toUpperCase() +
+                  goalContributionFrequency.slice(1)}
               </p>
               <p class="text-muted-foreground text-xs">
                 {goalAutoContribute ? 'Auto-contribute enabled' : 'Manual contributions'}

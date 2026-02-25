@@ -148,7 +148,9 @@ $effect(() => {
 
 // Form is valid if there are no errors
 const isFormValid = $derived.by(() => {
-  return selectedBudgetId && allocationAmount !== undefined && proposedAmount > 0 && !validationError;
+  return (
+    selectedBudgetId && allocationAmount !== undefined && proposedAmount > 0 && !validationError
+  );
 });
 
 function resetForm() {
@@ -158,14 +160,20 @@ function resetForm() {
 }
 
 async function handleAddAllocation() {
-  if (!selectedBudgetId || allocationAmount === undefined || !transaction || typeof transaction.id !== 'number')
+  if (
+    !selectedBudgetId ||
+    allocationAmount === undefined ||
+    !transaction ||
+    typeof transaction.id !== 'number'
+  )
     return;
 
   try {
     isSubmitting = true;
 
     // Ensure allocation has the same sign as the transaction
-    const signedAmount = transactionAmount >= 0 ? Math.abs(allocationAmount) : -Math.abs(allocationAmount);
+    const signedAmount =
+      transactionAmount >= 0 ? Math.abs(allocationAmount) : -Math.abs(allocationAmount);
 
     // Create the allocation using the real API
     await createAllocationMutation.mutateAsync({
@@ -333,7 +341,8 @@ const availableBudgetOptions = $derived.by(() => {
                             <span>•</span>
                             <span
                               >{formatPercent(
-                                allocation.allocatedAmount / Math.abs(transactionAmount), 1
+                                allocation.allocatedAmount / Math.abs(transactionAmount),
+                                1
                               )}</span>
                           </div>
                         </div>
@@ -358,7 +367,7 @@ const availableBudgetOptions = $derived.by(() => {
                           variant="ghost"
                           onclick={() => handleRemoveAllocation(allocation.id)}
                           aria-label="Remove allocation from {allocation.budgetName}"
-                          class="hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 text-emerald-600 opacity-50 transition-opacity hover:opacity-100 focus:opacity-100 group-hover:opacity-100">
+                          class="hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 text-emerald-600 opacity-50 transition-opacity group-hover:opacity-100 hover:opacity-100 focus:opacity-100">
                           <Trash2 class="h-4 w-4" />
                         </Button>
                       </Tooltip.Trigger>
@@ -388,8 +397,10 @@ const availableBudgetOptions = $derived.by(() => {
                 <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Lightbulb class="h-3.5 w-3.5 shrink-0" />
                   <span>
-                    Suggested: <span class="text-foreground font-medium">{topSuggestion.budgetName}</span>
-                    <span class="text-muted-foreground/70">({topSuggestion.confidence}% confident)</span>
+                    Suggested: <span class="text-foreground font-medium"
+                      >{topSuggestion.budgetName}</span>
+                    <span class="text-muted-foreground/70"
+                      >({topSuggestion.confidence}% confident)</span>
                   </span>
                 </div>
               {/if}
@@ -397,10 +408,13 @@ const availableBudgetOptions = $derived.by(() => {
               <div class="space-y-2">
                 <Label for="budget-select" class="text-xs">Budget</Label>
                 <Select.Root type="single" bind:value={selectedBudgetId}>
-                  <Select.Trigger id="budget-select" class="h-auto! w-full whitespace-normal border-2 border-primary/40 bg-card shadow-sm hover:border-primary/60 hover:bg-accent/50">
+                  <Select.Trigger
+                    id="budget-select"
+                    class="border-primary/40 bg-card hover:border-primary/60 hover:bg-accent/50 h-auto! w-full border-2 whitespace-normal shadow-sm">
                     <div class="flex items-center gap-2 py-1.5">
-                      <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                        <Target class="h-4 w-4 text-primary" />
+                      <div
+                        class="bg-primary/10 flex h-6 w-6 shrink-0 items-center justify-center rounded-md">
+                        <Target class="text-primary h-4 w-4" />
                       </div>
                       {#if selectedBudgetId && selectedBudget}
                         <div class="flex min-w-0 flex-col items-start">
@@ -408,7 +422,9 @@ const availableBudgetOptions = $derived.by(() => {
                           <span class="text-muted-foreground text-xs">
                             <span class="capitalize">{selectedBudget.type.replace('-', ' ')}</span>
                             {#if selectedBudget.metadata?.allocatedAmount}
-                              · {currencyFormatter.format(selectedBudget.metadata.allocatedAmount as number)} budgeted
+                              · {currencyFormatter.format(
+                                selectedBudget.metadata.allocatedAmount as number
+                              )} budgeted
                             {/if}
                           </span>
                         </div>
@@ -423,25 +439,43 @@ const availableBudgetOptions = $derived.by(() => {
                         <div class="flex w-full items-center gap-3">
                           <div
                             class={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                              budget.type === 'account-monthly' && "bg-blue-100 dark:bg-blue-900/30",
-                              budget.type === 'category-envelope' && "bg-emerald-100 dark:bg-emerald-900/30",
-                              budget.type === 'goal-based' && "bg-purple-100 dark:bg-purple-900/30",
-                              budget.type === 'scheduled-expense' && "bg-amber-100 dark:bg-amber-900/30",
-                              !['account-monthly', 'category-envelope', 'goal-based', 'scheduled-expense'].includes(budget.type) && "bg-primary/10"
+                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                              budget.type === 'account-monthly' &&
+                                'bg-blue-100 dark:bg-blue-900/30',
+                              budget.type === 'category-envelope' &&
+                                'bg-emerald-100 dark:bg-emerald-900/30',
+                              budget.type === 'goal-based' && 'bg-purple-100 dark:bg-purple-900/30',
+                              budget.type === 'scheduled-expense' &&
+                                'bg-amber-100 dark:bg-amber-900/30',
+                              ![
+                                'account-monthly',
+                                'category-envelope',
+                                'goal-based',
+                                'scheduled-expense',
+                              ].includes(budget.type) && 'bg-primary/10'
                             )}>
-                            <Target class={cn(
-                              "h-4 w-4",
-                              budget.type === 'account-monthly' && "text-blue-600 dark:text-blue-400",
-                              budget.type === 'category-envelope' && "text-emerald-600 dark:text-emerald-400",
-                              budget.type === 'goal-based' && "text-purple-600 dark:text-purple-400",
-                              budget.type === 'scheduled-expense' && "text-amber-600 dark:text-amber-400",
-                              !['account-monthly', 'category-envelope', 'goal-based', 'scheduled-expense'].includes(budget.type) && "text-primary"
-                            )} />
+                            <Target
+                              class={cn(
+                                'h-4 w-4',
+                                budget.type === 'account-monthly' &&
+                                  'text-blue-600 dark:text-blue-400',
+                                budget.type === 'category-envelope' &&
+                                  'text-emerald-600 dark:text-emerald-400',
+                                budget.type === 'goal-based' &&
+                                  'text-purple-600 dark:text-purple-400',
+                                budget.type === 'scheduled-expense' &&
+                                  'text-amber-600 dark:text-amber-400',
+                                ![
+                                  'account-monthly',
+                                  'category-envelope',
+                                  'goal-based',
+                                  'scheduled-expense',
+                                ].includes(budget.type) && 'text-primary'
+                              )} />
                           </div>
                           <div class="min-w-0 flex-1">
                             <div class="truncate font-medium">{budget.name}</div>
-                            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                            <div class="text-muted-foreground flex items-center gap-2 text-xs">
                               <Badge variant="outline" class="h-4 px-1 text-[10px] capitalize">
                                 {budget.type}
                               </Badge>
@@ -466,22 +500,26 @@ const availableBudgetOptions = $derived.by(() => {
                 <NumericInput
                   bind:value={allocationAmount}
                   onSubmit={handleAddAllocation}
-                  buttonClass={cn('w-full h-9', validationError ? 'border-red-500' : '')}
-                />
+                  buttonClass={cn('w-full h-9', validationError ? 'border-red-500' : '')} />
 
                 <!-- Real-time validation feedback -->
                 {#if validationError}
-                  <div id="amount-error" role="alert" class="flex items-center gap-1 text-xs text-red-600">
+                  <div
+                    id="amount-error"
+                    role="alert"
+                    class="flex items-center gap-1 text-xs text-red-600">
                     <TriangleAlert class="h-3 w-3" aria-hidden="true" />
                     <span>{validationError}</span>
                   </div>
                 {:else if validationWarning}
-                  <div id="amount-warning" role="status" class="flex items-center gap-1 text-xs text-orange-600">
+                  <div
+                    id="amount-warning"
+                    role="status"
+                    class="flex items-center gap-1 text-xs text-orange-600">
                     <TriangleAlert class="h-3 w-3" aria-hidden="true" />
                     <span>{validationWarning}</span>
                   </div>
                 {/if}
-
               </div>
 
               <!-- Quick allocation buttons -->

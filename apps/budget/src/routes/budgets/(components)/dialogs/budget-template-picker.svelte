@@ -15,8 +15,21 @@ import {
   type TemplateCategory,
 } from '$lib/constants/budget-templates';
 import { currencyFormatter } from '$lib/utils/formatters';
-import * as LucideIcons from '@lucide/svelte/icons';
-import { Search, Sparkles } from '@lucide/svelte/icons';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import BookOpen from '@lucide/svelte/icons/book-open';
+import Car from '@lucide/svelte/icons/car';
+import CircleDashed from '@lucide/svelte/icons/circle-dashed';
+import CreditCard from '@lucide/svelte/icons/credit-card';
+import Film from '@lucide/svelte/icons/film';
+import Hammer from '@lucide/svelte/icons/hammer';
+import HeartPulse from '@lucide/svelte/icons/heart-pulse';
+import Home from '@lucide/svelte/icons/home';
+import Plane from '@lucide/svelte/icons/plane';
+import Search from '@lucide/svelte/icons/search';
+import ShoppingCart from '@lucide/svelte/icons/shopping-cart';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Utensils from '@lucide/svelte/icons/utensils';
+import Zap from '@lucide/svelte/icons/zap';
 
 interface Props {
   open: boolean;
@@ -26,15 +39,22 @@ let { open = $bindable() }: Props = $props();
 
 // Helper to get Lucide icon component from icon name
 function getIconComponent(iconName: string) {
-  // Convert kebab-case to PascalCase (e.g., "shopping-cart" -> "ShoppingCart")
-  const pascalCase = iconName
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join('');
+  const templateIcons = {
+    'alert-triangle': AlertTriangle,
+    'book-open': BookOpen,
+    car: Car,
+    'credit-card': CreditCard,
+    film: Film,
+    hammer: Hammer,
+    'heart-pulse': HeartPulse,
+    home: Home,
+    plane: Plane,
+    'shopping-cart': ShoppingCart,
+    utensils: Utensils,
+    zap: Zap,
+  } as const;
 
-  // Get the icon from the LucideIcons object
-  const icon = (LucideIcons as any)[pascalCase];
-  return icon || LucideIcons.CircleDashed; // Fallback icon
+  return templateIcons[iconName as keyof typeof templateIcons] ?? CircleDashed;
 }
 
 let searchTerm = $state('');
@@ -117,8 +137,7 @@ function formatType(type: string) {
           class="relative"
           data-help-id="template-search"
           data-help-title="Template Search"
-          data-help-order="1"
-        >
+          data-help-order="1">
           <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             type="search"
@@ -131,8 +150,7 @@ function formatType(type: string) {
         <div
           data-help-id="template-category-tabs"
           data-help-title="Category Filter"
-          data-help-order="2"
-        >
+          data-help-order="2">
           <Tabs.Root bind:value={selectedCategory}>
             <Tabs.List class="grid w-full grid-cols-5">
               <Tabs.Trigger value="all">All</Tabs.Trigger>
@@ -158,8 +176,7 @@ function formatType(type: string) {
             class="space-y-3"
             data-help-id="template-grid"
             data-help-title="Template Cards"
-            data-help-order="3"
-          >
+            data-help-order="3">
             {#each filteredTemplates as template (template.id)}
               <Card.Root
                 class="hover:border-primary cursor-pointer transition-all hover:shadow-md"
@@ -219,8 +236,7 @@ function formatType(type: string) {
         href="/budgets/new"
         data-help-id="create-custom-budget"
         data-help-title="Create Custom Budget"
-        data-help-order="4"
-      >
+        data-help-order="4">
         Create Custom Budget
       </Button>
     </div>

@@ -12,7 +12,17 @@ import type { Category } from '$lib/schema/categories';
 import type { DetectedPattern } from '$lib/schema/detected-patterns';
 import type { Payee } from '$lib/schema/payees';
 import { formatCurrency } from '$lib/utils/formatters';
-import { Calendar, Check, Clock, DollarSign, LoaderCircle, RefreshCw, Sparkles, Tag, X } from '@lucide/svelte/icons';
+import {
+  Calendar,
+  Check,
+  Clock,
+  DollarSign,
+  LoaderCircle,
+  RefreshCw,
+  Sparkles,
+  Tag,
+  X,
+} from '@lucide/svelte/icons';
 import { toast } from '$lib/utils/toast-interceptor';
 
 // Extended type to include relations loaded by the query
@@ -161,8 +171,8 @@ function getConfidenceLabel(score: number): string {
         </div>
         <h3 class="mb-2 font-semibold">No patterns detected</h3>
         <p class="text-muted-foreground mb-4 max-w-md text-center text-sm">
-          Click "Detect Patterns" to analyze your transactions and find recurring expenses
-          that could be turned into scheduled transactions.
+          Click "Detect Patterns" to analyze your transactions and find recurring expenses that
+          could be turned into scheduled transactions.
         </p>
         <Button variant="outline" onclick={handleDetect} disabled={isDetecting}>
           {#if isDetecting}
@@ -194,7 +204,8 @@ function getConfidenceLabel(score: number): string {
                   </Badge>
                 </div>
 
-                <div class="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <div
+                  class="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                   <span class="flex items-center gap-1">
                     <Clock class="h-3.5 w-3.5" />
                     {getFrequencyLabel(pattern)}
@@ -206,7 +217,9 @@ function getConfidenceLabel(score: number): string {
                       {formatCurrency(pattern.amountAvg)}
                       {#if pattern.amountMin !== pattern.amountMax}
                         <span class="text-muted-foreground/60">
-                          ({formatCurrency(pattern.amountMin ?? 0)} - {formatCurrency(pattern.amountMax ?? 0)})
+                          ({formatCurrency(pattern.amountMin ?? 0)} - {formatCurrency(
+                            pattern.amountMax ?? 0
+                          )})
                         </span>
                       {/if}
                     </span>
@@ -239,8 +252,7 @@ function getConfidenceLabel(score: number): string {
                   size="sm"
                   variant="outline"
                   onclick={() => handleDismiss(pattern.id)}
-                  disabled={isProcessing}
-                >
+                  disabled={isProcessing}>
                   {#if isProcessing && dismissMutation.isPending}
                     <LoaderCircle class="h-4 w-4 animate-spin" />
                   {:else}
@@ -248,11 +260,7 @@ function getConfidenceLabel(score: number): string {
                   {/if}
                   <span class="sr-only">Dismiss</span>
                 </Button>
-                <Button
-                  size="sm"
-                  onclick={() => handleConvert(pattern.id)}
-                  disabled={isProcessing}
-                >
+                <Button size="sm" onclick={() => handleConvert(pattern.id)} disabled={isProcessing}>
                   {#if isProcessing && convertMutation.isPending}
                     <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                   {:else}

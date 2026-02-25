@@ -19,11 +19,7 @@ import { currentDate } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils/formatters';
 import { createTransactionValidationEngine } from '$lib/utils/wizard-validation';
 import type { DateValue } from '@internationalized/date';
-import {
-  Calendar,
-  HandCoins,
-  Info
-} from '@lucide/svelte/icons';
+import { Calendar, HandCoins, Info } from '@lucide/svelte/icons';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import type { Component } from 'svelte';
 import WizardStep from './wizard-step.svelte';
