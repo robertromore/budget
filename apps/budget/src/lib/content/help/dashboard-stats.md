@@ -6,12 +6,14 @@ related: [financial-overview, accounts-list]
 
 # Quick Stats Overview
 
-The stats cards at the top of your dashboard provide an instant snapshot of your financial status.
+The stats cards at the top of your dashboard provide an instant snapshot of your
+financial status.
 
 ## Key Metrics
 
 - **Total Balance** - Combined balance across all your accounts
-- **Active Accounts** - Number of accounts currently in use (excludes closed accounts)
+- **Active Accounts** - Number of accounts currently in use (excludes closed
+  accounts)
 - **Payees** - Total number of merchants and vendors you've transacted with
 - **Schedules** - Number of recurring transactions you've set up
 

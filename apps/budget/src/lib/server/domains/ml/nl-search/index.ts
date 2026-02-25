@@ -9,5 +9,5 @@ export {
   createNaturalLanguageSearchService,
   NaturalLanguageSearchService,
   type NLSearchResult,
-  type ParsedQuery
+  type ParsedQuery,
 } from "./service";

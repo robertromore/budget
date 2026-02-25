@@ -83,7 +83,7 @@ const badge = $derived(getStatusBadge(status));
   <Tooltip.Root>
     <Tooltip.Trigger class="flex cursor-help items-center gap-2">
       <StatusIcon class={`h-4 w-4 ${getStatusColor(status)}`} />
-      <Badge variant={badge.variant} class="bg-blue-100 text-blue-800 text-xs">
+      <Badge variant={badge.variant} class="bg-blue-100 text-xs text-blue-800">
         {badge.label}
       </Badge>
     </Tooltip.Trigger>
@@ -98,7 +98,10 @@ const badge = $derived(getStatusBadge(status));
           {#if transferMatch.dateDifference > 0}
             <p>
               <span class="font-medium">Date difference:</span>
-              <span class="text-muted-foreground">{transferMatch.dateDifference} day{transferMatch.dateDifference > 1 ? 's' : ''}</span>
+              <span class="text-muted-foreground"
+                >{transferMatch.dateDifference} day{transferMatch.dateDifference > 1
+                  ? 's'
+                  : ''}</span>
             </p>
           {/if}
           <p>
@@ -107,7 +110,8 @@ const badge = $derived(getStatusBadge(status));
           </p>
         </div>
         <p class="text-muted-foreground mt-2 text-xs italic">
-          This transaction will be reconciled with the existing transfer instead of creating a duplicate.
+          This transaction will be reconciled with the existing transfer instead of creating a
+          duplicate.
         </p>
       </div>
     </Tooltip.Content>

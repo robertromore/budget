@@ -52,7 +52,9 @@ let {
 let activeTab = $state('overview');
 
 // Derive the initial/default chart type from props
-const initialChartType = $derived<ChartType>(defaultChartType ?? supportedChartTypes?.[0] ?? 'line');
+const initialChartType = $derived<ChartType>(
+  defaultChartType ?? supportedChartTypes?.[0] ?? 'line'
+);
 
 // Chart type state - starts undefined and gets set by effect
 let selectedChartType = $state<ChartType | undefined>(undefined);
@@ -72,7 +74,11 @@ const displayChartTypes = $derived.by((): ChartType[] => {
 
 // Reset chart type when supportedChartTypes changes and current selection is no longer valid
 $effect(() => {
-  if (selectedChartType && supportedChartTypes && !supportedChartTypes.includes(selectedChartType)) {
+  if (
+    selectedChartType &&
+    supportedChartTypes &&
+    !supportedChartTypes.includes(selectedChartType)
+  ) {
     selectedChartType = supportedChartTypes[0];
   }
 });
@@ -138,8 +144,9 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
                       class="h-7 w-7"
                       disabled={isDisabled}
                       onclick={() => (selectedChartType = type)}
-                      title={isDisabled ? `${chartTypeOption.label} (not available for this view)` : chartTypeOption.label}
-                    >
+                      title={isDisabled
+                        ? `${chartTypeOption.label} (not available for this view)`
+                        : chartTypeOption.label}>
                       <chartTypeOption.icon class="h-4 w-4" />
                     </Button>
                   {/each}
@@ -172,8 +179,7 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
             <div
               class="h-[450px] w-full"
               bind:clientWidth={containerWidth}
-              bind:clientHeight={containerHeight}
-            >
+              bind:clientHeight={containerHeight}>
               {#if containerReady}
                 {@render chart?.({ data, chartType: effectiveChartType })}
               {/if}
@@ -182,7 +188,9 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
         </Tabs.Content>
 
         {#if comprehensiveStats}
-          <Tabs.Content value="statistics" class="tabs-connected-content max-h-[500px] overflow-y-auto">
+          <Tabs.Content
+            value="statistics"
+            class="tabs-connected-content max-h-[500px] overflow-y-auto">
             <StatisticsList stats={comprehensiveStats} {loading} />
           </Tabs.Content>
         {/if}

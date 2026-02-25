@@ -6,7 +6,12 @@
  */
 
 import type { db } from "$lib/server/db";
-import { actionDefinitions, type ActionConfig, type ActionResult, type EntityType } from "$lib/types/automation";
+import {
+  actionDefinitions,
+  type ActionConfig,
+  type ActionResult,
+  type EntityType,
+} from "$lib/types/automation";
 
 // Database connection type derived from the actual db export
 type DatabaseConnection = Omit<typeof db, "batch">;
@@ -251,10 +256,15 @@ const actionHandlers: Record<string, ActionHandler> = {
 
   createCategoryAlias: async (params, entity, entityId, context) => {
     const categoryId = params.categoryId as number;
-    const originalName = (entity.originalCategoryName as string) || (entity.inferredCategory as string);
+    const originalName =
+      (entity.originalCategoryName as string) || (entity.inferredCategory as string);
 
     if (!originalName) {
-      return { actionType: "createCategoryAlias", success: false, error: "No category name to alias" };
+      return {
+        actionType: "createCategoryAlias",
+        success: false,
+        error: "No category name to alias",
+      };
     }
 
     if (context.services.categories?.createAlias) {
@@ -656,36 +666,68 @@ export interface ActionExecutionContext {
 
 // Service interfaces (minimal for action execution)
 interface TransactionService {
-  update: (id: number, data: Record<string, unknown>, context: ActionExecutionContext) => Promise<void>;
+  update: (
+    id: number,
+    data: Record<string, unknown>,
+    context: ActionExecutionContext
+  ) => Promise<void>;
 }
 
 interface AccountService {
-  update?: (id: number, data: Record<string, unknown>, context: ActionExecutionContext) => Promise<void>;
+  update?: (
+    id: number,
+    data: Record<string, unknown>,
+    context: ActionExecutionContext
+  ) => Promise<void>;
   close?: (id: number, context: ActionExecutionContext) => Promise<void>;
 }
 
 interface PayeeService {
-  update?: (id: number, data: Record<string, unknown>, context: ActionExecutionContext) => Promise<void>;
+  update?: (
+    id: number,
+    data: Record<string, unknown>,
+    context: ActionExecutionContext
+  ) => Promise<void>;
   merge?: (sourceId: number, targetId: number, context: ActionExecutionContext) => Promise<void>;
   createAlias?: (name: string, payeeId: number, context: ActionExecutionContext) => Promise<void>;
 }
 
 interface CategoryService {
-  update?: (id: number, data: Record<string, unknown>, context: ActionExecutionContext) => Promise<void>;
+  update?: (
+    id: number,
+    data: Record<string, unknown>,
+    context: ActionExecutionContext
+  ) => Promise<void>;
   moveToGroup?: (id: number, groupId: number, context: ActionExecutionContext) => Promise<void>;
-  createAlias?: (name: string, categoryId: number, context: ActionExecutionContext) => Promise<void>;
+  createAlias?: (
+    name: string,
+    categoryId: number,
+    context: ActionExecutionContext
+  ) => Promise<void>;
 }
 
 interface ScheduleService {
-  update?: (id: number, data: Record<string, unknown>, context: ActionExecutionContext) => Promise<void>;
+  update?: (
+    id: number,
+    data: Record<string, unknown>,
+    context: ActionExecutionContext
+  ) => Promise<void>;
   skip?: (id: number, reason: string | undefined, context: ActionExecutionContext) => Promise<void>;
   pause?: (id: number, context: ActionExecutionContext) => Promise<void>;
   resume?: (id: number, context: ActionExecutionContext) => Promise<void>;
 }
 
 interface BudgetService {
-  update?: (id: number, data: Record<string, unknown>, context: ActionExecutionContext) => Promise<void>;
-  assignTransaction?: (transactionId: number, budgetId: number, context: ActionExecutionContext) => Promise<void>;
+  update?: (
+    id: number,
+    data: Record<string, unknown>,
+    context: ActionExecutionContext
+  ) => Promise<void>;
+  assignTransaction?: (
+    transactionId: number,
+    budgetId: number,
+    context: ActionExecutionContext
+  ) => Promise<void>;
   rollover?: (id: number, context: ActionExecutionContext) => Promise<void>;
   pause?: (id: number, context: ActionExecutionContext) => Promise<void>;
 }

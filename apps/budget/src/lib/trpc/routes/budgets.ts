@@ -39,13 +39,7 @@ const metadataSchema = z.record(z.string(), z.unknown());
 
 const scheduleCreationModes = ["link", "create"] as const;
 
-const scheduleFrequencies = [
-  "weekly",
-  "bi-weekly",
-  "monthly",
-  "quarterly",
-  "yearly",
-] as const;
+const scheduleFrequencies = ["weekly", "bi-weekly", "monthly", "quarterly", "yearly"] as const;
 
 const newScheduleSchema = z.object({
   name: z.string().min(2).max(80),
@@ -264,15 +258,17 @@ async function createPeriodTemplateFromMetadata(
     categoryIds?: number[];
   }
 ) {
-  const defaultPeriod = metadata?.defaultPeriod as {
-    type?: string;
-    startDay?: number;
-    intervalCount?: number;
-  } | undefined;
+  const defaultPeriod = metadata?.defaultPeriod as
+    | {
+        type?: string;
+        startDay?: number;
+        intervalCount?: number;
+      }
+    | undefined;
 
   if (!defaultPeriod?.type) return;
 
-  const periodType = defaultPeriod.type as typeof periodTemplateTypes[number];
+  const periodType = defaultPeriod.type as (typeof periodTemplateTypes)[number];
   const startDay = defaultPeriod.startDay || 1;
 
   // Query the earliest transaction date based on filters
@@ -299,7 +295,7 @@ async function createPeriodTemplateFromMetadata(
   // Map form startDay to the appropriate field based on period type
   const templateInput: {
     budgetId: number;
-    type: typeof periodTemplateTypes[number];
+    type: (typeof periodTemplateTypes)[number];
     intervalCount?: number;
     startDayOfWeek?: number;
     startDayOfMonth?: number;
@@ -480,10 +476,7 @@ export const budgetRoutes = t.router({
     .query(async ({ input, ctx }) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.getRelatedBudgetsForAccount(
-          input.accountId,
-          ctx.workspaceId
-        );
+        return await budgetService.getRelatedBudgetsForAccount(input.accountId, ctx.workspaceId);
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw translateDomainError(error);
@@ -618,12 +611,10 @@ export const budgetRoutes = t.router({
         });
 
         // Auto-create period template from metadata if configured (after transaction)
-        await createPeriodTemplateFromMetadata(
-          budget.id,
-          budgetMetadata,
-          ctx.workspaceId,
-          { accountIds: budgetData.accountIds, categoryIds: budgetData.categoryIds }
-        );
+        await createPeriodTemplateFromMetadata(budget.id, budgetMetadata, ctx.workspaceId, {
+          accountIds: budgetData.accountIds,
+          categoryIds: budgetData.categoryIds,
+        });
 
         return budget;
       } catch (error) {
@@ -669,15 +660,15 @@ export const budgetRoutes = t.router({
         await db
           .update(schedules)
           .set({ budgetId: budget.id })
-          .where(and(eq(schedules.id, linkedScheduleId), eq(schedules.workspaceId, ctx.workspaceId)));
+          .where(
+            and(eq(schedules.id, linkedScheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+          );
 
         // Auto-create period template from metadata if configured
-        await createPeriodTemplateFromMetadata(
-          budget.id,
-          budgetMetadata,
-          ctx.workspaceId,
-          { accountIds: budgetData.accountIds, categoryIds: budgetData.categoryIds }
-        );
+        await createPeriodTemplateFromMetadata(budget.id, budgetMetadata, ctx.workspaceId, {
+          accountIds: budgetData.accountIds,
+          categoryIds: budgetData.categoryIds,
+        });
 
         return budget;
       } catch (error) {
@@ -1160,9 +1151,13 @@ export const budgetRoutes = t.router({
           },
         };
 
-        return await budgetService.updateBudget(input.budgetId, {
-          metadata: updatedMetadata,
-        }, ctx.workspaceId);
+        return await budgetService.updateBudget(
+          input.budgetId,
+          {
+            metadata: updatedMetadata,
+          },
+          ctx.workspaceId
+        );
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1332,10 +1327,7 @@ export const budgetRoutes = t.router({
     .input(z.object({ budgetId: z.number().positive() }))
     .mutation(async ({ input, ctx }) => {
       try {
-        return await forecastService.autoAllocateScheduledExpenses(
-          input.budgetId,
-          ctx.workspaceId
-        );
+        return await forecastService.autoAllocateScheduledExpenses(input.budgetId, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1443,7 +1435,11 @@ export const budgetRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await budgetService.linkScheduleToGoal(input.budgetId, input.scheduleId, ctx.workspaceId);
+        return await budgetService.linkScheduleToGoal(
+          input.budgetId,
+          input.scheduleId,
+          ctx.workspaceId
+        );
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1458,7 +1454,11 @@ export const budgetRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await budgetService.linkScheduleToScheduledExpense(input.budgetId, input.scheduleId, ctx.workspaceId);
+        return await budgetService.linkScheduleToScheduledExpense(
+          input.budgetId,
+          input.scheduleId,
+          ctx.workspaceId
+        );
       } catch (error) {
         throw translateDomainError(error);
       }

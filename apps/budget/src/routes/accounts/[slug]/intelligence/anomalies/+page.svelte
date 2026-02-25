@@ -1,93 +1,93 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
-  import { AnomalyAlertCard } from "$lib/components/ml";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Label } from "$lib/components/ui/label";
-  import * as Select from "$lib/components/ui/select";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { ML } from "$lib/query/ml";
-  import { AccountsState } from "$lib/states/entities";
-  import { getPageTabsContext } from "$lib/stores/page-tabs.svelte";
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-  import Brain from "@lucide/svelte/icons/brain";
-  import Calendar from "@lucide/svelte/icons/calendar";
-  import ChartLine from "@lucide/svelte/icons/chart-line";
-  import List from "@lucide/svelte/icons/list";
-  import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
-  import Scan from "@lucide/svelte/icons/scan";
-  import ShieldAlert from "@lucide/svelte/icons/shield-alert";
-  import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
-  import Upload from "@lucide/svelte/icons/upload";
-  import Wallet from "@lucide/svelte/icons/wallet";
-  import { onDestroy } from "svelte";
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { AnomalyAlertCard } from '$lib/components/ml';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import { ML } from '$lib/query/ml';
+import { AccountsState } from '$lib/states/entities';
+import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+import Brain from '@lucide/svelte/icons/brain';
+import Calendar from '@lucide/svelte/icons/calendar';
+import ChartLine from '@lucide/svelte/icons/chart-line';
+import List from '@lucide/svelte/icons/list';
+import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
+import Scan from '@lucide/svelte/icons/scan';
+import ShieldAlert from '@lucide/svelte/icons/shield-alert';
+import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+import Upload from '@lucide/svelte/icons/upload';
+import Wallet from '@lucide/svelte/icons/wallet';
+import { onDestroy } from 'svelte';
 
-  // Get account from state
-  const accountsState = AccountsState.get();
-  const accountSlug = $derived(page.params.slug ?? "");
-  const account = $derived(accountsState.getBySlug(accountSlug));
+// Get account from state
+const accountsState = AccountsState.get();
+const accountSlug = $derived(page.params.slug ?? '');
+const account = $derived(accountsState.getBySlug(accountSlug));
 
-  // Tab navigation - register with pageTabsContext for header tabs
-  const pageTabsContext = getPageTabsContext();
+// Tab navigation - register with pageTabsContext for header tabs
+const pageTabsContext = getPageTabsContext();
 
-  function handleTabChange(value: string) {
-    if (value === "intelligence") {
-      goto(`/accounts/${accountSlug}/intelligence`);
-    } else if (value === "transactions") {
-      goto(`/accounts/${accountSlug}`);
-    } else {
-      goto(`/accounts/${accountSlug}?tab=${value}`);
-    }
+function handleTabChange(value: string) {
+  if (value === 'intelligence') {
+    goto(`/accounts/${accountSlug}/intelligence`);
+  } else if (value === 'transactions') {
+    goto(`/accounts/${accountSlug}`);
+  } else {
+    goto(`/accounts/${accountSlug}?tab=${value}`);
   }
+}
 
-  $effect(() => {
-    if (pageTabsContext) {
-      pageTabsContext.register({
-        tabs: [
-          { id: "transactions", label: "Transactions", icon: List },
-          { id: "analytics", label: "Analytics", icon: ChartLine },
-          { id: "intelligence", label: "Intelligence", icon: Brain },
-          { id: "schedules", label: "Schedules", icon: Calendar },
-          { id: "budgets", label: "Budgets", icon: Wallet },
-          { id: "import", label: "Import", icon: Upload },
-          { id: "settings", label: "Settings", icon: SlidersHorizontal },
-        ],
-        activeTab: "intelligence",
-        onTabChange: handleTabChange,
-      });
-    }
-  });
-
-  onDestroy(() => {
-    pageTabsContext?.clear();
-  });
-
-  // Filter state
-  let minRiskLevel = $state<"low" | "medium" | "high" | "critical">("medium");
-  let limit = $state(20);
-
-  // Queries - use $derived for reactive filter updates
-  const anomalyAlertsQuery = $derived(ML.getAnomalyAlerts({ limit, minRiskLevel }).options());
-
-  // Mutations - use .options() for reactive interface
-  const scanAndAlertMutation = ML.scanAndAlert().options();
-
-  function handleScan() {
-    scanAndAlertMutation.mutate({ days: 7, minRiskLevel: "high" });
+$effect(() => {
+  if (pageTabsContext) {
+    pageTabsContext.register({
+      tabs: [
+        { id: 'transactions', label: 'Transactions', icon: List },
+        { id: 'analytics', label: 'Analytics', icon: ChartLine },
+        { id: 'intelligence', label: 'Intelligence', icon: Brain },
+        { id: 'schedules', label: 'Schedules', icon: Calendar },
+        { id: 'budgets', label: 'Budgets', icon: Wallet },
+        { id: 'import', label: 'Import', icon: Upload },
+        { id: 'settings', label: 'Settings', icon: SlidersHorizontal },
+      ],
+      activeTab: 'intelligence',
+      onTabChange: handleTabChange,
+    });
   }
+});
 
-  const riskLevelOptions = [
-    { value: "low", label: "Low & Above" },
-    { value: "medium", label: "Medium & Above" },
-    { value: "high", label: "High & Above" },
-    { value: "critical", label: "Critical Only" },
-  ];
+onDestroy(() => {
+  pageTabsContext?.clear();
+});
+
+// Filter state
+let minRiskLevel = $state<'low' | 'medium' | 'high' | 'critical'>('medium');
+let limit = $state(20);
+
+// Queries - use $derived for reactive filter updates
+const anomalyAlertsQuery = $derived(ML.getAnomalyAlerts({ limit, minRiskLevel }).options());
+
+// Mutations - use .options() for reactive interface
+const scanAndAlertMutation = ML.scanAndAlert().options();
+
+function handleScan() {
+  scanAndAlertMutation.mutate({ days: 7, minRiskLevel: 'high' });
+}
+
+const riskLevelOptions = [
+  { value: 'low', label: 'Low & Above' },
+  { value: 'medium', label: 'Medium & Above' },
+  { value: 'high', label: 'High & Above' },
+  { value: 'critical', label: 'Critical Only' },
+];
 </script>
 
 <svelte:head>
-  <title>Anomalies - {account?.name ?? "Account"} - Budget App</title>
+  <title>Anomalies - {account?.name ?? 'Account'} - Budget App</title>
   <meta name="description" content="Transaction anomalies for {account?.name ?? 'account'}" />
 </svelte:head>
 
@@ -104,16 +104,12 @@
           <h1 class="text-2xl font-bold tracking-tight">Anomalies</h1>
         </div>
         <p class="text-muted-foreground">
-          {account?.name ?? "Account"} - {anomalyAlertsQuery.data?.total ?? 0} anomalies
+          {account?.name ?? 'Account'} - {anomalyAlertsQuery.data?.total ?? 0} anomalies
         </p>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <Button
-        variant="outline"
-        onclick={handleScan}
-        disabled={scanAndAlertMutation.isPending}
-      >
+      <Button variant="outline" onclick={handleScan} disabled={scanAndAlertMutation.isPending}>
         <Scan class="mr-2 h-4 w-4 {scanAndAlertMutation.isPending ? 'animate-pulse' : ''}" />
         Scan
       </Button>
@@ -131,8 +127,7 @@
             value={minRiskLevel}
             onValueChange={(v) => {
               if (v) minRiskLevel = v as typeof minRiskLevel;
-            }}
-          >
+            }}>
             <Select.Trigger class="w-45">
               {riskLevelOptions.find((o) => o.value === minRiskLevel)?.label}
             </Select.Trigger>
@@ -148,8 +143,7 @@
           variant="ghost"
           size="sm"
           onclick={() => anomalyAlertsQuery.refetch()}
-          disabled={anomalyAlertsQuery.isFetching}
-        >
+          disabled={anomalyAlertsQuery.isFetching}>
           <RefreshCcw class="mr-2 h-4 w-4 {anomalyAlertsQuery.isFetching ? 'animate-spin' : ''}" />
           Refresh
         </Button>
@@ -167,7 +161,7 @@
   {:else if anomalyAlertsQuery.error}
     <Card.Root class="border-destructive">
       <Card.Content class="pt-6">
-        <div class="flex items-center gap-2 text-destructive">
+        <div class="text-destructive flex items-center gap-2">
           <AlertTriangle class="h-5 w-5" />
           <p>Failed to load anomaly alerts</p>
         </div>
@@ -178,9 +172,7 @@
       <Card.Content class="py-12 text-center">
         <AlertTriangle class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
         <h3 class="text-lg font-semibold">No Anomalies Found</h3>
-        <p class="text-muted-foreground mt-1">
-          No unusual transactions detected for this account.
-        </p>
+        <p class="text-muted-foreground mt-1">No unusual transactions detected for this account.</p>
       </Card.Content>
     </Card.Root>
   {:else if anomalyAlertsQuery.data}
@@ -195,8 +187,7 @@
           dimensions={alert.dimensions}
           onViewTransaction={() => {
             // Navigate to transaction
-          }}
-        />
+          }} />
       {/each}
     </div>
   {/if}

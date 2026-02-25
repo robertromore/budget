@@ -81,26 +81,28 @@ const docTypeLabel = $derived(docType ? documentTypeEnum[docType] : 'Document');
 
 // Simple markdown to HTML conversion for common patterns
 function formatMarkdown(text: string): string {
-  return text
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Bullet lists
-    .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
-    .replace(/(<li.*<\/li>\n?)+/g, '<ul class="list-disc my-2">$&</ul>')
-    // Numbered lists
-    .replace(/^\d+\. (.+)$/gm, '<li class="ml-4">$1</li>')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p class="my-2">')
-    .replace(/\n/g, '<br>')
-    // Wrap in paragraph
-    .replace(/^/, '<p class="my-2">')
-    .replace(/$/, '</p>');
+  return (
+    text
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
+      // Bold
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // Bullet lists
+      .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
+      .replace(/(<li.*<\/li>\n?)+/g, '<ul class="list-disc my-2">$&</ul>')
+      // Numbered lists
+      .replace(/^\d+\. (.+)$/gm, '<li class="ml-4">$1</li>')
+      // Line breaks
+      .replace(/\n\n/g, '</p><p class="my-2">')
+      .replace(/\n/g, '<br>')
+      // Wrap in paragraph
+      .replace(/^/, '<p class="my-2">')
+      .replace(/$/, '</p>')
+  );
 }
 </script>
 
@@ -110,8 +112,7 @@ function formatMarkdown(text: string): string {
   side="right"
   defaultWidth={500}
   minWidth={400}
-  maxWidth={700}
->
+  maxWidth={700}>
   {#snippet header()}
     <div class="flex flex-col gap-1">
       <h2 class="flex items-center gap-2 text-lg font-semibold">
@@ -158,12 +159,7 @@ function formatMarkdown(text: string): string {
           <div class="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
             <p class="text-destructive mb-2 text-sm font-medium">Unable to explain document</p>
             <p class="text-muted-foreground text-sm">{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              class="mt-3"
-              onclick={handleRetry}
-            >
+            <Button variant="outline" size="sm" class="mt-3" onclick={handleRetry}>
               <RefreshCw class="mr-2 h-4 w-4" />
               Try Again
             </Button>
@@ -182,9 +178,7 @@ function formatMarkdown(text: string): string {
 
   {#snippet footer()}
     <div class="flex justify-end gap-2">
-      <Button variant="outline" onclick={() => onOpenChange(false)}>
-        Close
-      </Button>
+      <Button variant="outline" onclick={() => onOpenChange(false)}>Close</Button>
       {#if explanation && !isLoading}
         <Button variant="outline" onclick={handleRetry}>
           <RefreshCw class="mr-2 h-4 w-4" />

@@ -18,24 +18,24 @@ import type { SearchAdapter, SearchAdapterConfig, WebSearchProvider } from "./ty
  * Factory function to create the appropriate search adapter based on provider
  */
 export function createSearchAdapter(
-	provider: WebSearchProvider,
-	config: SearchAdapterConfig = {}
+  provider: WebSearchProvider,
+  config: SearchAdapterConfig = {}
 ): SearchAdapter {
-	switch (provider) {
-		case "brave":
-			if (!config.braveApiKey) {
-				throw new Error("Brave Search API key is required");
-			}
-			return new BraveSearchAdapter(config.braveApiKey);
+  switch (provider) {
+    case "brave":
+      if (!config.braveApiKey) {
+        throw new Error("Brave Search API key is required");
+      }
+      return new BraveSearchAdapter(config.braveApiKey);
 
-		case "ollama":
-			if (!config.ollamaApiKey) {
-				throw new Error("Ollama API key is required for web search");
-			}
-			return new OllamaWebSearchAdapter(config.ollamaApiKey);
+    case "ollama":
+      if (!config.ollamaApiKey) {
+        throw new Error("Ollama API key is required for web search");
+      }
+      return new OllamaWebSearchAdapter(config.ollamaApiKey);
 
-		case "duckduckgo":
-		default:
-			return new DuckDuckGoAdapter();
-	}
+    case "duckduckgo":
+    default:
+      return new DuckDuckGoAdapter();
+  }
 }

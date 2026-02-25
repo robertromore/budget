@@ -1,6 +1,6 @@
-import {describe, it, expect} from "vitest";
-import type {TransactionsFormat} from "$lib/types/transactions";
-import {CalendarDate} from "@internationalized/date";
+import { describe, it, expect } from "vitest";
+import type { TransactionsFormat } from "$lib/types/transactions";
+import { CalendarDate } from "@internationalized/date";
 
 // Extended type with balance field for test data
 type TestTransactionFormat = TransactionsFormat & {
@@ -133,8 +133,8 @@ describe("ServerDataTable Component Logic", () => {
         transactions: TestTransactionFormat[],
         searchQuery?: string
       ) => {
-        if (hasError) return {type: "error", message: "Error loading transactions"};
-        if (isLoading) return {type: "loading"};
+        if (hasError) return { type: "error", message: "Error loading transactions" };
+        if (isLoading) return { type: "loading" };
         if (transactions.length === 0 && searchQuery) {
           return {
             type: "empty-search",
@@ -142,9 +142,9 @@ describe("ServerDataTable Component Logic", () => {
           };
         }
         if (transactions.length === 0) {
-          return {type: "empty", message: "No transactions found."};
+          return { type: "empty", message: "No transactions found." };
         }
-        return {type: "loaded", data: transactions};
+        return { type: "loaded", data: transactions };
       };
 
       // Loading state
@@ -258,7 +258,7 @@ describe("ServerDataTable Component Logic", () => {
       const safeSortingHandler = (sortFn: () => void) => {
         try {
           sortFn();
-          return {success: true, error: null};
+          return { success: true, error: null };
         } catch (error) {
           console.error("Sort error:", error);
           return {
@@ -325,9 +325,9 @@ describe("ServerDataTable Component Logic", () => {
   describe("Performance Optimizations", () => {
     it("should batch state updates efficiently", () => {
       let updateCount = 0;
-      const updates: Array<{type: string; value: any}> = [];
+      const updates: Array<{ type: string; value: any }> = [];
 
-      const batchStateUpdates = (newUpdates: Array<{type: string; value: any}>) => {
+      const batchStateUpdates = (newUpdates: Array<{ type: string; value: any }>) => {
         updates.push(...newUpdates);
         updateCount++;
 
@@ -343,9 +343,9 @@ describe("ServerDataTable Component Logic", () => {
       };
 
       const multipleUpdates = [
-        {type: "pageIndex", value: 1},
-        {type: "sortBy", value: "amount"},
-        {type: "sortOrder", value: "desc"},
+        { type: "pageIndex", value: 1 },
+        { type: "sortBy", value: "amount" },
+        { type: "sortOrder", value: "desc" },
       ];
 
       const result = batchStateUpdates(multipleUpdates);

@@ -246,8 +246,7 @@ export const getAnomalies = (
 ) => {
   return defineQuery({
     queryKey: ["utility", "anomalies", accountId, options],
-    queryFn: () =>
-      trpc().utilityRoutes.getAnomalies.query({ accountId, options }),
+    queryFn: () => trpc().utilityRoutes.getAnomalies.query({ accountId, options }),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
@@ -289,7 +288,13 @@ export const getBillProjection = (
   }
 ) => {
   return defineQuery({
-    queryKey: ["utility", "bill-projection", accountId, options?.projectedUsage, options?.targetMonth],
+    queryKey: [
+      "utility",
+      "bill-projection",
+      accountId,
+      options?.projectedUsage,
+      options?.targetMonth,
+    ],
     queryFn: () =>
       trpc().utilityRoutes.getBillProjection.query({
         accountId,

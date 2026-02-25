@@ -6,7 +6,8 @@ related: [sidebar, workspaces-page]
 
 # Workspace Switcher
 
-The workspace switcher lets you change between different workspaces and manage your workspace settings.
+The workspace switcher lets you change between different workspaces and manage
+your workspace settings.
 
 ## What are Workspaces?
 

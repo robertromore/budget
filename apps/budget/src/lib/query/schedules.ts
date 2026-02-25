@@ -3,10 +3,7 @@ import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 import { transactionKeys } from "./transactions";
 
-import type {
-  ScheduleSubscriptionStatus,
-  ScheduleSubscriptionType,
-} from "$lib/schema/schedules";
+import type { ScheduleSubscriptionStatus, ScheduleSubscriptionType } from "$lib/schema/schedules";
 
 /**
  * Query Keys for schedule operations
@@ -19,7 +16,8 @@ export const scheduleKeys = createQueryKeys("schedules", {
   detail: (id: number) => ["schedules", "detail", id] as const,
   skipHistory: (scheduleId: number) => ["schedules", "skips", scheduleId] as const,
   // Subscription-specific keys
-  subscriptions: (filters?: SubscriptionFilters) => ["schedules", "subscriptions", filters] as const,
+  subscriptions: (filters?: SubscriptionFilters) =>
+    ["schedules", "subscriptions", filters] as const,
   subscriptionAnalytics: () => ["schedules", "subscription-analytics"] as const,
   priceHistory: (scheduleId: number) => ["schedules", "price-history", scheduleId] as const,
 });
@@ -109,8 +107,7 @@ export const removeSkip = () =>
  */
 export const toggleStatus = () =>
   defineMutation({
-    mutationFn: (scheduleId: number) =>
-      trpc().scheduleRoutes.toggleStatus.mutate({ scheduleId }),
+    mutationFn: (scheduleId: number) => trpc().scheduleRoutes.toggleStatus.mutate({ scheduleId }),
     onSuccess: (updatedSchedule, scheduleId) => {
       queryClient.setQueryData(scheduleKeys.detail(scheduleId), updatedSchedule);
       queryClient.invalidateQueries({
@@ -125,8 +122,7 @@ export const toggleStatus = () =>
  */
 export const executeAutoAdd = () =>
   defineMutation({
-    mutationFn: (scheduleId: number) =>
-      trpc().scheduleRoutes.executeAutoAdd.mutate({ scheduleId }),
+    mutationFn: (scheduleId: number) => trpc().scheduleRoutes.executeAutoAdd.mutate({ scheduleId }),
     onSuccess: (_result, scheduleId) => {
       queryClient.invalidateQueries({ queryKey: scheduleKeys.detail(scheduleId) });
       queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
@@ -163,8 +159,7 @@ export const executeAutoAddAll = defineMutation<
  */
 export const remove = () =>
   defineMutation({
-    mutationFn: (scheduleId: number) =>
-      trpc().scheduleRoutes.remove.mutate({ id: scheduleId }),
+    mutationFn: (scheduleId: number) => trpc().scheduleRoutes.remove.mutate({ id: scheduleId }),
     onSuccess: (_data, scheduleId) => {
       queryClient.removeQueries({ queryKey: scheduleKeys.detail(scheduleId) });
       // Invalidate all schedule list queries (both global and account-specific)
@@ -205,8 +200,7 @@ export const bulkRemove = defineMutation<
  */
 export const duplicate = () =>
   defineMutation({
-    mutationFn: (scheduleId: number) =>
-      trpc().scheduleRoutes.duplicate.mutate({ id: scheduleId }),
+    mutationFn: (scheduleId: number) => trpc().scheduleRoutes.duplicate.mutate({ id: scheduleId }),
     onSuccess: (duplicatedSchedule) => {
       queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
       queryClient.setQueryData(scheduleKeys.detail(duplicatedSchedule.id), duplicatedSchedule);
@@ -265,8 +259,9 @@ export const getPriceHistory = (scheduleId: number) =>
  * Create a new schedule (used by detection UI)
  */
 export const create = defineMutation({
-  mutationFn: (data: Parameters<ReturnType<typeof trpc>["scheduleRoutes"]["create"]["mutate"]>[0]) =>
-    trpc().scheduleRoutes.create.mutate(data),
+  mutationFn: (
+    data: Parameters<ReturnType<typeof trpc>["scheduleRoutes"]["create"]["mutate"]>[0]
+  ) => trpc().scheduleRoutes.create.mutate(data),
   onSuccess: (newSchedule) => {
     queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
     queryClient.invalidateQueries({ queryKey: scheduleKeys.subscriptions() });

@@ -2,7 +2,7 @@
 import {
   AdvancedDataTable,
   GenericDisplayInput,
-  GenericFilterInput
+  GenericFilterInput,
 } from '$lib/components/data-table';
 import EntityBulkActions from '$lib/components/shared/data-table/entity-bulk-actions.svelte';
 import type { Category } from '$lib/schema';
@@ -40,7 +40,7 @@ let {
   onViewAnalytics,
   onBulkDelete,
   loading = false,
-  table = $bindable()
+  table = $bindable(),
 }: Props = $props();
 
 // Create columns with handlers
@@ -69,7 +69,7 @@ function getAvailableFilters(tableInstance: TTable<CategoryWithGroup>) {
     filtering: true,
     pagination: true,
     rowSelection: true,
-    columnVisibility: true
+    columnVisibility: true,
   }}
   showPagination={true}
   pageSizeOptions={[10, 25, 50, 100]}

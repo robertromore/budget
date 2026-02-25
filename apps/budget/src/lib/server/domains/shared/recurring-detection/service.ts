@@ -94,7 +94,8 @@ export class RecurringDetectionService {
 
       // Weighted confidence: 40% interval, 30% amount, 20% pattern, 10% occurrences
       const overallConfidence =
-        (intervalScore * 0.4 + amountScore * 0.3 + patternScore * 0.2 + occurrenceScore * 0.1) * 100;
+        (intervalScore * 0.4 + amountScore * 0.3 + patternScore * 0.2 + occurrenceScore * 0.1) *
+        100;
 
       // Skip if below minimum confidence
       if (overallConfidence < opts.minConfidence) continue;
@@ -256,7 +257,9 @@ export class RecurringDetectionService {
       .orderBy(transactions.date);
 
     // Filter out transactions without payees
-    return results.filter((t) => t.payeeId != null && t.payeeName != null) as TransactionForAnalysis[];
+    return results.filter(
+      (t) => t.payeeId != null && t.payeeName != null
+    ) as TransactionForAnalysis[];
   }
 
   /**

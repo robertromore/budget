@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, afterEach} from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 describe("ServerDataTableToolbar Logic", () => {
   describe("Debounced Search Logic", () => {
@@ -422,17 +422,17 @@ describe("ServerDataTableToolbar Logic", () => {
         }
       };
 
-      expect(handleKeyboardShortcut({key: "/", ctrlKey: false, metaKey: false})).toBe(
+      expect(handleKeyboardShortcut({ key: "/", ctrlKey: false, metaKey: false })).toBe(
         "focus-search"
       );
-      expect(handleKeyboardShortcut({key: "Escape", ctrlKey: false, metaKey: false})).toBe(
+      expect(handleKeyboardShortcut({ key: "Escape", ctrlKey: false, metaKey: false })).toBe(
         "clear-search"
       );
-      expect(handleKeyboardShortcut({key: "Enter", ctrlKey: false, metaKey: false})).toBe(
+      expect(handleKeyboardShortcut({ key: "Enter", ctrlKey: false, metaKey: false })).toBe(
         "trigger-search"
       );
-      expect(handleKeyboardShortcut({key: "r", ctrlKey: true, metaKey: false})).toBe("refresh");
-      expect(handleKeyboardShortcut({key: "r", ctrlKey: false, metaKey: false})).toBeNull();
+      expect(handleKeyboardShortcut({ key: "r", ctrlKey: true, metaKey: false })).toBe("refresh");
+      expect(handleKeyboardShortcut({ key: "r", ctrlKey: false, metaKey: false })).toBeNull();
     });
   });
 

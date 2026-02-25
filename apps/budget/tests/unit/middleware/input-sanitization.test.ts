@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest";
+import { describe, test, expect } from "vitest";
 
 // Test the input sanitization functions directly
 describe("Input Sanitization Middleware Tests", () => {

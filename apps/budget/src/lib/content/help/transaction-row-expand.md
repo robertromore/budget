@@ -11,6 +11,7 @@ Expand grouped rows to see individual transactions within a group.
 ## When Available
 
 Row expansion appears when:
+
 - Transactions are grouped by category, payee, or date
 - Grouped view is enabled
 - Rows have nested transactions
@@ -18,11 +19,13 @@ Row expansion appears when:
 ## Expand Controls
 
 ### Single Row
+
 - Click the expand chevron (▸) on a grouped row
 - Chevron rotates when expanded (▾)
 - Shows individual transactions in group
 
 ### Expand All
+
 - Click the header expand button
 - Expands all grouped rows at once
 - Click again to collapse all
@@ -30,6 +33,7 @@ Row expansion appears when:
 ## Grouped Views
 
 Groups can be created by:
+
 - **Category** - Transactions by budget category
 - **Payee** - Transactions by merchant
 - **Date** - Transactions by day/week/month
@@ -37,6 +41,7 @@ Groups can be created by:
 ## Group Summary
 
 Collapsed groups show:
+
 - Transaction count
 - Total amount
 - Group identifier (category, payee, or date)

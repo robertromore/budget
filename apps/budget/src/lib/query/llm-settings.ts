@@ -14,7 +14,8 @@ type LLMPreferencesResponse = RouterOutputs["llmSettingsRoutes"]["getPreferences
 export const llmSettingsKeys = createQueryKeys("llmSettings", {
   preferences: () => ["llmSettings", "preferences"] as const,
   models: (provider: LLMProvider) => ["llmSettings", "models", provider] as const,
-  ollamaModels: (endpoint?: string) => ["llmSettings", "ollamaModels", endpoint ?? "default"] as const,
+  ollamaModels: (endpoint?: string) =>
+    ["llmSettings", "ollamaModels", endpoint ?? "default"] as const,
 });
 
 /**
@@ -114,7 +115,9 @@ export const setDefaultProvider = () =>
   defineMutation<{ provider: LLMProvider | null }, LLMPreferences>({
     mutationFn: (input) => trpc().llmSettingsRoutes.setDefaultProvider.mutate(input),
     successMessage: (data) =>
-      data.defaultProvider ? `${data.defaultProvider} set as default provider` : "Default provider cleared",
+      data.defaultProvider
+        ? `${data.defaultProvider} set as default provider`
+        : "Default provider cleared",
     errorMessage: "Failed to set default provider",
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: llmSettingsKeys.preferences() });

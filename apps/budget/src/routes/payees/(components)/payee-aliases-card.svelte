@@ -3,11 +3,7 @@ import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Input } from '$lib/components/ui/input';
-import {
-  createPayeeAlias,
-  deletePayeeAlias,
-  getAliasesForPayee,
-} from '$lib/query/payee-aliases';
+import { createPayeeAlias, deletePayeeAlias, getAliasesForPayee } from '$lib/query/payee-aliases';
 import type { PayeeAlias } from '$lib/schema/payee-aliases';
 import Link from '@lucide/svelte/icons/link';
 import Plus from '@lucide/svelte/icons/plus';
@@ -120,14 +116,11 @@ function getTriggerLabel(trigger: string): string {
           bind:value={newAliasValue}
           placeholder="Enter raw import string..."
           class="flex-1"
-          onkeydown={(e) => e.key === 'Enter' && handleAddAlias()}
-        />
+          onkeydown={(e) => e.key === 'Enter' && handleAddAlias()} />
         <Button size="sm" onclick={handleAddAlias} disabled={isAdding || !newAliasValue.trim()}>
           {isAdding ? 'Adding...' : 'Add'}
         </Button>
-        <Button variant="ghost" size="sm" onclick={() => (showAddForm = false)}>
-          Cancel
-        </Button>
+        <Button variant="ghost" size="sm" onclick={() => (showAddForm = false)}>Cancel</Button>
       </div>
     {/if}
 
@@ -180,7 +173,10 @@ function getTriggerLabel(trigger: string): string {
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel onclick={() => (aliasToDelete = null)}>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={handleDelete} disabled={isDeleting} class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+      <AlertDialog.Action
+        onclick={handleDelete}
+        disabled={isDeleting}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
         {isDeleting ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

@@ -66,9 +66,7 @@ const groupedAnalytics = $derived(groupAnalyticsByCategory(filteredAnalyticsType
   <div class="flex items-start justify-between">
     <div>
       <h2 class="text-2xl font-bold tracking-tight">Analytics</h2>
-      <p class="text-muted-foreground">
-        Spending trends and insights for this budget
-      </p>
+      <p class="text-muted-foreground">Spending trends and insights for this budget</p>
     </div>
   </div>
 
@@ -78,7 +76,7 @@ const groupedAnalytics = $derived(groupAnalyticsByCategory(filteredAnalyticsType
     <div class="w-56 shrink-0 space-y-4">
       {#each groupedAnalytics as [category, analytics]}
         <div class="space-y-1">
-          <h3 class="text-muted-foreground px-2 text-xs font-semibold uppercase tracking-wider">
+          <h3 class="text-muted-foreground px-2 text-xs font-semibold tracking-wider uppercase">
             {category}
           </h3>
           <div class="space-y-0.5">
@@ -90,8 +88,7 @@ const groupedAnalytics = $derived(groupAnalyticsByCategory(filteredAnalyticsType
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                 )}
-                onclick={() => (selectedAnalytic = analytic.id)}
-              >
+                onclick={() => (selectedAnalytic = analytic.id)}>
                 <analytic.icon class="h-4 w-4 shrink-0" />
                 <span class="truncate">{analytic.title}</span>
               </button>
@@ -109,17 +106,9 @@ const groupedAnalytics = $derived(groupAnalyticsByCategory(filteredAnalyticsType
         {:else if effectiveSelectedAnalytic === 'category-breakdown'}
           <BudgetCategoryBreakdownChart {budgetId} />
         {:else if effectiveSelectedAnalytic === 'period-comparison'}
-          <BudgetPeriodComparisonChart
-            {budgetId}
-            {currentPeriodId}
-            {previousPeriodId}
-          />
+          <BudgetPeriodComparisonChart {budgetId} {currentPeriodId} {previousPeriodId} />
         {:else if effectiveSelectedAnalytic === 'daily-burndown'}
-          <BudgetBurndownChart
-            {budgetId}
-            startDate={periodStartDate}
-            endDate={periodEndDate}
-          />
+          <BudgetBurndownChart {budgetId} startDate={periodStartDate} endDate={periodEndDate} />
         {/if}
       {/if}
     </div>

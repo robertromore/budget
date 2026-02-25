@@ -11,7 +11,11 @@ import { DEFAULT_ONBOARDING_STATUS } from "$lib/types/onboarding";
 import type { AccountService } from "$lib/server/domains/accounts/services";
 import type { CategoryService } from "$lib/server/domains/categories/services";
 import { nowISOString } from "$lib/utils/dates";
-import { SmartDefaultsGenerator, type AccountConfig, type SmartDefaultsResult } from "./smart-defaults";
+import {
+  SmartDefaultsGenerator,
+  type AccountConfig,
+  type SmartDefaultsResult,
+} from "./smart-defaults";
 
 /**
  * Result of completing the onboarding wizard
@@ -190,10 +194,7 @@ export class OnboardingService {
   /**
    * Create accounts from configurations
    */
-  private async createAccounts(
-    workspaceId: number,
-    accounts: AccountConfig[]
-  ): Promise<number> {
+  private async createAccounts(workspaceId: number, accounts: AccountConfig[]): Promise<number> {
     let created = 0;
 
     for (const config of accounts) {

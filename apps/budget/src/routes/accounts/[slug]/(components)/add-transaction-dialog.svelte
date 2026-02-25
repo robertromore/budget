@@ -183,13 +183,11 @@ async function handleWizardComplete(data: Record<string, any>) {
           size="icon"
           class="h-8 w-8 shrink-0"
           onclick={() => helpMode.activate()}
-          title="Get help"
-        >
+          title="Get help">
           <CircleHelp class="h-4 w-4" />
         </Button>
         <Sheet.Close
-          class="ring-offset-background focus-visible:ring-ring h-8 w-8 shrink-0 rounded-md opacity-70 transition-opacity hover:bg-accent hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden inline-flex items-center justify-center"
-        >
+          class="ring-offset-background focus-visible:ring-ring hover:bg-accent inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden">
           <X class="h-4 w-4" />
           <span class="sr-only">Close</span>
         </Sheet.Close>
@@ -198,93 +196,116 @@ async function handleWizardComplete(data: Record<string, any>) {
   {/snippet}
 
   <ModalHelpProvider modalId="add-transaction" defaultHelpId="add-transaction-dialog">
-  <Tabs.Root bind:value={activeTab} class="w-full">
-    <Tabs.List class="grid w-full grid-cols-3">
-      <Tabs.Trigger value="manual" data-help-id="transaction-tab-manual" data-help-title="Manual Entry Tab">Manual</Tabs.Trigger>
-      <Tabs.Trigger value="transfer" data-help-id="transaction-tab-transfer" data-help-title="Transfer Tab">Transfer</Tabs.Trigger>
-      <Tabs.Trigger value="guided" data-help-id="transaction-tab-guided" data-help-title="Guided Entry Tab">Guided</Tabs.Trigger>
-    </Tabs.List>
+    <Tabs.Root bind:value={activeTab} class="w-full">
+      <Tabs.List class="grid w-full grid-cols-3">
+        <Tabs.Trigger
+          value="manual"
+          data-help-id="transaction-tab-manual"
+          data-help-title="Manual Entry Tab">Manual</Tabs.Trigger>
+        <Tabs.Trigger
+          value="transfer"
+          data-help-id="transaction-tab-transfer"
+          data-help-title="Transfer Tab">Transfer</Tabs.Trigger>
+        <Tabs.Trigger
+          value="guided"
+          data-help-id="transaction-tab-guided"
+          data-help-title="Guided Entry Tab">Guided</Tabs.Trigger>
+      </Tabs.List>
 
-    <Tabs.Content value="manual" class="mt-4">
-      <div class="space-y-4">
-        <!-- Amount -->
-        <div class="space-y-2" data-help-id="transaction-amount-field" data-help-title="Amount">
-          <Label for="amount">Amount</Label>
-          <NumericInput bind:value={amount} buttonClass="w-full" />
+      <Tabs.Content value="manual" class="mt-4">
+        <div class="space-y-4">
+          <!-- Amount -->
+          <div class="space-y-2" data-help-id="transaction-amount-field" data-help-title="Amount">
+            <Label for="amount">Amount</Label>
+            <NumericInput bind:value={amount} buttonClass="w-full" />
+          </div>
+
+          <!-- Date -->
+          <div class="space-y-2" data-help-id="transaction-date-field" data-help-title="Date">
+            <Label for="date">Date</Label>
+            <DateInput bind:value={dateValue} />
+          </div>
+
+          <!-- Payee -->
+          <div class="space-y-2" data-help-id="transaction-payee-field" data-help-title="Payee">
+            <Label for="payee">Payee</Label>
+            <EntityInput
+              entityLabel="payees"
+              entities={payees as EditableEntityItem[]}
+              bind:value={payee}
+              icon={HandCoins as unknown as Component}
+              buttonClass="w-full" />
+          </div>
+
+          <!-- Category -->
+          <div
+            class="space-y-2"
+            data-help-id="transaction-category-field"
+            data-help-title="Category">
+            <Label for="category">Category</Label>
+            <EntityInput
+              entityLabel="categories"
+              entities={categories as EditableEntityItem[]}
+              bind:value={category}
+              icon={SquareMousePointer as unknown as Component}
+              buttonClass="w-full" />
+          </div>
+
+          <!-- Budget -->
+          <div
+            class="space-y-2"
+            data-help-id="transaction-budget-field"
+            data-help-title="Budget Allocation">
+            <Label for="budget">Budget (Optional)</Label>
+            <BudgetSelector bind:value={selectedBudgetId} placeholder="Allocate to budget..." />
+            {#if selectedBudgetId && transactionForm.budgetAllocation}
+              <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                <CircleDollarSign class="h-3 w-3" />
+                <span>
+                  Allocating {currencyFormatter.format(Math.abs(transactionForm.budgetAllocation))} to
+                  selected budget
+                </span>
+              </div>
+            {/if}
+          </div>
+
+          <!-- Status - Hidden, defaults to pending -->
+
+          <!-- Notes -->
+          <div class="space-y-2" data-help-id="transaction-notes-field" data-help-title="Notes">
+            <Label for="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="Transaction notes (optional)"
+              bind:value={transactionForm.notes}
+              rows={3} />
+          </div>
         </div>
+      </Tabs.Content>
 
-        <!-- Date -->
-        <div class="space-y-2" data-help-id="transaction-date-field" data-help-title="Date">
-          <Label for="date">Date</Label>
-          <DateInput bind:value={dateValue} />
-        </div>
+      <Tabs.Content
+        value="transfer"
+        class="mt-4"
+        data-help-id="transaction-transfer-form"
+        data-help-title="Transfer Between Accounts">
+        <TransferTransactionForm
+          fromAccountId={account?.id || 0}
+          onSuccess={handleClose}
+          onCancel={handleClose} />
+      </Tabs.Content>
 
-        <!-- Payee -->
-        <div class="space-y-2" data-help-id="transaction-payee-field" data-help-title="Payee">
-          <Label for="payee">Payee</Label>
-          <EntityInput
-            entityLabel="payees"
-            entities={payees as EditableEntityItem[]}
-            bind:value={payee}
-            icon={HandCoins as unknown as Component}
-            buttonClass="w-full" />
-        </div>
-
-        <!-- Category -->
-        <div class="space-y-2" data-help-id="transaction-category-field" data-help-title="Category">
-          <Label for="category">Category</Label>
-          <EntityInput
-            entityLabel="categories"
-            entities={categories as EditableEntityItem[]}
-            bind:value={category}
-            icon={SquareMousePointer as unknown as Component}
-            buttonClass="w-full" />
-        </div>
-
-        <!-- Budget -->
-        <div class="space-y-2" data-help-id="transaction-budget-field" data-help-title="Budget Allocation">
-          <Label for="budget">Budget (Optional)</Label>
-          <BudgetSelector bind:value={selectedBudgetId} placeholder="Allocate to budget..." />
-          {#if selectedBudgetId && transactionForm.budgetAllocation}
-            <div class="text-muted-foreground flex items-center gap-2 text-xs">
-              <CircleDollarSign class="h-3 w-3" />
-              <span>
-                Allocating {currencyFormatter.format(Math.abs(transactionForm.budgetAllocation))} to
-                selected budget
-              </span>
-            </div>
-          {/if}
-        </div>
-
-        <!-- Status - Hidden, defaults to pending -->
-
-        <!-- Notes -->
-        <div class="space-y-2" data-help-id="transaction-notes-field" data-help-title="Notes">
-          <Label for="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Transaction notes (optional)"
-            bind:value={transactionForm.notes}
-            rows={3} />
-        </div>
-      </div>
-    </Tabs.Content>
-
-    <Tabs.Content value="transfer" class="mt-4" data-help-id="transaction-transfer-form" data-help-title="Transfer Between Accounts">
-      <TransferTransactionForm
-        fromAccountId={account?.id || 0}
-        onSuccess={handleClose}
-        onCancel={handleClose} />
-    </Tabs.Content>
-
-    <Tabs.Content value="guided" class="mt-4" data-help-id="transaction-wizard" data-help-title="Guided Entry">
-      <TransactionWizard
-        accountId={account?.id || 0}
-        {payees}
-        {categories}
-        onComplete={handleWizardComplete} />
-    </Tabs.Content>
-  </Tabs.Root>
+      <Tabs.Content
+        value="guided"
+        class="mt-4"
+        data-help-id="transaction-wizard"
+        data-help-title="Guided Entry">
+        <TransactionWizard
+          accountId={account?.id || 0}
+          {payees}
+          {categories}
+          onComplete={handleWizardComplete} />
+      </Tabs.Content>
+    </Tabs.Root>
   </ModalHelpProvider>
 
   {#snippet footer()}
@@ -305,8 +326,8 @@ async function handleWizardComplete(data: Record<string, any>) {
 </ResponsiveSheet>
 
 <style>
-  /* Hide the default absolute-positioned close button from sheet-content */
-  :global(.hide-default-close[data-slot="sheet-content"] > button.absolute) {
-    display: none;
-  }
+/* Hide the default absolute-positioned close button from sheet-content */
+:global(.hide-default-close[data-slot='sheet-content'] > button.absolute) {
+  display: none;
+}
 </style>

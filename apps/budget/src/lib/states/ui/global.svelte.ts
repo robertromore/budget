@@ -24,11 +24,7 @@ export const skipOccurrenceData = $state<{
   date: string;
 }>({ scheduleId: 0, scheduleName: "", date: "" });
 
-export function openSkipOccurrenceDialog(
-  scheduleId: number,
-  scheduleName: string,
-  date: string
-) {
+export function openSkipOccurrenceDialog(scheduleId: number, scheduleName: string, date: string) {
   skipOccurrenceData.scheduleId = scheduleId;
   skipOccurrenceData.scheduleName = scheduleName;
   skipOccurrenceData.date = date;

@@ -70,7 +70,10 @@ function handleTourPromptClose() {
   </div>
 
   <!-- Quick Stats Overview -->
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-4" data-help-id="dashboard-stats" data-help-title="Quick Stats Overview">
+  <div
+    class="grid grid-cols-1 gap-4 md:grid-cols-4"
+    data-help-id="dashboard-stats"
+    data-help-title="Quick Stats Overview">
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Total Balance</Card.Title>

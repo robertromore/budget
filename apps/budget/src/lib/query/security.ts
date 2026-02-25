@@ -19,8 +19,7 @@ export const securityKeys = createQueryKeys("security", {
   userPreferences: () => ["security", "userPreferences"] as const,
   workspaceEncryption: (workspaceId: number) =>
     ["security", "workspaceEncryption", workspaceId] as const,
-  accountEncryption: (accountId: number) =>
-    ["security", "accountEncryption", accountId] as const,
+  accountEncryption: (accountId: number) => ["security", "accountEncryption", accountId] as const,
   trustedDevices: () => ["security", "trustedDevices"] as const,
   riskScore: () => ["security", "riskScore"] as const,
   effectiveLevel: (workspaceId?: number, accountId?: number) =>
@@ -115,8 +114,7 @@ export const updateUserEncryptionPreferences = defineMutation<
   },
   { success: boolean }
 >({
-  mutationFn: (input) =>
-    trpc().securityRoutes.updateUserEncryptionPreferences.mutate(input),
+  mutationFn: (input) => trpc().securityRoutes.updateUserEncryptionPreferences.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(securityKeys.userPreferences());
   },
@@ -141,8 +139,7 @@ export const generateUserEncryptionKey = defineMutation<
     message: string;
   }
 >({
-  mutationFn: (input) =>
-    trpc().securityRoutes.generateUserEncryptionKey.mutate(input),
+  mutationFn: (input) => trpc().securityRoutes.generateUserEncryptionKey.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(securityKeys.userPreferences());
   },
@@ -183,8 +180,7 @@ export const rotateUserEncryptionKey = defineMutation<
     message: string;
   }
 >({
-  mutationFn: (input) =>
-    trpc().securityRoutes.rotateUserEncryptionKey.mutate(input),
+  mutationFn: (input) => trpc().securityRoutes.rotateUserEncryptionKey.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(securityKeys.userPreferences());
   },
@@ -211,8 +207,7 @@ export const getWorkspaceEncryptionSettings = (workspaceId: number) =>
     hasEncryptionKey: boolean;
   }>({
     queryKey: securityKeys.workspaceEncryption(workspaceId),
-    queryFn: () =>
-      trpc().securityRoutes.getWorkspaceEncryptionSettings.query({ workspaceId }),
+    queryFn: () => trpc().securityRoutes.getWorkspaceEncryptionSettings.query({ workspaceId }),
   });
 
 export const updateWorkspaceEncryptionSettings = defineMutation<
@@ -229,12 +224,9 @@ export const updateWorkspaceEncryptionSettings = defineMutation<
   },
   { success: boolean }
 >({
-  mutationFn: (input) =>
-    trpc().securityRoutes.updateWorkspaceEncryptionSettings.mutate(input),
+  mutationFn: (input) => trpc().securityRoutes.updateWorkspaceEncryptionSettings.mutate(input),
   onSuccess: (_data, variables) => {
-    cachePatterns.invalidatePrefix(
-      securityKeys.workspaceEncryption(variables.workspaceId)
-    );
+    cachePatterns.invalidatePrefix(securityKeys.workspaceEncryption(variables.workspaceId));
   },
   successMessage: "Workspace encryption settings updated",
   errorMessage: "Failed to update workspace encryption settings",
@@ -250,8 +242,7 @@ export const getAccountEncryptionSettings = (accountId: number) =>
     hasEncryptionKey: boolean;
   }>({
     queryKey: securityKeys.accountEncryption(accountId),
-    queryFn: () =>
-      trpc().securityRoutes.getAccountEncryptionSettings.query({ accountId }),
+    queryFn: () => trpc().securityRoutes.getAccountEncryptionSettings.query({ accountId }),
   });
 
 export const updateAccountEncryptionSettings = defineMutation<
@@ -261,12 +252,9 @@ export const updateAccountEncryptionSettings = defineMutation<
   },
   { success: boolean }
 >({
-  mutationFn: (input) =>
-    trpc().securityRoutes.updateAccountEncryptionSettings.mutate(input),
+  mutationFn: (input) => trpc().securityRoutes.updateAccountEncryptionSettings.mutate(input),
   onSuccess: (_data, variables) => {
-    cachePatterns.invalidatePrefix(
-      securityKeys.accountEncryption(variables.accountId)
-    );
+    cachePatterns.invalidatePrefix(securityKeys.accountEncryption(variables.accountId));
   },
   successMessage: "Account encryption settings updated",
   errorMessage: "Failed to update account encryption settings",
@@ -294,10 +282,7 @@ export const trustCurrentDevice = defineMutation<
   errorMessage: "Failed to trust device",
 });
 
-export const revokeDeviceTrust = defineMutation<
-  { deviceId: number },
-  { success: boolean }
->({
+export const revokeDeviceTrust = defineMutation<{ deviceId: number }, { success: boolean }>({
   mutationFn: (input) => trpc().securityRoutes.revokeDeviceTrust.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(securityKeys.trustedDevices());
@@ -330,10 +315,7 @@ export const getCurrentRiskScore = (input: {
 // Effective Encryption Level
 // ============================================================================
 
-export const getEffectiveEncryptionLevel = (input: {
-  workspaceId?: number;
-  accountId?: number;
-}) =>
+export const getEffectiveEncryptionLevel = (input: { workspaceId?: number; accountId?: number }) =>
   defineQuery<{
     level: EncryptionLevel;
     levelName: string;
@@ -343,6 +325,5 @@ export const getEffectiveEncryptionLevel = (input: {
     requiresKey: boolean;
   }>({
     queryKey: securityKeys.effectiveLevel(input.workspaceId, input.accountId),
-    queryFn: () =>
-      trpc().securityRoutes.getEffectiveEncryptionLevel.query(input),
+    queryFn: () => trpc().securityRoutes.getEffectiveEncryptionLevel.query(input),
   });

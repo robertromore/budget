@@ -42,7 +42,16 @@ const onboardingFormDataSchema = z.object({
     ])
   ),
   accountsToTrack: z.array(
-    z.enum(["checking", "savings", "credit-card", "investment", "hsa", "loan", "mortgage", "utility"])
+    z.enum([
+      "checking",
+      "savings",
+      "credit-card",
+      "investment",
+      "hsa",
+      "loan",
+      "mortgage",
+      "utility",
+    ])
   ),
   spendingAreas: z.array(
     z.enum([

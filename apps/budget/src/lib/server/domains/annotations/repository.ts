@@ -30,10 +30,7 @@ export class AnnotationRepository extends BaseRepository<
   /**
    * Create a new annotation
    */
-  override async create(
-    data: NewMonthAnnotation,
-    workspaceId: number
-  ): Promise<MonthAnnotation> {
+  override async create(data: NewMonthAnnotation, workspaceId: number): Promise<MonthAnnotation> {
     const [annotation] = await db
       .insert(monthAnnotations)
       .values({ ...data, workspaceId })
@@ -49,19 +46,11 @@ export class AnnotationRepository extends BaseRepository<
   /**
    * Find annotation by ID with workspace filtering
    */
-  override async findById(
-    id: number,
-    workspaceId: number
-  ): Promise<MonthAnnotation | null> {
+  override async findById(id: number, workspaceId: number): Promise<MonthAnnotation | null> {
     const result = await db
       .select()
       .from(monthAnnotations)
-      .where(
-        and(
-          eq(monthAnnotations.id, id),
-          eq(monthAnnotations.workspaceId, workspaceId)
-        )
-      )
+      .where(and(eq(monthAnnotations.id, id), eq(monthAnnotations.workspaceId, workspaceId)))
       .limit(1);
 
     return result[0] || null;
@@ -138,10 +127,7 @@ export class AnnotationRepository extends BaseRepository<
   /**
    * Find all annotations for an account
    */
-  async findByAccount(
-    accountId: number,
-    workspaceId: number
-  ): Promise<MonthAnnotation[]> {
+  async findByAccount(accountId: number, workspaceId: number): Promise<MonthAnnotation[]> {
     return await db
       .select()
       .from(monthAnnotations)
@@ -184,12 +170,7 @@ export class AnnotationRepository extends BaseRepository<
         ...data,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(
-        and(
-          eq(monthAnnotations.id, id),
-          eq(monthAnnotations.workspaceId, workspaceId)
-        )
-      )
+      .where(and(eq(monthAnnotations.id, id), eq(monthAnnotations.workspaceId, workspaceId)))
       .returning();
 
     if (!updated) {
@@ -205,12 +186,7 @@ export class AnnotationRepository extends BaseRepository<
   override async delete(id: number, workspaceId: number): Promise<void> {
     await db
       .delete(monthAnnotations)
-      .where(
-        and(
-          eq(monthAnnotations.id, id),
-          eq(monthAnnotations.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(monthAnnotations.id, id), eq(monthAnnotations.workspaceId, workspaceId)));
   }
 
   /**

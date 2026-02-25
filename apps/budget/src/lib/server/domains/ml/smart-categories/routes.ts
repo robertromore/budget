@@ -76,60 +76,56 @@ export const smartCategoryRoutes = t.router({
   /**
    * Get the top category suggestion for a transaction
    */
-  suggestTop: rateLimitedProcedure
-    .input(transactionContextSchema)
-    .query(async ({ input, ctx }) => {
-      try {
-        const service = getSmartCategoryService();
+  suggestTop: rateLimitedProcedure.input(transactionContextSchema).query(async ({ input, ctx }) => {
+    try {
+      const service = getSmartCategoryService();
 
-        const suggestions = await service.suggestCategories(ctx.workspaceId, input, 1);
+      const suggestions = await service.suggestCategories(ctx.workspaceId, input, 1);
 
-        if (suggestions.length === 0) {
-          return {
-            transaction: {
-              description: input.description,
-              amount: input.amount,
-            },
-            suggestion: null,
-            found: false,
-          };
-        }
-
+      if (suggestions.length === 0) {
         return {
           transaction: {
             description: input.description,
             amount: input.amount,
           },
-          suggestion: suggestions[0],
-          found: true,
+          suggestion: null,
+          found: false,
         };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to get category suggestion: ${errorMessage}`,
-        });
       }
-    }),
-
-  /**
-   * Analyze transaction type (income/expense/transfer)
-   */
-  analyzeType: rateLimitedProcedure
-    .input(transactionContextSchema)
-    .query(({ input }) => {
-      const service = getSmartCategoryService();
-
-      const analysis = service.analyzeTransactionType(input);
 
       return {
         transaction: {
           description: input.description,
           amount: input.amount,
         },
-        analysis,
+        suggestion: suggestions[0],
+        found: true,
       };
-    }),
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to get category suggestion: ${errorMessage}`,
+      });
+    }
+  }),
+
+  /**
+   * Analyze transaction type (income/expense/transfer)
+   */
+  analyzeType: rateLimitedProcedure.input(transactionContextSchema).query(({ input }) => {
+    const service = getSmartCategoryService();
+
+    const analysis = service.analyzeTransactionType(input);
+
+    return {
+      transaction: {
+        description: input.description,
+        amount: input.amount,
+      },
+      analysis,
+    };
+  }),
 
   /**
    * Detect if a transaction is likely a subscription
@@ -161,22 +157,20 @@ export const smartCategoryRoutes = t.router({
   /**
    * Get time-based category hints for a transaction
    */
-  getTimeHints: rateLimitedProcedure
-    .input(transactionContextSchema)
-    .query(({ input }) => {
-      const service = getSmartCategoryService();
+  getTimeHints: rateLimitedProcedure.input(transactionContextSchema).query(({ input }) => {
+    const service = getSmartCategoryService();
 
-      const hints = service.getTimeBasedHints(input);
+    const hints = service.getTimeBasedHints(input);
 
-      return {
-        transaction: {
-          description: input.description,
-          date: input.date,
-        },
-        hints,
-        total: hints.length,
-      };
-    }),
+    return {
+      transaction: {
+        description: input.description,
+        date: input.date,
+      },
+      hints,
+      total: hints.length,
+    };
+  }),
 
   /**
    * Batch suggest categories for multiple transactions
@@ -194,11 +188,7 @@ export const smartCategoryRoutes = t.router({
 
         const results = await Promise.all(
           input.transactions.map(async (txn) => {
-            const suggestions = await service.suggestCategories(
-              ctx.workspaceId,
-              txn,
-              input.limit
-            );
+            const suggestions = await service.suggestCategories(ctx.workspaceId, txn, input.limit);
             return {
               transaction: {
                 description: txn.description,

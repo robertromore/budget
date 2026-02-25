@@ -15,11 +15,7 @@ import YearSelect from "./calendar-year-select.svelte";
 import Caption from "./calendar-caption.svelte";
 
 // Shared components used by both Calendar and RangeCalendar
-import {
-  CalendarMonth as Month,
-  CalendarMonths as Months,
-  CalendarNav as Nav,
-} from "./shared";
+import { CalendarMonth as Month, CalendarMonths as Months, CalendarNav as Nav } from "./shared";
 export {
   Day,
   Cell,

@@ -130,7 +130,11 @@ export const automationRoutes = t.router({
    * Get trigger events for an entity type
    */
   getTriggerEvents: publicProcedure
-    .input(z.object({ entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]) }))
+    .input(
+      z.object({
+        entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]),
+      })
+    )
     .query(({ input }) => {
       return triggerEvents[input.entityType as EntityType];
     }),
@@ -139,7 +143,11 @@ export const automationRoutes = t.router({
    * Get condition fields for an entity type
    */
   getConditionFields: publicProcedure
-    .input(z.object({ entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]) }))
+    .input(
+      z.object({
+        entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]),
+      })
+    )
     .query(({ input }) => {
       return conditionFields[input.entityType as EntityType];
     }),
@@ -148,7 +156,11 @@ export const automationRoutes = t.router({
    * Get available actions for an entity type
    */
   getActions: publicProcedure
-    .input(z.object({ entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]) }))
+    .input(
+      z.object({
+        entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]),
+      })
+    )
     .query(({ input }) => {
       return getActionsForEntity(input.entityType as EntityType);
     }),
@@ -179,7 +191,11 @@ export const automationRoutes = t.router({
    * Get rules by entity type
    */
   listByEntityType: publicProcedure
-    .input(z.object({ entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]) }))
+    .input(
+      z.object({
+        entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]),
+      })
+    )
     .query(async ({ ctx, input }) => {
       return getRulesByEntityType(input.entityType as EntityType, {
         db: ctx.db,
@@ -205,60 +221,54 @@ export const automationRoutes = t.router({
   /**
    * Get a single rule by ID
    */
-  get: publicProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
-      const rule = await getRule(input.id, {
-        db: ctx.db,
-        workspaceId: ctx.workspaceId,
-        userId: ctx.userId,
+  get: publicProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+    const rule = await getRule(input.id, {
+      db: ctx.db,
+      workspaceId: ctx.workspaceId,
+      userId: ctx.userId,
+    });
+
+    if (!rule) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Rule not found",
       });
+    }
 
-      if (!rule) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Rule not found",
-        });
-      }
-
-      return rule;
-    }),
+    return rule;
+  }),
 
   /**
    * Create a new rule
    */
-  create: rateLimitedProcedure
-    .input(createRuleSchema)
-    .mutation(async ({ ctx, input }) => {
-      return createRule(input, {
-        db: ctx.db,
-        workspaceId: ctx.workspaceId,
-        userId: ctx.userId,
-      });
-    }),
+  create: rateLimitedProcedure.input(createRuleSchema).mutation(async ({ ctx, input }) => {
+    return createRule(input, {
+      db: ctx.db,
+      workspaceId: ctx.workspaceId,
+      userId: ctx.userId,
+    });
+  }),
 
   /**
    * Update an existing rule
    */
-  update: rateLimitedProcedure
-    .input(updateRuleSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
-      const rule = await updateRule(id, data, {
-        db: ctx.db,
-        workspaceId: ctx.workspaceId,
-        userId: ctx.userId,
+  update: rateLimitedProcedure.input(updateRuleSchema).mutation(async ({ ctx, input }) => {
+    const { id, ...data } = input;
+    const rule = await updateRule(id, data, {
+      db: ctx.db,
+      workspaceId: ctx.workspaceId,
+      userId: ctx.userId,
+    });
+
+    if (!rule) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Rule not found",
       });
+    }
 
-      if (!rule) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Rule not found",
-        });
-      }
-
-      return rule;
-    }),
+    return rule;
+  }),
 
   /**
    * Delete a rule
@@ -356,11 +366,13 @@ export const automationRoutes = t.router({
    * Get logs for a specific rule
    */
   getLogs: publicProcedure
-    .input(z.object({
-      ruleId: z.number(),
-      limit: z.number().min(1).max(500).optional(),
-      offset: z.number().min(0).optional(),
-    }))
+    .input(
+      z.object({
+        ruleId: z.number(),
+        limit: z.number().min(1).max(500).optional(),
+        offset: z.number().min(0).optional(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       return getRuleLogs(
         input.ruleId,
@@ -424,10 +436,12 @@ export const automationRoutes = t.router({
    * Test a rule against sample data (dry run)
    */
   testRule: publicProcedure
-    .input(z.object({
-      ruleId: z.number(),
-      testEntity: z.record(z.string(), z.unknown()),
-    }))
+    .input(
+      z.object({
+        ruleId: z.number(),
+        testEntity: z.record(z.string(), z.unknown()),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       // Create minimal services for testing
       const services = {

@@ -1,427 +1,390 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
-	import { getIconByName } from "$lib/components/ui/icon-picker/icon-categories";
-	import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
-	import * as ToggleGroup from "$lib/components/ui/toggle-group";
-	import type { Category } from "$lib/schema/categories";
-	import { CategoriesState } from "$lib/states/entities/categories.svelte";
-	import { rpc } from "$lib/query";
-	import { cn } from "$lib/utils";
-	import { MediaQuery } from "svelte/reactivity";
-	import CategoryDetailPanel from "./category-detail-panel.svelte";
-	import CategoryEmptyState from "./category-empty-state.svelte";
-	import CategoryListView from "./category-list-view.svelte";
-	import type {
-	  DisplayMode,
-	  EditMode,
-	  LayoutMode,
-	  QuickEditCategoryData,
-	} from "./types";
+import { browser } from '$app/environment';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as ToggleGroup from '$lib/components/ui/toggle-group';
+import type { Category } from '$lib/schema/categories';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { rpc } from '$lib/query';
+import { cn } from '$lib/utils';
+import { MediaQuery } from 'svelte/reactivity';
+import CategoryDetailPanel from './category-detail-panel.svelte';
+import CategoryEmptyState from './category-empty-state.svelte';
+import CategoryListView from './category-list-view.svelte';
+import type { DisplayMode, EditMode, LayoutMode, QuickEditCategoryData } from './types';
 
-	import Columns2 from "@lucide/svelte/icons/columns-2";
-	import LayoutList from "@lucide/svelte/icons/layout-list";
-	import Tag from "@lucide/svelte/icons/tag";
+import Columns2 from '@lucide/svelte/icons/columns-2';
+import LayoutList from '@lucide/svelte/icons/layout-list';
+import Tag from '@lucide/svelte/icons/tag';
 
-	interface Props {
-		value?: number | null;
-		onValueChange: (categoryId: number | null) => void;
-		displayMode?: DisplayMode;
-		allowCreate?: boolean;
-		allowEdit?: boolean;
-		allowClear?: boolean;
-		buttonClass?: string;
-		placeholder?: string;
-	}
+interface Props {
+  value?: number | null;
+  onValueChange: (categoryId: number | null) => void;
+  displayMode?: DisplayMode;
+  allowCreate?: boolean;
+  allowEdit?: boolean;
+  allowClear?: boolean;
+  buttonClass?: string;
+  placeholder?: string;
+}
 
-	let {
-		value = $bindable(null),
-		onValueChange,
-		displayMode = "normal",
-		allowCreate = true,
-		allowEdit = true,
-		allowClear = true,
-		buttonClass = "",
-		placeholder = "Select category...",
-	}: Props = $props();
+let {
+  value = $bindable(null),
+  onValueChange,
+  displayMode = 'normal',
+  allowCreate = true,
+  allowEdit = true,
+  allowClear = true,
+  buttonClass = '',
+  placeholder = 'Select category...',
+}: Props = $props();
 
-	// Layout mode preference storage
-	const LAYOUT_MODE_KEY = "category-selector-layout-mode";
+// Layout mode preference storage
+const LAYOUT_MODE_KEY = 'category-selector-layout-mode';
 
-	function getStoredLayoutMode(): LayoutMode {
-		if (!browser) return "slide-in";
-		return (
-			(localStorage.getItem(LAYOUT_MODE_KEY) as LayoutMode) || "slide-in"
-		);
-	}
+function getStoredLayoutMode(): LayoutMode {
+  if (!browser) return 'slide-in';
+  return (localStorage.getItem(LAYOUT_MODE_KEY) as LayoutMode) || 'slide-in';
+}
 
-	function setStoredLayoutMode(mode: LayoutMode) {
-		if (browser) {
-			localStorage.setItem(LAYOUT_MODE_KEY, mode);
-		}
-	}
+function setStoredLayoutMode(mode: LayoutMode) {
+  if (browser) {
+    localStorage.setItem(LAYOUT_MODE_KEY, mode);
+  }
+}
 
-	// State
-	const isDesktop = new MediaQuery("(min-width: 768px)");
-	let open = $state(false);
-	let layoutMode = $state<LayoutMode>(getStoredLayoutMode());
-	let focusedCategoryId = $state<number | null>(null);
-	let editMode = $state<EditMode>("view");
-	let createInitialName = $state("");
+// State
+const isDesktop = new MediaQuery('(min-width: 768px)');
+let open = $state(false);
+let layoutMode = $state<LayoutMode>(getStoredLayoutMode());
+let focusedCategoryId = $state<number | null>(null);
+let editMode = $state<EditMode>('view');
+let createInitialName = $state('');
 
-	// Categories from context
-	const categoriesState = CategoriesState.get();
-	const allCategories = $derived(
-		categoriesState ? categoriesState.getActiveCategories() : [],
-	);
+// Categories from context
+const categoriesState = CategoriesState.get();
+const allCategories = $derived(categoriesState ? categoriesState.getActiveCategories() : []);
 
-	// Refresh categories from server when selector opens (to catch categories created elsewhere)
-	$effect(() => {
-		if (open && categoriesState) {
-			rpc.categories.listCategories().execute().then((freshCategories) => {
-				if (freshCategories) {
-					categoriesState.init(freshCategories as Category[]);
-				}
-			}).catch((err) => {
-				console.error("Failed to refresh categories:", err);
-			});
-		}
-	});
+// Refresh categories from server when selector opens (to catch categories created elsewhere)
+$effect(() => {
+  if (open && categoriesState) {
+    rpc.categories
+      .listCategories()
+      .execute()
+      .then((freshCategories) => {
+        if (freshCategories) {
+          categoriesState.init(freshCategories as Category[]);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to refresh categories:', err);
+      });
+  }
+});
 
-	// Selected category (the one that will be returned as value)
-	const selectedCategory = $derived(
-		allCategories.find((c) => c.id === value),
-	);
+// Selected category (the one that will be returned as value)
+const selectedCategory = $derived(allCategories.find((c) => c.id === value));
 
-	// Focused category (the one shown in detail panel)
-	const focusedCategory = $derived(
-		focusedCategoryId
-			? (allCategories.find((c) => c.id === focusedCategoryId) ?? null)
-			: null,
-	);
+// Focused category (the one shown in detail panel)
+const focusedCategory = $derived(
+  focusedCategoryId ? (allCategories.find((c) => c.id === focusedCategoryId) ?? null) : null
+);
 
-	// Get icon for selected category
-	const SelectedIcon = $derived.by(() => {
-		if (!selectedCategory?.categoryIcon) return Tag;
-		const iconData = getIconByName(selectedCategory.categoryIcon);
-		return iconData?.icon || Tag;
-	});
+// Get icon for selected category
+const SelectedIcon = $derived.by(() => {
+  if (!selectedCategory?.categoryIcon) return Tag;
+  const iconData = getIconByName(selectedCategory.categoryIcon);
+  return iconData?.icon || Tag;
+});
 
-	// Use slide-in on mobile regardless of setting
-	const effectiveLayoutMode = $derived(
-		isDesktop.current ? layoutMode : "slide-in",
-	);
+// Use slide-in on mobile regardless of setting
+const effectiveLayoutMode = $derived(isDesktop.current ? layoutMode : 'slide-in');
 
-	// Show detail panel in slide-in mode
-	const showDetailPanel = $derived(
-		focusedCategoryId !== null || editMode === "create",
-	);
+// Show detail panel in slide-in mode
+const showDetailPanel = $derived(focusedCategoryId !== null || editMode === 'create');
 
-	// Handle layout mode change
-	function handleLayoutModeChange(mode: string) {
-		if (mode === "slide-in" || mode === "side-by-side") {
-			layoutMode = mode;
-			setStoredLayoutMode(mode);
-		}
-	}
+// Handle layout mode change
+function handleLayoutModeChange(mode: string) {
+  if (mode === 'slide-in' || mode === 'side-by-side') {
+    layoutMode = mode;
+    setStoredLayoutMode(mode);
+  }
+}
 
-	// Handle category focus (show in detail panel)
-	function handleCategoryFocus(categoryId: number) {
-		focusedCategoryId = categoryId;
-		editMode = "view";
-	}
+// Handle category focus (show in detail panel)
+function handleCategoryFocus(categoryId: number) {
+  focusedCategoryId = categoryId;
+  editMode = 'view';
+}
 
-	// Handle category select (confirm selection and close)
-	function handleCategorySelect(categoryId: number) {
-		value = categoryId;
-		onValueChange(categoryId);
-		open = false;
-		resetState();
-	}
+// Handle category select (confirm selection and close)
+function handleCategorySelect(categoryId: number) {
+  value = categoryId;
+  onValueChange(categoryId);
+  open = false;
+  resetState();
+}
 
-	// Handle clear category (set to null and close)
-	function handleClearCategory() {
-		value = null;
-		onValueChange(null);
-		open = false;
-		resetState();
-	}
+// Handle clear category (set to null and close)
+function handleClearCategory() {
+  value = null;
+  onValueChange(null);
+  open = false;
+  resetState();
+}
 
-	// Handle category edit
-	function handleCategoryEdit(categoryId: number) {
-		focusedCategoryId = categoryId;
-		editMode = "edit";
-	}
+// Handle category edit
+function handleCategoryEdit(categoryId: number) {
+  focusedCategoryId = categoryId;
+  editMode = 'edit';
+}
 
-	// Handle create new category
-	function handleCreateNew(searchValue: string = "") {
-		createInitialName = searchValue;
-		focusedCategoryId = null;
-		editMode = "create";
-	}
+// Handle create new category
+function handleCreateNew(searchValue: string = '') {
+  createInitialName = searchValue;
+  focusedCategoryId = null;
+  editMode = 'create';
+}
 
-	// Handle back from detail panel
-	function handleBack() {
-		focusedCategoryId = null;
-		editMode = "view";
-		createInitialName = "";
-	}
+// Handle back from detail panel
+function handleBack() {
+  focusedCategoryId = null;
+  editMode = 'view';
+  createInitialName = '';
+}
 
-	// Handle save category (create or update)
-	async function handleSaveCategory(
-		data: QuickEditCategoryData,
-	): Promise<void> {
-		if (editMode === "create") {
-			try {
-				// Create new category
-				const result = await rpc.categories.createCategory.execute({
-					name: data.name,
-					parentId: data.parentId,
-					categoryType: data.categoryType,
-					categoryIcon: data.categoryIcon,
-					categoryColor: data.categoryColor,
-					notes: data.notes,
-					isActive: true,
-					displayOrder: 0,
-					isTaxDeductible: false,
-					isSeasonal: false,
-				});
-				if (categoriesState) {
-					categoriesState.addCategory(result as Category);
-				}
-				// Auto-select the new category
-				handleCategorySelect(result.id);
-			} catch (err) {
-				// Check if it's a "already exists" error
-				const errorMessage = err instanceof Error ? err.message : String(err);
-				if (errorMessage.includes("already exists")) {
-					// Fetch all categories from server and find the existing one
-					const allCategories = await rpc.categories.listCategories().execute();
-					if (categoriesState && allCategories) {
-						// Refresh the local state with server data
-						categoriesState.init(allCategories as Category[]);
-						// Find and select the existing category by name
-						const existing = allCategories.find(
-							(c) => c.name?.toLowerCase() === data.name.toLowerCase()
-						);
-						if (existing) {
-							handleCategorySelect(existing.id);
-							return;
-						}
-					}
-				}
-				// Re-throw if not handled
-				throw err;
-			}
-		} else if (focusedCategory) {
-			// Update existing category
-			const result = await rpc.categories.updateCategory.execute({
-				id: focusedCategory.id,
-				name: data.name,
-				parentId: data.parentId,
-				categoryType: data.categoryType,
-				categoryIcon: data.categoryIcon,
-				categoryColor: data.categoryColor,
-				notes: data.notes,
-				isActive: focusedCategory.isActive,
-				displayOrder: focusedCategory.displayOrder,
-				isTaxDeductible: focusedCategory.isTaxDeductible,
-				isSeasonal: focusedCategory.isSeasonal,
-			});
-			if (categoriesState) {
-				categoriesState.updateCategory(result as Category);
-			}
-			editMode = "view";
-		}
-	}
+// Handle save category (create or update)
+async function handleSaveCategory(data: QuickEditCategoryData): Promise<void> {
+  if (editMode === 'create') {
+    try {
+      // Create new category
+      const result = await rpc.categories.createCategory.execute({
+        name: data.name,
+        parentId: data.parentId,
+        categoryType: data.categoryType,
+        categoryIcon: data.categoryIcon,
+        categoryColor: data.categoryColor,
+        notes: data.notes,
+        isActive: true,
+        displayOrder: 0,
+        isTaxDeductible: false,
+        isSeasonal: false,
+      });
+      if (categoriesState) {
+        categoriesState.addCategory(result as Category);
+      }
+      // Auto-select the new category
+      handleCategorySelect(result.id);
+    } catch (err) {
+      // Check if it's a "already exists" error
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('already exists')) {
+        // Fetch all categories from server and find the existing one
+        const allCategories = await rpc.categories.listCategories().execute();
+        if (categoriesState && allCategories) {
+          // Refresh the local state with server data
+          categoriesState.init(allCategories as Category[]);
+          // Find and select the existing category by name
+          const existing = allCategories.find(
+            (c) => c.name?.toLowerCase() === data.name.toLowerCase()
+          );
+          if (existing) {
+            handleCategorySelect(existing.id);
+            return;
+          }
+        }
+      }
+      // Re-throw if not handled
+      throw err;
+    }
+  } else if (focusedCategory) {
+    // Update existing category
+    const result = await rpc.categories.updateCategory.execute({
+      id: focusedCategory.id,
+      name: data.name,
+      parentId: data.parentId,
+      categoryType: data.categoryType,
+      categoryIcon: data.categoryIcon,
+      categoryColor: data.categoryColor,
+      notes: data.notes,
+      isActive: focusedCategory.isActive,
+      displayOrder: focusedCategory.displayOrder,
+      isTaxDeductible: focusedCategory.isTaxDeductible,
+      isSeasonal: focusedCategory.isSeasonal,
+    });
+    if (categoriesState) {
+      categoriesState.updateCategory(result as Category);
+    }
+    editMode = 'view';
+  }
+}
 
-	// Handle select from detail panel
-	function handleSelectFromDetail() {
-		if (focusedCategoryId) {
-			handleCategorySelect(focusedCategoryId);
-		}
-	}
+// Handle select from detail panel
+function handleSelectFromDetail() {
+  if (focusedCategoryId) {
+    handleCategorySelect(focusedCategoryId);
+  }
+}
 
-	// Reset state when closing
-	function resetState() {
-		focusedCategoryId = null;
-		editMode = "view";
-		createInitialName = "";
-	}
+// Reset state when closing
+function resetState() {
+  focusedCategoryId = null;
+  editMode = 'view';
+  createInitialName = '';
+}
 
-	// Handle open change via callback
-	function handleOpenChange(newOpen: boolean) {
-		if (!newOpen) {
-			resetState();
-		}
-	}
+// Handle open change via callback
+function handleOpenChange(newOpen: boolean) {
+  if (!newOpen) {
+    resetState();
+  }
+}
 </script>
 
 <div class="w-full">
-	<ResponsiveSheet
-		bind:open
-		onOpenChange={handleOpenChange}
-		defaultWidth={effectiveLayoutMode === "side-by-side" ? 800 : 480}
-		minWidth={effectiveLayoutMode === "side-by-side" ? 600 : 400}
-		maxWidth={effectiveLayoutMode === "side-by-side" ? 1200 : 600}
-		triggerClass={cn(
-			"flex items-center w-full h-9 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background",
-			"hover:bg-accent hover:text-accent-foreground",
-			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-			"justify-start text-left font-normal",
-			!selectedCategory && "text-muted-foreground",
-			buttonClass,
-		)}
-	>
-		{#snippet trigger()}
-			{#if selectedCategory}
-				<div
-					class="mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded"
-					style={selectedCategory.categoryColor
-						? `background-color: ${selectedCategory.categoryColor}20;`
-						: undefined}
-				>
-					<SelectedIcon
-						class="h-3 w-3"
-						style={selectedCategory.categoryColor
-							? `color: ${selectedCategory.categoryColor};`
-							: undefined}
-					/>
-				</div>
-				<span class="truncate">{selectedCategory.name}</span>
-			{:else}
-				<Tag class="mr-2 h-4 w-4 shrink-0" />
-				<span class="truncate">{placeholder}</span>
-			{/if}
-		{/snippet}
+  <ResponsiveSheet
+    bind:open
+    onOpenChange={handleOpenChange}
+    defaultWidth={effectiveLayoutMode === 'side-by-side' ? 800 : 480}
+    minWidth={effectiveLayoutMode === 'side-by-side' ? 600 : 400}
+    maxWidth={effectiveLayoutMode === 'side-by-side' ? 1200 : 600}
+    triggerClass={cn(
+      'flex items-center w-full h-9 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background',
+      'hover:bg-accent hover:text-accent-foreground',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      'justify-start text-left font-normal',
+      !selectedCategory && 'text-muted-foreground',
+      buttonClass
+    )}>
+    {#snippet trigger()}
+      {#if selectedCategory}
+        <div
+          class="mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded"
+          style={selectedCategory.categoryColor
+            ? `background-color: ${selectedCategory.categoryColor}20;`
+            : undefined}>
+          <SelectedIcon
+            class="h-3 w-3"
+            style={selectedCategory.categoryColor
+              ? `color: ${selectedCategory.categoryColor};`
+              : undefined} />
+        </div>
+        <span class="truncate">{selectedCategory.name}</span>
+      {:else}
+        <Tag class="mr-2 h-4 w-4 shrink-0" />
+        <span class="truncate">{placeholder}</span>
+      {/if}
+    {/snippet}
 
-		{#snippet header()}
-			<div class="flex items-center justify-between">
-				<div>
-					<h2 class="text-lg font-semibold">Select Category</h2>
-					<p class="text-muted-foreground text-sm">
-						{allCategories.length} categories available
-					</p>
-				</div>
+    {#snippet header()}
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold">Select Category</h2>
+          <p class="text-muted-foreground text-sm">
+            {allCategories.length} categories available
+          </p>
+        </div>
 
-				<!-- Layout mode toggle (desktop only) -->
-				{#if isDesktop.current}
-					<ToggleGroup.Root
-						type="single"
-						value={layoutMode}
-						onValueChange={handleLayoutModeChange}
-						class="border"
-					>
-						<ToggleGroup.Item
-							value="slide-in"
-							aria-label="Slide-in layout"
-							class="px-2"
-						>
-							<LayoutList class="h-4 w-4" />
-						</ToggleGroup.Item>
-						<ToggleGroup.Item
-							value="side-by-side"
-							aria-label="Side-by-side layout"
-							class="px-2"
-						>
-							<Columns2 class="h-4 w-4" />
-						</ToggleGroup.Item>
-					</ToggleGroup.Root>
-				{/if}
-			</div>
-		{/snippet}
+        <!-- Layout mode toggle (desktop only) -->
+        {#if isDesktop.current}
+          <ToggleGroup.Root
+            type="single"
+            value={layoutMode}
+            onValueChange={handleLayoutModeChange}
+            class="border">
+            <ToggleGroup.Item value="slide-in" aria-label="Slide-in layout" class="px-2">
+              <LayoutList class="h-4 w-4" />
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="side-by-side" aria-label="Side-by-side layout" class="px-2">
+              <Columns2 class="h-4 w-4" />
+            </ToggleGroup.Item>
+          </ToggleGroup.Root>
+        {/if}
+      </div>
+    {/snippet}
 
-		{#snippet content()}
-			{#if effectiveLayoutMode === "slide-in"}
-				<!-- Slide-in layout -->
-				<div
-					class="relative h-[60vh] min-h-[400px] max-h-[calc(100vh-12rem)] overflow-hidden md:h-[calc(100vh-12rem)]"
-				>
-					<!-- List panel -->
-					<div
-						class={cn(
-							"absolute inset-0 transition-transform duration-200 ease-out",
-							showDetailPanel && "-translate-x-full",
-						)}
-					>
-						<CategoryListView
-							categories={allCategories}
-							selectedId={value}
-							focusedId={focusedCategoryId}
-							{displayMode}
-							{allowCreate}
-							{allowClear}
-							onCategoryFocus={handleCategoryFocus}
-							onCategorySelect={handleCategorySelect}
-							onCategoryEdit={handleCategoryEdit}
-							onCreateNew={handleCreateNew}
-							onClearCategory={handleClearCategory}
-						/>
-					</div>
+    {#snippet content()}
+      {#if effectiveLayoutMode === 'slide-in'}
+        <!-- Slide-in layout -->
+        <div
+          class="relative h-[60vh] max-h-[calc(100vh-12rem)] min-h-[400px] overflow-hidden md:h-[calc(100vh-12rem)]">
+          <!-- List panel -->
+          <div
+            class={cn(
+              'absolute inset-0 transition-transform duration-200 ease-out',
+              showDetailPanel && '-translate-x-full'
+            )}>
+            <CategoryListView
+              categories={allCategories}
+              selectedId={value}
+              focusedId={focusedCategoryId}
+              {displayMode}
+              {allowCreate}
+              {allowClear}
+              onCategoryFocus={handleCategoryFocus}
+              onCategorySelect={handleCategorySelect}
+              onCategoryEdit={handleCategoryEdit}
+              onCreateNew={handleCreateNew}
+              onClearCategory={handleClearCategory} />
+          </div>
 
-					<!-- Detail panel (slides from right) -->
-					<div
-						class={cn(
-							"absolute inset-0 overflow-auto transition-transform duration-200 ease-out",
-							!showDetailPanel && "translate-x-full",
-						)}
-					>
-						<CategoryDetailPanel
-							category={focusedCategory}
-							mode={editMode}
-							initialName={createInitialName}
-							showBackButton={true}
-							onModeChange={(mode) => (editMode = mode)}
-							onSave={handleSaveCategory}
-							onSelect={handleSelectFromDetail}
-							onBack={handleBack}
-						/>
-					</div>
-				</div>
-			{:else}
-				<!-- Side-by-side layout -->
-				<div
-					class="grid h-[calc(100vh-12rem)] min-h-[400px] grid-cols-[40%_60%]"
-				>
-					<!-- List panel -->
-					<div class="h-full overflow-hidden border-r">
-						<CategoryListView
-							categories={allCategories}
-							selectedId={value}
-							focusedId={focusedCategoryId}
-							{displayMode}
-							{allowCreate}
-							{allowClear}
-							onCategoryFocus={handleCategoryFocus}
-							onCategorySelect={handleCategorySelect}
-							onCategoryEdit={handleCategoryEdit}
-							onCreateNew={handleCreateNew}
-							onClearCategory={handleClearCategory}
-						/>
-					</div>
+          <!-- Detail panel (slides from right) -->
+          <div
+            class={cn(
+              'absolute inset-0 overflow-auto transition-transform duration-200 ease-out',
+              !showDetailPanel && 'translate-x-full'
+            )}>
+            <CategoryDetailPanel
+              category={focusedCategory}
+              mode={editMode}
+              initialName={createInitialName}
+              showBackButton={true}
+              onModeChange={(mode) => (editMode = mode)}
+              onSave={handleSaveCategory}
+              onSelect={handleSelectFromDetail}
+              onBack={handleBack} />
+          </div>
+        </div>
+      {:else}
+        <!-- Side-by-side layout -->
+        <div class="grid h-[calc(100vh-12rem)] min-h-[400px] grid-cols-[40%_60%]">
+          <!-- List panel -->
+          <div class="h-full overflow-hidden border-r">
+            <CategoryListView
+              categories={allCategories}
+              selectedId={value}
+              focusedId={focusedCategoryId}
+              {displayMode}
+              {allowCreate}
+              {allowClear}
+              onCategoryFocus={handleCategoryFocus}
+              onCategorySelect={handleCategorySelect}
+              onCategoryEdit={handleCategoryEdit}
+              onCreateNew={handleCreateNew}
+              onClearCategory={handleClearCategory} />
+          </div>
 
-					<!-- Detail panel -->
-					<div class="h-full overflow-auto">
-						{#if showDetailPanel}
-							<CategoryDetailPanel
-								category={focusedCategory}
-								mode={editMode}
-								initialName={createInitialName}
-								showBackButton={false}
-								onModeChange={(mode) => (editMode = mode)}
-								onSave={handleSaveCategory}
-								onSelect={handleSelectFromDetail}
-								onBack={handleBack}
-							/>
-						{:else}
-							<CategoryEmptyState
-								categories={allCategories}
-								onCreateNew={() => handleCreateNew("")}
-								onCategoryFocus={handleCategoryFocus}
-							/>
-						{/if}
-					</div>
-				</div>
-			{/if}
-		{/snippet}
-	</ResponsiveSheet>
+          <!-- Detail panel -->
+          <div class="h-full overflow-auto">
+            {#if showDetailPanel}
+              <CategoryDetailPanel
+                category={focusedCategory}
+                mode={editMode}
+                initialName={createInitialName}
+                showBackButton={false}
+                onModeChange={(mode) => (editMode = mode)}
+                onSave={handleSaveCategory}
+                onSelect={handleSelectFromDetail}
+                onBack={handleBack} />
+            {:else}
+              <CategoryEmptyState
+                categories={allCategories}
+                onCreateNew={() => handleCreateNew('')}
+                onCategoryFocus={handleCategoryFocus} />
+            {/if}
+          </div>
+        </div>
+      {/if}
+    {/snippet}
+  </ResponsiveSheet>
 </div>

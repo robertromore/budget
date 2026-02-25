@@ -1,4 +1,9 @@
-import type { AccountConnection, ExternalAccount, ProviderCredentials, TellerCredentials } from "$lib/schema/account-connections";
+import type {
+  AccountConnection,
+  ExternalAccount,
+  ProviderCredentials,
+  TellerCredentials,
+} from "$lib/schema/account-connections";
 import type { ImportRow } from "$lib/types/import";
 import type { ConnectionProviderInterface, Teller } from "../types";
 import { env } from "$env/dynamic/private";
@@ -168,7 +173,8 @@ export class TellerProvider implements ConnectionProviderInterface {
 
     // Teller returns transactions newest first
     // The cursor for next page is the ID of the oldest transaction
-    const nextCursor = transactions.length > 0 ? transactions[transactions.length - 1].id : undefined;
+    const nextCursor =
+      transactions.length > 0 ? transactions[transactions.length - 1].id : undefined;
 
     return {
       data: transactions,

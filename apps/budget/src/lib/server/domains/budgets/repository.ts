@@ -215,7 +215,11 @@ export class BudgetRepository {
     client: DbClient = db
   ): Promise<BudgetWithRelations | null> {
     const result = await client.query.budgets.findFirst({
-      where: and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)),
+      where: and(
+        eq(budgets.id, id),
+        eq(budgets.workspaceId, workspaceId),
+        isNull(budgets.deletedAt)
+      ),
       with: this.defaultRelations(),
     });
 
@@ -584,16 +588,13 @@ export class BudgetRepository {
 
     // If we have per-account associations, use those
     if (accountAssociations && accountAssociations.length > 0) {
-      const uniqueAssociations = accountAssociations.reduce(
-        (acc, assoc) => {
-          // Keep the first association type for each account
-          if (!acc.has(assoc.accountId)) {
-            acc.set(assoc.accountId, assoc.associationType);
-          }
-          return acc;
-        },
-        new Map<number, BudgetAssociationType>()
-      );
+      const uniqueAssociations = accountAssociations.reduce((acc, assoc) => {
+        // Keep the first association type for each account
+        if (!acc.has(assoc.accountId)) {
+          acc.set(assoc.accountId, assoc.associationType);
+        }
+        return acc;
+      }, new Map<number, BudgetAssociationType>());
 
       const rows: NewBudgetAccount[] = Array.from(uniqueAssociations.entries()).map(
         ([accountId, type]) => ({
@@ -858,12 +859,7 @@ export class BudgetRepository {
     const scheduleBudgetIds = await db
       .select({ budgetId: schedules.budgetId })
       .from(schedules)
-      .where(
-        and(
-          eq(schedules.accountId, accountId),
-          isNotNull(schedules.budgetId)
-        )
-      );
+      .where(and(eq(schedules.accountId, accountId), isNotNull(schedules.budgetId)));
 
     const indirectBudgetIds = scheduleBudgetIds
       .map((s) => s.budgetId)
@@ -887,7 +883,8 @@ export class BudgetRepository {
     });
 
     // Separate into direct and viaSchedule, annotating direct ones with association type
-    const directBudgets: Array<BudgetWithRelations & { associationType: BudgetAssociationType }> = [];
+    const directBudgets: Array<BudgetWithRelations & { associationType: BudgetAssociationType }> =
+      [];
     const viaScheduleBudgets: BudgetWithRelations[] = [];
 
     for (const budget of allBudgets as BudgetWithRelations[]) {

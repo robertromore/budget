@@ -1,4 +1,4 @@
-import {describe, it, expect} from "vitest";
+import { describe, it, expect } from "vitest";
 
 /**
  * Tests for date filter label display logic from PR #48
@@ -71,9 +71,9 @@ describe("Date Filter Labels - Unit Tests", () => {
   describe("createAllOptionsWithSelected", () => {
     it("should include all available dates", () => {
       const allDates: FacetedFilterOption[] = [
-        {value: "2024-01-01", label: "January 1, 2024"},
-        {value: "2024-01-02", label: "January 2, 2024"},
-        {value: "2024-01-03", label: "January 3, 2024"},
+        { value: "2024-01-01", label: "January 1, 2024" },
+        { value: "2024-01-02", label: "January 2, 2024" },
+        { value: "2024-01-03", label: "January 3, 2024" },
       ];
 
       const options = createAllOptionsWithSelected(allDates, null);
@@ -90,7 +90,7 @@ describe("Date Filter Labels - Unit Tests", () => {
     });
 
     it("should include selected values not in allDates", () => {
-      const allDates: FacetedFilterOption[] = [{value: "2024-01-01", label: "January 1, 2024"}];
+      const allDates: FacetedFilterOption[] = [{ value: "2024-01-01", label: "January 1, 2024" }];
       const selectedValues = new Set<string | number>(["2024-01-01", "2024-01-15"]);
 
       const options = createAllOptionsWithSelected(allDates, selectedValues);
@@ -106,8 +106,8 @@ describe("Date Filter Labels - Unit Tests", () => {
 
     it("should not duplicate dates that exist in both allDates and selectedValues", () => {
       const allDates: FacetedFilterOption[] = [
-        {value: "2024-01-01", label: "January 1, 2024"},
-        {value: "2024-01-02", label: "January 2, 2024"},
+        { value: "2024-01-01", label: "January 1, 2024" },
+        { value: "2024-01-02", label: "January 2, 2024" },
       ];
       const selectedValues = new Set<string | number>(["2024-01-01"]);
 
@@ -129,9 +129,9 @@ describe("Date Filter Labels - Unit Tests", () => {
 
   describe("getFilterLabel", () => {
     const allOptions = new Map<string, FacetedFilterOption>([
-      ["2024-01-01", {value: "2024-01-01", label: "January 1, 2024"}],
-      ["2024-01-02", {value: "2024-01-02", label: "January 2, 2024"}],
-      ["2024-01-03", {value: "2024-01-03", label: "January 3, 2024"}],
+      ["2024-01-01", { value: "2024-01-01", label: "January 1, 2024" }],
+      ["2024-01-02", { value: "2024-01-02", label: "January 2, 2024" }],
+      ["2024-01-03", { value: "2024-01-03", label: "January 3, 2024" }],
     ]);
 
     it("should return 'none selected' when no values selected", () => {
@@ -217,7 +217,9 @@ describe("Date Filter Labels - Unit Tests", () => {
     });
 
     it("should preserve original date labels over fallback labels", () => {
-      const allDates: FacetedFilterOption[] = [{value: "2024-01-01", label: "New Year's Day 2024"}];
+      const allDates: FacetedFilterOption[] = [
+        { value: "2024-01-01", label: "New Year's Day 2024" },
+      ];
       const selectedValues = new Set<string | number>(["2024-01-01"]);
 
       const options = createAllOptionsWithSelected(allDates, selectedValues);

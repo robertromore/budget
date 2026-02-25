@@ -1,4 +1,11 @@
-import type { IntelligenceProfile, NewPayee, Payee, PayeeAiPreferences, PayeeType, PaymentFrequency } from "$lib/schema";
+import type {
+  IntelligenceProfile,
+  NewPayee,
+  Payee,
+  PayeeAiPreferences,
+  PayeeType,
+  PaymentFrequency,
+} from "$lib/schema";
 import { budgets, categories, payees, transactions } from "$lib/schema";
 import { DATABASE_CONFIG } from "$lib/server/config/database";
 import { db } from "$lib/server/db";
@@ -157,11 +164,7 @@ export class PayeeRepository extends BaseRepository<
       .select()
       .from(payees)
       .where(
-        and(
-          eq(payees.workspaceId, workspaceId),
-          inArray(payees.id, ids),
-          isNull(payees.deletedAt)
-        )
+        and(eq(payees.workspaceId, workspaceId), inArray(payees.id, ids), isNull(payees.deletedAt))
       )
       .orderBy(payees.name);
   }
@@ -174,11 +177,7 @@ export class PayeeRepository extends BaseRepository<
       .select()
       .from(payees)
       .where(
-        and(
-          eq(payees.workspaceId, workspaceId),
-          eq(payees.name, name),
-          isNull(payees.deletedAt)
-        )
+        and(eq(payees.workspaceId, workspaceId), eq(payees.name, name), isNull(payees.deletedAt))
       )
       .limit(1);
     return result[0] || null;
@@ -188,10 +187,7 @@ export class PayeeRepository extends BaseRepository<
    * Update transactions from one payee to another (for merging duplicates)
    * Note: Workspace filtering is implicit since payees are already workspace-scoped
    */
-  async updateTransactionPayee(
-    fromPayeeId: number,
-    toPayeeId: number
-  ): Promise<number> {
+  async updateTransactionPayee(fromPayeeId: number, toPayeeId: number): Promise<number> {
     const result = await db
       .update(transactions)
       .set({ payeeId: toPayeeId })
@@ -259,11 +255,7 @@ export class PayeeRepository extends BaseRepository<
   override async update(id: number, data: UpdatePayeeData, workspaceId: number): Promise<Payee> {
     // Type-safe database update data - Drizzle handles JSON serialization automatically
     // for columns with { mode: "json" }, so we pass objects directly
-    interface PayeeDbUpdate
-      extends Omit<
-        UpdatePayeeData,
-        "tags" | "preferredPaymentMethods"
-      > {
+    interface PayeeDbUpdate extends Omit<UpdatePayeeData, "tags" | "preferredPaymentMethods"> {
       tags?: string | null;
       preferredPaymentMethods?: string | null;
     }
@@ -1041,13 +1033,7 @@ export class PayeeRepository extends BaseRepository<
         aiPreferences: updatedAiPreferences,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(
-        and(
-          eq(payees.id, id),
-          eq(payees.workspaceId, workspaceId),
-          isNull(payees.deletedAt)
-        )
-      )
+      .where(and(eq(payees.id, id), eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
       .returning();
 
     if (!updated) {
@@ -1060,10 +1046,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Reset intelligence profile to defaults (disabled)
    */
-  async resetIntelligenceProfile(
-    id: number,
-    workspaceId: number
-  ): Promise<Payee> {
+  async resetIntelligenceProfile(id: number, workspaceId: number): Promise<Payee> {
     const defaultProfile: IntelligenceProfile = {
       enabled: false,
       filters: {},

@@ -1,15 +1,14 @@
-import {test, expect} from "@playwright/test";
-import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
+import { test, expect } from "@playwright/test";
+import { setupTestDb, seedTestData } from "../../integration/setup/test-db-node";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Accounts Navigation Tests", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
 
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     // Setup test database
     testDb = await setupTestDb();
     await seedTestData(testDb);
@@ -24,7 +23,7 @@ describeE2E("Accounts Navigation Tests", () => {
   });
 
   describeE2E("Accounts Page Navigation", () => {
-    test("should navigate to accounts page from main navigation", async ({page}) => {
+    test("should navigate to accounts page from main navigation", async ({ page }) => {
       // Click on accounts navigation link
       await page.click('[href="/accounts"]');
 
@@ -35,7 +34,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.getByRole("heading")).toContainText("Accounts");
     });
 
-    test("should display accounts list on accounts page", async ({page}) => {
+    test("should display accounts list on accounts page", async ({ page }) => {
       await page.goto("/accounts");
 
       // Should see accounts from test data
@@ -46,7 +45,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.locator("[data-testid='account-item']")).toHaveCount(2);
     });
 
-    test("should handle empty accounts page", async ({page}) => {
+    test("should handle empty accounts page", async ({ page }) => {
       // Clear test data first by setting up empty DB
       testDb = await setupTestDb(); // Fresh DB without seeding
 
@@ -58,7 +57,7 @@ describeE2E("Accounts Navigation Tests", () => {
       ).toBeVisible();
     });
 
-    test("should show loading state during navigation", async ({page, context}) => {
+    test("should show loading state during navigation", async ({ page, context }) => {
       // Slow down network to see loading state
       await context.route("**/*", (route) => {
         setTimeout(() => route.continue(), 100);
@@ -77,7 +76,7 @@ describeE2E("Accounts Navigation Tests", () => {
   });
 
   describeE2E("Individual Account Page Navigation", () => {
-    test("should navigate to individual account page", async ({page}) => {
+    test("should navigate to individual account page", async ({ page }) => {
       await page.goto("/accounts");
 
       // Click on the first account
@@ -90,7 +89,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.getByText("Test Checking") || page.getByText("Test Savings")).toBeVisible();
     });
 
-    test("should show account transactions on individual page", async ({page}) => {
+    test("should show account transactions on individual page", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -103,14 +102,14 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.getByText("Test transaction")).toBeVisible();
     });
 
-    test("should handle non-existent account page", async ({page}) => {
+    test("should handle non-existent account page", async ({ page }) => {
       await page.goto("/accounts/99999");
 
       // Should show 404 or error message
       await expect(page.getByText("Account not found") || page.getByText("404")).toBeVisible();
     });
 
-    test("should allow navigation back to accounts list", async ({page}) => {
+    test("should allow navigation back to accounts list", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -130,7 +129,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page).toHaveURL("/accounts");
     });
 
-    test("should maintain account context during navigation", async ({page}) => {
+    test("should maintain account context during navigation", async ({ page }) => {
       await page.goto("/accounts");
 
       // Remember the account name
@@ -142,7 +141,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.getByText(accountName!)).toBeVisible();
     });
 
-    test("should display account balance and summary", async ({page}) => {
+    test("should display account balance and summary", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -163,7 +162,7 @@ describeE2E("Accounts Navigation Tests", () => {
       ).toBeVisible();
     });
 
-    test("should filter transactions by date range", async ({page}) => {
+    test("should filter transactions by date range", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -187,7 +186,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should sort transactions by different columns", async ({page}) => {
+    test("should sort transactions by different columns", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -218,7 +217,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should paginate transactions when there are many", async ({page}) => {
+    test("should paginate transactions when there are many", async ({ page }) => {
       // First, create more test data by going through multiple accounts
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
@@ -240,7 +239,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show transaction details in modal or expanded view", async ({page}) => {
+    test("should show transaction details in modal or expanded view", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -272,7 +271,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should add new transaction to account", async ({page}) => {
+    test("should add new transaction to account", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -305,7 +304,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should edit existing transaction", async ({page}) => {
+    test("should edit existing transaction", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -339,7 +338,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should delete transaction with confirmation", async ({page}) => {
+    test("should delete transaction with confirmation", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -376,7 +375,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show account statistics and charts", async ({page}) => {
+    test("should show account statistics and charts", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -408,7 +407,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should export account data", async ({page}) => {
+    test("should export account data", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -436,7 +435,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle account with no transactions", async ({page}) => {
+    test("should handle account with no transactions", async ({ page }) => {
       // Create a new account with no transactions for this test
       await page.goto("/accounts");
 
@@ -466,7 +465,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should search transactions", async ({page}) => {
+    test("should search transactions", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -491,7 +490,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show account settings and preferences", async ({page}) => {
+    test("should show account settings and preferences", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -522,7 +521,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle bulk transaction operations", async ({page}) => {
+    test("should handle bulk transaction operations", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -560,7 +559,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show transaction categories and tags", async ({page}) => {
+    test("should show transaction categories and tags", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -594,7 +593,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle transaction recurring patterns", async ({page}) => {
+    test("should handle transaction recurring patterns", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -624,7 +623,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should display transaction attachments and receipts", async ({page}) => {
+    test("should display transaction attachments and receipts", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -655,7 +654,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle transaction splits and multiple categories", async ({page}) => {
+    test("should handle transaction splits and multiple categories", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -686,7 +685,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show account balance history and trends", async ({page}) => {
+    test("should show account balance history and trends", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -723,7 +722,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle transaction imports and bank sync", async ({page}) => {
+    test("should handle transaction imports and bank sync", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -762,7 +761,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should validate transaction amounts and dates", async ({page}) => {
+    test("should validate transaction amounts and dates", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -810,7 +809,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show transaction pending and cleared status", async ({page}) => {
+    test("should show transaction pending and cleared status", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -851,7 +850,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle account reconciliation", async ({page}) => {
+    test("should handle account reconciliation", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -896,7 +895,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should show transaction notes and memos in detail view", async ({page}) => {
+    test("should show transaction notes and memos in detail view", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -944,7 +943,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should handle account transfer transactions", async ({page}) => {
+    test("should handle account transfer transactions", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -967,7 +966,7 @@ describeE2E("Accounts Navigation Tests", () => {
           page.locator("[data-testid='to-account-select']");
 
         if (await toAccountSelect.isVisible()) {
-          await toAccountSelect.selectOption({index: 1});
+          await toAccountSelect.selectOption({ index: 1 });
 
           // Fill transfer amount
           await page.fill("input[name='amount']", "100.00");
@@ -992,7 +991,7 @@ describeE2E("Accounts Navigation Tests", () => {
       }
     });
 
-    test("should display transaction geolocation and merchant info", async ({page}) => {
+    test("should display transaction geolocation and merchant info", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -1037,7 +1036,7 @@ describeE2E("Accounts Navigation Tests", () => {
   });
 
   describeE2E("Account Management Navigation", () => {
-    test("should open add account dialog", async ({page}) => {
+    test("should open add account dialog", async ({ page }) => {
       await page.goto("/accounts");
 
       // Click add account button
@@ -1056,7 +1055,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.locator("input[name='name']")).toBeVisible();
     });
 
-    test("should open edit account dialog from account page", async ({page}) => {
+    test("should open edit account dialog from account page", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -1075,7 +1074,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.locator("input[name='name']")).toHaveValue(/Test (Checking|Savings)/);
     });
 
-    test("should show delete confirmation dialog", async ({page}) => {
+    test("should show delete confirmation dialog", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -1097,7 +1096,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.locator("button:has-text('Cancel')")).toBeVisible();
     });
 
-    test("should close dialogs when cancelled", async ({page}) => {
+    test("should close dialogs when cancelled", async ({ page }) => {
       await page.goto("/accounts");
 
       // Open add account dialog
@@ -1126,8 +1125,8 @@ describeE2E("Accounts Navigation Tests", () => {
   });
 
   describeE2E("Responsive Navigation", () => {
-    test("should work on mobile viewport", async ({page}) => {
-      await page.setViewportSize({width: 375, height: 667});
+    test("should work on mobile viewport", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
       await page.goto("/");
 
       // Mobile navigation might be behind hamburger menu
@@ -1151,8 +1150,8 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page.getByText("Test Checking")).toBeVisible();
     });
 
-    test("should handle tablet viewport", async ({page}) => {
-      await page.setViewportSize({width: 768, height: 1024});
+    test("should handle tablet viewport", async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
       await page.goto("/accounts");
 
       // Should display accounts in tablet-friendly layout
@@ -1162,7 +1161,7 @@ describeE2E("Accounts Navigation Tests", () => {
   });
 
   describeE2E("Accessibility Navigation", () => {
-    test("should be keyboard navigable", async ({page}) => {
+    test("should be keyboard navigable", async ({ page }) => {
       await page.goto("/");
 
       // Tab to accounts navigation
@@ -1183,7 +1182,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(page).toHaveURL("/accounts");
     });
 
-    test("should have proper ARIA labels", async ({page}) => {
+    test("should have proper ARIA labels", async ({ page }) => {
       await page.goto("/accounts");
 
       // Check for proper ARIA labels
@@ -1194,7 +1193,7 @@ describeE2E("Accounts Navigation Tests", () => {
       await expect(accountItems.first()).toHaveAttribute("role", "button");
     });
 
-    test("should announce page changes to screen readers", async ({page}) => {
+    test("should announce page changes to screen readers", async ({ page }) => {
       await page.goto("/");
 
       // Navigate to accounts

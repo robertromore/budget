@@ -11,12 +11,15 @@ Set when you want to reach your savings goal.
 ## Choosing a Target Date
 
 ### Realistic Timeline
+
 The system calculates required contributions:
+
 - **Daily** - Small but frequent saves
 - **Weekly** - Aligned with paychecks
 - **Monthly** - Budget-style contributions
 
 ### Considerations
+
 - Your current income and expenses
 - Other financial obligations
 - Seasonal factors (holidays, vacations)
@@ -26,16 +29,17 @@ The system calculates required contributions:
 
 Based on your progress vs. timeline:
 
-| Status | Meaning |
-|--------|---------|
+| Status   | Meaning                            |
+| -------- | ---------------------------------- |
 | On Track | Meeting expected contribution rate |
-| Ahead | Saving faster than needed |
-| Behind | Need to increase contributions |
-| At Risk | Significantly behind schedule |
+| Ahead    | Saving faster than needed          |
+| Behind   | Need to increase contributions     |
+| At Risk  | Significantly behind schedule      |
 
 ## Contribution Frequency
 
 Choose how often you plan to contribute:
+
 - **Monthly** - Most common, aligns with budgeting
 - **Weekly** - Better for variable income
 - **Bi-weekly** - Matches many pay schedules
@@ -43,6 +47,7 @@ Choose how often you plan to contribute:
 ## Auto-Contribute
 
 Enable automatic contributions:
+
 - Creates scheduled transactions
 - Transfers from checking to savings
 - Adjusts if you fall behind

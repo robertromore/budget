@@ -16,7 +16,14 @@ import Target from '@lucide/svelte/icons/target';
 const formData = $derived(onboardingWizardStore.typedFormData);
 
 const householdTypes: HouseholdType[] = ['single', 'couple', 'family-small', 'family-large'];
-const financialGoals: FinancialGoal[] = ['emergency-fund', 'pay-debt', 'budget-better', 'save-for-goal', 'invest', 'reduce-spending'];
+const financialGoals: FinancialGoal[] = [
+  'emergency-fund',
+  'pay-debt',
+  'budget-better',
+  'save-for-goal',
+  'invest',
+  'reduce-spending',
+];
 
 const householdIcons: Record<HouseholdType, string> = {
   single: 'Single person',
@@ -30,7 +37,7 @@ const householdIcons: Record<HouseholdType, string> = {
   <!-- Household Type -->
   <div class="space-y-3">
     <div class="flex items-center gap-2">
-      <Home class="h-5 w-5 text-muted-foreground" />
+      <Home class="text-muted-foreground h-5 w-5" />
       <Label class="text-base font-medium">Household Type</Label>
     </div>
     <p class="text-muted-foreground text-sm">
@@ -42,7 +49,7 @@ const householdIcons: Record<HouseholdType, string> = {
       class="grid grid-cols-2 gap-4">
       {#each householdTypes as type}
         <div
-          class="border-border hover:border-primary flex cursor-pointer items-center space-x-3 rounded-lg border p-4 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+          class="border-border hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary/5 flex cursor-pointer items-center space-x-3 rounded-lg border p-4 transition-colors">
           <RadioGroup.Item value={type} id={`household-${type}`} />
           <div>
             <Label for={`household-${type}`} class="cursor-pointer font-medium">
@@ -58,7 +65,7 @@ const householdIcons: Record<HouseholdType, string> = {
   <!-- Financial Goals -->
   <div class="space-y-3">
     <div class="flex items-center gap-2">
-      <Target class="h-5 w-5 text-muted-foreground" />
+      <Target class="text-muted-foreground h-5 w-5" />
       <Label class="text-base font-medium">Financial Goals</Label>
     </div>
     <p class="text-muted-foreground text-sm">
@@ -68,7 +75,9 @@ const householdIcons: Record<HouseholdType, string> = {
       {#each financialGoals as goal}
         {@const isSelected = formData.financialGoals?.includes(goal) ?? false}
         <div
-          class="border-border hover:border-primary flex cursor-pointer items-center space-x-3 rounded-lg border p-4 transition-colors {isSelected ? 'border-primary bg-primary/5' : ''}"
+          class="border-border hover:border-primary flex cursor-pointer items-center space-x-3 rounded-lg border p-4 transition-colors {isSelected
+            ? 'border-primary bg-primary/5'
+            : ''}"
           role="button"
           tabindex="0"
           onclick={() => onboardingWizardStore.toggleFinancialGoal(goal)}

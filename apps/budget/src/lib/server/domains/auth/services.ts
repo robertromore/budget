@@ -54,16 +54,12 @@ export class AuthService {
 
     // Check minimum length
     if (password.length < AUTH_CONFIG.PASSWORD.MIN_LENGTH) {
-      errors.push(
-        `Password must be at least ${AUTH_CONFIG.PASSWORD.MIN_LENGTH} characters`
-      );
+      errors.push(`Password must be at least ${AUTH_CONFIG.PASSWORD.MIN_LENGTH} characters`);
     }
 
     // Check maximum length
     if (password.length > AUTH_CONFIG.PASSWORD.MAX_LENGTH) {
-      errors.push(
-        `Password must be at most ${AUTH_CONFIG.PASSWORD.MAX_LENGTH} characters`
-      );
+      errors.push(`Password must be at most ${AUTH_CONFIG.PASSWORD.MAX_LENGTH} characters`);
     }
 
     // Check for lowercase letter
@@ -171,7 +167,8 @@ export class AuthService {
       60 // 60 minutes
     );
 
-    const baseUrl = process.env.PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:5173";
+    const baseUrl =
+      process.env.PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:5173";
     const resetUrl = `${baseUrl}/reset-password?token=${verification.token}`;
 
     logger.info("Password reset initiated:", {
@@ -199,10 +196,7 @@ export class AuthService {
     }
 
     // Find and validate the token
-    const verification = await authRepository.findValidVerification(
-      token,
-      "password_reset"
-    );
+    const verification = await authRepository.findValidVerification(token, "password_reset");
 
     if (!verification) {
       throw new ValidationError("Invalid or expired reset token");
@@ -226,12 +220,7 @@ export class AuthService {
         password: passwordHash,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(authAccounts.userId, user.id),
-          eq(authAccounts.providerId, "credential")
-        )
-      );
+      .where(and(eq(authAccounts.userId, user.id), eq(authAccounts.providerId, "credential")));
 
     // Delete the used verification token
     await authRepository.deleteVerification(verification.id);
@@ -260,11 +249,7 @@ export class AuthService {
     userId: string,
     data: { displayName?: string; image?: string }
   ): Promise<void> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user) {
       throw new NotFoundError("User", userId);
@@ -379,12 +364,7 @@ export class AuthService {
     const [authAccount] = await db
       .select()
       .from(authAccounts)
-      .where(
-        and(
-          eq(authAccounts.userId, userId),
-          eq(authAccounts.providerId, "credential")
-        )
-      )
+      .where(and(eq(authAccounts.userId, userId), eq(authAccounts.providerId, "credential")))
       .limit(1);
 
     if (!authAccount || !authAccount.password) {
@@ -443,14 +423,8 @@ export class AuthService {
   /**
    * Revoke all sessions except the current one
    */
-  async revokeOtherSessions(
-    userId: string,
-    currentSessionId: string
-  ): Promise<number> {
-    const count = await authRepository.deleteOtherUserSessions(
-      userId,
-      currentSessionId
-    );
+  async revokeOtherSessions(userId: string, currentSessionId: string): Promise<number> {
+    const count = await authRepository.deleteOtherUserSessions(userId, currentSessionId);
     logger.info("Other sessions revoked:", { userId, count });
     return count;
   }
@@ -484,9 +458,7 @@ export class AuthService {
     );
 
     const baseUrl =
-      process.env.PUBLIC_APP_URL ||
-      process.env.BETTER_AUTH_URL ||
-      "http://localhost:5173";
+      process.env.PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:5173";
     const verifyUrl = `${baseUrl}/verify-email?token=${verification.token}`;
 
     // Send verification email
@@ -512,10 +484,7 @@ export class AuthService {
    * Verify email with token
    */
   async verifyEmail(token: string): Promise<void> {
-    const verification = await authRepository.findValidVerification(
-      token,
-      "email_verification"
-    );
+    const verification = await authRepository.findValidVerification(token, "email_verification");
 
     if (!verification) {
       throw new ValidationError("Invalid or expired verification token");
@@ -552,12 +521,7 @@ export class AuthService {
     const [authAccount] = await db
       .select()
       .from(authAccounts)
-      .where(
-        and(
-          eq(authAccounts.userId, userId),
-          eq(authAccounts.providerId, "credential")
-        )
-      )
+      .where(and(eq(authAccounts.userId, userId), eq(authAccounts.providerId, "credential")))
       .limit(1);
 
     if (!authAccount || !authAccount.password) {

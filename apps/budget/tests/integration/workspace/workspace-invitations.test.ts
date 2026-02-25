@@ -4,12 +4,12 @@
  * Tests the workspace invitation system for inviting users to workspaces.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {createId} from "@paralleldrive/cuid2";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { createId } from "@paralleldrive/cuid2";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -283,7 +283,10 @@ describe("Workspace Invitations", () => {
         .select()
         .from(schema.workspaceInvitations)
         .where(
-          and(eq(schema.workspaceInvitations.email, email), eq(schema.workspaceInvitations.status, "pending"))
+          and(
+            eq(schema.workspaceInvitations.email, email),
+            eq(schema.workspaceInvitations.status, "pending")
+          )
         );
 
       expect(invitations).toHaveLength(1);
@@ -528,7 +531,7 @@ describe("Workspace Invitations", () => {
       for (const inv of toExpire) {
         await ctx.db
           .update(schema.workspaceInvitations)
-          .set({status: "expired"})
+          .set({ status: "expired" })
           .where(eq(schema.workspaceInvitations.id, inv.id));
       }
 
@@ -573,7 +576,9 @@ describe("Workspace Invitations", () => {
       expect(before).toBeDefined();
 
       // Delete
-      await ctx.db.delete(schema.workspaceInvitations).where(eq(schema.workspaceInvitations.id, invitation.id));
+      await ctx.db
+        .delete(schema.workspaceInvitations)
+        .where(eq(schema.workspaceInvitations.id, invitation.id));
 
       // Verify it's gone
       const [after] = await ctx.db
@@ -667,7 +672,10 @@ describe("Workspace Invitations", () => {
           },
         })
         .from(schema.workspaceInvitations)
-        .innerJoin(schema.workspaces, eq(schema.workspaceInvitations.workspaceId, schema.workspaces.id))
+        .innerJoin(
+          schema.workspaces,
+          eq(schema.workspaceInvitations.workspaceId, schema.workspaces.id)
+        )
         .where(eq(schema.workspaceInvitations.email, "jointest@example.com"));
 
       expect(results).toHaveLength(1);

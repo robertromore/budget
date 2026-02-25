@@ -11,6 +11,7 @@ Click this button to create a new financial account in your budget.
 ## Account Types
 
 You can create various types of accounts:
+
 - **Checking** - For everyday spending and payments
 - **Savings** - For money you're setting aside
 - **Credit Card** - Track credit card balances and payments
@@ -22,6 +23,7 @@ You can create various types of accounts:
 ## Account Setup
 
 When creating an account, you can specify:
+
 - Account name
 - Account type
 - Starting balance

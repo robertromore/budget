@@ -7,122 +7,122 @@
 
 import { nowISOString } from "$lib/utils/dates";
 import {
-	BUDGET_ASSISTANT_SYSTEM_PROMPT,
-	type TrainingCategory,
-	type TrainingDataset,
-	type TrainingExample,
+  BUDGET_ASSISTANT_SYSTEM_PROMPT,
+  type TrainingCategory,
+  type TrainingDataset,
+  type TrainingExample,
 } from "./types";
 
 // Realistic financial data for synthetic examples
 const ACCOUNT_NAMES = [
-	"Chase Checking",
-	"Ally Savings",
-	"Amex Platinum",
-	"Vanguard 401k",
-	"Fidelity Brokerage",
-	"Capital One Venture",
-	"Marcus Savings",
-	"Schwab Checking",
+  "Chase Checking",
+  "Ally Savings",
+  "Amex Platinum",
+  "Vanguard 401k",
+  "Fidelity Brokerage",
+  "Capital One Venture",
+  "Marcus Savings",
+  "Schwab Checking",
 ];
 
 const PAYEE_NAMES = [
-	"Whole Foods",
-	"Amazon",
-	"Netflix",
-	"Spotify",
-	"Target",
-	"Costco",
-	"Shell Gas",
-	"Starbucks",
-	"Uber",
-	"DoorDash",
-	"Trader Joe's",
-	"Home Depot",
-	"CVS Pharmacy",
-	"Verizon",
-	"Electric Company",
-	"Water Utility",
-	"Rent Payment",
-	"Gym Membership",
+  "Whole Foods",
+  "Amazon",
+  "Netflix",
+  "Spotify",
+  "Target",
+  "Costco",
+  "Shell Gas",
+  "Starbucks",
+  "Uber",
+  "DoorDash",
+  "Trader Joe's",
+  "Home Depot",
+  "CVS Pharmacy",
+  "Verizon",
+  "Electric Company",
+  "Water Utility",
+  "Rent Payment",
+  "Gym Membership",
 ];
 
 const CATEGORIES = [
-	"Groceries",
-	"Dining Out",
-	"Transportation",
-	"Entertainment",
-	"Utilities",
-	"Shopping",
-	"Healthcare",
-	"Subscriptions",
-	"Gas",
-	"Travel",
-	"Personal Care",
-	"Gifts",
-	"Education",
-	"Home Improvement",
+  "Groceries",
+  "Dining Out",
+  "Transportation",
+  "Entertainment",
+  "Utilities",
+  "Shopping",
+  "Healthcare",
+  "Subscriptions",
+  "Gas",
+  "Travel",
+  "Personal Care",
+  "Gifts",
+  "Education",
+  "Home Improvement",
 ];
 
 /**
  * Generate a random amount in a realistic range
  */
 function randomAmount(min: number, max: number): string {
-	return (Math.random() * (max - min) + min).toFixed(2);
+  return (Math.random() * (max - min) + min).toFixed(2);
 }
 
 /**
  * Generate a random date within the last N days
  */
 function randomDate(daysBack: number): string {
-	const date = new Date();
-	date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
-	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = new Date();
+  date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 /**
  * Pick random item from array
  */
 function pick<T>(arr: T[]): T {
-	return arr[Math.floor(Math.random() * arr.length)]!;
+  return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
 /**
  * Generate account balance examples
  */
 function generateAccountBalanceExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Simple balance inquiry
-	examples.push({
-		id: "account_balance_001",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my checking account balance?" },
-			{
-				role: "assistant",
-				content: `Your Chase Checking account has a current balance of **$3,245.67**.
+  // Simple balance inquiry
+  examples.push({
+    id: "account_balance_001",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my checking account balance?" },
+      {
+        role: "assistant",
+        content: `Your Chase Checking account has a current balance of **$3,245.67**.
 
 This reflects all cleared transactions as of today. You have 2 pending transactions totaling $45.23 that will post soon.`,
-			},
-		],
-		toolCalls: [{ name: "getAccountBalance", arguments: { accountName: "Chase Checking" } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "getAccountBalance", arguments: { accountName: "Chase Checking" } }],
+  });
 
-	// All accounts overview
-	examples.push({
-		id: "account_balance_002",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Show me all my account balances" },
-			{
-				role: "assistant",
-				content: `Here's an overview of all your accounts:
+  // All accounts overview
+  examples.push({
+    id: "account_balance_002",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Show me all my account balances" },
+      {
+        role: "assistant",
+        content: `Here's an overview of all your accounts:
 
 **Cash Accounts**
 - Chase Checking: $3,245.67
@@ -138,86 +138,86 @@ This reflects all cleared transactions as of today. You have 2 pending transacti
 - Fidelity Brokerage: $12,345.67
 
 **Total Net Worth: $77,078.90**`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Net worth question
-	examples.push({
-		id: "account_balance_003",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my net worth?" },
-			{
-				role: "assistant",
-				content: `Your current net worth is **$77,078.90**.
+  // Net worth question
+  examples.push({
+    id: "account_balance_003",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my net worth?" },
+      {
+        role: "assistant",
+        content: `Your current net worth is **$77,078.90**.
 
 This is calculated as:
 - Total Assets: $78,770.24
 - Total Liabilities: -$1,691.34 (credit card balances)
 
 Your net worth has increased by $2,345.67 (+3.1%) since last month, primarily due to contributions to your 401k and market gains.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Savings inquiry
-	examples.push({
-		id: "account_balance_004",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much do I have in savings?" },
-			{
-				role: "assistant",
-				content: `You have **$17,500.00** in savings accounts:
+  // Savings inquiry
+  examples.push({
+    id: "account_balance_004",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much do I have in savings?" },
+      {
+        role: "assistant",
+        content: `You have **$17,500.00** in savings accounts:
 
 - Ally Savings: $12,500.00 (Emergency Fund)
 - Marcus Savings: $5,000.00 (Vacation Fund)
 
 Your emergency fund covers approximately 3.5 months of expenses based on your average monthly spending of $3,500.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Additional variations
-	examples.push({
-		id: "account_balance_005",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much money do I have?" },
-			{
-				role: "assistant",
-				content: `You have **$20,745.67** in liquid cash:
+  // Additional variations
+  examples.push({
+    id: "account_balance_005",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much money do I have?" },
+      {
+        role: "assistant",
+        content: `You have **$20,745.67** in liquid cash:
 
 - Chase Checking: $3,245.67
 - Ally Savings: $12,500.00
 - Marcus Savings: $5,000.00
 
 Including investments, your total assets are $78,770.24. After subtracting credit card balances of $1,691.34, your net worth is **$77,078.90**.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "account_balance_006",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my credit card balance?" },
-			{
-				role: "assistant",
-				content: `Your credit card balances:
+  examples.push({
+    id: "account_balance_006",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my credit card balance?" },
+      {
+        role: "assistant",
+        content: `Your credit card balances:
 
 - **Amex Platinum**: $1,234.56 (due ${randomDate(-7)})
   - Credit limit: $15,000
@@ -230,21 +230,21 @@ Including investments, your total assets are $78,770.24. After subtracting credi
 **Total owed: $1,691.34**
 
 You're using 7.5% of your total credit, which is excellent for your credit score.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "account_balance_007",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Do I have enough in checking to pay rent?" },
-			{
-				role: "assistant",
-				content: `Your rent payment is typically $1,500. Currently you have **$3,245.67** in Chase Checking.
+  examples.push({
+    id: "account_balance_007",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Do I have enough in checking to pay rent?" },
+      {
+        role: "assistant",
+        content: `Your rent payment is typically $1,500. Currently you have **$3,245.67** in Chase Checking.
 
 ✅ Yes, you have enough! After rent, you'd have $1,745.67 remaining.
 
@@ -253,21 +253,21 @@ Upcoming expenses to consider:
 - Phone bill (~$85): Due in 8 days
 
 You should still have about $1,515 after these bills.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "account_balance_008",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much is in my 401k?" },
-			{
-				role: "assistant",
-				content: `Your Vanguard 401k balance is **$45,678.90**.
+  examples.push({
+    id: "account_balance_008",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much is in my 401k?" },
+      {
+        role: "assistant",
+        content: `Your Vanguard 401k balance is **$45,678.90**.
 
 **Performance this year:**
 - Contributions: $8,400 ($700/month)
@@ -275,21 +275,21 @@ You should still have about $1,515 after these bills.`,
 - Investment gains: $3,456.78 (+8.2%)
 
 You're on track to max out your contributions this year. Your current allocation is 80% stocks, 20% bonds.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "account_balance_009",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Show me my investment accounts" },
-			{
-				role: "assistant",
-				content: `Your investment accounts total **$58,024.57**:
+  examples.push({
+    id: "account_balance_009",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Show me my investment accounts" },
+      {
+        role: "assistant",
+        content: `Your investment accounts total **$58,024.57**:
 
 **Vanguard 401k** - $45,678.90
 - YTD return: +8.2%
@@ -300,21 +300,21 @@ You're on track to max out your contributions this year. Your current allocation
 - Holdings: AAPL, VTI, VXUS
 
 Combined, your investments have grown $4,892.34 (+9.2%) this year.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "account_balance_010",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my available credit?" },
-			{
-				role: "assistant",
-				content: `Your available credit across all cards: **$23,308.66**
+  examples.push({
+    id: "account_balance_010",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my available credit?" },
+      {
+        role: "assistant",
+        content: `Your available credit across all cards: **$23,308.66**
 
 | Card | Used | Limit | Available |
 |------|------|-------|-----------|
@@ -322,31 +322,31 @@ Combined, your investments have grown $4,892.34 (+9.2%) this year.`,
 | Capital One Venture | $456.78 | $10,000 | $9,543.22 |
 
 **Credit utilization: 6.7%** (Excellent - under 10%)`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate spending analysis examples
  */
 function generateSpendingAnalysisExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Monthly spending breakdown
-	examples.push({
-		id: "spending_001",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much did I spend this month?" },
-			{
-				role: "assistant",
-				content: `This month you've spent **$3,456.78** across 47 transactions.
+  // Monthly spending breakdown
+  examples.push({
+    id: "spending_001",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much did I spend this month?" },
+      {
+        role: "assistant",
+        content: `This month you've spent **$3,456.78** across 47 transactions.
 
 **Top Categories:**
 1. Groceries: $567.89 (16%)
@@ -356,22 +356,22 @@ function generateSpendingAnalysisExamples(): TrainingExample[] {
 5. Utilities: $198.90 (6%)
 
 This is 5% lower than last month ($3,640.12). Your largest purchase was $234.56 at Home Depot on ${randomDate(15)}.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Category-specific spending
-	examples.push({
-		id: "spending_002",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much am I spending on groceries?" },
-			{
-				role: "assistant",
-				content: `Your grocery spending this month: **$567.89**
+  // Category-specific spending
+  examples.push({
+    id: "spending_002",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much am I spending on groceries?" },
+      {
+        role: "assistant",
+        content: `Your grocery spending this month: **$567.89**
 
 **Breakdown by store:**
 - Whole Foods: $234.56 (8 visits)
@@ -381,23 +381,23 @@ This is 5% lower than last month ($3,640.12). Your largest purchase was $234.56 
 **Trend:** You're spending 12% more than last month ($507.23). Your average grocery trip is $37.86.
 
 **Tip:** Your Costco trips have the lowest per-visit cost. Consider consolidating more shopping there if convenient.`,
-			},
-		],
-		toolCalls: [{ name: "getCategorySpending", arguments: { category: "Groceries" } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "getCategorySpending", arguments: { category: "Groceries" } }],
+  });
 
-	// Comparison question
-	examples.push({
-		id: "spending_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Am I spending more than usual on dining out?" },
-			{
-				role: "assistant",
-				content: `Yes, your dining out spending is **23% higher** than your 3-month average.
+  // Comparison question
+  examples.push({
+    id: "spending_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Am I spending more than usual on dining out?" },
+      {
+        role: "assistant",
+        content: `Yes, your dining out spending is **23% higher** than your 3-month average.
 
 - This month: $345.67
 - Last month: $298.45
@@ -409,22 +409,22 @@ This is 5% lower than last month ($3,640.12). Your largest purchase was $234.56 
 - ${randomDate(7)}: Olive Garden - $67.89
 
 You've ordered delivery 6 times this month vs. your usual 3-4 times. Consider cooking more meals at home to reduce this spending.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Payee spending
-	examples.push({
-		id: "spending_004",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much have I spent at Amazon this year?" },
-			{
-				role: "assistant",
-				content: `Your Amazon spending this year: **$2,345.67** across 45 orders.
+  // Payee spending
+  examples.push({
+    id: "spending_004",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much have I spent at Amazon this year?" },
+      {
+        role: "assistant",
+        content: `Your Amazon spending this year: **$2,345.67** across 45 orders.
 
 **By category:**
 - Shopping: $1,234.56 (53%)
@@ -438,23 +438,23 @@ You've ordered delivery 6 times this month vs. your usual 3-4 times. Consider co
 - Average: $195.47/month
 
 Your Prime membership ($14.99/mo) has saved you approximately $180 in shipping costs based on your order frequency.`,
-			},
-		],
-		toolCalls: [{ name: "getPayeeSpending", arguments: { payeeName: "Amazon", period: "year" } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "getPayeeSpending", arguments: { payeeName: "Amazon", period: "year" } }],
+  });
 
-	// Additional spending analysis variations
-	examples.push({
-		id: "spending_005",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Where is my money going?" },
-			{
-				role: "assistant",
-				content: `Here's where your money went this month:
+  // Additional spending analysis variations
+  examples.push({
+    id: "spending_005",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Where is my money going?" },
+      {
+        role: "assistant",
+        content: `Here's where your money went this month:
 
 **Top Spending Categories:**
 1. 🏠 Housing: $1,500 (43%) - Rent
@@ -469,21 +469,21 @@ Your Prime membership ($14.99/mo) has saved you approximately $180 in shipping c
 **Total: $3,457** (You typically spend $3,400-3,600/month)
 
 Your biggest variable expenses are dining out and shopping - those are the best areas to cut back if needed.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "spending_006",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much did I spend last week?" },
-			{
-				role: "assistant",
-				content: `Last week you spent **$423.67** across 18 transactions.
+  examples.push({
+    id: "spending_006",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much did I spend last week?" },
+      {
+        role: "assistant",
+        content: `Last week you spent **$423.67** across 18 transactions.
 
 **Daily breakdown:**
 - Monday: $45.23 (Groceries, Coffee)
@@ -495,21 +495,21 @@ Your biggest variable expenses are dining out and shopping - those are the best 
 - Sunday: $22.89 (Groceries)
 
 This is 8% lower than your average weekly spending of $460.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "spending_007",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Compare my spending this month vs last month" },
-			{
-				role: "assistant",
-				content: `**Monthly Spending Comparison:**
+  examples.push({
+    id: "spending_007",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Compare my spending this month vs last month" },
+      {
+        role: "assistant",
+        content: `**Monthly Spending Comparison:**
 
 | Category | This Month | Last Month | Change |
 |----------|------------|------------|--------|
@@ -524,21 +524,21 @@ This is 8% lower than your average weekly spending of $460.`,
 - Shopping up 24% - You made 3 extra Target trips
 - Dining out up 16% - 4 more delivery orders than usual
 - Gas down 7% - Fewer commute days`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "spending_008",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What are my subscriptions costing me?" },
-			{
-				role: "assistant",
-				content: `Your recurring subscriptions total **$124.95/month** ($1,499/year):
+  examples.push({
+    id: "spending_008",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What are my subscriptions costing me?" },
+      {
+        role: "assistant",
+        content: `Your recurring subscriptions total **$124.95/month** ($1,499/year):
 
 **Streaming & Entertainment:**
 - Netflix: $15.99
@@ -555,21 +555,21 @@ This is 8% lower than your average weekly spending of $460.`,
 - Microsoft 365: $6.99
 
 **Tip:** You could save $24/month by bundling Disney+ with Hulu, or using Spotify's student discount if eligible.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "spending_009",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much do I spend on coffee?" },
-			{
-				role: "assistant",
-				content: `Your coffee spending this month: **$87.45**
+  examples.push({
+    id: "spending_009",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much do I spend on coffee?" },
+      {
+        role: "assistant",
+        content: `Your coffee spending this month: **$87.45**
 
 **Breakdown:**
 - Starbucks: $56.78 (12 visits, avg $4.73)
@@ -579,21 +579,21 @@ This is 8% lower than your average weekly spending of $460.`,
 **Trend:** You're averaging $85/month on coffee. That's **$1,020/year**.
 
 If you made coffee at home 3 days/week instead, you'd save about $45/month ($540/year).`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "spending_010",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my biggest expense?" },
-			{
-				role: "assistant",
-				content: `Your biggest expenses this month:
+  examples.push({
+    id: "spending_010",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my biggest expense?" },
+      {
+        role: "assistant",
+        content: `Your biggest expenses this month:
 
 1. **Rent** - $1,500 (43% of spending)
    - Paid to: Landlord
@@ -610,31 +610,31 @@ If you made coffee at home 3 days/week instead, you'd save about $45/month ($540
 **Largest category overall:** Housing at $1,500/month
 
 Your fixed expenses (rent, insurance, subscriptions) are $1,824/month, leaving about $1,676 for variable spending.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate budget management examples
  */
 function generateBudgetManagementExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Budget status check
-	examples.push({
-		id: "budget_001",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How am I doing on my budgets?" },
-			{
-				role: "assistant",
-				content: `Here's your budget status for this month:
+  // Budget status check
+  examples.push({
+    id: "budget_001",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How am I doing on my budgets?" },
+      {
+        role: "assistant",
+        content: `Here's your budget status for this month:
 
 **On Track** ✅
 - Groceries: $456/$600 (76%) - $144 remaining
@@ -649,23 +649,23 @@ function generateBudgetManagementExamples(): TrainingExample[] {
 - Shopping: $345/$300 (115%) - $45 over
 
 Overall, you're 87% through your monthly budgets with 40% of the month remaining. Consider reducing shopping and dining out for the rest of the month.`,
-			},
-		],
-		toolCalls: [{ name: "getBudgetStatus", arguments: {} }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "getBudgetStatus", arguments: {} }],
+  });
 
-	// Create a budget
-	examples.push({
-		id: "budget_002",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Create a budget for entertainment of $150 per month" },
-			{
-				role: "assistant",
-				content: `Done! I've created a new monthly budget:
+  // Create a budget
+  examples.push({
+    id: "budget_002",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Create a budget for entertainment of $150 per month" },
+      {
+        role: "assistant",
+        content: `Done! I've created a new monthly budget:
 
 **Entertainment Budget**
 - Amount: $150/month
@@ -675,50 +675,50 @@ Overall, you're 87% through your monthly budgets with 40% of the month remaining
 Based on your spending history, you've averaged $134/month on entertainment over the last 3 months, so this budget gives you a comfortable 12% buffer.
 
 I'll track all transactions categorized as Entertainment against this budget. You can view your progress anytime by asking "How's my entertainment budget?"`,
-			},
-		],
-		toolCalls: [
-			{
-				name: "createBudget",
-				arguments: { categoryName: "Entertainment", amount: 150, period: "monthly" },
-			},
-		],
-	});
+      },
+    ],
+    toolCalls: [
+      {
+        name: "createBudget",
+        arguments: { categoryName: "Entertainment", amount: 150, period: "monthly" },
+      },
+    ],
+  });
 
-	// Specific budget inquiry
-	examples.push({
-		id: "budget_003",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much of my grocery budget is left?" },
-			{
-				role: "assistant",
-				content: `You have **$144** remaining in your grocery budget.
+  // Specific budget inquiry
+  examples.push({
+    id: "budget_003",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much of my grocery budget is left?" },
+      {
+        role: "assistant",
+        content: `You have **$144** remaining in your grocery budget.
 
 - Budget: $600/month
 - Spent: $456 (76%)
 - Remaining: $144
 
 With 12 days left in the month, that's about $12/day for groceries. Based on your shopping pattern, you typically make 2-3 more grocery trips, averaging $50 each. You're on track to stay within budget!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Adjust budget amount
-	examples.push({
-		id: "budget_004",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Change my dining budget to $300" },
-			{
-				role: "assistant",
-				content: `Done! I've updated your Dining Out budget:
+  // Adjust budget amount
+  examples.push({
+    id: "budget_004",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Change my dining budget to $300" },
+      {
+        role: "assistant",
+        content: `Done! I've updated your Dining Out budget:
 
 **Previous:** $250/month
 **New:** $300/month (+20%)
@@ -728,22 +728,22 @@ This month's status with the new budget:
 - Remaining: $66
 
 Based on your recent spending, this increase gives you about 2 extra restaurant visits per month. Good adjustment given your recent patterns!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Budget recommendation
-	examples.push({
-		id: "budget_005",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What budget should I set for groceries?" },
-			{
-				role: "assistant",
-				content: `Based on your spending history, here's my recommendation:
+  // Budget recommendation
+  examples.push({
+    id: "budget_005",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What budget should I set for groceries?" },
+      {
+        role: "assistant",
+        content: `Based on your spending history, here's my recommendation:
 
 **Suggested Grocery Budget: $550/month**
 
@@ -763,22 +763,22 @@ Based on your recent spending, this increase gives you about 2 extra restaurant 
 - Comfortable: $600 (more flexibility)
 
 Would you like me to create this budget?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Multiple budget overview
-	examples.push({
-		id: "budget_006",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Show all my budgets" },
-			{
-				role: "assistant",
-				content: `**Your Active Budgets:**
+  // Multiple budget overview
+  examples.push({
+    id: "budget_006",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Show all my budgets" },
+      {
+        role: "assistant",
+        content: `**Your Active Budgets:**
 
 | Category | Budget | Spent | Remaining | Status |
 |----------|--------|-------|-----------|--------|
@@ -793,22 +793,22 @@ Would you like me to create this budget?`,
 **Total Spent:** $1,458 (86%)
 
 3 budgets on track, 2 close to limit, 1 over budget.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Budget progress by category
-	examples.push({
-		id: "budget_007",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Am I over budget on anything?" },
-			{
-				role: "assistant",
-				content: `Yes, you're over budget on **Shopping**:
+  // Budget progress by category
+  examples.push({
+    id: "budget_007",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Am I over budget on anything?" },
+      {
+        role: "assistant",
+        content: `Yes, you're over budget on **Shopping**:
 
 **Over Budget:**
 🔴 **Shopping**: $345 of $300 (115%)
@@ -823,22 +823,22 @@ Would you like me to create this budget?`,
    - Only $11 remaining
 
 **Recommendation:** Try to avoid shopping for the rest of the month, and maybe cook at home a few more times to stay within dining budget.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Create budget with category
-	examples.push({
-		id: "budget_008",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I want to budget $75 per month for subscriptions" },
-			{
-				role: "assistant",
-				content: `I'll create a Subscriptions budget for you.
+  // Create budget with category
+  examples.push({
+    id: "budget_008",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I want to budget $75 per month for subscriptions" },
+      {
+        role: "assistant",
+        content: `I'll create a Subscriptions budget for you.
 
 **Current subscription spending:**
 - Netflix: $15.99
@@ -859,28 +859,28 @@ This budget gives you room for:
 - Annual service trials
 
 You're currently at 71% of your new budget. Would you like me to set up alerts when you're at 80% and 100%?`,
-			},
-		],
-		toolCalls: [
-			{
-				name: "createBudget",
-				arguments: { categoryName: "Subscriptions", amount: 75, period: "monthly" },
-			},
-		],
-	});
+      },
+    ],
+    toolCalls: [
+      {
+        name: "createBudget",
+        arguments: { categoryName: "Subscriptions", amount: 75, period: "monthly" },
+      },
+    ],
+  });
 
-	// Budget history comparison
-	examples.push({
-		id: "budget_009",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How have I done on my budgets this year?" },
-			{
-				role: "assistant",
-				content: `**Budget Performance YTD:**
+  // Budget history comparison
+  examples.push({
+    id: "budget_009",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How have I done on my budgets this year?" },
+      {
+        role: "assistant",
+        content: `**Budget Performance YTD:**
 
 | Category | Avg % Used | Months Over | Trend |
 |----------|------------|-------------|-------|
@@ -896,22 +896,22 @@ You're currently at 71% of your new budget. Would you like me to set up alerts w
 - Shopping spikes during holidays (Nov/Dec)
 
 **Overall score:** 78% within budget across all categories. That's solid!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Delete/modify budget question
-	examples.push({
-		id: "budget_010",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I don't need a transportation budget anymore" },
-			{
-				role: "assistant",
-				content: `I can help you manage your Transportation budget.
+  // Delete/modify budget question
+  examples.push({
+    id: "budget_010",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I don't need a transportation budget anymore" },
+      {
+        role: "assistant",
+        content: `I can help you manage your Transportation budget.
 
 **Current status:**
 - Budget: $250/month
@@ -928,31 +928,31 @@ Since you're consistently under this budget, you could also:
 - Keep it as a safety net (no harm in having it)
 
 What would you prefer?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate transaction search examples
  */
 function generateTransactionSearchExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Recent transactions
-	examples.push({
-		id: "transaction_001",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Show me my recent transactions" },
-			{
-				role: "assistant",
-				content: `Here are your last 10 transactions:
+  // Recent transactions
+  examples.push({
+    id: "transaction_001",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Show me my recent transactions" },
+      {
+        role: "assistant",
+        content: `Here are your last 10 transactions:
 
 | Date | Payee | Category | Amount |
 |------|-------|----------|--------|
@@ -968,23 +968,23 @@ function generateTransactionSearchExamples(): TrainingExample[] {
 | ${randomDate(6)} | Spotify | Subscriptions | -$9.99 |
 
 Would you like me to filter these by category or search for something specific?`,
-			},
-		],
-		toolCalls: [{ name: "searchTransactions", arguments: { limit: 10 } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "searchTransactions", arguments: { limit: 10 } }],
+  });
 
-	// Search specific payee
-	examples.push({
-		id: "transaction_002",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Find my Costco transactions" },
-			{
-				role: "assistant",
-				content: `Found 8 Costco transactions in the last 3 months:
+  // Search specific payee
+  examples.push({
+    id: "transaction_002",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Find my Costco transactions" },
+      {
+        role: "assistant",
+        content: `Found 8 Costco transactions in the last 3 months:
 
 | Date | Amount | Category |
 |------|--------|----------|
@@ -1000,23 +1000,23 @@ Would you like me to filter these by category or search for something specific?`
 **Total: $1,539.70** | **Average: $192.46/trip**
 
 You visit Costco about 2-3 times per month. Your largest trip was $267.89 on ${randomDate(42)}.`,
-			},
-		],
-		toolCalls: [{ name: "searchTransactions", arguments: { payee: "Costco" } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "searchTransactions", arguments: { payee: "Costco" } }],
+  });
 
-	// Amount-based search
-	examples.push({
-		id: "transaction_003",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What transactions over $100 did I have this month?" },
-			{
-				role: "assistant",
-				content: `You have 5 transactions over $100 this month:
+  // Amount-based search
+  examples.push({
+    id: "transaction_003",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What transactions over $100 did I have this month?" },
+      {
+        role: "assistant",
+        content: `You have 5 transactions over $100 this month:
 
 1. **Rent Payment** - $1,500.00 (${randomDate(5)})
    - Category: Housing
@@ -1039,23 +1039,23 @@ You visit Costco about 2-3 times per month. Your largest trip was $267.89 on ${r
    - Account: Chase Checking
 
 **Total: $2,194.68** (These represent 63% of your monthly spending)`,
-			},
-		],
-		toolCalls: [{ name: "searchTransactions", arguments: { minAmount: 100 } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "searchTransactions", arguments: { minAmount: 100 } }],
+  });
 
-	// Date range search
-	examples.push({
-		id: "transaction_004",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Show me transactions from last weekend" },
-			{
-				role: "assistant",
-				content: `Here are your transactions from last weekend (Sat-Sun):
+  // Date range search
+  examples.push({
+    id: "transaction_004",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Show me transactions from last weekend" },
+      {
+        role: "assistant",
+        content: `Here are your transactions from last weekend (Sat-Sun):
 
 **Saturday:**
 - Target: -$67.89 (Shopping)
@@ -1070,22 +1070,22 @@ You visit Costco about 2-3 times per month. Your largest trip was $267.89 on ${r
 **Weekend Total: $206.32**
 
 This is about average for your weekend spending. Your Saturdays tend to be higher due to grocery shopping.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Category-based search
-	examples.push({
-		id: "transaction_005",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Find all my dining transactions this month" },
-			{
-				role: "assistant",
-				content: `Found 12 dining transactions this month totaling **$345.67**:
+  // Category-based search
+  examples.push({
+    id: "transaction_005",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Find all my dining transactions this month" },
+      {
+        role: "assistant",
+        content: `Found 12 dining transactions this month totaling **$345.67**:
 
 | Date | Payee | Amount |
 |------|-------|--------|
@@ -1106,23 +1106,23 @@ This is about average for your weekend spending. Your Saturdays tend to be highe
 - Restaurants: $114.86 (33%)
 - Delivery: $105.43 (31%)
 - Coffee: $123.38 (36%)`,
-			},
-		],
-		toolCalls: [{ name: "searchTransactions", arguments: { category: "Dining Out" } }],
-	});
+      },
+    ],
+    toolCalls: [{ name: "searchTransactions", arguments: { category: "Dining Out" } }],
+  });
 
-	// Uncategorized transactions
-	examples.push({
-		id: "transaction_006",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Do I have any uncategorized transactions?" },
-			{
-				role: "assistant",
-				content: `You have **4 uncategorized transactions** that need attention:
+  // Uncategorized transactions
+  examples.push({
+    id: "transaction_006",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Do I have any uncategorized transactions?" },
+      {
+        role: "assistant",
+        content: `You have **4 uncategorized transactions** that need attention:
 
 1. **ACH PAYMENT 847392** - $89.99 (${randomDate(3)})
    - Likely: Insurance payment or subscription
@@ -1141,22 +1141,22 @@ This is about average for your weekend spending. Your Saturdays tend to be highe
    - Suggested: Mark as Transfer
 
 Would you like me to apply these suggestions?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Search by account
-	examples.push({
-		id: "transaction_007",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What did I charge to my Amex this month?" },
-			{
-				role: "assistant",
-				content: `Your Amex Platinum charges this month: **$1,234.56** (18 transactions)
+  // Search by account
+  examples.push({
+    id: "transaction_007",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What did I charge to my Amex this month?" },
+      {
+        role: "assistant",
+        content: `Your Amex Platinum charges this month: **$1,234.56** (18 transactions)
 
 **Top Categories:**
 - Shopping: $456.78 (37%)
@@ -1171,22 +1171,22 @@ Would you like me to apply these suggestions?`,
 3. Amazon: $123.45 (${randomDate(12)})
 
 You're earning 5x points on restaurants and flights. Consider using this card more for dining!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Refund/credit search
-	examples.push({
-		id: "transaction_008",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Have I gotten any refunds recently?" },
-			{
-				role: "assistant",
-				content: `Found 3 refunds/credits in the last 30 days:
+  // Refund/credit search
+  examples.push({
+    id: "transaction_008",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Have I gotten any refunds recently?" },
+      {
+        role: "assistant",
+        content: `Found 3 refunds/credits in the last 30 days:
 
 1. **Amazon Refund** - +$45.67 (${randomDate(5)})
    - Original purchase: ${randomDate(20)}
@@ -1201,22 +1201,22 @@ You're earning 5x points on restaurants and flights. Consider using this card mo
 **Total refunds: $85.65**
 
 Your largest pending return is $89.99 from Best Buy (shipped ${randomDate(3)}, should arrive in 5-7 business days).`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Pending transactions
-	examples.push({
-		id: "transaction_009",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What transactions are pending?" },
-			{
-				role: "assistant",
-				content: `You have **3 pending transactions**:
+  // Pending transactions
+  examples.push({
+    id: "transaction_009",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What transactions are pending?" },
+      {
+        role: "assistant",
+        content: `You have **3 pending transactions**:
 
 | Payee | Amount | Account | Expected to Post |
 |-------|--------|---------|------------------|
@@ -1229,22 +1229,22 @@ Your largest pending return is $89.99 from Best Buy (shipped ${randomDate(3)}, s
 These will post within 1-3 business days. Your available balances already reflect these holds.
 
 **Note:** The restaurant charge is higher than the original - likely includes tip that was added after authorization.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Duplicate detection
-	examples.push({
-		id: "transaction_010",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Are there any duplicate transactions?" },
-			{
-				role: "assistant",
-				content: `I found **2 potential duplicates** to review:
+  // Duplicate detection
+  examples.push({
+    id: "transaction_010",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Are there any duplicate transactions?" },
+      {
+        role: "assistant",
+        content: `I found **2 potential duplicates** to review:
 
 **Likely Duplicates:**
 
@@ -1264,58 +1264,58 @@ These will post within 1-3 business days. Your available balances already reflec
 - Starbucks: 3 charges this week are normal (different dates/amounts)
 
 Want me to help resolve these?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate payee management examples
  */
 function generatePayeeManagementExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Create a payee
-	examples.push({
-		id: "payee_001",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Add a new payee for my gym membership called Equinox" },
-			{
-				role: "assistant",
-				content: `Done! I've created a new payee:
+  // Create a payee
+  examples.push({
+    id: "payee_001",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Add a new payee for my gym membership called Equinox" },
+      {
+        role: "assistant",
+        content: `Done! I've created a new payee:
 
 **Equinox**
 - Default Category: Health & Fitness
 
 Future transactions from Equinox will automatically be categorized as Health & Fitness. Would you like me to set up a recurring transaction for your membership fee?`,
-			},
-		],
-		toolCalls: [
-			{
-				name: "createPayee",
-				arguments: { name: "Equinox", defaultCategoryName: "Health & Fitness" },
-			},
-		],
-	});
+      },
+    ],
+    toolCalls: [
+      {
+        name: "createPayee",
+        arguments: { name: "Equinox", defaultCategoryName: "Health & Fitness" },
+      },
+    ],
+  });
 
-	// Payee spending inquiry
-	examples.push({
-		id: "payee_002",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Which merchants do I spend the most at?" },
-			{
-				role: "assistant",
-				content: `Here are your top 10 merchants by spending this year:
+  // Payee spending inquiry
+  examples.push({
+    id: "payee_002",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Which merchants do I spend the most at?" },
+      {
+        role: "assistant",
+        content: `Here are your top 10 merchants by spending this year:
 
 1. **Rent Payment** - $18,000 (Housing)
 2. **Amazon** - $2,345 (Various)
@@ -1329,22 +1329,22 @@ Future transactions from Equinox will automatically be categorized as Health & F
 10. **Netflix** - $192 (Subscriptions)
 
 Excluding rent, your top discretionary spending is at Amazon and grocery stores.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Merge payees
-	examples.push({
-		id: "payee_003",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I have duplicate payees for Starbucks" },
-			{
-				role: "assistant",
-				content: `I found 3 variations of Starbucks in your payees:
+  // Merge payees
+  examples.push({
+    id: "payee_003",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I have duplicate payees for Starbucks" },
+      {
+        role: "assistant",
+        content: `I found 3 variations of Starbucks in your payees:
 
 1. **Starbucks** - 24 transactions, $234.56 total
 2. **STARBUCKS STORE** - 8 transactions, $67.89 total
@@ -1358,22 +1358,22 @@ This will:
 - Set default category: Dining Out
 
 Would you like me to merge these? Your transaction history will be preserved.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Payee details
-	examples.push({
-		id: "payee_004",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Tell me about my spending at Target" },
-			{
-				role: "assistant",
-				content: `**Target Spending Analysis:**
+  // Payee details
+  examples.push({
+    id: "payee_004",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Tell me about my spending at Target" },
+      {
+        role: "assistant",
+        content: `**Target Spending Analysis:**
 
 **This Year:** $987.45 across 23 visits
 **Average per visit:** $42.93
@@ -1390,22 +1390,22 @@ Would you like me to merge these? Your transaction history will be preserved.`,
 - Highest spending month: December ($156.78)
 
 **Trend:** Your Target spending is up 15% vs last year. Most increase is in Groceries category.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Set default category for payee
-	examples.push({
-		id: "payee_005",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Always categorize Shell as Transportation" },
-			{
-				role: "assistant",
-				content: `Done! I've updated Shell's default category:
+  // Set default category for payee
+  examples.push({
+    id: "payee_005",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Always categorize Shell as Transportation" },
+      {
+        role: "assistant",
+        content: `Done! I've updated Shell's default category:
 
 **Shell**
 - Previous default: Uncategorized
@@ -1416,28 +1416,28 @@ Would you like me to merge these? Your transaction history will be preserved.`,
 - Total: $567.89 now in Transportation category
 
 Future transactions from Shell will automatically be categorized as Transportation. You can always override individual transactions if needed.`,
-			},
-		],
-		toolCalls: [
-			{
-				name: "updatePayee",
-				arguments: { payeeName: "Shell", defaultCategory: "Transportation" },
-			},
-		],
-	});
+      },
+    ],
+    toolCalls: [
+      {
+        name: "updatePayee",
+        arguments: { payeeName: "Shell", defaultCategory: "Transportation" },
+      },
+    ],
+  });
 
-	// Find similar payees
-	examples.push({
-		id: "payee_006",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Do I have any payees that should be merged?" },
-			{
-				role: "assistant",
-				content: `I found **4 groups** of similar payees that could be merged:
+  // Find similar payees
+  examples.push({
+    id: "payee_006",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Do I have any payees that should be merged?" },
+      {
+        role: "assistant",
+        content: `I found **4 groups** of similar payees that could be merged:
 
 **1. Amazon variants:**
 - Amazon, AMAZON.COM, AMZN MKTP → 45 transactions
@@ -1456,22 +1456,22 @@ Future transactions from Shell will automatically be categorized as Transportati
 - Recommendation: Merge to "Shell"
 
 Would you like me to merge the recommended groups?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Rename payee
-	examples.push({
-		id: "payee_007",
-		category: "payee_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Rename 'WHOLEFDS MKT' to 'Whole Foods'" },
-			{
-				role: "assistant",
-				content: `Done! I've renamed the payee:
+  // Rename payee
+  examples.push({
+    id: "payee_007",
+    category: "payee_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Rename 'WHOLEFDS MKT' to 'Whole Foods'" },
+      {
+        role: "assistant",
+        content: `Done! I've renamed the payee:
 
 **Before:** WHOLEFDS MKT
 **After:** Whole Foods
@@ -1481,34 +1481,34 @@ Would you like me to merge the recommended groups?`,
 - Default category remains: Groceries
 
 I notice you also have a "Whole Foods Market" payee with 8 transactions. Would you like to merge these together?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate category suggestion examples
  */
 function generateCategorySuggestionExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Suggest category
-	examples.push({
-		id: "category_001",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "I have a transaction from 'CHEESECAKE FACTORY', what category should it be?",
-			},
-			{
-				role: "assistant",
-				content: `I'd suggest categorizing this as **Dining Out**.
+  // Suggest category
+  examples.push({
+    id: "category_001",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "I have a transaction from 'CHEESECAKE FACTORY', what category should it be?",
+      },
+      {
+        role: "assistant",
+        content: `I'd suggest categorizing this as **Dining Out**.
 
 The Cheesecake Factory is a restaurant chain, so it fits best under your Dining Out category. This is where you have similar restaurant transactions like:
 - Olive Garden
@@ -1516,22 +1516,22 @@ The Cheesecake Factory is a restaurant chain, so it fits best under your Dining 
 - Local restaurants
 
 Would you like me to categorize it as Dining Out?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Categorize transaction
-	examples.push({
-		id: "category_002",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Categorize my last Uber transaction as Transportation" },
-			{
-				role: "assistant",
-				content: `Done! I've updated your Uber transaction:
+  // Categorize transaction
+  examples.push({
+    id: "category_002",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Categorize my last Uber transaction as Transportation" },
+      {
+        role: "assistant",
+        content: `Done! I've updated your Uber transaction:
 
 **Transaction Updated:**
 - Payee: Uber
@@ -1540,31 +1540,31 @@ Would you like me to categorize it as Dining Out?`,
 - Category: Transportation (was: Uncategorized)
 
 I've also set Transportation as the default category for future Uber transactions.`,
-			},
-		],
-		toolCalls: [
-			{
-				name: "categorizeTransaction",
-				arguments: { transactionId: 12345, categoryName: "Transportation" },
-			},
-		],
-	});
+      },
+    ],
+    toolCalls: [
+      {
+        name: "categorizeTransaction",
+        arguments: { transactionId: 12345, categoryName: "Transportation" },
+      },
+    ],
+  });
 
-	// Ambiguous category
-	examples.push({
-		id: "category_003",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What category should I use for my CVS purchase?",
-			},
-			{
-				role: "assistant",
-				content: `CVS purchases can fall into different categories depending on what you bought:
+  // Ambiguous category
+  examples.push({
+    id: "category_003",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What category should I use for my CVS purchase?",
+      },
+      {
+        role: "assistant",
+        content: `CVS purchases can fall into different categories depending on what you bought:
 
 **Common CVS categories:**
 - **Healthcare** - Prescriptions, medicine, first aid
@@ -1580,25 +1580,25 @@ I've also set Transportation as the default category for future Uber transaction
 **Suggestion:** If this was a typical visit, I'd categorize it as **Healthcare** since that's your most common use.
 
 What did you buy? Or should I use Healthcare as the default?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Split transaction category
-	examples.push({
-		id: "category_004",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "I bought groceries and household items at Target for $89.99",
-			},
-			{
-				role: "assistant",
-				content: `I can help you split this transaction:
+  // Split transaction category
+  examples.push({
+    id: "category_004",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "I bought groceries and household items at Target for $89.99",
+      },
+      {
+        role: "assistant",
+        content: `I can help you split this transaction:
 
 **Original:** Target - $89.99
 
@@ -1616,22 +1616,22 @@ What did you buy? Or should I use Healthcare as the default?`,
    - Tell me the exact amounts
 
 Your typical Target breakdown is 60% groceries, 40% other. Would you like me to apply the estimated split, or do you know the exact amounts?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Bulk categorization
-	examples.push({
-		id: "category_005",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Categorize all my Amazon transactions as Shopping" },
-			{
-				role: "assistant",
-				content: `I'll update your Amazon transactions, but first a heads up:
+  // Bulk categorization
+  examples.push({
+    id: "category_005",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Categorize all my Amazon transactions as Shopping" },
+      {
+        role: "assistant",
+        content: `I'll update your Amazon transactions, but first a heads up:
 
 **Amazon has mixed categories currently:**
 - Shopping: 28 transactions ($1,234.56)
@@ -1646,22 +1646,22 @@ Your typical Target breakdown is 60% groceries, 40% other. Would you like me to 
 I recommend option 3 - there are 5 uncategorized Amazon transactions totaling $234.56 that I can set to Shopping.
 
 What would you prefer?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Category recommendation
-	examples.push({
-		id: "category_006",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Should gym memberships be Healthcare or Entertainment?" },
-			{
-				role: "assistant",
-				content: `Great question! Here are both perspectives:
+  // Category recommendation
+  examples.push({
+    id: "category_006",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Should gym memberships be Healthcare or Entertainment?" },
+      {
+        role: "assistant",
+        content: `Great question! Here are both perspectives:
 
 **Healthcare (Recommended):**
 - Exercise is health-related
@@ -1678,22 +1678,22 @@ What would you prefer?`,
 This matches how most budgeting apps categorize it, and keeps your health-related spending together for analysis.
 
 Your current gym ($49.99/mo) is categorized as "Subscriptions". Want me to move it to Healthcare?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Create new category
-	examples.push({
-		id: "category_007",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I need a category for pet expenses" },
-			{
-				role: "assistant",
-				content: `I can create a new "Pets" category for you.
+  // Create new category
+  examples.push({
+    id: "category_007",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I need a category for pet expenses" },
+      {
+        role: "assistant",
+        content: `I can create a new "Pets" category for you.
 
 **Suggested setup:**
 - Name: Pets
@@ -1713,31 +1713,31 @@ Would you like me to:
 3. Set up a monthly budget (your average: $97/month)
 
 All of the above?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate financial advice examples
  */
 function generateFinancialAdviceExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	// Savings advice
-	examples.push({
-		id: "advice_001",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How can I save more money?" },
-			{
-				role: "assistant",
-				content: `Based on your spending patterns, here are some personalized recommendations:
+  // Savings advice
+  examples.push({
+    id: "advice_001",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How can I save more money?" },
+      {
+        role: "assistant",
+        content: `Based on your spending patterns, here are some personalized recommendations:
 
 **Quick Wins (Save ~$200/month)**
 1. **Reduce dining out** - You're spending $345/month vs. your $250 budget. Cooking 2 more meals at home weekly could save ~$100.
@@ -1751,22 +1751,22 @@ function generateFinancialAdviceExamples(): TrainingExample[] {
 - Consider refinancing your car loan if rate is above 5%.
 
 Would you like me to create a specific savings goal to track progress?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Budget recommendation
-	examples.push({
-		id: "advice_002",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Should I increase my grocery budget?" },
-			{
-				role: "assistant",
-				content: `Looking at your grocery spending trends:
+  // Budget recommendation
+  examples.push({
+    id: "advice_002",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Should I increase my grocery budget?" },
+      {
+        role: "assistant",
+        content: `Looking at your grocery spending trends:
 
 **Current budget:** $600/month
 **Actual spending (3-month avg):** $567/month
@@ -1781,22 +1781,22 @@ However, if you're feeling constrained, consider:
 - Shifting $50 from your under-utilized Entertainment budget instead of increasing overall spending
 
 What would you prefer?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Debt payoff advice
-	examples.push({
-		id: "advice_003",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How can I pay off my credit cards faster?" },
-			{
-				role: "assistant",
-				content: `Let's create a payoff strategy for your credit cards:
+  // Debt payoff advice
+  examples.push({
+    id: "advice_003",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How can I pay off my credit cards faster?" },
+      {
+        role: "assistant",
+        content: `Let's create a payoff strategy for your credit cards:
 
 **Current Debt:**
 - Amex Platinum: $1,234.56 (18.9% APR)
@@ -1823,22 +1823,22 @@ Pay Capital One first (higher interest), then Amex.
 **With extra $200:** Pay off in 8 months, save $156 in interest
 
 Would you like me to track your payoff progress?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Tax planning advice
-	examples.push({
-		id: "advice_004",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What can I deduct on my taxes?" },
-			{
-				role: "assistant",
-				content: `Based on your spending, here are potential deductions to discuss with a tax professional:
+  // Tax planning advice
+  examples.push({
+    id: "advice_004",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What can I deduct on my taxes?" },
+      {
+        role: "assistant",
+        content: `Based on your spending, here are potential deductions to discuss with a tax professional:
 
 **Potentially Deductible (if you itemize):**
 
@@ -1863,22 +1863,22 @@ Would you like me to track your payoff progress?`,
 **Recommendation:** Your standard deduction ($14,600 single) likely exceeds your itemized deductions. But track charitable giving - it may help next year.
 
 *Note: I'm not a tax advisor. Please consult a CPA for tax guidance.*`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Spending habit insights
-	examples.push({
-		id: "advice_005",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What are my worst spending habits?" },
-			{
-				role: "assistant",
-				content: `Based on analyzing your transactions, here are areas to improve:
+  // Spending habit insights
+  examples.push({
+    id: "advice_005",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What are my worst spending habits?" },
+      {
+        role: "assistant",
+        content: `Based on analyzing your transactions, here are areas to improve:
 
 **1. Impulse Delivery Orders** 🍕
 - DoorDash/Uber Eats: $187/month
@@ -1904,22 +1904,22 @@ Would you like me to track your payoff progress?`,
 **Total potential savings: $300/month**
 
 Which would you like to tackle first?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Investment advice
-	examples.push({
-		id: "advice_006",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Should I invest more in my 401k?" },
-			{
-				role: "assistant",
-				content: `Let me analyze your retirement savings:
+  // Investment advice
+  examples.push({
+    id: "advice_006",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Should I invest more in my 401k?" },
+      {
+        role: "assistant",
+        content: `Let me analyze your retirement savings:
 
 **Current 401k Status:**
 - Balance: $45,678.90
@@ -1945,22 +1945,22 @@ Which would you like to tackle first?`,
 Your emergency fund is solid (3.5 months). Consider increasing to 12-15% to accelerate retirement savings. You have the cash flow to support it.
 
 Would you like to see the long-term impact?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Affordability check
-	examples.push({
-		id: "advice_007",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Can I afford a $500 purchase?" },
-			{
-				role: "assistant",
-				content: `Let me check your financial situation:
+  // Affordability check
+  examples.push({
+    id: "advice_007",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Can I afford a $500 purchase?" },
+      {
+        role: "assistant",
+        content: `Let me check your financial situation:
 
 **Quick Answer: Yes, but let's be smart about it.**
 
@@ -1987,22 +1987,22 @@ Would you like to see the long-term impact?`,
 **Recommendation:** Wait for your paycheck. You'll feel better making the purchase without stress.
 
 What's the purchase for? I can help you find deals or alternatives.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Financial health check
-	examples.push({
-		id: "advice_008",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Give me a financial health check" },
-			{
-				role: "assistant",
-				content: `**Your Financial Health Report**
+  // Financial health check
+  examples.push({
+    id: "advice_008",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Give me a financial health check" },
+      {
+        role: "assistant",
+        content: `**Your Financial Health Report**
 
 **Overall Score: B+ (Good)**
 
@@ -2035,30 +2035,30 @@ What's the purchase for? I can help you find deals or alternatives.`,
 3. Review streaming subscriptions
 
 You're doing great! Focus on the emergency fund and you'll be in excellent shape.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate forecasting examples
  */
 function generateForecastingExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "forecast_001",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What will my balance be at the end of the month?" },
-			{
-				role: "assistant",
-				content: `Based on your spending patterns and upcoming transactions:
+  examples.push({
+    id: "forecast_001",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What will my balance be at the end of the month?" },
+      {
+        role: "assistant",
+        content: `Based on your spending patterns and upcoming transactions:
 
 **Projected End-of-Month Balance: $2,156.78**
 
@@ -2076,22 +2076,22 @@ function generateForecastingExamples(): TrainingExample[] {
 **Net Change:** -$1,088.89
 
 This projection assumes you stay within your remaining budgets. You have a comfortable buffer above your typical minimum balance of $1,500.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Monthly spending forecast
-	examples.push({
-		id: "forecast_002",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much will I spend this month?" },
-			{
-				role: "assistant",
-				content: `**Projected Monthly Spending: $3,520**
+  // Monthly spending forecast
+  examples.push({
+    id: "forecast_002",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much will I spend this month?" },
+      {
+        role: "assistant",
+        content: `**Projected Monthly Spending: $3,520**
 
 **Already Spent:** $2,456 (70%)
 **Projected Remaining:** $1,064
@@ -2114,22 +2114,22 @@ This projection assumes you stay within your remaining budgets. You have a comfo
 - Shopping might increase with upcoming sales
 
 Want me to alert you if spending trends toward over budget?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Cash flow forecast
-	examples.push({
-		id: "forecast_003",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Will I have cash flow problems this month?" },
-			{
-				role: "assistant",
-				content: `**Cash Flow Forecast - This Month**
+  // Cash flow forecast
+  examples.push({
+    id: "forecast_003",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Will I have cash flow problems this month?" },
+      {
+        role: "assistant",
+        content: `**Cash Flow Forecast - This Month**
 
 Good news: **No cash flow issues expected!**
 
@@ -2156,22 +2156,22 @@ Good news: **No cash flow issues expected!**
 3. Reduce spending by $50 before rent
 
 This is a very minor issue - your finances are solid overall.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Next month forecast
-	examples.push({
-		id: "forecast_004",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What does next month look like financially?" },
-			{
-				role: "assistant",
-				content: `**Next Month Forecast:**
+  // Next month forecast
+  examples.push({
+    id: "forecast_004",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What does next month look like financially?" },
+      {
+        role: "assistant",
+        content: `**Next Month Forecast:**
 
 **Expected Income:** $7,000
 - 2 paychecks @ $3,500
@@ -2199,22 +2199,22 @@ This is a very minor issue - your finances are solid overall.`,
 - Start holiday fund
 
 Would you like me to create a savings plan for next month?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Savings goal projection
-	examples.push({
-		id: "forecast_005",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "When will I reach my savings goal?" },
-			{
-				role: "assistant",
-				content: `**Savings Goal Progress:**
+  // Savings goal projection
+  examples.push({
+    id: "forecast_005",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "When will I reach my savings goal?" },
+      {
+        role: "assistant",
+        content: `**Savings Goal Progress:**
 
 **Emergency Fund Goal:** $21,000 (6 months expenses)
 **Current:** $12,500 (59%)
@@ -2241,22 +2241,22 @@ Would you like me to create a savings plan for next month?`,
 At 4.5% APY, you'll earn ~$380 in interest while saving.
 
 **Recommendation:** Push for $600/month - you'll hit your goal 7 months sooner and have peace of mind faster.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Year-end forecast
-	examples.push({
-		id: "forecast_006",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What will my net worth be at year end?" },
-			{
-				role: "assistant",
-				content: `**Year-End Net Worth Projection:**
+  // Year-end forecast
+  examples.push({
+    id: "forecast_006",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What will my net worth be at year end?" },
+      {
+        role: "assistant",
+        content: `**Year-End Net Worth Projection:**
 
 **Current Net Worth:** $77,079
 **Projected Year-End:** $85,400 (+$8,321, +10.8%)
@@ -2285,30 +2285,30 @@ At 4.5% APY, you'll earn ~$380 in interest while saving.
 
 **Milestone Alert:**
 At this rate, you'll cross **$100,000 net worth** in ~18 months!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate recurring transaction examples
  */
 function generateRecurringTransactionExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "recurring_001",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What bills do I have coming up?" },
-			{
-				role: "assistant",
-				content: `**Upcoming Bills (Next 14 Days):**
+  examples.push({
+    id: "recurring_001",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What bills do I have coming up?" },
+      {
+        role: "assistant",
+        content: `**Upcoming Bills (Next 14 Days):**
 
 | Due Date | Payee | Amount | Account |
 |----------|-------|--------|---------|
@@ -2321,21 +2321,21 @@ function generateRecurringTransactionExamples(): TrainingExample[] {
 **Total expected: ~$306**
 
 You have $3,245 in checking, so you're well covered for these bills.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "recurring_002",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "When is my rent due?" },
-			{
-				role: "assistant",
-				content: `Your rent payment of **$1,500** is due on the **1st of each month**.
+  examples.push({
+    id: "recurring_002",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "When is my rent due?" },
+      {
+        role: "assistant",
+        content: `Your rent payment of **$1,500** is due on the **1st of each month**.
 
 **Next payment:** ${randomDate(-8)} (in 8 days)
 **Paid from:** Chase Checking
@@ -2346,21 +2346,21 @@ Your last 3 rent payments:
 - Oct 1: $1,500 ✅
 
 You currently have $3,245.67 in checking - enough to cover rent with $1,745.67 remaining.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "recurring_003",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Show my recurring transactions" },
-			{
-				role: "assistant",
-				content: `**Your Recurring Transactions:**
+  examples.push({
+    id: "recurring_003",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Show my recurring transactions" },
+      {
+        role: "assistant",
+        content: `**Your Recurring Transactions:**
 
 **Monthly - Fixed Amount:**
 - Rent: $1,500 (1st)
@@ -2379,21 +2379,21 @@ You currently have $3,245.67 in checking - enough to cover rent with $1,745.67 r
 - Car Insurance: $756/year ($189/quarter)
 
 **Total monthly recurring: ~$1,855**`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "recurring_004",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much do I pay for utilities each month?" },
-			{
-				role: "assistant",
-				content: `Your monthly utility costs average **$244**:
+  examples.push({
+    id: "recurring_004",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much do I pay for utilities each month?" },
+      {
+        role: "assistant",
+        content: `Your monthly utility costs average **$244**:
 
 | Utility | Average | Last Month | Trend |
 |---------|---------|------------|-------|
@@ -2407,30 +2407,30 @@ You currently have $3,245.67 in checking - enough to cover rent with $1,745.67 r
 - Spring/Fall: ~$200 (lowest)
 
 You're in the lower utility months now. Expect costs to rise in summer.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate savings goal examples
  */
 function generateSavingsGoalExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "savings_001",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I want to save for a vacation" },
-			{
-				role: "assistant",
-				content: `Great! Let's set up a vacation savings goal.
+  examples.push({
+    id: "savings_001",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I want to save for a vacation" },
+      {
+        role: "assistant",
+        content: `Great! Let's set up a vacation savings goal.
 
 **Quick Questions:**
 1. How much do you want to save? (e.g., $3,000)
@@ -2449,21 +2449,21 @@ You could achieve this by:
 - Using your Marcus Savings account to earn 4.5% APY
 
 Would you like me to create this goal and track your progress?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "savings_002",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How long until I have a 6 month emergency fund?" },
-			{
-				role: "assistant",
-				content: `Let me calculate that for you:
+  examples.push({
+    id: "savings_002",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How long until I have a 6 month emergency fund?" },
+      {
+        role: "assistant",
+        content: `Let me calculate that for you:
 
 **Current Emergency Fund:** $12,500 (Ally Savings)
 **Monthly Expenses:** ~$3,500
@@ -2483,21 +2483,21 @@ At your current savings rate of $400/month:
 | $850 | 10 months |
 
 You already have 3.5 months covered - that's a solid foundation! Many experts say 3-6 months is sufficient.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "savings_003",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How can I save $500 more per month?" },
-			{
-				role: "assistant",
-				content: `Here's a plan to save $500 more monthly based on your spending:
+  examples.push({
+    id: "savings_003",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How can I save $500 more per month?" },
+      {
+        role: "assistant",
+        content: `Here's a plan to save $500 more monthly based on your spending:
 
 **Quick Wins (~$200/month):**
 1. Cook more, dine out less: -$100
@@ -2523,30 +2523,30 @@ You already have 3.5 months covered - that's a solid foundation! Many experts sa
 **Total potential: $550/month**
 
 Start with the quick wins - they're easiest to maintain!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate transfer and income examples
  */
 function generateTransferExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "transfer_001",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "When did I last transfer money to savings?" },
-			{
-				role: "assistant",
-				content: `Your last transfer to savings was **${randomDate(5)}**:
+  examples.push({
+    id: "transfer_001",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "When did I last transfer money to savings?" },
+      {
+        role: "assistant",
+        content: `Your last transfer to savings was **${randomDate(5)}**:
 
 - Amount: $500
 - From: Chase Checking
@@ -2561,21 +2561,21 @@ function generateTransferExamples(): TrainingExample[] {
 | ${randomDate(65)} | $400 | Marcus Savings |
 
 You've transferred $1,400 to savings in the last 3 months. Would you like me to help set up automatic transfers?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "transfer_002",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "When did I get paid last?" },
-			{
-				role: "assistant",
-				content: `Your last paycheck was **${randomDate(12)}**:
+  examples.push({
+    id: "transfer_002",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "When did I get paid last?" },
+      {
+        role: "assistant",
+        content: `Your last paycheck was **${randomDate(12)}**:
 
 - Amount: $3,500.00 (net)
 - From: Employer Direct Deposit
@@ -2588,21 +2588,21 @@ You've transferred $1,400 to savings in the last 3 months. Would you like me to 
 - Paycheck 1: $3,500 (${randomDate(12)})
 - Paycheck 2: $3,500 (expected ${randomDate(-2)})
 - **Total: $7,000**`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "transfer_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my income vs expenses?" },
-			{
-				role: "assistant",
-				content: `**Monthly Cash Flow Summary:**
+  examples.push({
+    id: "transfer_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my income vs expenses?" },
+      {
+        role: "assistant",
+        content: `**Monthly Cash Flow Summary:**
 
 **Income:** $7,000
 - Salary: $7,000 (2 paychecks)
@@ -2621,30 +2621,30 @@ You've transferred $1,400 to savings in the last 3 months. Would you like me to 
 **Savings Rate: 17%** (Savings + 401k)
 
 This is above the recommended 15-20%. Great job!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate edge case and error handling examples
  */
 function generateEdgeCaseExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "edge_001",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my balance at Bank of America?" },
-			{
-				role: "assistant",
-				content: `I don't see a Bank of America account in your connected accounts.
+  examples.push({
+    id: "edge_001",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my balance at Bank of America?" },
+      {
+        role: "assistant",
+        content: `I don't see a Bank of America account in your connected accounts.
 
 **Your current accounts are:**
 - Chase Checking
@@ -2656,21 +2656,21 @@ function generateEdgeCaseExamples(): TrainingExample[] {
 - Fidelity Brokerage
 
 Would you like to add a Bank of America account? You can connect it in Settings > Accounts.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "edge_002",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How much did I spend on travel?" },
-			{
-				role: "assistant",
-				content: `You haven't had any transactions categorized as Travel this month.
+  examples.push({
+    id: "edge_002",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How much did I spend on travel?" },
+      {
+        role: "assistant",
+        content: `You haven't had any transactions categorized as Travel this month.
 
 **Last travel expenses (past 6 months):**
 - September: $567 (flight to Denver)
@@ -2681,21 +2681,21 @@ Would you like to add a Bank of America account? You can connect it in Settings 
 - Would you like me to recategorize some Uber rides as Travel?
 
 To track travel better, you could create a Travel budget for future trips.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "edge_003",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Delete my grocery budget" },
-			{
-				role: "assistant",
-				content: `I can't delete budgets directly, but I can help you manage them.
+  examples.push({
+    id: "edge_003",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Delete my grocery budget" },
+      {
+        role: "assistant",
+        content: `I can't delete budgets directly, but I can help you manage them.
 
 **Your Groceries budget:**
 - Current: $600/month
@@ -2709,21 +2709,21 @@ To track travel better, you could create a Travel budget for future trips.`,
 To delete it completely, go to Budgets > Groceries > Settings > Delete.
 
 Would you like me to modify the amount instead?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "edge_004",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I have an uncategorized transaction from 'ACH PAYMENT 847392'" },
-			{
-				role: "assistant",
-				content: `That description looks like an ACH transfer. Let me help identify it:
+  examples.push({
+    id: "edge_004",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I have an uncategorized transaction from 'ACH PAYMENT 847392'" },
+      {
+        role: "assistant",
+        content: `That description looks like an ACH transfer. Let me help identify it:
 
 **Transaction Details:**
 - Description: ACH PAYMENT 847392
@@ -2742,22 +2742,22 @@ Would you like me to modify the amount instead?`,
 3. The number might be a reference ID from the company
 
 Would you like to share the amount and date so I can help match it?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Unusual spending alert
-	examples.push({
-		id: "edge_005",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Do I have any unusual spending?" },
-			{
-				role: "assistant",
-				content: `I analyzed your transactions and found a few unusual items:
+  // Unusual spending alert
+  examples.push({
+    id: "edge_005",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Do I have any unusual spending?" },
+      {
+        role: "assistant",
+        content: `I analyzed your transactions and found a few unusual items:
 
 **Flagged Transactions:**
 
@@ -2780,22 +2780,22 @@ Would you like to share the amount and date so I can help match it?`,
 - You had 3 late-night online purchases (Amazon at 1-2am)
 
 Nothing looks fraudulent, but the Best Buy purchase is worth remembering if you need to return it.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Data export request
-	examples.push({
-		id: "edge_006",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Can I export my transaction data?" },
-			{
-				role: "assistant",
-				content: `Yes! You can export your data in several formats:
+  // Data export request
+  examples.push({
+    id: "edge_006",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Can I export my transaction data?" },
+      {
+        role: "assistant",
+        content: `Yes! You can export your data in several formats:
 
 **Export Options:**
 1. **CSV** - For Excel/Google Sheets
@@ -2817,22 +2817,22 @@ Go to **Settings > Data > Export** or I can help you with a specific export.
 - "Export my dining out transactions"
 
 Let me know what you need!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Privacy/data question
-	examples.push({
-		id: "edge_007",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Is my financial data secure?" },
-			{
-				role: "assistant",
-				content: `Great question! Your financial data is protected:
+  // Privacy/data question
+  examples.push({
+    id: "edge_007",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Is my financial data secure?" },
+      {
+        role: "assistant",
+        content: `Great question! Your financial data is protected:
 
 **Security Measures:**
 ✅ **Encryption** - All data encrypted at rest and in transit
@@ -2856,22 +2856,22 @@ Let me know what you need!`,
 - Share your data with anyone
 
 Need more details on any security aspect?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Feature request/limitation
-	examples.push({
-		id: "edge_008",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Can you set up automatic bill pay?" },
-			{
-				role: "assistant",
-				content: `I can't set up automatic payments directly, but I can help in other ways:
+  // Feature request/limitation
+  examples.push({
+    id: "edge_008",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Can you set up automatic bill pay?" },
+      {
+        role: "assistant",
+        content: `I can't set up automatic payments directly, but I can help in other ways:
 
 **What I CAN do:**
 ✅ Remind you of upcoming bills
@@ -2891,22 +2891,22 @@ You'll need to do this through:
 - Show which bills you've paid this month?
 
 I'm here to help you stay organized, even if I can't make the actual payments!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Multiple accounts question
-	examples.push({
-		id: "edge_009",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Why are my balances different from my bank?" },
-			{
-				role: "assistant",
-				content: `Good question! Differences usually come from:
+  // Multiple accounts question
+  examples.push({
+    id: "edge_009",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Why are my balances different from my bank?" },
+      {
+        role: "assistant",
+        content: `Good question! Differences usually come from:
 
 **Common Reasons:**
 
@@ -2929,22 +2929,22 @@ I'm here to help you stay organized, even if I can't make the actual payments!`,
 | Chase | $3,245.67 | $3,295.67 | -$50.00 |
 
 Would you like me to help find the $50 discrepancy? I can show all transactions in the last week.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Goal tracking edge case
-	examples.push({
-		id: "edge_010",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "I need to buy a car in 3 months. Can I afford it?" },
-			{
-				role: "assistant",
-				content: `Let's figure this out! I'll need a few details:
+  // Goal tracking edge case
+  examples.push({
+    id: "edge_010",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "I need to buy a car in 3 months. Can I afford it?" },
+      {
+        role: "assistant",
+        content: `Let's figure this out! I'll need a few details:
 
 **Quick Analysis (assuming $15,000 car):**
 
@@ -2977,30 +2977,30 @@ For a $15K car:
 - What's your target budget?
 - New or used?
 - Have you checked your credit for loan rates?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate general chat examples
  */
 function generateGeneralChatExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "general_001",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Hello!" },
-			{
-				role: "assistant",
-				content: `Hi! I'm your personal finance assistant. I can help you:
+  examples.push({
+    id: "general_001",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Hello!" },
+      {
+        role: "assistant",
+        content: `Hi! I'm your personal finance assistant. I can help you:
 
 - Check account balances and net worth
 - Analyze your spending patterns
@@ -3009,21 +3009,21 @@ function generateGeneralChatExamples(): TrainingExample[] {
 - Get personalized savings tips
 
 What would you like to know about your finances today?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "general_002",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What can you do?" },
-			{
-				role: "assistant",
-				content: `I can help you manage your finances in several ways:
+  examples.push({
+    id: "general_002",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What can you do?" },
+      {
+        role: "assistant",
+        content: `I can help you manage your finances in several ways:
 
 **Information & Analysis**
 - View account balances and net worth
@@ -3047,21 +3047,21 @@ Just ask me anything about your finances! For example:
 - "How much did I spend on dining this month?"
 - "Show me my Amazon transactions"
 - "Create a $200 budget for entertainment"`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "general_003",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Thanks for the help!" },
-			{
-				role: "assistant",
-				content: `You're welcome! I'm here whenever you need help with your finances.
+  examples.push({
+    id: "general_003",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Thanks for the help!" },
+      {
+        role: "assistant",
+        content: `You're welcome! I'm here whenever you need help with your finances.
 
 A few things to try next time:
 - Ask "How am I doing financially?" for a quick overview
@@ -3069,21 +3069,21 @@ A few things to try next time:
 - Check in weekly with "What should I know this week?"
 
 Have a great day! 💰`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "general_004",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Give me a quick financial summary" },
-			{
-				role: "assistant",
-				content: `**Your Financial Snapshot:**
+  examples.push({
+    id: "general_004",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Give me a quick financial summary" },
+      {
+        role: "assistant",
+        content: `**Your Financial Snapshot:**
 
 💰 **Cash:** $20,746 across 3 accounts
 📈 **Investments:** $58,025 (+9.2% YTD)
@@ -3101,21 +3101,21 @@ Have a great day! 💰`,
 💡 You could save $45/mo on subscriptions
 
 Anything specific you'd like to dive into?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "general_005",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Am I doing okay financially?" },
-			{
-				role: "assistant",
-				content: `Yes, you're doing well! Here's why:
+  examples.push({
+    id: "general_005",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Am I doing okay financially?" },
+      {
+        role: "assistant",
+        content: `Yes, you're doing well! Here's why:
 
 **Strengths:**
 ✅ Positive net worth: $77,079
@@ -3135,22 +3135,22 @@ Anything specific you'd like to dive into?`,
 - Your emergency fund is above the median
 
 Overall grade: **B+** - You're in good shape with room to grow!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Comparison question
-	examples.push({
-		id: "general_006",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How do I compare to others my age?" },
-			{
-				role: "assistant",
-				content: `Here's how you compare to others in your age group (assuming 30-35):
+  // Comparison question
+  examples.push({
+    id: "general_006",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How do I compare to others my age?" },
+      {
+        role: "assistant",
+        content: `Here's how you compare to others in your age group (assuming 30-35):
 
 **Net Worth:**
 - You: $77,079
@@ -3176,22 +3176,22 @@ Overall grade: **B+** - You're in good shape with room to grow!`,
 - **Very low debt!**
 
 **Overall:** You're doing better than most people your age. Focus on hitting 6-month emergency fund and you'll be in the top 25%.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Surprise insight
-	examples.push({
-		id: "general_007",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "Surprise me with an insight" },
-			{
-				role: "assistant",
-				content: `Here's something interesting I noticed:
+  // Surprise insight
+  examples.push({
+    id: "general_007",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "Surprise me with an insight" },
+      {
+        role: "assistant",
+        content: `Here's something interesting I noticed:
 
 **You spend 40% more on weekends! 📊**
 
@@ -3213,22 +3213,22 @@ Your Netflix account costs you **$0.53 per hour** of use (based on your viewing)
 If you shifted one weekend meal to cooking at home, you'd save $200/month.
 
 Want me to dig into any of these patterns?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Weekly check-in
-	examples.push({
-		id: "general_008",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What should I know this week?" },
-			{
-				role: "assistant",
-				content: `**Your Weekly Financial Briefing:**
+  // Weekly check-in
+  examples.push({
+    id: "general_008",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What should I know this week?" },
+      {
+        role: "assistant",
+        content: `**Your Weekly Financial Briefing:**
 
 **Upcoming Bills:**
 - Electric bill (~$145) - Due in 3 days
@@ -3254,22 +3254,22 @@ Want me to dig into any of these patterns?`,
 Hold off on non-essential purchases until after Friday. You're doing well but the dining budget is tight.
 
 Have a great week!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Natural language date handling
-	examples.push({
-		id: "general_009",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What did I buy yesterday?" },
-			{
-				role: "assistant",
-				content: `Here are your transactions from yesterday (${randomDate(1)}):
+  // Natural language date handling
+  examples.push({
+    id: "general_009",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What did I buy yesterday?" },
+      {
+        role: "assistant",
+        content: `Here are your transactions from yesterday (${randomDate(1)}):
 
 1. **Starbucks** - $6.45 (Dining Out)
    - Time: 8:15 AM
@@ -3290,25 +3290,25 @@ Have a great week!`,
 **Yesterday's Total: $98.68**
 
 This is 15% higher than your typical weekday ($85). The Amazon purchase pushed it above average.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Complex question handling
-	examples.push({
-		id: "general_010",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much have I spent on food if you include groceries and dining out?",
-			},
-			{
-				role: "assistant",
-				content: `**Combined Food Spending This Month:**
+  // Complex question handling
+  examples.push({
+    id: "general_010",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much have I spent on food if you include groceries and dining out?",
+      },
+      {
+        role: "assistant",
+        content: `**Combined Food Spending This Month:**
 
 | Category | Amount | % of Total |
 |----------|--------|------------|
@@ -3331,22 +3331,22 @@ This is 15% higher than your typical weekday ($85). The Amazon purchase pushed i
 **You're spending $105/week on food**, which is reasonable for one person. The dining/grocery ratio (38%/62%) is a bit high - 30%/70% is more economical.
 
 Want tips to reduce the dining out portion?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Help with app features
-	examples.push({
-		id: "general_011",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How do I add a new account?" },
-			{
-				role: "assistant",
-				content: `Here's how to add a new account:
+  // Help with app features
+  examples.push({
+    id: "general_011",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How do I add a new account?" },
+      {
+        role: "assistant",
+        content: `Here's how to add a new account:
 
 **Option 1: Manual Account**
 1. Go to **Accounts** in the sidebar
@@ -3377,22 +3377,22 @@ Want tips to reduce the dining out portion?`,
 - Investment accounts help track net worth
 
 Would you like me to walk you through adding a specific type of account?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Year over year comparison
-	examples.push({
-		id: "general_012",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "How does this year compare to last year?" },
-			{
-				role: "assistant",
-				content: `**Year-Over-Year Comparison:**
+  // Year over year comparison
+  examples.push({
+    id: "general_012",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "How does this year compare to last year?" },
+      {
+        role: "assistant",
+        content: `**Year-Over-Year Comparison:**
 
 **Total Spending:**
 - This year: $38,456 (10 months)
@@ -3416,22 +3416,22 @@ Would you like me to walk you through adding a specific type of account?`,
 - Shopping up (home improvement projects)
 
 **Bright spot:** Your savings rate improved from 14% to 17%!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	// Fun/engaging question
-	examples.push({
-		id: "general_013",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{ role: "user", content: "What's my most interesting financial fact?" },
-			{
-				role: "assistant",
-				content: `Here's your most interesting financial fact:
+  // Fun/engaging question
+  examples.push({
+    id: "general_013",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      { role: "user", content: "What's my most interesting financial fact?" },
+      {
+        role: "assistant",
+        content: `Here's your most interesting financial fact:
 
 **You've spent more on coffee than on Netflix, Spotify, and gym combined!** ☕
 
@@ -3452,33 +3452,33 @@ Would you like me to walk you through adding a specific type of account?`,
 ⏰ **Timing:** Your bills are paid an average of 3 days before due date (nicely organized!)
 
 Want more financial trivia about your spending?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate calculation and "what-if" scenario examples
  */
 function generateCalculationExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "calc_001",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much can I spend per day if I want to save $500 this month?",
-			},
-			{
-				role: "assistant",
-				content: `Let me calculate your daily spending budget:
+  examples.push({
+    id: "calc_001",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much can I spend per day if I want to save $500 this month?",
+      },
+      {
+        role: "assistant",
+        content: `Let me calculate your daily spending budget:
 
 **Your Monthly Picture:**
 - Expected income: $7,000
@@ -3498,24 +3498,24 @@ function generateCalculationExamples(): TrainingExample[] {
 - Daily limit: **$159.45/day**
 
 You're on track! Keep spending under $160/day and you'll hit your savings goal.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "calc_002",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "If I cut my coffee spending in half, how long until I save $1000?",
-			},
-			{
-				role: "assistant",
-				content: `Great question! Let's do the math:
+  examples.push({
+    id: "calc_002",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "If I cut my coffee spending in half, how long until I save $1000?",
+      },
+      {
+        role: "assistant",
+        content: `Great question! Let's do the math:
 
 **Your Coffee Spending:**
 - Current: $87/month
@@ -3537,24 +3537,24 @@ You're on track! Keep spending under $160/day and you'll hit your savings goal.`
 **Alternative:** Make coffee at home 4 days/week (current: 0) and treat yourself 1 day. That's roughly a 60% cut = **19 months to $1,000**.
 
 The coffee alone won't make you rich, but it's $522/year that could go to investments!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "calc_003",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What if I got a $500/month raise? How would that change things?",
-			},
-			{
-				role: "assistant",
-				content: `Let's model a $500/month raise:
+  examples.push({
+    id: "calc_003",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What if I got a $500/month raise? How would that change things?",
+      },
+      {
+        role: "assistant",
+        content: `Let's model a $500/month raise:
 
 **Current Finances:**
 - Income: $7,000/month
@@ -3581,24 +3581,24 @@ The coffee alone won't make you rich, but it's $522/year that could go to invest
 - In 20 years: ~$130,000
 
 The key is avoiding lifestyle creep! Want me to set up a savings goal for when you get the raise?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "calc_004",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much house can I afford?",
-			},
-			{
-				role: "assistant",
-				content: `Based on your financial profile, here's a home affordability estimate:
+  examples.push({
+    id: "calc_004",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much house can I afford?",
+      },
+      {
+        role: "assistant",
+        content: `Based on your financial profile, here's a home affordability estimate:
 
 **Your Financials:**
 - Annual income: ~$84,000
@@ -3625,24 +3625,24 @@ The key is avoiding lifestyle creep! Want me to set up a savings goal for when y
 **Note:** You'd need to save an additional $7,500 - $10,500 for a 10% down payment. At your current savings rate, that's about 15-21 months.
 
 *This is a rough estimate. Talk to a lender for pre-approval.*`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "calc_005",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much am I spending per meal when I eat out?",
-			},
-			{
-				role: "assistant",
-				content: `Let me break down your dining cost per meal:
+  examples.push({
+    id: "calc_005",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much am I spending per meal when I eat out?",
+      },
+      {
+        role: "assistant",
+        content: `Let me break down your dining cost per meal:
 
 **This Month's Dining Data:**
 - Total dining spending: $345.67
@@ -3670,33 +3670,33 @@ The key is avoiding lifestyle creep! Want me to set up a savings goal for when y
 - Annual: $600
 
 Your most expensive dining spot? Olive Garden at $67.89 for one meal.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate credit card rewards and optimization examples
  */
 function generateRewardsExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "rewards_001",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Which card should I use for groceries?",
-			},
-			{
-				role: "assistant",
-				content: `Based on your cards, here's the best choice for groceries:
+  examples.push({
+    id: "rewards_001",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Which card should I use for groceries?",
+      },
+      {
+        role: "assistant",
+        content: `Based on your cards, here's the best choice for groceries:
 
 **Your Cards & Grocery Rewards:**
 
@@ -3720,24 +3720,24 @@ Use Capital One Venture for groceries until you decide on a dedicated grocery ca
 - Dining: Amex Platinum (5x at restaurants)
 - Travel: Amex Platinum (5x flights)
 - Everything else: Capital One Venture (2x)`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "rewards_002",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much have I earned in credit card rewards?",
-			},
-			{
-				role: "assistant",
-				content: `Here's your estimated rewards earnings this year:
+  examples.push({
+    id: "rewards_002",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much have I earned in credit card rewards?",
+      },
+      {
+        role: "assistant",
+        content: `Here's your estimated rewards earnings this year:
 
 **Amex Platinum:**
 - Total spend: $8,456
@@ -3761,24 +3761,24 @@ Use Capital One Venture for groceries until you decide on a dedicated grocery ca
 **Potential if optimized:** $500-600/year
 
 **Tip:** You're paying $695 in annual fees. You're getting $375 in rewards plus other perks (lounge access, credits). Make sure you're using all the perks!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "rewards_003",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Is my credit card worth the annual fee?",
-			},
-			{
-				role: "assistant",
-				content: `Let's analyze your Amex Platinum ($695/year):
+  examples.push({
+    id: "rewards_003",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Is my credit card worth the annual fee?",
+      },
+      {
+        role: "assistant",
+        content: `Let's analyze your Amex Platinum ($695/year):
 
 **Value You're Getting:**
 
@@ -3803,33 +3803,33 @@ Use Capital One Venture for groceries until you decide on a dedicated grocery ca
 3. Max out the $240 dining credits ($20/month at Grubhub, etc.)
 
 **Alternative:** The Capital One Venture X ($395/year) might be better for your spending patterns. Want me to compare?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate seasonal and holiday budgeting examples
  */
 function generateSeasonalExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "seasonal_001",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much did I spend last Christmas?",
-			},
-			{
-				role: "assistant",
-				content: `Here's your Christmas spending breakdown (Dec 1-25 last year):
+  examples.push({
+    id: "seasonal_001",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much did I spend last Christmas?",
+      },
+      {
+        role: "assistant",
+        content: `Here's your Christmas spending breakdown (Dec 1-25 last year):
 
 **Total Holiday Spending: $1,234.56**
 
@@ -3852,24 +3852,24 @@ function generateSeasonalExamples(): TrainingExample[] {
 
 **Recommendation:**
 Start setting aside **$150-175/month** now to avoid credit card debt during the holidays. Want me to create a "Holiday Fund" goal?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "seasonal_002",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Help me budget for the holidays",
-			},
-			{
-				role: "assistant",
-				content: `Let's create a holiday budget based on your history:
+  examples.push({
+    id: "seasonal_002",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Help me budget for the holidays",
+      },
+      {
+        role: "assistant",
+        content: `Let's create a holiday budget based on your history:
 
 **Last Year's Holiday Spending: $1,235**
 
@@ -3898,24 +3898,24 @@ Start setting aside **$150-175/month** now to avoid credit card debt during the 
 - Period: Nov 1 - Dec 31
 
 I'll track your holiday spending and alert you at 75% and 100%. Would you like to also create a gift list to track individual recipients?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "seasonal_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How does my summer spending compare to winter?",
-			},
-			{
-				role: "assistant",
-				content: `**Seasonal Spending Comparison:**
+  examples.push({
+    id: "seasonal_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How does my summer spending compare to winter?",
+      },
+      {
+        role: "assistant",
+        content: `**Seasonal Spending Comparison:**
 
 | Category | Summer (Jun-Aug) | Winter (Dec-Feb) | Difference |
 |----------|------------------|------------------|------------|
@@ -3941,24 +3941,24 @@ I'll track your holiday spending and alert you at 75% and 100%. Would you like t
 **Your cheapest month:** February ($3,012)
 
 **Tip:** Your summer travel spending spikes. Consider starting a "Vacation Fund" in January to spread the cost.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "seasonal_004",
-		category: "forecasting",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What expenses should I expect in January?",
-			},
-			{
-				role: "assistant",
-				content: `**January Expense Forecast:**
+  examples.push({
+    id: "seasonal_004",
+    category: "forecasting",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What expenses should I expect in January?",
+      },
+      {
+        role: "assistant",
+        content: `**January Expense Forecast:**
 
 **Regular Monthly Expenses: $3,500**
 (Same as usual)
@@ -3987,33 +3987,33 @@ I'll track your holiday spending and alert you at 75% and 100%. Would you like t
 - **Available: $2,073**
 
 **Recommendation:** January is expensive with annual renewals. Make sure you have extra buffer. Want me to create reminders for these expenses?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate goal tracking examples beyond savings
  */
 function generateGoalTrackingExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "goal_001",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Help me set up a 50/30/20 budget",
-			},
-			{
-				role: "assistant",
-				content: `Let's set up a 50/30/20 budget based on your income:
+  examples.push({
+    id: "goal_001",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Help me set up a 50/30/20 budget",
+      },
+      {
+        role: "assistant",
+        content: `Let's set up a 50/30/20 budget based on your income:
 
 **Your Monthly Income: $7,000**
 
@@ -4051,24 +4051,24 @@ function generateGoalTrackingExamples(): TrainingExample[] {
 Move $200 from "Wants" surplus to savings to hit 20%.
 
 Want me to set up budget alerts based on these targets?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "goal_002",
-		category: "budget_management",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Track my no-spend challenge progress",
-			},
-			{
-				role: "assistant",
-				content: `**No-Spend Challenge Progress:**
+  examples.push({
+    id: "goal_002",
+    category: "budget_management",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Track my no-spend challenge progress",
+      },
+      {
+        role: "assistant",
+        content: `**No-Spend Challenge Progress:**
 
 **Challenge Details:**
 - Type: No discretionary spending
@@ -4100,24 +4100,24 @@ Want me to set up budget alerts based on these targets?`,
 **Projected 30-day savings: $708**
 
 Keep going! You've resisted 12 temptations (I saw those almost-purchases at Amazon and Target that you deleted from cart).`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "goal_003",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Set a goal to pay off my credit card by June",
-			},
-			{
-				role: "assistant",
-				content: `Let's create a credit card payoff plan:
+  examples.push({
+    id: "goal_003",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Set a goal to pay off my credit card by June",
+      },
+      {
+        role: "assistant",
+        content: `Let's create a credit card payoff plan:
 
 **Current Credit Card Debt:**
 - Amex Platinum: $1,234.56 (18.9% APR)
@@ -4156,24 +4156,24 @@ Keep going! You've resisted 12 temptations (I saw those almost-purchases at Amaz
 - Monthly payment: $295
 
 I'll track your payments and alert you if you're off pace!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "goal_004",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How am I doing on my fitness spending goal?",
-			},
-			{
-				role: "assistant",
-				content: `**Fitness Spending Goal Progress:**
+  examples.push({
+    id: "goal_004",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How am I doing on my fitness spending goal?",
+      },
+      {
+        role: "assistant",
+        content: `**Fitness Spending Goal Progress:**
 
 **Your Goal:** Spend at least $100/month on fitness
 **Reasoning:** Invest in health
@@ -4201,33 +4201,33 @@ I'll track your payments and alert you if you're off pace!`,
 **Suggestion:** Your gym has classes included. Try one to get even more value from your $49.99.
 
 Keep it up! Spending on health is an investment, not an expense.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate historical pattern examples
  */
 function generatePatternExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "pattern_001",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What day of the month do I usually run low on cash?",
-			},
-			{
-				role: "assistant",
-				content: `Based on 6 months of data, here's your cash flow pattern:
+  examples.push({
+    id: "pattern_001",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What day of the month do I usually run low on cash?",
+      },
+      {
+        role: "assistant",
+        content: `Based on 6 months of data, here's your cash flow pattern:
 
 **Your Lowest Balance Days:**
 
@@ -4253,24 +4253,24 @@ function generatePatternExamples(): TrainingExample[] {
 
 **Recommendation:**
 Consider paying rent on the 3rd instead of 1st (if allowed), so your paycheck clears first. Or keep an extra $500 buffer for month-end.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "pattern_002",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "When did my delivery spending start increasing?",
-			},
-			{
-				role: "assistant",
-				content: `I analyzed your delivery app spending over the past year:
+  examples.push({
+    id: "pattern_002",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "When did my delivery spending start increasing?",
+      },
+      {
+        role: "assistant",
+        content: `I analyzed your delivery app spending over the past year:
 
 **Delivery Spending Timeline:**
 
@@ -4300,24 +4300,24 @@ Consider paying rent on the 3rd instead of 1st (if allowed), so your paycheck cl
 - Most common: Thai food, pizza
 
 **Suggestion:** The convenience is costing you $1,080/year more than before. Consider meal prepping on Sundays?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "pattern_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Show me my spending by day of week",
-			},
-			{
-				role: "assistant",
-				content: `**Spending by Day of Week (Last 3 Months):**
+  examples.push({
+    id: "pattern_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Show me my spending by day of week",
+      },
+      {
+        role: "assistant",
+        content: `**Spending by Day of Week (Last 3 Months):**
 
 | Day | Avg Spending | # Transactions | Top Category |
 |-----|--------------|----------------|--------------|
@@ -4344,24 +4344,24 @@ Consider paying rent on the 3rd instead of 1st (if allowed), so your paycheck cl
 **Your cheapest day ever:** Monday, Feb 10 ($0 - no spend day!)
 
 Want me to set a weekend spending limit?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "pattern_004",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What time of day do I spend the most?",
-			},
-			{
-				role: "assistant",
-				content: `**Spending by Time of Day:**
+  examples.push({
+    id: "pattern_004",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What time of day do I spend the most?",
+      },
+      {
+        role: "assistant",
+        content: `**Spending by Time of Day:**
 
 | Time | Avg/Transaction | Total Spending | Category |
 |------|-----------------|----------------|----------|
@@ -4389,33 +4389,33 @@ Want me to set a weekend spending limit?`,
 - Monthly total: $112
 
 **Tip:** Your late-night shopping is costing ~$200/month. Try adding items to cart and waiting 24 hours before buying!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate casual/informal language examples
  */
 function generateCasualLanguageExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "casual_001",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "whats my blance",
-			},
-			{
-				role: "assistant",
-				content: `Your checking balance is **$3,245.67** (Chase Checking).
+  examples.push({
+    id: "casual_001",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "whats my blance",
+      },
+      {
+        role: "assistant",
+        content: `Your checking balance is **$3,245.67** (Chase Checking).
 
 Quick overview:
 - Checking: $3,245.67
@@ -4423,24 +4423,24 @@ Quick overview:
 - Credit cards: -$1,691.34
 
 Need more details on any account?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "casual_002",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How broke am I?",
-			},
-			{
-				role: "assistant",
-				content: `Not broke at all! Here's the real picture:
+  examples.push({
+    id: "casual_002",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How broke am I?",
+      },
+      {
+        role: "assistant",
+        content: `Not broke at all! Here's the real picture:
 
 **The Good News:**
 - Net worth: $77,079 💪
@@ -4462,24 +4462,24 @@ You've got more than most people your age! The "broke" feeling might be from:
 - Lifestyle inflation? (We can work on that)
 
 What's making you feel squeezed?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "casual_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "grocery $?",
-			},
-			{
-				role: "assistant",
-				content: `**Groceries this month: $456**
+  examples.push({
+    id: "casual_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "grocery $?",
+      },
+      {
+        role: "assistant",
+        content: `**Groceries this month: $456**
 
 - Budget: $600
 - Remaining: $144
@@ -4491,24 +4491,24 @@ Top stores:
 3. Costco: $88
 
 Anything else?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "casual_004",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "ugh i spent too much this weekend",
-			},
-			{
-				role: "assistant",
-				content: `I hear you. Let's see the damage:
+  examples.push({
+    id: "casual_004",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "ugh i spent too much this weekend",
+      },
+      {
+        role: "assistant",
+        content: `I hear you. Let's see the damage:
 
 **This Weekend's Spending: $287.45**
 
@@ -4533,24 +4533,24 @@ Anything else?`,
 - Return the Amazon thing if you don't need it?
 
 Don't beat yourself up. We all have those weekends. 🤷`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "casual_005",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "where'd my money go lol",
-			},
-			{
-				role: "assistant",
-				content: `Haha, let me trace the money trail 🔍
+  examples.push({
+    id: "casual_005",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "where'd my money go lol",
+      },
+      {
+        role: "assistant",
+        content: `Haha, let me trace the money trail 🔍
 
 **This Month So Far: $2,456 spent**
 
@@ -4573,24 +4573,24 @@ Most of it's normal bills. The "leaks" are:
 - Late-night Amazon: $40
 
 **The real question:** Any regrets in that list? We can set up some guardrails if you want!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "casual_006",
-		category: "financial_advice",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "can i afford this $200 jacket",
-			},
-			{
-				role: "assistant",
-				content: `Let's check:
+  examples.push({
+    id: "casual_006",
+    category: "financial_advice",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "can i afford this $200 jacket",
+      },
+      {
+        role: "assistant",
+        content: `Let's check:
 
 **Quick Answer: Yes, but...** 🧥
 
@@ -4620,33 +4620,33 @@ You *can* afford it financially. The question is whether it aligns with your goa
 4. Save toward it next month
 
 What's your gut saying?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate project and event tracking examples
  */
 function generateProjectExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "project_001",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Track my moving expenses",
-			},
-			{
-				role: "assistant",
-				content: `I'll help track your move! Let me find related expenses:
+  examples.push({
+    id: "project_001",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Track my moving expenses",
+      },
+      {
+        role: "assistant",
+        content: `I'll help track your move! Let me find related expenses:
 
 **Moving Expenses Found:**
 
@@ -4674,24 +4674,24 @@ function generateProjectExamples(): TrainingExample[] {
 - Set a limit? Average move costs $3,000-5,000
 
 Any expenses I missed?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "project_002",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What did I spend on my vacation?",
-			},
-			{
-				role: "assistant",
-				content: `Found your recent trip! Here's the breakdown:
+  examples.push({
+    id: "project_002",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What did I spend on my vacation?",
+      },
+      {
+        role: "assistant",
+        content: `Found your recent trip! Here's the breakdown:
 
 **Vacation: July 15-22 (7 days)**
 
@@ -4723,24 +4723,24 @@ Any expenses I missed?`,
 Book activities in advance - you paid $45 more for last-minute tour booking.
 
 Want me to create a "Vacation Fund" for your next trip?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "project_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "How much have I spent on home improvement this year?",
-			},
-			{
-				role: "assistant",
-				content: `**Home Improvement Spending YTD:**
+  examples.push({
+    id: "project_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "How much have I spent on home improvement this year?",
+      },
+      {
+        role: "assistant",
+        content: `**Home Improvement Spending YTD:**
 
 **Total: $2,345.67**
 
@@ -4772,24 +4772,24 @@ Want me to create a "Vacation Fund" for your next trip?`,
 If you rent, these aren't deductible. If you own, some improvements can add to your cost basis. Keep receipts!
 
 Want me to create a "Home Projects" budget?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "project_004",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Birthday spending this year",
-			},
-			{
-				role: "assistant",
-				content: `**Birthday-Related Spending This Year:**
+  examples.push({
+    id: "project_004",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Birthday spending this year",
+      },
+      {
+        role: "assistant",
+        content: `**Birthday-Related Spending This Year:**
 
 **Your Birthday (April):**
 - Birthday dinner out: $89.45 (treated yourself!)
@@ -4817,33 +4817,33 @@ Want me to create a "Home Projects" budget?`,
 - None saved yet!
 
 **Tip:** Want me to remind you a week before each birthday? I can also suggest budget-friendly gift ideas!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate follow-up and contextual examples
  */
 function generateFollowUpExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "followup_001",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "What about last month?",
-			},
-			{
-				role: "assistant",
-				content: `**Last Month's Summary:**
+  examples.push({
+    id: "followup_001",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "What about last month?",
+      },
+      {
+        role: "assistant",
+        content: `**Last Month's Summary:**
 
 | Category | Last Month | This Month | Change |
 |----------|------------|------------|--------|
@@ -4868,24 +4868,24 @@ function generateFollowUpExamples(): TrainingExample[] {
 - This month: $234 (on track!)
 
 Want me to dive deeper into any category?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "followup_002",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Break that down more",
-			},
-			{
-				role: "assistant",
-				content: `**Detailed Breakdown:**
+  examples.push({
+    id: "followup_002",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Break that down more",
+      },
+      {
+        role: "assistant",
+        content: `**Detailed Breakdown:**
 
 **Groceries ($456):**
 - Whole Foods: $234 (8 trips, avg $29)
@@ -4916,24 +4916,24 @@ Want me to dive deeper into any category?`,
 - Whole Foods organic premium adds ~$40/month vs regular
 
 Want even more detail on a specific store or category?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "followup_003",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Explain the biggest one",
-			},
-			{
-				role: "assistant",
-				content: `**Your Largest Transaction:**
+  examples.push({
+    id: "followup_003",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Explain the biggest one",
+      },
+      {
+        role: "assistant",
+        content: `**Your Largest Transaction:**
 
 **Costco - $234.56** (${randomDate(8)})
 
@@ -4967,24 +4967,24 @@ Even at $234, Costco trips save you ~15-20% vs buying same items at regular stor
 Not really - it's within your grocery budget and you shop there monthly. Just a slightly bigger haul.
 
 Want me to track Costco spending separately?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "followup_004",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Yes please",
-			},
-			{
-				role: "assistant",
-				content: `Done! I've set that up for you.
+  examples.push({
+    id: "followup_004",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Yes please",
+      },
+      {
+        role: "assistant",
+        content: `Done! I've set that up for you.
 
 **What I created:**
 - Tracking tag: "Costco Runs"
@@ -5006,24 +5006,24 @@ Based on your pattern, your next Costco run is likely in ~2 weeks.
 - You earn ~2% back = ~$46/year in rewards
 
 Anything else you'd like me to track this way?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "followup_005",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "And the year before?",
-			},
-			{
-				role: "assistant",
-				content: `**Two Years Ago Comparison:**
+  examples.push({
+    id: "followup_005",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "And the year before?",
+      },
+      {
+        role: "assistant",
+        content: `**Two Years Ago Comparison:**
 
 | Metric | 2 Years Ago | Last Year | This Year |
 |--------|-------------|-----------|-----------|
@@ -5052,33 +5052,33 @@ Anything else you'd like me to track this way?`,
 Your income grew faster than expenses, so despite spending more, you're saving more. That's the right direction!
 
 The dining increase is notable though - that's doubled in 2 years.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate correction and feedback examples
  */
 function generateCorrectionExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "correction_001",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "That Target transaction was actually groceries, not shopping",
-			},
-			{
-				role: "assistant",
-				content: `Got it! I've updated the transaction:
+  examples.push({
+    id: "correction_001",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "That Target transaction was actually groceries, not shopping",
+      },
+      {
+        role: "assistant",
+        content: `Got it! I've updated the transaction:
 
 **Updated:**
 - Transaction: Target - $89.99
@@ -5098,24 +5098,24 @@ I'll remember that your Target purchases are often groceries. Want me to:
 3. **Split automatically** - Assume 60% groceries, 40% shopping
 
 Which would you prefer for Target purchases?`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "correction_002",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "I returned that Amazon item",
-			},
-			{
-				role: "assistant",
-				content: `I'll help you track that return:
+  examples.push({
+    id: "correction_002",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "I returned that Amazon item",
+      },
+      {
+        role: "assistant",
+        content: `I'll help you track that return:
 
 **Original Purchase Found:**
 - Amazon - $67.89
@@ -5144,24 +5144,24 @@ If you see the refund:
 - Better reflects actual spending
 
 Let me know which applies!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "correction_003",
-		category: "transaction_search",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "That's a duplicate, please remove it",
-			},
-			{
-				role: "assistant",
-				content: `I'll help remove the duplicate.
+  examples.push({
+    id: "correction_003",
+    category: "transaction_search",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "That's a duplicate, please remove it",
+      },
+      {
+        role: "assistant",
+        content: `I'll help remove the duplicate.
 
 **Which transaction is the duplicate?**
 
@@ -5185,24 +5185,24 @@ If these are the same charge appearing twice:
 **Which one should I remove?**
 
 (Or describe a different transaction if I found the wrong ones)`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "correction_004",
-		category: "category_suggestion",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "That wasn't dining, it was a birthday gift",
-			},
-			{
-				role: "assistant",
-				content: `Updated! Here's what I changed:
+  examples.push({
+    id: "correction_004",
+    category: "category_suggestion",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "That wasn't dining, it was a birthday gift",
+      },
+      {
+        role: "assistant",
+        content: `Updated! Here's what I changed:
 
 **Transaction Updated:**
 - Restaurant name - $67.89
@@ -5224,24 +5224,24 @@ Treating someone to dinner as a gift is thoughtful. For tracking purposes, categ
 Want me to add who this gift was for? I can help you track birthday spending per person.
 
 **Future:** When I see restaurant charges on/near a contact's birthday (if you add them), I can ask if it's a gift!`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "correction_005",
-		category: "account_balance",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "The balance is wrong, my bank shows $3,500",
-			},
-			{
-				role: "assistant",
-				content: `Let me help figure out the discrepancy:
+  examples.push({
+    id: "correction_005",
+    category: "account_balance",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "The balance is wrong, my bank shows $3,500",
+      },
+      {
+        role: "assistant",
+        content: `Let me help figure out the discrepancy:
 
 **What I show:** $3,245.67
 **Your bank shows:** $3,500.00
@@ -5275,33 +5275,33 @@ Want me to add who this gift was for? I can help you track birthday spending per
 2. Recent deposits in the last day or two?
 
 If you want, I can manually adjust the balance to match and we can reconcile the difference when transactions clear.`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate report generation examples
  */
 function generateReportExamples(): TrainingExample[] {
-	const examples: TrainingExample[] = [];
+  const examples: TrainingExample[] = [];
 
-	examples.push({
-		id: "report_001",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Create a spending report for my taxes",
-			},
-			{
-				role: "assistant",
-				content: `**Tax-Related Expenses Report - 2024**
+  examples.push({
+    id: "report_001",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Create a spending report for my taxes",
+      },
+      {
+        role: "assistant",
+        content: `**Tax-Related Expenses Report - 2024**
 
 **Potentially Deductible Expenses:**
 
@@ -5337,24 +5337,24 @@ function generateReportExamples(): TrainingExample[] {
 **Note:** Standard deduction is $14,600. You'd need significant additional deductions to itemize.
 
 *Export this as PDF?*`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "report_002",
-		category: "general_chat",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Summarize my finances for my partner",
-			},
-			{
-				role: "assistant",
-				content: `**Financial Summary - Shareable Version**
+  examples.push({
+    id: "report_002",
+    category: "general_chat",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Summarize my finances for my partner",
+      },
+      {
+        role: "assistant",
+        content: `**Financial Summary - Shareable Version**
 
 ---
 
@@ -5394,24 +5394,24 @@ function generateReportExamples(): TrainingExample[] {
 3. Any big purchases coming up?
 
 *Want me to adjust what's included?*`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "report_003",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 5,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Monthly report",
-			},
-			{
-				role: "assistant",
-				content: `**Monthly Financial Report - ${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}**
+  examples.push({
+    id: "report_003",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 5,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Monthly report",
+      },
+      {
+        role: "assistant",
+        content: `**Monthly Financial Report - ${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}**
 
 ---
 
@@ -5462,24 +5462,24 @@ function generateReportExamples(): TrainingExample[] {
 💡 Could save $200 more with subscription audit
 
 *Export as PDF?*`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	examples.push({
-		id: "report_004",
-		category: "spending_analysis",
-		source: "synthetic",
-		quality: 4,
-		messages: [
-			{ role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: "Create a report of my business expenses",
-			},
-			{
-				role: "assistant",
-				content: `**Business Expense Report**
+  examples.push({
+    id: "report_004",
+    category: "spending_analysis",
+    source: "synthetic",
+    quality: 4,
+    messages: [
+      { role: "system", content: BUDGET_ASSISTANT_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: "Create a report of my business expenses",
+      },
+      {
+        role: "assistant",
+        content: `**Business Expense Report**
 
 **Period:** This Year to Date
 
@@ -5526,114 +5526,114 @@ function generateReportExamples(): TrainingExample[] {
 | **Grand Total** | **$1,666.25** |
 
 *Consult your accountant for actual deductibility.*`,
-			},
-		],
-	});
+      },
+    ],
+  });
 
-	return examples;
+  return examples;
 }
 
 /**
  * Generate a complete training dataset
  */
 export function generateTrainingDataset(options: {
-	includeToolCalls?: boolean;
-	minQuality?: number;
+  includeToolCalls?: boolean;
+  minQuality?: number;
 }): TrainingDataset {
-	const { includeToolCalls = true, minQuality = 3 } = options;
+  const { includeToolCalls = true, minQuality = 3 } = options;
 
-	let allExamples: TrainingExample[] = [
-		// Core categories
-		...generateAccountBalanceExamples(),
-		...generateSpendingAnalysisExamples(),
-		...generateBudgetManagementExamples(),
-		...generateTransactionSearchExamples(),
-		...generatePayeeManagementExamples(),
-		...generateCategorySuggestionExamples(),
-		...generateFinancialAdviceExamples(),
-		...generateForecastingExamples(),
-		// Extended categories
-		...generateRecurringTransactionExamples(),
-		...generateSavingsGoalExamples(),
-		...generateTransferExamples(),
-		...generateEdgeCaseExamples(),
-		...generateGeneralChatExamples(),
-		// Advanced use cases
-		...generateCalculationExamples(),
-		...generateRewardsExamples(),
-		...generateSeasonalExamples(),
-		...generateGoalTrackingExamples(),
-		...generatePatternExamples(),
-		// Natural language variations
-		...generateCasualLanguageExamples(),
-		...generateProjectExamples(),
-		...generateFollowUpExamples(),
-		...generateCorrectionExamples(),
-		...generateReportExamples(),
-	];
+  let allExamples: TrainingExample[] = [
+    // Core categories
+    ...generateAccountBalanceExamples(),
+    ...generateSpendingAnalysisExamples(),
+    ...generateBudgetManagementExamples(),
+    ...generateTransactionSearchExamples(),
+    ...generatePayeeManagementExamples(),
+    ...generateCategorySuggestionExamples(),
+    ...generateFinancialAdviceExamples(),
+    ...generateForecastingExamples(),
+    // Extended categories
+    ...generateRecurringTransactionExamples(),
+    ...generateSavingsGoalExamples(),
+    ...generateTransferExamples(),
+    ...generateEdgeCaseExamples(),
+    ...generateGeneralChatExamples(),
+    // Advanced use cases
+    ...generateCalculationExamples(),
+    ...generateRewardsExamples(),
+    ...generateSeasonalExamples(),
+    ...generateGoalTrackingExamples(),
+    ...generatePatternExamples(),
+    // Natural language variations
+    ...generateCasualLanguageExamples(),
+    ...generateProjectExamples(),
+    ...generateFollowUpExamples(),
+    ...generateCorrectionExamples(),
+    ...generateReportExamples(),
+  ];
 
-	// Filter by quality
-	allExamples = allExamples.filter((e) => (e.quality || 3) >= minQuality);
+  // Filter by quality
+  allExamples = allExamples.filter((e) => (e.quality || 3) >= minQuality);
 
-	// Optionally remove tool calls
-	if (!includeToolCalls) {
-		allExamples = allExamples.map((e) => ({
-			...e,
-			toolCalls: undefined,
-			toolResults: undefined,
-		}));
-	}
+  // Optionally remove tool calls
+  if (!includeToolCalls) {
+    allExamples = allExamples.map((e) => ({
+      ...e,
+      toolCalls: undefined,
+      toolResults: undefined,
+    }));
+  }
 
-	// Calculate category distribution
-	const categories = allExamples.reduce(
-		(acc, e) => {
-			acc[e.category] = (acc[e.category] || 0) + 1;
-			return acc;
-		},
-		{} as Record<TrainingCategory, number>
-	);
+  // Calculate category distribution
+  const categories = allExamples.reduce(
+    (acc, e) => {
+      acc[e.category] = (acc[e.category] || 0) + 1;
+      return acc;
+    },
+    {} as Record<TrainingCategory, number>
+  );
 
-	return {
-		version: "1.0.0",
-		createdAt: nowISOString(),
-		count: allExamples.length,
-		categories,
-		baseModel: "qwen2.5:7b",
-		examples: allExamples,
-	};
+  return {
+    version: "1.0.0",
+    createdAt: nowISOString(),
+    count: allExamples.length,
+    categories,
+    baseModel: "qwen2.5:7b",
+    examples: allExamples,
+  };
 }
 
 /**
  * Export dataset to JSONL format (one JSON object per line)
  */
 export function exportToJSONL(dataset: TrainingDataset): string {
-	return dataset.examples
-		.map((example) => {
-			return JSON.stringify({
-				messages: example.messages.map((m) => ({
-					role: m.role,
-					content: m.content,
-				})),
-			});
-		})
-		.join("\n");
+  return dataset.examples
+    .map((example) => {
+      return JSON.stringify({
+        messages: example.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      });
+    })
+    .join("\n");
 }
 
 /**
  * Export dataset to Alpaca format
  */
 export function exportToAlpaca(dataset: TrainingDataset): string {
-	const alpacaExamples = dataset.examples.map((example) => {
-		const systemMsg = example.messages.find((m) => m.role === "system");
-		const userMsg = example.messages.find((m) => m.role === "user");
-		const assistantMsg = example.messages.find((m) => m.role === "assistant");
+  const alpacaExamples = dataset.examples.map((example) => {
+    const systemMsg = example.messages.find((m) => m.role === "system");
+    const userMsg = example.messages.find((m) => m.role === "user");
+    const assistantMsg = example.messages.find((m) => m.role === "assistant");
 
-		return {
-			instruction: systemMsg?.content || BUDGET_ASSISTANT_SYSTEM_PROMPT,
-			input: userMsg?.content || "",
-			output: assistantMsg?.content || "",
-		};
-	});
+    return {
+      instruction: systemMsg?.content || BUDGET_ASSISTANT_SYSTEM_PROMPT,
+      input: userMsg?.content || "",
+      output: assistantMsg?.content || "",
+    };
+  });
 
-	return JSON.stringify(alpacaExamples, null, 2);
+  return JSON.stringify(alpacaExamples, null, 2);
 }

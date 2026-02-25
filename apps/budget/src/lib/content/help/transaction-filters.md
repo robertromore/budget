@@ -11,28 +11,33 @@ Filter your transactions to find exactly what you're looking for.
 ## Available Filters
 
 ### Date Range
+
 - Today, This Week, This Month
 - Last 30/60/90 days
 - Custom date range
 - Year to date
 
 ### Amount
+
 - Greater than
 - Less than
 - Between range
 - Exact amount
 
 ### Category
+
 - Select one or more categories
 - Include/exclude subcategories
 - Uncategorized only
 
 ### Payee
+
 - Select specific payees
 - Search payee names
 - Multiple selection
 
 ### Status
+
 - Pending
 - Cleared
 - Scheduled

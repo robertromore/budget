@@ -4,11 +4,11 @@
  * Tests the category grouping system for organizing transaction categories.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -34,9 +34,9 @@ async function setupTestContext(): Promise<TestContext> {
   const categories = await db
     .insert(schema.categories)
     .values([
-      {workspaceId: workspace.id, name: "Groceries", slug: "groceries"},
-      {workspaceId: workspace.id, name: "Restaurants", slug: "restaurants"},
-      {workspaceId: workspace.id, name: "Coffee", slug: "coffee"},
+      { workspaceId: workspace.id, name: "Groceries", slug: "groceries" },
+      { workspaceId: workspace.id, name: "Restaurants", slug: "restaurants" },
+      { workspaceId: workspace.id, name: "Coffee", slug: "coffee" },
     ])
     .returning();
 
@@ -130,9 +130,9 @@ describe("Category Group Service", () => {
 
     it("should order groups by sortOrder", async () => {
       await ctx.db.insert(schema.categoryGroups).values([
-        {workspaceId: ctx.workspaceId, name: "Third", slug: "third", sortOrder: 3},
-        {workspaceId: ctx.workspaceId, name: "First", slug: "first", sortOrder: 1},
-        {workspaceId: ctx.workspaceId, name: "Second", slug: "second", sortOrder: 2},
+        { workspaceId: ctx.workspaceId, name: "Third", slug: "third", sortOrder: 3 },
+        { workspaceId: ctx.workspaceId, name: "First", slug: "first", sortOrder: 1 },
+        { workspaceId: ctx.workspaceId, name: "Second", slug: "second", sortOrder: 2 },
       ]);
 
       const groups = await ctx.db
@@ -180,9 +180,9 @@ describe("Category Group Service", () => {
 
     it("should add multiple categories to group", async () => {
       await ctx.db.insert(schema.categoryGroupMemberships).values([
-        {categoryGroupId: groupId, categoryId: ctx.categoryId1, sortOrder: 0},
-        {categoryGroupId: groupId, categoryId: ctx.categoryId2, sortOrder: 1},
-        {categoryGroupId: groupId, categoryId: ctx.categoryId3, sortOrder: 2},
+        { categoryGroupId: groupId, categoryId: ctx.categoryId1, sortOrder: 0 },
+        { categoryGroupId: groupId, categoryId: ctx.categoryId2, sortOrder: 1 },
+        { categoryGroupId: groupId, categoryId: ctx.categoryId3, sortOrder: 2 },
       ]);
 
       const memberships = await ctx.db
@@ -238,7 +238,9 @@ describe("Category Group Service", () => {
         })
         .returning();
 
-      await ctx.db.delete(schema.categoryGroupMemberships).where(eq(schema.categoryGroupMemberships.id, membership.id));
+      await ctx.db
+        .delete(schema.categoryGroupMemberships)
+        .where(eq(schema.categoryGroupMemberships.id, membership.id));
 
       const [notFound] = await ctx.db
         .select()
@@ -250,9 +252,9 @@ describe("Category Group Service", () => {
 
     it("should order memberships by sortOrder", async () => {
       await ctx.db.insert(schema.categoryGroupMemberships).values([
-        {categoryGroupId: groupId, categoryId: ctx.categoryId3, sortOrder: 3},
-        {categoryGroupId: groupId, categoryId: ctx.categoryId1, sortOrder: 1},
-        {categoryGroupId: groupId, categoryId: ctx.categoryId2, sortOrder: 2},
+        { categoryGroupId: groupId, categoryId: ctx.categoryId3, sortOrder: 3 },
+        { categoryGroupId: groupId, categoryId: ctx.categoryId1, sortOrder: 1 },
+        { categoryGroupId: groupId, categoryId: ctx.categoryId2, sortOrder: 2 },
       ]);
 
       const memberships = await ctx.db
@@ -339,7 +341,7 @@ describe("Category Group Service", () => {
 
       const [updated] = await ctx.db
         .update(schema.categoryGroupRecommendations)
-        .set({status: "approved"})
+        .set({ status: "approved" })
         .where(eq(schema.categoryGroupRecommendations.id, recommendation.id))
         .returning();
 
@@ -348,9 +350,24 @@ describe("Category Group Service", () => {
 
     it("should filter recommendations by confidence", async () => {
       await ctx.db.insert(schema.categoryGroupRecommendations).values([
-        {categoryId: ctx.categoryId1, suggestedGroupId: groupId, confidenceScore: 0.95, status: "pending"},
-        {categoryId: ctx.categoryId2, suggestedGroupId: groupId, confidenceScore: 0.65, status: "pending"},
-        {categoryId: ctx.categoryId3, suggestedGroupId: groupId, confidenceScore: 0.45, status: "pending"},
+        {
+          categoryId: ctx.categoryId1,
+          suggestedGroupId: groupId,
+          confidenceScore: 0.95,
+          status: "pending",
+        },
+        {
+          categoryId: ctx.categoryId2,
+          suggestedGroupId: groupId,
+          confidenceScore: 0.65,
+          status: "pending",
+        },
+        {
+          categoryId: ctx.categoryId3,
+          suggestedGroupId: groupId,
+          confidenceScore: 0.45,
+          status: "pending",
+        },
       ]);
 
       const allRecommendations = await ctx.db.select().from(schema.categoryGroupRecommendations);
@@ -379,10 +396,7 @@ describe("Category Group Service", () => {
 
   describe("category group settings", () => {
     it("should create settings with defaults", async () => {
-      const [settings] = await ctx.db
-        .insert(schema.categoryGroupSettings)
-        .values({})
-        .returning();
+      const [settings] = await ctx.db.insert(schema.categoryGroupSettings).values({}).returning();
 
       expect(settings).toBeDefined();
       expect(settings.recommendationsEnabled).toBe(true);
@@ -417,8 +431,8 @@ describe("Category Group Service", () => {
         .returning();
 
       await ctx.db.insert(schema.categoryGroups).values([
-        {workspaceId: ctx.workspaceId, name: "Shared Group", slug: "shared-group", sortOrder: 0},
-        {workspaceId: workspace2.id, name: "Shared Group", slug: "shared-group", sortOrder: 0},
+        { workspaceId: ctx.workspaceId, name: "Shared Group", slug: "shared-group", sortOrder: 0 },
+        { workspaceId: workspace2.id, name: "Shared Group", slug: "shared-group", sortOrder: 0 },
       ]);
 
       const workspace1Groups = await ctx.db
@@ -449,8 +463,8 @@ describe("Category Group Service", () => {
 
       // Create groups in both workspaces
       await ctx.db.insert(schema.categoryGroups).values([
-        {workspaceId: ctx.workspaceId, name: "Group WS1", slug: "group-ws1", sortOrder: 0},
-        {workspaceId: workspace2.id, name: "Group WS2", slug: "group-ws2", sortOrder: 0},
+        { workspaceId: ctx.workspaceId, name: "Group WS1", slug: "group-ws1", sortOrder: 0 },
+        { workspaceId: workspace2.id, name: "Group WS2", slug: "group-ws2", sortOrder: 0 },
       ]);
 
       // Query workspace 1
@@ -486,8 +500,8 @@ describe("Category Group Service", () => {
         .returning();
 
       await ctx.db.insert(schema.categoryGroupMemberships).values([
-        {categoryGroupId: group.id, categoryId: ctx.categoryId1, sortOrder: 0},
-        {categoryGroupId: group.id, categoryId: ctx.categoryId2, sortOrder: 1},
+        { categoryGroupId: group.id, categoryId: ctx.categoryId1, sortOrder: 0 },
+        { categoryGroupId: group.id, categoryId: ctx.categoryId2, sortOrder: 1 },
       ]);
 
       const results = await ctx.db
@@ -499,7 +513,10 @@ describe("Category Group Service", () => {
           },
         })
         .from(schema.categoryGroupMemberships)
-        .innerJoin(schema.categories, eq(schema.categoryGroupMemberships.categoryId, schema.categories.id))
+        .innerJoin(
+          schema.categories,
+          eq(schema.categoryGroupMemberships.categoryId, schema.categories.id)
+        )
         .where(eq(schema.categoryGroupMemberships.categoryGroupId, group.id));
 
       expect(results).toHaveLength(2);
@@ -520,9 +537,9 @@ describe("Category Group Service", () => {
         .returning();
 
       await ctx.db.insert(schema.categoryGroupMemberships).values([
-        {categoryGroupId: group.id, categoryId: ctx.categoryId1, sortOrder: 0},
-        {categoryGroupId: group.id, categoryId: ctx.categoryId2, sortOrder: 1},
-        {categoryGroupId: group.id, categoryId: ctx.categoryId3, sortOrder: 2},
+        { categoryGroupId: group.id, categoryId: ctx.categoryId1, sortOrder: 0 },
+        { categoryGroupId: group.id, categoryId: ctx.categoryId2, sortOrder: 1 },
+        { categoryGroupId: group.id, categoryId: ctx.categoryId3, sortOrder: 2 },
       ]);
 
       // Join to get group with all its memberships

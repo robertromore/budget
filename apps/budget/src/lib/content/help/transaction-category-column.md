@@ -6,7 +6,8 @@ related: [transaction-table, transaction-category-field, categories-list]
 
 # Category Column
 
-The category column assigns transactions to budget categories for tracking and reporting.
+The category column assigns transactions to budget categories for tracking and
+reporting.
 
 ## Display
 
@@ -17,6 +18,7 @@ The category column assigns transactions to budget categories for tracking and r
 ## Inline Editing
 
 Click any category cell to edit:
+
 1. A categorized dropdown appears
 2. Browse or search categories
 3. Select to assign immediately
@@ -31,6 +33,7 @@ Click any category cell to edit:
 ## Filtering
 
 Filter by category:
+
 - **Is** - Show only selected categories
 - **Is not** - Exclude selected categories
 - Includes sub-categories when filtering by parent

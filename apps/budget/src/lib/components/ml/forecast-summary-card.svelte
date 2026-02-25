@@ -1,110 +1,109 @@
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
-  import * as Card from "$lib/components/ui/card";
-  import { cn, formatCurrency, formatPercent, formatPercentRaw } from "$lib/utils";
-  import ArrowDown from "@lucide/svelte/icons/arrow-down";
-  import ArrowUp from "@lucide/svelte/icons/arrow-up";
-  import Minus from "@lucide/svelte/icons/minus";
-  import TrendingDown from "@lucide/svelte/icons/trending-down";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import { cn, formatCurrency, formatPercent, formatPercentRaw } from '$lib/utils';
+import ArrowDown from '@lucide/svelte/icons/arrow-down';
+import ArrowUp from '@lucide/svelte/icons/arrow-up';
+import Minus from '@lucide/svelte/icons/minus';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 
-  interface Prediction {
-    date: string;
-    value: number;
-    lowerBound: number;
-    upperBound: number;
-    confidence: number;
-  }
+interface Prediction {
+  date: string;
+  value: number;
+  lowerBound: number;
+  upperBound: number;
+  confidence: number;
+}
 
-  interface Props {
-    title?: string;
-    predictions: Prediction[];
-    currentValue?: number;
-    granularity?: "daily" | "weekly" | "monthly";
-    confidence?: number;
-    class?: string;
-  }
+interface Props {
+  title?: string;
+  predictions: Prediction[];
+  currentValue?: number;
+  granularity?: 'daily' | 'weekly' | 'monthly';
+  confidence?: number;
+  class?: string;
+}
 
-  let {
-    title = "Cash Flow Forecast",
-    predictions,
-    currentValue,
-    granularity = "monthly",
-    confidence,
-    class: className,
-  }: Props = $props();
+let {
+  title = 'Cash Flow Forecast',
+  predictions,
+  currentValue,
+  granularity = 'monthly',
+  confidence,
+  class: className,
+}: Props = $props();
 
-  // Calculate totals and trends using $derived.by for complex calculation
-  const totals = $derived.by(() => {
-    if (!predictions || predictions.length === 0) return null;
+// Calculate totals and trends using $derived.by for complex calculation
+const totals = $derived.by(() => {
+  if (!predictions || predictions.length === 0) return null;
 
-    const netChange = predictions.reduce((sum, p) => sum + p.value, 0);
-    const avgValue = netChange / predictions.length;
-    const firstValue = predictions[0]?.value ?? 0;
-    const lastValue = predictions[predictions.length - 1]?.value ?? 0;
+  const netChange = predictions.reduce((sum, p) => sum + p.value, 0);
+  const avgValue = netChange / predictions.length;
+  const firstValue = predictions[0]?.value ?? 0;
+  const lastValue = predictions[predictions.length - 1]?.value ?? 0;
 
-    // Calculate projected ending balance if currentValue is provided
-    const projectedBalance = currentValue !== undefined ? currentValue + netChange : null;
+  // Calculate projected ending balance if currentValue is provided
+  const projectedBalance = currentValue !== undefined ? currentValue + netChange : null;
 
-    // Calculate trend based on the overall direction of net change
-    let trend: "up" | "down" | "stable" = "stable";
-    if (netChange > 100) trend = "up";
-    else if (netChange < -100) trend = "down";
+  // Calculate trend based on the overall direction of net change
+  let trend: 'up' | 'down' | 'stable' = 'stable';
+  if (netChange > 100) trend = 'up';
+  else if (netChange < -100) trend = 'down';
 
-    // Calculate percent change from current value
-    const percentChange = currentValue && currentValue !== 0
-      ? (netChange / Math.abs(currentValue)) * 100
-      : 0;
+  // Calculate percent change from current value
+  const percentChange =
+    currentValue && currentValue !== 0 ? (netChange / Math.abs(currentValue)) * 100 : 0;
 
-    // Calculate confidence range totals
-    const totalLower = predictions.reduce((sum, p) => sum + p.lowerBound, 0);
-    const totalUpper = predictions.reduce((sum, p) => sum + p.upperBound, 0);
+  // Calculate confidence range totals
+  const totalLower = predictions.reduce((sum, p) => sum + p.lowerBound, 0);
+  const totalUpper = predictions.reduce((sum, p) => sum + p.upperBound, 0);
 
-    return {
-      netChange,
-      projectedBalance,
-      avgValue,
-      trend,
-      percentChange,
-      totalLower,
-      totalUpper,
-    };
-  });
-
-  const trendConfig = {
-    up: {
-      icon: TrendingUp,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-      label: "Increasing",
-    },
-    down: {
-      icon: TrendingDown,
-      color: "text-red-500",
-      bgColor: "bg-red-500/10",
-      label: "Decreasing",
-    },
-    stable: {
-      icon: Minus,
-      color: "text-muted-foreground",
-      bgColor: "bg-muted",
-      label: "Stable",
-    },
+  return {
+    netChange,
+    projectedBalance,
+    avgValue,
+    trend,
+    percentChange,
+    totalLower,
+    totalUpper,
   };
+});
 
-  const config = $derived(totals ? trendConfig[totals.trend] : trendConfig.stable);
+const trendConfig = {
+  up: {
+    icon: TrendingUp,
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    label: 'Increasing',
+  },
+  down: {
+    icon: TrendingDown,
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    label: 'Decreasing',
+  },
+  stable: {
+    icon: Minus,
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
+    label: 'Stable',
+  },
+};
 
-  const periodLabel = $derived(
-    granularity === "daily" ? "day" : granularity === "weekly" ? "week" : "month"
-  );
+const config = $derived(totals ? trendConfig[totals.trend] : trendConfig.stable);
+
+const periodLabel = $derived(
+  granularity === 'daily' ? 'day' : granularity === 'weekly' ? 'week' : 'month'
+);
 </script>
 
-<Card.Root class={cn("", className)}>
+<Card.Root class={cn('', className)}>
   <Card.Header class="pb-2">
     <div class="flex items-center justify-between">
       <Card.Title class="text-sm font-medium">{title}</Card.Title>
       {#if totals}
-        <Badge variant="outline" class={cn("gap-1", config.color)}>
+        <Badge variant="outline" class={cn('gap-1', config.color)}>
           <config.icon class="h-3 w-3" />
           {config.label}
         </Badge>
@@ -112,7 +111,8 @@
     </div>
     {#if predictions && predictions.length > 0}
       <Card.Description>
-        Next {predictions.length} {periodLabel}{predictions.length > 1 ? "s" : ""}
+        Next {predictions.length}
+        {periodLabel}{predictions.length > 1 ? 's' : ''}
       </Card.Description>
     {/if}
   </Card.Header>
@@ -129,11 +129,10 @@
             </span>
             {#if totals.percentChange !== 0}
               <span
-                class={cn("flex items-center text-sm font-medium", {
-                  "text-green-500": totals.percentChange > 0,
-                  "text-red-500": totals.percentChange < 0,
-                })}
-              >
+                class={cn('flex items-center text-sm font-medium', {
+                  'text-green-500': totals.percentChange > 0,
+                  'text-red-500': totals.percentChange < 0,
+                })}>
                 {#if totals.percentChange > 0}
                   <ArrowUp class="h-3 w-3" />
                 {:else}
@@ -164,11 +163,12 @@
 
         <div class="space-y-0.5">
           <p class="text-muted-foreground text-xs">Net Change</p>
-          <p class={cn("font-medium", {
-            "text-green-600": totals.netChange > 0,
-            "text-red-600": totals.netChange < 0,
-          })}>
-            {totals.netChange >= 0 ? "+" : ""}{formatCurrency(totals.netChange)}
+          <p
+            class={cn('font-medium', {
+              'text-green-600': totals.netChange > 0,
+              'text-red-600': totals.netChange < 0,
+            })}>
+            {totals.netChange >= 0 ? '+' : ''}{formatCurrency(totals.netChange)}
           </p>
         </div>
 
@@ -188,9 +188,11 @@
       <!-- Confidence Range -->
       {#if totals.totalLower !== 0 || totals.totalUpper !== 0}
         <div class="border-t pt-3">
-          <p class="text-muted-foreground text-xs mb-1">Confidence Range</p>
+          <p class="text-muted-foreground mb-1 text-xs">Confidence Range</p>
           <p class="text-sm">
-            {formatCurrency((currentValue ?? 0) + totals.totalLower)} to {formatCurrency((currentValue ?? 0) + totals.totalUpper)}
+            {formatCurrency((currentValue ?? 0) + totals.totalLower)} to {formatCurrency(
+              (currentValue ?? 0) + totals.totalUpper
+            )}
           </p>
         </div>
       {/if}

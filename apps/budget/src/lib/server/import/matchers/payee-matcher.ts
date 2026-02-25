@@ -28,7 +28,9 @@ export interface PayeeMatcherOptions {
   useAliases?: boolean; // Whether to check aliases first (default: true)
 }
 
-const DEFAULT_OPTIONS: Required<Omit<PayeeMatcherOptions, "workspaceId">> & { workspaceId?: number } = {
+const DEFAULT_OPTIONS: Required<Omit<PayeeMatcherOptions, "workspaceId">> & {
+  workspaceId?: number;
+} = {
   exactThreshold: 1.0,
   highThreshold: 0.9,
   mediumThreshold: 0.7,

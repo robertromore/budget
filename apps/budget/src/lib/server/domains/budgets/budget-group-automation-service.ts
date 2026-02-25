@@ -297,7 +297,11 @@ export class BudgetGroupAutomationService {
     const budgetIds = recommendation.metadata.suggestedGroupMembers;
 
     if (typeof groupId !== "number" || !Array.isArray(budgetIds) || budgetIds.length === 0) {
-      return { success: false, activityId, error: "Missing required metadata for group assignment" };
+      return {
+        success: false,
+        activityId,
+        error: "Missing required metadata for group assignment",
+      };
     }
 
     const group = await db.query.budgetGroups.findFirst({
@@ -308,10 +312,7 @@ export class BudgetGroupAutomationService {
     }
 
     for (const budgetId of budgetIds) {
-      await db
-        .insert(budgetGroupMemberships)
-        .values({ budgetId, groupId })
-        .onConflictDoNothing();
+      await db.insert(budgetGroupMemberships).values({ budgetId, groupId }).onConflictDoNothing();
     }
 
     await db
@@ -337,7 +338,11 @@ export class BudgetGroupAutomationService {
     const newLimit = recommendation.metadata.groupSpendingLimit;
 
     if (typeof groupId !== "number" || typeof newLimit !== "number") {
-      return { success: false, activityId, error: "Missing required metadata for limit adjustment" };
+      return {
+        success: false,
+        activityId,
+        error: "Missing required metadata for limit adjustment",
+      };
     }
 
     const group = await db.query.budgetGroups.findFirst({

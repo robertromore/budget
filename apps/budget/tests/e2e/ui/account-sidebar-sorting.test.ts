@@ -1,17 +1,16 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Account Sidebar Sorting", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/accounts");
     await page.waitForLoadState("networkidle");
   });
 
-  test("sort dropdown appears next to add account button", async ({page}) => {
+  test("sort dropdown appears next to add account button", async ({ page }) => {
     // Check that sort dropdown button exists with dynamic title
     await expect(page.locator('[title*="Sorting by:"]')).toBeVisible();
 
@@ -24,7 +23,7 @@ describeE2E("Account Sidebar Sorting", () => {
     await expect(container.locator('[title="Add Account"]')).toBeVisible();
   });
 
-  test("sort dropdown opens with all sort options", async ({page}) => {
+  test("sort dropdown opens with all sort options", async ({ page }) => {
     // Click the sort dropdown
     await page.click('[title*="Sorting by:"]');
 
@@ -39,7 +38,7 @@ describeE2E("Account Sidebar Sorting", () => {
     await expect(page.locator("text=Date Created")).toBeVisible();
   });
 
-  test("can select different sort options", async ({page}) => {
+  test("can select different sort options", async ({ page }) => {
     // Initial state should show "Sorting by: Name" with ascending arrow
     const sortButton = page.locator('[title*="Sorting by: Name"]');
     await expect(sortButton).toBeVisible();
@@ -68,7 +67,7 @@ describeE2E("Account Sidebar Sorting", () => {
     ).toBeVisible();
   });
 
-  test("account list reorders when sort changes", async ({page}) => {
+  test("account list reorders when sort changes", async ({ page }) => {
     // Get initial account order (should be name ascending)
     const initialAccounts = await page.locator('[data-testid="account-name"]').allTextContents();
     expect(initialAccounts.length).toBeGreaterThan(0);
@@ -89,7 +88,7 @@ describeE2E("Account Sidebar Sorting", () => {
     expect(newAccounts).toEqual(initialAccounts.reverse());
   });
 
-  test("sort preference persists across page reloads", async ({page}) => {
+  test("sort preference persists across page reloads", async ({ page }) => {
     // Change sort to balance descending
     await page.click('[title*="Sorting by: Name"]');
     await page.hover("text=Balance");
@@ -116,7 +115,7 @@ describeE2E("Account Sidebar Sorting", () => {
     ).toBeVisible();
   });
 
-  test("sort preference persists across navigation", async ({page}) => {
+  test("sort preference persists across navigation", async ({ page }) => {
     // Change sort to date opened ascending
     await page.click('[title*="Sorting by: Name"]');
     await page.hover("text=Date Opened");
@@ -139,7 +138,7 @@ describeE2E("Account Sidebar Sorting", () => {
     ).toBeVisible();
   });
 
-  test("sort dropdown is accessible via keyboard", async ({page}) => {
+  test("sort dropdown is accessible via keyboard", async ({ page }) => {
     // Focus on sort dropdown via keyboard navigation
     await page.keyboard.press("Tab");
     const sortButton = page.locator('[title="Sort accounts"]');
@@ -160,7 +159,7 @@ describeE2E("Account Sidebar Sorting", () => {
     await expect(page.locator("text=Sort accounts by")).not.toBeVisible();
   });
 
-  test("sort indicators are visually correct", async ({page}) => {
+  test("sort indicators are visually correct", async ({ page }) => {
     // Test ascending indicator (default)
     const ascButton = page.locator('[title*="Sort by Name"][title*="Ascending"]');
     await expect(ascButton).toBeVisible();
@@ -174,7 +173,7 @@ describeE2E("Account Sidebar Sorting", () => {
     await expect(descButton).toBeVisible();
   });
 
-  test("sort works with different account states", async ({page}) => {
+  test("sort works with different account states", async ({ page }) => {
     // Test that sorting works with active accounts
     await page.click('[title*="Sort by Name"]');
     await page.hover("text=Status");

@@ -1,6 +1,7 @@
 # Utils Directory Documentation
 
-Comprehensive documentation of all utility files in `apps/budget/src/lib/utils/`.
+Comprehensive documentation of all utility files in
+`apps/budget/src/lib/utils/`.
 
 ---
 
@@ -11,9 +12,11 @@ Comprehensive documentation of all utility files in `apps/budget/src/lib/utils/`
 3. [formatters.ts](#formattersts) - Formatting utilities
 4. [colors.ts](#colorsts) - Color utilities for charts
 5. [chart-statistics.ts](#chart-statisticsts) - Statistical utilities for charts
-6. [comprehensive-statistics.ts](#comprehensive-statisticsts) - Extended statistics for analytics
+6. [comprehensive-statistics.ts](#comprehensive-statisticsts) - Extended
+   statistics for analytics
 7. [field-encryption.ts](#field-encryptionts) - Client-side encryption
-8. [use-encryption.svelte.ts](#use-encryptionsveltets) - Reactive encryption helpers
+8. [use-encryption.svelte.ts](#use-encryptionsveltets) - Reactive encryption
+   helpers
 9. [local-storage.svelte.ts](#local-storagesveltets) - Reactive localStorage
 10. [search.ts](#searchts) - Search and filter utilities
 11. [cache.ts](#cachets) - In-memory caching
@@ -83,7 +86,7 @@ export function isUndefined(value: unknown): value is undefined;
 ### Constants
 
 ```typescript
-export const timezone: string;      // Local timezone
+export const timezone: string; // Local timezone
 export const currentDate: DateValue; // Today's date
 ```
 
@@ -91,42 +94,87 @@ export const currentDate: DateValue; // Today's date
 
 ```typescript
 // Date extraction
-export function getDayOfWeek(date: DateValue): number;           // 0=Sunday, 6=Saturday
-export function getIsoWeekday(date: DateValue): number;          // 1=Monday, 7=Sunday (ISO)
-export function getDaysInMonth(date: DateValue): number;         // 28-31
-export function getOrdinalSuffix(day: number): string;           // "st", "nd", "rd", "th"
+export function getDayOfWeek(date: DateValue): number; // 0=Sunday, 6=Saturday
+export function getIsoWeekday(date: DateValue): number; // 1=Monday, 7=Sunday (ISO)
+export function getDaysInMonth(date: DateValue): number; // 28-31
+export function getOrdinalSuffix(day: number): string; // "st", "nd", "rd", "th"
 
 // Date comparison
 export function sameMonthAndYear(date1: DateValue, date2: DateValue): boolean;
 export function sameMonthOrFuture(date1: DateValue, date2?: DateValue): boolean;
 export function sameMonthOrPast(date1: DateValue, date2?: DateValue): boolean;
-export function isSamePeriod(date1: DateValue, date2: DateValue, unit: "day" | "month" | "quarter" | "year"): boolean;
-export function dateDifference(date1: DateValue, date2: DateValue, unit: "days" | "months" | "quarters" | "years"): number;
+export function isSamePeriod(
+  date1: DateValue,
+  date2: DateValue,
+  unit: 'day' | 'month' | 'quarter' | 'year'
+): boolean;
+export function dateDifference(
+  date1: DateValue,
+  date2: DateValue,
+  unit: 'days' | 'months' | 'quarters' | 'years'
+): number;
 
 // Weekday finding
-export function getFirstDayInCalendarMonth(date: DateValue, locale?: string, firstDayOfWeek?: string): DateValue;
-export function getFirstSpecifiedWeekdayInMonth(year: number, month: number, weekday: number): DateValue;
+export function getFirstDayInCalendarMonth(
+  date: DateValue,
+  locale?: string,
+  firstDayOfWeek?: string
+): DateValue;
+export function getFirstSpecifiedWeekdayInMonth(
+  year: number,
+  month: number,
+  weekday: number
+): DateValue;
 export function getFirstWeekday(date: DateValue): DateValue;
-export function getNextWeekday(fromDate: DateValue, targetWeekday: number): DateValue;
-export function getNextWeekdayFlexible(fromDate: DateValue, targetWeekday: number, includeSameDay?: boolean): DateValue;
-export function getNextWeekdayByLabel(fromDate: DateValue, weekdayLabel: string, includeSameDay?: boolean): DateValue;
-export function getNthWeekdayOfMonth(year: number, month: number, week: number, weekDay: number): DateValue | null;
-export function getLastWeekdayOfMonth(year: number, month: number, weekDay: number): DateValue | null;
+export function getNextWeekday(
+  fromDate: DateValue,
+  targetWeekday: number
+): DateValue;
+export function getNextWeekdayFlexible(
+  fromDate: DateValue,
+  targetWeekday: number,
+  includeSameDay?: boolean
+): DateValue;
+export function getNextWeekdayByLabel(
+  fromDate: DateValue,
+  weekdayLabel: string,
+  includeSameDay?: boolean
+): DateValue;
+export function getNthWeekdayOfMonth(
+  year: number,
+  month: number,
+  week: number,
+  weekDay: number
+): DateValue | null;
+export function getLastWeekdayOfMonth(
+  year: number,
+  month: number,
+  weekDay: number
+): DateValue | null;
 
 // Parsing and conversion
 export function parseDateValue(dateValue: any): DateValue | null;
 export function ensureDateValue(dateValue: any): DateValue;
-export function dateValueToJSDate(dateValue: DateValue, timeZone?: string): Date;
+export function dateValueToJSDate(
+  dateValue: DateValue,
+  timeZone?: string
+): Date;
 export function parseISOString(isoString: string): DateValue | null;
 export function toISOString(dateValue: DateValue): string;
 
 // Formatting
-export function formatDateDisplay(dateValue: DateValue, format?: "short" | "medium" | "long"): string;
+export function formatDateDisplay(
+  dateValue: DateValue,
+  format?: 'short' | 'medium' | 'long'
+): string;
 export function getCurrentTimestamp(): string;
 export function formatTimeAgo(date: Date): string;
 
 // Types
-export type SpecialDateValue = ["day" | "month" | "quarter" | "year" | "half-year", string];
+export type SpecialDateValue = [
+  'day' | 'month' | 'quarter' | 'year' | 'half-year',
+  string,
+];
 export function getSpecialDateValue(date: string): SpecialDateValue;
 ```
 
@@ -139,13 +187,17 @@ export function getSpecialDateValue(date: string): SpecialDateValue;
 ### Formatters
 
 ```typescript
-export const currencyFormatter: Intl.NumberFormat;     // Legacy - prefer formatCurrency()
-export const numberFormatter: Intl.NumberFormat;       // Legacy - prefer formatNumber()
+export const currencyFormatter: Intl.NumberFormat; // Legacy - prefer formatCurrency()
+export const numberFormatter: Intl.NumberFormat; // Legacy - prefer formatNumber()
 export const percentageFormatter: { format(value: number): string };
 export const daysFormatter: { format(value: number): string };
-export const transactionFormatter: { format(transactions?: Transaction[]): TransactionsFormat[] | undefined };
+export const transactionFormatter: {
+  format(transactions?: Transaction[]): TransactionsFormat[] | undefined;
+};
 export const periodFormatter: { toAdverb(period: string): string };
-export const recurringFormatter: { format(frequency: string, interval?: number): string };
+export const recurringFormatter: {
+  format(frequency: string, interval?: number): string;
+};
 ```
 
 ### Functions
@@ -159,9 +211,9 @@ export function formatDisplayValue(value: any): string;
 export function toSignedAmount(amount: number, referenceAmount: number): number;
 
 // Percentage formatting (NEW)
-export function formatPercent(value: number, decimals?: number): string;        // 0.75 → "75%"
-export function formatPercentChange(value: number, decimals?: number): string;  // 0.15 → "+15.0%"
-export function formatPercentRaw(value: number, decimals?: number): string;     // 75 → "75%"
+export function formatPercent(value: number, decimals?: number): string; // 0.75 → "75%"
+export function formatPercentChange(value: number, decimals?: number): string; // 0.15 → "+15.0%"
+export function formatPercentRaw(value: number, decimals?: number): string; // 75 → "75%"
 ```
 
 ---
@@ -174,12 +226,12 @@ export function formatPercentRaw(value: number, decimals?: number): string;     
 
 ```typescript
 export const FINANCIAL_COLORS: {
-  positive: string;   // Green for income/gains
-  negative: string;   // Red for expenses/losses
-  neutral: string;    // Blue for balance
-  zeroLine: string;   // Gray for reference lines
-  primary: string;    // Blue primary
-  accent: string;     // Orange accent
+  positive: string; // Green for income/gains
+  negative: string; // Red for expenses/losses
+  neutral: string; // Blue for balance
+  zeroLine: string; // Gray for reference lines
+  primary: string; // Blue primary
+  accent: string; // Orange accent
 };
 
 export const CHART_THEME: {
@@ -230,13 +282,25 @@ export interface TrendLineData {
   direction: 'up' | 'down' | 'flat';
 }
 
-export interface PercentileBands { p25: number; p50: number; p75: number; }
+export interface PercentileBands {
+  p25: number;
+  p50: number;
+  p75: number;
+}
 export interface ExtendedPercentileBands extends PercentileBands {
-  iqr: number; lowerFence: number; upperFence: number;
+  iqr: number;
+  lowerFence: number;
+  upperFence: number;
 }
 export interface BasicStats {
-  mean: number; median: number; stdDev: number;
-  min: number; max: number; range: number; count: number; total: number;
+  mean: number;
+  median: number;
+  stdDev: number;
+  min: number;
+  max: number;
+  range: number;
+  count: number;
+  total: number;
 }
 ```
 
@@ -244,19 +308,35 @@ export interface BasicStats {
 
 ```typescript
 // Trend analysis
-export function calculateLinearTrend(data: Array<{ spending: number; index?: number }>): TrendLineData | null;
-export function getTrendValueAtIndex(trend: TrendLineData, index: number): number;
-export function calculateGrowthRate(data: Array<{ spending: number }>): number | null;
+export function calculateLinearTrend(
+  data: Array<{ spending: number; index?: number }>
+): TrendLineData | null;
+export function getTrendValueAtIndex(
+  trend: TrendLineData,
+  index: number
+): number;
+export function calculateGrowthRate(
+  data: Array<{ spending: number }>
+): number | null;
 
 // Averages and percentiles
-export function calculateHistoricalAverage(data: Array<{ spending: number }>): number;
-export function calculatePercentileBands(data: Array<{ spending: number }>): PercentileBands | null;
-export function calculateExtendedPercentiles(values: number[]): ExtendedPercentileBands | null;
+export function calculateHistoricalAverage(
+  data: Array<{ spending: number }>
+): number;
+export function calculatePercentileBands(
+  data: Array<{ spending: number }>
+): PercentileBands | null;
+export function calculateExtendedPercentiles(
+  values: number[]
+): ExtendedPercentileBands | null;
 
 // Basic statistics
 export function calculateBasicStats(values: number[]): BasicStats | null;
 export function calculateCoefficientOfVariation(values: number[]): number;
-export function calculateMovingAverage(values: number[], window: number): (number | null)[];
+export function calculateMovingAverage(
+  values: number[],
+  window: number
+): (number | null)[];
 
 // Outliers
 export function identifyOutliers(data: Array<{ spending: number }>): number[];
@@ -300,14 +380,26 @@ export function calculateComprehensiveStats(
 ): ComprehensiveStats | null;
 
 // Specialized calculators
-export function calculateComprehensiveStatsForRate(data: RateDataPoint[], targetRate?: number): RateStats | null;
-export function calculateComprehensiveStatsForDistribution(data: DistributionDataPoint[]): DistributionChartStats | null;
-export function calculateComprehensiveStatsForRanking(data: RankingDataPoint[]): RankingStats | null;
-export function calculateComprehensiveStatsForDualSeries(data: DualSeriesDataPoint[]): DualSeriesStats | null;
+export function calculateComprehensiveStatsForRate(
+  data: RateDataPoint[],
+  targetRate?: number
+): RateStats | null;
+export function calculateComprehensiveStatsForDistribution(
+  data: DistributionDataPoint[]
+): DistributionChartStats | null;
+export function calculateComprehensiveStatsForRanking(
+  data: RankingDataPoint[]
+): RankingStats | null;
+export function calculateComprehensiveStatsForDualSeries(
+  data: DualSeriesDataPoint[]
+): DualSeriesStats | null;
 
 // Formatting helpers
 export function formatStatCurrency(value: number): string;
-export function formatStatPercent(value: number | null, includeSign?: boolean): string;
+export function formatStatPercent(
+  value: number | null,
+  includeSign?: boolean
+): string;
 export function getTrendIndicator(direction: 'up' | 'down' | 'flat'): string;
 ```
 
@@ -320,7 +412,7 @@ export function getTrendIndicator(direction: 'up' | 'down' | 'flat'): string;
 ### Constants
 
 ```typescript
-export const ENCRYPTED_PREFIX = "enc:";
+export const ENCRYPTED_PREFIX = 'enc:';
 ```
 
 ### Functions
@@ -330,15 +422,31 @@ export const ENCRYPTED_PREFIX = "enc:";
 export function isEncryptedValue(value: string | null | undefined): boolean;
 
 // Decryption
-export async function decryptField(encryptedValue: string, dek: string): Promise<string>;
-export async function decryptFields<T extends Record<string, string | null>>(fields: T, dek: string): Promise<T>;
+export async function decryptField(
+  encryptedValue: string,
+  dek: string
+): Promise<string>;
+export async function decryptFields<T extends Record<string, string | null>>(
+  fields: T,
+  dek: string
+): Promise<T>;
 
 // Encryption
-export async function encryptField(plaintext: string, dek: string): Promise<string>;
+export async function encryptField(
+  plaintext: string,
+  dek: string
+): Promise<string>;
 
 // Helpers
-export async function safeDecryptField(value: string | null | undefined, dek: string | null): Promise<string | null>;
-export function getEncryptedFieldDisplay(value: string | null | undefined, dek: string | null, placeholder?: string): string;
+export async function safeDecryptField(
+  value: string | null | undefined,
+  dek: string | null
+): Promise<string | null>;
+export function getEncryptedFieldDisplay(
+  value: string | null | undefined,
+  dek: string | null,
+  placeholder?: string
+): string;
 ```
 
 ---
@@ -361,12 +469,23 @@ export function hasCachedDek(): boolean;
 export async function requestUnlock(context?: UnlockContext): Promise<string>;
 
 // Field operations
-export async function decryptFieldValue(value: string | null | undefined, context?: UnlockContext): Promise<string | null>;
-export async function decryptFieldSilent(value: string | null | undefined): Promise<string | null>;
-export async function encryptFieldValue(value: string, context?: UnlockContext): Promise<string>;
+export async function decryptFieldValue(
+  value: string | null | undefined,
+  context?: UnlockContext
+): Promise<string | null>;
+export async function decryptFieldSilent(
+  value: string | null | undefined
+): Promise<string | null>;
+export async function encryptFieldValue(
+  value: string,
+  context?: UnlockContext
+): Promise<string>;
 
 // Reactive state factory (Svelte 5)
-export function createEncryptedFieldState(getValue: () => string | null | undefined, context?: UnlockContext): {
+export function createEncryptedFieldState(
+  getValue: () => string | null | undefined,
+  context?: UnlockContext
+): {
   value: string | null;
   isLoading: boolean;
   error: string | null;
@@ -376,7 +495,10 @@ export function createEncryptedFieldState(getValue: () => string | null | undefi
 };
 
 // Display helper
-export function displayEncryptedField(value: string | null | undefined, placeholder?: string): string;
+export function displayEncryptedField(
+  value: string | null | undefined,
+  placeholder?: string
+): string;
 ```
 
 ---
@@ -390,7 +512,10 @@ export function displayEncryptedField(value: string | null | undefined, placehol
 ```typescript
 export function shouldPersistToLocalStorage(): boolean;
 
-export function createLocalStorageState<T>(key: string, defaultValue: T): {
+export function createLocalStorageState<T>(
+  key: string,
+  defaultValue: T
+): {
   get value(): T;
   set value(newValue: T): void;
 };
@@ -408,10 +533,16 @@ export function createLocalStorageState<T>(key: string, defaultValue: T): {
 export function highlightMatches(text: string, query: string): string;
 export function countActiveFilters(filters: Record<string, any>): number;
 export function isActiveFilterValue(value: any): boolean;
-export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void;
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void;
 export function formatFilterValue(value: any): string;
 export function getFilterLabel(key: string): string;
-export function getFilterSummaries(filters: Record<string, any>, labelMap?: Record<string, string>): string[];
+export function getFilterSummaries(
+  filters: Record<string, any>,
+  labelMap?: Record<string, string>
+): string[];
 export function clearFilters<T>(filters: T, keys: (keyof T)[]): Partial<T>;
 export function updateFilters<T>(currentFilters: T, updates: Partial<T>): T;
 ```
@@ -497,9 +628,21 @@ export class WebVitalsMonitor {
 class PerformanceMonitor {
   startTimer(name: string): void;
   endTimer(name: string, tags?: Record<string, string>): number;
-  recordMetric(name: string, value: number, tags?: Record<string, string>): void;
+  recordMetric(
+    name: string,
+    value: number,
+    tags?: Record<string, string>
+  ): void;
   getMetrics(name?: string, limit?: number): PerformanceMetric[];
-  getStats(name?: string): { count: number; avg: number; min: number; max: number; p50: number; p95: number; p99: number };
+  getStats(name?: string): {
+    count: number;
+    avg: number;
+    min: number;
+    max: number;
+    p50: number;
+    p95: number;
+    p99: number;
+  };
   clear(): void;
 }
 ```
@@ -567,7 +710,9 @@ export interface PeriodPresetOption {
 
 ```typescript
 export function getPeriodPresetOptions(): PeriodPresetOption[];
-export function getGroupedPresetOptions(allowedGroups?: PeriodPresetGroup[]): Record<string, PeriodPresetOption[]>;
+export function getGroupedPresetOptions(
+  allowedGroups?: PeriodPresetGroup[]
+): Record<string, PeriodPresetOption[]>;
 export function getPresetLabel(preset: TimePeriodPreset): string;
 export function formatPeriodLabel(period: TimePeriod): string;
 export function formatPeriodShortLabel(period: TimePeriod): string;
@@ -620,7 +765,10 @@ export interface MarkdownFrontmatter {
 ### Functions
 
 ```typescript
-export function renderMarkdown(content: string): { html: string; frontmatter: MarkdownFrontmatter };
+export function renderMarkdown(content: string): {
+  html: string;
+  frontmatter: MarkdownFrontmatter;
+};
 export function markdownToHtml(content: string): string;
 ```
 
@@ -633,10 +781,20 @@ export function markdownToHtml(content: string): string;
 ### Functions
 
 ```typescript
-export async function generatePdf(element: HTMLElement, options?: PdfOptions): Promise<void>;
-export async function generatePdfBlob(element: HTMLElement, options?: PdfOptions): Promise<Blob>;
+export async function generatePdf(
+  element: HTMLElement,
+  options?: PdfOptions
+): Promise<void>;
+export async function generatePdfBlob(
+  element: HTMLElement,
+  options?: PdfOptions
+): Promise<Blob>;
 export function generateHtmlExport(element: HTMLElement, title: string): string;
-export function downloadHtml(element: HTMLElement, filename: string, title: string): void;
+export function downloadHtml(
+  element: HTMLElement,
+  filename: string,
+  title: string
+): void;
 export function downloadMarkdown(content: string, filename: string): void;
 ```
 
@@ -644,12 +802,12 @@ export function downloadMarkdown(content: string, filename: string): void;
 
 ```typescript
 interface PdfOptions {
-  filename?: string;              // Without .pdf extension
-  margin?: number;                // In mm
-  imageQuality?: number;          // 0-1
-  scale?: number;                 // html2canvas scale
-  format?: "a4" | "letter" | "legal";
-  orientation?: "portrait" | "landscape";
+  filename?: string; // Without .pdf extension
+  margin?: number; // In mm
+  imageQuality?: number; // 0-1
+  scale?: number; // html2canvas scale
+  format?: 'a4' | 'letter' | 'legal';
+  orientation?: 'portrait' | 'landscape';
 }
 ```
 
@@ -676,11 +834,30 @@ export function isPaymentTransaction(tx: TransactionsFormat): boolean;
 export function isInterestCharge(tx: TransactionsFormat): boolean;
 
 // Analysis
-export function calculateMonthlyUtilization(transactions: TransactionsFormat[], creditLimit: number): MonthlyUtilizationPoint[];
-export function analyzePayments(transactions: TransactionsFormat[], minimumPayment: number, interestRate: number): PaymentAnalysisPoint[];
-export function calculatePayoffScenarios(balance: number, interestRate: number, minimumPayment: number, customPayment?: number): PayoffScenario[];
-export function calculateBalanceHistory(transactions: TransactionsFormat[], creditLimit: number, currentBalance?: number): MonthlyUtilizationPoint[];
-export function getCurrentBalance(account: Account, transactions: TransactionsFormat[]): number;
+export function calculateMonthlyUtilization(
+  transactions: TransactionsFormat[],
+  creditLimit: number
+): MonthlyUtilizationPoint[];
+export function analyzePayments(
+  transactions: TransactionsFormat[],
+  minimumPayment: number,
+  interestRate: number
+): PaymentAnalysisPoint[];
+export function calculatePayoffScenarios(
+  balance: number,
+  interestRate: number,
+  minimumPayment: number,
+  customPayment?: number
+): PayoffScenario[];
+export function calculateBalanceHistory(
+  transactions: TransactionsFormat[],
+  creditLimit: number,
+  currentBalance?: number
+): MonthlyUtilizationPoint[];
+export function getCurrentBalance(
+  account: Account,
+  transactions: TransactionsFormat[]
+): number;
 ```
 
 ---
@@ -714,8 +891,13 @@ export const AVAILABLE_METRICS: MetricDefinition[];
 export const DEFAULT_ENABLED_METRICS: MetricId[];
 
 export function getEnabledMetrics(account: Account): MetricId[];
-export function getAvailableMetricsForAccount(account: Account): MetricDefinition[];
-export function isMetricAvailable(metric: MetricDefinition, account: Account): boolean;
+export function getAvailableMetricsForAccount(
+  account: Account
+): MetricDefinition[];
+export function isMetricAvailable(
+  metric: MetricDefinition,
+  account: Account
+): boolean;
 export function calculateAllMetrics(account: Account): CalculatedMetrics;
 ```
 
@@ -740,10 +922,25 @@ export interface UtilityStats { ... }
 ### Functions
 
 ```typescript
-export function calculateUtilityStats(records: UtilityUsage[]): UtilityStats | null;
-export function detectAnomalies(records: UtilityUsage[], options?: { zsScoreThreshold?: number; monthOverMonthThreshold?: number; potentialLeakDays?: number }): UsageAnomaly[];
-export function forecastUsage(records: UtilityUsage[], options?: { targetMonth?: number; useSeasonal?: boolean }): UsageForecast | null;
-export function projectBill(records: UtilityUsage[], options?: { projectedUsage?: number; targetMonth?: number }): BillProjection | null;
+export function calculateUtilityStats(
+  records: UtilityUsage[]
+): UtilityStats | null;
+export function detectAnomalies(
+  records: UtilityUsage[],
+  options?: {
+    zsScoreThreshold?: number;
+    monthOverMonthThreshold?: number;
+    potentialLeakDays?: number;
+  }
+): UsageAnomaly[];
+export function forecastUsage(
+  records: UtilityUsage[],
+  options?: { targetMonth?: number; useSeasonal?: boolean }
+): UsageForecast | null;
+export function projectBill(
+  records: UtilityUsage[],
+  options?: { projectedUsage?: number; targetMonth?: number }
+): BillProjection | null;
 ```
 
 ---
@@ -755,10 +952,35 @@ export function projectBill(records: UtilityUsage[], options?: { projectedUsage?
 ### Functions
 
 ```typescript
-export function nextDaily(start: DateValue, end: DateValue | null, interval: number, limit: number): DateValue[];
-export function nextWeekly(start: DateValue, end: DateValue | null, interval: number, weekDays: number[], limit: number): DateValue[];
-export function nextMonthly(start: DateValue, end: DateValue | null, interval: number, days: number[] | number | null, weeks: number[], weekDays: number[], limit: number): DateValue[];
-export function nextYearly(actualStart: DateValue, start: DateValue, end: DateValue | null, interval: number, limit: number): DateValue[];
+export function nextDaily(
+  start: DateValue,
+  end: DateValue | null,
+  interval: number,
+  limit: number
+): DateValue[];
+export function nextWeekly(
+  start: DateValue,
+  end: DateValue | null,
+  interval: number,
+  weekDays: number[],
+  limit: number
+): DateValue[];
+export function nextMonthly(
+  start: DateValue,
+  end: DateValue | null,
+  interval: number,
+  days: number[] | number | null,
+  weeks: number[],
+  weekDays: number[],
+  limit: number
+): DateValue[];
+export function nextYearly(
+  actualStart: DateValue,
+  start: DateValue,
+  end: DateValue | null,
+  interval: number,
+  limit: number
+): DateValue[];
 ```
 
 ---
@@ -772,13 +994,13 @@ export function nextYearly(actualStart: DateValue, start: DateValue, end: DateVa
 ```typescript
 export type Option<T> = { value: T; label: string };
 
-export const dayOptions: Option<number>[];           // 1-31 with ordinal suffixes
-export const lastDayOption: Option<number>;          // { value: 32, label: "last day" }
-export const weekdayOptions: Option<number>[];       // Sunday=0 to Saturday=6
-export const weekOptions: Option<number>[];          // first, second, third, fourth, last
-export const monthOptions: Option<number>[];         // January=1 to December=12
-export const isoWeekdayOptions: Option<string>[];    // Monday=1 to Sunday=7 (ISO 8601)
-export const monthStringOptions: Option<string>[];   // Months with string values
+export const dayOptions: Option<number>[]; // 1-31 with ordinal suffixes
+export const lastDayOption: Option<number>; // { value: 32, label: "last day" }
+export const weekdayOptions: Option<number>[]; // Sunday=0 to Saturday=6
+export const weekOptions: Option<number>[]; // first, second, third, fourth, last
+export const monthOptions: Option<number>[]; // January=1 to December=12
+export const isoWeekdayOptions: Option<string>[]; // Monday=1 to Sunday=7 (ISO 8601)
+export const monthStringOptions: Option<string>[]; // Months with string values
 ```
 
 ---
@@ -786,45 +1008,59 @@ export const monthStringOptions: Option<string>[];   // Months with string value
 ## Additional Files
 
 ### accessibility-colors.ts
+
 WCAG-compliant color contrast utilities.
 
 ### account-display.ts
+
 Account display formatting helpers.
 
 ### ai-response-parser.ts
+
 Parse AI-generated responses for categorization.
 
 ### bind-helpers.ts
+
 Svelte binding utilities.
 
 ### budget-calculations.ts
+
 Budget allocation and rollover calculations.
 
 ### budget-validation.ts
+
 Budget form validation.
 
 ### chart-color-config.ts
+
 Chart color configuration and theme mappings.
 
 ### confidence-colors.ts
+
 Confidence level color indicators.
 
 ### date-formatters.ts
+
 Additional date formatting utilities.
 
 ### date-options.ts
+
 Date range option generators.
 
 ### font-classes.ts
+
 Font utility classes.
 
 ### generate-unique-slug.ts
+
 Slug generation utilities.
 
 ### holidays.ts
+
 Holiday detection and calendar utilities.
 
 ### icon-validation.ts
+
 Icon name validation.
 
 ```typescript
@@ -834,6 +1070,7 @@ export type ValidIconName = (typeof VALID_ICON_NAMES)[number];
 ```
 
 ### import.ts
+
 Import preview utilities.
 
 ```typescript
@@ -842,15 +1079,23 @@ export function formatPreviewAmount(value: any, isDebit: boolean): string;
 ```
 
 ### input-sanitization.ts
+
 XSS prevention and input validation.
 
 ```typescript
-export function sanitizeTextInput(input: string | null | undefined): string | null;
+export function sanitizeTextInput(
+  input: string | null | undefined
+): string | null;
 export function containsHtmlTags(input: string): boolean;
-export function validateAndSanitizeNotes(notes: string | null | undefined): { isValid: boolean; sanitized: string | null; error?: string };
+export function validateAndSanitizeNotes(notes: string | null | undefined): {
+  isValid: boolean;
+  sanitized: string | null;
+  error?: string;
+};
 ```
 
 ### payee-matching.ts
+
 Payee name comparison.
 
 ```typescript
@@ -860,25 +1105,38 @@ export function findSimilarPayeeTransactions<T>(...): { item: T; index: number }
 ```
 
 ### slug-utils.ts
+
 Database-safe slug generation.
 
 ```typescript
-export function generateUniqueSlugForDB(baseName: string, existingSlugs: string[]): string;
+export function generateUniqueSlugForDB(
+  baseName: string,
+  existingSlugs: string[]
+): string;
 export const generateUniqueSlug = generateUniqueSlugForDB; // Deprecated alias
 ```
 
 ### wizard-validation.ts
+
 Multi-step wizard validation.
 
 ### import/payment-processor-filter.ts
+
 Payment processor detection for imports.
 
 ```typescript
 export const PAYMENT_PROCESSORS: ProcessorPattern[];
-export function detectPaymentProcessor(payeeName: string): ProcessorDetection | null;
+export function detectPaymentProcessor(
+  payeeName: string
+): ProcessorDetection | null;
 export function filterPaymentProcessor(payeeName: string): string;
-export function analyzePaymentProcessors(payeeNames: string[]): Map<string, ProcessorDetection[]>;
-export function countProcessorTransactions(payeeNames: string[]): { total: number; byProcessor: Map<string, number> };
+export function analyzePaymentProcessors(
+  payeeNames: string[]
+): Map<string, ProcessorDetection[]>;
+export function countProcessorTransactions(payeeNames: string[]): {
+  total: number;
+  byProcessor: Map<string, number>;
+};
 ```
 
 ---
@@ -897,7 +1155,7 @@ export function formatCurrencyAbs(amount: number): string;
 // Numbers
 export function formatNumber(value: number): string;
 export function formatNumberFixed(value: number, decimals: number): string;
-export function formatCompact(value: number, decimals?: number): string;  // 1500000 → "1.5M"
+export function formatCompact(value: number, decimals?: number): string; // 1500000 → "1.5M"
 
 // Percentages
 export function formatPercent(value: number, decimals?: number): string;
@@ -905,10 +1163,10 @@ export function formatPercentChange(value: number, decimals?: number): string;
 export function formatPercentRaw(value: number, decimals?: number): string;
 
 // Dates
-export function formatShortDate(date: Date | string): string;     // "Jan 15"
-export function formatMonthYear(date: Date | string): string;     // "January 2024"
-export function formatFullDate(date: Date | string): string;      // "January 15, 2024"
-export function formatISODate(date: Date): string;                // "2024-01-15"
+export function formatShortDate(date: Date | string): string; // "Jan 15"
+export function formatMonthYear(date: Date | string): string; // "January 2024"
+export function formatFullDate(date: Date | string): string; // "January 15, 2024"
+export function formatISODate(date: Date): string; // "2024-01-15"
 
 // Files
 export function formatFileSize(bytes: number): string;
@@ -919,6 +1177,7 @@ export function formatFileSize(bytes: number): string;
 ## Usage Patterns
 
 ### Formatting Currency
+
 ```typescript
 import { formatCurrency } from '$lib/utils';
 const display = formatCurrency(1234.56); // "$1,234.56"
@@ -928,10 +1187,10 @@ const display = formatCurrency(1234.56); // "$1,234.56"
 
 ```typescript
 import { formatPercent, formatPercentChange } from '$lib/utils';
-formatPercent(0.75);          // "75%"
-formatPercent(0.756, 1);      // "75.6%"
-formatPercentChange(0.15);    // "+15.0%"
-formatPercentChange(-0.08);   // "-8.0%"
+formatPercent(0.75); // "75%"
+formatPercent(0.756, 1); // "75.6%"
+formatPercentChange(0.15); // "+15.0%"
+formatPercentChange(-0.08); // "-8.0%"
 ```
 
 ### Server-Side Formatting (tRPC routes)
@@ -942,6 +1201,7 @@ import { formatCurrency, formatPercent } from '$lib/server/utils/formatters';
 ```
 
 ### Date Manipulation
+
 ```typescript
 import { currentDate, toISOString, getNextWeekday } from '$lib/utils/dates';
 const nextMonday = getNextWeekday(currentDate, 1);
@@ -949,6 +1209,7 @@ const isoDate = toISOString(nextMonday);
 ```
 
 ### Caching
+
 ```typescript
 import { queryCache, cacheKeys } from '$lib/utils/cache';
 const cached = queryCache.get(cacheKeys.allAccounts());
@@ -959,6 +1220,7 @@ if (!cached) {
 ```
 
 ### Encrypted Fields
+
 ```typescript
 import { createEncryptedFieldState } from '$lib/utils/use-encryption.svelte';
 const notesState = createEncryptedFieldState(() => transaction.notes);
@@ -966,6 +1228,7 @@ const notesState = createEncryptedFieldState(() => transaction.notes);
 ```
 
 ### Toast Notifications
+
 ```typescript
 import { toast } from '$lib/utils/toast-interceptor';
 toast.success('Account created');

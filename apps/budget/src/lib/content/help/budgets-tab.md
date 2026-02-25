@@ -11,6 +11,7 @@ Create and track budgets to manage your spending in this account.
 ## Budget Overview
 
 Each budget shows:
+
 - **Name** - Budget identifier
 - **Allocated** - Amount budgeted
 - **Spent** - Current spending
@@ -19,17 +20,18 @@ Each budget shows:
 
 ## Budget Actions
 
-| Action | Description |
-|--------|-------------|
-| View | See budget details |
-| Edit | Modify budget settings |
-| Duplicate | Copy for a new period |
-| Archive | Keep for records, stop tracking |
-| Delete | Remove permanently |
+| Action    | Description                     |
+| --------- | ------------------------------- |
+| View      | See budget details              |
+| Edit      | Modify budget settings          |
+| Duplicate | Copy for a new period           |
+| Archive   | Keep for records, stop tracking |
+| Delete    | Remove permanently              |
 
 ## AI Recommendations
 
 Click **Recommendations** to see:
+
 - Suggested budget amounts
 - Adjustments based on spending
 - New budget opportunities

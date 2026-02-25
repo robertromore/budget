@@ -1,8 +1,16 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {setupTestDb, clearTestDb} from "../setup/test-db";
-import {accounts, transactions, categories, payees, users, workspaces, workspaceMembers} from "$lib/schema";
-import {createId} from "@paralleldrive/cuid2";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { setupTestDb, clearTestDb } from "../setup/test-db";
+import {
+  accounts,
+  transactions,
+  categories,
+  payees,
+  users,
+  workspaces,
+  workspaceMembers,
+} from "$lib/schema";
+import { createId } from "@paralleldrive/cuid2";
 
 describe("Accounts Performance Testing Concepts", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -114,7 +122,7 @@ describe("Accounts Performance Testing Concepts", () => {
 
       // This test demonstrates performance considerations for account loading
       // Currently tests against existing routes to establish baseline metrics
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
 
       expect(account.id).toBe(testAccount.id);
       expect(account.name).toBe("Test Account");
@@ -148,7 +156,7 @@ describe("Accounts Performance Testing Concepts", () => {
       await Promise.all(transactionPromises);
 
       // Load account (which currently loads all transactions)
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
 
       expect(account.transactions).toHaveLength(25);
 
@@ -185,7 +193,7 @@ describe("Accounts Performance Testing Concepts", () => {
         });
       }
 
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
 
       // Verify final balance
       const expectedFinalBalance = transactionAmounts.reduce((sum, amount) => sum + amount, 0);
@@ -204,10 +212,10 @@ describe("Accounts Performance Testing Concepts", () => {
     test("should handle transaction search efficiently", async () => {
       // Create transactions with searchable content
       const searchableTransactions = [
-        {notes: "Grocery store purchase", amount: -85.5},
-        {notes: "Gas station fill-up", amount: -45.0},
-        {notes: "Grocery delivery", amount: -25.75},
-        {notes: "Restaurant dinner", amount: -65.0},
+        { notes: "Grocery store purchase", amount: -85.5 },
+        { notes: "Gas station fill-up", amount: -45.0 },
+        { notes: "Grocery delivery", amount: -25.75 },
+        { notes: "Restaurant dinner", amount: -65.0 },
       ];
 
       for (const tx of searchableTransactions) {
@@ -221,7 +229,7 @@ describe("Accounts Performance Testing Concepts", () => {
         });
       }
 
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
 
       // Performance consideration: Server-side search would be more efficient
       // For now, test that we can filter the loaded transactions
@@ -259,7 +267,7 @@ describe("Accounts Performance Testing Concepts", () => {
 
       // Time the account loading
       const startTime = performance.now();
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
       const endTime = performance.now();
 
       const loadTime = endTime - startTime;
@@ -298,7 +306,7 @@ describe("Accounts Performance Testing Concepts", () => {
 
       await Promise.all(transactionPromises);
 
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
 
       expect(account.transactions).toHaveLength(largeDatasetSize);
 
@@ -311,11 +319,11 @@ describe("Accounts Performance Testing Concepts", () => {
 
   describe("Error Handling and Edge Cases", () => {
     test("should handle non-existent account gracefully", async () => {
-      await expect(caller.accountRoutes.load({id: 99999})).rejects.toThrow("Account not found");
+      await expect(caller.accountRoutes.load({ id: 99999 })).rejects.toThrow("Account not found");
     });
 
     test("should handle accounts with no transactions", async () => {
-      const account = await caller.accountRoutes.load({id: testAccount.id});
+      const account = await caller.accountRoutes.load({ id: testAccount.id });
 
       expect(account.transactions).toHaveLength(0);
       expect(account.balance).toBe(0); // No transactions means zero balance

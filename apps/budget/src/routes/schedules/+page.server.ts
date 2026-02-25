@@ -1,5 +1,8 @@
 import { removeScheduleSchema, type RemoveScheduleData } from "$lib/schema";
-import { superformInsertScheduleSchema, type SuperformInsertScheduleData } from "$lib/schema/superforms";
+import {
+  superformInsertScheduleSchema,
+  type SuperformInsertScheduleData,
+} from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { fail } from "@sveltejs/kit";

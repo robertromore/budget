@@ -1,7 +1,7 @@
-import {describe, it, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {TRPCError} from "@trpc/server";
-import {setupTestDb, clearTestDb, seedTestData} from "../setup/test-db";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { TRPCError } from "@trpc/server";
+import { setupTestDb, clearTestDb, seedTestData } from "../setup/test-db";
 
 describe("Rate Limiting Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -21,7 +21,7 @@ describe("Rate Limiting Integration Tests", () => {
     caller = createCaller(ctx as any);
 
     // Create caller without rate limiting (for setup operations)
-    const testCtx = {db, isTest: true};
+    const testCtx = { db, isTest: true };
     callerWithoutRateLimit = createCaller(testCtx as any);
   });
 
@@ -55,7 +55,7 @@ describe("Rate Limiting Integration Tests", () => {
       let created = 0;
 
       for (let batch = 0; batch < batches; batch++) {
-        const operations = Array.from({length: perBatch}, (_, index) => {
+        const operations = Array.from({ length: perBatch }, (_, index) => {
           const i = batch * perBatch + index;
           return callerWithoutRateLimit.accountRoutes.save({
             name: `Bypass Account ${i}`,
@@ -88,7 +88,7 @@ describe("Rate Limiting Integration Tests", () => {
             .save({
               name: `Rate Limited View ${i}`,
             })
-            .catch((error) => ({error, index: i}))
+            .catch((error) => ({ error, index: i }))
         );
       }
 
@@ -147,7 +147,7 @@ describe("Rate Limiting Integration Tests", () => {
 
       // Strict-limited endpoint should not inherit the standard mutation counter.
       try {
-        await isolatedCaller.securityRoutes.revokeDeviceTrust({deviceId: 999999});
+        await isolatedCaller.securityRoutes.revokeDeviceTrust({ deviceId: 999999 });
       } catch (error) {
         expect(error).toBeInstanceOf(TRPCError);
         expect((error as TRPCError).code).not.toBe("TOO_MANY_REQUESTS");
@@ -199,7 +199,7 @@ describe("Rate Limiting Integration Tests", () => {
 
   describe("Mixed Operations", () => {
     it("should handle basic mixed CRUD operations", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
 
       // Simple mixed operations test - just verify basic functionality works
       const createResult = await callerWithoutRateLimit.accountRoutes.save({

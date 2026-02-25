@@ -34,12 +34,12 @@ Intelligence mode enhances:
 
 ## Suggestion Types
 
-| Type | Description |
-|------|-------------|
-| **History** | Based on your past entries |
-| **Pattern** | Detected spending patterns |
-| **AI** | Machine learning suggestions |
-| **Similar** | Matching existing entries |
+| Type        | Description                  |
+| ----------- | ---------------------------- |
+| **History** | Based on your past entries   |
+| **Pattern** | Detected spending patterns   |
+| **AI**      | Machine learning suggestions |
+| **Similar** | Matching existing entries    |
 
 ## Accepting Suggestions
 

@@ -83,7 +83,14 @@ describe("Entity Types", () => {
 
 describe("Trigger Events", () => {
   it("should have events defined for all entity types", () => {
-    const types: EntityType[] = ["transaction", "account", "payee", "category", "schedule", "budget"];
+    const types: EntityType[] = [
+      "transaction",
+      "account",
+      "payee",
+      "category",
+      "schedule",
+      "budget",
+    ];
     types.forEach((type) => {
       expect(triggerEvents[type]).toBeDefined();
       expect(Array.isArray(triggerEvents[type])).toBe(true);
@@ -140,7 +147,14 @@ describe("Trigger Events", () => {
 
 describe("Condition Fields", () => {
   it("should have fields defined for all entity types", () => {
-    const types: EntityType[] = ["transaction", "account", "payee", "category", "schedule", "budget"];
+    const types: EntityType[] = [
+      "transaction",
+      "account",
+      "payee",
+      "category",
+      "schedule",
+      "budget",
+    ];
     types.forEach((type) => {
       expect(conditionFields[type]).toBeDefined();
       expect(Array.isArray(conditionFields[type])).toBe(true);
@@ -194,10 +208,26 @@ describe("Condition Fields", () => {
 
 describe("Operator Info", () => {
   const allOperators: ConditionOperator[] = [
-    "equals", "notEquals", "contains", "startsWith", "endsWith", "matches",
-    "greaterThan", "lessThan", "greaterThanOrEquals", "lessThanOrEquals",
-    "between", "in", "inGroup", "isNull", "isEmpty", "before", "after",
-    "within", "dayOfWeek", "dayOfMonth",
+    "equals",
+    "notEquals",
+    "contains",
+    "startsWith",
+    "endsWith",
+    "matches",
+    "greaterThan",
+    "lessThan",
+    "greaterThanOrEquals",
+    "lessThanOrEquals",
+    "between",
+    "in",
+    "inGroup",
+    "isNull",
+    "isEmpty",
+    "before",
+    "after",
+    "within",
+    "dayOfWeek",
+    "dayOfMonth",
   ];
 
   it("should have info for all operators", () => {

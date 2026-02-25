@@ -1,8 +1,5 @@
 import type { WorkspaceMember, WorkspaceRole } from "$lib/schema/workspace-members";
-import type {
-  MemberWithUser,
-  MemberWithWorkspace,
-} from "$lib/server/domains/workspace-members";
+import type { MemberWithUser, MemberWithWorkspace } from "$lib/server/domains/workspace-members";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
@@ -104,10 +101,7 @@ export const leaveWorkspace = defineMutation<void, { success: boolean }>({
 /**
  * Transfer workspace ownership
  */
-export const transferOwnership = defineMutation<
-  { newOwnerId: string },
-  { success: boolean }
->({
+export const transferOwnership = defineMutation<{ newOwnerId: string }, { success: boolean }>({
   mutationFn: (input) => trpc().workspaceMembersRoutes.transferOwnership.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(workspaceMemberKeys.all());
@@ -121,10 +115,7 @@ export const transferOwnership = defineMutation<
 /**
  * Set default workspace
  */
-export const setDefaultWorkspace = defineMutation<
-  { workspaceId: number },
-  { success: boolean }
->({
+export const setDefaultWorkspace = defineMutation<{ workspaceId: number }, { success: boolean }>({
   mutationFn: (input) => trpc().workspaceMembersRoutes.setDefault.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(workspaceMemberKeys.myWorkspaces());

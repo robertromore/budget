@@ -64,13 +64,14 @@ function getFeatureConfig(
 }
 
 // Mapping from LLM feature modes to ML feature names
-const LLM_TO_ML_FEATURE_MAP: Record<keyof LLMFeatureModes, keyof MLPreferences["features"] | null> = {
-  transactionParsing: null, // No direct ML equivalent
-  categorySuggestion: "similarity", // Uses similarity service
-  anomalyDetection: "anomalyDetection",
-  forecasting: "forecasting",
-  payeeMatching: "similarity",
-};
+const LLM_TO_ML_FEATURE_MAP: Record<keyof LLMFeatureModes, keyof MLPreferences["features"] | null> =
+  {
+    transactionParsing: null, // No direct ML equivalent
+    categorySuggestion: "similarity", // Uses similarity service
+    anomalyDetection: "anomalyDetection",
+    forecasting: "forecasting",
+    payeeMatching: "similarity",
+  };
 
 /**
  * Intelligence Coordinator
@@ -255,7 +256,8 @@ export class IntelligenceCoordinator {
       return false;
     }
 
-    const defaultProviderConfig = this.llmPreferences.providers[this.llmPreferences.defaultProvider];
+    const defaultProviderConfig =
+      this.llmPreferences.providers[this.llmPreferences.defaultProvider];
     return defaultProviderConfig?.enabled ?? false;
   }
 
@@ -300,7 +302,10 @@ export class IntelligenceCoordinator {
     mlMasterEnabled: boolean;
     llmMasterEnabled: boolean;
     defaultProvider: string | null;
-    features: Record<IntelligenceFeature, { ml: boolean; llm: boolean; mode: string; provider: string | null }>;
+    features: Record<
+      IntelligenceFeature,
+      { ml: boolean; llm: boolean; mode: string; provider: string | null }
+    >;
   } {
     const getFeatureSummary = (feature: IntelligenceFeature) => ({
       ml: this.isMLEnabled(feature),
@@ -309,7 +314,10 @@ export class IntelligenceCoordinator {
       provider: this.getFeatureProviderType(feature),
     });
 
-    const features: Record<IntelligenceFeature, { ml: boolean; llm: boolean; mode: string; provider: string | null }> = {
+    const features: Record<
+      IntelligenceFeature,
+      { ml: boolean; llm: boolean; mode: string; provider: string | null }
+    > = {
       transactionParsing: getFeatureSummary("transactionParsing"),
       categorySuggestion: getFeatureSummary("categorySuggestion"),
       anomalyDetection: getFeatureSummary("anomalyDetection"),

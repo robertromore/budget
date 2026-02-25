@@ -37,7 +37,7 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
   if (!filterValue) return true;
 
   // Handle new format with operator
-  if (typeof filterValue === 'object' && 'operator' in filterValue && 'values' in filterValue) {
+  if (typeof filterValue === "object" && "operator" in filterValue && "values" in filterValue) {
     const { operator, values } = filterValue as { operator: string; values: string[] };
     if (!values || values.length === 0) return true;
 
@@ -45,7 +45,7 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
     const isIncluded = values.includes(rowValue);
 
     // "is not one of" operator
-    if (operator === 'arrNotIncludesSome') {
+    if (operator === "arrNotIncludesSome") {
       return !isIncluded;
     }
     // "is one of" operator (default)

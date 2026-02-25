@@ -105,7 +105,8 @@ export const securityRoutes = t.router({
       }
 
       const currentPreferences = user.preferences ? JSON.parse(user.preferences) : {};
-      const currentEncryption = currentPreferences.encryption ?? DEFAULT_USER_ENCRYPTION_PREFERENCES;
+      const currentEncryption =
+        currentPreferences.encryption ?? DEFAULT_USER_ENCRYPTION_PREFERENCES;
 
       const updatedPreferences = {
         ...currentPreferences,
@@ -115,7 +116,8 @@ export const securityRoutes = t.router({
           riskFactorsEnabled: input.riskFactorsEnabled,
           riskFactors: input.riskFactors ?? currentEncryption.riskFactors,
           challengeThreshold: input.challengeThreshold ?? currentEncryption.challengeThreshold,
-          keyStoragePreference: input.keyStoragePreference ?? currentEncryption.keyStoragePreference,
+          keyStoragePreference:
+            input.keyStoragePreference ?? currentEncryption.keyStoragePreference,
         },
       };
 

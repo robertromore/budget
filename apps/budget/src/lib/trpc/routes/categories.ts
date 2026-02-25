@@ -3,7 +3,11 @@ import {
   removeCategoriesSchema,
   removeCategorySchema,
 } from "$lib/schema";
-import { categoryIdSchema, mergeCategoriesSchema, searchCategoriesSchema } from "$lib/server/domains/categories";
+import {
+  categoryIdSchema,
+  mergeCategoriesSchema,
+  searchCategoriesSchema,
+} from "$lib/server/domains/categories";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";

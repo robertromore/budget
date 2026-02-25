@@ -5,11 +5,11 @@
  * period calculations, and analytics.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, gte, lte} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, gte, lte } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -93,14 +93,14 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 850,
           usageUnit: "kwh",
-          totalAmount: 125.50,
+          totalAmount: 125.5,
         })
         .returning();
 
       expect(record).toBeDefined();
       expect(record.usageAmount).toBe(850);
       expect(record.usageUnit).toBe("kwh");
-      expect(record.totalAmount).toBe(125.50);
+      expect(record.totalAmount).toBe(125.5);
     });
 
     it("should create record with all fields", async () => {
@@ -113,11 +113,11 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 850,
           usageUnit: "kwh",
-          totalAmount: 125.50,
-          baseCharge: 15.00,
-          usageCost: 102.00,
-          taxes: 5.50,
-          fees: 3.00,
+          totalAmount: 125.5,
+          baseCharge: 15.0,
+          usageCost: 102.0,
+          taxes: 5.5,
+          fees: 3.0,
           ratePerUnit: 0.12,
           meterReadingStart: 10000,
           meterReadingEnd: 10850,
@@ -126,10 +126,10 @@ describe("Utility Usage", () => {
         })
         .returning();
 
-      expect(record.baseCharge).toBe(15.00);
-      expect(record.usageCost).toBe(102.00);
-      expect(record.taxes).toBe(5.50);
-      expect(record.fees).toBe(3.00);
+      expect(record.baseCharge).toBe(15.0);
+      expect(record.usageCost).toBe(102.0);
+      expect(record.taxes).toBe(5.5);
+      expect(record.fees).toBe(3.0);
       expect(record.meterReadingStart).toBe(10000);
       expect(record.meterReadingEnd).toBe(10850);
     });
@@ -140,7 +140,7 @@ describe("Utility Usage", () => {
         .values({
           workspaceId: ctx.workspaceId,
           accountId: ctx.accountId,
-          amount: -125.50,
+          amount: -125.5,
           date: "2024-02-05",
           status: "cleared",
         })
@@ -156,7 +156,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 850,
           usageUnit: "kwh",
-          totalAmount: 125.50,
+          totalAmount: 125.5,
         })
         .returning();
 
@@ -176,8 +176,8 @@ describe("Utility Usage", () => {
     });
 
     it("should calculate cost per unit", () => {
-      const totalAmount = 125.50;
-      const baseCharge = 15.00;
+      const totalAmount = 125.5;
+      const baseCharge = 15.0;
       const usageAmount = 850;
 
       const costPerUnit = calculateCostPerUnit(totalAmount, baseCharge, usageAmount);
@@ -186,7 +186,7 @@ describe("Utility Usage", () => {
     });
 
     it("should handle zero usage", () => {
-      const costPerUnit = calculateCostPerUnit(15.00, 15.00, 0);
+      const costPerUnit = calculateCostPerUnit(15.0, 15.0, 0);
       expect(costPerUnit).toBeNull();
     });
 
@@ -214,7 +214,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 850,
           usageUnit: "kwh",
-          totalAmount: 125.50,
+          totalAmount: 125.5,
         },
         {
           workspaceId: ctx.workspaceId,
@@ -223,7 +223,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-02-29",
           usageAmount: 780,
           usageUnit: "kwh",
-          totalAmount: 118.00,
+          totalAmount: 118.0,
         },
         {
           workspaceId: ctx.workspaceId,
@@ -232,7 +232,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-03-31",
           usageAmount: 650,
           usageUnit: "kwh",
-          totalAmount: 105.00,
+          totalAmount: 105.0,
         },
       ]);
     });
@@ -289,11 +289,43 @@ describe("Utility Usage", () => {
       // Create year-over-year data (monotonically decreasing)
       await ctx.db.insert(schema.utilityUsage).values([
         // 2023 data
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, periodStart: "2023-01-01", periodEnd: "2023-01-31", usageAmount: 900, usageUnit: "kwh", totalAmount: 130.00},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, periodStart: "2023-02-01", periodEnd: "2023-02-28", usageAmount: 860, usageUnit: "kwh", totalAmount: 126.00},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          periodStart: "2023-01-01",
+          periodEnd: "2023-01-31",
+          usageAmount: 900,
+          usageUnit: "kwh",
+          totalAmount: 130.0,
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          periodStart: "2023-02-01",
+          periodEnd: "2023-02-28",
+          usageAmount: 860,
+          usageUnit: "kwh",
+          totalAmount: 126.0,
+        },
         // 2024 data
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, periodStart: "2024-01-01", periodEnd: "2024-01-31", usageAmount: 850, usageUnit: "kwh", totalAmount: 125.50},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, periodStart: "2024-02-01", periodEnd: "2024-02-29", usageAmount: 780, usageUnit: "kwh", totalAmount: 118.00},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          periodStart: "2024-01-01",
+          periodEnd: "2024-01-31",
+          usageAmount: 850,
+          usageUnit: "kwh",
+          totalAmount: 125.5,
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          periodStart: "2024-02-01",
+          periodEnd: "2024-02-29",
+          usageAmount: 780,
+          usageUnit: "kwh",
+          totalAmount: 118.0,
+        },
       ]);
     });
 
@@ -426,7 +458,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 850,
           usageUnit: "kwh",
-          totalAmount: 125.50,
+          totalAmount: 125.5,
           meterReadingStart: 10000,
           meterReadingEnd: 10850,
         })
@@ -459,7 +491,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 4500,
           usageUnit: "gallons",
-          totalAmount: 45.00,
+          totalAmount: 45.0,
         })
         .returning();
 
@@ -487,7 +519,7 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 85,
           usageUnit: "therms",
-          totalAmount: 95.00,
+          totalAmount: 95.0,
         })
         .returning();
 
@@ -498,15 +530,14 @@ describe("Utility Usage", () => {
   describe("cost breakdown", () => {
     it("should calculate cost components", () => {
       const record = {
-        baseCharge: 15.00,
-        usageCost: 102.00,
-        taxes: 5.50,
-        fees: 3.00,
-        totalAmount: 125.50,
+        baseCharge: 15.0,
+        usageCost: 102.0,
+        taxes: 5.5,
+        fees: 3.0,
+        totalAmount: 125.5,
       };
 
-      const calculatedTotal =
-        record.baseCharge + record.usageCost + record.taxes + record.fees;
+      const calculatedTotal = record.baseCharge + record.usageCost + record.taxes + record.fees;
 
       expect(calculatedTotal).toBe(record.totalAmount);
     });
@@ -521,18 +552,18 @@ describe("Utility Usage", () => {
           periodEnd: "2024-01-31",
           usageAmount: 850,
           usageUnit: "kwh",
-          totalAmount: 125.50,
-          baseCharge: 15.00,
-          usageCost: 102.00,
-          taxes: 5.50,
-          fees: 3.00,
+          totalAmount: 125.5,
+          baseCharge: 15.0,
+          usageCost: 102.0,
+          taxes: 5.5,
+          fees: 3.0,
         })
         .returning();
 
-      expect(record.baseCharge).toBe(15.00);
-      expect(record.usageCost).toBe(102.00);
-      expect(record.taxes).toBe(5.50);
-      expect(record.fees).toBe(3.00);
+      expect(record.baseCharge).toBe(15.0);
+      expect(record.usageCost).toBe(102.0);
+      expect(record.taxes).toBe(5.5);
+      expect(record.fees).toBe(3.0);
     });
   });
 });

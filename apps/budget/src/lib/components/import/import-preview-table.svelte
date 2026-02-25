@@ -1,17 +1,14 @@
 <script lang="ts">
-import { AdvancedDataTable } from "$lib/components/data-table/core";
-import { createTableState } from "$lib/components/data-table/state";
-import type { CleanupState, ImportRow } from "$lib/types/import";
-import type {
-  RowSelectionState,
-  Table,
-} from "@tanstack/table-core";
+import { AdvancedDataTable } from '$lib/components/data-table/core';
+import { createTableState } from '$lib/components/data-table/state';
+import type { CleanupState, ImportRow } from '$lib/types/import';
+import type { RowSelectionState, Table } from '@tanstack/table-core';
 import {
   createImportPreviewColumns,
   type AliasCandidate,
   type ImportPreviewColumnActions,
-} from "./import-preview-columns";
-import ImportPreviewToolbar from "./import-preview-toolbar.svelte";
+} from './import-preview-columns';
+import ImportPreviewToolbar from './import-preview-toolbar.svelte';
 
 interface ImportOptions {
   createMissingPayees: boolean;
@@ -81,7 +78,6 @@ const tableState = createTableState({
   initialPagination: { pageIndex: 0, pageSize: 25 },
 });
 
-
 // Initialize selection with valid, pending, and transfer_match rows
 let hasInitialized = $state(false);
 $effect(() => {
@@ -128,7 +124,6 @@ const columnActions: ImportPreviewColumnActions = $derived({
   currentAccountId: accountId,
 });
 
-
 // Create columns with actions
 const columns = $derived(createImportPreviewColumns(columnActions));
 
@@ -137,14 +132,14 @@ const filterFns = {
   arrIncludesSome: (row: any, columnId: string, filterValue: unknown) => {
     if (!filterValue) return true;
 
-    if (typeof filterValue === "object" && "operator" in filterValue && "values" in filterValue) {
+    if (typeof filterValue === 'object' && 'operator' in filterValue && 'values' in filterValue) {
       const { operator, values } = filterValue as { operator: string; values: string[] };
       if (!values || values.length === 0) return true;
 
       const rowValue = row.getValue(columnId);
       const isIncluded = values.includes(rowValue);
 
-      if (operator === "arrNotIncludesSome") {
+      if (operator === 'arrNotIncludesSome') {
         return !isIncluded;
       }
       return isIncluded;
@@ -179,8 +174,7 @@ const filterFns = {
   pageSizeOptions={[25, 50, 100, 250]}
   showPagination={true}
   showSelection={true}
-  emptyMessage="No import data to preview."
->
+  emptyMessage="No import data to preview.">
   {#snippet toolbar(tableInstance)}
     <ImportPreviewToolbar
       table={tableInstance}
@@ -191,7 +185,6 @@ const filterFns = {
       {onCleanupStateChange}
       {processorCount}
       {onOpenProcessorFilter}
-      bind:cleanupSheetOpen
-    />
+      bind:cleanupSheetOpen />
   {/snippet}
 </AdvancedDataTable>

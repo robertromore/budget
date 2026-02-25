@@ -10,11 +10,11 @@ Adjust the text size throughout the application for better readability.
 
 ## Size Options
 
-| Size | Label | Description |
-|------|-------|-------------|
-| **Small** | S | Compact text, more content visible |
-| **Normal** | M | Default balanced size |
-| **Large** | L | Easier reading, larger text |
+| Size       | Label | Description                        |
+| ---------- | ----- | ---------------------------------- |
+| **Small**  | S     | Compact text, more content visible |
+| **Normal** | M     | Default balanced size              |
+| **Large**  | L     | Easier reading, larger text        |
 
 ## How It Works
 

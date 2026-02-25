@@ -17,12 +17,7 @@ import {
   ENCRYPTION_LEVELS,
   type EncryptionLevel,
 } from "$lib/types/encryption";
-import {
-  decryptField,
-  encryptField,
-  isEncryptedValue,
-  safeDecryptField,
-} from "./field-encryption";
+import { decryptField, encryptField, isEncryptedValue, safeDecryptField } from "./field-encryption";
 
 // =============================================================================
 // Reactive Getters
@@ -129,9 +124,7 @@ export async function decryptFieldValue(
  * Decrypt a field value silently (no unlock prompt).
  * Returns the original value if no DEK is available.
  */
-export async function decryptFieldSilent(
-  value: string | null | undefined
-): Promise<string | null> {
+export async function decryptFieldSilent(value: string | null | undefined): Promise<string | null> {
   const dek = getCachedDek();
   return safeDecryptField(value, dek);
 }
@@ -143,10 +136,7 @@ export async function decryptFieldSilent(
  * @param context - Optional context for the unlock dialog
  * @returns The encrypted value
  */
-export async function encryptFieldValue(
-  value: string,
-  context?: UnlockContext
-): Promise<string> {
+export async function encryptFieldValue(value: string, context?: UnlockContext): Promise<string> {
   // Check if encryption is enabled
   if (!isEncryptionEnabled()) {
     return value;

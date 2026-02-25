@@ -23,6 +23,7 @@ The payee is the merchant, vendor, or person involved in the transaction.
 ## Payee Normalization
 
 When AI intelligence is enabled:
+
 - Similar names are grouped (e.g., "AMZN" and "Amazon")
 - Merchant names are cleaned up automatically
 - Duplicates are detected and suggested for merging

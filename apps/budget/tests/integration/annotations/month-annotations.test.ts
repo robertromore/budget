@@ -5,11 +5,11 @@
  * tagging, flagging, and context-specific annotations.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -154,7 +154,7 @@ describe("Month Annotations", () => {
 
       await ctx.db
         .update(schema.monthAnnotations)
-        .set({flaggedForReview: false})
+        .set({ flaggedForReview: false })
         .where(eq(schema.monthAnnotations.id, annotation.id));
 
       const updated = await ctx.db.query.monthAnnotations.findFirst({
@@ -166,9 +166,9 @@ describe("Month Annotations", () => {
 
     it("should query flagged annotations", async () => {
       await ctx.db.insert(schema.monthAnnotations).values([
-        {workspaceId: ctx.workspaceId, month: "2024-01", flaggedForReview: true},
-        {workspaceId: ctx.workspaceId, month: "2024-02", flaggedForReview: false},
-        {workspaceId: ctx.workspaceId, month: "2024-03", flaggedForReview: true},
+        { workspaceId: ctx.workspaceId, month: "2024-01", flaggedForReview: true },
+        { workspaceId: ctx.workspaceId, month: "2024-02", flaggedForReview: false },
+        { workspaceId: ctx.workspaceId, month: "2024-03", flaggedForReview: true },
       ]);
 
       const flagged = await ctx.db
@@ -214,7 +214,7 @@ describe("Month Annotations", () => {
 
       await ctx.db
         .update(schema.monthAnnotations)
-        .set({tags: ["unusual", "expected", "recurring"]})
+        .set({ tags: ["unusual", "expected", "recurring"] })
         .where(eq(schema.monthAnnotations.id, annotation.id));
 
       const updated = await ctx.db.query.monthAnnotations.findFirst({
@@ -258,9 +258,9 @@ describe("Month Annotations", () => {
   describe("annotation queries", () => {
     it("should query annotations by month", async () => {
       await ctx.db.insert(schema.monthAnnotations).values([
-        {workspaceId: ctx.workspaceId, month: "2024-01", note: "January note"},
-        {workspaceId: ctx.workspaceId, month: "2024-02", note: "February note"},
-        {workspaceId: ctx.workspaceId, month: "2024-01", note: "Another January note"},
+        { workspaceId: ctx.workspaceId, month: "2024-01", note: "January note" },
+        { workspaceId: ctx.workspaceId, month: "2024-02", note: "February note" },
+        { workspaceId: ctx.workspaceId, month: "2024-01", note: "Another January note" },
       ]);
 
       const januaryAnnotations = await ctx.db
@@ -288,8 +288,18 @@ describe("Month Annotations", () => {
         .returning();
 
       await ctx.db.insert(schema.monthAnnotations).values([
-        {workspaceId: ctx.workspaceId, month: "2024-01", accountId: ctx.accountId, note: "Checking note"},
-        {workspaceId: ctx.workspaceId, month: "2024-01", accountId: account2.id, note: "Savings note"},
+        {
+          workspaceId: ctx.workspaceId,
+          month: "2024-01",
+          accountId: ctx.accountId,
+          note: "Checking note",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          month: "2024-01",
+          accountId: account2.id,
+          note: "Savings note",
+        },
       ]);
 
       const checkingAnnotations = await ctx.db
@@ -312,8 +322,18 @@ describe("Month Annotations", () => {
         .returning();
 
       await ctx.db.insert(schema.monthAnnotations).values([
-        {workspaceId: ctx.workspaceId, month: "2024-01", categoryId: ctx.categoryId, note: "Utilities note"},
-        {workspaceId: ctx.workspaceId, month: "2024-01", categoryId: category2.id, note: "Groceries note"},
+        {
+          workspaceId: ctx.workspaceId,
+          month: "2024-01",
+          categoryId: ctx.categoryId,
+          note: "Utilities note",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          month: "2024-01",
+          categoryId: category2.id,
+          note: "Groceries note",
+        },
       ]);
 
       const utilitiesAnnotations = await ctx.db
@@ -339,7 +359,7 @@ describe("Month Annotations", () => {
 
       await ctx.db
         .update(schema.monthAnnotations)
-        .set({note: "Updated note"})
+        .set({ note: "Updated note" })
         .where(eq(schema.monthAnnotations.id, annotation.id));
 
       const updated = await ctx.db.query.monthAnnotations.findFirst({
@@ -463,9 +483,13 @@ describe("Month Annotations", () => {
         .returning();
 
       // Manual cleanup in correct order
-      await ctx.db.delete(schema.monthAnnotations).where(eq(schema.monthAnnotations.workspaceId, ctx.workspaceId));
+      await ctx.db
+        .delete(schema.monthAnnotations)
+        .where(eq(schema.monthAnnotations.workspaceId, ctx.workspaceId));
       await ctx.db.delete(schema.accounts).where(eq(schema.accounts.workspaceId, ctx.workspaceId));
-      await ctx.db.delete(schema.categories).where(eq(schema.categories.workspaceId, ctx.workspaceId));
+      await ctx.db
+        .delete(schema.categories)
+        .where(eq(schema.categories.workspaceId, ctx.workspaceId));
       await ctx.db.delete(schema.workspaces).where(eq(schema.workspaces.id, ctx.workspaceId));
 
       const deleted = await ctx.db.query.monthAnnotations.findFirst({
@@ -533,8 +557,8 @@ describe("Month Annotations", () => {
 
     it("should handle year boundary months", async () => {
       await ctx.db.insert(schema.monthAnnotations).values([
-        {workspaceId: ctx.workspaceId, month: "2023-12", note: "End of 2023"},
-        {workspaceId: ctx.workspaceId, month: "2024-01", note: "Start of 2024"},
+        { workspaceId: ctx.workspaceId, month: "2023-12", note: "End of 2023" },
+        { workspaceId: ctx.workspaceId, month: "2024-01", note: "Start of 2024" },
       ]);
 
       const annotations = await ctx.db

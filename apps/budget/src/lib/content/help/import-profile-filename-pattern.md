@@ -10,7 +10,8 @@ An optional pattern to automatically match files to this profile.
 
 ## How It Works
 
-When you import a file, the app checks if the filename matches any profile patterns. Matching profiles are suggested automatically.
+When you import a file, the app checks if the filename matches any profile
+patterns. Matching profiles are suggested automatically.
 
 ## Pattern Syntax
 
@@ -18,10 +19,10 @@ Use `*` as a wildcard to match any characters.
 
 ## Examples
 
-| Pattern | Matches |
-|---------|---------|
-| `chase_*.csv` | chase_2024.csv, chase_statement.csv |
-| `*amex*.csv` | my_amex_card.csv, amex_gold.csv |
+| Pattern           | Matches                               |
+| ----------------- | ------------------------------------- |
+| `chase_*.csv`     | chase_2024.csv, chase_statement.csv   |
+| `*amex*.csv`      | my_amex_card.csv, amex_gold.csv       |
 | `statement_*.csv` | statement_jan.csv, statement_2024.csv |
 
 ## Tips

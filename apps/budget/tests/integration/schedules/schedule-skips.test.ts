@@ -5,11 +5,11 @@
  * push forward, and skip removal.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -86,7 +86,10 @@ async function setupTestContext(): Promise<TestContext> {
     })
     .returning();
 
-  await db.update(schema.schedules).set({dateId: scheduleDate.id}).where(eq(schema.schedules.id, schedule.id));
+  await db
+    .update(schema.schedules)
+    .set({ dateId: scheduleDate.id })
+    .where(eq(schema.schedules.id, schedule.id));
 
   return {
     db,
@@ -138,7 +141,10 @@ describe("Schedule Skips", () => {
 
       // Check if skip exists before adding another
       const existing = await ctx.db.query.scheduleSkips.findFirst({
-        where: and(eq(schema.scheduleSkips.scheduleId, ctx.scheduleId), eq(schema.scheduleSkips.skippedDate, skipDate)),
+        where: and(
+          eq(schema.scheduleSkips.scheduleId, ctx.scheduleId),
+          eq(schema.scheduleSkips.skippedDate, skipDate)
+        ),
       });
 
       expect(existing).toBeDefined();
@@ -175,16 +181,34 @@ describe("Schedule Skips", () => {
     it("should count push forward skips for offset calculation", async () => {
       // Create multiple push forward skips
       await ctx.db.insert(schema.scheduleSkips).values([
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-02-15", skipType: "push_forward"},
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-03-15", skipType: "push_forward"},
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-04-15", skipType: "single"}, // Not push_forward
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-02-15",
+          skipType: "push_forward",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-03-15",
+          skipType: "push_forward",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-04-15",
+          skipType: "single",
+        }, // Not push_forward
       ]);
 
       const pushForwardCount = await ctx.db
         .select()
         .from(schema.scheduleSkips)
         .where(
-          and(eq(schema.scheduleSkips.scheduleId, ctx.scheduleId), eq(schema.scheduleSkips.skipType, "push_forward"))
+          and(
+            eq(schema.scheduleSkips.scheduleId, ctx.scheduleId),
+            eq(schema.scheduleSkips.skipType, "push_forward")
+          )
         );
 
       expect(pushForwardCount).toHaveLength(2);
@@ -248,9 +272,27 @@ describe("Schedule Skips", () => {
   describe("skip history", () => {
     it("should retrieve skip history for schedule", async () => {
       await ctx.db.insert(schema.scheduleSkips).values([
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-02-15", skipType: "single", reason: "Reason 1"},
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-03-15", skipType: "push_forward", reason: "Reason 2"},
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-04-15", skipType: "single", reason: "Reason 3"},
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-02-15",
+          skipType: "single",
+          reason: "Reason 1",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-03-15",
+          skipType: "push_forward",
+          reason: "Reason 2",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-04-15",
+          skipType: "single",
+          reason: "Reason 3",
+        },
       ]);
 
       const history = await ctx.db
@@ -267,9 +309,24 @@ describe("Schedule Skips", () => {
 
     it("should separate single and push_forward skips", async () => {
       await ctx.db.insert(schema.scheduleSkips).values([
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-02-15", skipType: "single"},
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-03-15", skipType: "push_forward"},
-        {workspaceId: ctx.workspaceId, scheduleId: ctx.scheduleId, skippedDate: "2024-04-15", skipType: "single"},
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-02-15",
+          skipType: "single",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-03-15",
+          skipType: "push_forward",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          scheduleId: ctx.scheduleId,
+          skippedDate: "2024-04-15",
+          skipType: "single",
+        },
       ]);
 
       const allSkips = await ctx.db
@@ -297,7 +354,10 @@ describe("Schedule Skips", () => {
       });
 
       const isSkipped = await ctx.db.query.scheduleSkips.findFirst({
-        where: and(eq(schema.scheduleSkips.scheduleId, ctx.scheduleId), eq(schema.scheduleSkips.skippedDate, skipDate)),
+        where: and(
+          eq(schema.scheduleSkips.scheduleId, ctx.scheduleId),
+          eq(schema.scheduleSkips.skippedDate, skipDate)
+        ),
       });
 
       expect(isSkipped).toBeDefined();

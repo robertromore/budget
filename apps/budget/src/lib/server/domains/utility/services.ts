@@ -212,7 +212,8 @@ export class UtilityUsageService {
     const usageChange = {
       vsLastPeriod:
         currentPeriod && previousPeriod
-          ? ((currentPeriod.usageAmount - previousPeriod.usageAmount) / previousPeriod.usageAmount) *
+          ? ((currentPeriod.usageAmount - previousPeriod.usageAmount) /
+              previousPeriod.usageAmount) *
             100
           : null,
       vsLastYear:

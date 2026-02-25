@@ -16,12 +16,12 @@ import { roundToCents } from "$lib/utils/math-utilities";
 // ============================================================================
 
 export type AnomalyType =
-  | "high_usage"      // Usage significantly above average
-  | "low_usage"       // Usage significantly below average (vacation, etc.)
-  | "high_cost"       // Cost per unit spike (rate increase)
-  | "usage_spike"     // Sudden increase month-over-month
-  | "potential_leak"  // Consistent high usage (water leak indicator)
-  | "billing_error";  // Cost doesn't match expected calculation
+  | "high_usage" // Usage significantly above average
+  | "low_usage" // Usage significantly below average (vacation, etc.)
+  | "high_cost" // Cost per unit spike (rate increase)
+  | "usage_spike" // Sudden increase month-over-month
+  | "potential_leak" // Consistent high usage (water leak indicator)
+  | "billing_error"; // Cost doesn't match expected calculation
 
 export type AnomalySeverity = "info" | "warning" | "critical";
 
@@ -180,11 +180,7 @@ export function detectAnomalies(
 ): UsageAnomaly[] {
   if (records.length < 3) return []; // Need at least 3 records for meaningful analysis
 
-  const {
-    zsScoreThreshold = 2,
-    monthOverMonthThreshold = 50,
-    potentialLeakDays = 60,
-  } = options;
+  const { zsScoreThreshold = 2, monthOverMonthThreshold = 50, potentialLeakDays = 60 } = options;
 
   const anomalies: UsageAnomaly[] = [];
   const stats = calculateUtilityStats(records);
@@ -289,9 +285,7 @@ export function detectAnomalies(
       const rateZScore = zScore(
         record.ratePerUnit,
         stats.avgCostPerUnit,
-        standardDeviation(
-          records.filter((r) => r.ratePerUnit).map((r) => r.ratePerUnit!)
-        )
+        standardDeviation(records.filter((r) => r.ratePerUnit).map((r) => r.ratePerUnit!))
       );
 
       if (rateZScore > 2) {
@@ -412,7 +406,7 @@ export function forecastUsage(
   // Determine target month
   const lastRecord = sortedRecords[sortedRecords.length - 1];
   const lastDate = new Date(lastRecord.periodEnd);
-  const nextMonth = targetMonth ?? ((lastDate.getMonth() + 1) % 12);
+  const nextMonth = targetMonth ?? (lastDate.getMonth() + 1) % 12;
 
   // Check if we have enough data for seasonal analysis (at least 12 months)
   const hasSeasonalData = sortedRecords.length >= 12 && useSeasonal;

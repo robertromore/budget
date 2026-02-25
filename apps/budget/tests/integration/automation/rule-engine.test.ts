@@ -60,7 +60,11 @@ function createTestTrigger(entityType = "transaction", event = "created"): Trigg
   return { entityType: entityType as TriggerConfig["entityType"], event };
 }
 
-function createTestConditions(field = "amount", operator = "greaterThan", value: unknown = 100): ConditionGroup {
+function createTestConditions(
+  field = "amount",
+  operator = "greaterThan",
+  value: unknown = 100
+): ConditionGroup {
   return {
     id: "group-1",
     operator: "AND",
@@ -296,19 +300,11 @@ describe("Rule Engine Integration Tests", () => {
       expect(result1.matched).toBe(true);
 
       // Second condition matches
-      const result2 = await engine.testRule(
-        rule,
-        { amount: 50, status: "urgent" },
-        "transaction"
-      );
+      const result2 = await engine.testRule(rule, { amount: 50, status: "urgent" }, "transaction");
       expect(result2.matched).toBe(true);
 
       // Neither matches
-      const result3 = await engine.testRule(
-        rule,
-        { amount: 50, status: "normal" },
-        "transaction"
-      );
+      const result3 = await engine.testRule(rule, { amount: 50, status: "normal" }, "transaction");
       expect(result3.matched).toBe(false);
     });
 
@@ -328,11 +324,7 @@ describe("Rule Engine Integration Tests", () => {
       const result = await engine.testRule(rule, { amount: 150 }, "transaction");
 
       expect(result.actions).toHaveLength(3);
-      expect(result.actions.map((a) => a.type)).toEqual([
-        "setCategory",
-        "setPayee",
-        "appendNotes",
-      ]);
+      expect(result.actions.map((a) => a.type)).toEqual(["setCategory", "setPayee", "appendNotes"]);
     });
   });
 

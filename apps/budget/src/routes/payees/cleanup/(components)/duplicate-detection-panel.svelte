@@ -1,285 +1,320 @@
 <script lang="ts">
-  import { SvelteSet } from "svelte/reactivity";
-  import * as Card from "$lib/components/ui/card";
-  import * as Collapsible from "$lib/components/ui/collapsible";
-  import * as Select from "$lib/components/ui/select";
-  import { Button } from "$lib/components/ui/button";
-  import { Slider } from "$lib/components/ui/slider";
-  import { Label } from "$lib/components/ui/label";
-  import { Switch } from "$lib/components/ui/switch";
-  import { ScrollArea } from "$lib/components/ui/scroll-area";
-  import { getDuplicates, listPayees, mergeDuplicates } from "$lib/query/payees";
-  import { LLMSettings } from "$lib/query";
-  import type { DuplicateGroup, LLMLogEntry } from "$lib/query/payees-types";
-  import type { Payee } from "$lib/schema/payees";
-  import { toast } from "$lib/utils/toast-interceptor";
+import { SvelteSet } from 'svelte/reactivity';
+import * as Card from '$lib/components/ui/card';
+import * as Collapsible from '$lib/components/ui/collapsible';
+import * as Select from '$lib/components/ui/select';
+import { Button } from '$lib/components/ui/button';
+import { Slider } from '$lib/components/ui/slider';
+import { Label } from '$lib/components/ui/label';
+import { Switch } from '$lib/components/ui/switch';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { getDuplicates, listPayees, mergeDuplicates } from '$lib/query/payees';
+import { LLMSettings } from '$lib/query';
+import type { DuplicateGroup, LLMLogEntry } from '$lib/query/payees-types';
+import type { Payee } from '$lib/schema/payees';
+import { toast } from '$lib/utils/toast-interceptor';
 
-  import DuplicateGroupCard from "./duplicate-group-card.svelte";
-  import MergeConfirmationDialog from "./merge-confirmation-dialog.svelte";
+import DuplicateGroupCard from './duplicate-group-card.svelte';
+import MergeConfirmationDialog from './merge-confirmation-dialog.svelte';
 
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import Brain from "@lucide/svelte/icons/brain";
-  import ChevronDown from "@lucide/svelte/icons/chevron-down";
-  import ChevronRight from "@lucide/svelte/icons/chevron-right";
-  import CircleAlert from "@lucide/svelte/icons/circle-alert";
-  import CircleCheck from "@lucide/svelte/icons/circle-check";
-  import GitMerge from "@lucide/svelte/icons/git-merge";
-  import Loader2 from "@lucide/svelte/icons/loader-2";
-  import ScrollText from "@lucide/svelte/icons/scroll-text";
-  import Search from "@lucide/svelte/icons/search";
-  import Sparkles from "@lucide/svelte/icons/sparkles";
-  import Zap from "@lucide/svelte/icons/zap";
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import Brain from '@lucide/svelte/icons/brain';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import GitMerge from '@lucide/svelte/icons/git-merge';
+import Loader2 from '@lucide/svelte/icons/loader-2';
+import ScrollText from '@lucide/svelte/icons/scroll-text';
+import Search from '@lucide/svelte/icons/search';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Zap from '@lucide/svelte/icons/zap';
 
-  // State
-  let threshold = $state([0.8]);
-  let detectionMethod = $state<"simple" | "ml" | "llm" | "llm_direct">("ml");
-  let strategy = $state<"name" | "contact" | "transaction_pattern" | "comprehensive">("comprehensive");
-  let includeInactive = $state(false);
+// State
+let threshold = $state([0.8]);
+let detectionMethod = $state<'simple' | 'ml' | 'llm' | 'llm_direct'>('ml');
+let strategy = $state<'name' | 'contact' | 'transaction_pattern' | 'comprehensive'>(
+  'comprehensive'
+);
+let includeInactive = $state(false);
 
-  let duplicateGroups = $state<DuplicateGroup[]>([]);
-  let selectedGroupIds = $state(new SvelteSet<number>());
-  let isScanning = $state(false);
-  let hasScanned = $state(false);
+let duplicateGroups = $state<DuplicateGroup[]>([]);
+let selectedGroupIds = $state(new SvelteSet<number>());
+let isScanning = $state(false);
+let hasScanned = $state(false);
 
-  // LLM Log state
-  let llmLog = $state<LLMLogEntry[]>([]);
-  let logPanelOpen = $state(false);
-  let expandedLogEntries = $state(new SvelteSet<number>());
+// LLM Log state
+let llmLog = $state<LLMLogEntry[]>([]);
+let logPanelOpen = $state(false);
+let expandedLogEntries = $state(new SvelteSet<number>());
 
-  // Merge dialog state
-  let mergeDialogOpen = $state(false);
-  let selectedGroupForMerge = $state<DuplicateGroup | null>(null);
-  let isMerging = $state(false);
+// Merge dialog state
+let mergeDialogOpen = $state(false);
+let selectedGroupForMerge = $state<DuplicateGroup | null>(null);
+let isMerging = $state(false);
 
-  // Queries
-  const payeesQuery = listPayees().options();
-  const mergeMutation = mergeDuplicates().options();
-  const llmPreferencesQuery = LLMSettings.getPreferences().options();
+// Queries
+const payeesQuery = listPayees().options();
+const mergeMutation = mergeDuplicates().options();
+const llmPreferencesQuery = LLMSettings.getPreferences().options();
 
-  // Check if LLM is enabled
-  const isLLMEnabled = $derived(llmPreferencesQuery.data?.enabled ?? false);
+// Check if LLM is enabled
+const isLLMEnabled = $derived(llmPreferencesQuery.data?.enabled ?? false);
 
-  const payeesMap = $derived(
-    new Map((payeesQuery.data ?? []).map((p) => [p.id, p]))
-  );
+const payeesMap = $derived(new Map((payeesQuery.data ?? []).map((p) => [p.id, p])));
 
-  // Calculate the number of pairs that will be analyzed for LLM direct mode
-  const activePayeeCount = $derived(
-    (payeesQuery.data ?? []).filter(p => includeInactive || p.isActive).length
-  );
-  const totalPairsForLLM = $derived(
-    Math.floor((activePayeeCount * (activePayeeCount - 1)) / 2)
-  );
-  const estimatedLLMCalls = $derived(
-    Math.ceil(totalPairsForLLM / 15) // 15 pairs per batch
-  );
+// Calculate the number of pairs that will be analyzed for LLM direct mode
+const activePayeeCount = $derived(
+  (payeesQuery.data ?? []).filter((p) => includeInactive || p.isActive).length
+);
+const totalPairsForLLM = $derived(Math.floor((activePayeeCount * (activePayeeCount - 1)) / 2));
+const estimatedLLMCalls = $derived(
+  Math.ceil(totalPairsForLLM / 15) // 15 pairs per batch
+);
 
-  const allDetectionMethodOptions = [
-    { value: "simple", label: "Simple", icon: Zap, description: "Basic text matching (fastest)", requiresLLM: false },
-    { value: "ml", label: "Machine Learning", icon: Brain, description: "Pattern-aware matching (recommended)", requiresLLM: false },
-    { value: "llm", label: "AI + ML Filter", icon: Sparkles, description: "ML finds candidates, AI confirms", requiresLLM: true },
-    { value: "llm_direct", label: "AI Direct", icon: Sparkles, description: "AI analyzes all pairs (no pre-filter)", requiresLLM: true },
-  ];
+const allDetectionMethodOptions = [
+  {
+    value: 'simple',
+    label: 'Simple',
+    icon: Zap,
+    description: 'Basic text matching (fastest)',
+    requiresLLM: false,
+  },
+  {
+    value: 'ml',
+    label: 'Machine Learning',
+    icon: Brain,
+    description: 'Pattern-aware matching (recommended)',
+    requiresLLM: false,
+  },
+  {
+    value: 'llm',
+    label: 'AI + ML Filter',
+    icon: Sparkles,
+    description: 'ML finds candidates, AI confirms',
+    requiresLLM: true,
+  },
+  {
+    value: 'llm_direct',
+    label: 'AI Direct',
+    icon: Sparkles,
+    description: 'AI analyzes all pairs (no pre-filter)',
+    requiresLLM: true,
+  },
+];
 
-  // Filter out LLM options when LLM is disabled
-  const detectionMethodOptions = $derived(
-    allDetectionMethodOptions.filter(option => !option.requiresLLM || isLLMEnabled)
-  );
+// Filter out LLM options when LLM is disabled
+const detectionMethodOptions = $derived(
+  allDetectionMethodOptions.filter((option) => !option.requiresLLM || isLLMEnabled)
+);
 
-  // Reset to ML if current method requires LLM but LLM is disabled
-  $effect(() => {
-    if (!isLLMEnabled && (detectionMethod === "llm" || detectionMethod === "llm_direct")) {
-      detectionMethod = "ml";
-    }
-  });
-
-  const strategyOptions = [
-    { value: "name", label: "Name Only", description: "Match by payee names" },
-    { value: "contact", label: "Contact Info", description: "Match by email, phone, etc." },
-    { value: "transaction_pattern", label: "Transaction Patterns", description: "Match by spending patterns" },
-    { value: "comprehensive", label: "Comprehensive", description: "Use all matching methods" },
-  ];
-
-  function toggleLogEntry(batchIndex: number) {
-    if (expandedLogEntries.has(batchIndex)) {
-      expandedLogEntries.delete(batchIndex);
-    } else {
-      expandedLogEntries.add(batchIndex);
-    }
+// Reset to ML if current method requires LLM but LLM is disabled
+$effect(() => {
+  if (!isLLMEnabled && (detectionMethod === 'llm' || detectionMethod === 'llm_direct')) {
+    detectionMethod = 'ml';
   }
+});
 
-  async function handleScan() {
-    isScanning = true;
-    selectedGroupIds.clear();
-    llmLog = [];
-    expandedLogEntries.clear();
+const strategyOptions = [
+  { value: 'name', label: 'Name Only', description: 'Match by payee names' },
+  { value: 'contact', label: 'Contact Info', description: 'Match by email, phone, etc.' },
+  {
+    value: 'transaction_pattern',
+    label: 'Transaction Patterns',
+    description: 'Match by spending patterns',
+  },
+  { value: 'comprehensive', label: 'Comprehensive', description: 'Use all matching methods' },
+];
 
-    try {
-      const result = await getDuplicates(threshold[0], includeInactive, strategy, detectionMethod).execute();
+function toggleLogEntry(batchIndex: number) {
+  if (expandedLogEntries.has(batchIndex)) {
+    expandedLogEntries.delete(batchIndex);
+  } else {
+    expandedLogEntries.add(batchIndex);
+  }
+}
 
-      duplicateGroups = result?.groups ?? [];
-      llmLog = result?.llmLog ?? [];
-      hasScanned = true;
+async function handleScan() {
+  isScanning = true;
+  selectedGroupIds.clear();
+  llmLog = [];
+  expandedLogEntries.clear();
 
-      // Auto-expand log panel if we have LLM logs
-      if (llmLog.length > 0) {
-        logPanelOpen = true;
-      }
+  try {
+    const result = await getDuplicates(
+      threshold[0],
+      includeInactive,
+      strategy,
+      detectionMethod
+    ).execute();
 
-      // Check if LLM had issues
-      const isLlmMode = detectionMethod === "llm" || detectionMethod === "llm_direct";
-      const hasLlmError = isLlmMode && llmLog.length > 0 && !!llmLog[0]?.error;
-      const llmNotConfigured = hasLlmError && (llmLog[0]?.error?.includes("not available") || llmLog[0]?.error?.includes("not configured"));
-      const llmNoCandidates = hasLlmError && llmLog[0]?.error?.includes("No duplicate candidates");
-      const llmFailed = hasLlmError && llmLog[0]?.error?.includes("failed");
+    duplicateGroups = result?.groups ?? [];
+    llmLog = result?.llmLog ?? [];
+    hasScanned = true;
 
-      const methodLabels: Record<string, string> = {
-        simple: "Simple",
-        ml: "ML",
-        llm: "AI + ML Filter",
-        llm_direct: "AI Direct",
-      };
-      const methodLabel = methodLabels[detectionMethod] ?? detectionMethod;
-      const actualMethod = llmNotConfigured ? "ML (LLM not configured)" :
-                          llmFailed ? "ML (LLM failed)" :
-                          methodLabel;
+    // Auto-expand log panel if we have LLM logs
+    if (llmLog.length > 0) {
+      logPanelOpen = true;
+    }
 
-      if (llmNotConfigured) {
-        toast.warning("LLM not available", {
-          description: "Falling back to ML detection. Configure an LLM provider in Settings → Intelligence → LLM Settings.",
-        });
-      } else if (llmFailed) {
-        toast.warning("LLM detection failed", {
-          description: "Falling back to ML detection. Check the LLM Log for details.",
-        });
-      } else if (llmNoCandidates) {
-        // This is actually fine - no duplicates to analyze
-        // The toast below will handle this case
-      }
+    // Check if LLM had issues
+    const isLlmMode = detectionMethod === 'llm' || detectionMethod === 'llm_direct';
+    const hasLlmError = isLlmMode && llmLog.length > 0 && !!llmLog[0]?.error;
+    const llmNotConfigured =
+      hasLlmError &&
+      (llmLog[0]?.error?.includes('not available') || llmLog[0]?.error?.includes('not configured'));
+    const llmNoCandidates = hasLlmError && llmLog[0]?.error?.includes('No duplicate candidates');
+    const llmFailed = hasLlmError && llmLog[0]?.error?.includes('failed');
 
-      if (duplicateGroups.length === 0) {
-        toast.success("No duplicates found", {
-          description: `Scanned using ${actualMethod} detection. Your payees are already clean!`,
-        });
-      } else {
-        toast.info(`Found ${duplicateGroups.length} duplicate group${duplicateGroups.length === 1 ? "" : "s"}`, {
+    const methodLabels: Record<string, string> = {
+      simple: 'Simple',
+      ml: 'ML',
+      llm: 'AI + ML Filter',
+      llm_direct: 'AI Direct',
+    };
+    const methodLabel = methodLabels[detectionMethod] ?? detectionMethod;
+    const actualMethod = llmNotConfigured
+      ? 'ML (LLM not configured)'
+      : llmFailed
+        ? 'ML (LLM failed)'
+        : methodLabel;
+
+    if (llmNotConfigured) {
+      toast.warning('LLM not available', {
+        description:
+          'Falling back to ML detection. Configure an LLM provider in Settings → Intelligence → LLM Settings.',
+      });
+    } else if (llmFailed) {
+      toast.warning('LLM detection failed', {
+        description: 'Falling back to ML detection. Check the LLM Log for details.',
+      });
+    } else if (llmNoCandidates) {
+      // This is actually fine - no duplicates to analyze
+      // The toast below will handle this case
+    }
+
+    if (duplicateGroups.length === 0) {
+      toast.success('No duplicates found', {
+        description: `Scanned using ${actualMethod} detection. Your payees are already clean!`,
+      });
+    } else {
+      toast.info(
+        `Found ${duplicateGroups.length} duplicate group${duplicateGroups.length === 1 ? '' : 's'}`,
+        {
           description: `Scanned using ${actualMethod} detection`,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to scan for duplicates:", error);
-      toast.error("Failed to scan for duplicates", {
-        description: error instanceof Error ? error.message : "An error occurred",
-      });
-    } finally {
-      isScanning = false;
-    }
-  }
-
-  function toggleGroupSelection(groupId: number, selected: boolean) {
-    if (selected) {
-      selectedGroupIds.add(groupId);
-    } else {
-      selectedGroupIds.delete(groupId);
-    }
-  }
-
-  function openMergeDialog(group: DuplicateGroup) {
-    selectedGroupForMerge = group;
-    mergeDialogOpen = true;
-  }
-
-  function closeMergeDialog() {
-    mergeDialogOpen = false;
-    selectedGroupForMerge = null;
-  }
-
-  async function handleMerge(mergeStrategy: {
-    preserveTransactionHistory: boolean;
-    conflictResolution: "primary" | "latest" | "best_quality";
-    mergeContactInfo: boolean;
-    mergeIntelligenceData: boolean;
-  }) {
-    if (!selectedGroupForMerge) return;
-
-    isMerging = true;
-
-    try {
-      await mergeMutation.mutateAsync({
-        primaryPayeeId: selectedGroupForMerge.primaryPayeeId,
-        duplicatePayeeIds: selectedGroupForMerge.duplicatePayeeIds,
-        mergeStrategy,
-        confirmMerge: true,
-      });
-
-      toast.success("Payees merged successfully", {
-        description: `Merged ${selectedGroupForMerge.duplicatePayeeIds.length} duplicate${selectedGroupForMerge.duplicatePayeeIds.length === 1 ? "" : "s"} into ${payeesMap.get(selectedGroupForMerge.primaryPayeeId)?.name}`,
-      });
-
-      // Remove the merged group from the list
-      duplicateGroups = duplicateGroups.filter(
-        (g) => g.primaryPayeeId !== selectedGroupForMerge!.primaryPayeeId
+        }
       );
-
-      closeMergeDialog();
-    } catch (error) {
-      console.error("Failed to merge payees:", error);
-      toast.error("Failed to merge payees", {
-        description: error instanceof Error ? error.message : "An error occurred",
-      });
-    } finally {
-      isMerging = false;
     }
+  } catch (error) {
+    console.error('Failed to scan for duplicates:', error);
+    toast.error('Failed to scan for duplicates', {
+      description: error instanceof Error ? error.message : 'An error occurred',
+    });
+  } finally {
+    isScanning = false;
   }
+}
 
-  async function handleBulkMerge() {
-    const groupsToMerge = duplicateGroups.filter((g) =>
-      selectedGroupIds.has(g.primaryPayeeId)
+function toggleGroupSelection(groupId: number, selected: boolean) {
+  if (selected) {
+    selectedGroupIds.add(groupId);
+  } else {
+    selectedGroupIds.delete(groupId);
+  }
+}
+
+function openMergeDialog(group: DuplicateGroup) {
+  selectedGroupForMerge = group;
+  mergeDialogOpen = true;
+}
+
+function closeMergeDialog() {
+  mergeDialogOpen = false;
+  selectedGroupForMerge = null;
+}
+
+async function handleMerge(mergeStrategy: {
+  preserveTransactionHistory: boolean;
+  conflictResolution: 'primary' | 'latest' | 'best_quality';
+  mergeContactInfo: boolean;
+  mergeIntelligenceData: boolean;
+}) {
+  if (!selectedGroupForMerge) return;
+
+  isMerging = true;
+
+  try {
+    await mergeMutation.mutateAsync({
+      primaryPayeeId: selectedGroupForMerge.primaryPayeeId,
+      duplicatePayeeIds: selectedGroupForMerge.duplicatePayeeIds,
+      mergeStrategy,
+      confirmMerge: true,
+    });
+
+    toast.success('Payees merged successfully', {
+      description: `Merged ${selectedGroupForMerge.duplicatePayeeIds.length} duplicate${selectedGroupForMerge.duplicatePayeeIds.length === 1 ? '' : 's'} into ${payeesMap.get(selectedGroupForMerge.primaryPayeeId)?.name}`,
+    });
+
+    // Remove the merged group from the list
+    duplicateGroups = duplicateGroups.filter(
+      (g) => g.primaryPayeeId !== selectedGroupForMerge!.primaryPayeeId
     );
 
-    if (groupsToMerge.length === 0) return;
-
-    isMerging = true;
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const group of groupsToMerge) {
-      try {
-        await mergeMutation.mutateAsync({
-          primaryPayeeId: group.primaryPayeeId,
-          duplicatePayeeIds: group.duplicatePayeeIds,
-          mergeStrategy: {
-            preserveTransactionHistory: true,
-            conflictResolution: "primary",
-            mergeContactInfo: true,
-            mergeIntelligenceData: true,
-          },
-          confirmMerge: true,
-        });
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
-
-    if (successCount > 0) {
-      toast.success(`Merged ${successCount} group${successCount === 1 ? "" : "s"}`, {
-        description: failCount > 0 ? `${failCount} failed` : undefined,
-      });
-
-      // Remove merged groups
-      duplicateGroups = duplicateGroups.filter(
-        (g) => !selectedGroupIds.has(g.primaryPayeeId)
-      );
-      selectedGroupIds.clear();
-    }
-
-    if (failCount > 0 && successCount === 0) {
-      toast.error("Failed to merge payees");
-    }
-
+    closeMergeDialog();
+  } catch (error) {
+    console.error('Failed to merge payees:', error);
+    toast.error('Failed to merge payees', {
+      description: error instanceof Error ? error.message : 'An error occurred',
+    });
+  } finally {
     isMerging = false;
   }
+}
+
+async function handleBulkMerge() {
+  const groupsToMerge = duplicateGroups.filter((g) => selectedGroupIds.has(g.primaryPayeeId));
+
+  if (groupsToMerge.length === 0) return;
+
+  isMerging = true;
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const group of groupsToMerge) {
+    try {
+      await mergeMutation.mutateAsync({
+        primaryPayeeId: group.primaryPayeeId,
+        duplicatePayeeIds: group.duplicatePayeeIds,
+        mergeStrategy: {
+          preserveTransactionHistory: true,
+          conflictResolution: 'primary',
+          mergeContactInfo: true,
+          mergeIntelligenceData: true,
+        },
+        confirmMerge: true,
+      });
+      successCount++;
+    } catch {
+      failCount++;
+    }
+  }
+
+  if (successCount > 0) {
+    toast.success(`Merged ${successCount} group${successCount === 1 ? '' : 's'}`, {
+      description: failCount > 0 ? `${failCount} failed` : undefined,
+    });
+
+    // Remove merged groups
+    duplicateGroups = duplicateGroups.filter((g) => !selectedGroupIds.has(g.primaryPayeeId));
+    selectedGroupIds.clear();
+  }
+
+  if (failCount > 0 && successCount === 0) {
+    toast.error('Failed to merge payees');
+  }
+
+  isMerging = false;
+}
 </script>
 
 <div class="space-y-6">
@@ -290,9 +325,7 @@
         <Brain class="text-primary h-5 w-5" />
         <Card.Title>Detection Settings</Card.Title>
       </div>
-      <Card.Description>
-        Configure how duplicate payees are detected
-      </Card.Description>
+      <Card.Description>Configure how duplicate payees are detected</Card.Description>
     </Card.Header>
     <Card.Content class="space-y-6">
       <!-- Detection Method -->
@@ -301,14 +334,15 @@
         <Select.Root type="single" bind:value={detectionMethod}>
           <Select.Trigger id="detection-method" class="w-full">
             <div class="flex items-center gap-2">
-              {#if detectionMethod === "simple"}
+              {#if detectionMethod === 'simple'}
                 <Zap class="h-4 w-4" />
-              {:else if detectionMethod === "ml"}
+              {:else if detectionMethod === 'ml'}
                 <Brain class="h-4 w-4" />
               {:else}
                 <Sparkles class="h-4 w-4" />
               {/if}
-              {detectionMethodOptions.find((o) => o.value === detectionMethod)?.label ?? "Select..."}
+              {detectionMethodOptions.find((o) => o.value === detectionMethod)?.label ??
+                'Select...'}
             </div>
           </Select.Trigger>
           <Select.Content>
@@ -325,20 +359,20 @@
             {/each}
           </Select.Content>
         </Select.Root>
-        {#if detectionMethod === "llm"}
+        {#if detectionMethod === 'llm'}
           <div class="bg-muted/50 rounded-md border p-3 text-sm">
             <div class="flex items-start gap-2">
               <Sparkles class="text-primary mt-0.5 h-4 w-4 shrink-0" />
               <div class="space-y-1">
                 <p class="font-medium">AI + ML Filter</p>
                 <p class="text-muted-foreground text-xs">
-                  ML finds candidates above threshold, then AI confirms matches.
-                  Uses similarity threshold as a pre-filter for efficiency.
+                  ML finds candidates above threshold, then AI confirms matches. Uses similarity
+                  threshold as a pre-filter for efficiency.
                 </p>
               </div>
             </div>
           </div>
-        {:else if detectionMethod === "llm_direct"}
+        {:else if detectionMethod === 'llm_direct'}
           <div class="bg-muted/50 rounded-md border p-3 text-sm">
             <div class="flex items-start gap-2">
               <Sparkles class="text-primary mt-0.5 h-4 w-4 shrink-0" />
@@ -355,14 +389,15 @@
             </div>
           </div>
           {#if totalPairsForLLM > 500}
-            <div class="bg-warning/10 border-warning/30 text-warning-foreground rounded-md border p-3 text-sm">
+            <div
+              class="bg-warning/10 border-warning/30 text-warning-foreground rounded-md border p-3 text-sm">
               <div class="flex items-start gap-2">
                 <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
                   <p class="font-medium">Large Dataset Warning</p>
                   <p class="text-muted-foreground text-xs">
-                    With {activePayeeCount} payees, this will analyze {totalPairsForLLM.toLocaleString()} pairs.
-                    This may take several minutes and use significant API quota.
+                    With {activePayeeCount} payees, this will analyze {totalPairsForLLM.toLocaleString()}
+                    pairs. This may take several minutes and use significant API quota.
                   </p>
                 </div>
               </div>
@@ -372,22 +407,28 @@
       </div>
 
       <!-- Similarity Threshold -->
-      <div class="space-y-3" class:opacity-50={detectionMethod === "llm_direct"}>
+      <div class="space-y-3" class:opacity-50={detectionMethod === 'llm_direct'}>
         <div class="flex items-center justify-between">
           <Label>Similarity Threshold</Label>
           <span class="text-muted-foreground text-sm">
-            {#if detectionMethod === "llm_direct"}
+            {#if detectionMethod === 'llm_direct'}
               N/A
             {:else}
               {Math.round(threshold[0] * 100)}%
             {/if}
           </span>
         </div>
-        <Slider bind:value={threshold} type="multiple" min={0.5} max={1} step={0.05} disabled={detectionMethod === "llm_direct"} />
+        <Slider
+          bind:value={threshold}
+          type="multiple"
+          min={0.5}
+          max={1}
+          step={0.05}
+          disabled={detectionMethod === 'llm_direct'} />
         <p class="text-muted-foreground text-xs">
-          {#if detectionMethod === "llm_direct"}
+          {#if detectionMethod === 'llm_direct'}
             Threshold bypassed in AI Direct mode - the LLM analyzes all pairs.
-          {:else if detectionMethod === "llm"}
+          {:else if detectionMethod === 'llm'}
             ML pre-filter threshold. Pairs above this are sent to AI for confirmation.
           {:else}
             Higher values require more exact matches. Lower values find more potential duplicates.
@@ -400,7 +441,7 @@
         <Label for="strategy">Matching Strategy</Label>
         <Select.Root type="single" bind:value={strategy}>
           <Select.Trigger id="strategy" class="w-full">
-            {strategyOptions.find((o) => o.value === strategy)?.label ?? "Select..."}
+            {strategyOptions.find((o) => o.value === strategy)?.label ?? 'Select...'}
           </Select.Trigger>
           <Select.Content>
             {#each strategyOptions as option (option.value)}
@@ -418,12 +459,8 @@
       <!-- Include Inactive -->
       <div class="flex items-center justify-between">
         <div>
-          <Label for="include-inactive" class="text-sm font-normal">
-            Include inactive payees
-          </Label>
-          <p class="text-muted-foreground text-xs">
-            Also scan archived/inactive payees
-          </p>
+          <Label for="include-inactive" class="text-sm font-normal">Include inactive payees</Label>
+          <p class="text-muted-foreground text-xs">Also scan archived/inactive payees</p>
         </div>
         <Switch id="include-inactive" bind:checked={includeInactive} />
       </div>
@@ -448,11 +485,9 @@
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-lg font-semibold">
-            {duplicateGroups.length} Duplicate Group{duplicateGroups.length === 1 ? "" : "s"} Found
+            {duplicateGroups.length} Duplicate Group{duplicateGroups.length === 1 ? '' : 's'} Found
           </h3>
-          <p class="text-muted-foreground text-sm">
-            Review each group and merge as needed
-          </p>
+          <p class="text-muted-foreground text-sm">Review each group and merge as needed</p>
         </div>
         {#if selectedGroupIds.size > 0}
           <Button onclick={handleBulkMerge} disabled={isMerging}>
@@ -474,7 +509,8 @@
             <Sparkles class="text-muted-foreground mb-4 h-12 w-12" />
             <h3 class="mb-1 text-lg font-semibold">No Duplicates Found</h3>
             <p class="text-muted-foreground text-center text-sm">
-              Your payee list is clean! Try adjusting the threshold or strategy to find more potential matches.
+              Your payee list is clean! Try adjusting the threshold or strategy to find more
+              potential matches.
             </p>
           </Card.Content>
         </Card.Root>
@@ -486,8 +522,7 @@
               payees={payeesMap}
               isSelected={selectedGroupIds.has(group.primaryPayeeId)}
               onSelect={(selected) => toggleGroupSelection(group.primaryPayeeId, selected)}
-              onMerge={() => openMergeDialog(group)}
-            />
+              onMerge={() => openMergeDialog(group)} />
           {/each}
         </div>
       {/if}
@@ -504,7 +539,7 @@
               <ScrollText class="text-primary h-5 w-5" />
               <Card.Title class="text-base">LLM Detection Log</Card.Title>
               <span class="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
-                {llmLog.length} batch{llmLog.length === 1 ? "" : "es"}
+                {llmLog.length} batch{llmLog.length === 1 ? '' : 'es'}
               </span>
             </div>
             {#if logPanelOpen}
@@ -525,11 +560,10 @@
                   <div class="border-border rounded-lg border">
                     <button
                       class="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-left transition-colors"
-                      onclick={() => toggleLogEntry(entry.batchIndex)}
-                    >
+                      onclick={() => toggleLogEntry(entry.batchIndex)}>
                       <div class="flex items-center gap-3">
                         {#if entry.error}
-                          <CircleAlert class="h-4 w-4 text-destructive" />
+                          <CircleAlert class="text-destructive h-4 w-4" />
                         {:else if entry.parsedResult}
                           <CircleCheck class="h-4 w-4 text-green-500" />
                         {:else}
@@ -538,7 +572,7 @@
                         <div>
                           <div class="font-medium">Batch {entry.batchIndex + 1}</div>
                           <div class="text-muted-foreground text-xs">
-                            {entry.pairs.length} pair{entry.pairs.length === 1 ? "" : "s"} analyzed
+                            {entry.pairs.length} pair{entry.pairs.length === 1 ? '' : 's'} analyzed
                           </div>
                         </div>
                       </div>
@@ -569,7 +603,8 @@
                         <!-- Prompt Sent -->
                         <div>
                           <h5 class="mb-2 text-sm font-medium">Prompt Sent</h5>
-                          <pre class="bg-muted/50 max-h-[200px] overflow-auto whitespace-pre-wrap rounded-md p-2 font-mono text-xs">{entry.prompt}</pre>
+                          <pre
+                            class="bg-muted/50 max-h-[200px] overflow-auto rounded-md p-2 font-mono text-xs whitespace-pre-wrap">{entry.prompt}</pre>
                         </div>
 
                         <!-- Raw Response -->
@@ -580,7 +615,8 @@
                               Error: {entry.error}
                             </div>
                           {:else}
-                            <pre class="bg-muted/50 max-h-[200px] overflow-auto whitespace-pre-wrap rounded-md p-2 font-mono text-xs">{entry.rawResponse}</pre>
+                            <pre
+                              class="bg-muted/50 max-h-[200px] overflow-auto rounded-md p-2 font-mono text-xs whitespace-pre-wrap">{entry.rawResponse}</pre>
                           {/if}
                         </div>
 
@@ -601,7 +637,8 @@
                                   {#each entry.parsedResult.pairs as result}
                                     <tr class="border-border border-b last:border-0">
                                       <td class="py-1">
-                                        {entry.pairs[result.index - 1]?.primaryName ?? "?"} / {entry.pairs[result.index - 1]?.duplicateName ?? "?"}
+                                        {entry.pairs[result.index - 1]?.primaryName ?? '?'} / {entry
+                                          .pairs[result.index - 1]?.duplicateName ?? '?'}
                                       </td>
                                       <td class="py-1">
                                         {#if result.isMatch}
@@ -634,13 +671,14 @@
 <!-- Merge Confirmation Dialog -->
 <MergeConfirmationDialog
   bind:open={mergeDialogOpen}
-  primaryPayee={selectedGroupForMerge ? payeesMap.get(selectedGroupForMerge.primaryPayeeId) ?? null : null}
+  primaryPayee={selectedGroupForMerge
+    ? (payeesMap.get(selectedGroupForMerge.primaryPayeeId) ?? null)
+    : null}
   duplicatePayees={selectedGroupForMerge
-    ? selectedGroupForMerge.duplicatePayeeIds
+    ? (selectedGroupForMerge.duplicatePayeeIds
         .map((id) => payeesMap.get(id))
-        .filter(Boolean) as Payee[]
+        .filter(Boolean) as Payee[])
     : []}
   isLoading={isMerging}
   onConfirm={handleMerge}
-  onCancel={closeMergeDialog}
-/>
+  onCancel={closeMergeDialog} />

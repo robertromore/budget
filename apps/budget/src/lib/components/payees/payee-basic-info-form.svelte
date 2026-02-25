@@ -11,11 +11,12 @@ import { Input } from '$lib/components/ui/input';
 import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
 import { Textarea } from '$lib/components/ui/textarea';
+import { recordEnhancement, type FieldEnhancementSummary } from '$lib/query/payee-enhancements';
 import {
-  recordEnhancement,
-  type FieldEnhancementSummary,
-} from '$lib/query/payee-enhancements';
-import { enhancePayeeName, inferPayeeDetails, type PayeeDetailsSuggestions } from '$lib/query/payees';
+  enhancePayeeName,
+  inferPayeeDetails,
+  type PayeeDetailsSuggestions,
+} from '$lib/query/payees';
 import type { EnhanceableField, PayeeAiPreferences } from '$lib/schema';
 import { payeeTypes, paymentFrequencies } from '$lib/schema/payees';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
@@ -40,7 +41,15 @@ interface Props {
   isGlobalApplying?: boolean;
 }
 
-let { formData, entityForm, categories, payeeId, aiPreferences, enhancementSummary = [], isGlobalApplying = false }: Props = $props();
+let {
+  formData,
+  entityForm,
+  categories,
+  payeeId,
+  aiPreferences,
+  enhancementSummary = [],
+  isGlobalApplying = false,
+}: Props = $props();
 
 // Helper to get the mode for a field - check enhancementSummary first, then aiPreferences
 function getFieldMode(fieldName: string): IntelligenceMode {
@@ -137,7 +146,9 @@ async function handleFieldAction(field: string) {
   try {
     const result = await inferMutation.mutateAsync({
       name: $formData.name,
-      currentCategoryId: $formData.defaultCategoryId ? Number($formData.defaultCategoryId) : undefined,
+      currentCategoryId: $formData.defaultCategoryId
+        ? Number($formData.defaultCategoryId)
+        : undefined,
     });
     if (result.success && result.suggestions) {
       applySuggestions(result.suggestions, field);
@@ -188,14 +199,24 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
     if (suggestions.paymentFrequency) {
       const originalValue = $formData.paymentFrequency;
       $formData.paymentFrequency = suggestions.paymentFrequency;
-      recordFieldEnhancement('paymentFrequency', originalValue, suggestions.paymentFrequency, confidence);
+      recordFieldEnhancement(
+        'paymentFrequency',
+        originalValue,
+        suggestions.paymentFrequency,
+        confidence
+      );
     }
   }
   if (scope === 'all' || scope === 'defaultCategoryId') {
     if (suggestions.suggestedCategoryId) {
       const originalValue = $formData.defaultCategoryId;
       $formData.defaultCategoryId = suggestions.suggestedCategoryId.toString();
-      recordFieldEnhancement('defaultCategoryId', originalValue, suggestions.suggestedCategoryId, confidence);
+      recordFieldEnhancement(
+        'defaultCategoryId',
+        originalValue,
+        suggestions.suggestedCategoryId,
+        confidence
+      );
     }
   }
   if (scope === 'all' || scope === 'taxRelevant') {
@@ -333,14 +354,12 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                   title: 'Enhance Name',
                   modes: ['llm'],
                   order: 1,
-                  onTrigger: async () => handleNameAction()
-                }}
-              >
+                  onTrigger: async () => handleNameAction(),
+                }}>
                 <Input
                   {...props}
                   bind:value={$formData.name}
-                  placeholder="e.g., Starbucks, Netflix, Electric Company"
-                />
+                  placeholder="e.g., Starbucks, Netflix, Electric Company" />
               </div>
               <IntelligenceModeToggle
                 mode={fieldModes.name}
@@ -348,12 +367,11 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                 onAction={() => handleNameAction()}
                 isPending={isGlobalApplying || enhancingField === 'name'}
                 disabled={!$formData.name?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('name')}
                 enhancedAt={getEnhancementInfo('name')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('name')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('name')?.lastConfidence} />
             </div>
             <Form.FieldErrors />
           {/snippet}
@@ -373,9 +391,8 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                   title: 'Infer Type',
                   modes: ['llm'],
                   order: 2,
-                  onTrigger: async () => handleFieldAction('payeeType')
-                }}
-              >
+                  onTrigger: async () => handleFieldAction('payeeType'),
+                }}>
                 <Select.Root type="single" bind:value={$formData.payeeType}>
                   <Select.Trigger {...props} class="w-full">
                     <span
@@ -396,12 +413,11 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                 onAction={() => handleFieldAction('payeeType')}
                 isPending={isGlobalApplying || enhancingField === 'payeeType'}
                 disabled={!$formData.name?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('payeeType')}
                 enhancedAt={getEnhancementInfo('payeeType')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('payeeType')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('payeeType')?.lastConfidence} />
             </div>
             <Form.Description class="text-xs">
               Business entity type (individual, business, etc.)
@@ -451,9 +467,8 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                   title: 'Infer Frequency',
                   modes: ['llm'],
                   order: 3,
-                  onTrigger: async () => handleFieldAction('paymentFrequency')
-                }}
-              >
+                  onTrigger: async () => handleFieldAction('paymentFrequency'),
+                }}>
                 <Select.Root type="single" bind:value={$formData.paymentFrequency}>
                   <Select.Trigger {...props} class="w-full">
                     <span
@@ -476,12 +491,11 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                 onAction={() => handleFieldAction('paymentFrequency')}
                 isPending={isGlobalApplying || enhancingField === 'paymentFrequency'}
                 disabled={!$formData.name?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('paymentFrequency')}
                 enhancedAt={getEnhancementInfo('paymentFrequency')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('paymentFrequency')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('paymentFrequency')?.lastConfidence} />
             </div>
             <Form.Description class="text-xs">
               How often you typically pay this payee
@@ -504,9 +518,8 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                   title: 'Suggest Category',
                   modes: ['llm'],
                   order: 4,
-                  onTrigger: async () => handleFieldAction('defaultCategoryId')
-                }}
-              >
+                  onTrigger: async () => handleFieldAction('defaultCategoryId'),
+                }}>
                 <EntityInput
                   entityLabel="Category"
                   entities={reactiveCategories}
@@ -527,12 +540,11 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
                 onAction={() => handleFieldAction('defaultCategoryId')}
                 isPending={isGlobalApplying || enhancingField === 'defaultCategoryId'}
                 disabled={!$formData.name?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('defaultCategoryId')}
                 enhancedAt={getEnhancementInfo('defaultCategoryId')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('defaultCategoryId')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('defaultCategoryId')?.lastConfidence} />
             </div>
             <Form.Description class="text-xs">
               Budget category for transactions (e.g., Groceries, Entertainment). Auto-applied to new
@@ -579,9 +591,8 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
           title: 'Infer Tax Relevance',
           modes: ['llm'],
           order: 5,
-          onTrigger: async () => handleFieldAction('taxRelevant')
-        }}
-      >
+          onTrigger: async () => handleFieldAction('taxRelevant'),
+        }}>
         <div class="flex h-5 items-center">
           <Switch id="payee-tax-relevant" bind:checked={$formData.taxRelevant} />
         </div>
@@ -598,12 +609,11 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
             onAction={() => handleFieldAction('taxRelevant')}
             isPending={isGlobalApplying || enhancingField === 'taxRelevant'}
             disabled={!$formData.name?.trim()}
-            disabledModes={disabledModes}
+            {disabledModes}
             variant="icon"
             isEnhanced={isFieldEnhanced('taxRelevant')}
             enhancedAt={getEnhancementInfo('taxRelevant')?.lastEnhancedAt}
-            enhancedConfidence={getEnhancementInfo('taxRelevant')?.lastConfidence}
-          />
+            enhancedConfidence={getEnhancementInfo('taxRelevant')?.lastConfidence} />
         </div>
       </div>
 
@@ -615,9 +625,8 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
           title: 'Infer Seasonality',
           modes: ['llm'],
           order: 6,
-          onTrigger: async () => handleFieldAction('isSeasonal')
-        }}
-      >
+          onTrigger: async () => handleFieldAction('isSeasonal'),
+        }}>
         <div class="flex h-5 items-center">
           <Switch id="payee-seasonal" bind:checked={$formData.isSeasonal} />
         </div>
@@ -634,12 +643,11 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
             onAction={() => handleFieldAction('isSeasonal')}
             isPending={isGlobalApplying || enhancingField === 'isSeasonal'}
             disabled={!$formData.name?.trim()}
-            disabledModes={disabledModes}
+            {disabledModes}
             variant="icon"
             isEnhanced={isFieldEnhanced('isSeasonal')}
             enhancedAt={getEnhancementInfo('isSeasonal')?.lastEnhancedAt}
-            enhancedConfidence={getEnhancementInfo('isSeasonal')?.lastConfidence}
-          />
+            enhancedConfidence={getEnhancementInfo('isSeasonal')?.lastConfidence} />
         </div>
       </div>
 

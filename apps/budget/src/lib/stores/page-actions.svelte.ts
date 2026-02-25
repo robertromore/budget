@@ -1,31 +1,31 @@
-import { getContext, setContext, type Component } from 'svelte';
+import { getContext, setContext, type Component } from "svelte";
 
 export interface PageAction {
-	id: string;
-	label: string;
-	icon?: Component;
-	href?: string;
-	onclick?: () => void;
-	variant?: 'default' | 'outline' | 'ghost';
-	/** Primary actions (Add X) vs Secondary (Analytics, Management) */
-	isPrimary?: boolean;
+  id: string;
+  label: string;
+  icon?: Component;
+  href?: string;
+  onclick?: () => void;
+  variant?: "default" | "outline" | "ghost";
+  /** Primary actions (Add X) vs Secondary (Analytics, Management) */
+  isPrimary?: boolean;
 }
 
-const PAGE_ACTIONS_KEY = Symbol('page-actions');
+const PAGE_ACTIONS_KEY = Symbol("page-actions");
 
 /**
  * State for managing page-specific actions that can be displayed in the header
  */
 class PageActionsState {
-	actions = $state<PageAction[]>([]);
+  actions = $state<PageAction[]>([]);
 
-	register(newActions: PageAction[]) {
-		this.actions = newActions;
-	}
+  register(newActions: PageAction[]) {
+    this.actions = newActions;
+  }
 
-	clear() {
-		this.actions = [];
-	}
+  clear() {
+    this.actions = [];
+  }
 }
 
 /**
@@ -33,9 +33,9 @@ class PageActionsState {
  * Must be called from +layout.svelte
  */
 export function setPageActionsContext(): PageActionsState {
-	const state = new PageActionsState();
-	setContext(PAGE_ACTIONS_KEY, state);
-	return state;
+  const state = new PageActionsState();
+  setContext(PAGE_ACTIONS_KEY, state);
+  return state;
 }
 
 /**
@@ -43,5 +43,5 @@ export function setPageActionsContext(): PageActionsState {
  * Returns undefined if context is not set
  */
 export function getPageActionsContext(): PageActionsState | undefined {
-	return getContext<PageActionsState>(PAGE_ACTIONS_KEY);
+  return getContext<PageActionsState>(PAGE_ACTIONS_KEY);
 }

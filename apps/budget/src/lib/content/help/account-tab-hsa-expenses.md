@@ -11,6 +11,7 @@ Specialized tracking for Health Savings Account (HSA) medical expenses.
 ## Purpose
 
 Track all medical expenses that can be reimbursed from your HSA:
+
 - Doctor visits and copays
 - Prescriptions and medications
 - Medical equipment and supplies
@@ -20,6 +21,7 @@ Track all medical expenses that can be reimbursed from your HSA:
 ## Expense Table
 
 View all recorded medical expenses:
+
 - **Date** - When the expense occurred
 - **Provider** - Doctor, pharmacy, or facility
 - **Type** - Category of medical expense
@@ -48,6 +50,7 @@ View all recorded medical expenses:
 ## Reimbursement Tracking
 
 Track which expenses have been:
+
 - Paid directly from HSA
 - Reimbursed from HSA
 - Pending reimbursement

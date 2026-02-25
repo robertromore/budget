@@ -1,6 +1,6 @@
-import {describe, it, expect, beforeEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {createTestContext} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { createTestContext } from "../setup/test-db";
 
 describe("Schedule Date Integration Tests", () => {
   let caller: ReturnType<typeof createCaller>;
@@ -41,7 +41,7 @@ describe("Schedule Date Integration Tests", () => {
       expect(schedule.dateId).toBeNull(); // Initially null until date config is set
 
       // Load schedule with relations
-      const loadedSchedule = await caller.scheduleRoutes.load({id: schedule.id});
+      const loadedSchedule = await caller.scheduleRoutes.load({ id: schedule.id });
       expect(loadedSchedule).toBeDefined();
       expect(loadedSchedule.recurring).toBe(true);
     });
@@ -216,9 +216,9 @@ describe("Schedule Date Integration Tests", () => {
 
     it("should handle different amount types with recurring schedules", async () => {
       const amountTypes = [
-        {type: "exact", amount: 100.0, amount_2: 0},
-        {type: "approximate", amount: 150.0, amount_2: 0},
-        {type: "range", amount: 100.0, amount_2: 200.0},
+        { type: "exact", amount: 100.0, amount_2: 0 },
+        { type: "approximate", amount: 150.0, amount_2: 0 },
+        { type: "range", amount: 100.0, amount_2: 200.0 },
       ];
 
       for (const config of amountTypes) {
@@ -286,7 +286,7 @@ describe("Schedule Date Integration Tests", () => {
         accountId: testAccountId,
       });
 
-      const loadedSchedule = await caller.scheduleRoutes.load({id: schedule.id});
+      const loadedSchedule = await caller.scheduleRoutes.load({ id: schedule.id });
 
       expect(loadedSchedule).toBeDefined();
       expect(loadedSchedule.id).toBe(schedule.id);
@@ -337,7 +337,7 @@ describe("Schedule Date Integration Tests", () => {
       const startTime = Date.now();
 
       // Create multiple recurring schedules
-      const schedulePromises = Array.from({length: 10}, (_, i) =>
+      const schedulePromises = Array.from({ length: 10 }, (_, i) =>
         caller.scheduleRoutes.save({
           name: `Performance Test Schedule ${i}`,
           slug: `performance-test-schedule-${i}`,
@@ -387,7 +387,7 @@ describe("Schedule Date Integration Tests", () => {
       const startTime = Date.now();
 
       // Query all schedules multiple times
-      const queryPromises = Array.from({length: 5}, () => caller.scheduleRoutes.all());
+      const queryPromises = Array.from({ length: 5 }, () => caller.scheduleRoutes.all());
 
       const results = await Promise.all(queryPromises);
       const endTime = Date.now();

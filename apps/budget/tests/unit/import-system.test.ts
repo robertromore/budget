@@ -75,9 +75,7 @@ describe("Financial Import System", () => {
 
     it("should return null payee when no good match found", () => {
       const payeeMatcher = new PayeeMatcher();
-      const existingPayees = [
-        { id: 1, name: "Target", slug: "target", deletedAt: null } as any,
-      ];
+      const existingPayees = [{ id: 1, name: "Target", slug: "target", deletedAt: null } as any];
 
       const testPayeeName = "COMPLETELY DIFFERENT STORE";
       const cleanedName = payeeMatcher.cleanPayeeName(testPayeeName);

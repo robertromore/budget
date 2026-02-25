@@ -129,10 +129,7 @@ export class SubscriptionService {
     return await this.repository.getAll(workspaceId, filters, sort);
   }
 
-  async getByAccount(
-    accountId: number,
-    workspaceId: number
-  ): Promise<SubscriptionWithRelations[]> {
+  async getByAccount(accountId: number, workspaceId: number): Promise<SubscriptionWithRelations[]> {
     return await this.repository.getByAccountId(accountId, workspaceId);
   }
 

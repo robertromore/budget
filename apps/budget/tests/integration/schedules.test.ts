@@ -1,6 +1,6 @@
-import {describe, it, expect, beforeEach} from "vitest";
-import {createTestContext, seedTestData, clearTestDb} from "./setup/test-db";
-import {createCaller} from "../../src/lib/trpc/router";
+import { describe, it, expect, beforeEach } from "vitest";
+import { createTestContext, seedTestData, clearTestDb } from "./setup/test-db";
+import { createCaller } from "../../src/lib/trpc/router";
 
 describe("Schedule Creation with Repeating Dates", () => {
   let ctx: Awaited<ReturnType<typeof createTestContext>>;
@@ -18,11 +18,11 @@ describe("Schedule Creation with Repeating Dates", () => {
     // Sample repeating date JSON from the form
     const repeatingDateJson = JSON.stringify({
       start: {
-        calendar: {identifier: "gregory"},
+        calendar: { identifier: "gregory" },
         era: "AD",
         year: 2025,
         month: 9,
-        day: 19
+        day: 19,
       },
       end: null,
       frequency: "monthly",
@@ -32,7 +32,7 @@ describe("Schedule Creation with Repeating Dates", () => {
       move_holidays: "none",
       specific_dates: [],
       on: false,
-      on_type: "day"
+      on_type: "day",
     });
 
     const scheduleData = {
@@ -47,7 +47,7 @@ describe("Schedule Creation with Repeating Dates", () => {
       dateId: null,
       payeeId: 1,
       accountId: testData.accounts[0].id,
-      repeating_date: repeatingDateJson
+      repeating_date: repeatingDateJson,
     };
 
     console.log("Creating schedule with data:", scheduleData);
@@ -70,7 +70,7 @@ describe("Schedule Creation with Repeating Dates", () => {
     }
 
     // Verify the schedule date record was created
-    const scheduleWithDate = await caller.scheduleRoutes.load({id: result.id});
+    const scheduleWithDate = await caller.scheduleRoutes.load({ id: result.id });
     expect(scheduleWithDate).toBeDefined();
 
     console.log("Schedule with date lookup:", scheduleWithDate);
@@ -88,7 +88,7 @@ describe("Schedule Creation with Repeating Dates", () => {
       dateId: null,
       payeeId: 1,
       accountId: testData.accounts[0].id,
-      repeating_date: "invalid json string"
+      repeating_date: "invalid json string",
     };
 
     // This should still create the schedule but without dateId

@@ -102,7 +102,15 @@ export function formatBudgetName(budgetId: number, budgetName?: string): string 
 export const transactionFormatter = {
   format: (transactions?: Transaction[]) => {
     return transactions?.map((transaction: Transaction): TransactionsFormat => {
-      const { scheduleName, scheduleSlug, scheduleFrequency, scheduleInterval, scheduleNextOccurrence, budgetAllocations, ...rest } = transaction;
+      const {
+        scheduleName,
+        scheduleSlug,
+        scheduleFrequency,
+        scheduleInterval,
+        scheduleNextOccurrence,
+        budgetAllocations,
+        ...rest
+      } = transaction;
       return {
         ...rest,
         date: toCalendarDate(parseDate(transaction.date)),

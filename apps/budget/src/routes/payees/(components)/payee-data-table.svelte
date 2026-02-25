@@ -4,7 +4,7 @@ import type { Payee } from '$lib/schema';
 import {
   AdvancedDataTable,
   GenericDisplayInput,
-  GenericFilterInput
+  GenericFilterInput,
 } from '$lib/components/data-table';
 import type { FilterInputOption } from '$lib/types';
 import PayeeBulkActions from './payee-bulk-actions.svelte';
@@ -38,7 +38,7 @@ function getAvailableFilters(tableInstance: TTable<Payee>) {
     filtering: true,
     pagination: true,
     rowSelection: true,
-    columnVisibility: true
+    columnVisibility: true,
   }}
   showPagination={true}
   pageSizeOptions={[10, 25, 50, 100]}
@@ -68,9 +68,6 @@ function getAvailableFilters(tableInstance: TTable<Payee>) {
     </div>
   {/snippet}
   {#snippet footer(tableInstance)}
-    <PayeeBulkActions
-      table={tableInstance}
-      allPayees={payees}
-      {onBulkDelete} />
+    <PayeeBulkActions table={tableInstance} allPayees={payees} {onBulkDelete} />
   {/snippet}
 </AdvancedDataTable>

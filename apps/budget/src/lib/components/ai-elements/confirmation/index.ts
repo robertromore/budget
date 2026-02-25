@@ -15,7 +15,7 @@ export type { ConfirmationActionsProps } from "./ConfirmationActions.svelte";
 export type { ConfirmationActionProps } from "./ConfirmationAction.svelte";
 
 export type {
-	ToolUIPartApproval,
-	ToolUIPartState,
-	ConfirmationContextValue,
+  ToolUIPartApproval,
+  ToolUIPartState,
+  ConfirmationContextValue,
 } from "./confirmation-context.svelte.js";

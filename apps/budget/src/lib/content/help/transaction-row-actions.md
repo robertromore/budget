@@ -17,31 +17,41 @@ Each transaction row has an actions menu for individual operations.
 ## Available Actions
 
 ### Edit Transaction
+
 Open the full transaction editor:
+
 - Modify all fields
 - View detailed history
 - Access advanced options
 
 ### Duplicate
+
 Create a copy of the transaction:
+
 - Pre-fills all fields
 - Useful for recurring manual entries
 - Date defaults to today
 
 ### Split Transaction
+
 Divide into multiple transactions:
+
 - Same total amount
 - Different categories or payees
 - Useful for shared expenses
 
 ### Delete Transaction
+
 Remove the transaction:
+
 - Confirmation required
 - Cannot be undone
 - Affects account balance
 
 ### View History
+
 See transaction changes:
+
 - Edit history
 - Original import data
 - Modification timestamps
@@ -49,6 +59,7 @@ See transaction changes:
 ## Scheduled Transactions
 
 Actions are limited for scheduled transactions:
+
 - Edit schedule
 - Skip occurrence
 - Delete schedule
@@ -56,6 +67,7 @@ Actions are limited for scheduled transactions:
 ## Context Menu
 
 Right-click a row for quick access:
+
 - Same actions as menu
 - Faster for power users
 

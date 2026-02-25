@@ -1,7 +1,4 @@
-import type {
-  WorkspaceInvitation,
-  InvitationStatus,
-} from "$lib/schema/workspace-invitations";
+import type { WorkspaceInvitation, InvitationStatus } from "$lib/schema/workspace-invitations";
 import { workspaceInvitations } from "$lib/schema/workspace-invitations";
 import { workspaces } from "$lib/schema/workspaces";
 import { users } from "$lib/schema/users";
@@ -95,9 +92,7 @@ export class WorkspaceInvitationRepository {
   /**
    * Find pending invitations for a workspace
    */
-  async findPendingByWorkspace(
-    workspaceId: number
-  ): Promise<InvitationWithDetails[]> {
+  async findPendingByWorkspace(workspaceId: number): Promise<InvitationWithDetails[]> {
     try {
       const invitations = await db
         .select({
@@ -138,10 +133,7 @@ export class WorkspaceInvitationRepository {
 
       return invitations;
     } catch (error) {
-      throw new DatabaseError(
-        "Failed to find pending invitations",
-        "findPendingByWorkspace"
-      );
+      throw new DatabaseError("Failed to find pending invitations", "findPendingByWorkspace");
     }
   }
 
@@ -189,20 +181,14 @@ export class WorkspaceInvitationRepository {
 
       return invitations;
     } catch (error) {
-      throw new DatabaseError(
-        "Failed to find pending invitations for email",
-        "findPendingByEmail"
-      );
+      throw new DatabaseError("Failed to find pending invitations for email", "findPendingByEmail");
     }
   }
 
   /**
    * Check if a pending invitation exists for email and workspace
    */
-  async existsPendingForEmailAndWorkspace(
-    email: string,
-    workspaceId: number
-  ): Promise<boolean> {
+  async existsPendingForEmailAndWorkspace(email: string, workspaceId: number): Promise<boolean> {
     try {
       const [invitation] = await db
         .select()
@@ -291,10 +277,7 @@ export class WorkspaceInvitationRepository {
         .update(workspaceInvitations)
         .set({ status: "expired" })
         .where(
-          and(
-            eq(workspaceInvitations.status, "pending"),
-            lt(workspaceInvitations.expiresAt, now)
-          )
+          and(eq(workspaceInvitations.status, "pending"), lt(workspaceInvitations.expiresAt, now))
         )
         .returning();
 

@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 /**
  * Tests for range input max default behavior from PR #43
@@ -8,13 +8,13 @@ describe("Range Input Behavior - Unit Tests", () => {
   // Mock the range input behavior logic
   let mockState: {
     operatorType: string | null;
-    values: {min: number | null; max: number | null};
+    values: { min: number | null; max: number | null };
   };
 
   beforeEach(() => {
     mockState = {
       operatorType: null,
-      values: {min: null, max: null},
+      values: { min: null, max: null },
     };
   });
 

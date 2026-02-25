@@ -41,7 +41,10 @@ export type DetectionMethod = (typeof detectionMethods)[number];
 
 // ==================== FREQUENCY RANGES ====================
 
-export const FREQUENCY_RANGES: Record<Exclude<Frequency, "irregular">, { min: number; max: number }> = {
+export const FREQUENCY_RANGES: Record<
+  Exclude<Frequency, "irregular">,
+  { min: number; max: number }
+> = {
   daily: { min: 0.5, max: 1.5 },
   weekly: { min: 6, max: 8 },
   biweekly: { min: 13, max: 16 },

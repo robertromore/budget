@@ -70,22 +70,25 @@ async function persistSkip() {
 }
 </script>
 
-<AlertDialog.Root bind:open onOpenChange={(isOpen) => { if (!isOpen) handleDialogClose(); }}>
+<AlertDialog.Root
+  bind:open
+  onOpenChange={(isOpen) => {
+    if (!isOpen) handleDialogClose();
+  }}>
   <AlertDialog.Content class="max-w-md">
     <AlertDialog.Header>
-      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-        <Map class="h-7 w-7 text-primary" />
+      <div
+        class="bg-primary/10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+        <Map class="text-primary h-7 w-7" />
       </div>
-      <AlertDialog.Title class="text-center text-xl">
-        Take a Quick Tour?
-      </AlertDialog.Title>
+      <AlertDialog.Title class="text-center text-xl">Take a Quick Tour?</AlertDialog.Title>
       <AlertDialog.Description class="text-center">
-        Your account is all set up! Would you like a quick tour to learn where
-        everything is? It only takes about 2 minutes.
+        Your account is all set up! Would you like a quick tour to learn where everything is? It
+        only takes about 2 minutes.
       </AlertDialog.Description>
     </AlertDialog.Header>
 
-    <div class="my-4 rounded-lg bg-muted/50 p-4">
+    <div class="bg-muted/50 my-4 rounded-lg p-4">
       <div class="flex items-start gap-3">
         <Sparkles class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
         <div class="text-sm">

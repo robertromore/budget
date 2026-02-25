@@ -126,7 +126,9 @@ export const createCategoryAlias = defineMutation<
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.list() }),
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.stats() }),
-      queryClient.invalidateQueries({ queryKey: categoryAliasKeys.forCategory(variables.categoryId) }),
+      queryClient.invalidateQueries({
+        queryKey: categoryAliasKeys.forCategory(variables.categoryId),
+      }),
     ]);
   },
   successMessage: "Alias created",
@@ -150,7 +152,9 @@ export const recordCategoryAliasFromImport = defineMutation<
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.list() }),
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.stats() }),
-      queryClient.invalidateQueries({ queryKey: categoryAliasKeys.forCategory(variables.categoryId) }),
+      queryClient.invalidateQueries({
+        queryKey: categoryAliasKeys.forCategory(variables.categoryId),
+      }),
     ]);
   },
 });
@@ -170,7 +174,9 @@ export const recordCategoryAliasFromTransactionEdit = defineMutation<
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.list() }),
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.stats() }),
-      queryClient.invalidateQueries({ queryKey: categoryAliasKeys.forCategory(variables.categoryId) }),
+      queryClient.invalidateQueries({
+        queryKey: categoryAliasKeys.forCategory(variables.categoryId),
+      }),
     ]);
   },
 });
@@ -191,7 +197,9 @@ export const recordCategoryAiAcceptance = defineMutation<
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.list() }),
       queryClient.invalidateQueries({ queryKey: categoryAliasKeys.stats() }),
-      queryClient.invalidateQueries({ queryKey: categoryAliasKeys.forCategory(variables.categoryId) }),
+      queryClient.invalidateQueries({
+        queryKey: categoryAliasKeys.forCategory(variables.categoryId),
+      }),
     ]);
   },
 });

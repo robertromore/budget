@@ -4,11 +4,11 @@
  * Tests the security-related tables: encryption keys, trusted contexts, and access logs.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -299,7 +299,7 @@ describe("User Trusted Contexts", () => {
 
       await ctx.db
         .update(schema.userTrustedContexts)
-        .set({revokedAt: new Date().toISOString()})
+        .set({ revokedAt: new Date().toISOString() })
         .where(eq(schema.userTrustedContexts.id, context.id));
 
       const [revoked] = await ctx.db
@@ -314,8 +314,8 @@ describe("User Trusted Contexts", () => {
   describe("context queries", () => {
     it("should find trusted contexts for user", async () => {
       await ctx.db.insert(schema.userTrustedContexts).values([
-        {userId: ctx.userId, contextType: "ip", contextValue: "ip1", label: "Home"},
-        {userId: ctx.userId, contextType: "device", contextValue: "device1", label: "Laptop"},
+        { userId: ctx.userId, contextType: "ip", contextValue: "ip1", label: "Home" },
+        { userId: ctx.userId, contextType: "device", contextValue: "device1", label: "Laptop" },
       ]);
 
       const contexts = await ctx.db
@@ -417,10 +417,15 @@ describe("Access Log", () => {
   describe("log queries", () => {
     beforeEach(async () => {
       await ctx.db.insert(schema.accessLog).values([
-        {userId: ctx.userId, eventType: "login", riskScore: 10},
-        {userId: ctx.userId, eventType: "logout", riskScore: 0},
-        {userId: ctx.userId, eventType: "challenge_required", riskScore: 80, challengeRequired: true},
-        {userId: ctx.userId, eventType: "challenge_passed", challengePassed: true},
+        { userId: ctx.userId, eventType: "login", riskScore: 10 },
+        { userId: ctx.userId, eventType: "logout", riskScore: 0 },
+        {
+          userId: ctx.userId,
+          eventType: "challenge_required",
+          riskScore: 80,
+          challengeRequired: true,
+        },
+        { userId: ctx.userId, eventType: "challenge_passed", challengePassed: true },
       ]);
     });
 
@@ -438,17 +443,17 @@ describe("Access Log", () => {
         .select()
         .from(schema.accessLog)
         .where(
-          and(
-            eq(schema.accessLog.userId, ctx.userId),
-            eq(schema.accessLog.eventType, "login")
-          )
+          and(eq(schema.accessLog.userId, ctx.userId), eq(schema.accessLog.eventType, "login"))
         );
 
       expect(loginLogs).toHaveLength(1);
     });
 
     it("should find high risk events", async () => {
-      const logs = await ctx.db.select().from(schema.accessLog).where(eq(schema.accessLog.userId, ctx.userId));
+      const logs = await ctx.db
+        .select()
+        .from(schema.accessLog)
+        .where(eq(schema.accessLog.userId, ctx.userId));
 
       const highRiskLogs = logs.filter((l) => (l.riskScore ?? 0) > 50);
       expect(highRiskLogs).toHaveLength(1);
@@ -469,8 +474,8 @@ describe("Access Log", () => {
         .returning();
 
       await ctx.db.insert(schema.accessLog).values([
-        {userId: ctx.userId, eventType: "login"},
-        {userId: user2.id, eventType: "login"},
+        { userId: ctx.userId, eventType: "login" },
+        { userId: user2.id, eventType: "login" },
       ]);
 
       const user1Logs = await ctx.db

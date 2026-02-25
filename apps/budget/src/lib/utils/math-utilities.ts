@@ -356,10 +356,7 @@ export function simpleMovingAverage(values: number[], window: number): number[] 
  * Calculate exponential moving average
  * @example exponentialMovingAverage([1, 2, 3, 4, 5], 0.5)
  */
-export function exponentialMovingAverage(
-  values: number[],
-  alpha: number
-): number[] {
+export function exponentialMovingAverage(values: number[], alpha: number): number[] {
   if (values.length === 0) return [];
   const result: number[] = [values[0]];
   for (let i = 1; i < values.length; i++) {
@@ -377,10 +374,7 @@ export function exponentialMovingAverage(
  * Returns indices of outlier values
  * @example findOutlierIndices([1, 2, 3, 4, 100]) => [4]
  */
-export function findOutlierIndices(
-  values: number[],
-  multiplier = 1.5
-): number[] {
+export function findOutlierIndices(values: number[], multiplier = 1.5): number[] {
   const q = quartiles(values);
   const iqrVal = q.q3 - q.q1;
   const lowerBound = q.q1 - multiplier * iqrVal;
@@ -408,11 +402,7 @@ export function zScore(value: number, mean: number, stdDev: number): number {
  * Check if value is an outlier based on z-score
  * @example isOutlier(100, [1, 2, 3, 4, 5], 2) => true
  */
-export function isOutlier(
-  value: number,
-  values: number[],
-  zThreshold = 2
-): boolean {
+export function isOutlier(value: number, values: number[], zThreshold = 2): boolean {
   const stats = getBasicStats(values);
   if (stats.stdDev === 0) return false;
   const z = Math.abs(zScore(value, stats.mean, stats.stdDev));
@@ -479,10 +469,6 @@ export function sign(n: number): -1 | 0 | 1 {
  * Check if number is approximately equal to another
  * @example approxEqual(0.1 + 0.2, 0.3) => true
  */
-export function approxEqual(
-  a: number,
-  b: number,
-  epsilon = 0.0001
-): boolean {
+export function approxEqual(a: number, b: number, epsilon = 0.0001): boolean {
   return Math.abs(a - b) < epsilon;
 }

@@ -1,182 +1,186 @@
 <script lang="ts">
-  import { MLFeatureToggle } from "$lib/components/ml";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Input } from "$lib/components/ui/input";
-  import { Label } from "$lib/components/ui/label";
-  import * as RadioGroup from "$lib/components/ui/radio-group";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { Slider } from "$lib/components/ui/slider";
-  import { Switch } from "$lib/components/ui/switch";
-  import { IntelligenceInputSettings } from "$lib/query/intelligence-input-settings";
-  import { MLSettings } from "$lib/query/ml-settings";
-  import { WebSearchSettings } from "$lib/query/web-search-settings";
-  import type { DuplicateDetectionMethod, IntelligenceInputPreferences, WebSearchProvider } from "$lib/schema/workspaces";
-  import { formatPercent } from "$lib/utils";
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import Brain from "@lucide/svelte/icons/brain";
-  import Check from "@lucide/svelte/icons/check";
-  import Eye from "@lucide/svelte/icons/eye";
-  import Globe from "@lucide/svelte/icons/globe";
-  import Save from "@lucide/svelte/icons/save";
-  import Sparkles from "@lucide/svelte/icons/sparkles";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
-  import Users from "@lucide/svelte/icons/users";
-  import Wand from "@lucide/svelte/icons/wand";
-  import Zap from "@lucide/svelte/icons/zap";
+import { MLFeatureToggle } from '$lib/components/ml';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import * as RadioGroup from '$lib/components/ui/radio-group';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import { Slider } from '$lib/components/ui/slider';
+import { Switch } from '$lib/components/ui/switch';
+import { IntelligenceInputSettings } from '$lib/query/intelligence-input-settings';
+import { MLSettings } from '$lib/query/ml-settings';
+import { WebSearchSettings } from '$lib/query/web-search-settings';
+import type {
+  DuplicateDetectionMethod,
+  IntelligenceInputPreferences,
+  WebSearchProvider,
+} from '$lib/schema/workspaces';
+import { formatPercent } from '$lib/utils';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import Brain from '@lucide/svelte/icons/brain';
+import Check from '@lucide/svelte/icons/check';
+import Eye from '@lucide/svelte/icons/eye';
+import Globe from '@lucide/svelte/icons/globe';
+import Save from '@lucide/svelte/icons/save';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Users from '@lucide/svelte/icons/users';
+import Wand from '@lucide/svelte/icons/wand';
+import Zap from '@lucide/svelte/icons/zap';
 
-  // ML Queries - use .options() for reactive interface
-  const preferencesQuery = MLSettings.getPreferences().options();
+// ML Queries - use .options() for reactive interface
+const preferencesQuery = MLSettings.getPreferences().options();
 
-  // ML Mutations - use .options() for reactive interface
-  const updateMutation = MLSettings.update().options();
-  const toggleMutation = MLSettings.toggle().options();
+// ML Mutations - use .options() for reactive interface
+const updateMutation = MLSettings.update().options();
+const toggleMutation = MLSettings.toggle().options();
 
-  // Web Search Queries
-  const webSearchQuery = WebSearchSettings.getPreferences().options();
+// Web Search Queries
+const webSearchQuery = WebSearchSettings.getPreferences().options();
 
-  // Web Search Mutations
-  const webSearchUpdateMutation = WebSearchSettings.update().options();
-  const webSearchToggleMutation = WebSearchSettings.toggle().options();
+// Web Search Mutations
+const webSearchUpdateMutation = WebSearchSettings.update().options();
+const webSearchToggleMutation = WebSearchSettings.toggle().options();
 
-  // Intelligence Input Queries
-  const intelligenceInputQuery = IntelligenceInputSettings.getPreferences().options();
+// Intelligence Input Queries
+const intelligenceInputQuery = IntelligenceInputSettings.getPreferences().options();
 
-  // Intelligence Input Mutations
-  const intelligenceInputUpdateMutation = IntelligenceInputSettings.update().options();
-  const intelligenceInputToggleMutation = IntelligenceInputSettings.toggle().options();
+// Intelligence Input Mutations
+const intelligenceInputUpdateMutation = IntelligenceInputSettings.update().options();
+const intelligenceInputToggleMutation = IntelligenceInputSettings.toggle().options();
 
-  // Local state for ML form
-  let enabled = $state(true);
-  let features = $state({
-    forecasting: true,
-    anomalyDetection: true,
-    similarity: true,
-    userBehavior: true,
-  });
-  let config = $state({
-    anomalySensitivity: "medium" as "low" | "medium" | "high",
-    forecastHorizon: 30,
-    similarityThreshold: 0.6,
-  });
-  let duplicateDetection = $state({
-    defaultMethod: "ml" as DuplicateDetectionMethod,
-  });
+// Local state for ML form
+let enabled = $state(true);
+let features = $state({
+  forecasting: true,
+  anomalyDetection: true,
+  similarity: true,
+  userBehavior: true,
+});
+let config = $state({
+  anomalySensitivity: 'medium' as 'low' | 'medium' | 'high',
+  forecastHorizon: 30,
+  similarityThreshold: 0.6,
+});
+let duplicateDetection = $state({
+  defaultMethod: 'ml' as DuplicateDetectionMethod,
+});
 
-  // Local state for Web Search form
-  let webSearchEnabled = $state(true);
-  let webSearchProvider = $state<WebSearchProvider>("duckduckgo");
-  let braveApiKey = $state("");
-  let ollamaCloudApiKey = $state("");
-  let hasBraveApiKey = $state(false);
-  let hasOllamaCloudApiKey = $state(false);
+// Local state for Web Search form
+let webSearchEnabled = $state(true);
+let webSearchProvider = $state<WebSearchProvider>('duckduckgo');
+let braveApiKey = $state('');
+let ollamaCloudApiKey = $state('');
+let hasBraveApiKey = $state(false);
+let hasOllamaCloudApiKey = $state(false);
 
-  // Local state for Intelligence Input form
-  let intelligenceInputEnabled = $state(true);
-  let showInHeader = $state(true);
-  let defaultMode = $state<IntelligenceInputPreferences["defaultMode"]>("auto");
+// Local state for Intelligence Input form
+let intelligenceInputEnabled = $state(true);
+let showInHeader = $state(true);
+let defaultMode = $state<IntelligenceInputPreferences['defaultMode']>('auto');
 
-  // Sync ML with query data
-  $effect(() => {
-    if (preferencesQuery.data) {
-      enabled = preferencesQuery.data.enabled;
-      features = { ...preferencesQuery.data.features };
-      config = { ...preferencesQuery.data.config };
-      duplicateDetection = { ...preferencesQuery.data.duplicateDetection };
-    }
-  });
-
-  // Sync Web Search with query data
-  $effect(() => {
-    if (webSearchQuery.data) {
-      webSearchEnabled = webSearchQuery.data.enabled;
-      webSearchProvider = webSearchQuery.data.provider;
-      hasBraveApiKey = webSearchQuery.data.hasBraveApiKey;
-      hasOllamaCloudApiKey = webSearchQuery.data.hasOllamaCloudApiKey;
-    }
-  });
-
-  // Sync Intelligence Input with query data
-  $effect(() => {
-    if (intelligenceInputQuery.data) {
-      intelligenceInputEnabled = intelligenceInputQuery.data.enabled;
-      showInHeader = intelligenceInputQuery.data.showInHeader;
-      defaultMode = intelligenceInputQuery.data.defaultMode;
-    }
-  });
-
-  function handleToggle() {
-    toggleMutation.mutate({ enabled: !enabled });
-    enabled = !enabled;
+// Sync ML with query data
+$effect(() => {
+  if (preferencesQuery.data) {
+    enabled = preferencesQuery.data.enabled;
+    features = { ...preferencesQuery.data.features };
+    config = { ...preferencesQuery.data.config };
+    duplicateDetection = { ...preferencesQuery.data.duplicateDetection };
   }
+});
 
-  function handleSave() {
-    updateMutation.mutate({
-      enabled,
-      features,
-      config,
-      duplicateDetection,
-    });
+// Sync Web Search with query data
+$effect(() => {
+  if (webSearchQuery.data) {
+    webSearchEnabled = webSearchQuery.data.enabled;
+    webSearchProvider = webSearchQuery.data.provider;
+    hasBraveApiKey = webSearchQuery.data.hasBraveApiKey;
+    hasOllamaCloudApiKey = webSearchQuery.data.hasOllamaCloudApiKey;
   }
+});
 
-  function handleWebSearchToggle() {
-    webSearchToggleMutation.mutate({ enabled: !webSearchEnabled });
-    webSearchEnabled = !webSearchEnabled;
+// Sync Intelligence Input with query data
+$effect(() => {
+  if (intelligenceInputQuery.data) {
+    intelligenceInputEnabled = intelligenceInputQuery.data.enabled;
+    showInHeader = intelligenceInputQuery.data.showInHeader;
+    defaultMode = intelligenceInputQuery.data.defaultMode;
   }
+});
 
-  function handleWebSearchSave() {
-    webSearchUpdateMutation.mutate({
-      enabled: webSearchEnabled,
-      provider: webSearchProvider,
-      braveApiKey: braveApiKey || undefined,
-      ollamaCloudApiKey: ollamaCloudApiKey || undefined,
-    });
-    // Clear the input fields after save
-    braveApiKey = "";
-    ollamaCloudApiKey = "";
-  }
+function handleToggle() {
+  toggleMutation.mutate({ enabled: !enabled });
+  enabled = !enabled;
+}
 
-  function handleIntelligenceInputToggle() {
-    intelligenceInputToggleMutation.mutate({ enabled: !intelligenceInputEnabled });
-    intelligenceInputEnabled = !intelligenceInputEnabled;
-  }
-
-  function handleIntelligenceInputSave() {
-    intelligenceInputUpdateMutation.mutate({
-      enabled: intelligenceInputEnabled,
-      showInHeader,
-      defaultMode,
-    });
-  }
-
-  const hasChanges = $derived(() => {
-    if (!preferencesQuery.data) return false;
-    return (
-      enabled !== preferencesQuery.data.enabled ||
-      JSON.stringify(features) !== JSON.stringify(preferencesQuery.data.features) ||
-      JSON.stringify(config) !== JSON.stringify(preferencesQuery.data.config) ||
-      JSON.stringify(duplicateDetection) !== JSON.stringify(preferencesQuery.data.duplicateDetection)
-    );
+function handleSave() {
+  updateMutation.mutate({
+    enabled,
+    features,
+    config,
+    duplicateDetection,
   });
+}
 
-  const hasWebSearchChanges = $derived(() => {
-    if (!webSearchQuery.data) return false;
-    return (
-      webSearchEnabled !== webSearchQuery.data.enabled ||
-      webSearchProvider !== webSearchQuery.data.provider ||
-      braveApiKey.length > 0 ||
-      ollamaCloudApiKey.length > 0
-    );
-  });
+function handleWebSearchToggle() {
+  webSearchToggleMutation.mutate({ enabled: !webSearchEnabled });
+  webSearchEnabled = !webSearchEnabled;
+}
 
-  const hasIntelligenceInputChanges = $derived(() => {
-    if (!intelligenceInputQuery.data) return false;
-    return (
-      intelligenceInputEnabled !== intelligenceInputQuery.data.enabled ||
-      showInHeader !== intelligenceInputQuery.data.showInHeader ||
-      defaultMode !== intelligenceInputQuery.data.defaultMode
-    );
+function handleWebSearchSave() {
+  webSearchUpdateMutation.mutate({
+    enabled: webSearchEnabled,
+    provider: webSearchProvider,
+    braveApiKey: braveApiKey || undefined,
+    ollamaCloudApiKey: ollamaCloudApiKey || undefined,
   });
+  // Clear the input fields after save
+  braveApiKey = '';
+  ollamaCloudApiKey = '';
+}
+
+function handleIntelligenceInputToggle() {
+  intelligenceInputToggleMutation.mutate({ enabled: !intelligenceInputEnabled });
+  intelligenceInputEnabled = !intelligenceInputEnabled;
+}
+
+function handleIntelligenceInputSave() {
+  intelligenceInputUpdateMutation.mutate({
+    enabled: intelligenceInputEnabled,
+    showInHeader,
+    defaultMode,
+  });
+}
+
+const hasChanges = $derived(() => {
+  if (!preferencesQuery.data) return false;
+  return (
+    enabled !== preferencesQuery.data.enabled ||
+    JSON.stringify(features) !== JSON.stringify(preferencesQuery.data.features) ||
+    JSON.stringify(config) !== JSON.stringify(preferencesQuery.data.config) ||
+    JSON.stringify(duplicateDetection) !== JSON.stringify(preferencesQuery.data.duplicateDetection)
+  );
+});
+
+const hasWebSearchChanges = $derived(() => {
+  if (!webSearchQuery.data) return false;
+  return (
+    webSearchEnabled !== webSearchQuery.data.enabled ||
+    webSearchProvider !== webSearchQuery.data.provider ||
+    braveApiKey.length > 0 ||
+    ollamaCloudApiKey.length > 0
+  );
+});
+
+const hasIntelligenceInputChanges = $derived(() => {
+  if (!intelligenceInputQuery.data) return false;
+  return (
+    intelligenceInputEnabled !== intelligenceInputQuery.data.enabled ||
+    showInHeader !== intelligenceInputQuery.data.showInHeader ||
+    defaultMode !== intelligenceInputQuery.data.defaultMode
+  );
+});
 </script>
 
 <svelte:head>
@@ -191,10 +195,7 @@
       <h2 class="text-lg font-semibold">Machine Learning</h2>
       <p class="text-muted-foreground text-sm">Configure ML-powered features and preferences</p>
     </div>
-    <Button
-      onclick={handleSave}
-      disabled={!hasChanges() || updateMutation.isPending}
-    >
+    <Button onclick={handleSave} disabled={!hasChanges() || updateMutation.isPending}>
       <Save class="mr-2 h-4 w-4" />
       Save Changes
     </Button>
@@ -209,7 +210,7 @@
   {:else if preferencesQuery.error}
     <Card.Root class="border-destructive">
       <Card.Content class="pt-6">
-        <div class="flex items-center gap-2 text-destructive">
+        <div class="text-destructive flex items-center gap-2">
           <AlertTriangle class="h-5 w-5" />
           <p>Failed to load ML settings</p>
         </div>
@@ -225,16 +226,13 @@
           </div>
           <div>
             <h3 class="font-semibold">Machine Learning Features</h3>
-            <p class="text-muted-foreground text-sm">
-              Enable or disable all ML-powered features
-            </p>
+            <p class="text-muted-foreground text-sm">Enable or disable all ML-powered features</p>
           </div>
         </div>
         <Switch
           checked={enabled}
           onCheckedChange={handleToggle}
-          disabled={toggleMutation.isPending}
-        />
+          disabled={toggleMutation.isPending} />
       </Card.Content>
     </Card.Root>
 
@@ -242,9 +240,7 @@
     <Card.Root data-help-id="ml-features" data-help-title="ML Feature Toggles">
       <Card.Header>
         <Card.Title>Features</Card.Title>
-        <Card.Description>
-          Choose which ML features to enable for your workspace
-        </Card.Description>
+        <Card.Description>Choose which ML features to enable for your workspace</Card.Description>
       </Card.Header>
       <Card.Content class="grid gap-4 sm:grid-cols-2">
         <MLFeatureToggle
@@ -252,29 +248,25 @@
           description="Cash flow predictions and spending projections"
           bind:enabled={features.forecasting}
           disabled={!enabled}
-          icon={TrendingUp}
-        />
+          icon={TrendingUp} />
         <MLFeatureToggle
           title="Anomaly Detection"
           description="Detect unusual transactions and patterns"
           bind:enabled={features.anomalyDetection}
           disabled={!enabled}
-          icon={AlertTriangle}
-        />
+          icon={AlertTriangle} />
         <MLFeatureToggle
           title="Similarity Matching"
           description="Smart payee matching and canonicalization"
           bind:enabled={features.similarity}
           disabled={!enabled}
-          icon={Eye}
-        />
+          icon={Eye} />
         <MLFeatureToggle
           title="User Behavior"
           description="Personalized recommendations and learning"
           bind:enabled={features.userBehavior}
           disabled={!enabled}
-          icon={Users}
-        />
+          icon={Users} />
       </Card.Content>
     </Card.Root>
 
@@ -282,13 +274,14 @@
     <Card.Root>
       <Card.Header>
         <Card.Title>Configuration</Card.Title>
-        <Card.Description>
-          Fine-tune ML feature behavior
-        </Card.Description>
+        <Card.Description>Fine-tune ML feature behavior</Card.Description>
       </Card.Header>
       <Card.Content class="space-y-6">
         <!-- Anomaly Sensitivity -->
-        <div class="space-y-3" data-help-id="ml-anomaly-sensitivity" data-help-title="Anomaly Sensitivity">
+        <div
+          class="space-y-3"
+          data-help-id="ml-anomaly-sensitivity"
+          data-help-title="Anomaly Sensitivity">
           <Label>Anomaly Detection Sensitivity</Label>
           <RadioGroup.Root
             value={config.anomalySensitivity}
@@ -296,8 +289,7 @@
               if (v) config.anomalySensitivity = v as typeof config.anomalySensitivity;
             }}
             disabled={!enabled || !features.anomalyDetection}
-            class="flex gap-4"
-          >
+            class="flex gap-4">
             <div class="flex items-center space-x-2">
               <RadioGroup.Item value="low" id="sens-low" />
               <Label for="sens-low" class="font-normal">Low</Label>
@@ -317,7 +309,10 @@
         </div>
 
         <!-- Forecast Horizon -->
-        <div class="space-y-3" data-help-id="ml-forecast-horizon" data-help-title="Forecast Horizon">
+        <div
+          class="space-y-3"
+          data-help-id="ml-forecast-horizon"
+          data-help-title="Forecast Horizon">
           <div class="flex items-center justify-between">
             <Label>Default Forecast Horizon</Label>
             <span class="text-muted-foreground text-sm">{config.forecastHorizon} days</span>
@@ -332,15 +327,17 @@
             max={365}
             step={1}
             disabled={!enabled || !features.forecasting}
-            class="w-full"
-          />
+            class="w-full" />
           <p class="text-muted-foreground text-xs">
             How far ahead to predict by default (7-365 days).
           </p>
         </div>
 
         <!-- Similarity Threshold -->
-        <div class="space-y-3" data-help-id="ml-similarity-threshold" data-help-title="Similarity Threshold">
+        <div
+          class="space-y-3"
+          data-help-id="ml-similarity-threshold"
+          data-help-title="Similarity Threshold">
           <div class="flex items-center justify-between">
             <Label>Similarity Threshold</Label>
             <span class="text-muted-foreground text-sm">
@@ -357,15 +354,17 @@
             max={1}
             step={0.05}
             disabled={!enabled || !features.similarity}
-            class="w-full"
-          />
+            class="w-full" />
           <p class="text-muted-foreground text-xs">
             Minimum similarity score required for payee matching (0-100%).
           </p>
         </div>
 
         <!-- Duplicate Detection Method -->
-        <div class="space-y-3" data-help-id="ml-duplicate-detection" data-help-title="Duplicate Detection Method">
+        <div
+          class="space-y-3"
+          data-help-id="ml-duplicate-detection"
+          data-help-title="Duplicate Detection Method">
           <Label>Default Duplicate Detection Method</Label>
           <RadioGroup.Root
             value={duplicateDetection.defaultMethod}
@@ -373,16 +372,17 @@
               if (v) duplicateDetection.defaultMethod = v as DuplicateDetectionMethod;
             }}
             disabled={!enabled || !features.similarity}
-            class="grid gap-3"
-          >
+            class="grid gap-3">
             <div class="flex items-start space-x-3 rounded-lg border p-3">
               <RadioGroup.Item value="simple" id="detect-simple" class="mt-1" />
               <div class="flex-1">
-                <Label for="detect-simple" class="font-medium cursor-pointer flex items-center gap-2">
+                <Label
+                  for="detect-simple"
+                  class="flex cursor-pointer items-center gap-2 font-medium">
                   <Zap class="h-4 w-4 text-yellow-500" />
                   Simple
                 </Label>
-                <p class="text-muted-foreground text-sm mt-0.5">
+                <p class="text-muted-foreground mt-0.5 text-sm">
                   Basic text matching using Levenshtein distance (fastest)
                 </p>
               </div>
@@ -391,12 +391,12 @@
             <div class="flex items-start space-x-3 rounded-lg border p-3">
               <RadioGroup.Item value="ml" id="detect-ml" class="mt-1" />
               <div class="flex-1">
-                <Label for="detect-ml" class="font-medium cursor-pointer flex items-center gap-2">
-                  <Brain class="h-4 w-4 text-primary" />
+                <Label for="detect-ml" class="flex cursor-pointer items-center gap-2 font-medium">
+                  <Brain class="text-primary h-4 w-4" />
                   Machine Learning
-                  <span class="text-xs text-muted-foreground font-normal">(Recommended)</span>
+                  <span class="text-muted-foreground text-xs font-normal">(Recommended)</span>
                 </Label>
-                <p class="text-muted-foreground text-sm mt-0.5">
+                <p class="text-muted-foreground mt-0.5 text-sm">
                   Pattern-aware matching that handles order IDs and store numbers
                 </p>
               </div>
@@ -405,11 +405,11 @@
             <div class="flex items-start space-x-3 rounded-lg border p-3">
               <RadioGroup.Item value="llm" id="detect-llm" class="mt-1" />
               <div class="flex-1">
-                <Label for="detect-llm" class="font-medium cursor-pointer flex items-center gap-2">
+                <Label for="detect-llm" class="flex cursor-pointer items-center gap-2 font-medium">
                   <Sparkles class="h-4 w-4 text-violet-500" />
                   AI + ML Filter
                 </Label>
-                <p class="text-muted-foreground text-sm mt-0.5">
+                <p class="text-muted-foreground mt-0.5 text-sm">
                   ML finds candidates above threshold, AI confirms matches
                 </p>
               </div>
@@ -418,11 +418,13 @@
             <div class="flex items-start space-x-3 rounded-lg border p-3">
               <RadioGroup.Item value="llm_direct" id="detect-llm-direct" class="mt-1" />
               <div class="flex-1">
-                <Label for="detect-llm-direct" class="font-medium cursor-pointer flex items-center gap-2">
+                <Label
+                  for="detect-llm-direct"
+                  class="flex cursor-pointer items-center gap-2 font-medium">
                   <Sparkles class="h-4 w-4 text-violet-500" />
                   AI Direct
                 </Label>
-                <p class="text-muted-foreground text-sm mt-0.5">
+                <p class="text-muted-foreground mt-0.5 text-sm">
                   AI analyzes all payee pairs directly (bypasses threshold)
                 </p>
               </div>
@@ -439,7 +441,7 @@
   <!-- Web Search Section -->
   <div class="mt-8 border-t pt-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="mb-6 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold">Contact Enrichment</h2>
         <p class="text-muted-foreground text-sm">
@@ -448,8 +450,7 @@
       </div>
       <Button
         onclick={handleWebSearchSave}
-        disabled={!hasWebSearchChanges() || webSearchUpdateMutation.isPending}
-      >
+        disabled={!hasWebSearchChanges() || webSearchUpdateMutation.isPending}>
         <Save class="mr-2 h-4 w-4" />
         Save Changes
       </Button>
@@ -463,7 +464,7 @@
     {:else if webSearchQuery.error}
       <Card.Root class="border-destructive">
         <Card.Content class="pt-6">
-          <div class="flex items-center gap-2 text-destructive">
+          <div class="text-destructive flex items-center gap-2">
             <AlertTriangle class="h-5 w-5" />
             <p>Failed to load web search settings</p>
           </div>
@@ -487,13 +488,15 @@
           <Switch
             checked={webSearchEnabled}
             onCheckedChange={handleWebSearchToggle}
-            disabled={webSearchToggleMutation.isPending}
-          />
+            disabled={webSearchToggleMutation.isPending} />
         </Card.Content>
       </Card.Root>
 
       <!-- Search Provider Configuration -->
-      <Card.Root class="mt-4" data-help-id="ml-web-search-provider" data-help-title="Search Provider">
+      <Card.Root
+        class="mt-4"
+        data-help-id="ml-web-search-provider"
+        data-help-title="Search Provider">
         <Card.Header>
           <Card.Title>Search Provider</Card.Title>
           <Card.Description>
@@ -508,16 +511,13 @@
               if (v) webSearchProvider = v as WebSearchProvider;
             }}
             disabled={!webSearchEnabled}
-            class="grid gap-4"
-          >
+            class="grid gap-4">
             <!-- DuckDuckGo -->
             <div class="flex items-start space-x-3 rounded-lg border p-4">
               <RadioGroup.Item value="duckduckgo" id="provider-ddg" class="mt-1" />
               <div class="flex-1">
-                <Label for="provider-ddg" class="font-medium cursor-pointer">
-                  DuckDuckGo
-                </Label>
-                <p class="text-muted-foreground text-sm mt-1">
+                <Label for="provider-ddg" class="cursor-pointer font-medium">DuckDuckGo</Label>
+                <p class="text-muted-foreground mt-1 text-sm">
                   Free, no API key required. Uses HTML scraping.
                 </p>
               </div>
@@ -528,19 +528,20 @@
               <RadioGroup.Item value="brave" id="provider-brave" class="mt-1" />
               <div class="flex-1 space-y-3">
                 <div>
-                  <Label for="provider-brave" class="font-medium cursor-pointer">
+                  <Label for="provider-brave" class="cursor-pointer font-medium">
                     Brave Search API
                   </Label>
-                  <p class="text-muted-foreground text-sm mt-1">
+                  <p class="text-muted-foreground mt-1 text-sm">
                     Reliable API with 2,000 free queries/month. Requires API key.
                   </p>
                 </div>
-                {#if webSearchProvider === "brave"}
+                {#if webSearchProvider === 'brave'}
                   <div class="space-y-2">
                     <div class="flex items-center gap-2">
                       <Label for="brave-key" class="text-sm">API Key</Label>
                       {#if hasBraveApiKey}
-                        <span class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                        <span
+                          class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                           <Check class="h-3 w-3" />
                           Configured
                         </span>
@@ -549,17 +550,15 @@
                     <Input
                       id="brave-key"
                       type="password"
-                      placeholder={hasBraveApiKey ? "••••••••" : "Enter Brave API key"}
+                      placeholder={hasBraveApiKey ? '••••••••' : 'Enter Brave API key'}
                       bind:value={braveApiKey}
-                      disabled={!webSearchEnabled}
-                    />
+                      disabled={!webSearchEnabled} />
                     <p class="text-muted-foreground text-xs">
                       Get your API key at <a
                         href="https://brave.com/search/api/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="underline hover:text-foreground"
-                      >brave.com/search/api</a>
+                        class="hover:text-foreground underline">brave.com/search/api</a>
                     </p>
                   </div>
                 {/if}
@@ -571,19 +570,20 @@
               <RadioGroup.Item value="ollama" id="provider-ollama" class="mt-1" />
               <div class="flex-1 space-y-3">
                 <div>
-                  <Label for="provider-ollama" class="font-medium cursor-pointer">
+                  <Label for="provider-ollama" class="cursor-pointer font-medium">
                     Ollama Web Search
                   </Label>
-                  <p class="text-muted-foreground text-sm mt-1">
+                  <p class="text-muted-foreground mt-1 text-sm">
                     Cloud-based web search from Ollama. Requires API key.
                   </p>
                 </div>
-                {#if webSearchProvider === "ollama"}
+                {#if webSearchProvider === 'ollama'}
                   <div class="space-y-2">
                     <div class="flex items-center gap-2">
                       <Label for="ollama-key" class="text-sm">API Key</Label>
                       {#if hasOllamaCloudApiKey}
-                        <span class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                        <span
+                          class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                           <Check class="h-3 w-3" />
                           Configured
                         </span>
@@ -592,10 +592,9 @@
                     <Input
                       id="ollama-key"
                       type="password"
-                      placeholder={hasOllamaCloudApiKey ? "••••••••" : "Enter Ollama API key"}
+                      placeholder={hasOllamaCloudApiKey ? '••••••••' : 'Enter Ollama API key'}
                       bind:value={ollamaCloudApiKey}
-                      disabled={!webSearchEnabled}
-                    />
+                      disabled={!webSearchEnabled} />
                     <p class="text-muted-foreground text-xs">
                       Get your API key from your Ollama cloud account.
                     </p>
@@ -612,7 +611,7 @@
   <!-- Intelligence Input Mode Section -->
   <div class="mt-8 border-t pt-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="mb-6 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold">Intelligence Input Mode</h2>
         <p class="text-muted-foreground text-sm">
@@ -621,8 +620,7 @@
       </div>
       <Button
         onclick={handleIntelligenceInputSave}
-        disabled={!hasIntelligenceInputChanges() || intelligenceInputUpdateMutation.isPending}
-      >
+        disabled={!hasIntelligenceInputChanges() || intelligenceInputUpdateMutation.isPending}>
         <Save class="mr-2 h-4 w-4" />
         Save Changes
       </Button>
@@ -636,7 +634,7 @@
     {:else if intelligenceInputQuery.error}
       <Card.Root class="border-destructive">
         <Card.Content class="pt-6">
-          <div class="flex items-center gap-2 text-destructive">
+          <div class="text-destructive flex items-center gap-2">
             <AlertTriangle class="h-5 w-5" />
             <p>Failed to load intelligence input settings</p>
           </div>
@@ -647,21 +645,21 @@
       <Card.Root data-help-id="ml-intelligence-input" data-help-title="Intelligence Input Mode">
         <Card.Content class="flex items-center justify-between p-6">
           <div class="flex items-center gap-4">
-            <div class="bg-violet-500/10 rounded-lg p-3">
-              <Wand class="text-violet-500 h-6 w-6" />
+            <div class="rounded-lg bg-violet-500/10 p-3">
+              <Wand class="h-6 w-6 text-violet-500" />
             </div>
             <div>
               <h3 class="font-semibold">Intelligence Input Mode</h3>
               <p class="text-muted-foreground text-sm">
-                Activate with <kbd class="px-1.5 py-0.5 text-xs rounded border bg-muted">⌘/Ctrl+Shift+I</kbd> to highlight form fields with ML/LLM capabilities
+                Activate with <kbd class="bg-muted rounded border px-1.5 py-0.5 text-xs"
+                  >⌘/Ctrl+Shift+I</kbd> to highlight form fields with ML/LLM capabilities
               </p>
             </div>
           </div>
           <Switch
             checked={intelligenceInputEnabled}
             onCheckedChange={handleIntelligenceInputToggle}
-            disabled={intelligenceInputToggleMutation.isPending}
-          />
+            disabled={intelligenceInputToggleMutation.isPending} />
         </Card.Content>
       </Card.Root>
 
@@ -669,9 +667,7 @@
       <Card.Root class="mt-4">
         <Card.Header>
           <Card.Title>Configuration</Card.Title>
-          <Card.Description>
-            Customize how intelligence input mode behaves
-          </Card.Description>
+          <Card.Description>Customize how intelligence input mode behaves</Card.Description>
         </Card.Header>
         <Card.Content class="space-y-6">
           <!-- Show in Header -->
@@ -685,12 +681,14 @@
             <Switch
               checked={showInHeader}
               onCheckedChange={(v) => (showInHeader = v)}
-              disabled={!intelligenceInputEnabled}
-            />
+              disabled={!intelligenceInputEnabled} />
           </div>
 
           <!-- Default Mode -->
-          <div class="space-y-3" data-help-id="ml-intelligence-input-mode" data-help-title="Default Mode">
+          <div
+            class="space-y-3"
+            data-help-id="ml-intelligence-input-mode"
+            data-help-title="Default Mode">
             <Label>Default Mode</Label>
             <RadioGroup.Root
               value={defaultMode}
@@ -698,16 +696,15 @@
                 if (v) defaultMode = v as typeof defaultMode;
               }}
               disabled={!intelligenceInputEnabled}
-              class="grid gap-3"
-            >
+              class="grid gap-3">
               <div class="flex items-start space-x-3 rounded-lg border p-3">
                 <RadioGroup.Item value="auto" id="mode-auto" class="mt-1" />
                 <div class="flex-1">
-                  <Label for="mode-auto" class="font-medium cursor-pointer flex items-center gap-2">
+                  <Label for="mode-auto" class="flex cursor-pointer items-center gap-2 font-medium">
                     Auto
-                    <span class="text-xs text-muted-foreground font-normal">(Recommended)</span>
+                    <span class="text-muted-foreground text-xs font-normal">(Recommended)</span>
                   </Label>
-                  <p class="text-muted-foreground text-sm mt-0.5">
+                  <p class="text-muted-foreground mt-0.5 text-sm">
                     Uses last-used mode per field, or ML for new fields
                   </p>
                 </div>
@@ -716,11 +713,11 @@
               <div class="flex items-start space-x-3 rounded-lg border p-3">
                 <RadioGroup.Item value="ml" id="mode-ml" class="mt-1" />
                 <div class="flex-1">
-                  <Label for="mode-ml" class="font-medium cursor-pointer flex items-center gap-2">
-                    <Brain class="h-4 w-4 text-primary" />
+                  <Label for="mode-ml" class="flex cursor-pointer items-center gap-2 font-medium">
+                    <Brain class="text-primary h-4 w-4" />
                     ML Only
                   </Label>
-                  <p class="text-muted-foreground text-sm mt-0.5">
+                  <p class="text-muted-foreground mt-0.5 text-sm">
                     Always use local machine learning for suggestions
                   </p>
                 </div>
@@ -729,18 +726,20 @@
               <div class="flex items-start space-x-3 rounded-lg border p-3">
                 <RadioGroup.Item value="llm" id="mode-llm" class="mt-1" />
                 <div class="flex-1">
-                  <Label for="mode-llm" class="font-medium cursor-pointer flex items-center gap-2">
+                  <Label for="mode-llm" class="flex cursor-pointer items-center gap-2 font-medium">
                     <Sparkles class="h-4 w-4 text-violet-500" />
                     LLM Only
                   </Label>
-                  <p class="text-muted-foreground text-sm mt-0.5">
+                  <p class="text-muted-foreground mt-0.5 text-sm">
                     Always use language models for richer suggestions
                   </p>
                 </div>
               </div>
             </RadioGroup.Root>
             <p class="text-muted-foreground text-xs">
-              You can always change the mode per-field by pressing <kbd class="px-1 py-0.5 text-xs rounded border bg-muted">M</kbd> or <kbd class="px-1 py-0.5 text-xs rounded border bg-muted">L</kbd> while a field is highlighted.
+              You can always change the mode per-field by pressing <kbd
+                class="bg-muted rounded border px-1 py-0.5 text-xs">M</kbd>
+              or <kbd class="bg-muted rounded border px-1 py-0.5 text-xs">L</kbd> while a field is highlighted.
             </p>
           </div>
         </Card.Content>

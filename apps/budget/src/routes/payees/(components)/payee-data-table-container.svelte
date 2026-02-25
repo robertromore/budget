@@ -39,11 +39,7 @@ const tableColumns = $derived(columns({ onView, onEdit, onDelete, onViewAnalytic
   </div>
 {:else if browser}
   <!-- Show the data table -->
-  <PayeeDataTable
-    columns={tableColumns}
-    {payees}
-    {onBulkDelete}
-    bind:table />
+  <PayeeDataTable columns={tableColumns} {payees} {onBulkDelete} bind:table />
 {:else}
   <!-- Fallback loading state -->
   <div class="space-y-4">

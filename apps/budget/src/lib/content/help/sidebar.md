@@ -6,7 +6,8 @@ related: [accounts-list, budgets-list, payees-list]
 
 # Sidebar Navigation
 
-The sidebar provides quick access to all major sections of your budget application.
+The sidebar provides quick access to all major sections of your budget
+application.
 
 ## Main Sections
 

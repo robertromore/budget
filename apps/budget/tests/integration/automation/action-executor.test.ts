@@ -112,9 +112,7 @@ describe("Action Executor Integration Tests", () => {
 
     describe("setPayee", () => {
       it("should update transaction payee", async () => {
-        const actions: ActionConfig[] = [
-          { id: "a1", type: "setPayee", params: { payeeId: 10 } },
-        ];
+        const actions: ActionConfig[] = [{ id: "a1", type: "setPayee", params: { payeeId: 10 } }];
         const entity = { id: 123, payeeId: 5 };
 
         const results = await executeActions(actions, entity, "transaction", 123, context);
@@ -538,9 +536,7 @@ describe("Action Executor Integration Tests", () => {
 
   describe("Error Handling", () => {
     it("should return error for unknown action type", async () => {
-      const actions: ActionConfig[] = [
-        { id: "a1", type: "unknownAction", params: {} },
-      ];
+      const actions: ActionConfig[] = [{ id: "a1", type: "unknownAction", params: {} }];
       const entity = { id: 123 };
 
       const results = await executeActions(actions, entity, "transaction", 123, context);

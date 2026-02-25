@@ -288,7 +288,11 @@ export const getProviderSettings = () =>
  * Update Teller provider settings
  */
 export const updateTellerSettings = defineMutation<
-  { enabled: boolean; applicationId?: string; environment: "sandbox" | "development" | "production" },
+  {
+    enabled: boolean;
+    applicationId?: string;
+    environment: "sandbox" | "development" | "production";
+  },
   { success: boolean }
 >({
   mutationFn: (data) => trpc().connectionRoutes.updateTellerSettings.mutate(data),

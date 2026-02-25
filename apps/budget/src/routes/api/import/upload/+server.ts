@@ -244,7 +244,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
         (r) => r.validationStatus === "transfer_match"
       ).length;
       if (transferMatchCount > 0) {
-        console.log(`[Transfer Target Matching] Found ${transferMatchCount} transfer target matches`);
+        console.log(
+          `[Transfer Target Matching] Found ${transferMatchCount} transfer target matches`
+        );
       }
     }
 

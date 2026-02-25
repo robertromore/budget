@@ -6,25 +6,26 @@ related: [transaction-toolbar, transaction-selection, transaction-filters]
 
 # Transaction Table
 
-The transaction table displays all transactions for the selected account with powerful inline editing, filtering, and sorting capabilities.
+The transaction table displays all transactions for the selected account with
+powerful inline editing, filtering, and sorting capabilities.
 
 ## Table Columns
 
-| Column | Description | Editable |
-|--------|-------------|----------|
-| **Select** | Checkbox for bulk operations | - |
-| **Expand** | Expand grouped rows | - |
-| **ID** | Unique transaction identifier | No |
-| **Date** | When the transaction occurred | Yes |
-| **Payee** | Merchant, vendor, or person | Yes |
-| **Notes** | Optional memo or description | Yes |
-| **Transfer** | Transfer indicator icon | No |
-| **Category** | Budget category assignment | Yes |
-| **Budget** | Budget allocation | No |
-| **Amount** | Transaction value | Yes |
-| **Balance** | Running account balance | No |
-| **Status** | Pending/Cleared/Reconciled | Yes |
-| **Actions** | Row action menu | - |
+| Column       | Description                   | Editable |
+| ------------ | ----------------------------- | -------- |
+| **Select**   | Checkbox for bulk operations  | -        |
+| **Expand**   | Expand grouped rows           | -        |
+| **ID**       | Unique transaction identifier | No       |
+| **Date**     | When the transaction occurred | Yes      |
+| **Payee**    | Merchant, vendor, or person   | Yes      |
+| **Notes**    | Optional memo or description  | Yes      |
+| **Transfer** | Transfer indicator icon       | No       |
+| **Category** | Budget category assignment    | Yes      |
+| **Budget**   | Budget allocation             | No       |
+| **Amount**   | Transaction value             | Yes      |
+| **Balance**  | Running account balance       | No       |
+| **Status**   | Pending/Cleared/Reconciled    | Yes      |
+| **Actions**  | Row action menu               | -        |
 
 ## Inline Editing
 
@@ -69,13 +70,13 @@ Scheduled transactions appear with:
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| [[Ctrl+F]] | Focus search/filter |
-| [[Space]] | Toggle row selection |
-| [[Enter]] | Edit focused cell |
-| [[Escape]] | Cancel edit / Clear filters |
-| [[Arrow Keys]] | Navigate cells |
+| Shortcut       | Action                      |
+| -------------- | --------------------------- |
+| [[Ctrl+F]]     | Focus search/filter         |
+| [[Space]]      | Toggle row selection        |
+| [[Enter]]      | Edit focused cell           |
+| [[Escape]]     | Cancel edit / Clear filters |
+| [[Arrow Keys]] | Navigate cells              |
 
 ## Tips
 

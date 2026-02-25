@@ -1,27 +1,26 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Widget Drag and Drop - Manual Testing", () => {
-  test("should demonstrate widget drag and drop functionality", async ({page}) => {
+  test("should demonstrate widget drag and drop functionality", async ({ page }) => {
     // Navigate to the account page
     await page.goto("http://localhost:3000/accounts/1");
     await page.waitForLoadState("networkidle");
 
     // Take initial screenshot
-    await page.screenshot({path: "test-results/manual-01-initial-page.png", fullPage: true});
+    await page.screenshot({ path: "test-results/manual-01-initial-page.png", fullPage: true });
 
     // Find and click the Customize button to enter edit mode
-    const customizeButton = page.locator("button", {hasText: /customize/i}).first();
-    await expect(customizeButton).toBeVisible({timeout: 10000});
+    const customizeButton = page.locator("button", { hasText: /customize/i }).first();
+    await expect(customizeButton).toBeVisible({ timeout: 10000 });
     await customizeButton.click();
     await page.waitForTimeout(1000); // Wait for edit mode to activate
 
     // Take screenshot after entering edit mode
-    await page.screenshot({path: "test-results/manual-02-edit-mode-active.png", fullPage: true});
+    await page.screenshot({ path: "test-results/manual-02-edit-mode-active.png", fullPage: true });
 
     // Find all widget wrappers (the draggable containers)
     const widgets = page.locator('.widget-wrapper[draggable="true"]');
@@ -108,7 +107,7 @@ describeE2E("Widget Drag and Drop - Manual Testing", () => {
       await page.waitForTimeout(2000);
 
       // Take screenshot after drag attempt
-      await page.screenshot({path: "test-results/manual-03-after-drag.png", fullPage: true});
+      await page.screenshot({ path: "test-results/manual-03-after-drag.png", fullPage: true });
 
       // Check if order changed by comparing widget positions
       const updatedWidgets = page.locator('.widget-wrapper[draggable="true"]');
@@ -173,7 +172,7 @@ describeE2E("Widget Drag and Drop - Manual Testing", () => {
             });
           });
 
-          observer.observe(widget, {attributes: true, attributeFilter: ["style"]});
+          observer.observe(widget, { attributes: true, attributeFilter: ["style"] });
 
           // Start a drag operation
           const dragEvent = new DragEvent("dragstart", {
@@ -197,17 +196,17 @@ describeE2E("Widget Drag and Drop - Manual Testing", () => {
       console.log(`Rapid movements detected: ${movementCount}`);
 
       // Take final screenshot
-      await page.screenshot({path: "test-results/manual-04-final-state.png", fullPage: true});
+      await page.screenshot({ path: "test-results/manual-04-final-state.png", fullPage: true });
     }
 
     // Test exiting edit mode
-    const doneButton = page.locator("button", {hasText: /done/i}).first();
+    const doneButton = page.locator("button", { hasText: /done/i }).first();
     if (await doneButton.isVisible()) {
       await doneButton.click();
       await page.waitForTimeout(1000);
 
       // Take screenshot after exiting edit mode
-      await page.screenshot({path: "test-results/manual-05-exit-edit-mode.png", fullPage: true});
+      await page.screenshot({ path: "test-results/manual-05-exit-edit-mode.png", fullPage: true });
 
       // Verify widgets are no longer draggable
       const remainingDraggableWidgets = page.locator('[draggable="true"]');

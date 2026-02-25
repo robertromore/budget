@@ -24,12 +24,7 @@ import type { Schedule } from "$lib/schema/schedules";
 // - processing: globalStep === 'processing' (includes mapping, cleanup, preview per file)
 // - review: globalStep === 'review' (combined review before import)
 // - complete: globalStep === 'complete' (import finished)
-export type ImportDemoStep =
-  | "idle"
-  | "upload"
-  | "processing"
-  | "review"
-  | "complete";
+export type ImportDemoStep = "idle" | "upload" | "processing" | "review" | "complete";
 
 export interface DemoTransaction {
   id: number;
@@ -169,12 +164,120 @@ function generateDemoCategories(): Category[] {
   const now = nowISOString();
   // Use unknown cast for demo data - we only need fields used in display
   return [
-    { id: -1, workspaceId: -1, name: "Groceries", slug: "groceries", categoryColor: "#22C55E", categoryIcon: "shopping-cart", parentId: null, displayOrder: 0, categoryType: "expense", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
-    { id: -2, workspaceId: -1, name: "Dining Out", slug: "dining-out", categoryColor: "#F97316", categoryIcon: "utensils", parentId: null, displayOrder: 1, categoryType: "expense", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
-    { id: -3, workspaceId: -1, name: "Transportation", slug: "transportation", categoryColor: "#8B5CF6", categoryIcon: "car", parentId: null, displayOrder: 2, categoryType: "expense", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
-    { id: -4, workspaceId: -1, name: "Utilities", slug: "utilities", categoryColor: "#06B6D4", categoryIcon: "zap", parentId: null, displayOrder: 3, categoryType: "expense", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
-    { id: -5, workspaceId: -1, name: "Entertainment", slug: "entertainment", categoryColor: "#EC4899", categoryIcon: "film", parentId: null, displayOrder: 4, categoryType: "expense", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
-    { id: -6, workspaceId: -1, name: "Salary", slug: "salary", categoryColor: "#10B981", categoryIcon: "briefcase", parentId: null, displayOrder: 5, categoryType: "income", isActive: true, isTaxDeductible: false, isSeasonal: false, notes: null, deletedAt: null, dateCreated: now, createdAt: now, updatedAt: now },
+    {
+      id: -1,
+      workspaceId: -1,
+      name: "Groceries",
+      slug: "groceries",
+      categoryColor: "#22C55E",
+      categoryIcon: "shopping-cart",
+      parentId: null,
+      displayOrder: 0,
+      categoryType: "expense",
+      isActive: true,
+      isTaxDeductible: false,
+      isSeasonal: false,
+      notes: null,
+      deletedAt: null,
+      dateCreated: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -2,
+      workspaceId: -1,
+      name: "Dining Out",
+      slug: "dining-out",
+      categoryColor: "#F97316",
+      categoryIcon: "utensils",
+      parentId: null,
+      displayOrder: 1,
+      categoryType: "expense",
+      isActive: true,
+      isTaxDeductible: false,
+      isSeasonal: false,
+      notes: null,
+      deletedAt: null,
+      dateCreated: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -3,
+      workspaceId: -1,
+      name: "Transportation",
+      slug: "transportation",
+      categoryColor: "#8B5CF6",
+      categoryIcon: "car",
+      parentId: null,
+      displayOrder: 2,
+      categoryType: "expense",
+      isActive: true,
+      isTaxDeductible: false,
+      isSeasonal: false,
+      notes: null,
+      deletedAt: null,
+      dateCreated: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -4,
+      workspaceId: -1,
+      name: "Utilities",
+      slug: "utilities",
+      categoryColor: "#06B6D4",
+      categoryIcon: "zap",
+      parentId: null,
+      displayOrder: 3,
+      categoryType: "expense",
+      isActive: true,
+      isTaxDeductible: false,
+      isSeasonal: false,
+      notes: null,
+      deletedAt: null,
+      dateCreated: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -5,
+      workspaceId: -1,
+      name: "Entertainment",
+      slug: "entertainment",
+      categoryColor: "#EC4899",
+      categoryIcon: "film",
+      parentId: null,
+      displayOrder: 4,
+      categoryType: "expense",
+      isActive: true,
+      isTaxDeductible: false,
+      isSeasonal: false,
+      notes: null,
+      deletedAt: null,
+      dateCreated: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -6,
+      workspaceId: -1,
+      name: "Salary",
+      slug: "salary",
+      categoryColor: "#10B981",
+      categoryIcon: "briefcase",
+      parentId: null,
+      displayOrder: 5,
+      categoryType: "income",
+      isActive: true,
+      isTaxDeductible: false,
+      isSeasonal: false,
+      notes: null,
+      deletedAt: null,
+      dateCreated: now,
+      createdAt: now,
+      updatedAt: now,
+    },
   ] as unknown as Category[];
 }
 
@@ -182,14 +285,150 @@ function generateDemoPayees(): Payee[] {
   const now = nowISOString();
   // Use unknown cast for demo data - we only need fields used in display
   return [
-    { id: -1, workspaceId: -1, name: "Whole Foods Market", slug: "whole-foods-market", notes: null, defaultCategoryId: -1, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -2, workspaceId: -1, name: "Starbucks", slug: "starbucks", notes: null, defaultCategoryId: -2, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -3, workspaceId: -1, name: "Shell Gas Station", slug: "shell-gas-station", notes: null, defaultCategoryId: -3, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -4, workspaceId: -1, name: "Electric Company", slug: "electric-company", notes: null, defaultCategoryId: -4, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -5, workspaceId: -1, name: "Netflix", slug: "netflix", notes: null, defaultCategoryId: -5, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -6, workspaceId: -1, name: "Acme Corporation", slug: "acme-corporation", notes: "Employer", defaultCategoryId: -6, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -7, workspaceId: -1, name: "Target", slug: "target", notes: null, defaultCategoryId: -1, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
-    { id: -8, workspaceId: -1, name: "Amazon", slug: "amazon", notes: null, defaultCategoryId: null, defaultBudgetId: null, isActive: true, taxRelevant: false, isSeasonal: false, phone: null, email: null, website: null, createdAt: now, updatedAt: now, deletedAt: null },
+    {
+      id: -1,
+      workspaceId: -1,
+      name: "Whole Foods Market",
+      slug: "whole-foods-market",
+      notes: null,
+      defaultCategoryId: -1,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -2,
+      workspaceId: -1,
+      name: "Starbucks",
+      slug: "starbucks",
+      notes: null,
+      defaultCategoryId: -2,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -3,
+      workspaceId: -1,
+      name: "Shell Gas Station",
+      slug: "shell-gas-station",
+      notes: null,
+      defaultCategoryId: -3,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -4,
+      workspaceId: -1,
+      name: "Electric Company",
+      slug: "electric-company",
+      notes: null,
+      defaultCategoryId: -4,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -5,
+      workspaceId: -1,
+      name: "Netflix",
+      slug: "netflix",
+      notes: null,
+      defaultCategoryId: -5,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -6,
+      workspaceId: -1,
+      name: "Acme Corporation",
+      slug: "acme-corporation",
+      notes: "Employer",
+      defaultCategoryId: -6,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -7,
+      workspaceId: -1,
+      name: "Target",
+      slug: "target",
+      notes: null,
+      defaultCategoryId: -1,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    {
+      id: -8,
+      workspaceId: -1,
+      name: "Amazon",
+      slug: "amazon",
+      notes: null,
+      defaultCategoryId: null,
+      defaultBudgetId: null,
+      isActive: true,
+      taxRelevant: false,
+      isSeasonal: false,
+      phone: null,
+      email: null,
+      website: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
   ] as unknown as Payee[];
 }
 
@@ -219,7 +458,9 @@ function generateDemoSchedules(): DemoSchedule[] {
       amount: -15.99,
       payee: { id: -5, name: "Netflix" },
       category: { id: -5, name: "Entertainment" },
-      nextOccurrence: new Date(today.getFullYear(), today.getMonth(), 15).toISOString().split("T")[0],
+      nextOccurrence: new Date(today.getFullYear(), today.getMonth(), 15)
+        .toISOString()
+        .split("T")[0],
     },
     {
       id: -3,
@@ -230,7 +471,9 @@ function generateDemoSchedules(): DemoSchedule[] {
       amount: -120,
       payee: { id: -4, name: "Electric Company" },
       category: { id: -4, name: "Utilities" },
-      nextOccurrence: new Date(today.getFullYear(), today.getMonth(), 28).toISOString().split("T")[0],
+      nextOccurrence: new Date(today.getFullYear(), today.getMonth(), 28)
+        .toISOString()
+        .split("T")[0],
     },
   ];
 }
@@ -245,21 +488,35 @@ function generateDemoTransactions(categories: Category[], payees: Payee[]): Demo
   const transactionData = [
     { daysAgo: 1, payeeIdx: 0, catIdx: 0, amount: -85.42, notes: "Weekly groceries" },
     { daysAgo: 2, payeeIdx: 1, catIdx: 1, amount: -6.75, notes: "Morning coffee" },
-    { daysAgo: 3, payeeIdx: 2, catIdx: 2, amount: -45.00, notes: "Gas fill-up" },
+    { daysAgo: 3, payeeIdx: 2, catIdx: 2, amount: -45.0, notes: "Gas fill-up" },
     { daysAgo: 5, payeeIdx: 6, catIdx: 0, amount: -32.18, notes: "Household items" },
     { daysAgo: 6, payeeIdx: 4, catIdx: 4, amount: -15.99, notes: "Monthly subscription" },
-    { daysAgo: 7, payeeIdx: 1, catIdx: 1, amount: -12.50, notes: "Lunch with colleague" },
+    { daysAgo: 7, payeeIdx: 1, catIdx: 1, amount: -12.5, notes: "Lunch with colleague" },
     { daysAgo: 8, payeeIdx: 0, catIdx: 0, amount: -112.35, notes: "Groceries and snacks" },
     { daysAgo: 10, payeeIdx: 7, catIdx: null, amount: -67.89, notes: "Online order" },
-    { daysAgo: 12, payeeIdx: 2, catIdx: 2, amount: -52.00, notes: "Gas" },
-    { daysAgo: 14, payeeIdx: 5, catIdx: 5, amount: 4500.00, notes: "Bi-weekly paycheck", status: "cleared" },
+    { daysAgo: 12, payeeIdx: 2, catIdx: 2, amount: -52.0, notes: "Gas" },
+    {
+      daysAgo: 14,
+      payeeIdx: 5,
+      catIdx: 5,
+      amount: 4500.0,
+      notes: "Bi-weekly paycheck",
+      status: "cleared",
+    },
     { daysAgo: 15, payeeIdx: 0, catIdx: 0, amount: -95.67, notes: "Weekly groceries" },
     { daysAgo: 17, payeeIdx: 3, catIdx: 3, amount: -145.23, notes: "Monthly electric bill" },
     { daysAgo: 18, payeeIdx: 1, catIdx: 1, amount: -8.25, notes: "Coffee and pastry" },
-    { daysAgo: 20, payeeIdx: 6, catIdx: 0, amount: -42.50, notes: "Kitchen supplies" },
+    { daysAgo: 20, payeeIdx: 6, catIdx: 0, amount: -42.5, notes: "Kitchen supplies" },
     { daysAgo: 22, payeeIdx: 2, catIdx: 2, amount: -48.75, notes: "Gas fill-up" },
-    { daysAgo: 25, payeeIdx: 0, catIdx: 0, amount: -78.90, notes: "Groceries" },
-    { daysAgo: 28, payeeIdx: 5, catIdx: 5, amount: 4500.00, notes: "Bi-weekly paycheck", status: "cleared" },
+    { daysAgo: 25, payeeIdx: 0, catIdx: 0, amount: -78.9, notes: "Groceries" },
+    {
+      daysAgo: 28,
+      payeeIdx: 5,
+      catIdx: 5,
+      amount: 4500.0,
+      notes: "Bi-weekly paycheck",
+      status: "cleared",
+    },
   ];
 
   for (const data of transactionData) {
@@ -281,7 +538,13 @@ function generateDemoTransactions(categories: Category[], payees: Payee[]): Demo
       payeeId: payee?.id ?? null,
       payee: payee ? { id: payee.id, name: payee.name ?? "Unknown" } : null,
       notes: data.notes,
-      category: category ? { id: category.id, name: category.name ?? "Unknown", color: category.categoryColor ?? null } : null,
+      category: category
+        ? {
+            id: category.id,
+            name: category.name ?? "Unknown",
+            color: category.categoryColor ?? null,
+          }
+        : null,
       categoryId: category?.id ?? null,
       status: (data as any).status ?? "cleared",
       accountId: -1,
@@ -295,16 +558,14 @@ function generateDemoTransactions(categories: Category[], payees: Payee[]): Demo
 
 function generateDemoImportCSV(): string {
   const today = new Date();
-  const lines = [
-    "Date,Description,Amount",
-  ];
+  const lines = ["Date,Description,Amount"];
 
   const importData = [
     { daysAgo: 0, desc: "WHOLE FOODS MKT #123", amount: -67.45 },
-    { daysAgo: 1, desc: "SHELL SERVICE STN", amount: -42.50 },
+    { daysAgo: 1, desc: "SHELL SERVICE STN", amount: -42.5 },
     { daysAgo: 2, desc: "STARBUCKS STORE 456", amount: -5.95 },
     { daysAgo: 3, desc: "AMAZON.COM*AB12CD34", amount: -29.99 },
-    { daysAgo: 4, desc: "ELECTRIC COMPANY PMT", amount: -135.00 },
+    { daysAgo: 4, desc: "ELECTRIC COMPANY PMT", amount: -135.0 },
     { daysAgo: 5, desc: "TARGET STORE #789", amount: -54.32 },
   ];
 
@@ -377,7 +638,12 @@ function generateDemoBudgets(
       allocatedAmount: accountMonthlyAllocated,
       spent: roundToCents(accountMonthlySpent),
       remaining: roundToCents(accountMonthlyRemaining),
-      progressStatus: accountMonthlyPercent > 90 ? "approaching" : accountMonthlyPercent > 100 ? "over" : "on_track",
+      progressStatus:
+        accountMonthlyPercent > 90
+          ? "approaching"
+          : accountMonthlyPercent > 100
+            ? "over"
+            : "on_track",
       progressPercent: Math.min(100, Math.round(accountMonthlyPercent)),
       accounts: [{ id: demoAccount.id, name: demoAccount.name }],
       categories: [],
@@ -480,7 +746,7 @@ function generateDemoBudgetRecommendations(budgets: DemoBudget[]): DemoBudgetRec
   const recommendations: DemoBudgetRecommendation[] = [];
 
   // Find food budget and check if approaching limit
-  const foodBudget = budgets.find(b => b.slug === "food-budget");
+  const foodBudget = budgets.find((b) => b.slug === "food-budget");
   if (foodBudget && foodBudget.progressPercent > 60) {
     recommendations.push({
       id: -1,
@@ -494,21 +760,22 @@ function generateDemoBudgetRecommendations(budgets: DemoBudget[]): DemoBudgetRec
   }
 
   // Check monthly spending budget
-  const monthlyBudget = budgets.find(b => b.slug === "monthly-spending-limit");
+  const monthlyBudget = budgets.find((b) => b.slug === "monthly-spending-limit");
   if (monthlyBudget && monthlyBudget.progressPercent > 50) {
     recommendations.push({
       id: -2,
       budgetId: monthlyBudget.id,
       budgetName: monthlyBudget.name,
       type: "decrease",
-      message: "Based on your spending patterns, you could reduce entertainment spending by $50/month.",
+      message:
+        "Based on your spending patterns, you could reduce entertainment spending by $50/month.",
       suggestedAmount: 50,
       confidence: 72,
     });
   }
 
   // Vacation fund recommendation
-  const vacationBudget = budgets.find(b => b.slug === "vacation-fund");
+  const vacationBudget = budgets.find((b) => b.slug === "vacation-fund");
   if (vacationBudget) {
     recommendations.push({
       id: -3,
@@ -759,13 +1026,7 @@ class DemoModeState {
    * Advance to the next import step
    */
   advanceImportStep() {
-    const steps: ImportDemoStep[] = [
-      "idle",
-      "upload",
-      "processing",
-      "review",
-      "complete",
-    ];
+    const steps: ImportDemoStep[] = ["idle", "upload", "processing", "review", "complete"];
 
     const currentIndex = steps.indexOf(this.#importStep);
     if (currentIndex < steps.length - 1) {
@@ -777,13 +1038,7 @@ class DemoModeState {
    * Go back to the previous import step
    */
   previousImportStep() {
-    const steps: ImportDemoStep[] = [
-      "idle",
-      "upload",
-      "processing",
-      "review",
-      "complete",
-    ];
+    const steps: ImportDemoStep[] = ["idle", "upload", "processing", "review", "complete"];
 
     const currentIndex = steps.indexOf(this.#importStep);
     if (currentIndex > 0) {

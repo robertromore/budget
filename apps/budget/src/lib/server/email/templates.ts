@@ -80,14 +80,7 @@ export function workspaceInvitationEmail(options: {
   message?: string;
   expiresInDays?: number;
 }): { subject: string; html: string; text: string } {
-  const {
-    workspaceName,
-    inviterName,
-    role,
-    acceptUrl,
-    message,
-    expiresInDays = 7,
-  } = options;
+  const { workspaceName, inviterName, role, acceptUrl, message, expiresInDays = 7 } = options;
 
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
 
@@ -240,10 +233,11 @@ This link will expire in ${expiresInHours} hours. If you didn't create an accoun
 /**
  * Email template for welcome email after signup
  */
-export function welcomeEmail(options: {
-  userName: string;
-  loginUrl: string;
-}): { subject: string; html: string; text: string } {
+export function welcomeEmail(options: { userName: string; loginUrl: string }): {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const { userName, loginUrl } = options;
 
   return {

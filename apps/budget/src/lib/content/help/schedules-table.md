@@ -6,7 +6,8 @@ related: [schedules-page-header]
 
 # Schedules Table
 
-The schedules table displays all your recurring transactions with their status and upcoming dates.
+The schedules table displays all your recurring transactions with their status
+and upcoming dates.
 
 ## Table Columns
 

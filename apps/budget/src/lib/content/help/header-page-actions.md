@@ -6,7 +6,8 @@ related: [header-page-tabs, add-transaction-button]
 
 # Page Actions
 
-Page actions are context-specific buttons that appear in the header based on the current page.
+Page actions are context-specific buttons that appear in the header based on the
+current page.
 
 ## How They Work
 

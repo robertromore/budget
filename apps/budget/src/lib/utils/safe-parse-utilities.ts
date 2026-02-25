@@ -25,10 +25,7 @@ export function safeParse<T>(fn: () => T, defaultValue: T): T {
  * Execute an async function safely with a fallback value
  * @example await safeParseAsync(async () => fetch(url), null)
  */
-export async function safeParseAsync<T>(
-  fn: () => Promise<T>,
-  defaultValue: T
-): Promise<T> {
+export async function safeParseAsync<T>(fn: () => Promise<T>, defaultValue: T): Promise<T> {
   try {
     return await fn();
   } catch {
@@ -51,9 +48,7 @@ export function safeResult<T>(fn: () => T): [T, null] | [null, Error] {
 /**
  * Execute an async function safely, returning result or error
  */
-export async function safeResultAsync<T>(
-  fn: () => Promise<T>
-): Promise<[T, null] | [null, Error]> {
+export async function safeResultAsync<T>(fn: () => Promise<T>): Promise<[T, null] | [null, Error]> {
   try {
     return [await fn(), null];
   } catch (error) {
@@ -132,10 +127,7 @@ export function safeParseFloat(value: string, defaultValue: number): number {
  * @example coerceToNumber('42') => 42
  * @example coerceToNumber(null, 0) => 0
  */
-export function coerceToNumber(
-  value: unknown,
-  defaultValue: number = 0
-): number {
+export function coerceToNumber(value: unknown, defaultValue: number = 0): number {
   if (value === null || value === undefined) return defaultValue;
   if (typeof value === "number") return isNaN(value) ? defaultValue : value;
   if (typeof value === "string") {
@@ -165,10 +157,7 @@ export function coerceToInt(value: unknown, defaultValue: number = 0): number {
  * @example coerceToBoolean(1) => true
  * @example coerceToBoolean('false') => false
  */
-export function coerceToBoolean(
-  value: unknown,
-  defaultValue: boolean = false
-): boolean {
+export function coerceToBoolean(value: unknown, defaultValue: boolean = false): boolean {
   if (value === null || value === undefined) return defaultValue;
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
@@ -189,10 +178,7 @@ export function coerceToBoolean(
  * @example coerceToString(42) => '42'
  * @example coerceToString(null, 'N/A') => 'N/A'
  */
-export function coerceToString(
-  value: unknown,
-  defaultValue: string = ""
-): string {
+export function coerceToString(value: unknown, defaultValue: string = ""): string {
   if (value === null || value === undefined) return defaultValue;
   if (typeof value === "string") return value;
   return String(value);
@@ -221,10 +207,7 @@ export function safeParseDateOrNull(value: string | number): Date | null {
  * @example safeParseDate('2024-01-15', new Date()) => Date for 2024-01-15
  * @example safeParseDate('invalid', new Date()) => current date
  */
-export function safeParseDate(
-  value: string | number,
-  defaultValue: Date
-): Date {
+export function safeParseDate(value: string | number, defaultValue: Date): Date {
   const parsed = safeParseDateOrNull(value);
   return parsed ?? defaultValue;
 }
@@ -280,9 +263,7 @@ export function coalesce<T>(...values: (T | null | undefined)[]): T | null {
  * Return first truthy value (including handling empty strings and 0)
  * @example coalesceTruthy('', 0, 'value') => 'value'
  */
-export function coalesceTruthy<T>(
-  ...values: (T | null | undefined | "" | 0)[]
-): T | null {
+export function coalesceTruthy<T>(...values: (T | null | undefined | "" | 0)[]): T | null {
   for (const value of values) {
     if (value) {
       return value as T;
@@ -300,10 +281,7 @@ export function coalesceTruthy<T>(
  * @example getStringOrDefault('hello', 'default') => 'hello'
  * @example getStringOrDefault(123, 'default') => 'default'
  */
-export function getStringOrDefault(
-  value: unknown,
-  defaultValue: string
-): string {
+export function getStringOrDefault(value: unknown, defaultValue: string): string {
   return typeof value === "string" ? value : defaultValue;
 }
 
@@ -312,10 +290,7 @@ export function getStringOrDefault(
  * @example getNumberOrDefault(42, 0) => 42
  * @example getNumberOrDefault('hello', 0) => 0
  */
-export function getNumberOrDefault(
-  value: unknown,
-  defaultValue: number
-): number {
+export function getNumberOrDefault(value: unknown, defaultValue: number): number {
   return typeof value === "number" && !isNaN(value) ? value : defaultValue;
 }
 
@@ -333,10 +308,7 @@ export function getArrayOrDefault<T>(value: unknown, defaultValue: T[]): T[] {
  * @example getObjectOrDefault({ a: 1 }, {}) => { a: 1 }
  * @example getObjectOrDefault('hello', {}) => {}
  */
-export function getObjectOrDefault<T extends object>(
-  value: unknown,
-  defaultValue: T
-): T {
+export function getObjectOrDefault<T extends object>(value: unknown, defaultValue: T): T {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as T)
     : defaultValue;
@@ -350,11 +322,7 @@ export function getObjectOrDefault<T extends object>(
  * Safely access nested property with fallback
  * @example safeGet(obj, o => o.deep.nested.value, 'default')
  */
-export function safeGet<T, R>(
-  obj: T,
-  accessor: (obj: T) => R,
-  defaultValue: R
-): R {
+export function safeGet<T, R>(obj: T, accessor: (obj: T) => R, defaultValue: R): R {
   try {
     const value = accessor(obj);
     return value === undefined || value === null ? defaultValue : value;
@@ -367,10 +335,7 @@ export function safeGet<T, R>(
  * Safely call a function on an object if it exists
  * @example safeCall(obj, o => o.method?.())
  */
-export function safeCall<T, R>(
-  obj: T,
-  fn: (obj: T) => R | undefined
-): R | undefined {
+export function safeCall<T, R>(obj: T, fn: (obj: T) => R | undefined): R | undefined {
   try {
     return fn(obj);
   } catch {

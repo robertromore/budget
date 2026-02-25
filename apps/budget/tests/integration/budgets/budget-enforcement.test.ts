@@ -5,11 +5,11 @@
  * their effect on budget behavior.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, sum} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, sum } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -101,7 +101,7 @@ async function createBudgetWithEnforcement(
     categoryId: ctx.categoryId,
   });
 
-  return {budget, template, periodInstance};
+  return { budget, template, periodInstance };
 }
 
 describe("Budget Enforcement", () => {
@@ -113,27 +113,30 @@ describe("Budget Enforcement", () => {
 
   describe("enforcement levels", () => {
     it("should support 'none' enforcement level", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "none");
+      const { budget } = await createBudgetWithEnforcement(ctx, "none");
 
       expect(budget.enforcementLevel).toBe("none");
     });
 
     it("should support 'warning' enforcement level", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "warning");
+      const { budget } = await createBudgetWithEnforcement(ctx, "warning");
 
       expect(budget.enforcementLevel).toBe("warning");
     });
 
     it("should support 'strict' enforcement level", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "strict");
+      const { budget } = await createBudgetWithEnforcement(ctx, "strict");
 
       expect(budget.enforcementLevel).toBe("strict");
     });
 
     it("should allow changing enforcement level", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "warning");
+      const { budget } = await createBudgetWithEnforcement(ctx, "warning");
 
-      await ctx.db.update(schema.budgets).set({enforcementLevel: "strict"}).where(eq(schema.budgets.id, budget.id));
+      await ctx.db
+        .update(schema.budgets)
+        .set({ enforcementLevel: "strict" })
+        .where(eq(schema.budgets.id, budget.id));
 
       const updated = await ctx.db.query.budgets.findFirst({
         where: eq(schema.budgets.id, budget.id),
@@ -145,7 +148,7 @@ describe("Budget Enforcement", () => {
 
   describe("none enforcement", () => {
     it("should allow transactions regardless of budget status", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "none", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "none", 100);
 
       // Create transaction that exceeds budget
       const [transaction] = await ctx.db
@@ -175,7 +178,7 @@ describe("Budget Enforcement", () => {
     });
 
     it("should not generate warnings for over-budget spending", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "none", 100);
+      const { budget } = await createBudgetWithEnforcement(ctx, "none", 100);
 
       // Simulate over-budget check
       const isOverBudget = await checkIfOverBudget(ctx.db, budget.id, 200);
@@ -188,7 +191,7 @@ describe("Budget Enforcement", () => {
 
   describe("warning enforcement", () => {
     it("should allow transactions that exceed budget", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "warning", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "warning", 100);
 
       const [transaction] = await ctx.db
         .insert(schema.transactions)
@@ -215,7 +218,7 @@ describe("Budget Enforcement", () => {
     });
 
     it("should detect when spending approaches limit (80% threshold)", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "warning", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "warning", 100);
 
       const [transaction] = await ctx.db
         .insert(schema.transactions)
@@ -239,7 +242,7 @@ describe("Budget Enforcement", () => {
       });
 
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, budget.id));
 
@@ -252,7 +255,7 @@ describe("Budget Enforcement", () => {
     });
 
     it("should detect over-budget status", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "warning", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "warning", 100);
 
       const [transaction] = await ctx.db
         .insert(schema.transactions)
@@ -271,14 +274,18 @@ describe("Budget Enforcement", () => {
         allocatedAmount: 120,
       });
 
-      const isOverBudget = await checkIfOverBudget(ctx.db, budget.id, periodInstance.allocatedAmount ?? 0);
+      const isOverBudget = await checkIfOverBudget(
+        ctx.db,
+        budget.id,
+        periodInstance.allocatedAmount ?? 0
+      );
       expect(isOverBudget).toBe(true);
     });
   });
 
   describe("strict enforcement", () => {
     it("should validate transaction against budget before allocation", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "strict", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "strict", 100);
 
       // Check if transaction would exceed budget BEFORE creating it
       const proposedAmount = 150;
@@ -297,7 +304,7 @@ describe("Budget Enforcement", () => {
     });
 
     it("should allow transactions within budget", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "strict", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "strict", 100);
 
       const proposedAmount = 80;
       const currentSpent = 0;
@@ -332,7 +339,7 @@ describe("Budget Enforcement", () => {
     });
 
     it("should calculate remaining budget for strict validation", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "strict", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "strict", 100);
 
       // First transaction
       const [txn1] = await ctx.db
@@ -354,7 +361,7 @@ describe("Budget Enforcement", () => {
 
       // Calculate remaining
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, budget.id));
 
@@ -380,15 +387,15 @@ describe("Budget Enforcement", () => {
       // Rename budgets to avoid conflicts
       await ctx.db
         .update(schema.budgets)
-        .set({slug: "none-budget-test"})
+        .set({ slug: "none-budget-test" })
         .where(eq(schema.budgets.id, noneResult.budget.id));
       await ctx.db
         .update(schema.budgets)
-        .set({slug: "warning-budget-test"})
+        .set({ slug: "warning-budget-test" })
         .where(eq(schema.budgets.id, warningResult.budget.id));
       await ctx.db
         .update(schema.budgets)
-        .set({slug: "strict-budget-test"})
+        .set({ slug: "strict-budget-test" })
         .where(eq(schema.budgets.id, strictResult.budget.id));
 
       const proposedAmount = 150; // Exceeds all budgets
@@ -409,10 +416,13 @@ describe("Budget Enforcement", () => {
 
   describe("budget status", () => {
     it("should only enforce active budgets", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "strict", 100);
+      const { budget } = await createBudgetWithEnforcement(ctx, "strict", 100);
 
       // Deactivate budget
-      await ctx.db.update(schema.budgets).set({status: "inactive"}).where(eq(schema.budgets.id, budget.id));
+      await ctx.db
+        .update(schema.budgets)
+        .set({ status: "inactive" })
+        .where(eq(schema.budgets.id, budget.id));
 
       const updated = await ctx.db.query.budgets.findFirst({
         where: eq(schema.budgets.id, budget.id),
@@ -426,9 +436,12 @@ describe("Budget Enforcement", () => {
     });
 
     it("should not enforce archived budgets", async () => {
-      const {budget} = await createBudgetWithEnforcement(ctx, "strict", 100);
+      const { budget } = await createBudgetWithEnforcement(ctx, "strict", 100);
 
-      await ctx.db.update(schema.budgets).set({status: "archived"}).where(eq(schema.budgets.id, budget.id));
+      await ctx.db
+        .update(schema.budgets)
+        .set({ status: "archived" })
+        .where(eq(schema.budgets.id, budget.id));
 
       const updated = await ctx.db.query.budgets.findFirst({
         where: eq(schema.budgets.id, budget.id),
@@ -441,7 +454,7 @@ describe("Budget Enforcement", () => {
 
   describe("utilization thresholds", () => {
     it("should calculate utilization rate correctly", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "warning", 1000);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "warning", 1000);
 
       const [transaction] = await ctx.db
         .insert(schema.transactions)
@@ -461,7 +474,7 @@ describe("Budget Enforcement", () => {
       });
 
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, budget.id));
 
@@ -474,11 +487,11 @@ describe("Budget Enforcement", () => {
 
     it("should identify different warning thresholds", async () => {
       const testCases = [
-        {spent: 50, allocated: 100, threshold: "safe"}, // 50%
-        {spent: 75, allocated: 100, threshold: "caution"}, // 75%
-        {spent: 85, allocated: 100, threshold: "warning"}, // 85%
-        {spent: 95, allocated: 100, threshold: "critical"}, // 95%
-        {spent: 110, allocated: 100, threshold: "exceeded"}, // 110%
+        { spent: 50, allocated: 100, threshold: "safe" }, // 50%
+        { spent: 75, allocated: 100, threshold: "caution" }, // 75%
+        { spent: 85, allocated: 100, threshold: "warning" }, // 85%
+        { spent: 95, allocated: 100, threshold: "critical" }, // 95%
+        { spent: 110, allocated: 100, threshold: "exceeded" }, // 110%
       ];
 
       for (const testCase of testCases) {
@@ -491,7 +504,7 @@ describe("Budget Enforcement", () => {
 
   describe("deficit detection", () => {
     it("should detect deficit when spending exceeds allocation", async () => {
-      const {budget, periodInstance} = await createBudgetWithEnforcement(ctx, "warning", 100);
+      const { budget, periodInstance } = await createBudgetWithEnforcement(ctx, "warning", 100);
 
       const [transaction] = await ctx.db
         .insert(schema.transactions)
@@ -511,7 +524,7 @@ describe("Budget Enforcement", () => {
       });
 
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, budget.id));
 
@@ -527,10 +540,10 @@ describe("Budget Enforcement", () => {
 
     it("should calculate deficit severity", async () => {
       const testCases = [
-        {deficit: 10, allocated: 100, severity: "low"}, // 10% over
-        {deficit: 25, allocated: 100, severity: "medium"}, // 25% over
-        {deficit: 50, allocated: 100, severity: "high"}, // 50% over
-        {deficit: 100, allocated: 100, severity: "critical"}, // 100% over
+        { deficit: 10, allocated: 100, severity: "low" }, // 10% over
+        { deficit: 25, allocated: 100, severity: "medium" }, // 25% over
+        { deficit: 50, allocated: 100, severity: "high" }, // 50% over
+        { deficit: 100, allocated: 100, severity: "critical" }, // 100% over
       ];
 
       for (const testCase of testCases) {
@@ -544,9 +557,13 @@ describe("Budget Enforcement", () => {
 
 // Helper functions for tests
 
-async function checkIfOverBudget(db: TestDb, budgetId: number, allocated: number): Promise<boolean> {
+async function checkIfOverBudget(
+  db: TestDb,
+  budgetId: number,
+  allocated: number
+): Promise<boolean> {
   const spentResult = await db
-    .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+    .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
     .from(schema.budgetTransactions)
     .where(eq(schema.budgetTransactions.budgetId, budgetId));
 

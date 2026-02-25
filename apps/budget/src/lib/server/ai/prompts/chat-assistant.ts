@@ -105,74 +105,73 @@ For actions the user can take in the app:
 - Insights are for highlighting key data points
 - Actions are for navigating to relevant app pages`;
 
-
 /**
  * Build a context-aware system prompt with full financial data
  */
 export function buildContextualPrompt(
-	financialContext: FinancialContext | null,
-	pageContext?: ChatContext
+  financialContext: FinancialContext | null,
+  pageContext?: ChatContext
 ): string {
-	let prompt = BUDGET_ASSISTANT_SYSTEM_PROMPT;
+  let prompt = BUDGET_ASSISTANT_SYSTEM_PROMPT;
 
-	// Add comprehensive financial data
-	if (financialContext) {
-		prompt += "\n\n" + formatContextForPrompt(financialContext);
-	} else {
-		prompt += `\n\n## Financial Data\n\nNo financial data is currently available. Please help the user with general budgeting advice.`;
-	}
+  // Add comprehensive financial data
+  if (financialContext) {
+    prompt += "\n\n" + formatContextForPrompt(financialContext);
+  } else {
+    prompt += `\n\n## Financial Data\n\nNo financial data is currently available. Please help the user with general budgeting advice.`;
+  }
 
-	// Add page context as a hint about likely topic
-	if (pageContext?.page) {
-		prompt += `\n## Likely Topic\n\nThe user is currently on the **${pageContext.page}** page, so they may be asking about related data. However, feel free to reference any of their financial data above to provide a complete answer.`;
+  // Add page context as a hint about likely topic
+  if (pageContext?.page) {
+    prompt += `\n## Likely Topic\n\nThe user is currently on the **${pageContext.page}** page, so they may be asking about related data. However, feel free to reference any of their financial data above to provide a complete answer.`;
 
-		// Add page-specific hints
-		switch (pageContext.page) {
-			case "dashboard":
-				prompt += ` They're likely interested in their overall financial picture.`;
-				break;
-			case "accounts":
-				prompt += ` They may be asking about specific accounts or balances.`;
-				break;
-			case "transactions":
-				prompt += ` They may have questions about specific transactions or categorization.`;
-				break;
-			case "payees":
-				prompt += ` They may be asking about spending with specific merchants.`;
-				break;
-			case "budgets":
-				prompt += ` They're likely interested in budget performance or allocation advice.`;
-				break;
-			case "categories":
-				prompt += ` They may want to understand category spending patterns.`;
-				break;
-			case "schedules":
-				prompt += ` They may have questions about recurring payments or subscriptions.`;
-				break;
-		}
-	}
+    // Add page-specific hints
+    switch (pageContext.page) {
+      case "dashboard":
+        prompt += ` They're likely interested in their overall financial picture.`;
+        break;
+      case "accounts":
+        prompt += ` They may be asking about specific accounts or balances.`;
+        break;
+      case "transactions":
+        prompt += ` They may have questions about specific transactions or categorization.`;
+        break;
+      case "payees":
+        prompt += ` They may be asking about spending with specific merchants.`;
+        break;
+      case "budgets":
+        prompt += ` They're likely interested in budget performance or allocation advice.`;
+        break;
+      case "categories":
+        prompt += ` They may want to understand category spending patterns.`;
+        break;
+      case "schedules":
+        prompt += ` They may have questions about recurring payments or subscriptions.`;
+        break;
+    }
+  }
 
-	// Add entity-specific context if available
-	if (pageContext?.entityType && pageContext?.entityId) {
-		prompt += `\n\nThe user is viewing a specific ${pageContext.entityType} (ID: ${pageContext.entityId}).`;
-	}
+  // Add entity-specific context if available
+  if (pageContext?.entityType && pageContext?.entityId) {
+    prompt += `\n\nThe user is viewing a specific ${pageContext.entityType} (ID: ${pageContext.entityId}).`;
+  }
 
-	// Add any additional context data
-	if (pageContext?.data && isNotEmptyObject(pageContext.data)) {
-		prompt += `\n\nAdditional context: ${JSON.stringify(pageContext.data)}`;
-	}
+  // Add any additional context data
+  if (pageContext?.data && isNotEmptyObject(pageContext.data)) {
+    prompt += `\n\nAdditional context: ${JSON.stringify(pageContext.data)}`;
+  }
 
-	return prompt;
+  return prompt;
 }
 
 /**
  * Quick suggestion prompts for the empty state
  */
 export const QUICK_SUGGESTIONS = [
-	"How can I reduce my spending?",
-	"What are my biggest expenses?",
-	"Help me create a budget",
-	"Explain my spending trends",
-	"How can I save more money?",
-	"What subscriptions should I review?",
+  "How can I reduce my spending?",
+  "What are my biggest expenses?",
+  "Help me create a budget",
+  "Explain my spending trends",
+  "How can I save more money?",
+  "What subscriptions should I review?",
 ];

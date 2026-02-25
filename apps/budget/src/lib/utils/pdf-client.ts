@@ -45,10 +45,7 @@ interface Html2PdfInternalOptions {
  * });
  * ```
  */
-export async function generatePdf(
-  element: HTMLElement,
-  options: PdfOptions = {}
-): Promise<void> {
+export async function generatePdf(element: HTMLElement, options: PdfOptions = {}): Promise<void> {
   const {
     filename = "report",
     margin = 10,
@@ -77,7 +74,10 @@ export async function generatePdf(
     },
   };
 
-  await html2pdf().set(pdfOptions as any).from(element).save();
+  await html2pdf()
+    .set(pdfOptions as any)
+    .from(element)
+    .save();
 }
 
 /**
@@ -117,7 +117,10 @@ export async function generatePdfBlob(
     },
   };
 
-  return html2pdf().set(pdfOptions as any).from(element).outputPdf("blob");
+  return html2pdf()
+    .set(pdfOptions as any)
+    .from(element)
+    .outputPdf("blob");
 }
 
 /**
@@ -193,11 +196,7 @@ export function generateHtmlExport(element: HTMLElement, title: string): string 
  * @param filename - Filename (without .html extension)
  * @param title - Document title
  */
-export function downloadHtml(
-  element: HTMLElement,
-  filename: string,
-  title: string
-): void {
+export function downloadHtml(element: HTMLElement, filename: string, title: string): void {
   const html = generateHtmlExport(element, title);
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);

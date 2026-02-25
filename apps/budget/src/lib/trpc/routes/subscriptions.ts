@@ -1,8 +1,4 @@
-import {
-  billingCycles,
-  subscriptionStatuses,
-  subscriptionTypes,
-} from "$lib/schema/subscriptions";
+import { billingCycles, subscriptionStatuses, subscriptionTypes } from "$lib/schema/subscriptions";
 import {
   insertSubscriptionSchema,
   updateSubscriptionSchema,
@@ -15,32 +11,49 @@ import { z } from "zod";
 const subscriptionService = new SubscriptionService();
 
 // Input schemas
-const filtersSchema = z.object({
-  status: z.enum(subscriptionStatuses).or(z.array(z.enum(subscriptionStatuses))).optional(),
-  type: z.enum(subscriptionTypes).or(z.array(z.enum(subscriptionTypes))).optional(),
-  billingCycle: z.enum(billingCycles).or(z.array(z.enum(billingCycles))).optional(),
-  accountId: z.number().optional(),
-  payeeId: z.number().optional(),
-  minAmount: z.number().optional(),
-  maxAmount: z.number().optional(),
-  isManuallyAdded: z.boolean().optional(),
-  isUserConfirmed: z.boolean().optional(),
-  search: z.string().optional(),
-}).optional();
+const filtersSchema = z
+  .object({
+    status: z
+      .enum(subscriptionStatuses)
+      .or(z.array(z.enum(subscriptionStatuses)))
+      .optional(),
+    type: z
+      .enum(subscriptionTypes)
+      .or(z.array(z.enum(subscriptionTypes)))
+      .optional(),
+    billingCycle: z
+      .enum(billingCycles)
+      .or(z.array(z.enum(billingCycles)))
+      .optional(),
+    accountId: z.number().optional(),
+    payeeId: z.number().optional(),
+    minAmount: z.number().optional(),
+    maxAmount: z.number().optional(),
+    isManuallyAdded: z.boolean().optional(),
+    isUserConfirmed: z.boolean().optional(),
+    search: z.string().optional(),
+  })
+  .optional();
 
-const sortSchema = z.object({
-  field: z.enum(["name", "amount", "renewalDate", "createdAt", "type", "status"]),
-  direction: z.enum(["asc", "desc"]),
-}).optional();
+const sortSchema = z
+  .object({
+    field: z.enum(["name", "amount", "renewalDate", "createdAt", "type", "status"]),
+    direction: z.enum(["asc", "desc"]),
+  })
+  .optional();
 
 export const subscriptionRoutes = t.router({
   // ==================== CRUD ====================
 
   all: publicProcedure
-    .input(z.object({
-      filters: filtersSchema,
-      sort: sortSchema,
-    }).optional())
+    .input(
+      z
+        .object({
+          filters: filtersSchema,
+          sort: sortSchema,
+        })
+        .optional()
+    )
     .query(async ({ ctx, input }) => {
       return await subscriptionService.getAll(
         ctx.workspaceId,
@@ -68,24 +81,20 @@ export const subscriptionRoutes = t.router({
       return await subscriptionService.getByAccount(input.accountId, ctx.workspaceId);
     }),
 
-  create: rateLimitedProcedure
-    .input(insertSubscriptionSchema)
-    .mutation(async ({ ctx, input }) => {
-      return await subscriptionService.create(input, ctx.workspaceId);
-    }),
+  create: rateLimitedProcedure.input(insertSubscriptionSchema).mutation(async ({ ctx, input }) => {
+    return await subscriptionService.create(input, ctx.workspaceId);
+  }),
 
-  update: rateLimitedProcedure
-    .input(updateSubscriptionSchema)
-    .mutation(async ({ ctx, input }) => {
-      const subscription = await subscriptionService.update(input, ctx.workspaceId);
-      if (!subscription) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Subscription not found",
-        });
-      }
-      return subscription;
-    }),
+  update: rateLimitedProcedure.input(updateSubscriptionSchema).mutation(async ({ ctx, input }) => {
+    const subscription = await subscriptionService.update(input, ctx.workspaceId);
+    if (!subscription) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Subscription not found",
+      });
+    }
+    return subscription;
+  }),
 
   delete: rateLimitedProcedure
     .input(z.object({ id: z.number().positive() }))
@@ -103,26 +112,32 @@ export const subscriptionRoutes = t.router({
   // ==================== DETECTION ====================
 
   detect: publicProcedure
-    .input(z.object({
-      payeeIds: z.array(z.number().positive()).optional(),
-      includeAlreadyTracked: z.boolean().optional(),
-      minConfidence: z.number().min(0).max(1).optional(),
-      accountId: z.number().positive().optional(),
-    }).optional())
+    .input(
+      z
+        .object({
+          payeeIds: z.array(z.number().positive()).optional(),
+          includeAlreadyTracked: z.boolean().optional(),
+          minConfidence: z.number().min(0).max(1).optional(),
+          accountId: z.number().positive().optional(),
+        })
+        .optional()
+    )
     .query(async ({ ctx, input }) => {
       return await subscriptionService.detectSubscriptions(ctx.workspaceId, input);
     }),
 
   confirm: rateLimitedProcedure
-    .input(z.object({
-      payeeId: z.number().positive(),
-      name: z.string().optional(),
-      type: z.enum(subscriptionTypes).optional(),
-      billingCycle: z.enum(billingCycles).optional(),
-      amount: z.number().positive().optional(),
-      accountId: z.number().positive().optional(),
-      renewalDate: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        payeeId: z.number().positive(),
+        name: z.string().optional(),
+        type: z.enum(subscriptionTypes).optional(),
+        billingCycle: z.enum(billingCycles).optional(),
+        amount: z.number().positive().optional(),
+        accountId: z.number().positive().optional(),
+        renewalDate: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       return await subscriptionService.confirmSubscription(input, ctx.workspaceId);
     }),
@@ -139,13 +154,17 @@ export const subscriptionRoutes = t.router({
    * Similar to how budgets analyze transactions for recurring expenses
    */
   detectFromTransactions: publicProcedure
-    .input(z.object({
-      accountIds: z.array(z.number().positive()).optional(),
-      months: z.number().positive().max(24).optional(),
-      minTransactions: z.number().positive().optional(),
-      minConfidence: z.number().min(0).max(100).optional(),
-      minPredictability: z.number().min(0).max(100).optional(),
-    }).optional())
+    .input(
+      z
+        .object({
+          accountIds: z.array(z.number().positive()).optional(),
+          months: z.number().positive().max(24).optional(),
+          minTransactions: z.number().positive().optional(),
+          minConfidence: z.number().min(0).max(100).optional(),
+          minPredictability: z.number().min(0).max(100).optional(),
+        })
+        .optional()
+    )
     .query(async ({ ctx, input }) => {
       return await subscriptionService.detectFromTransactions(ctx.workspaceId, input);
     }),
@@ -159,12 +178,14 @@ export const subscriptionRoutes = t.router({
     }),
 
   recordPriceChange: rateLimitedProcedure
-    .input(z.object({
-      subscriptionId: z.number().positive(),
-      newAmount: z.number().positive(),
-      effectiveDate: z.string().optional(),
-      transactionId: z.number().positive().optional(),
-    }))
+    .input(
+      z.object({
+        subscriptionId: z.number().positive(),
+        newAmount: z.number().positive(),
+        effectiveDate: z.string().optional(),
+        transactionId: z.number().positive().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       await subscriptionService.recordPriceChange(input, ctx.workspaceId);
       return { success: true };
@@ -211,10 +232,12 @@ export const subscriptionRoutes = t.router({
     }),
 
   calendarView: publicProcedure
-    .input(z.object({
-      startDate: z.string(),
-      endDate: z.string(),
-    }))
+    .input(
+      z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       return await subscriptionService.getCalendarView(
         ctx.workspaceId,
@@ -256,10 +279,12 @@ export const subscriptionRoutes = t.router({
     }),
 
   bulkUpdateStatus: rateLimitedProcedure
-    .input(z.object({
-      ids: z.array(z.number().positive()).min(1),
-      status: z.enum(subscriptionStatuses),
-    }))
+    .input(
+      z.object({
+        ids: z.array(z.number().positive()).min(1),
+        status: z.enum(subscriptionStatuses),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const results = {
         success: 0,

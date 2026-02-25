@@ -153,14 +153,16 @@ export interface BudgetPredictionService {
   predictCategoryOverspend(
     workspaceId: number,
     budgetId: number
-  ): Promise<Array<{
-    categoryId: number;
-    categoryName: string;
-    allocated: number;
-    spent: number;
-    predicted: number;
-    risk: OverspendRisk;
-  }>>;
+  ): Promise<
+    Array<{
+      categoryId: number;
+      categoryName: string;
+      allocated: number;
+      spent: number;
+      predicted: number;
+      risk: OverspendRisk;
+    }>
+  >;
 }
 
 // =============================================================================
@@ -358,10 +360,15 @@ export function createBudgetPredictionService(
   /**
    * Generate recommendation based on prediction
    */
-  function generateRecommendation(
-    prediction: BudgetOverspendPrediction
-  ): string {
-    const { overSpendRisk, predictedOverspend, remainingBudget, daysRemaining, recommendedDailyLimit, dailySpendingRate } = prediction;
+  function generateRecommendation(prediction: BudgetOverspendPrediction): string {
+    const {
+      overSpendRisk,
+      predictedOverspend,
+      remainingBudget,
+      daysRemaining,
+      recommendedDailyLimit,
+      dailySpendingRate,
+    } = prediction;
 
     if (overSpendRisk === "none") {
       return "On track! You're within your budget allocation.";
@@ -372,7 +379,10 @@ export function createBudgetPredictionService(
     }
 
     if (overSpendRisk === "medium") {
-      const reduceBy = formatPercent((dailySpendingRate - recommendedDailyLimit) / dailySpendingRate, 0);
+      const reduceBy = formatPercent(
+        (dailySpendingRate - recommendedDailyLimit) / dailySpendingRate,
+        0
+      );
       return `At current pace, you'll exceed your budget by ~$${Math.abs(predictedOverspend).toFixed(2)}. Reduce daily spending by ${reduceBy} to stay on track.`;
     }
 
@@ -420,8 +430,11 @@ export function createBudgetPredictionService(
       const startDate = new Date(period.startDate);
       const endDate = new Date(period.endDate);
 
-      const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      const daysElapsed = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const totalDays =
+        Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const daysElapsed = Math.ceil(
+        (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
       const daysRemaining = Math.max(0, totalDays - daysElapsed);
 
       // Get current spending
@@ -455,7 +468,7 @@ export function createBudgetPredictionService(
       const factors: PredictionFactor[] = [];
 
       // Factor 1: Current spending rate projection
-      const rateProjection = currentSpending + (dailySpendingRate * daysRemaining);
+      const rateProjection = currentSpending + dailySpendingRate * daysRemaining;
       factors.push({
         type: "spending_rate",
         description: `Current rate: $${dailySpendingRate.toFixed(2)}/day`,
@@ -495,9 +508,11 @@ export function createBudgetPredictionService(
       }
 
       // Calculate weighted prediction
-      const projectedFromRate = currentSpending + (dailySpendingRate * daysRemaining);
-      const projectedWithRecurring = currentSpending + upcomingRecurring + (dailySpendingRate * daysRemaining * 0.4);
-      const projectedFromHistorical = (historical.average || allocatedAmount) * historical.endOfMonthMultiplier;
+      const projectedFromRate = currentSpending + dailySpendingRate * daysRemaining;
+      const projectedWithRecurring =
+        currentSpending + upcomingRecurring + dailySpendingRate * daysRemaining * 0.4;
+      const projectedFromHistorical =
+        (historical.average || allocatedAmount) * historical.endOfMonthMultiplier;
 
       // Weighted ensemble prediction
       const predictedEndSpending =
@@ -506,11 +521,13 @@ export function createBudgetPredictionService(
         projectedFromHistorical * cfg.historicalWeight;
 
       const predictedOverspend = predictedEndSpending - allocatedAmount;
-      const predictedPercent = allocatedAmount > 0 ? (predictedEndSpending / allocatedAmount) * 100 : 0;
+      const predictedPercent =
+        allocatedAmount > 0 ? (predictedEndSpending / allocatedAmount) * 100 : 0;
       const overSpendRisk = calculateRisk(predictedPercent);
 
       // Calculate recommended daily limit
-      const recommendedDailyLimit = daysRemaining > 0 ? Math.max(0, remainingBudget / daysRemaining) : 0;
+      const recommendedDailyLimit =
+        daysRemaining > 0 ? Math.max(0, remainingBudget / daysRemaining) : 0;
 
       // Calculate confidence
       const confidence = Math.min(
@@ -640,14 +657,16 @@ export function createBudgetPredictionService(
     async predictCategoryOverspend(
       workspaceId: number,
       budgetId: number
-    ): Promise<Array<{
-      categoryId: number;
-      categoryName: string;
-      allocated: number;
-      spent: number;
-      predicted: number;
-      risk: OverspendRisk;
-    }>> {
+    ): Promise<
+      Array<{
+        categoryId: number;
+        categoryName: string;
+        allocated: number;
+        spent: number;
+        predicted: number;
+        risk: OverspendRisk;
+      }>
+    > {
       // Get budget period
       const period = await getCurrentPeriod(budgetId);
       if (!period) {
@@ -671,8 +690,11 @@ export function createBudgetPredictionService(
       const today = new Date();
       const startDate = new Date(period.startDate);
       const endDate = new Date(period.endDate);
-      const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      const daysElapsed = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const totalDays =
+        Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const daysElapsed = Math.ceil(
+        (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
       const daysRemaining = Math.max(0, totalDays - daysElapsed);
 
       // Calculate per-category allocation (equal split for now)
@@ -710,8 +732,9 @@ export function createBudgetPredictionService(
 
         const spent = Math.abs(spending[0]?.total || 0);
         const dailyRate = daysElapsed > 0 ? spent / daysElapsed : 0;
-        const predicted = spent + (dailyRate * daysRemaining);
-        const predictedPercent = perCategoryAllocation > 0 ? (predicted / perCategoryAllocation) * 100 : 0;
+        const predicted = spent + dailyRate * daysRemaining;
+        const predictedPercent =
+          perCategoryAllocation > 0 ? (predicted / perCategoryAllocation) * 100 : 0;
 
         results.push({
           categoryId: cat.categoryId,

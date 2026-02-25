@@ -25,8 +25,9 @@ const totalCount = $derived(realTransactions.length);
 const pageRowCount = $derived(
   table
     .getRowModel()
-    .rows.filter((row) => typeof row.original.id === 'number' || row.original.isReconciliationMarker)
-    .length
+    .rows.filter(
+      (row) => typeof row.original.id === 'number' || row.original.isReconciliationMarker
+    ).length
 );
 const allPageRowsSelected = $derived(table.getIsAllPageRowsSelected());
 const canSelectAll = $derived(allPageRowsSelected && totalCount > pageRowCount);

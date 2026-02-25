@@ -12,7 +12,7 @@ import {
   type LLMFeatureModes,
   type LLMPreferences,
   type LLMProviderConfig,
-  workspaces
+  workspaces,
 } from "$lib/schema/workspaces";
 import { db } from "$lib/server/db";
 import {
@@ -73,11 +73,26 @@ function normalizeFeatureModes(
   modes: Partial<Record<keyof LLMFeatureModes, LLMFeatureConfig | string>> | undefined
 ): LLMFeatureModes {
   return {
-    transactionParsing: normalizeFeatureConfig(modes?.transactionParsing, DEFAULT_LLM_PREFERENCES.featureModes.transactionParsing),
-    categorySuggestion: normalizeFeatureConfig(modes?.categorySuggestion, DEFAULT_LLM_PREFERENCES.featureModes.categorySuggestion),
-    anomalyDetection: normalizeFeatureConfig(modes?.anomalyDetection, DEFAULT_LLM_PREFERENCES.featureModes.anomalyDetection),
-    forecasting: normalizeFeatureConfig(modes?.forecasting, DEFAULT_LLM_PREFERENCES.featureModes.forecasting),
-    payeeMatching: normalizeFeatureConfig(modes?.payeeMatching, DEFAULT_LLM_PREFERENCES.featureModes.payeeMatching),
+    transactionParsing: normalizeFeatureConfig(
+      modes?.transactionParsing,
+      DEFAULT_LLM_PREFERENCES.featureModes.transactionParsing
+    ),
+    categorySuggestion: normalizeFeatureConfig(
+      modes?.categorySuggestion,
+      DEFAULT_LLM_PREFERENCES.featureModes.categorySuggestion
+    ),
+    anomalyDetection: normalizeFeatureConfig(
+      modes?.anomalyDetection,
+      DEFAULT_LLM_PREFERENCES.featureModes.anomalyDetection
+    ),
+    forecasting: normalizeFeatureConfig(
+      modes?.forecasting,
+      DEFAULT_LLM_PREFERENCES.featureModes.forecasting
+    ),
+    payeeMatching: normalizeFeatureConfig(
+      modes?.payeeMatching,
+      DEFAULT_LLM_PREFERENCES.featureModes.payeeMatching
+    ),
   };
 }
 
@@ -107,7 +122,9 @@ function getMaskedProviderConfig(
   };
 }
 
-function normalizeOllamaEndpoint(rawEndpoint?: string): { ok: true; endpoint: string } | { ok: false; error: string } {
+function normalizeOllamaEndpoint(
+  rawEndpoint?: string
+): { ok: true; endpoint: string } | { ok: false; error: string } {
   const raw = (rawEndpoint?.trim() || "http://localhost:11434").replace(/\/+$/, "");
 
   let parsed: URL;
@@ -151,12 +168,18 @@ export const llmSettingsRoutes = t.router({
 
       // Mask API keys for client display (also adds hasApiKey field)
       const maskedProviders = {
-        openai: getMaskedProviderConfig(llm.providers?.openai ?? DEFAULT_LLM_PREFERENCES.providers.openai),
+        openai: getMaskedProviderConfig(
+          llm.providers?.openai ?? DEFAULT_LLM_PREFERENCES.providers.openai
+        ),
         anthropic: getMaskedProviderConfig(
           llm.providers?.anthropic ?? DEFAULT_LLM_PREFERENCES.providers.anthropic
         ),
-        google: getMaskedProviderConfig(llm.providers?.google ?? DEFAULT_LLM_PREFERENCES.providers.google),
-        ollama: getMaskedProviderConfig(llm.providers?.ollama ?? DEFAULT_LLM_PREFERENCES.providers.ollama),
+        google: getMaskedProviderConfig(
+          llm.providers?.google ?? DEFAULT_LLM_PREFERENCES.providers.google
+        ),
+        ollama: getMaskedProviderConfig(
+          llm.providers?.ollama ?? DEFAULT_LLM_PREFERENCES.providers.ollama
+        ),
       };
 
       return {
@@ -262,7 +285,9 @@ export const llmSettingsRoutes = t.router({
         // Remove encrypted key and disable provider
         const updatedProvider: LLMProviderConfig = {
           enabled: false,
-          model: currentLLM.providers?.[input.provider]?.model ?? DEFAULT_LLM_PREFERENCES.providers[input.provider].model,
+          model:
+            currentLLM.providers?.[input.provider]?.model ??
+            DEFAULT_LLM_PREFERENCES.providers[input.provider].model,
           endpoint: currentLLM.providers?.[input.provider]?.endpoint,
         };
 
@@ -435,9 +460,11 @@ export const llmSettingsRoutes = t.router({
   /**
    * Get available models for a provider.
    */
-  getModels: publicProcedure.input(z.object({ provider: llmProviderSchema })).query(async ({ input }) => {
-    return LLM_MODELS[input.provider];
-  }),
+  getModels: publicProcedure
+    .input(z.object({ provider: llmProviderSchema }))
+    .query(async ({ input }) => {
+      return LLM_MODELS[input.provider];
+    }),
 
   /**
    * Fetch installed models from Ollama server.
@@ -466,42 +493,53 @@ export const llmSettingsRoutes = t.router({
           return {
             success: false,
             error: `Ollama server returned ${response.status}`,
-            models: []
+            models: [],
           };
         }
 
         const data = await response.json();
 
         // Transform Ollama's model format to our ModelInfo format
-        const models = (data.models || []).map((m: { name: string; size?: number; modified_at?: string; details?: { parameter_size?: string; family?: string; quantization_level?: string } }) => {
-          const baseName = m.name.split(":")[0];
+        const models = (data.models || []).map(
+          (m: {
+            name: string;
+            size?: number;
+            modified_at?: string;
+            details?: { parameter_size?: string; family?: string; quantization_level?: string };
+          }) => {
+            const baseName = m.name.split(":")[0];
 
-          // Check if we have a hardcoded description for this model
-          const knownModel = LLM_MODELS.ollama.find(
-            (known) => known.id === m.name || known.id === baseName || baseName.startsWith(known.id.split(".")[0])
-          );
+            // Check if we have a hardcoded description for this model
+            const knownModel = LLM_MODELS.ollama.find(
+              (known) =>
+                known.id === m.name ||
+                known.id === baseName ||
+                baseName.startsWith(known.id.split(".")[0])
+            );
 
-          // Generate a helpful description from model details
-          let description = "Local Ollama model";
-          if (knownModel) {
-            description = knownModel.description;
-          } else if (m.details) {
-            const parts: string[] = [];
-            if (m.details.parameter_size) parts.push(m.details.parameter_size);
-            if (m.details.quantization_level) parts.push(m.details.quantization_level);
-            if (m.details.family) parts.push(`${m.details.family} family`);
-            if (parts.length > 0) {
-              description = parts.join(" · ");
+            // Generate a helpful description from model details
+            let description = "Local Ollama model";
+            if (knownModel) {
+              description = knownModel.description;
+            } else if (m.details) {
+              const parts: string[] = [];
+              if (m.details.parameter_size) parts.push(m.details.parameter_size);
+              if (m.details.quantization_level) parts.push(m.details.quantization_level);
+              if (m.details.family) parts.push(`${m.details.family} family`);
+              if (parts.length > 0) {
+                description = parts.join(" · ");
+              }
             }
-          }
 
-          return {
-            id: m.name,
-            name: baseName,
-            description,
-            recommended: knownModel && "recommended" in knownModel ? knownModel.recommended : undefined,
-          };
-        });
+            return {
+              id: m.name,
+              name: baseName,
+              description,
+              recommended:
+                knownModel && "recommended" in knownModel ? knownModel.recommended : undefined,
+            };
+          }
+        );
 
         return { success: true, models, error: null };
       } catch (error) {
@@ -509,7 +547,7 @@ export const llmSettingsRoutes = t.router({
         return {
           success: false,
           error: `Cannot connect to Ollama at ${endpoint}: ${message}`,
-          models: []
+          models: [],
         };
       }
     }),

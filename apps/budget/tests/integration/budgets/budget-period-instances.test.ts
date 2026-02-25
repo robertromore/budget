@@ -5,11 +5,11 @@
  * and period management.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, gte, lte} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, gte, lte } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -84,7 +84,7 @@ describe("Budget Period Instances", () => {
 
   describe("createPeriodInstance", () => {
     it("should create a period instance with correct boundaries", async () => {
-      const {startDate, endDate} = calculateMonthlyBoundaries(2024, 0); // January 2024
+      const { startDate, endDate } = calculateMonthlyBoundaries(2024, 0); // January 2024
 
       const [instance] = await ctx.db
         .insert(schema.budgetPeriodInstances)
@@ -105,7 +105,7 @@ describe("Budget Period Instances", () => {
     });
 
     it("should calculate period duration correctly", async () => {
-      const {startDate, endDate} = calculateMonthlyBoundaries(2024, 1); // February 2024 (leap year)
+      const { startDate, endDate } = calculateMonthlyBoundaries(2024, 1); // February 2024 (leap year)
 
       const [instance] = await ctx.db
         .insert(schema.budgetPeriodInstances)
@@ -156,7 +156,7 @@ describe("Budget Period Instances", () => {
 
   describe("allocated vs actual amounts", () => {
     it("should track allocated amount separately from actual spending", async () => {
-      const {startDate, endDate} = calculateMonthlyBoundaries(2024, 0);
+      const { startDate, endDate } = calculateMonthlyBoundaries(2024, 0);
 
       const [instance] = await ctx.db
         .insert(schema.budgetPeriodInstances)
@@ -178,7 +178,7 @@ describe("Budget Period Instances", () => {
     });
 
     it("should detect overspending when actual exceeds allocated", async () => {
-      const {startDate, endDate} = calculateMonthlyBoundaries(2024, 0);
+      const { startDate, endDate } = calculateMonthlyBoundaries(2024, 0);
 
       const [instance] = await ctx.db
         .insert(schema.budgetPeriodInstances)
@@ -199,7 +199,7 @@ describe("Budget Period Instances", () => {
     });
 
     it("should calculate utilization rate", async () => {
-      const {startDate, endDate} = calculateMonthlyBoundaries(2024, 0);
+      const { startDate, endDate } = calculateMonthlyBoundaries(2024, 0);
 
       const [instance] = await ctx.db
         .insert(schema.budgetPeriodInstances)
@@ -368,7 +368,7 @@ describe("Budget Period Instances", () => {
 
   describe("period analytics", () => {
     it("should calculate performance score based on utilization", async () => {
-      const {startDate, endDate} = calculateMonthlyBoundaries(2024, 0);
+      const { startDate, endDate } = calculateMonthlyBoundaries(2024, 0);
 
       const [instance] = await ctx.db
         .insert(schema.budgetPeriodInstances)
@@ -400,13 +400,13 @@ describe("Budget Period Instances", () => {
 
     it("should detect spending trends across periods", async () => {
       const periods = [
-        {month: 0, actual: 800},
-        {month: 1, actual: 850},
-        {month: 2, actual: 900},
+        { month: 0, actual: 800 },
+        { month: 1, actual: 850 },
+        { month: 2, actual: 900 },
       ];
 
       for (const p of periods) {
-        const {startDate, endDate} = calculateMonthlyBoundaries(2024, p.month);
+        const { startDate, endDate } = calculateMonthlyBoundaries(2024, p.month);
         await ctx.db.insert(schema.budgetPeriodInstances).values({
           templateId: ctx.templateId,
           startDate,

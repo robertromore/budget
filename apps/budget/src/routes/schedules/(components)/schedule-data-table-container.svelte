@@ -37,11 +37,7 @@ const tableColumns = $derived(columns({ onView, onEdit, onDelete }));
   </div>
 {:else if browser}
   <!-- Show the data table -->
-  <ScheduleDataTable
-    columns={tableColumns}
-    {schedules}
-    {onBulkDelete}
-    bind:table />
+  <ScheduleDataTable columns={tableColumns} {schedules} {onBulkDelete} bind:table />
 {:else}
   <!-- Fallback loading state -->
   <div class="space-y-4">

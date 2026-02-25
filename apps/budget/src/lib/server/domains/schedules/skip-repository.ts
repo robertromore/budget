@@ -20,10 +20,7 @@ export class ScheduleSkipRepository {
    */
   async getSingleSkippedDatesSet(scheduleId: number): Promise<Set<string>> {
     const skips = await db.query.scheduleSkips.findMany({
-      where: and(
-        eq(scheduleSkips.scheduleId, scheduleId),
-        eq(scheduleSkips.skipType, "single")
-      ),
+      where: and(eq(scheduleSkips.scheduleId, scheduleId), eq(scheduleSkips.skipType, "single")),
     });
     return new Set(skips.map((skip) => skip.skippedDate));
   }
@@ -46,10 +43,7 @@ export class ScheduleSkipRepository {
    */
   async isDateSkipped(scheduleId: number, date: string): Promise<boolean> {
     const existing = await db.query.scheduleSkips.findFirst({
-      where: and(
-        eq(scheduleSkips.scheduleId, scheduleId),
-        eq(scheduleSkips.skippedDate, date)
-      ),
+      where: and(eq(scheduleSkips.scheduleId, scheduleId), eq(scheduleSkips.skippedDate, date)),
     });
     return !!existing;
   }

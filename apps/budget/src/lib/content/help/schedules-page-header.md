@@ -6,11 +6,13 @@ related: [schedules-table]
 
 # Schedules Page
 
-Schedules help you track and manage recurring transactions like bills, subscriptions, and regular income.
+Schedules help you track and manage recurring transactions like bills,
+subscriptions, and regular income.
 
 ## Overview
 
 Schedules allow you to:
+
 - Track recurring bills and subscriptions
 - Set reminders for upcoming payments
 - Auto-create transactions on schedule dates

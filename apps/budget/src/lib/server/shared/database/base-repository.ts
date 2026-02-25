@@ -4,7 +4,7 @@ import type {
   FilterOptions,
   PaginatedResult,
   PaginationOptions,
-  SortOptions
+  SortOptions,
 } from "$lib/server/shared/types";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
 import { getCurrentTimestamp } from "$lib/utils/dates";
@@ -128,8 +128,8 @@ export abstract class BaseRepository<
         errno: error?.errno,
         name: error?.name,
         cause: error?.cause,
-        stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
-        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+        stack: error?.stack?.split("\n").slice(0, 5).join("\n"),
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
       });
 
       // Preserve the original error message and properties for SQLite constraint errors
@@ -212,7 +212,11 @@ export abstract class BaseRepository<
         throw new DatabaseError(`Soft delete not supported for ${this.entityName}`, "softDelete");
       }
 
-      return await this.update(id, { deletedAt: getCurrentTimestamp() } as TUpdateInput, workspaceId);
+      return await this.update(
+        id,
+        { deletedAt: getCurrentTimestamp() } as TUpdateInput,
+        workspaceId
+      );
     } catch (error) {
       if (error instanceof DatabaseError || error instanceof NotFoundError) throw error;
       throw new DatabaseError(`Failed to soft delete ${this.entityName}`, "softDelete");

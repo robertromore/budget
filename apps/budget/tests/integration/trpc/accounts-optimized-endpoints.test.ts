@@ -1,8 +1,16 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {setupTestDb, clearTestDb} from "../setup/test-db";
-import {accounts, transactions, categories, payees, users, workspaces, workspaceMembers} from "$lib/schema";
-import {queryCache} from "$lib/utils/cache";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { setupTestDb, clearTestDb } from "../setup/test-db";
+import {
+  accounts,
+  transactions,
+  categories,
+  payees,
+  users,
+  workspaces,
+  workspaceMembers,
+} from "$lib/schema";
+import { queryCache } from "$lib/utils/cache";
 
 describe("Optimized Account Endpoints Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -138,7 +146,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
     });
 
     test("should throw error for non-existent account", async () => {
-      await expect(caller.serverAccountsRoutes.loadSummary({id: 99999})).rejects.toThrow(
+      await expect(caller.serverAccountsRoutes.loadSummary({ id: 99999 })).rejects.toThrow(
         "Account not found"
       );
     });

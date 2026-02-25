@@ -11,16 +11,24 @@ The summary cards provide a quick snapshot of your overall budget health.
 ## Summary Cards
 
 ### Total Allocated
-The combined amount you've budgeted across all active budgets. This represents your planned spending limits.
+
+The combined amount you've budgeted across all active budgets. This represents
+your planned spending limits.
 
 ### Total Spent
-How much you've actually spent against your budgets. The percentage shows usage relative to allocated amounts.
+
+How much you've actually spent against your budgets. The percentage shows usage
+relative to allocated amounts.
 
 ### Remaining
-The difference between allocated and spent amounts. Negative values indicate overspending (shown in red).
+
+The difference between allocated and spent amounts. Negative values indicate
+overspending (shown in red).
 
 ### Alerts
+
 Count of budgets that need attention:
+
 - **Over** - Budgets that have exceeded their limit
 - **Approaching** - Budgets at 80% or more of their limit
 

@@ -64,15 +64,20 @@ export function calculateNextOccurrenceDate(schedule: ScheduleWithDetails): Date
         Array.isArray(days) &&
         days.length > 0;
       const onThe =
-        scheduleDate.on &&
-        scheduleDate.on_type === "the" &&
-        weeks.length &&
-        weeksDays.length;
+        scheduleDate.on && scheduleDate.on_type === "the" && weeks.length && weeksDays.length;
 
       if (onDay) {
         futureDates = nextMonthly(startDateValue, futureLimit, interval, days, [], [], 100);
       } else if (onThe) {
-        futureDates = nextMonthly(startDateValue, futureLimit, interval, null, weeks, weeksDays, 100);
+        futureDates = nextMonthly(
+          startDateValue,
+          futureLimit,
+          interval,
+          null,
+          weeks,
+          weeksDays,
+          100
+        );
       } else {
         // Fallback: same day as start date
         futureDates = nextMonthly(

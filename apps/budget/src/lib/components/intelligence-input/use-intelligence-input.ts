@@ -43,10 +43,7 @@ export interface IntelligenceInputOptions {
 /**
  * Svelte action that adds intelligence input mode capability to an element
  */
-export function intelligenceInput(
-  node: HTMLElement,
-  options: IntelligenceInputOptions
-) {
+export function intelligenceInput(node: HTMLElement, options: IntelligenceInputOptions) {
   function updateAttributes(opts: IntelligenceInputOptions) {
     node.setAttribute("data-intelligence-id", opts.id);
     node.setAttribute("data-intelligence-title", opts.title);
@@ -76,21 +73,18 @@ export function intelligenceInput(
   // Register handler if provided
   let unregisterHandler: (() => void) | null = null;
   if (options.onTrigger) {
-    unregisterHandler = intelligenceInputMode.registerHandler(
-      options.id,
-      async (detail) => {
-        try {
-          await options.onTrigger?.(detail);
-          intelligenceInputMode.completeProcessing(options.id);
-        } catch (error) {
-          intelligenceInputMode.failProcessing(
-            options.id,
-            error instanceof Error ? error : new Error(String(error))
-          );
-          throw error;
-        }
+    unregisterHandler = intelligenceInputMode.registerHandler(options.id, async (detail) => {
+      try {
+        await options.onTrigger?.(detail);
+        intelligenceInputMode.completeProcessing(options.id);
+      } catch (error) {
+        intelligenceInputMode.failProcessing(
+          options.id,
+          error instanceof Error ? error : new Error(String(error))
+        );
+        throw error;
       }
-    );
+    });
   }
 
   // Trigger rescan when mounted
@@ -117,21 +111,18 @@ export function intelligenceInput(
 
       // Register new handler if needed
       if (newOptions.onTrigger && !unregisterHandler) {
-        unregisterHandler = intelligenceInputMode.registerHandler(
-          newOptions.id,
-          async (detail) => {
-            try {
-              await newOptions.onTrigger?.(detail);
-              intelligenceInputMode.completeProcessing(newOptions.id);
-            } catch (error) {
-              intelligenceInputMode.failProcessing(
-                newOptions.id,
-                error instanceof Error ? error : new Error(String(error))
-              );
-              throw error;
-            }
+        unregisterHandler = intelligenceInputMode.registerHandler(newOptions.id, async (detail) => {
+          try {
+            await newOptions.onTrigger?.(detail);
+            intelligenceInputMode.completeProcessing(newOptions.id);
+          } catch (error) {
+            intelligenceInputMode.failProcessing(
+              newOptions.id,
+              error instanceof Error ? error : new Error(String(error))
+            );
+            throw error;
           }
-        );
+        });
       }
 
       options = newOptions;

@@ -11,6 +11,7 @@ Customize the visual appearance of the budget app to match your preferences.
 ## Color Mode
 
 Choose your preferred color scheme:
+
 - **Light** - Bright theme for well-lit environments
 - **Dark** - Dark theme that's easier on the eyes
 - **System** - Automatically match your device settings
@@ -18,6 +19,7 @@ Choose your preferred color scheme:
 ## Theme Color
 
 Select an accent color for the app interface:
+
 - Multiple preset colors available
 - Affects buttons, links, and highlights
 - Changes apply immediately
@@ -25,6 +27,7 @@ Select an accent color for the app interface:
 ## Font Size
 
 Adjust text size throughout the app:
+
 - **Small** - Compact text for more content
 - **Normal** - Default comfortable reading size
 - **Large** - Bigger text for easier reading

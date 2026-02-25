@@ -5,7 +5,13 @@
  */
 
 import { trpc } from "$lib/trpc/client";
-import type { ActionConfig, ConditionGroup, EntityType, FlowState, TriggerConfig } from "$lib/types/automation";
+import type {
+  ActionConfig,
+  ConditionGroup,
+  EntityType,
+  FlowState,
+  TriggerConfig,
+} from "$lib/types/automation";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
@@ -24,8 +30,10 @@ export const automationKeys = createQueryKeys("automation", {
   logStats: (ruleId: number) => ["automation", "stats", ruleId] as const,
   // Metadata
   entityTypes: () => ["automation", "meta", "entityTypes"] as const,
-  triggerEvents: (entityType: EntityType) => ["automation", "meta", "triggers", entityType] as const,
-  conditionFields: (entityType: EntityType) => ["automation", "meta", "conditions", entityType] as const,
+  triggerEvents: (entityType: EntityType) =>
+    ["automation", "meta", "triggers", entityType] as const,
+  conditionFields: (entityType: EntityType) =>
+    ["automation", "meta", "conditions", entityType] as const,
   actions: (entityType: EntityType) => ["automation", "meta", "actions", entityType] as const,
   allActions: () => ["automation", "meta", "actions"] as const,
 });
@@ -238,7 +246,8 @@ export const disableRule = defineMutation({
  * Duplicate a rule
  */
 export const duplicateRule = defineMutation({
-  mutationFn: ({ id, newName }: { id: number; newName?: string }) => trpc().automationRoutes.duplicate.mutate({ id, newName }),
+  mutationFn: ({ id, newName }: { id: number; newName?: string }) =>
+    trpc().automationRoutes.duplicate.mutate({ id, newName }),
   onSuccess: (newRule) => {
     queryClient.invalidateQueries({ queryKey: automationKeys.lists() });
     // Invalidate account-specific and entity-type queries

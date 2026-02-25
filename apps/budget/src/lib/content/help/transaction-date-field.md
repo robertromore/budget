@@ -25,10 +25,11 @@ Select the date when the transaction occurred or is scheduled to occur.
 
 ## Date Formats
 
-The date displays according to your settings in:
-Settings > Display > Date Format
+The date displays according to your settings in: Settings > Display > Date
+Format
 
 Common formats:
+
 - MM/DD/YYYY (US)
 - DD/MM/YYYY (UK/EU)
 - YYYY-MM-DD (ISO)

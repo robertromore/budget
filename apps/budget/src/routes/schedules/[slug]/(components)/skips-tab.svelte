@@ -142,9 +142,7 @@ const pushForwardCount = $derived(skips.filter((s) => s.skipType === 'push_forwa
             <History class="h-4 w-4" />
             Skip History
           </Card.Title>
-          <Card.Description class="text-xs">
-            View and manage skipped occurrences
-          </Card.Description>
+          <Card.Description class="text-xs">View and manage skipped occurrences</Card.Description>
         </div>
         <Button size="sm" variant="outline" onclick={handleSkipUpcoming}>
           <Plus class="mr-1 h-3 w-3" />
@@ -154,15 +152,13 @@ const pushForwardCount = $derived(skips.filter((s) => s.skipType === 'push_forwa
       <Card.Content class="pt-2">
         {#if isLoading}
           <div class="flex items-center justify-center py-8">
-            <Loader2 class="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 class="text-muted-foreground h-6 w-6 animate-spin" />
           </div>
         {:else if skips.length === 0}
           <div class="flex flex-col items-center justify-center py-8 text-center">
-            <CalendarX class="h-12 w-12 text-muted-foreground/50" />
+            <CalendarX class="text-muted-foreground/50 h-12 w-12" />
             <p class="mt-4 text-sm font-medium">No skipped occurrences</p>
-            <p class="text-muted-foreground text-xs">
-              All scheduled transactions are active
-            </p>
+            <p class="text-muted-foreground text-xs">All scheduled transactions are active</p>
           </div>
         {:else}
           <Table.Root>
@@ -225,7 +221,8 @@ const pushForwardCount = $derived(skips.filter((s) => s.skipType === 'push_forwa
           <strong>Single Skip:</strong> Only skips one specific date. Other occurrences remain unchanged.
         </p>
         <p class="mt-2 text-sm text-blue-800 dark:text-blue-300">
-          <strong>Push Forward:</strong> Shifts all future occurrences forward by one interval. This is reversible - restoring will shift dates back.
+          <strong>Push Forward:</strong> Shifts all future occurrences forward by one interval. This is
+          reversible - restoring will shift dates back.
         </p>
       </Card.Content>
     </Card.Root>

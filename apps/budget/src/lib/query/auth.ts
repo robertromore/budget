@@ -30,10 +30,7 @@ export const getCurrentUser = () =>
 /**
  * Check if email is available for registration
  */
-export const checkEmailAvailable = defineQuery<
-  { email: string },
-  { available: boolean }
->({
+export const checkEmailAvailable = defineQuery<{ email: string }, { available: boolean }>({
   queryKey: (params: { email: string }) => authKeys.emailAvailable(params.email),
   queryFn: (params: { email: string }) => trpc().authRoutes.checkEmailAvailable.query(params),
 });
@@ -41,10 +38,7 @@ export const checkEmailAvailable = defineQuery<
 /**
  * Validate password strength
  */
-export const validatePassword = defineMutation<
-  { password: string },
-  PasswordValidationResult
->({
+export const validatePassword = defineMutation<{ password: string }, PasswordValidationResult>({
   mutationFn: (input) => trpc().authRoutes.validatePassword.mutate(input),
 });
 

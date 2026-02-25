@@ -1,13 +1,13 @@
-import {Database} from "bun:sqlite";
-import {drizzle} from "drizzle-orm/bun-sqlite";
-import {migrate} from "drizzle-orm/bun-sqlite/migrator";
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import * as schema from "../../../src/lib/schema";
-import {sql} from "drizzle-orm";
-import {eq} from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
-import {fileURLToPath} from "url";
-import type {Context} from "../../../src/lib/trpc/context";
+import { fileURLToPath } from "url";
+import type { Context } from "../../../src/lib/trpc/context";
 
 const DEFAULT_TEST_USER_ID = "system-test-user";
 const DEFAULT_TEST_EMAIL = "system-test@example.invalid";
@@ -28,15 +28,13 @@ export function resolveMigrationsFolder() {
     }
   }
 
-  throw new Error(
-    `Could not locate drizzle migrations folder. Tried: ${candidates.join(", ")}`
-  );
+  throw new Error(`Could not locate drizzle migrations folder. Tried: ${candidates.join(", ")}`);
 }
 
 // Create a unique test database for each test run
 export function createTestDb() {
   const sqlite = new Database(":memory:"); // Use in-memory database for tests
-  return drizzle(sqlite, {schema});
+  return drizzle(sqlite, { schema });
 }
 
 // Setup test database with migrations
@@ -44,7 +42,7 @@ export async function setupTestDb() {
   const db = createTestDb();
 
   // Run migrations
-  await migrate(db, {migrationsFolder: resolveMigrationsFolder()});
+  await migrate(db, { migrationsFolder: resolveMigrationsFolder() });
 
   // Bootstrap a default authenticated context for integration tests that only
   // provide `{ db, isTest: true }` to createCaller.
@@ -59,7 +57,7 @@ export async function setupTestDb() {
     .onConflictDoNothing();
 
   let [workspace] = await db
-    .select({id: schema.workspaces.id})
+    .select({ id: schema.workspaces.id })
     .from(schema.workspaces)
     .where(eq(schema.workspaces.slug, DEFAULT_TEST_WORKSPACE_SLUG))
     .limit(1);
@@ -72,7 +70,7 @@ export async function setupTestDb() {
         slug: DEFAULT_TEST_WORKSPACE_SLUG,
         ownerId: DEFAULT_TEST_USER_ID,
       })
-      .returning({id: schema.workspaces.id});
+      .returning({ id: schema.workspaces.id });
   }
 
   if (workspace) {
@@ -253,14 +251,14 @@ export async function seedTestData(db: ReturnType<typeof createTestDb>) {
 
   // Insert test categories
   await db.insert(schema.categories).values([
-    {workspaceId: workspace.id, name: "Groceries", slug: "groceries"},
-    {workspaceId: workspace.id, name: "Entertainment", slug: "entertainment"},
+    { workspaceId: workspace.id, name: "Groceries", slug: "groceries" },
+    { workspaceId: workspace.id, name: "Entertainment", slug: "entertainment" },
   ]);
 
   // Insert test payees
   await db.insert(schema.payees).values([
-    {workspaceId: workspace.id, name: "Test Store", slug: "test-store"},
-    {workspaceId: workspace.id, name: "Gas Station", slug: "gas-station"},
+    { workspaceId: workspace.id, name: "Test Store", slug: "test-store" },
+    { workspaceId: workspace.id, name: "Gas Station", slug: "gas-station" },
   ]);
 
   // Insert test accounts

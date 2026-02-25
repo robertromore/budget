@@ -57,14 +57,11 @@ export const recurringRoutes = t.router({
       const bills = patterns.filter((p) => p.patternType === "bill");
       const income = patterns.filter((p) => p.patternType === "income");
 
-      const totalMonthlyExpense = [...subscriptions, ...bills].reduce(
-        (sum, p) => {
-          // Normalize to monthly
-          const monthlyAmount = normalizeToMonthly(p.amount.median, p.frequency);
-          return sum + Math.abs(monthlyAmount);
-        },
-        0
-      );
+      const totalMonthlyExpense = [...subscriptions, ...bills].reduce((sum, p) => {
+        // Normalize to monthly
+        const monthlyAmount = normalizeToMonthly(p.amount.median, p.frequency);
+        return sum + Math.abs(monthlyAmount);
+      }, 0);
 
       const totalMonthlyIncome = income.reduce((sum, p) => {
         const monthlyAmount = normalizeToMonthly(p.amount.median, p.frequency);
@@ -89,7 +86,15 @@ export const recurringRoutes = t.router({
  */
 function normalizeToMonthly(
   amount: number,
-  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "quarterly" | "semi_annual" | "annual" | "irregular"
+  frequency:
+    | "daily"
+    | "weekly"
+    | "biweekly"
+    | "monthly"
+    | "quarterly"
+    | "semi_annual"
+    | "annual"
+    | "irregular"
 ): number {
   switch (frequency) {
     case "daily":

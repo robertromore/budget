@@ -5,11 +5,11 @@
  * mapping storage, and transfer pair creation.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -84,20 +84,12 @@ interface TransferMatch {
  */
 function detectTransferFromPayee(
   payeeName: string,
-  accounts: Array<{id: number; name: string}>
+  accounts: Array<{ id: number; name: string }>
 ): TransferMatch | null {
   const normalized = payeeName.toLowerCase();
 
   // Common transfer indicators
-  const transferIndicators = [
-    "transfer",
-    "xfer",
-    "trf",
-    "from",
-    "to",
-    "savings",
-    "checking",
-  ];
+  const transferIndicators = ["transfer", "xfer", "trf", "from", "to", "savings", "checking"];
 
   const hasIndicator = transferIndicators.some((i) => normalized.includes(i));
 
@@ -164,9 +156,27 @@ describe("Transfer Detector", () => {
 
     it("should support multiple mappings per workspace", async () => {
       await ctx.db.insert(schema.transferMappings).values([
-        {workspaceId: ctx.workspaceId, rawPayeeString: "TRANSFER TO SAVINGS", normalizedString: "transfer to savings", targetAccountId: ctx.savingsId, trigger: "import_confirmation"},
-        {workspaceId: ctx.workspaceId, rawPayeeString: "TRANSFER FROM SAVINGS", normalizedString: "transfer from savings", targetAccountId: ctx.savingsId, trigger: "import_confirmation"},
-        {workspaceId: ctx.workspaceId, rawPayeeString: "TRANSFER TO CHECKING", normalizedString: "transfer to checking", targetAccountId: ctx.checkingId, trigger: "import_confirmation"},
+        {
+          workspaceId: ctx.workspaceId,
+          rawPayeeString: "TRANSFER TO SAVINGS",
+          normalizedString: "transfer to savings",
+          targetAccountId: ctx.savingsId,
+          trigger: "import_confirmation",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          rawPayeeString: "TRANSFER FROM SAVINGS",
+          normalizedString: "transfer from savings",
+          targetAccountId: ctx.savingsId,
+          trigger: "import_confirmation",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          rawPayeeString: "TRANSFER TO CHECKING",
+          normalizedString: "transfer to checking",
+          targetAccountId: ctx.checkingId,
+          trigger: "import_confirmation",
+        },
       ]);
 
       const mappings = await ctx.db
@@ -181,8 +191,8 @@ describe("Transfer Detector", () => {
   describe("payee-based detection", () => {
     it("should detect transfer from payee name with account", () => {
       const accounts = [
-        {id: ctx.checkingId, name: "Checking"},
-        {id: ctx.savingsId, name: "Savings"},
+        { id: ctx.checkingId, name: "Checking" },
+        { id: ctx.savingsId, name: "Savings" },
       ];
 
       const match = detectTransferFromPayee("TRANSFER TO SAVINGS", accounts);
@@ -194,8 +204,8 @@ describe("Transfer Detector", () => {
 
     it("should detect transfer with abbreviated keywords", () => {
       const accounts = [
-        {id: ctx.checkingId, name: "Checking"},
-        {id: ctx.savingsId, name: "Savings"},
+        { id: ctx.checkingId, name: "Checking" },
+        { id: ctx.savingsId, name: "Savings" },
       ];
 
       const match = detectTransferFromPayee("XFER SAVINGS", accounts);
@@ -206,8 +216,8 @@ describe("Transfer Detector", () => {
 
     it("should return null for non-transfer payees", () => {
       const accounts = [
-        {id: ctx.checkingId, name: "Checking"},
-        {id: ctx.savingsId, name: "Savings"},
+        { id: ctx.checkingId, name: "Checking" },
+        { id: ctx.savingsId, name: "Savings" },
       ];
 
       const match = detectTransferFromPayee("WALMART STORE #1234", accounts);
@@ -217,8 +227,8 @@ describe("Transfer Detector", () => {
 
     it("should handle case insensitive matching", () => {
       const accounts = [
-        {id: ctx.checkingId, name: "Checking"},
-        {id: ctx.savingsId, name: "Savings"},
+        { id: ctx.checkingId, name: "Checking" },
+        { id: ctx.savingsId, name: "Savings" },
       ];
 
       const match = detectTransferFromPayee("transfer to savings", accounts);
@@ -279,7 +289,7 @@ describe("Transfer Detector", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.checkingId,
           date: "2024-01-15",
-          amount: -500.00,
+          amount: -500.0,
           originalPayeeName: "TRANSFER TO SAVINGS",
           status: "cleared",
         })
@@ -292,7 +302,7 @@ describe("Transfer Detector", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.savingsId,
           date: "2024-01-15",
-          amount: 500.00,
+          amount: 500.0,
           originalPayeeName: "TRANSFER FROM CHECKING",
           status: "cleared",
         })
@@ -317,10 +327,10 @@ describe("Transfer Detector", () => {
     });
 
     it("should handle amount tolerance for fees", () => {
-      const outgoing = -500.00;
-      const incoming = 497.50; // Bank took a $2.50 fee
+      const outgoing = -500.0;
+      const incoming = 497.5; // Bank took a $2.50 fee
 
-      const tolerance = 5.00; // Allow $5 difference
+      const tolerance = 5.0; // Allow $5 difference
       const difference = Math.abs(Math.abs(outgoing) - incoming);
 
       expect(difference).toBeLessThanOrEqual(tolerance);
@@ -350,7 +360,7 @@ describe("Transfer Detector", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.checkingId,
           date: "2024-01-15",
-          amount: -500.00,
+          amount: -500.0,
           isTransfer: true,
           transferId,
           transferAccountId: ctx.savingsId,
@@ -364,7 +374,7 @@ describe("Transfer Detector", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.savingsId,
           date: "2024-01-15",
-          amount: 500.00,
+          amount: 500.0,
           isTransfer: true,
           transferId,
           transferAccountId: ctx.checkingId,
@@ -376,7 +386,7 @@ describe("Transfer Detector", () => {
       // Update outgoing with incoming reference
       await ctx.db
         .update(schema.transactions)
-        .set({transferTransactionId: incoming.id})
+        .set({ transferTransactionId: incoming.id })
         .where(eq(schema.transactions.id, outgoing.id));
 
       // Verify linkage
@@ -397,15 +407,15 @@ describe("Transfer Detector", () => {
   describe("import batch detection", () => {
     it("should detect transfers in batch import", async () => {
       const importRows: ImportRow[] = [
-        {date: "2024-01-10", amount: -100.00, payeeName: "WALMART"},
-        {date: "2024-01-12", amount: -500.00, payeeName: "TRANSFER TO SAVINGS"},
-        {date: "2024-01-15", amount: -50.00, payeeName: "STARBUCKS"},
-        {date: "2024-01-18", amount: -200.00, payeeName: "XFER TO CHECKING"},
+        { date: "2024-01-10", amount: -100.0, payeeName: "WALMART" },
+        { date: "2024-01-12", amount: -500.0, payeeName: "TRANSFER TO SAVINGS" },
+        { date: "2024-01-15", amount: -50.0, payeeName: "STARBUCKS" },
+        { date: "2024-01-18", amount: -200.0, payeeName: "XFER TO CHECKING" },
       ];
 
       const accounts = [
-        {id: ctx.checkingId, name: "Checking"},
-        {id: ctx.savingsId, name: "Savings"},
+        { id: ctx.checkingId, name: "Checking" },
+        { id: ctx.savingsId, name: "Savings" },
       ];
 
       const detectedTransfers = importRows.filter((row) => {
@@ -420,9 +430,9 @@ describe("Transfer Detector", () => {
 
     it("should return detection stats", () => {
       const rows: ImportRow[] = [
-        {date: "2024-01-10", amount: -100.00, payeeName: "WALMART"},
-        {date: "2024-01-12", amount: -500.00, payeeName: "TRANSFER TO SAVINGS"},
-        {date: "2024-01-15", amount: -50.00, payeeName: "STARBUCKS"},
+        { date: "2024-01-10", amount: -100.0, payeeName: "WALMART" },
+        { date: "2024-01-12", amount: -500.0, payeeName: "TRANSFER TO SAVINGS" },
+        { date: "2024-01-15", amount: -50.0, payeeName: "STARBUCKS" },
       ];
 
       const stats = {
@@ -433,8 +443,8 @@ describe("Transfer Detector", () => {
       };
 
       const accounts = [
-        {id: ctx.checkingId, name: "Checking"},
-        {id: ctx.savingsId, name: "Savings"},
+        { id: ctx.checkingId, name: "Checking" },
+        { id: ctx.savingsId, name: "Savings" },
       ];
 
       for (const row of rows) {
@@ -490,7 +500,7 @@ describe("Transfer Detector", () => {
       // Update to different account
       await ctx.db
         .update(schema.transferMappings)
-        .set({targetAccountId: ctx.checkingId})
+        .set({ targetAccountId: ctx.checkingId })
         .where(eq(schema.transferMappings.id, mapping.id));
 
       const updated = await ctx.db.query.transferMappings.findFirst({

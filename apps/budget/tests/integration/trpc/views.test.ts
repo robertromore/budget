@@ -1,9 +1,9 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {eq} from "drizzle-orm";
-import {views, users, workspaces, workspaceMembers} from "$lib/schema";
-import {setupTestDb, clearTestDb} from "../setup/test-db";
-import type {ViewFilter, ViewDisplayState} from "$lib/types";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { eq } from "drizzle-orm";
+import { views, users, workspaces, workspaceMembers } from "$lib/schema";
+import { setupTestDb, clearTestDb } from "../setup/test-db";
+import type { ViewFilter, ViewDisplayState } from "$lib/types";
 
 describe("Views tRPC Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -103,7 +103,7 @@ describe("Views tRPC Integration Tests", () => {
           name: "Filtered View",
           description: "View with filters",
           icon: "filter",
-          filters: [{column: "status", filter: "equals", value: ["cleared"]}],
+          filters: [{ column: "status", filter: "equals", value: ["cleared"] }],
         }),
         buildView({
           name: "Custom View",
@@ -121,11 +121,13 @@ describe("Views tRPC Integration Tests", () => {
     });
 
     test("should include all required view fields", async () => {
-      await db.insert(views).values(buildView({
-        name: "Test View",
-        description: "Test description",
-        icon: "test-icon",
-      }));
+      await db.insert(views).values(
+        buildView({
+          name: "Test View",
+          description: "Test description",
+          icon: "test-icon",
+        })
+      );
 
       const result = await caller.viewsRoutes.all();
 
@@ -142,22 +144,24 @@ describe("Views tRPC Integration Tests", () => {
 
     test("should handle JSON fields correctly", async () => {
       const testFilters: ViewFilter[] = [
-        {column: "amount", filter: "greater_than", value: [100]},
-        {column: "date", filter: "last_days", value: [30]},
+        { column: "amount", filter: "greater_than", value: [100] },
+        { column: "date", filter: "last_days", value: [30] },
       ];
 
       const testDisplay: ViewDisplayState = {
         grouping: ["category"],
-        sort: [{id: "date", desc: true}],
-        expanded: {group1: true, group2: false},
-        visibility: {amount: true, notes: false},
+        sort: [{ id: "date", desc: true }],
+        expanded: { group1: true, group2: false },
+        visibility: { amount: true, notes: false },
       };
 
-      await db.insert(views).values(buildView({
-        name: "Complex View",
-        filters: testFilters,
-        display: testDisplay,
-      }));
+      await db.insert(views).values(
+        buildView({
+          name: "Complex View",
+          filters: testFilters,
+          display: testDisplay,
+        })
+      );
 
       const result = await caller.viewsRoutes.all();
       const view = result[0];
@@ -171,10 +175,16 @@ describe("Views tRPC Integration Tests", () => {
     test("should load specific view by ID", async () => {
       const [inserted] = await db
         .insert(views)
-        .values(buildView({name: "Budget Overview", description: "Monthly budget overview", icon: "chart"}))
+        .values(
+          buildView({
+            name: "Budget Overview",
+            description: "Monthly budget overview",
+            icon: "chart",
+          })
+        )
         .returning();
 
-      const result = await caller.viewsRoutes.load({id: inserted.id});
+      const result = await caller.viewsRoutes.load({ id: inserted.id });
 
       expect(result.id).toBe(inserted.id);
       expect(result.name).toBe("Budget Overview");
@@ -183,31 +193,31 @@ describe("Views tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent view", async () => {
-      await expect(caller.viewsRoutes.load({id: 999})).rejects.toThrow("View not found");
+      await expect(caller.viewsRoutes.load({ id: 999 })).rejects.toThrow("View not found");
     });
 
     test("should handle string ID input (coercion)", async () => {
       const [inserted] = await db
         .insert(views)
-        .values(buildView({name: "Coercion Test"}))
+        .values(buildView({ name: "Coercion Test" }))
         .returning();
 
-      const result = await caller.viewsRoutes.load({id: inserted.id.toString() as any});
+      const result = await caller.viewsRoutes.load({ id: inserted.id.toString() as any });
       expect(result.id).toBe(inserted.id);
     });
 
     test("should load view with complex JSON data", async () => {
       const complexFilters: ViewFilter[] = [
-        {column: "payee", filter: "contains", value: ["grocery"]},
-        {column: "amount", filter: "between", value: [10, 100]},
+        { column: "payee", filter: "contains", value: ["grocery"] },
+        { column: "amount", filter: "between", value: [10, 100] },
       ];
 
       const [inserted] = await db
         .insert(views)
-        .values(buildView({name: "Complex JSON View", filters: complexFilters}))
+        .values(buildView({ name: "Complex JSON View", filters: complexFilters }))
         .returning();
 
-      const result = await caller.viewsRoutes.load({id: inserted.id});
+      const result = await caller.viewsRoutes.load({ id: inserted.id });
       expect(result.filters).toEqual(complexFilters);
     });
   });
@@ -234,10 +244,10 @@ describe("Views tRPC Integration Tests", () => {
       });
 
       test("should create view with all optional fields", async () => {
-        const filters: ViewFilter[] = [{column: "status", filter: "equals", value: ["cleared"]}];
+        const filters: ViewFilter[] = [{ column: "status", filter: "equals", value: ["cleared"] }];
 
         const display = {
-          sort: [{id: "date", desc: true}],
+          sort: [{ id: "date", desc: true }],
           expanded: true,
           visibility: true,
         } as any;
@@ -257,11 +267,13 @@ describe("Views tRPC Integration Tests", () => {
         expect(result.description).toBe("View with all fields");
         expect(result.icon).toBe("complete");
         expect(result.filters).toEqual(filters);
-        expect(result.display).toEqual(withDefaultDisplay({
-          sort: [{id: "date", desc: true}],
-          expanded: true,
-          visibility: {},
-        }));
+        expect(result.display).toEqual(
+          withDefaultDisplay({
+            sort: [{ id: "date", desc: true }],
+            expanded: true,
+            visibility: {},
+          })
+        );
         expect(result.dirty).toBe(true);
       });
 
@@ -281,7 +293,13 @@ describe("Views tRPC Integration Tests", () => {
       test("should update existing view", async () => {
         const [existing] = await db
           .insert(views)
-          .values(buildView({name: "Original View", description: "Original description", icon: "original"}))
+          .values(
+            buildView({
+              name: "Original View",
+              description: "Original description",
+              icon: "original",
+            })
+          )
           .returning();
 
         const result = await caller.viewsRoutes.save({
@@ -305,18 +323,18 @@ describe("Views tRPC Integration Tests", () => {
       test("should update JSON fields", async () => {
         const [existing] = await db
           .insert(views)
-          .values(buildView({name: "JSON Update Test"}))
+          .values(buildView({ name: "JSON Update Test" }))
           .returning();
 
         const newFilters: ViewFilter[] = [
-          {column: "category", filter: "in", value: ["food", "transport"]},
+          { column: "category", filter: "in", value: ["food", "transport"] },
         ];
 
         const newDisplay: ViewDisplayState = {
           grouping: ["month"],
-          sort: [{id: "amount", desc: false}],
-          expanded: {"2023": true},
-          visibility: {notes: false},
+          sort: [{ id: "amount", desc: false }],
+          expanded: { "2023": true },
+          visibility: { notes: false },
         };
 
         const result = await caller.viewsRoutes.save({
@@ -327,18 +345,28 @@ describe("Views tRPC Integration Tests", () => {
         });
 
         expect(result.filters).toEqual(newFilters);
-        expect(result.display).toEqual(withDefaultDisplay(newDisplay as unknown as Record<string, unknown>));
+        expect(result.display).toEqual(
+          withDefaultDisplay(newDisplay as unknown as Record<string, unknown>)
+        );
 
         // Verify in database
         const dbView = await db.select().from(views).where(eq(views.id, existing.id));
         expect(dbView[0].filters).toEqual(newFilters);
-        expect(dbView[0].display).toEqual(withDefaultDisplay(newDisplay as unknown as Record<string, unknown>));
+        expect(dbView[0].display).toEqual(
+          withDefaultDisplay(newDisplay as unknown as Record<string, unknown>)
+        );
       });
 
       test("should clear optional fields when set to null", async () => {
         const [existing] = await db
           .insert(views)
-          .values(buildView({name: "Clear Fields Test", description: "Original description", icon: "original"}))
+          .values(
+            buildView({
+              name: "Clear Fields Test",
+              description: "Original description",
+              icon: "original",
+            })
+          )
           .returning();
 
         const result = await caller.viewsRoutes.save({
@@ -355,10 +383,10 @@ describe("Views tRPC Integration Tests", () => {
 
     describe("Validation errors", () => {
       test("should reject empty name", async () => {
-        await expect(caller.viewsRoutes.save({name: ""})).rejects.toThrow(
+        await expect(caller.viewsRoutes.save({ name: "" })).rejects.toThrow(
           "Name must contain at least 2 characters"
         );
-        await expect(caller.viewsRoutes.save({name: "a"})).rejects.toThrow(
+        await expect(caller.viewsRoutes.save({ name: "a" })).rejects.toThrow(
           "Name must contain at least 2 characters"
         );
       });
@@ -384,9 +412,9 @@ describe("Views tRPC Integration Tests", () => {
 
       test("should validate filter structure", async () => {
         const invalidFilters = [
-          {column: "test"}, // Missing filter and value
-          {filter: "equals"}, // Missing column and value
-          {column: "test", filter: "equals"}, // Missing value
+          { column: "test" }, // Missing filter and value
+          { filter: "equals" }, // Missing column and value
+          { column: "test", filter: "equals" }, // Missing value
         ];
 
         for (const invalidFilter of invalidFilters) {
@@ -401,7 +429,7 @@ describe("Views tRPC Integration Tests", () => {
 
       test("should validate display structure", async () => {
         const invalidDisplay = {
-          sort: [{id: "test"}], // Missing desc field
+          sort: [{ id: "test" }], // Missing desc field
         };
 
         await expect(
@@ -414,9 +442,9 @@ describe("Views tRPC Integration Tests", () => {
 
       test("should accept valid filter structures", async () => {
         const validFilters: ViewFilter[] = [
-          {column: "amount", filter: "equals", value: [100]},
-          {column: "date", filter: "between", value: ["2023-01-01", "2023-12-31"]},
-          {column: "category", filter: "in", value: ["food", "transport", "utilities"]},
+          { column: "amount", filter: "equals", value: [100] },
+          { column: "date", filter: "between", value: ["2023-01-01", "2023-12-31"] },
+          { column: "category", filter: "in", value: ["food", "transport", "utilities"] },
         ];
 
         const result = await caller.viewsRoutes.save({
@@ -431,11 +459,11 @@ describe("Views tRPC Integration Tests", () => {
         const validDisplay: ViewDisplayState = {
           grouping: ["category", "month"],
           sort: [
-            {id: "date", desc: true},
-            {id: "amount", desc: false},
+            { id: "date", desc: true },
+            { id: "amount", desc: false },
           ],
-          expanded: {food: true, transport: false},
-          visibility: {notes: false, category: true},
+          expanded: { food: true, transport: false },
+          visibility: { notes: false, category: true },
         };
 
         const result = await caller.viewsRoutes.save({
@@ -464,10 +492,10 @@ describe("Views tRPC Integration Tests", () => {
     test("should hard delete view", async () => {
       const [view] = await db
         .insert(views)
-        .values(buildView({name: "To Be Deleted", description: "This will be deleted"}))
+        .values(buildView({ name: "To Be Deleted", description: "This will be deleted" }))
         .returning();
 
-      const result = await caller.viewsRoutes.remove({id: view.id});
+      const result = await caller.viewsRoutes.remove({ id: view.id });
 
       expect(result.id).toBe(view.id);
       expect(result.name).toBe("To Be Deleted");
@@ -481,7 +509,7 @@ describe("Views tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent view", async () => {
-      await expect(caller.viewsRoutes.remove({id: 999})).rejects.toThrow(
+      await expect(caller.viewsRoutes.remove({ id: 999 })).rejects.toThrow(
         "View not found or could not be deleted"
       );
     });
@@ -497,15 +525,15 @@ describe("Views tRPC Integration Tests", () => {
       const views1 = await db
         .insert(views)
         .values([
-          buildView({name: "View 1", description: "First view"}),
-          buildView({name: "View 2", description: "Second view"}),
-          buildView({name: "View 3", description: "Third view"}),
+          buildView({ name: "View 1", description: "First view" }),
+          buildView({ name: "View 2", description: "Second view" }),
+          buildView({ name: "View 3", description: "Third view" }),
         ])
         .returning();
 
       const idsToDelete = [views1[0].id, views1[2].id]; // Delete first and third
 
-      const result = await caller.viewsRoutes.delete({entities: idsToDelete});
+      const result = await caller.viewsRoutes.delete({ entities: idsToDelete });
 
       expect(result.length).toBe(2);
       expect(result.map((v) => v.id)).toEqual(expect.arrayContaining(idsToDelete));
@@ -521,19 +549,19 @@ describe("Views tRPC Integration Tests", () => {
     });
 
     test("should handle empty array", async () => {
-      const result = await caller.viewsRoutes.delete({entities: []});
+      const result = await caller.viewsRoutes.delete({ entities: [] });
       expect(result).toEqual([]);
     });
 
     test("should handle non-existent IDs gracefully", async () => {
-      const result = await caller.viewsRoutes.delete({entities: [999, 1000]});
+      const result = await caller.viewsRoutes.delete({ entities: [999, 1000] });
       expect(result).toEqual([]);
     });
 
     test("should handle mix of valid and invalid IDs", async () => {
       const [validView] = await db
         .insert(views)
-        .values(buildView({name: "Valid View"}))
+        .values(buildView({ name: "Valid View" }))
         .returning();
 
       const result = await caller.viewsRoutes.delete({
@@ -551,27 +579,27 @@ describe("Views tRPC Integration Tests", () => {
 
   describe("Rate limiting", () => {
     test("should apply rate limiting to save operation", async () => {
-      const result = await caller.viewsRoutes.save({name: "Rate Limited Test"});
+      const result = await caller.viewsRoutes.save({ name: "Rate Limited Test" });
       expect(result.name).toBe("Rate Limited Test");
     });
 
     test("should apply rate limiting to remove operation", async () => {
       const [view] = await db
         .insert(views)
-        .values(buildView({name: "Rate Limited Delete"}))
+        .values(buildView({ name: "Rate Limited Delete" }))
         .returning();
 
-      const result = await caller.viewsRoutes.remove({id: view.id});
+      const result = await caller.viewsRoutes.remove({ id: view.id });
       expect(result.name).toBe("Rate Limited Delete");
     });
 
     test("should apply rate limiting to bulk delete operation", async () => {
       const [view] = await db
         .insert(views)
-        .values(buildView({name: "Rate Limited Bulk Delete"}))
+        .values(buildView({ name: "Rate Limited Bulk Delete" }))
         .returning();
 
-      const result = await caller.viewsRoutes.delete({entities: [view.id]});
+      const result = await caller.viewsRoutes.delete({ entities: [view.id] });
       expect(result.length).toBe(1);
     });
   });
@@ -579,8 +607,8 @@ describe("Views tRPC Integration Tests", () => {
   describe("Data integrity", () => {
     test("should handle concurrent operations", async () => {
       // Create multiple views simultaneously
-      const promises = Array.from({length: 5}, (_, i) =>
-        caller.viewsRoutes.save({name: `Concurrent View ${i}`})
+      const promises = Array.from({ length: 5 }, (_, i) =>
+        caller.viewsRoutes.save({ name: `Concurrent View ${i}` })
       );
 
       const results = await Promise.all(promises);
@@ -596,24 +624,24 @@ describe("Views tRPC Integration Tests", () => {
       const complexData = {
         name: "Integrity Test",
         filters: [
-          {column: "amount", filter: "between", value: [0, 1000]},
-          {column: "status", filter: "in", value: ["cleared", "pending"]},
+          { column: "amount", filter: "between", value: [0, 1000] },
+          { column: "status", filter: "in", value: ["cleared", "pending"] },
         ] as ViewFilter[],
         display: {
           grouping: ["category", "payee"],
           sort: [
-            {id: "date", desc: true},
-            {id: "amount", desc: false},
+            { id: "date", desc: true },
+            { id: "amount", desc: false },
           ],
-          expanded: {food: true, transport: false, utilities: true},
-          visibility: {notes: false, category: true, amount: true},
+          expanded: { food: true, transport: false, utilities: true },
+          visibility: { notes: false, category: true, amount: true },
         } as ViewDisplayState,
       };
 
       const result = await caller.viewsRoutes.save(complexData);
 
       // Load the same view to verify data integrity
-      const loaded = await caller.viewsRoutes.load({id: result.id});
+      const loaded = await caller.viewsRoutes.load({ id: result.id });
 
       expect(loaded.filters).toEqual(complexData.filters);
       expect(loaded.display).toEqual(
@@ -636,7 +664,7 @@ describe("Views tRPC Integration Tests", () => {
       ];
 
       for (const name of specialNames) {
-        const result = await caller.viewsRoutes.save({name});
+        const result = await caller.viewsRoutes.save({ name });
         expect(result.name).toBe(name);
       }
 
@@ -648,9 +676,9 @@ describe("Views tRPC Integration Tests", () => {
       const deeplyNestedDisplay: ViewDisplayState = {
         grouping: ["year", "month", "category", "payee"],
         sort: [
-          {id: "date", desc: true},
-          {id: "amount", desc: false},
-          {id: "category", desc: false},
+          { id: "date", desc: true },
+          { id: "amount", desc: false },
+          { id: "category", desc: false },
         ],
         expanded: {
           "2023": true,
@@ -683,7 +711,7 @@ describe("Views tRPC Integration Tests", () => {
       );
 
       // Verify persistence
-      const loaded = await caller.viewsRoutes.load({id: result.id});
+      const loaded = await caller.viewsRoutes.load({ id: result.id });
       expect(loaded.display).toEqual(
         withDefaultDisplay(deeplyNestedDisplay as unknown as Record<string, unknown>)
       );
@@ -696,9 +724,9 @@ describe("Views tRPC Integration Tests", () => {
           filter: "in",
           value: ["food", "transport", "utilities", "entertainment"],
         },
-        {column: "amount", filter: "between", value: [0, 500]},
-        {column: "tags", filter: "contains_any", value: ["urgent", "recurring", "planned"]},
-        {column: "date", filter: "in_range", value: ["2023-01-01", "2023-12-31"]},
+        { column: "amount", filter: "between", value: [0, 500] },
+        { column: "tags", filter: "contains_any", value: ["urgent", "recurring", "planned"] },
+        { column: "date", filter: "in_range", value: ["2023-01-01", "2023-12-31"] },
       ];
 
       const result = await caller.viewsRoutes.save({
@@ -720,13 +748,11 @@ describe("Views tRPC Integration Tests", () => {
         display: displayWithLiterals,
       });
 
-      expect(result1.display).toEqual(
-        withDefaultDisplay({expanded: true, visibility: {}})
-      );
+      expect(result1.display).toEqual(withDefaultDisplay({ expanded: true, visibility: {} }));
 
       const displayWithRecords: ViewDisplayState = {
-        expanded: {group1: true, group2: false},
-        visibility: {col1: true, col2: false},
+        expanded: { group1: true, group2: false },
+        visibility: { col1: true, col2: false },
       };
 
       const result2 = await caller.viewsRoutes.save({
@@ -764,8 +790,8 @@ describe("Views tRPC Integration Tests", () => {
       // System should allow duplicate names (business requirement)
       const duplicateName = "Duplicate View";
 
-      const view1 = await caller.viewsRoutes.save({name: duplicateName});
-      const view2 = await caller.viewsRoutes.save({name: duplicateName});
+      const view1 = await caller.viewsRoutes.save({ name: duplicateName });
+      const view2 = await caller.viewsRoutes.save({ name: duplicateName });
 
       expect(view1.name).toBe(duplicateName);
       expect(view2.name).toBe(duplicateName);
@@ -821,14 +847,14 @@ describe("Views tRPC Integration Tests", () => {
         description: "Monthly budget overview template",
         icon: "chart",
         filters: [
-          {column: "date", filter: "current_month", value: []},
-          {column: "status", filter: "not_equals", value: ["scheduled"]},
+          { column: "date", filter: "current_month", value: [] },
+          { column: "status", filter: "not_equals", value: ["scheduled"] },
         ] as ViewFilter[],
         display: {
           grouping: ["category"],
-          sort: [{id: "amount", desc: true}],
+          sort: [{ id: "amount", desc: true }],
           expanded: true,
-          visibility: {notes: false, id: false},
+          visibility: { notes: false, id: false },
         } as ViewDisplayState,
       };
 
@@ -836,12 +862,14 @@ describe("Views tRPC Integration Tests", () => {
 
       // Verify template structure is preserved
       expect(result.filters).toEqual(templateView.filters);
-      expect(result.display).toEqual(withDefaultDisplay({
-        grouping: ["category"],
-        sort: [{id: "amount", desc: true}],
-        expanded: true,
-        visibility: {notes: false, id: false},
-      }));
+      expect(result.display).toEqual(
+        withDefaultDisplay({
+          grouping: ["category"],
+          sort: [{ id: "amount", desc: true }],
+          expanded: true,
+          visibility: { notes: false, id: false },
+        })
+      );
     });
   });
 });

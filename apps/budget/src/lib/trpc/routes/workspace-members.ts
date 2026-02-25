@@ -174,11 +174,7 @@ export const workspaceMembersRoutes = t.router({
       }
 
       try {
-        await memberService.transferOwnership(
-          ctx.workspaceId,
-          input.newOwnerId,
-          ctx.userId
-        );
+        await memberService.transferOwnership(ctx.workspaceId, input.newOwnerId, ctx.userId);
         return { success: true };
       } catch (error) {
         if (error instanceof Error) {

@@ -186,7 +186,8 @@ export function validateLevelChange(
   if (currentLevel === ENCRYPTION_LEVELS.ZERO_KNOWLEDGE && newLevel < currentLevel) {
     return {
       valid: true,
-      reason: "Downgrading from zero-knowledge mode. You will need to re-enter your encryption key to decrypt existing data.",
+      reason:
+        "Downgrading from zero-knowledge mode. You will need to re-enter your encryption key to decrypt existing data.",
     };
   }
 
@@ -252,9 +253,5 @@ export function getEncryptionLevelOptions(): EncryptionLevelOption[] {
 }
 
 // Re-export the types and constants for convenience
-export {
-  ENCRYPTION_LEVELS,
-  ENCRYPTION_LEVEL_NAMES,
-  ENCRYPTION_LEVEL_DESCRIPTIONS,
-};
+export { ENCRYPTION_LEVELS, ENCRYPTION_LEVEL_NAMES, ENCRYPTION_LEVEL_DESCRIPTIONS };
 export type { EncryptionLevel, FeatureAvailability };

@@ -54,11 +54,7 @@ function createConditionNode(
   };
 }
 
-function createActionNode(
-  id: string,
-  type: string,
-  params: Record<string, unknown> = {}
-): Node {
+function createActionNode(id: string, type: string, params: Record<string, unknown> = {}): Node {
   return {
     id,
     type: "action",
@@ -122,10 +118,7 @@ describe("flowToRule", () => {
         createConditionNode("condition-1", "amount", "greaterThan", 100),
         createActionNode("action-1", "appendNotes", { text: "Large transaction" }),
       ];
-      const edges = [
-        createEdge("trigger-1", "condition-1"),
-        createEdge("condition-1", "action-1"),
-      ];
+      const edges = [createEdge("trigger-1", "condition-1"), createEdge("condition-1", "action-1")];
 
       const rule = flowToRule(nodes, edges);
 
@@ -220,10 +213,7 @@ describe("flowToRule", () => {
         createActionNode("action-1", "setCategory", { categoryId: 5 }),
         createActionNode("action-2", "appendNotes", { text: "Auto-categorized" }),
       ];
-      const edges = [
-        createEdge("trigger-1", "action-1"),
-        createEdge("trigger-1", "action-2"),
-      ];
+      const edges = [createEdge("trigger-1", "action-1"), createEdge("trigger-1", "action-2")];
 
       const rule = flowToRule(nodes, edges);
 
@@ -240,10 +230,7 @@ describe("flowToRule", () => {
         createConditionNode("condition-1", "amount", "between", 100, { value2: 500 }),
         createActionNode("action-1", "setCategory", { categoryId: 5 }),
       ];
-      const edges = [
-        createEdge("trigger-1", "condition-1"),
-        createEdge("condition-1", "action-1"),
-      ];
+      const edges = [createEdge("trigger-1", "condition-1"), createEdge("condition-1", "action-1")];
 
       const rule = flowToRule(nodes, edges);
 
@@ -258,10 +245,7 @@ describe("flowToRule", () => {
         createConditionNode("condition-1", "status", "equals", "cleared", { negate: true }),
         createActionNode("action-1", "setStatus", { status: "pending" }),
       ];
-      const edges = [
-        createEdge("trigger-1", "condition-1"),
-        createEdge("condition-1", "action-1"),
-      ];
+      const edges = [createEdge("trigger-1", "condition-1"), createEdge("condition-1", "action-1")];
 
       const rule = flowToRule(nodes, edges);
 
@@ -448,10 +432,7 @@ describe("validateFlow", () => {
         } as Node,
         createActionNode("action-1", "setCategory", {}),
       ];
-      const edges = [
-        createEdge("trigger-1", "condition-1"),
-        createEdge("condition-1", "action-1"),
-      ];
+      const edges = [createEdge("trigger-1", "condition-1"), createEdge("condition-1", "action-1")];
 
       const errors = validateFlow(nodes, edges);
 
@@ -469,10 +450,7 @@ describe("validateFlow", () => {
         } as Node,
         createActionNode("action-1", "setCategory", {}),
       ];
-      const edges = [
-        createEdge("trigger-1", "condition-1"),
-        createEdge("condition-1", "action-1"),
-      ];
+      const edges = [createEdge("trigger-1", "condition-1"), createEdge("condition-1", "action-1")];
 
       const errors = validateFlow(nodes, edges);
 
@@ -492,10 +470,7 @@ describe("validateFlow", () => {
         } as Node,
         createActionNode("action-1", "setCategory", {}),
       ];
-      const edges = [
-        createEdge("trigger-1", "group-1"),
-        createEdge("group-1", "action-1"),
-      ];
+      const edges = [createEdge("trigger-1", "group-1"), createEdge("group-1", "action-1")];
 
       const errors = validateFlow(nodes, edges);
 
@@ -547,10 +522,7 @@ describe("exportFlowState", () => {
       createConditionNode("condition-1", "amount", "greaterThan", 100),
       createActionNode("action-1", "setCategory", { categoryId: 5 }),
     ];
-    const edges = [
-      createEdge("trigger-1", "condition-1"),
-      createEdge("condition-1", "action-1"),
-    ];
+    const edges = [createEdge("trigger-1", "condition-1"), createEdge("condition-1", "action-1")];
 
     const state = exportFlowState(nodes, edges);
 
@@ -564,10 +536,7 @@ describe("exportFlowState", () => {
   });
 
   it("should export edges with correct structure", () => {
-    const nodes = [
-      createTriggerNode("trigger-1"),
-      createActionNode("action-1", "setCategory", {}),
-    ];
+    const nodes = [createTriggerNode("trigger-1"), createActionNode("action-1", "setCategory", {})];
     const edges = [createEdge("trigger-1", "action-1")];
 
     const state = exportFlowState(nodes, edges);

@@ -10,8 +10,20 @@ import { beforeNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
 import { PayeeBasicInfoForm, PayeeBusinessForm, PayeeContactForm } from '$lib/components/payees';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
-import { getFieldEnhancementSummary, recordEnhancement, type FieldEnhancementSummary } from '$lib/query/payee-enhancements';
-import { enrichPayeeContact, explainInsights, getPayeeSuggestions, inferPayeeDetails, type ContactEnrichmentSuggestions, type PayeeDetailsSuggestions, type PayeeSuggestions } from '$lib/query/payees';
+import {
+  getFieldEnhancementSummary,
+  recordEnhancement,
+  type FieldEnhancementSummary,
+} from '$lib/query/payee-enhancements';
+import {
+  enrichPayeeContact,
+  explainInsights,
+  getPayeeSuggestions,
+  inferPayeeDetails,
+  type ContactEnrichmentSuggestions,
+  type PayeeDetailsSuggestions,
+  type PayeeSuggestions,
+} from '$lib/query/payees';
 import type { EnhanceableField } from '$lib/schema';
 import type { Payee, PayeeAiPreferences, PaymentFrequency } from '$lib/schema/payees';
 import { superformInsertPayeeSchema } from '$lib/schema/superforms';
@@ -237,7 +249,13 @@ const tabFieldMapping = {
     'isSeasonal',
   ],
   contact: ['phone', 'email', 'website', 'accountNumber', 'address'],
-  business: ['merchantCategoryCode', 'alertThreshold', 'tags', 'preferredPaymentMethods', 'subscriptionInfo'],
+  business: [
+    'merchantCategoryCode',
+    'alertThreshold',
+    'tags',
+    'preferredPaymentMethods',
+    'subscriptionInfo',
+  ],
 };
 
 // Computed: Check which tabs have errors
@@ -368,13 +386,23 @@ function applyDetailsSuggestions(suggestions: PayeeDetailsSuggestions, filledFie
   if (suggestions.paymentFrequency && !filledFields.has('paymentFrequency')) {
     const originalValue = $formData.paymentFrequency;
     $formData.paymentFrequency = suggestions.paymentFrequency;
-    recordFieldEnhancement('paymentFrequency', originalValue, suggestions.paymentFrequency, confidence);
+    recordFieldEnhancement(
+      'paymentFrequency',
+      originalValue,
+      suggestions.paymentFrequency,
+      confidence
+    );
     filledFields.add('paymentFrequency');
   }
   if (suggestions.suggestedCategoryId && !filledFields.has('defaultCategoryId')) {
     const originalValue = $formData.defaultCategoryId;
     $formData.defaultCategoryId = suggestions.suggestedCategoryId.toString();
-    recordFieldEnhancement('defaultCategoryId', originalValue, suggestions.suggestedCategoryId, confidence);
+    recordFieldEnhancement(
+      'defaultCategoryId',
+      originalValue,
+      suggestions.suggestedCategoryId,
+      confidence
+    );
     filledFields.add('defaultCategoryId');
   }
   if (suggestions.taxRelevant !== null && !filledFields.has('taxRelevant')) {
@@ -394,7 +422,12 @@ function applyDetailsSuggestions(suggestions: PayeeDetailsSuggestions, filledFie
   if (suggestions.suggestedMCC && !filledFields.has('merchantCategoryCode')) {
     const originalValue = $formData.merchantCategoryCode;
     $formData.merchantCategoryCode = suggestions.suggestedMCC;
-    recordFieldEnhancement('merchantCategoryCode', originalValue, suggestions.suggestedMCC, confidence);
+    recordFieldEnhancement(
+      'merchantCategoryCode',
+      originalValue,
+      suggestions.suggestedMCC,
+      confidence
+    );
     filledFields.add('merchantCategoryCode');
   }
   if (suggestions.suggestedTags?.length && !filledFields.has('tags')) {
@@ -406,7 +439,12 @@ function applyDetailsSuggestions(suggestions: PayeeDetailsSuggestions, filledFie
   if (suggestions.suggestedPaymentMethods?.length && !filledFields.has('preferredPaymentMethods')) {
     const originalValue = $formData.preferredPaymentMethods;
     $formData.preferredPaymentMethods = suggestions.suggestedPaymentMethods;
-    recordFieldEnhancement('preferredPaymentMethods', originalValue, suggestions.suggestedPaymentMethods, confidence);
+    recordFieldEnhancement(
+      'preferredPaymentMethods',
+      originalValue,
+      suggestions.suggestedPaymentMethods,
+      confidence
+    );
     filledFields.add('preferredPaymentMethods');
   }
 
@@ -420,7 +458,10 @@ function applyDetailsSuggestions(suggestions: PayeeDetailsSuggestions, filledFie
 }
 
 // Apply contact enrichment suggestions (LLM-based)
-function applyContactSuggestions(suggestions: ContactEnrichmentSuggestions, filledFields: Set<string>) {
+function applyContactSuggestions(
+  suggestions: ContactEnrichmentSuggestions,
+  filledFields: Set<string>
+) {
   if (suggestions.website && !filledFields.has('website')) {
     const originalValue = $formData.website;
     $formData.website = suggestions.website;
@@ -454,13 +495,25 @@ function applyMLSuggestions(suggestions: PayeeSuggestions, filledFields: Set<str
   if (suggestions.suggestedCategoryId && !filledFields.has('defaultCategoryId')) {
     const originalValue = $formData.defaultCategoryId;
     $formData.defaultCategoryId = suggestions.suggestedCategoryId.toString();
-    recordFieldEnhancement('defaultCategoryId', originalValue, suggestions.suggestedCategoryId, confidence, 'ml');
+    recordFieldEnhancement(
+      'defaultCategoryId',
+      originalValue,
+      suggestions.suggestedCategoryId,
+      confidence,
+      'ml'
+    );
     filledFields.add('defaultCategoryId');
   }
   if (suggestions.suggestedFrequency && !filledFields.has('paymentFrequency')) {
     const originalValue = $formData.paymentFrequency;
     $formData.paymentFrequency = suggestions.suggestedFrequency;
-    recordFieldEnhancement('paymentFrequency', originalValue, suggestions.suggestedFrequency, confidence, 'ml');
+    recordFieldEnhancement(
+      'paymentFrequency',
+      originalValue,
+      suggestions.suggestedFrequency,
+      confidence,
+      'ml'
+    );
     filledFields.add('paymentFrequency');
   }
   if (suggestions.suggestedAmount && !filledFields.has('avgAmount')) {
@@ -479,25 +532,31 @@ async function fetchLLMSuggestions(payeeName: string): Promise<{
   const [detailsResult, contactResult] = await Promise.allSettled([
     new Promise<{ success: boolean; suggestions?: PayeeDetailsSuggestions }>((resolve, reject) => {
       inferMutation.mutate(
-        { name: payeeName, currentCategoryId: $formData.defaultCategoryId ? Number($formData.defaultCategoryId) : undefined },
+        {
+          name: payeeName,
+          currentCategoryId: $formData.defaultCategoryId
+            ? Number($formData.defaultCategoryId)
+            : undefined,
+        },
         { onSuccess: resolve, onError: reject }
       );
     }),
-    new Promise<{ success: boolean; suggestions?: ContactEnrichmentSuggestions }>((resolve, reject) => {
-      enrichContactMutation.mutate(
-        { name: payeeName },
-        { onSuccess: resolve, onError: reject }
-      );
-    }),
+    new Promise<{ success: boolean; suggestions?: ContactEnrichmentSuggestions }>(
+      (resolve, reject) => {
+        enrichContactMutation.mutate({ name: payeeName }, { onSuccess: resolve, onError: reject });
+      }
+    ),
   ]);
 
   return {
-    details: detailsResult.status === 'fulfilled' && detailsResult.value.success
-      ? detailsResult.value.suggestions
-      : undefined,
-    contact: contactResult.status === 'fulfilled' && contactResult.value.success
-      ? contactResult.value.suggestions
-      : undefined,
+    details:
+      detailsResult.status === 'fulfilled' && detailsResult.value.success
+        ? detailsResult.value.suggestions
+        : undefined,
+    contact:
+      contactResult.status === 'fulfilled' && contactResult.value.success
+        ? contactResult.value.suggestions
+        : undefined,
   };
 }
 
@@ -571,38 +630,74 @@ async function handleApplyAllIntelligence(strategy: IntelligenceStrategy = selec
           if (details.payeeType && !filledFields.has('payeeType')) {
             const originalValue = $formData.payeeType;
             $formData.payeeType = details.payeeType;
-            recordFieldEnhancement('payeeType', originalValue, details.payeeType, confidence, 'llm');
+            recordFieldEnhancement(
+              'payeeType',
+              originalValue,
+              details.payeeType,
+              confidence,
+              'llm'
+            );
             filledFields.add('payeeType');
           }
           if (details.paymentFrequency && !filledFields.has('paymentFrequency')) {
             const originalValue = $formData.paymentFrequency;
             $formData.paymentFrequency = details.paymentFrequency;
-            recordFieldEnhancement('paymentFrequency', originalValue, details.paymentFrequency, confidence, 'llm');
+            recordFieldEnhancement(
+              'paymentFrequency',
+              originalValue,
+              details.paymentFrequency,
+              confidence,
+              'llm'
+            );
             filledFields.add('paymentFrequency');
           }
           if (details.suggestedCategoryId && !filledFields.has('defaultCategoryId')) {
             const originalValue = $formData.defaultCategoryId;
             $formData.defaultCategoryId = details.suggestedCategoryId.toString();
-            recordFieldEnhancement('defaultCategoryId', originalValue, details.suggestedCategoryId, confidence, 'llm');
+            recordFieldEnhancement(
+              'defaultCategoryId',
+              originalValue,
+              details.suggestedCategoryId,
+              confidence,
+              'llm'
+            );
             filledFields.add('defaultCategoryId');
           }
           if (details.taxRelevant !== null && !filledFields.has('taxRelevant')) {
             const originalValue = $formData.taxRelevant;
             $formData.taxRelevant = details.taxRelevant;
-            recordFieldEnhancement('taxRelevant', originalValue, details.taxRelevant, confidence, 'llm');
+            recordFieldEnhancement(
+              'taxRelevant',
+              originalValue,
+              details.taxRelevant,
+              confidence,
+              'llm'
+            );
             filledFields.add('taxRelevant');
           }
           if (details.isSeasonal !== null && !filledFields.has('isSeasonal')) {
             const originalValue = $formData.isSeasonal;
             $formData.isSeasonal = details.isSeasonal;
-            recordFieldEnhancement('isSeasonal', originalValue, details.isSeasonal, confidence, 'llm');
+            recordFieldEnhancement(
+              'isSeasonal',
+              originalValue,
+              details.isSeasonal,
+              confidence,
+              'llm'
+            );
             filledFields.add('isSeasonal');
           }
           // Business fields
           if (details.suggestedMCC && !filledFields.has('merchantCategoryCode')) {
             const originalValue = $formData.merchantCategoryCode;
             $formData.merchantCategoryCode = details.suggestedMCC;
-            recordFieldEnhancement('merchantCategoryCode', originalValue, details.suggestedMCC, confidence, 'llm');
+            recordFieldEnhancement(
+              'merchantCategoryCode',
+              originalValue,
+              details.suggestedMCC,
+              confidence,
+              'llm'
+            );
             filledFields.add('merchantCategoryCode');
           }
           if (details.suggestedTags?.length && !filledFields.has('tags')) {
@@ -611,16 +706,31 @@ async function handleApplyAllIntelligence(strategy: IntelligenceStrategy = selec
             recordFieldEnhancement('tags', originalValue, details.suggestedTags, confidence, 'llm');
             filledFields.add('tags');
           }
-          if (details.suggestedPaymentMethods?.length && !filledFields.has('preferredPaymentMethods')) {
+          if (
+            details.suggestedPaymentMethods?.length &&
+            !filledFields.has('preferredPaymentMethods')
+          ) {
             const originalValue = $formData.preferredPaymentMethods;
             $formData.preferredPaymentMethods = details.suggestedPaymentMethods;
-            recordFieldEnhancement('preferredPaymentMethods', originalValue, details.suggestedPaymentMethods, confidence, 'llm');
+            recordFieldEnhancement(
+              'preferredPaymentMethods',
+              originalValue,
+              details.suggestedPaymentMethods,
+              confidence,
+              'llm'
+            );
             filledFields.add('preferredPaymentMethods');
           }
           if (details.suggestedWebsite && !filledFields.has('website')) {
             const originalValue = $formData.website;
             $formData.website = details.suggestedWebsite;
-            recordFieldEnhancement('website', originalValue, details.suggestedWebsite, confidence, 'llm');
+            recordFieldEnhancement(
+              'website',
+              originalValue,
+              details.suggestedWebsite,
+              confidence,
+              'llm'
+            );
             filledFields.add('website');
           }
         }
@@ -788,13 +898,7 @@ $effect(() => {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger disabled={isApplyingAllIntelligence || !$formData.name?.trim()}>
         {#snippet child({ props })}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            class="gap-2"
-            {...props}
-          >
+          <Button type="button" variant="outline" size="sm" class="gap-2" {...props}>
             {#if isApplyingAllIntelligence}
               <Loader2 class="h-4 w-4 animate-spin" />
               Applying...
@@ -813,7 +917,8 @@ $effect(() => {
 
         {#each intelligenceStrategies as strategy (strategy.value)}
           {@const isSelected = selectedStrategy === strategy.value}
-          {@const isMlDisabled = !_id && (strategy.value === 'ml-only' || strategy.value === 'ml-then-llm')}
+          {@const isMlDisabled =
+            !_id && (strategy.value === 'ml-only' || strategy.value === 'ml-then-llm')}
           <DropdownMenu.Item
             class="gap-3 {isMlDisabled ? 'opacity-50' : ''}"
             disabled={isMlDisabled}
@@ -822,8 +927,7 @@ $effect(() => {
                 selectedStrategy = strategy.value;
                 handleApplyAllIntelligence(strategy.value);
               }
-            }}
-          >
+            }}>
             <div class="flex items-center gap-1.5">
               {#if strategy.icon === 'sparkles'}
                 <Sparkles class="h-4 w-4 text-violet-500" />
@@ -831,22 +935,22 @@ $effect(() => {
                 <Brain class="h-4 w-4 text-blue-500" />
               {:else if strategy.icon === 'sparkles-brain'}
                 <Sparkles class="h-4 w-4 text-violet-500" />
-                <ArrowRight class="h-3 w-3 text-muted-foreground" />
+                <ArrowRight class="text-muted-foreground h-3 w-3" />
                 <Brain class="h-4 w-4 text-blue-500" />
               {:else if strategy.icon === 'brain-sparkles'}
                 <Brain class="h-4 w-4 text-blue-500" />
-                <ArrowRight class="h-3 w-3 text-muted-foreground" />
+                <ArrowRight class="text-muted-foreground h-3 w-3" />
                 <Sparkles class="h-4 w-4 text-violet-500" />
               {/if}
             </div>
-            <div class="flex flex-col flex-1">
+            <div class="flex flex-1 flex-col">
               <span class="font-medium">{strategy.label}</span>
               <span class="text-muted-foreground text-xs">
                 {isMlDisabled ? 'Requires existing payee with history' : strategy.description}
               </span>
             </div>
             {#if isSelected}
-              <CircleCheck class="h-4 w-4 text-primary" />
+              <CircleCheck class="text-primary h-4 w-4" />
             {/if}
           </DropdownMenu.Item>
         {/each}
@@ -920,13 +1024,17 @@ $effect(() => {
         payeeId={_id}
         aiPreferences={payeeAiPreferences}
         {enhancementSummary}
-        isGlobalApplying={isApplyingAllIntelligence}
-      />
+        isGlobalApplying={isApplyingAllIntelligence} />
     </Tabs.Content>
 
     <!-- Contact Information Tab -->
     <Tabs.Content value="contact" class="space-y-6">
-      <PayeeContactForm {formData} {entityForm} payeeName={$formData.name} {enhancementSummary} isGlobalApplying={isApplyingAllIntelligence} />
+      <PayeeContactForm
+        {formData}
+        {entityForm}
+        payeeName={$formData.name}
+        {enhancementSummary}
+        isGlobalApplying={isApplyingAllIntelligence} />
     </Tabs.Content>
 
     <!-- Business Information Tab -->
@@ -942,7 +1050,6 @@ $effect(() => {
         {enhancementSummary}
         isGlobalApplying={isApplyingAllIntelligence} />
     </Tabs.Content>
-
   </Tabs.Root>
 
   <!-- Hidden fields for complex data -->
@@ -1004,13 +1111,15 @@ $effect(() => {
   <AlertDialog.Content>
     <AlertDialog.Header>
       <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
           <TriangleAlert class="h-5 w-5 text-amber-600 dark:text-amber-500" />
         </div>
         <AlertDialog.Title>Unsaved Changes</AlertDialog.Title>
       </div>
       <AlertDialog.Description class="pt-2">
-        You have unsaved changes that will be lost if you leave this page. Are you sure you want to discard your changes?
+        You have unsaved changes that will be lost if you leave this page. Are you sure you want to
+        discard your changes?
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

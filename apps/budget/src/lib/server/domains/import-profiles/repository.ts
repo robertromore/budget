@@ -1,4 +1,8 @@
-import { importProfiles, type ImportProfile, type NewImportProfile } from "$lib/schema/import-profiles";
+import {
+  importProfiles,
+  type ImportProfile,
+  type NewImportProfile,
+} from "$lib/schema/import-profiles";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { nowISOString } from "$lib/utils/dates";
@@ -110,10 +114,7 @@ export class ImportProfileRepository extends BaseRepository<
   /**
    * Find account default profile
    */
-  async findAccountDefault(
-    accountId: number,
-    workspaceId: number
-  ): Promise<ImportProfile | null> {
+  async findAccountDefault(accountId: number, workspaceId: number): Promise<ImportProfile | null> {
     const result = await db
       .select()
       .from(importProfiles)

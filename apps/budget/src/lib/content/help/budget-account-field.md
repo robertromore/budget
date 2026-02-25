@@ -11,17 +11,20 @@ Select which accounts this budget tracks transactions from.
 ## When to Use Account Selection
 
 ### Required For
+
 - **Account Monthly** budgets - must select exactly one account
 - Tracking specific credit card spending
 - Monitoring individual account activity
 
 ### Optional For
+
 - **Category Monthly** budgets - leave blank to track all accounts
 - **Goal-Based** budgets - link to savings account for progress tracking
 
 ## Multiple Accounts
 
 Some budget types support multiple accounts:
+
 - Aggregate spending across related accounts
 - Track combined credit card usage
 - Monitor household spending from joint accounts
@@ -30,12 +33,12 @@ Some budget types support multiple accounts:
 
 Different account types work best for different budgets:
 
-| Account Type | Best Budget Use |
-|-------------|-----------------|
-| Checking | Day-to-day expense budgets |
-| Credit Card | Spending limit enforcement |
-| Savings | Goal-based budgets |
-| Investment | Long-term goals |
+| Account Type | Best Budget Use            |
+| ------------ | -------------------------- |
+| Checking     | Day-to-day expense budgets |
+| Credit Card  | Spending limit enforcement |
+| Savings      | Goal-based budgets         |
+| Investment   | Long-term goals            |
 
 ## Tips
 

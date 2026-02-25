@@ -250,7 +250,10 @@ export const accountRoutes = t.router({
 
     // Calculate balance for each account using balance management options
     return accountsData.map((account) => {
-      const { balance, transactionsWithBalance } = calculateAccountBalance(account, account.transactions);
+      const { balance, transactionsWithBalance } = calculateAccountBalance(
+        account,
+        account.transactions
+      );
 
       return {
         ...account,
@@ -287,7 +290,10 @@ export const accountRoutes = t.router({
     }
 
     // Calculate balance using balance management options
-    const { balance, transactionsWithBalance } = calculateAccountBalance(account, account.transactions);
+    const { balance, transactionsWithBalance } = calculateAccountBalance(
+      account,
+      account.transactions
+    );
 
     const accountWithBalance = {
       ...account,
@@ -1028,14 +1034,10 @@ export const accountRoutes = t.router({
           .where(inArray(schedules.id, scheduleIds));
 
         // Delete related scheduleDates (no cascade on FK)
-        await ctx.db
-          .delete(scheduleDates)
-          .where(inArray(scheduleDates.scheduleId, scheduleIds));
+        await ctx.db.delete(scheduleDates).where(inArray(scheduleDates.scheduleId, scheduleIds));
 
         // Delete related scheduleSkips (has cascade but delete explicitly for clarity)
-        await ctx.db
-          .delete(scheduleSkips)
-          .where(inArray(scheduleSkips.scheduleId, scheduleIds));
+        await ctx.db.delete(scheduleSkips).where(inArray(scheduleSkips.scheduleId, scheduleIds));
       }
 
       // Now delete the schedules
@@ -1238,14 +1240,10 @@ export const accountRoutes = t.router({
           .where(inArray(schedules.id, scheduleIds));
 
         // Delete related scheduleDates (no cascade on FK)
-        await ctx.db
-          .delete(scheduleDates)
-          .where(inArray(scheduleDates.scheduleId, scheduleIds));
+        await ctx.db.delete(scheduleDates).where(inArray(scheduleDates.scheduleId, scheduleIds));
 
         // Delete related scheduleSkips
-        await ctx.db
-          .delete(scheduleSkips)
-          .where(inArray(scheduleSkips.scheduleId, scheduleIds));
+        await ctx.db.delete(scheduleSkips).where(inArray(scheduleSkips.scheduleId, scheduleIds));
       }
 
       // Delete all schedules (hard delete since schedules table doesn't have deletedAt)

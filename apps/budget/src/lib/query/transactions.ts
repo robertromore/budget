@@ -233,8 +233,7 @@ export const getMonthlySpendingAggregates = (accountId: number) => {
 export const getMonthlySpendingForecast = (accountId: number, horizon: number = 3) => {
   return defineQuery({
     queryKey: ["transactions", "analytics", "monthlyForecast", accountId, horizon],
-    queryFn: () =>
-      trpc().transactionRoutes.monthlySpendingForecast.query({ accountId, horizon }),
+    queryFn: () => trpc().transactionRoutes.monthlySpendingForecast.query({ accountId, horizon }),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes cache for forecast data
       enabled: accountId > 0 && !Number.isNaN(accountId),

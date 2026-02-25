@@ -11,7 +11,10 @@ import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { SubscriptionFormDialog } from '$lib/components/subscriptions';
 import { rpc } from '$lib/query';
 import type { SubscriptionWithRelations } from '$lib/schema/subscriptions-table';
-import type { DetectionResult, TransactionBasedDetectionResult } from '$lib/server/domains/subscriptions';
+import type {
+  DetectionResult,
+  TransactionBasedDetectionResult,
+} from '$lib/server/domains/subscriptions';
 import { currencyFormatter } from '$lib/utils/formatters';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';
@@ -33,11 +36,13 @@ import X from '@lucide/svelte/icons/x';
 const subscriptionsQuery = rpc.subscriptions.getAll().options();
 const analyticsQuery = rpc.subscriptions.getAnalytics().options();
 const detectionsQuery = rpc.subscriptions.detectSubscriptions({ minConfidence: 0.5 }).options();
-const transactionDetectionsQuery = rpc.subscriptions.detectFromTransactions({
-  months: 6,
-  minConfidence: 50,
-  minPredictability: 60,
-}).options();
+const transactionDetectionsQuery = rpc.subscriptions
+  .detectFromTransactions({
+    months: 6,
+    minConfidence: 50,
+    minPredictability: 60,
+  })
+  .options();
 const alertsQuery = rpc.subscriptions.getAlerts().options();
 const upcomingQuery = rpc.subscriptions.getUpcomingRenewals(14).options();
 
@@ -67,24 +72,66 @@ let activeTab = $state('subscriptions');
 
 // Subscription type colors and labels
 const subscriptionTypeConfig: Record<string, { color: string; label: string }> = {
-  entertainment: { color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300', label: 'Entertainment' },
-  utilities: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', label: 'Utilities' },
-  software: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: 'Software' },
-  membership: { color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300', label: 'Membership' },
-  communication: { color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300', label: 'Communication' },
-  finance: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', label: 'Finance' },
-  shopping: { color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300', label: 'Shopping' },
-  health: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Health' },
-  education: { color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300', label: 'Education' },
-  other: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300', label: 'Other' },
+  entertainment: {
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    label: 'Entertainment',
+  },
+  utilities: {
+    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    label: 'Utilities',
+  },
+  software: {
+    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    label: 'Software',
+  },
+  membership: {
+    color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    label: 'Membership',
+  },
+  communication: {
+    color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+    label: 'Communication',
+  },
+  finance: {
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    label: 'Finance',
+  },
+  shopping: {
+    color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+    label: 'Shopping',
+  },
+  health: {
+    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    label: 'Health',
+  },
+  education: {
+    color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+    label: 'Education',
+  },
+  other: {
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    label: 'Other',
+  },
 };
 
 // Status colors
 const statusConfig: Record<string, { color: string; label: string }> = {
-  active: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: 'Active' },
-  trial: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', label: 'Trial' },
-  paused: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', label: 'Paused' },
-  cancelled: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Cancelled' },
+  active: {
+    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    label: 'Active',
+  },
+  trial: {
+    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    label: 'Trial',
+  },
+  paused: {
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    label: 'Paused',
+  },
+  cancelled: {
+    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    label: 'Cancelled',
+  },
 };
 
 // Billing cycle labels
@@ -346,24 +393,25 @@ function refreshData() {
           <Card.Header>
             <Card.Title>Your Subscriptions</Card.Title>
             <Card.Description>
-              Manage your {subscriptions.length} tracked subscription{subscriptions.length !== 1 ? 's' : ''}
+              Manage your {subscriptions.length} tracked subscription{subscriptions.length !== 1
+                ? 's'
+                : ''}
             </Card.Description>
           </Card.Header>
           <Card.Content>
             <div class="space-y-3">
               {#each subscriptions as subscription}
-                {@const typeConfig = subscriptionTypeConfig[subscription.type] ?? subscriptionTypeConfig.other}
+                {@const typeConfig =
+                  subscriptionTypeConfig[subscription.type] ?? subscriptionTypeConfig.other}
                 {@const statusCfg = statusConfig[subscription.status] ?? statusConfig.active}
                 {@const billingLabel = billingCycleLabels[subscription.billingCycle] ?? 'Monthly'}
 
                 <div
-                  class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
-                >
+                  class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
                   <button
                     type="button"
                     class="flex flex-1 items-center gap-4 text-left"
-                    onclick={() => openEditDialog(subscription)}
-                  >
+                    onclick={() => openEditDialog(subscription)}>
                     <!-- Type Badge Icon -->
                     <div class="bg-muted flex h-10 w-10 items-center justify-center rounded-lg">
                       <RefreshCw class="text-muted-foreground h-5 w-5" />
@@ -388,25 +436,28 @@ function refreshData() {
                         {/if}
                         {#if subscription.renewalDate}
                           <span class="text-muted-foreground/50">•</span>
-                          <span>Renews: {new Date(subscription.renewalDate).toLocaleDateString()}</span>
+                          <span
+                            >Renews: {new Date(
+                              subscription.renewalDate
+                            ).toLocaleDateString()}</span>
                         {/if}
                       </div>
                     </div>
 
                     <!-- Cost -->
                     <div class="text-right">
-                      <div class="font-semibold">{currencyFormatter.format(subscription.amount)}</div>
-                      <div class="text-muted-foreground text-xs">per {subscription.billingCycle}</div>
+                      <div class="font-semibold">
+                        {currencyFormatter.format(subscription.amount)}
+                      </div>
+                      <div class="text-muted-foreground text-xs">
+                        per {subscription.billingCycle}
+                      </div>
                     </div>
                   </button>
 
                   <!-- Actions -->
                   <div class="ml-4 flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onclick={() => confirmDelete(subscription)}
-                    >
+                    <Button variant="ghost" size="icon" onclick={() => confirmDelete(subscription)}>
                       <Trash2 class="h-4 w-4" />
                     </Button>
                     <ArrowRight class="text-muted-foreground h-4 w-4" />
@@ -428,7 +479,10 @@ function refreshData() {
             Transaction Analysis
           </Card.Title>
           <Card.Description>
-            Found {transactionDetections.length} recurring payment{transactionDetections.length !== 1 ? 's' : ''} by analyzing your transaction history
+            Found {transactionDetections.length} recurring payment{transactionDetections.length !==
+            1
+              ? 's'
+              : ''} by analyzing your transaction history
           </Card.Description>
         </Card.Header>
         <Card.Content>
@@ -450,14 +504,18 @@ function refreshData() {
           {:else}
             <div class="space-y-3">
               {#each transactionDetections as detection}
-                {@const typeConfig = subscriptionTypeConfig[detection.subscriptionType] ?? subscriptionTypeConfig.other}
+                {@const typeConfig =
+                  subscriptionTypeConfig[detection.subscriptionType] ??
+                  subscriptionTypeConfig.other}
                 {@const confidence = Math.round(detection.detectionConfidence * 100)}
                 {@const billingLabel = billingCycleLabels[detection.billingCycle] ?? 'Monthly'}
 
-                <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+                <div
+                  class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div class="flex items-start gap-4">
-                      <div class="bg-blue-100 dark:bg-blue-900/50 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                      <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/50">
                         <RefreshCw class="h-5 w-5 text-blue-600" />
                       </div>
                       <div class="min-w-0 flex-1">
@@ -469,8 +527,10 @@ function refreshData() {
                         </div>
                         <div class="text-muted-foreground mt-1 space-y-1 text-sm">
                           <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span class="font-medium text-foreground">
-                              {currencyFormatter.format(detection.estimatedAmount)}/{billingLabel.toLowerCase()}
+                            <span class="text-foreground font-medium">
+                              {currencyFormatter.format(
+                                detection.estimatedAmount
+                              )}/{billingLabel.toLowerCase()}
                             </span>
                             <span class="text-muted-foreground/50">•</span>
                             <span>{detection.transactionCount} transactions</span>
@@ -481,13 +541,18 @@ function refreshData() {
                             <Tooltip.Provider>
                               <Tooltip.Root>
                                 <Tooltip.Trigger class="inline-flex items-center gap-1">
-                                  <span class="text-blue-600 dark:text-blue-400">{confidence}% confidence</span>
+                                  <span class="text-blue-600 dark:text-blue-400"
+                                    >{confidence}% confidence</span>
                                 </Tooltip.Trigger>
                                 <Tooltip.Content side="bottom" class="max-w-xs">
                                   <div class="space-y-2 text-xs">
                                     {#each detection.detectionMethods as method}
                                       <div>
-                                        <p class="font-medium capitalize">{method.method.replace('_', ' ')}: {Math.round(method.confidence * 100)}%</p>
+                                        <p class="font-medium capitalize">
+                                          {method.method.replace('_', ' ')}: {Math.round(
+                                            method.confidence * 100
+                                          )}%
+                                        </p>
                                         {#each method.evidence as ev}
                                           <p class="text-muted-foreground">{ev}</p>
                                         {/each}
@@ -505,7 +570,7 @@ function refreshData() {
                             {/if}
                           </div>
                           {#if detection.accountName}
-                            <div class="text-xs text-muted-foreground">
+                            <div class="text-muted-foreground text-xs">
                               Account: {detection.accountName}
                             </div>
                           {/if}
@@ -517,16 +582,14 @@ function refreshData() {
                         variant="outline"
                         size="sm"
                         onclick={() => handleRejectTransactionDetection(detection)}
-                        disabled={rejectMutation.isPending}
-                      >
+                        disabled={rejectMutation.isPending}>
                         <X class="mr-1 h-4 w-4" />
                         Ignore
                       </Button>
                       <Button
                         size="sm"
                         onclick={() => handleConfirmTransactionDetection(detection)}
-                        disabled={confirmMutation.isPending}
-                      >
+                        disabled={confirmMutation.isPending}>
                         <Check class="mr-1 h-4 w-4" />
                         Add
                       </Button>
@@ -549,23 +612,29 @@ function refreshData() {
             Detected Subscriptions
           </Card.Title>
           <Card.Description>
-            We've detected {detections.length} potential subscription{detections.length !== 1 ? 's' : ''} from your transactions
+            We've detected {detections.length} potential subscription{detections.length !== 1
+              ? 's'
+              : ''} from your transactions
           </Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-3">
             {#each detections as detection}
-              {@const typeConfig = subscriptionTypeConfig[detection.subscriptionType] ?? subscriptionTypeConfig.other}
+              {@const typeConfig =
+                subscriptionTypeConfig[detection.subscriptionType] ?? subscriptionTypeConfig.other}
               {@const confidence = Math.round(detection.detectionConfidence * 100)}
 
-              <div class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+              <div
+                class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
                 <div class="flex items-center gap-4">
-                  <div class="bg-amber-100 dark:bg-amber-900/50 flex h-10 w-10 items-center justify-center rounded-lg">
+                  <div
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50">
                     <Search class="h-5 w-5 text-amber-600" />
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-medium">{detection.suggestedName || detection.payeeName}</span>
+                      <span class="font-medium"
+                        >{detection.suggestedName || detection.payeeName}</span>
                       <Badge variant="outline" class={typeConfig.color}>
                         {typeConfig.label}
                       </Badge>
@@ -573,7 +642,9 @@ function refreshData() {
                     <div class="text-muted-foreground mt-1 text-sm">
                       {confidence}% confidence
                       {#if detection.estimatedAmount > 0}
-                        • ~{currencyFormatter.format(detection.estimatedAmount)}/{detection.billingCycle}
+                        • ~{currencyFormatter.format(
+                          detection.estimatedAmount
+                        )}/{detection.billingCycle}
                       {/if}
                     </div>
                   </div>
@@ -583,16 +654,14 @@ function refreshData() {
                     variant="outline"
                     size="sm"
                     onclick={() => handleRejectDetection(detection)}
-                    disabled={rejectMutation.isPending}
-                  >
+                    disabled={rejectMutation.isPending}>
                     <X class="mr-1 h-4 w-4" />
                     Ignore
                   </Button>
                   <Button
                     size="sm"
                     onclick={() => handleConfirmDetection(detection)}
-                    disabled={confirmMutation.isPending}
-                  >
+                    disabled={confirmMutation.isPending}>
                     <Check class="mr-1 h-4 w-4" />
                     Add
                   </Button>
@@ -612,9 +681,7 @@ function refreshData() {
             <Bell class="h-5 w-5 text-blue-500" />
             Subscription Alerts
           </Card.Title>
-          <Card.Description>
-            Important notifications about your subscriptions
-          </Card.Description>
+          <Card.Description>Important notifications about your subscriptions</Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-3">
@@ -645,8 +712,7 @@ function refreshData() {
                   variant="ghost"
                   size="sm"
                   onclick={() => handleDismissAlert(alert.id)}
-                  disabled={dismissAlertMutation.isPending}
-                >
+                  disabled={dismissAlertMutation.isPending}>
                   Dismiss
                 </Button>
               </div>
@@ -664,24 +730,28 @@ function refreshData() {
             <Calendar class="h-5 w-5" />
             Upcoming Renewals
           </Card.Title>
-          <Card.Description>
-            Subscriptions renewing in the next 14 days
-          </Card.Description>
+          <Card.Description>Subscriptions renewing in the next 14 days</Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-3">
             {#each upcomingRenewals as subscription}
               {@const daysUntil = subscription.renewalDate
-                ? Math.ceil((new Date(subscription.renewalDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                ? Math.ceil(
+                    (new Date(subscription.renewalDate).getTime() - Date.now()) /
+                      (1000 * 60 * 60 * 24)
+                  )
                 : 0}
 
               <div class="flex items-center justify-between rounded-lg border p-4">
                 <div>
                   <p class="font-medium">{subscription.name}</p>
                   <p class="text-muted-foreground text-sm">
-                    Renews {subscription.renewalDate ? new Date(subscription.renewalDate).toLocaleDateString() : 'soon'}
+                    Renews {subscription.renewalDate
+                      ? new Date(subscription.renewalDate).toLocaleDateString()
+                      : 'soon'}
                     {#if daysUntil > 0}
-                      <span class="text-amber-600">({daysUntil} day{daysUntil !== 1 ? 's' : ''})</span>
+                      <span class="text-amber-600"
+                        >({daysUntil} day{daysUntil !== 1 ? 's' : ''})</span>
                     {:else if daysUntil === 0}
                       <span class="text-red-600">(Today!)</span>
                     {/if}
@@ -717,7 +787,7 @@ function refreshData() {
               </div>
               <div class="text-right">
                 <span class="text-sm font-medium">{data.count}</span>
-                <span class="text-muted-foreground text-xs ml-1">
+                <span class="text-muted-foreground ml-1 text-xs">
                   ({currencyFormatter.format(data.monthlyCost)}/mo)
                 </span>
               </div>
@@ -736,8 +806,7 @@ function refreshData() {
   onSaved={() => {
     formDialogOpen = false;
     editingSubscription = undefined;
-  }}
-/>
+  }} />
 
 <!-- Delete Confirmation Dialog -->
 <AlertDialog.Root bind:open={deleteConfirmOpen}>
@@ -745,7 +814,8 @@ function refreshData() {
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Subscription?</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete "{subscriptionToDelete?.name}"? This action cannot be undone.
+        Are you sure you want to delete "{subscriptionToDelete?.name}"? This action cannot be
+        undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

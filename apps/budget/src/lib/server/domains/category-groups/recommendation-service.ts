@@ -87,9 +87,9 @@ export class CategoryGroupRecommendationService {
   /**
    * Get all pending recommendations with category names
    */
-  async getPendingRecommendations(workspaceId: number): Promise<
-    (CategoryGroupRecommendation & { categoryName: string | null })[]
-  > {
+  async getPendingRecommendations(
+    workspaceId: number
+  ): Promise<(CategoryGroupRecommendation & { categoryName: string | null })[]> {
     return await this.recommendationRepository.findPending(workspaceId);
   }
 
@@ -414,7 +414,11 @@ export class CategoryGroupRecommendationService {
         }
       }
 
-      await categoryGroupService.addCategoriesToGroup(groupId, [recommendation.categoryId], workspaceId);
+      await categoryGroupService.addCategoriesToGroup(
+        groupId,
+        [recommendation.categoryId],
+        workspaceId
+      );
     } else {
       throw new ValidationError("Recommendation has no suggested group");
     }

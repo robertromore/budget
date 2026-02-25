@@ -113,27 +113,21 @@ function handleOverlayClick(e: MouseEvent) {
     class="spotlight-overlay"
     class:is-transitioning={isTransitioning}
     class:no-overlay={hideOverlay}
-    onclick={handleOverlayClick}
-  >
+    onclick={handleOverlayClick}>
     <!-- SVG overlay with spotlight cutout (hidden when hideOverlay is true) -->
     {#if !hideOverlay}
       <svg
         class="spotlight-svg"
         viewBox="0 0 {windowWidth} {windowHeight}"
-        preserveAspectRatio="none"
-      >
-        <path
-          d={overlayPath}
-          fill={config.overlayColor}
-          fill-rule="evenodd"
-        />
+        preserveAspectRatio="none">
+        <path d={overlayPath} fill={config.overlayColor} fill-rule="evenodd" />
       </svg>
     {/if}
 
     <!-- Tooltip positioned relative to target -->
     <SpotlightTooltip
       step={currentStep}
-      targetRect={targetRect}
+      {targetRect}
       currentIndex={spotlightTour.currentStepIndex}
       totalSteps={spotlightTour.totalSteps}
       progress={spotlightTour.progress}
@@ -144,8 +138,7 @@ function handleOverlayClick(e: MouseEvent) {
       onPrevious={() => spotlightTour.previous()}
       onNext={() => spotlightTour.next()}
       onSkip={() => spotlightTour.skip()}
-      onEnterBranch={(branchId) => spotlightTour.enterBranch(branchId)}
-    />
+      onEnterBranch={(branchId) => spotlightTour.enterBranch(branchId)} />
 
     <!-- Table of Contents for navigation -->
     <TourTableOfContents />
@@ -153,31 +146,31 @@ function handleOverlayClick(e: MouseEvent) {
 {/if}
 
 <style>
-  .spotlight-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: auto;
-    transition: opacity 0.3s ease;
-  }
+.spotlight-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
 
-  .spotlight-overlay.is-transitioning {
-    opacity: 0.5;
-  }
+.spotlight-overlay.is-transitioning {
+  opacity: 0.5;
+}
 
-  /* When overlay is hidden, don't block interactions with the content */
-  .spotlight-overlay.no-overlay {
-    pointer-events: none;
-  }
+/* When overlay is hidden, don't block interactions with the content */
+.spotlight-overlay.no-overlay {
+  pointer-events: none;
+}
 
-  .spotlight-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
+.spotlight-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 
-  .spotlight-svg path {
-    transition: d 0.3s ease;
-  }
+.spotlight-svg path {
+  transition: d 0.3s ease;
+}
 </style>

@@ -1,5 +1,10 @@
 import type { IntelligenceProfile, Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
-import type { FeedbackRating, FeedbackType, PredictionFeedback, RecordPredictionFeedbackInput } from "$lib/schema/prediction-feedback";
+import type {
+  FeedbackRating,
+  FeedbackType,
+  PredictionFeedback,
+  RecordPredictionFeedbackInput,
+} from "$lib/schema/prediction-feedback";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
@@ -26,7 +31,8 @@ export const payeeKeys = createQueryKeys("payees", {
   intelligence: (id: number) => ["payees", "intelligence", id] as const,
   intelligenceProfile: (id: number) => ["payees", "intelligence-profile", id] as const,
   intelligenceWithProfile: (id: number) => ["payees", "intelligence-with-profile", id] as const,
-  intelligenceProfileSuggestions: (id: number) => ["payees", "intelligence-profile-suggestions", id] as const,
+  intelligenceProfileSuggestions: (id: number) =>
+    ["payees", "intelligence-profile-suggestions", id] as const,
   suggestions: (id: number) => ["payees", "suggestions", id] as const,
   stats: (id: number) => ["payees", "stats", id] as const,
   search: (query: string) => ["payees", "search", query] as const,
@@ -115,15 +121,15 @@ export const searchPayeesAdvanced = (params: {
         (params.query && params.query.length >= 2) ||
         Boolean(
           params.payeeType ||
-            params.isActive !== undefined ||
-            params.taxRelevant !== undefined ||
-            params.hasDefaultCategory !== undefined ||
-            params.hasDefaultBudget !== undefined ||
-            params.paymentFrequency ||
-            params.minAvgAmount !== undefined ||
-            params.maxAvgAmount !== undefined ||
-            params.lastTransactionBefore ||
-            params.lastTransactionAfter
+          params.isActive !== undefined ||
+          params.taxRelevant !== undefined ||
+          params.hasDefaultCategory !== undefined ||
+          params.hasDefaultBudget !== undefined ||
+          params.paymentFrequency ||
+          params.minAvgAmount !== undefined ||
+          params.maxAvgAmount !== undefined ||
+          params.lastTransactionBefore ||
+          params.lastTransactionAfter
         ),
       staleTime: 30 * 1000,
     },
@@ -230,8 +236,7 @@ export const updateIntelligenceProfile = defineMutation<
 });
 
 export const resetIntelligenceProfile = defineMutation<{ id: number }, Payee>({
-  mutationFn: (data) =>
-    trpc().payeeRoutes.resetIntelligenceProfile.mutate({ id: data.id }),
+  mutationFn: (data) => trpc().payeeRoutes.resetIntelligenceProfile.mutate({ id: data.id }),
   onSuccess: (result, variables) => {
     // Invalidate intelligence-related queries to refetch with default profile
     cachePatterns.invalidatePrefix(payeeKeys.intelligenceProfile(variables.id));
@@ -404,8 +409,7 @@ export const getSubscriptionsForAccount = (accountId: number, minConfidence = 0.
 export const getSubscriptionLifecycle = (payeeId: number) =>
   defineQuery<Record<string, any>>({
     queryKey: ["payees", "subscription-lifecycle", payeeId],
-    queryFn: () =>
-      trpc().payeeRoutes.subscriptionLifecycleAnalysis.query({ payeeId }),
+    queryFn: () => trpc().payeeRoutes.subscriptionLifecycleAnalysis.query({ payeeId }),
     options: {
       staleTime: 10 * 60 * 1000, // 10 minutes
     },
@@ -414,17 +418,13 @@ export const getSubscriptionLifecycle = (payeeId: number) =>
 export const getSubscriptionCostAnalysis = (payeeId: number, timeframeDays = 365) =>
   defineQuery<Record<string, any>>({
     queryKey: ["payees", "subscription-cost", payeeId, timeframeDays],
-    queryFn: () =>
-      trpc().payeeRoutes.subscriptionCostAnalysis.query({ payeeId, timeframeDays }),
+    queryFn: () => trpc().payeeRoutes.subscriptionCostAnalysis.query({ payeeId, timeframeDays }),
     options: {
       staleTime: 10 * 60 * 1000, // 10 minutes
     },
   });
 
-export const getSubscriptionRenewalPredictions = (
-  payeeIds: number[],
-  forecastMonths = 12
-) =>
+export const getSubscriptionRenewalPredictions = (payeeIds: number[], forecastMonths = 12) =>
   defineQuery<Record<string, any>[]>({
     queryKey: ["payees", "subscription-renewals", payeeIds, forecastMonths],
     queryFn: () =>
@@ -438,8 +438,7 @@ export const getSubscriptionRenewalPredictions = (
 export const getSubscriptionCancellationAssistance = (payeeId: number) =>
   defineQuery<Record<string, any>>({
     queryKey: ["payees", "subscription-cancellation", payeeId],
-    queryFn: () =>
-      trpc().payeeRoutes.subscriptionCancellationAssistance.query({ payeeId }),
+    queryFn: () => trpc().payeeRoutes.subscriptionCancellationAssistance.query({ payeeId }),
     options: {
       staleTime: 30 * 60 * 1000, // 30 minutes - doesn't change often
     },
@@ -855,7 +854,14 @@ export const getDuplicates = (
   detectionMethod: "simple" | "ml" | "llm" | "llm_direct" = "ml"
 ) =>
   defineQuery<DuplicateDetectionResult>({
-    queryKey: ["payees", "duplicates", similarityThreshold, includeInactive, groupingStrategy, detectionMethod],
+    queryKey: [
+      "payees",
+      "duplicates",
+      similarityThreshold,
+      includeInactive,
+      groupingStrategy,
+      detectionMethod,
+    ],
     queryFn: () =>
       trpc().payeeRoutes.getDuplicates.query({
         similarityThreshold,
@@ -1008,8 +1014,7 @@ export const explainInsights = () =>
       message?: string;
     }
   >({
-    mutationFn: ({ id }) =>
-      trpc().payeeRoutes.explainInsights.mutate({ id }),
+    mutationFn: ({ id }) => trpc().payeeRoutes.explainInsights.mutate({ id }),
     successMessage: "AI explanation generated",
     errorMessage: "Failed to generate explanation",
   });
@@ -1033,8 +1038,7 @@ export const enrichPayeeContact = () =>
       searchProvider?: string | null;
     }
   >({
-    mutationFn: ({ name }) =>
-      trpc().payeeRoutes.enrichContact.mutate({ name }),
+    mutationFn: ({ name }) => trpc().payeeRoutes.enrichContact.mutate({ name }),
     successMessage: "Contact information enriched",
     errorMessage: "Failed to enrich contact",
   });
@@ -1124,10 +1128,7 @@ export const getPredictionFeedbackHistory = (
 /**
  * Get prediction accuracy metrics
  */
-export const getPredictionAccuracyMetrics = (
-  payeeId?: number,
-  predictionType?: FeedbackType
-) =>
+export const getPredictionAccuracyMetrics = (payeeId?: number, predictionType?: FeedbackType) =>
   defineQuery<PredictionAccuracyMetrics>({
     queryKey: [...payeeKeys.predictionAccuracy(), payeeId, predictionType],
     queryFn: () =>

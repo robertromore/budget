@@ -4,11 +4,11 @@
  * Tests the ML learning system for tracking user corrections to payee categorization.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -334,7 +334,7 @@ describe("Payee Category Corrections", () => {
 
       const [updated] = await ctx.db
         .update(schema.payeeCategoryCorrections)
-        .set({correctionWeight: 2.5})
+        .set({ correctionWeight: 2.5 })
         .where(eq(schema.payeeCategoryCorrections.id, correction.id))
         .returning();
 
@@ -355,7 +355,7 @@ describe("Payee Category Corrections", () => {
 
       const [updated] = await ctx.db
         .update(schema.payeeCategoryCorrections)
-        .set({isOverride: true})
+        .set({ isOverride: true })
         .where(eq(schema.payeeCategoryCorrections.id, correction.id))
         .returning();
 
@@ -379,7 +379,7 @@ describe("Payee Category Corrections", () => {
 
       await ctx.db
         .update(schema.payeeCategoryCorrections)
-        .set({deletedAt})
+        .set({ deletedAt })
         .where(eq(schema.payeeCategoryCorrections.id, correction.id));
 
       // Should not appear in normal queries
@@ -408,7 +408,7 @@ describe("Payee Category Corrections", () => {
 
   describe("learning metadata", () => {
     it("should store amount range as JSON", async () => {
-      const amountRange = JSON.stringify({min: 10, max: 100});
+      const amountRange = JSON.stringify({ min: 10, max: 100 });
 
       const [correction] = await ctx.db
         .insert(schema.payeeCategoryCorrections)
@@ -637,7 +637,10 @@ describe("Payee Category Corrections", () => {
           },
         })
         .from(schema.payeeCategoryCorrections)
-        .innerJoin(schema.categories, eq(schema.payeeCategoryCorrections.toCategoryId, schema.categories.id))
+        .innerJoin(
+          schema.categories,
+          eq(schema.payeeCategoryCorrections.toCategoryId, schema.categories.id)
+        )
         .where(eq(schema.payeeCategoryCorrections.workspaceId, ctx.workspaceId));
 
       expect(results).toHaveLength(1);

@@ -15,6 +15,7 @@ Press **Cmd/Ctrl + Shift + I** to toggle the mode on or off.
 ## What It Does
 
 When active:
+
 - Form fields with AI capabilities are highlighted
 - Click a field to get intelligent suggestions
 - Choose between ML and LLM for each field
@@ -28,6 +29,7 @@ When active:
 ## Keyboard Shortcuts
 
 While a field is highlighted:
+
 - **M**: Switch to ML mode
 - **L**: Switch to LLM mode
 - **Esc**: Exit intelligence input mode

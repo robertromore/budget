@@ -5,7 +5,8 @@ description: Switch between light and dark color schemes
 
 # Theme Toggle
 
-Switch between light and dark modes to match your preference or reduce eye strain.
+Switch between light and dark modes to match your preference or reduce eye
+strain.
 
 ## Available Themes
 

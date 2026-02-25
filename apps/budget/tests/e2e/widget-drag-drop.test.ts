@@ -1,27 +1,26 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Widget Drag and Drop Functionality", () => {
-  test("should handle widget drag and drop operations correctly", async ({page}) => {
+  test("should handle widget drag and drop operations correctly", async ({ page }) => {
     // Navigate to the account page
     await page.goto("http://localhost:3000/accounts/1");
     await page.waitForLoadState("networkidle");
 
     // Take initial screenshot
-    await page.screenshot({path: "test-results/01-initial-page.png", fullPage: true});
+    await page.screenshot({ path: "test-results/01-initial-page.png", fullPage: true });
 
     // Find and click the Customize button to enter edit mode
-    const customizeButton = page.locator("button", {hasText: /customize/i}).first();
-    await expect(customizeButton).toBeVisible({timeout: 10000});
+    const customizeButton = page.locator("button", { hasText: /customize/i }).first();
+    await expect(customizeButton).toBeVisible({ timeout: 10000 });
     await customizeButton.click();
     await page.waitForTimeout(1000); // Wait for edit mode to activate
 
     // Take screenshot after entering edit mode
-    await page.screenshot({path: "test-results/02-edit-mode-active.png", fullPage: true});
+    await page.screenshot({ path: "test-results/02-edit-mode-active.png", fullPage: true });
 
     // Find all draggable widgets
     const draggableWidgets = page.locator('[draggable="true"]');
@@ -65,7 +64,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
       await page.waitForTimeout(1500); // Wait for animation to complete
 
       // Take screenshot after first drag operation
-      await page.screenshot({path: "test-results/03-after-move-forward.png", fullPage: true});
+      await page.screenshot({ path: "test-results/03-after-move-forward.png", fullPage: true });
 
       // Refresh widget references and check if order changed
       const updatedWidgets = page.locator('[draggable="true"]');
@@ -99,7 +98,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
       await page.waitForTimeout(1500); // Wait for animation to complete
 
       // Take screenshot after backward drag operation
-      await page.screenshot({path: "test-results/04-after-move-backward.png", fullPage: true});
+      await page.screenshot({ path: "test-results/04-after-move-backward.png", fullPage: true });
 
       const secondNewBox = await secondWidget.boundingBox();
       const positionChanged =
@@ -126,7 +125,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
       await page.waitForTimeout(1500);
 
       // Take screenshot after multi-position forward drag
-      await page.screenshot({path: "test-results/05-after-multi-forward.png", fullPage: true});
+      await page.screenshot({ path: "test-results/05-after-multi-forward.png", fullPage: true });
 
       const firstNewBox = await firstWidget.boundingBox();
       const multiPositionChanged =
@@ -145,7 +144,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
       await page.waitForTimeout(1500);
 
       // Take screenshot after multi-position backward drag
-      await page.screenshot({path: "test-results/06-after-multi-backward.png", fullPage: true});
+      await page.screenshot({ path: "test-results/06-after-multi-backward.png", fullPage: true });
 
       console.log("Multi-position backward drag completed");
     }
@@ -160,7 +159,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
 
       // Monitor for any rapid position changes during drag
       let positionChanges = 0;
-      let lastPosition: {x: number; y: number} | null = null;
+      let lastPosition: { x: number; y: number } | null = null;
 
       // Start monitoring position changes
       const monitorPositions = async () => {
@@ -175,7 +174,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
               positionChanges++;
             }
           }
-          if (box) lastPosition = {x: box.x, y: box.y};
+          if (box) lastPosition = { x: box.x, y: box.y };
           await page.waitForTimeout(100);
         }
       };
@@ -186,7 +185,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
       await page.waitForTimeout(1500);
 
       // Take screenshot after wiggle test
-      await page.screenshot({path: "test-results/07-after-wiggle-test.png", fullPage: true});
+      await page.screenshot({ path: "test-results/07-after-wiggle-test.png", fullPage: true });
 
       console.log(`Position changes detected during drag: ${positionChanges}`);
       // We expect some position changes during drag, but not excessive rapid changes
@@ -213,7 +212,7 @@ describeE2E("Widget Drag and Drop Functionality", () => {
       console.log(`Drop zones visible during drag: ${dropZoneCount}`);
 
       // Take screenshot showing drop zones
-      await page.screenshot({path: "test-results/08-drop-zones-visible.png", fullPage: true});
+      await page.screenshot({ path: "test-results/08-drop-zones-visible.png", fullPage: true });
 
       // Complete the drag operation
       await page.mouse.up();
@@ -223,16 +222,16 @@ describeE2E("Widget Drag and Drop Functionality", () => {
     }
 
     // Take final screenshot showing end state
-    await page.screenshot({path: "test-results/09-final-state.png", fullPage: true});
+    await page.screenshot({ path: "test-results/09-final-state.png", fullPage: true });
 
     // Verify we can exit edit mode
-    const doneButton = page.locator("button", {hasText: /done/i}).first();
+    const doneButton = page.locator("button", { hasText: /done/i }).first();
     if (await doneButton.isVisible()) {
       await doneButton.click();
       await page.waitForTimeout(1000);
 
       // Take screenshot after exiting edit mode
-      await page.screenshot({path: "test-results/10-exit-edit-mode.png", fullPage: true});
+      await page.screenshot({ path: "test-results/10-exit-edit-mode.png", fullPage: true });
 
       // Verify widgets are no longer draggable
       const remainingDraggableWidgets = page.locator('[draggable="true"]');

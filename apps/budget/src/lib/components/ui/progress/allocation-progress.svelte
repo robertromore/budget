@@ -11,13 +11,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   max?: number;
 }
 
-let {
-  value = 0,
-  projected = 0,
-  max = 100,
-  class: className,
-  ...restProps
-}: Props = $props();
+let { value = 0, projected = 0, max = 100, class: className, ...restProps }: Props = $props();
 
 const valuePercent = $derived.by(() => {
   if (max <= 0) return 0;

@@ -10,5 +10,12 @@
 
 export { savingsOpportunityRoutes } from "./routes";
 export {
-  createSavingsOpportunityService, type OpportunityEvidence, type OpportunityPriority, type OpportunityType, type SavingsOpportunity, type SavingsOpportunityConfig, type SavingsOpportunityService, type SavingsOpportunitySummary
+  createSavingsOpportunityService,
+  type OpportunityEvidence,
+  type OpportunityPriority,
+  type OpportunityType,
+  type SavingsOpportunity,
+  type SavingsOpportunityConfig,
+  type SavingsOpportunityService,
+  type SavingsOpportunitySummary,
 } from "./service";

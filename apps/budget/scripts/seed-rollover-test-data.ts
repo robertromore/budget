@@ -5,33 +5,38 @@
  * Run with: bun run apps/budget/scripts/seed-rollover-test-data.ts
  */
 
-import {db} from '../src/lib/server/db';
-import {budgets, budgetPeriodTemplates, budgetPeriodInstances, budgetAccounts} from '../src/lib/schema/budgets';
-import {envelopeAllocations} from '../src/lib/schema/budgets/envelope-allocations';
-import {categories} from '../src/lib/schema/categories';
-import {accounts} from '../src/lib/schema/accounts';
-import {transactions} from '../src/lib/schema/transactions';
-import {eq, and} from 'drizzle-orm';
+import { db } from "../src/lib/server/db";
+import {
+  budgets,
+  budgetPeriodTemplates,
+  budgetPeriodInstances,
+  budgetAccounts,
+} from "../src/lib/schema/budgets";
+import { envelopeAllocations } from "../src/lib/schema/budgets/envelope-allocations";
+import { categories } from "../src/lib/schema/categories";
+import { accounts } from "../src/lib/schema/accounts";
+import { transactions } from "../src/lib/schema/transactions";
+import { eq, and } from "drizzle-orm";
 
-console.log('🌱 Seeding rollover test data...\n');
+console.log("🌱 Seeding rollover test data...\n");
 
 async function seedRolloverTestData() {
   try {
     // 1. Create or get a test account
-    console.log('📊 Creating test account...');
+    console.log("📊 Creating test account...");
 
     // Try to find existing account first
     let account = await db.query.accounts.findFirst({
-      where: eq(accounts.name, 'Test Checking Account'),
+      where: eq(accounts.name, "Test Checking Account"),
     });
 
     if (!account) {
       [account] = await db
         .insert(accounts)
         .values({
-          name: 'Test Checking Account',
-          slug: 'test-checking-account',
-          accountType: 'checking',
+          name: "Test Checking Account",
+          slug: "test-checking-account",
+          accountType: "checking",
           initialBalance: 10000,
           onBudget: true,
         })
@@ -40,13 +45,13 @@ async function seedRolloverTestData() {
     console.log(`✓ Account ready: ${account.name} (ID: ${account.id})\n`);
 
     // 2. Create test categories
-    console.log('📁 Creating test categories...');
+    console.log("📁 Creating test categories...");
     const categoryData = [
-      {name: 'Groceries', slug: 'groceries', type: 'expense' as const, color: '#10b981'},
-      {name: 'Gas', slug: 'gas', type: 'expense' as const, color: '#3b82f6'},
-      {name: 'Entertainment', slug: 'entertainment', type: 'expense' as const, color: '#8b5cf6'},
-      {name: 'Utilities', slug: 'utilities', type: 'expense' as const, color: '#f59e0b'},
-      {name: 'Savings', slug: 'savings', type: 'expense' as const, color: '#06b6d4'},
+      { name: "Groceries", slug: "groceries", type: "expense" as const, color: "#10b981" },
+      { name: "Gas", slug: "gas", type: "expense" as const, color: "#3b82f6" },
+      { name: "Entertainment", slug: "entertainment", type: "expense" as const, color: "#8b5cf6" },
+      { name: "Utilities", slug: "utilities", type: "expense" as const, color: "#f59e0b" },
+      { name: "Savings", slug: "savings", type: "expense" as const, color: "#06b6d4" },
     ];
 
     const testCategories = [];
@@ -64,25 +69,25 @@ async function seedRolloverTestData() {
     console.log();
 
     // 3. Create a test budget
-    console.log('💰 Creating test budget...');
+    console.log("💰 Creating test budget...");
     let budget = await db.query.budgets.findFirst({
-      where: eq(budgets.name, 'Rollover Test Budget'),
+      where: eq(budgets.name, "Rollover Test Budget"),
     });
 
     if (!budget) {
       [budget] = await db
         .insert(budgets)
         .values({
-          name: 'Rollover Test Budget',
-          slug: 'rollover-test-budget',
-          type: 'envelope',
-          scope: 'account',
+          name: "Rollover Test Budget",
+          slug: "rollover-test-budget",
+          type: "envelope",
+          scope: "account",
           metadata: {
             rolloverSettings: {
               enabled: true,
               maxRolloverPercentage: 100,
               rolloverLimitMonths: 6,
-              deficitRecoveryMode: 'gradual',
+              deficitRecoveryMode: "gradual",
               autoTransition: false,
               notificationEnabled: true,
             },
@@ -94,10 +99,7 @@ async function seedRolloverTestData() {
 
     // Link budget to account
     const existingBudgetAccount = await db.query.budgetAccounts.findFirst({
-      where: and(
-        eq(budgetAccounts.budgetId, budget.id),
-        eq(budgetAccounts.accountId, account.id)
-      ),
+      where: and(eq(budgetAccounts.budgetId, budget.id), eq(budgetAccounts.accountId, account.id)),
     });
 
     if (!existingBudgetAccount) {
@@ -111,7 +113,7 @@ async function seedRolloverTestData() {
     }
 
     // 4. Create period template
-    console.log('📅 Creating period template...');
+    console.log("📅 Creating period template...");
     let template = await db.query.budgetPeriodTemplates.findFirst({
       where: eq(budgetPeriodTemplates.budgetId, budget.id),
     });
@@ -121,7 +123,7 @@ async function seedRolloverTestData() {
         .insert(budgetPeriodTemplates)
         .values({
           budgetId: budget.id,
-          type: 'monthly',
+          type: "monthly",
           intervalCount: 1,
           startDayOfMonth: 1,
         })
@@ -130,7 +132,7 @@ async function seedRolloverTestData() {
     console.log(`✓ Template ready (ID: ${template.id})\n`);
 
     // 5. Create two period instances (previous and current)
-    console.log('📆 Creating period instances...');
+    console.log("📆 Creating period instances...");
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -138,11 +140,11 @@ async function seedRolloverTestData() {
     const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     // Previous period
-    const previousPeriodName = `${lastMonth.toLocaleString('default', {month: 'long'})} ${lastMonth.getFullYear()}`;
+    const previousPeriodName = `${lastMonth.toLocaleString("default", { month: "long" })} ${lastMonth.getFullYear()}`;
     let previousPeriod = await db.query.budgetPeriodInstances.findFirst({
       where: and(
         eq(budgetPeriodInstances.templateId, template.id),
-        eq(budgetPeriodInstances.startDate, lastMonth.toISOString().split('T')[0])
+        eq(budgetPeriodInstances.startDate, lastMonth.toISOString().split("T")[0])
       ),
     });
 
@@ -151,8 +153,8 @@ async function seedRolloverTestData() {
         .insert(budgetPeriodInstances)
         .values({
           templateId: template.id,
-          startDate: lastMonth.toISOString().split('T')[0],
-          endDate: lastMonthEnd.toISOString().split('T')[0],
+          startDate: lastMonth.toISOString().split("T")[0],
+          endDate: lastMonthEnd.toISOString().split("T")[0],
           allocatedAmount: 1750, // Total allocated for all categories
           rolloverAmount: 0,
           actualAmount: 1305, // Total spent in previous period
@@ -161,11 +163,11 @@ async function seedRolloverTestData() {
     }
 
     // Current period
-    const currentPeriodName = `${thisMonth.toLocaleString('default', {month: 'long'})} ${thisMonth.getFullYear()}`;
+    const currentPeriodName = `${thisMonth.toLocaleString("default", { month: "long" })} ${thisMonth.getFullYear()}`;
     let currentPeriod = await db.query.budgetPeriodInstances.findFirst({
       where: and(
         eq(budgetPeriodInstances.templateId, template.id),
-        eq(budgetPeriodInstances.startDate, thisMonth.toISOString().split('T')[0])
+        eq(budgetPeriodInstances.startDate, thisMonth.toISOString().split("T")[0])
       ),
     });
 
@@ -174,8 +176,8 @@ async function seedRolloverTestData() {
         .insert(budgetPeriodInstances)
         .values({
           templateId: template.id,
-          startDate: thisMonth.toISOString().split('T')[0],
-          endDate: thisMonthEnd.toISOString().split('T')[0],
+          startDate: thisMonth.toISOString().split("T")[0],
+          endDate: thisMonthEnd.toISOString().split("T")[0],
           allocatedAmount: 1750, // Same as previous period
           rolloverAmount: 0, // Will be filled by rollover process
           actualAmount: 0,
@@ -187,20 +189,20 @@ async function seedRolloverTestData() {
     console.log(`✓ Current period: ${currentPeriodName} (ID: ${currentPeriod.id})\n`);
 
     // 6. Create envelope allocations for previous period
-    console.log('📮 Creating envelope allocations for previous period...');
+    console.log("📮 Creating envelope allocations for previous period...");
     const envelopeData = [
       {
         category: testCategories[0], // Groceries
         allocated: 600,
         spent: 450, // $150 surplus
-        rolloverMode: 'unlimited' as const,
+        rolloverMode: "unlimited" as const,
         priority: 1,
       },
       {
         category: testCategories[1], // Gas
         allocated: 200,
         spent: 180, // $20 surplus
-        rolloverMode: 'limited' as const,
+        rolloverMode: "limited" as const,
         priority: 2,
         maxRolloverMonths: 3,
       },
@@ -208,21 +210,21 @@ async function seedRolloverTestData() {
         category: testCategories[2], // Entertainment
         allocated: 150,
         spent: 175, // $25 deficit
-        rolloverMode: 'unlimited' as const,
+        rolloverMode: "unlimited" as const,
         priority: 3,
       },
       {
         category: testCategories[3], // Utilities
         allocated: 300,
         spent: 300, // $0
-        rolloverMode: 'reset' as const,
+        rolloverMode: "reset" as const,
         priority: 4,
       },
       {
         category: testCategories[4], // Savings
         allocated: 500,
         spent: 100, // $400 surplus
-        rolloverMode: 'unlimited' as const,
+        rolloverMode: "unlimited" as const,
         priority: 5,
         isEmergencyFund: true,
       },
@@ -252,7 +254,7 @@ async function seedRolloverTestData() {
             rolloverAmount: 0,
             availableAmount: Math.max(0, availableAmount),
             deficitAmount,
-            status: deficitAmount > 0 ? 'overspent' : 'active',
+            status: deficitAmount > 0 ? "overspent" : "active",
             rolloverMode: data.rolloverMode,
             metadata: {
               priority: data.priority,
@@ -280,10 +282,10 @@ async function seedRolloverTestData() {
             accountId: account.id,
             categoryId: data.category.id,
             amount: -amountPerTransaction,
-            date: transactionDate.toISOString().split('T')[0],
+            date: transactionDate.toISOString().split("T")[0],
             description: `Test ${data.category.name} purchase ${i + 1}`,
-            type: 'debit',
-            status: 'cleared',
+            type: "debit",
+            status: "cleared",
             metadata: {},
           });
         }
@@ -292,7 +294,7 @@ async function seedRolloverTestData() {
     console.log();
 
     // 7. Create empty envelopes for current period
-    console.log('📮 Creating envelope allocations for current period...');
+    console.log("📮 Creating envelope allocations for current period...");
     for (const data of envelopeData) {
       let currentEnvelope = await db.query.envelopeAllocations.findFirst({
         where: and(
@@ -303,45 +305,43 @@ async function seedRolloverTestData() {
       });
 
       if (!currentEnvelope) {
-        await db
-          .insert(envelopeAllocations)
-          .values({
-            budgetId: budget.id,
-            categoryId: data.category.id,
-            periodInstanceId: currentPeriod.id,
-            allocatedAmount: data.allocated,
-            spentAmount: 0,
-            rolloverAmount: 0,
-            availableAmount: data.allocated,
-            deficitAmount: 0,
-            status: 'active',
-            rolloverMode: data.rolloverMode,
-            metadata: {
-              priority: data.priority,
-              isEmergencyFund: data.isEmergencyFund,
-              maxRolloverMonths: data.maxRolloverMonths,
-            },
-          });
+        await db.insert(envelopeAllocations).values({
+          budgetId: budget.id,
+          categoryId: data.category.id,
+          periodInstanceId: currentPeriod.id,
+          allocatedAmount: data.allocated,
+          spentAmount: 0,
+          rolloverAmount: 0,
+          availableAmount: data.allocated,
+          deficitAmount: 0,
+          status: "active",
+          rolloverMode: data.rolloverMode,
+          metadata: {
+            priority: data.priority,
+            isEmergencyFund: data.isEmergencyFund,
+            maxRolloverMonths: data.maxRolloverMonths,
+          },
+        });
       }
 
       console.log(`  ✓ ${data.category.name}: $${data.allocated} allocated (ready for rollover)`);
     }
     console.log();
 
-    console.log('✅ Test data seeded successfully!\n');
-    console.log('📝 Summary:');
+    console.log("✅ Test data seeded successfully!\n");
+    console.log("📝 Summary:");
     console.log(`   - Budget: "${budget.name}" (ID: ${budget.id})`);
     console.log(`   - Previous Period: "${previousPeriod.name}" (ID: ${previousPeriod.id})`);
     console.log(`   - Current Period: "${currentPeriod.name}" (ID: ${currentPeriod.id})`);
     console.log(`   - Envelopes: ${envelopeData.length} per period`);
     console.log(`   - Expected rollover: ~$545 surplus, $25 deficit\n`);
-    console.log('🎯 To test rollover:');
+    console.log("🎯 To test rollover:");
     console.log(`   1. Navigate to /budgets/${budget.id}`);
-    console.log('   2. Go to Rollover Manager tab');
+    console.log("   2. Go to Rollover Manager tab");
     console.log('   3. Click "Manual Transition"');
-    console.log('   4. Observe the detailed notification!\n');
+    console.log("   4. Observe the detailed notification!\n");
   } catch (error) {
-    console.error('❌ Error seeding data:', error);
+    console.error("❌ Error seeding data:", error);
     throw error;
   }
 }
@@ -349,10 +349,10 @@ async function seedRolloverTestData() {
 // Run the seed function
 seedRolloverTestData()
   .then(() => {
-    console.log('🎉 Done!');
+    console.log("🎉 Done!");
     process.exit(0);
   })
   .catch((error) => {
-    console.error('Fatal error:', error);
+    console.error("Fatal error:", error);
     process.exit(1);
   });

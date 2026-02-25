@@ -1,15 +1,14 @@
-import {test, expect} from "@playwright/test";
-import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
+import { test, expect } from "@playwright/test";
+import { setupTestDb, seedTestData } from "../../integration/setup/test-db-node";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Individual Account Page Integration Tests", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
 
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     // Setup test database
     testDb = await setupTestDb();
     await seedTestData(testDb);
@@ -24,7 +23,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
   });
 
   describeE2E("Individual Account Page Deep Integration", () => {
-    test("should display complete account header with all metadata", async ({page}) => {
+    test("should display complete account header with all metadata", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -55,7 +54,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       ).toBeVisible();
     });
 
-    test("should show comprehensive transaction list with sorting options", async ({page}) => {
+    test("should show comprehensive transaction list with sorting options", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -87,7 +86,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       await expect(transactionRows.first()).toBeVisible();
     });
 
-    test("should provide comprehensive transaction filtering capabilities", async ({page}) => {
+    test("should provide comprehensive transaction filtering capabilities", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -123,7 +122,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       const categoryFilter =
         page.locator("[data-testid='category-filter']") || page.locator("select[name='category']");
       if (await categoryFilter.isVisible()) {
-        await categoryFilter.selectOption({index: 1});
+        await categoryFilter.selectOption({ index: 1 });
         await expect(page.locator("[data-testid='transactions-table']")).toBeVisible();
       }
 
@@ -138,7 +137,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should support advanced search with multiple criteria", async ({page}) => {
+    test("should support advanced search with multiple criteria", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -180,7 +179,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should handle transaction CRUD operations with proper validation", async ({page}) => {
+    test("should handle transaction CRUD operations with proper validation", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -215,7 +214,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
           page.locator("select[name='category']") ||
           page.locator("[data-testid='category-select']");
         if (await categorySelect.isVisible()) {
-          await categorySelect.selectOption({index: 1});
+          await categorySelect.selectOption({ index: 1 });
         }
 
         // Submit the form
@@ -237,7 +236,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should provide detailed transaction view with edit capabilities", async ({page}) => {
+    test("should provide detailed transaction view with edit capabilities", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -298,7 +297,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should display comprehensive account statistics and analytics", async ({page}) => {
+    test("should display comprehensive account statistics and analytics", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -354,7 +353,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should provide robust account data export functionality", async ({page}) => {
+    test("should provide robust account data export functionality", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -403,7 +402,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should handle account reconciliation process comprehensively", async ({page}) => {
+    test("should handle account reconciliation process comprehensively", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -479,7 +478,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should support comprehensive bulk transaction operations", async ({page}) => {
+    test("should support comprehensive bulk transaction operations", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -516,7 +515,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
             page.locator("select[name='category']") ||
             page.locator("[data-testid='category-select']");
           if (await categoryOption.isVisible()) {
-            await categoryOption.selectOption({index: 1});
+            await categoryOption.selectOption({ index: 1 });
 
             const applyButton = page.locator("button:has-text('Apply')");
             if (await applyButton.isVisible()) {
@@ -556,7 +555,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should provide comprehensive account management and settings", async ({page}) => {
+    test("should provide comprehensive account management and settings", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 
@@ -610,7 +609,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
           page.locator("select[name='accountType']") ||
           page.locator("[data-testid='account-type-select']");
         if (await accountTypeSelect.isVisible()) {
-          await accountTypeSelect.selectOption({index: 1});
+          await accountTypeSelect.selectOption({ index: 1 });
         }
 
         // Save settings
@@ -659,7 +658,7 @@ describeE2E("Individual Account Page Integration Tests", () => {
       }
     });
 
-    test("should handle complex error states and recovery gracefully", async ({page}) => {
+    test("should handle complex error states and recovery gracefully", async ({ page }) => {
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
 

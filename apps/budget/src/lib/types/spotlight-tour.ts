@@ -8,7 +8,15 @@
 /**
  * Placement options for tour tooltips
  */
-export type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
+export type TooltipPlacement =
+  | "top"
+  | "bottom"
+  | "left"
+  | "right"
+  | "top-start"
+  | "top-end"
+  | "bottom-start"
+  | "bottom-end";
 
 /**
  * A branch option that can appear at a tour step
@@ -170,7 +178,7 @@ export interface SpotlightConfig {
  * Default spotlight configuration
  */
 export const DEFAULT_SPOTLIGHT_CONFIG: SpotlightConfig = {
-  overlayColor: 'rgba(0, 0, 0, 0.75)',
+  overlayColor: "rgba(0, 0, 0, 0.75)",
   spotlightBorderRadius: 8,
   defaultPadding: 8,
   animationDuration: 300,
@@ -183,19 +191,19 @@ export const DEFAULT_SPOTLIGHT_CONFIG: SpotlightConfig = {
  * Tour step for the main application tour
  */
 export const MAIN_TOUR_STEP_IDS = {
-  WELCOME: 'welcome',
-  SIDEBAR_NAV: 'sidebar-navigation',
-  ACCOUNTS_LIST: 'accounts-list',
-  ADD_ACCOUNT: 'add-account-button',
-  TRANSACTIONS_TABLE: 'transactions-table',
-  BUDGETS_PAGE: 'budgets-page',
-  SCHEDULES_PAGE: 'schedules-page',
-  CATEGORIES_PAGE: 'categories-page',
-  PAYEES_PAGE: 'payees-page',
-  IMPORT_TAB: 'import-tab',
-  HELP_BUTTON: 'help-button',
-  SETTINGS_BUTTON: 'settings-button',
-  COMPLETE: 'tour-complete',
+  WELCOME: "welcome",
+  SIDEBAR_NAV: "sidebar-navigation",
+  ACCOUNTS_LIST: "accounts-list",
+  ADD_ACCOUNT: "add-account-button",
+  TRANSACTIONS_TABLE: "transactions-table",
+  BUDGETS_PAGE: "budgets-page",
+  SCHEDULES_PAGE: "schedules-page",
+  CATEGORIES_PAGE: "categories-page",
+  PAYEES_PAGE: "payees-page",
+  IMPORT_TAB: "import-tab",
+  HELP_BUTTON: "help-button",
+  SETTINGS_BUTTON: "settings-button",
+  COMPLETE: "tour-complete",
 } as const;
 
 export type MainTourStepId = (typeof MAIN_TOUR_STEP_IDS)[keyof typeof MAIN_TOUR_STEP_IDS];

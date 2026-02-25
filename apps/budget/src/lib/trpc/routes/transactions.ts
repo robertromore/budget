@@ -383,9 +383,7 @@ export const transactionRoutes = t.router({
 
         // If user wants to remember this mapping for future imports
         if (input.rememberMapping && input.rawPayeeString) {
-          const { getTransferMappingService } = await import(
-            "$lib/server/domains/transfers"
-          );
+          const { getTransferMappingService } = await import("$lib/server/domains/transfers");
           const transferMappingService = getTransferMappingService();
 
           await transferMappingService.recordMappingFromConversion(
@@ -422,7 +420,9 @@ export const transactionRoutes = t.router({
   convertToTransferBulk: bulkOperationProcedure
     .input(
       z.object({
-        transactionIds: z.array(z.number().positive()).min(1, "At least one transaction ID required"),
+        transactionIds: z
+          .array(z.number().positive())
+          .min(1, "At least one transaction ID required"),
         targetAccountId: z.number().positive("Target account ID must be positive"),
         rememberMapping: z.boolean().optional().default(false),
         rawPayeeString: z.string().optional(), // Original payee string for mapping
@@ -678,10 +678,7 @@ export const transactionRoutes = t.router({
         const repository = serviceFactory.getTransactionRepository();
 
         // Calculate the current balance
-        const currentBalance = await repository.getAccountBalance(
-          input.accountId,
-          ctx.workspaceId
-        );
+        const currentBalance = await repository.getAccountBalance(input.accountId, ctx.workspaceId);
 
         // Calculate the adjustment amount needed
         const adjustmentAmount = input.targetBalance - currentBalance;
@@ -710,10 +707,7 @@ export const transactionRoutes = t.router({
     .query(
       withErrorHandler(async ({ input, ctx }) => {
         const repository = serviceFactory.getTransactionRepository();
-        const count = await repository.countArchivedTransactions(
-          input.accountId,
-          ctx.workspaceId
-        );
+        const count = await repository.countArchivedTransactions(input.accountId, ctx.workspaceId);
         return { count };
       })
     ),

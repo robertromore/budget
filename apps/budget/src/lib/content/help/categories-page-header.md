@@ -6,11 +6,13 @@ related: [categories-list, budgets-page-header]
 
 # Categories Page
 
-Categories help you organize and classify your transactions for better spending analysis.
+Categories help you organize and classify your transactions for better spending
+analysis.
 
 ## Overview
 
 Categories allow you to:
+
 - Group similar transactions together
 - Track spending by category
 - Create budgets based on categories

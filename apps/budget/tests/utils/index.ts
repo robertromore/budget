@@ -18,4 +18,4 @@ export {
 } from "./component-helpers";
 
 // Re-export commonly used vitest functions for convenience
-export {expect, vi, describe, it, test, beforeEach, afterEach, beforeAll, afterAll} from "vitest";
+export { expect, vi, describe, it, test, beforeEach, afterEach, beforeAll, afterAll } from "vitest";

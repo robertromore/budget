@@ -1,6 +1,6 @@
 import * as schema from "$lib/schema/index";
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
@@ -8,8 +8,8 @@ const testDbStorage = new AsyncLocalStorage<ReturnType<typeof drizzle<typeof sch
 let testDbOverride: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 function createDb() {
-  const DATABASE_URL = process.env.DATABASE_URL || Bun.env?.DATABASE_URL || '';
-  if (!DATABASE_URL) throw new Error('DATABASE_URL is not set');
+  const DATABASE_URL = process.env.DATABASE_URL || Bun.env?.DATABASE_URL || "";
+  if (!DATABASE_URL) throw new Error("DATABASE_URL is not set");
 
   const client = createClient({ url: DATABASE_URL });
   return drizzle(client, { schema });
@@ -45,9 +45,7 @@ export function runWithDbForTesting<T>(
 /**
  * Global test DB override for runners where async context propagation is unreliable.
  */
-export function setDbForTesting(
-  testDb: ReturnType<typeof drizzle<typeof schema>> | null
-): void {
+export function setDbForTesting(testDb: ReturnType<typeof drizzle<typeof schema>> | null): void {
   testDbOverride = testDb;
 }
 
@@ -56,6 +54,6 @@ export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
   get(_target, prop, receiver) {
     const instance = getDb();
     const value = Reflect.get(instance, prop, receiver);
-    return typeof value === 'function' ? value.bind(instance) : value;
+    return typeof value === "function" ? value.bind(instance) : value;
   },
 });

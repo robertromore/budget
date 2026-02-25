@@ -551,18 +551,24 @@ export const scheduleRoutes = t.router({
 
   getSkipHistory: publicProcedure
     .input(z.object({ scheduleId: z.number().int().positive() }))
-    .query(
-      withErrorHandler(async ({ input }) => scheduleService.getSkipHistory(input.scheduleId))
-    ),
+    .query(withErrorHandler(async ({ input }) => scheduleService.getSkipHistory(input.scheduleId))),
 
   removeSkip: rateLimitedProcedure
     .input(z.object({ skipId: z.number().int().positive() }))
-    .mutation(withErrorHandler(async ({ input, ctx }) => scheduleService.removeSkip(input.skipId, ctx.workspaceId))),
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        scheduleService.removeSkip(input.skipId, ctx.workspaceId)
+      )
+    ),
 
   bulkRemove: rateLimitedProcedure
     .input(z.object({ ids: z.array(z.number().int().positive()).min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const results: { success: number; failed: number; errors: Array<{ id: number; error: string }> } = {
+      const results: {
+        success: number;
+        failed: number;
+        errors: Array<{ id: number; error: string }>;
+      } = {
         success: 0,
         failed: 0,
         errors: [],
@@ -939,9 +945,7 @@ export const scheduleRoutes = t.router({
           priceChangeDetectedAt: getCurrentTimestamp(),
           updatedAt: getCurrentTimestamp(),
         })
-        .where(
-          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
-        );
+        .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)));
 
       return historyResult[0];
     }),
@@ -981,9 +985,7 @@ export const scheduleRoutes = t.router({
           lastKnownAmount: schedule.amount,
           updatedAt: getCurrentTimestamp(),
         })
-        .where(
-          and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
-        )
+        .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
         .returning();
 
       // Record initial price history
@@ -1005,10 +1007,7 @@ export const scheduleRoutes = t.router({
 /**
  * Helper to normalize amounts to monthly based on frequency
  */
-function normalizeAmountToMonthly(
-  amount: number,
-  frequency: string
-): number {
+function normalizeAmountToMonthly(amount: number, frequency: string): number {
   switch (frequency) {
     case "daily":
       return amount * 30;

@@ -6,18 +6,23 @@ related: [transaction-table, transaction-filters, transaction-view-options]
 
 # Transaction Toolbar
 
-The toolbar provides powerful controls for filtering, searching, and customizing your transaction view.
+The toolbar provides powerful controls for filtering, searching, and customizing
+your transaction view.
 
 ## Toolbar Sections
 
 ### Saved Views
+
 Pre-configured filters and column layouts:
+
 - **Account** - Default view for this account
 - **Custom Views** - Your saved configurations
 - **Edit Views** - Modify saved views
 
 ### Filters
+
 Narrow down transactions by:
+
 - Date range
 - Amount range
 - Category
@@ -25,7 +30,9 @@ Narrow down transactions by:
 - Status
 
 ### View Options
+
 Customize the display:
+
 - Show/hide columns
 - Change sort order
 - Adjust column widths

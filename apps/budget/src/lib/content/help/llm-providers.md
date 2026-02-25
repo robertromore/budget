@@ -11,24 +11,28 @@ Configure external AI providers to power language model features.
 ## Available Providers
 
 ### OpenAI
+
 - GPT-4 and GPT-3.5 models
 - Industry-leading language understanding
 - Requires OpenAI API key
 - Pay-as-you-go pricing
 
 ### Claude (Anthropic)
+
 - Claude models known for safety and accuracy
 - Strong reasoning capabilities
 - Requires Anthropic API key
 - Competitive pricing
 
 ### Gemini (Google)
+
 - Google's Gemini models
 - Good multilingual support
 - Requires Google AI API key
 - Free tier available
 
 ### Ollama (Local)
+
 - Run open-source models locally
 - No API key required
 - Models: Llama, Mistral, etc.

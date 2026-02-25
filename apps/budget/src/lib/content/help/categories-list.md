@@ -6,7 +6,8 @@ related: [categories-page-header]
 
 # Categories List
 
-The categories list displays all your transaction categories with search and management features.
+The categories list displays all your transaction categories with search and
+management features.
 
 ## View Modes
 
@@ -17,6 +18,7 @@ The categories list displays all your transaction categories with search and man
 ## Search & Filter
 
 Use the search bar to find categories by:
+
 - Name
 - Notes
 - Group name
@@ -31,6 +33,7 @@ Use the search bar to find categories by:
 ## Reorder Mode
 
 Enable reorder mode to drag and drop categories to change their display order:
+
 1. Switch to grid view
 2. Click "Reorder" button
 3. Drag categories to new positions

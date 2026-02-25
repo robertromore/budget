@@ -176,9 +176,7 @@ export class ConnectionRepository {
     const [updated] = await db
       .update(accountConnections)
       .set(updateData)
-      .where(
-        and(eq(accountConnections.id, id), eq(accountConnections.workspaceId, workspaceId))
-      )
+      .where(and(eq(accountConnections.id, id), eq(accountConnections.workspaceId, workspaceId)))
       .returning();
 
     if (!updated) {
@@ -202,9 +200,7 @@ export class ConnectionRepository {
         encryptedCredentials,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(
-        and(eq(accountConnections.id, id), eq(accountConnections.workspaceId, workspaceId))
-      )
+      .where(and(eq(accountConnections.id, id), eq(accountConnections.workspaceId, workspaceId)))
       .returning();
 
     if (!updated) {
@@ -226,9 +222,7 @@ export class ConnectionRepository {
     await db
       .update(accountConnections)
       .set({ deletedAt: getCurrentTimestamp() })
-      .where(
-        and(eq(accountConnections.id, id), eq(accountConnections.workspaceId, workspaceId))
-      );
+      .where(and(eq(accountConnections.id, id), eq(accountConnections.workspaceId, workspaceId)));
   }
 
   /**
@@ -269,7 +263,17 @@ export class ConnectionRepository {
    */
   async updateSyncHistory(
     id: number,
-    data: Partial<Pick<SyncHistoryRecord, "status" | "completedAt" | "transactionsFetched" | "transactionsImported" | "duplicatesSkipped" | "errorMessage">>
+    data: Partial<
+      Pick<
+        SyncHistoryRecord,
+        | "status"
+        | "completedAt"
+        | "transactionsFetched"
+        | "transactionsImported"
+        | "duplicatesSkipped"
+        | "errorMessage"
+      >
+    >
   ): Promise<SyncHistoryRecord> {
     const [updated] = await db
       .update(syncHistory)
@@ -333,9 +337,7 @@ export class ConnectionRepository {
     const [successResult] = await db
       .select({ success: count() })
       .from(syncHistory)
-      .where(
-        and(eq(syncHistory.connectionId, connectionId), eq(syncHistory.status, "success"))
-      );
+      .where(and(eq(syncHistory.connectionId, connectionId), eq(syncHistory.status, "success")));
 
     // Failed syncs
     const [failedResult] = await db

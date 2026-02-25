@@ -6,7 +6,7 @@
  */
 
 import { env } from "$env/dynamic/private";
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const KEY_LENGTH = 32;

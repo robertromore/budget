@@ -216,9 +216,7 @@ function getFileIcon(mimeType: string) {
       <!-- Upload Prompt -->
       <Upload class="text-muted-foreground mx-auto mb-2 h-10 w-10" />
       <p class="mb-1 font-medium">Drop files here or click to upload</p>
-      <p class="text-muted-foreground mb-3 text-sm">
-        JPEG, PNG, WebP, or PDF (max 10MB)
-      </p>
+      <p class="text-muted-foreground mb-3 text-sm">JPEG, PNG, WebP, or PDF (max 10MB)</p>
       <input
         bind:this={fileInput}
         type="file"
@@ -331,10 +329,7 @@ function getFileIcon(mimeType: string) {
       </div>
 
       <!-- Upload Button -->
-      <Button
-        class="w-full"
-        onclick={handleUpload}
-        disabled={isUploading || !selectedAccountId}>
+      <Button class="w-full" onclick={handleUpload} disabled={isUploading || !selectedAccountId}>
         {isUploading ? 'Uploading...' : 'Upload Document'}
       </Button>
     </div>

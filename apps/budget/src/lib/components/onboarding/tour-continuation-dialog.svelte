@@ -57,34 +57,31 @@ function handleFinish() {
 <AlertDialog.Root bind:open>
   <AlertDialog.Content class="max-w-md">
     <AlertDialog.Header>
-      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
+      <div
+        class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
         <Check class="h-7 w-7 text-green-600 dark:text-green-400" />
       </div>
-      <AlertDialog.Title class="text-center text-xl">
-        Tour Complete!
-      </AlertDialog.Title>
+      <AlertDialog.Title class="text-center text-xl">Tour Complete!</AlertDialog.Title>
       <AlertDialog.Description class="text-center">
         Great job! You've completed the main tour and learned the basics of navigation.
       </AlertDialog.Description>
     </AlertDialog.Header>
 
-    <div class="my-4 rounded-lg bg-muted/50 p-4">
+    <div class="bg-muted/50 my-4 rounded-lg p-4">
       <div class="flex items-start gap-3">
-        <Wallet class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+        <Wallet class="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
         <div class="text-sm">
           <p class="font-medium">Want to learn more?</p>
           <p class="text-muted-foreground mt-1">
-            Continue with the Account Page Demo to see how to manage transactions,
-            import data, and explore all the features with sample data.
+            Continue with the Account Page Demo to see how to manage transactions, import data, and
+            explore all the features with sample data.
           </p>
         </div>
       </div>
     </div>
 
     <AlertDialog.Footer class="flex-col gap-2 sm:flex-row">
-      <Button variant="outline" class="w-full sm:w-auto" onclick={handleFinish}>
-        I'm Done
-      </Button>
+      <Button variant="outline" class="w-full sm:w-auto" onclick={handleFinish}>I'm Done</Button>
       <Button class="w-full sm:w-auto" onclick={handleContinueToAccountDemo}>
         <Play class="mr-2 h-4 w-4" />
         Continue to Demo

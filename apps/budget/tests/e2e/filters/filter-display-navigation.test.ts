@@ -1,17 +1,16 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Filter Display Navigation Bug #30", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/accounts/1");
     await page.waitForLoadState("networkidle");
   });
 
-  test("filter display persists when navigating back from schedules", async ({page}) => {
+  test("filter display persists when navigating back from schedules", async ({ page }) => {
     // Step 1: Set a date filter on account view
     await page.click('[data-testid="filter-button"]');
     await page.click("text=Date");
@@ -47,7 +46,7 @@ describeE2E("Filter Display Navigation Bug #30", () => {
     await expect(page.locator('[data-testid="date-filter-chip"]')).toContainText("2024-01-01");
   });
 
-  test("multiple filters persist display after navigation", async ({page}) => {
+  test("multiple filters persist display after navigation", async ({ page }) => {
     // Apply multiple filters
     await page.click('[data-testid="filter-button"]');
     await page.click("text=Date");
@@ -81,7 +80,7 @@ describeE2E("Filter Display Navigation Bug #30", () => {
     expect(finalRowCount).toBe(initialRowCount);
   });
 
-  test("filter display updates correctly after removing filters", async ({page}) => {
+  test("filter display updates correctly after removing filters", async ({ page }) => {
     // Apply a filter
     await page.click('[data-testid="filter-button"]');
     await page.click("text=Date");

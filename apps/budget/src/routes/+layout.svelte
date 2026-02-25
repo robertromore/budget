@@ -12,7 +12,10 @@ import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog
 import EncryptionUnlockDialog from '$lib/components/dialogs/encryption-unlock-dialog.svelte';
 import SkipOccurrenceDialog from '$lib/components/dialogs/skip-occurrence-dialog.svelte';
 import { HelpButton, HelpOverlay } from '$lib/components/help';
-import { IntelligenceInputButton, IntelligenceInputOverlay } from '$lib/components/intelligence-input';
+import {
+  IntelligenceInputButton,
+  IntelligenceInputOverlay,
+} from '$lib/components/intelligence-input';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
@@ -162,13 +165,16 @@ onMount(() => {
           <AppSidebar />
           <Sidebar.Inset>
             <header
-              class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b p-2"
-            >
+              class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b p-2">
               <div class="flex items-center gap-2 px-4">
                 <Tooltip.Root>
                   <Tooltip.Trigger>
                     {#snippet child({ props })}
-                      <Sidebar.Trigger {...props} class="-ml-1" data-help-id="sidebar-trigger" data-help-title="Toggle Sidebar" />
+                      <Sidebar.Trigger
+                        {...props}
+                        class="-ml-1"
+                        data-help-id="sidebar-trigger"
+                        data-help-title="Toggle Sidebar" />
                     {/snippet}
                   </Tooltip.Trigger>
                   <Tooltip.Content>Toggle sidebar</Tooltip.Content>
@@ -213,8 +219,7 @@ onMount(() => {
   <!-- Tour Continuation Dialog - shown after main tour completion -->
   <TourContinuationDialog
     open={demoMode.showContinuationPrompt}
-    onClose={() => demoMode.hideContinuationDialog()}
-  />
+    onClose={() => demoMode.hideContinuationDialog()} />
 
   <!-- AI Chat Panel - global slide-out panel for AI assistant (only when LLM enabled) -->
   {#if isLLMEnabled}

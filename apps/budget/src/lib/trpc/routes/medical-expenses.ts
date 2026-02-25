@@ -1,8 +1,4 @@
-import {
-  claimStatusKeys,
-  medicalExpenseTypeKeys,
-  receiptTypeKeys
-} from "$lib/schema";
+import { claimStatusKeys, medicalExpenseTypeKeys, receiptTypeKeys } from "$lib/schema";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";

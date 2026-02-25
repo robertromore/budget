@@ -51,7 +51,9 @@ import { toast } from '$lib/utils/toast-interceptor';
 let { data } = $props();
 const queryClient = useQueryClient();
 
-const _data = (() => { return data })();
+const _data = (() => {
+  return data;
+})();
 
 // Initialize entity states for the import page
 PayeesState.set(_data.payees);
@@ -187,9 +189,10 @@ function handleCleanupStateChange(state: CleanupState) {
   // Apply cleanup decisions to entityOverrides and create alias candidates
   for (const group of state.payeeGroups) {
     if (group.userDecision === 'accept' || group.userDecision === 'custom') {
-      const payeeName = group.userDecision === 'custom' && group.customName
-        ? group.customName
-        : group.canonicalName;
+      const payeeName =
+        group.userDecision === 'custom' && group.customName
+          ? group.customName
+          : group.canonicalName;
       const payeeId = group.existingMatch?.id ?? null;
 
       for (const member of group.members) {
@@ -199,8 +202,8 @@ function handleCleanupStateChange(state: CleanupState) {
           [member.rowIndex]: {
             ...entityOverrides[member.rowIndex],
             payeeId,
-            payeeName
-          }
+            payeeName,
+          },
         };
 
         // Create alias candidate for both existing and new payees
@@ -210,8 +213,8 @@ function handleCleanupStateChange(state: CleanupState) {
           const newCandidates = new Map(aliasCandidates);
           newCandidates.set(member.rowIndex, {
             rawString: member.originalPayee,
-            payeeId: payeeId ?? undefined,  // null for new payees
-            payeeName,  // Track name for resolution after import
+            payeeId: payeeId ?? undefined, // null for new payees
+            payeeName, // Track name for resolution after import
           });
           aliasCandidates = newCandidates;
         }
@@ -231,8 +234,8 @@ function handleCleanupStateChange(state: CleanupState) {
           [suggestion.rowIndex]: {
             ...entityOverrides[suggestion.rowIndex],
             categoryId: suggestion.selectedCategoryId,
-            categoryName: selectedSuggestion.categoryName
-          }
+            categoryName: selectedSuggestion.categoryName,
+          },
         };
       }
     }
@@ -250,7 +253,9 @@ const previewData = $derived.by(() => {
       const override = entityOverrides[row.rowIndex];
       // Store the original payee value from the CSV before any overrides
       // Use 'originalPayee' if set by infer-categories (true raw value), otherwise fall back to 'payee'
-      const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as string | null;
+      const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as
+        | string
+        | null;
 
       return {
         ...row,
@@ -274,9 +279,9 @@ const previewData = $derived.by(() => {
           categoryId:
             override?.categoryId !== undefined
               ? override.categoryId
-              : (override?.categoryName !== undefined
+              : override?.categoryName !== undefined
                 ? null
-                : row.normalizedData['categoryId']),
+                : row.normalizedData['categoryId'],
           description:
             override?.description !== undefined
               ? override.description
@@ -1225,7 +1230,7 @@ async function proceedToEntityReview() {
 
   try {
     // selectedRows already contains row.rowIndex values from ImportPreviewTable
-    const selectedRowsData = previewData.rows.filter(row => selectedRows.has(row.rowIndex));
+    const selectedRowsData = previewData.rows.filter((row) => selectedRows.has(row.rowIndex));
 
     const response = await fetch('/api/import/preview-entities', {
       method: 'POST',
@@ -1342,9 +1347,9 @@ async function processImport() {
             categoryId:
               override?.categoryId !== undefined
                 ? override.categoryId
-                : (override?.categoryName !== undefined
+                : override?.categoryName !== undefined
                   ? null // Clear categoryId if categoryName was overridden (even to null)
-                  : row.normalizedData['categoryId'] ?? null),
+                  : (row.normalizedData['categoryId'] ?? null),
             description:
               override?.description !== undefined
                 ? override.description
@@ -1353,12 +1358,15 @@ async function processImport() {
             transferAccountId:
               override?.transferAccountId !== undefined
                 ? override.transferAccountId
-                : row.normalizedData['transferAccountId'] ?? null,
+                : (row.normalizedData['transferAccountId'] ?? null),
             transferAccountName:
               override?.transferAccountName !== undefined
                 ? override.transferAccountName
-                : row.normalizedData['transferAccountName'] ?? null,
-            rememberTransferMapping: override?.rememberTransferMapping ?? row.normalizedData['rememberTransferMapping'] ?? false,
+                : (row.normalizedData['transferAccountName'] ?? null),
+            rememberTransferMapping:
+              override?.rememberTransferMapping ??
+              row.normalizedData['rememberTransferMapping'] ??
+              false,
           },
         };
       });
@@ -1389,14 +1397,17 @@ async function processImport() {
     };
 
     // Log transfer data being sent
-    const transferRows = selectedRowsData.filter(r => r.normalizedData?.transferAccountId);
+    const transferRows = selectedRowsData.filter((r) => r.normalizedData?.transferAccountId);
     if (transferRows.length > 0) {
-      console.log('[Import] Sending transfer rows:', transferRows.map(r => ({
-        rowIndex: r.rowIndex,
-        transferAccountId: r.normalizedData?.transferAccountId,
-        rememberTransferMapping: r.normalizedData?.rememberTransferMapping,
-        payee: r.normalizedData?.payee,
-      })));
+      console.log(
+        '[Import] Sending transfer rows:',
+        transferRows.map((r) => ({
+          rowIndex: r.rowIndex,
+          transferAccountId: r.normalizedData?.transferAccountId,
+          rememberTransferMapping: r.normalizedData?.rememberTransferMapping,
+          payee: r.normalizedData?.payee,
+        }))
+      );
     }
 
     const response = await fetch('/api/import/process', {
@@ -1470,8 +1481,13 @@ async function processImport() {
               return null;
             })
             .filter(
-              (alias): alias is { rawString: string; payeeId: number; sourceAccountId: number | undefined } =>
-                alias !== null && !!alias.rawString
+              (
+                alias
+              ): alias is {
+                rawString: string;
+                payeeId: number;
+                sourceAccountId: number | undefined;
+              } => alias !== null && !!alias.rawString
             );
 
           if (aliasesToCreate.length > 0) {
@@ -1485,7 +1501,10 @@ async function processImport() {
 
       // Record category aliases from import
       // This records raw string → category mappings for future imports
-      if (result.result.createdCategoryMappings && result.result.createdCategoryMappings.length > 0) {
+      if (
+        result.result.createdCategoryMappings &&
+        result.result.createdCategoryMappings.length > 0
+      ) {
         try {
           const categoryAliasesToCreate = result.result.createdCategoryMappings.map(
             (mapping: {
@@ -1621,9 +1640,10 @@ async function saveImportProfile() {
       filenamePattern: saveProfileDialog.saveFilenamePattern
         ? saveProfileDialog.filenamePattern.trim() || null
         : null,
-      accountId: saveProfileDialog.saveAsAccountDefault && selectedAccountId
-        ? parseInt(selectedAccountId)
-        : null,
+      accountId:
+        saveProfileDialog.saveAsAccountDefault && selectedAccountId
+          ? parseInt(selectedAccountId)
+          : null,
       isAccountDefault: saveProfileDialog.saveAsAccountDefault,
       mapping: columnMapping,
     });
@@ -1664,7 +1684,6 @@ $effect(() => {
   currentStep;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
-
 </script>
 
 <svelte:head>
@@ -1715,7 +1734,7 @@ $effect(() => {
                 {/if}
               </div>
               <div
-                class="absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap text-sm font-medium transition-colors {isCurrent
+                class="absolute top-full left-1/2 mt-3 -translate-x-1/2 text-sm font-medium whitespace-nowrap transition-colors {isCurrent
                   ? 'text-primary'
                   : isComplete
                     ? 'text-green-600'
@@ -1826,7 +1845,8 @@ $effect(() => {
         </div>
       {:else if currentStep === 'map-columns' && parseResults && rawCSVData}
         {#if matchedProfile}
-          <div class="bg-primary/10 border-primary/20 mb-4 flex items-center justify-between rounded-lg border p-3">
+          <div
+            class="bg-primary/10 border-primary/20 mb-4 flex items-center justify-between rounded-lg border p-3">
             <div class="flex items-center gap-2">
               <Sparkles class="text-primary h-4 w-4" />
               <span class="text-sm">
@@ -1873,14 +1893,11 @@ $effect(() => {
               processorCount={processorAnalysis.total}
               onOpenProcessorFilter={openProcessorFilterDialog}
               bind:table={previewTable}
-              bind:selectedRows
-            />
+              bind:selectedRows />
 
             <!-- Navigation Buttons -->
             <div class="flex items-center justify-between pt-4">
-              <Button variant="outline" onclick={goBackToUpload}>
-                Back
-              </Button>
+              <Button variant="outline" onclick={goBackToUpload}>Back</Button>
               <div class="flex items-center gap-2">
                 <span class="text-muted-foreground text-sm">
                   {selectedRowCount} of {previewData.rows.length} selected
@@ -2226,9 +2243,7 @@ $effect(() => {
             <Label for="save-filename-pattern" class="text-sm font-medium">
               Match by filename pattern
             </Label>
-            <p class="text-muted-foreground text-xs">
-              Auto-match files with similar names
-            </p>
+            <p class="text-muted-foreground text-xs">Auto-match files with similar names</p>
           </div>
         </div>
         {#if saveProfileDialog.saveFilenamePattern}
@@ -2441,9 +2456,13 @@ $effect(() => {
     <AlertDialog.Header>
       <AlertDialog.Title>Convert Similar Transactions to Transfers?</AlertDialog.Title>
       <AlertDialog.Description>
-        Found {bulkTransferUpdateDialog.matchCount} other transaction{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} with similar payee "{bulkTransferUpdateDialog.originalPayeeName}".
+        Found {bulkTransferUpdateDialog.matchCount} other transaction{bulkTransferUpdateDialog.matchCount !==
+        1
+          ? 's'
+          : ''} with similar payee "{bulkTransferUpdateDialog.originalPayeeName}".
         <br /><br />
-        Would you like to also convert {bulkTransferUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to transfer{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} to "{bulkTransferUpdateDialog.accountName}"?
+        Would you like to also convert {bulkTransferUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to
+        transfer{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} to "{bulkTransferUpdateDialog.accountName}"?
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">

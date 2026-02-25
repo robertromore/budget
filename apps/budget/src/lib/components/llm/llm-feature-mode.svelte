@@ -1,76 +1,76 @@
 <script lang="ts">
-  import * as Card from "$lib/components/ui/card";
-  import { Label } from "$lib/components/ui/label";
-  import * as RadioGroup from "$lib/components/ui/radio-group";
-  import * as Select from "$lib/components/ui/select";
-  import type { LLMFeatureConfig, LLMFeatureMode, LLMProvider } from "$lib/schema/workspaces";
-  import { cn } from "$lib/utils";
-  import type { Component } from "svelte";
+import * as Card from '$lib/components/ui/card';
+import { Label } from '$lib/components/ui/label';
+import * as RadioGroup from '$lib/components/ui/radio-group';
+import * as Select from '$lib/components/ui/select';
+import type { LLMFeatureConfig, LLMFeatureMode, LLMProvider } from '$lib/schema/workspaces';
+import { cn } from '$lib/utils';
+import type { Component } from 'svelte';
 
-  interface ProviderOption {
-    value: LLMProvider;
-    label: string;
-    enabled: boolean;
+interface ProviderOption {
+  value: LLMProvider;
+  label: string;
+  enabled: boolean;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  icon?: Component;
+  config: LLMFeatureConfig;
+  defaultProvider: LLMProvider | null;
+  providers: ProviderOption[];
+  disabled?: boolean;
+  onConfigChange?: (config: LLMFeatureConfig) => void;
+  class?: string;
+}
+
+let {
+  title,
+  description,
+  icon: Icon,
+  config = $bindable(),
+  defaultProvider,
+  providers,
+  disabled = false,
+  onConfigChange,
+  class: className,
+}: Props = $props();
+
+// Get enabled providers for the dropdown
+const enabledProviders = $derived(providers.filter((p) => p.enabled));
+
+// Current provider display value
+const currentProviderLabel = $derived(() => {
+  if (config.provider) {
+    const provider = providers.find((p) => p.value === config.provider);
+    return provider?.label ?? config.provider;
   }
-
-  interface Props {
-    title: string;
-    description: string;
-    icon?: Component;
-    config: LLMFeatureConfig;
-    defaultProvider: LLMProvider | null;
-    providers: ProviderOption[];
-    disabled?: boolean;
-    onConfigChange?: (config: LLMFeatureConfig) => void;
-    class?: string;
+  if (defaultProvider) {
+    const provider = providers.find((p) => p.value === defaultProvider);
+    return `Default (${provider?.label ?? defaultProvider})`;
   }
+  return 'Use Default';
+});
 
-  let {
-    title,
-    description,
-    icon: Icon,
-    config = $bindable(),
-    defaultProvider,
-    providers,
-    disabled = false,
-    onConfigChange,
-    class: className,
-  }: Props = $props();
-
-  // Get enabled providers for the dropdown
-  const enabledProviders = $derived(providers.filter((p) => p.enabled));
-
-  // Current provider display value
-  const currentProviderLabel = $derived(() => {
-    if (config.provider) {
-      const provider = providers.find((p) => p.value === config.provider);
-      return provider?.label ?? config.provider;
-    }
-    if (defaultProvider) {
-      const provider = providers.find((p) => p.value === defaultProvider);
-      return `Default (${provider?.label ?? defaultProvider})`;
-    }
-    return "Use Default";
-  });
-
-  function handleModeChange(value: string | undefined) {
-    if (value) {
-      const newConfig = { ...config, mode: value as LLMFeatureMode };
-      config = newConfig;
-      onConfigChange?.(newConfig);
-    }
-  }
-
-  function handleProviderChange(value: string | undefined) {
-    // null means use default provider
-    const newProvider = value === "default" ? null : (value as LLMProvider);
-    const newConfig = { ...config, provider: newProvider };
+function handleModeChange(value: string | undefined) {
+  if (value) {
+    const newConfig = { ...config, mode: value as LLMFeatureMode };
     config = newConfig;
     onConfigChange?.(newConfig);
   }
+}
+
+function handleProviderChange(value: string | undefined) {
+  // null means use default provider
+  const newProvider = value === 'default' ? null : (value as LLMProvider);
+  const newConfig = { ...config, provider: newProvider };
+  config = newConfig;
+  onConfigChange?.(newConfig);
+}
 </script>
 
-<Card.Root class={cn("transition-colors", { "opacity-50": disabled }, className)}>
+<Card.Root class={cn('transition-colors', { 'opacity-50': disabled }, className)}>
   <Card.Content class="p-4">
     <div class="flex items-start gap-4">
       {#if Icon}
@@ -90,8 +90,7 @@
             value={config.mode}
             onValueChange={handleModeChange}
             {disabled}
-            class="flex gap-4"
-          >
+            class="flex gap-4">
             <div class="flex items-center space-x-2">
               <RadioGroup.Item value="disabled" id={`${title}-disabled`} />
               <Label for={`${title}-disabled`} class="cursor-pointer text-sm font-normal">
@@ -112,15 +111,14 @@
             </div>
           </RadioGroup.Root>
 
-          {#if config.mode !== "disabled" && enabledProviders.length > 0}
+          {#if config.mode !== 'disabled' && enabledProviders.length > 0}
             <div class="flex items-center gap-2">
               <Label class="text-muted-foreground text-xs">Provider:</Label>
               <Select.Root
                 type="single"
-                value={config.provider ?? "default"}
+                value={config.provider ?? 'default'}
                 onValueChange={handleProviderChange}
-                disabled={disabled}
-              >
+                {disabled}>
                 <Select.Trigger class="h-8 w-45 text-xs">
                   {currentProviderLabel()}
                 </Select.Trigger>
@@ -128,7 +126,8 @@
                   <Select.Item value="default">
                     {#if defaultProvider}
                       {@const defaultLabel =
-                        providers.find((p) => p.value === defaultProvider)?.label ?? defaultProvider}
+                        providers.find((p) => p.value === defaultProvider)?.label ??
+                        defaultProvider}
                       Use Default ({defaultLabel})
                     {:else}
                       Use Default

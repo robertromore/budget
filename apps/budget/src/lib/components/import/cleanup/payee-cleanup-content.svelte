@@ -1,26 +1,26 @@
 <script lang="ts">
-import { Badge } from "$lib/components/ui/badge";
-import { Button } from "$lib/components/ui/button";
-import * as Card from "$lib/components/ui/card";
-import { Input } from "$lib/components/ui/input";
-import { Progress } from "$lib/components/ui/progress";
-import { ScrollArea } from "$lib/components/ui/scroll-area";
-import type { CleanupState, PayeeGroup } from "$lib/types/import";
-import Check from "@lucide/svelte/icons/check";
-import ChevronDown from "@lucide/svelte/icons/chevron-down";
-import ChevronUp from "@lucide/svelte/icons/chevron-up";
-import Edit3 from "@lucide/svelte/icons/edit-3";
-import Loader2 from "@lucide/svelte/icons/loader-2";
-import Merge from "@lucide/svelte/icons/merge";
-import Sparkles from "@lucide/svelte/icons/sparkles";
-import Users from "@lucide/svelte/icons/users";
-import X from "@lucide/svelte/icons/x";
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Input } from '$lib/components/ui/input';
+import { Progress } from '$lib/components/ui/progress';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import type { CleanupState, PayeeGroup } from '$lib/types/import';
+import Check from '@lucide/svelte/icons/check';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronUp from '@lucide/svelte/icons/chevron-up';
+import Edit3 from '@lucide/svelte/icons/edit-3';
+import Loader2 from '@lucide/svelte/icons/loader-2';
+import Merge from '@lucide/svelte/icons/merge';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Users from '@lucide/svelte/icons/users';
+import X from '@lucide/svelte/icons/x';
 
 interface Props {
   cleanupState: CleanupState | null;
   onGroupDecision: (
     groupId: string,
-    decision: "accept" | "reject" | "custom" | "pending",
+    decision: 'accept' | 'reject' | 'custom' | 'pending',
     customName?: string
   ) => void;
   onAcceptHighConfidence: () => void;
@@ -32,15 +32,15 @@ let { cleanupState, onGroupDecision, onAcceptHighConfidence, onResetAll }: Props
 // Local state for UI
 let expandedGroups = $state(new Set<string>());
 let editingGroup = $state<string | null>(null);
-let editingName = $state("");
+let editingName = $state('');
 
 // Derived stats
 const stats = $derived.by(() => {
   if (!cleanupState) return null;
   const groups = cleanupState.payeeGroups;
-  const accepted = groups.filter((g) => g.userDecision === "accept").length;
-  const rejected = groups.filter((g) => g.userDecision === "reject").length;
-  const pending = groups.filter((g) => g.userDecision === "pending").length;
+  const accepted = groups.filter((g) => g.userDecision === 'accept').length;
+  const rejected = groups.filter((g) => g.userDecision === 'reject').length;
+  const pending = groups.filter((g) => g.userDecision === 'pending').length;
   const withExisting = groups.filter((g) => g.existingMatch).length;
 
   return {
@@ -63,11 +63,11 @@ function toggleGroup(groupId: string) {
 }
 
 function acceptGroup(groupId: string) {
-  onGroupDecision(groupId, "accept");
+  onGroupDecision(groupId, 'accept');
 }
 
 function rejectGroup(groupId: string) {
-  onGroupDecision(groupId, "reject");
+  onGroupDecision(groupId, 'reject');
 }
 
 function startEditGroup(group: PayeeGroup) {
@@ -77,23 +77,23 @@ function startEditGroup(group: PayeeGroup) {
 
 function saveEditGroup(groupId: string) {
   if (editingName.trim()) {
-    onGroupDecision(groupId, "custom", editingName.trim());
+    onGroupDecision(groupId, 'custom', editingName.trim());
   }
   editingGroup = null;
-  editingName = "";
+  editingName = '';
 }
 
 function cancelEditGroup() {
   editingGroup = null;
-  editingName = "";
+  editingName = '';
 }
 
 function getConfidenceBadgeVariant(
   confidence: number
-): "default" | "secondary" | "destructive" | "outline" {
-  if (confidence >= 0.9) return "default";
-  if (confidence >= 0.8) return "secondary";
-  return "outline";
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (confidence >= 0.9) return 'default';
+  if (confidence >= 0.8) return 'secondary';
+  return 'outline';
 }
 </script>
 
@@ -106,9 +106,9 @@ function getConfidenceBadgeVariant(
         <p class="font-medium">Analyzing payees...</p>
         {#if cleanupState}
           <p class="text-muted-foreground text-sm">
-            {#if cleanupState.analysisPhase === "grouping_payees"}
+            {#if cleanupState.analysisPhase === 'grouping_payees'}
               Grouping similar payees
-            {:else if cleanupState.analysisPhase === "matching_existing"}
+            {:else if cleanupState.analysisPhase === 'matching_existing'}
               Matching to existing payees
             {:else}
               Finalizing analysis
@@ -123,9 +123,7 @@ function getConfidenceBadgeVariant(
     <div class="py-8 text-center">
       <Users class="text-muted-foreground mx-auto mb-3 h-8 w-8" />
       <p class="text-muted-foreground">No payee groups to review.</p>
-      <p class="text-muted-foreground mt-1 text-sm">
-        All payees appear to be unique.
-      </p>
+      <p class="text-muted-foreground mt-1 text-sm">All payees appear to be unique.</p>
     </div>
   {:else}
     <!-- Summary Stats -->
@@ -172,7 +170,7 @@ function getConfidenceBadgeVariant(
           {@const isExpanded = expandedGroups.has(group.groupId)}
           {@const isEditing = editingGroup === group.groupId}
           {@const displayName =
-            group.userDecision === "custom" && group.customName
+            group.userDecision === 'custom' && group.customName
               ? group.customName
               : group.canonicalName}
 
@@ -183,15 +181,13 @@ function getConfidenceBadgeVariant(
                 ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
                 : group.userDecision === 'custom'
                   ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
-                  : ''}"
-          >
+                  : ''}">
             <div class="flex items-start gap-2">
               <!-- Expand/Collapse Toggle -->
               <button
                 type="button"
                 class="text-muted-foreground hover:text-foreground mt-0.5 shrink-0"
-                onclick={() => toggleGroup(group.groupId)}
-              >
+                onclick={() => toggleGroup(group.groupId)}>
                 {#if isExpanded}
                   <ChevronUp class="h-4 w-4" />
                 {:else}
@@ -210,26 +206,30 @@ function getConfidenceBadgeVariant(
                           class="h-7 text-sm"
                           placeholder="Enter custom name"
                           onkeydown={(e) => {
-                            if (e.key === "Enter") saveEditGroup(group.groupId);
-                            if (e.key === "Escape") cancelEditGroup();
-                          }}
-                        />
+                            if (e.key === 'Enter') saveEditGroup(group.groupId);
+                            if (e.key === 'Escape') cancelEditGroup();
+                          }} />
                         <Button
                           variant="ghost"
                           size="sm"
                           class="h-7 w-7 p-0"
-                          onclick={() => saveEditGroup(group.groupId)}
-                        >
+                          onclick={() => saveEditGroup(group.groupId)}>
                           <Check class="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" class="h-7 w-7 p-0" onclick={cancelEditGroup}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          class="h-7 w-7 p-0"
+                          onclick={cancelEditGroup}>
                           <X class="h-3 w-3" />
                         </Button>
                       </div>
                     {:else}
                       <div class="flex flex-wrap items-center gap-1">
                         <span class="text-sm font-medium">{displayName}</span>
-                        <Badge variant={getConfidenceBadgeVariant(group.confidence)} class="text-xs">
+                        <Badge
+                          variant={getConfidenceBadgeVariant(group.confidence)}
+                          class="text-xs">
                           {Math.round(group.confidence * 100)}%
                         </Badge>
                         {#if group.members.length > 1}
@@ -254,12 +254,11 @@ function getConfidenceBadgeVariant(
                   {#if !isEditing}
                     <div class="flex shrink-0 items-center gap-0.5">
                       <Button
-                        variant={group.userDecision === "accept" ? "default" : "ghost"}
+                        variant={group.userDecision === 'accept' ? 'default' : 'ghost'}
                         size="sm"
                         class="h-6 w-6 p-0"
                         onclick={() => acceptGroup(group.groupId)}
-                        title="Accept"
-                      >
+                        title="Accept">
                         <Check class="h-3 w-3" />
                       </Button>
                       <Button
@@ -267,17 +266,15 @@ function getConfidenceBadgeVariant(
                         size="sm"
                         class="h-6 w-6 p-0"
                         onclick={() => startEditGroup(group)}
-                        title="Edit name"
-                      >
+                        title="Edit name">
                         <Edit3 class="h-3 w-3" />
                       </Button>
                       <Button
-                        variant={group.userDecision === "reject" ? "destructive" : "ghost"}
+                        variant={group.userDecision === 'reject' ? 'destructive' : 'ghost'}
                         size="sm"
                         class="h-6 w-6 p-0"
                         onclick={() => rejectGroup(group.groupId)}
-                        title="Reject"
-                      >
+                        title="Reject">
                         <X class="h-3 w-3" />
                       </Button>
                     </div>

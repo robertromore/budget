@@ -8,9 +8,13 @@ const patternRepository = new PatternRepository();
 const patternService = new PatternDetectionService(patternRepository);
 
 // Helper to strip undefined values for exactOptionalPropertyTypes compatibility
-function stripUndefined<T extends Record<string, unknown>>(obj: T | undefined): Partial<DetectionCriteria> | undefined {
+function stripUndefined<T extends Record<string, unknown>>(
+  obj: T | undefined
+): Partial<DetectionCriteria> | undefined {
   if (!obj) return undefined;
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<DetectionCriteria>;
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as Partial<DetectionCriteria>;
 }
 
 const detectionCriteriaSchema = z.object({

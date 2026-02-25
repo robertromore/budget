@@ -25,6 +25,7 @@ Master toggle to enable or disable all language model features.
 ## Requirements
 
 To use LLM features, you need:
+
 1. This toggle enabled
 2. At least one provider configured
 3. A default provider selected

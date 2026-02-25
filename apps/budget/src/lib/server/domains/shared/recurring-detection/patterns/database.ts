@@ -45,7 +45,13 @@ export const SUBSCRIPTION_PATTERNS: Record<ScheduleSubscriptionType, Subscriptio
       "sling",
       "twitch",
     ],
-    regexPatterns: [/streaming/i, /subscription/i, /premium/i, /plus$/i, /music\s*(?:service|app)/i],
+    regexPatterns: [
+      /streaming/i,
+      /subscription/i,
+      /premium/i,
+      /plus$/i,
+      /music\s*(?:service|app)/i,
+    ],
     merchantCodes: ["5815", "5735", "7841", "7832"], // Digital goods, music stores, video tape rental, theaters
     typicalBillingCycles: ["monthly", "annual"],
     typicalCostRange: { min: 5, max: 25 },
@@ -337,7 +343,13 @@ export interface IncomePattern {
 export const INCOME_PATTERNS: IncomePattern[] = [
   {
     keywords: ["payroll", "salary", "wages", "direct deposit", "paycheck"],
-    regexPatterns: [/payroll/i, /salary/i, /wages/i, /direct\s*dep(?:osit)?/i, /pay(?:check|ment)/i],
+    regexPatterns: [
+      /payroll/i,
+      /salary/i,
+      /wages/i,
+      /direct\s*dep(?:osit)?/i,
+      /pay(?:check|ment)/i,
+    ],
     typicalFrequency: "biweekly",
   },
   {
@@ -444,7 +456,8 @@ export function classifyPatternType(
         const absAmount = Math.abs(amount);
         // Check if amount is in typical range
         const inRange =
-          absAmount >= subPattern.typicalCostRange.min && absAmount <= subPattern.typicalCostRange.max;
+          absAmount >= subPattern.typicalCostRange.min &&
+          absAmount <= subPattern.typicalCostRange.max;
         return {
           type: "subscription",
           subscriptionType: subType as ScheduleSubscriptionType,
@@ -484,9 +497,7 @@ export function classifyPatternType(
 /**
  * Gets the expected frequency for a subscription type
  */
-export function getTypicalFrequency(
-  subscriptionType?: ScheduleSubscriptionType
-): Frequency[] {
+export function getTypicalFrequency(subscriptionType?: ScheduleSubscriptionType): Frequency[] {
   if (!subscriptionType) return ["monthly"];
   return SUBSCRIPTION_PATTERNS[subscriptionType]?.typicalBillingCycles ?? ["monthly"];
 }

@@ -1,5 +1,5 @@
-import {describe, it, expect} from "vitest";
-import {currencyFormatter} from "$lib/utils/formatters";
+import { describe, it, expect } from "vitest";
+import { currencyFormatter } from "$lib/utils/formatters";
 
 describe("Balance Calculation Safety", () => {
   describe("Currency Formatter Edge Cases", () => {
@@ -62,12 +62,12 @@ describe("Balance Calculation Safety", () => {
 
   describe("Running Balance Calculation Logic", () => {
     it("should correctly calculate running balance with positive amounts", () => {
-      const transactions = [{amount: 100.0}, {amount: 50.0}, {amount: 25.5}];
+      const transactions = [{ amount: 100.0 }, { amount: 50.0 }, { amount: 25.5 }];
 
       let runningBalance = 0;
       const results = transactions.map((transaction) => {
         runningBalance += transaction.amount;
-        return {...transaction, balance: runningBalance};
+        return { ...transaction, balance: runningBalance };
       });
 
       expect(results[0]?.balance).toBe(100.0);
@@ -82,12 +82,12 @@ describe("Balance Calculation Safety", () => {
     });
 
     it("should correctly calculate running balance with negative amounts", () => {
-      const transactions = [{amount: 100.0}, {amount: -25.5}, {amount: -10.0}];
+      const transactions = [{ amount: 100.0 }, { amount: -25.5 }, { amount: -10.0 }];
 
       let runningBalance = 0;
       const results = transactions.map((transaction) => {
         runningBalance += transaction.amount;
-        return {...transaction, balance: runningBalance};
+        return { ...transaction, balance: runningBalance };
       });
 
       expect(results[0]?.balance).toBe(100.0);
@@ -102,12 +102,12 @@ describe("Balance Calculation Safety", () => {
     });
 
     it("should handle zero amounts correctly", () => {
-      const transactions = [{amount: 100.0}, {amount: 0.0}, {amount: -50.0}];
+      const transactions = [{ amount: 100.0 }, { amount: 0.0 }, { amount: -50.0 }];
 
       let runningBalance = 0;
       const results = transactions.map((transaction) => {
         runningBalance += transaction.amount;
-        return {...transaction, balance: runningBalance};
+        return { ...transaction, balance: runningBalance };
       });
 
       expect(results[0].balance).toBe(100.0);
@@ -122,12 +122,12 @@ describe("Balance Calculation Safety", () => {
     });
 
     it("should handle empty transaction list", () => {
-      const transactions: Array<{amount: number}> = [];
+      const transactions: Array<{ amount: number }> = [];
 
       let runningBalance = 0;
       const results = transactions.map((transaction) => {
         runningBalance += transaction.amount;
-        return {...transaction, balance: runningBalance};
+        return { ...transaction, balance: runningBalance };
       });
 
       expect(results).toHaveLength(0);
@@ -137,11 +137,11 @@ describe("Balance Calculation Safety", () => {
 
     it("should handle malformed transaction amounts", () => {
       const transactions = [
-        {amount: 100.0},
-        {amount: null as any},
-        {amount: undefined as any},
-        {amount: NaN as any},
-        {amount: "invalid" as any},
+        { amount: 100.0 },
+        { amount: null as any },
+        { amount: undefined as any },
+        { amount: NaN as any },
+        { amount: "invalid" as any },
       ];
 
       let runningBalance = 0;
@@ -149,7 +149,7 @@ describe("Balance Calculation Safety", () => {
         // Simulate the safe amount handling we implemented
         const safeAmount = isNaN(Number(transaction.amount)) ? 0 : Number(transaction.amount) || 0;
         runningBalance += safeAmount;
-        return {...transaction, amount: safeAmount, balance: runningBalance};
+        return { ...transaction, amount: safeAmount, balance: runningBalance };
       });
 
       expect(results[0].balance).toBe(100.0);
@@ -178,21 +178,21 @@ describe("Balance Calculation Safety", () => {
 
       // Test various problematic inputs
       const testCases = [
-        {input: null, expected: "$0.00"},
-        {input: undefined, expected: "$0.00"},
-        {input: NaN, expected: "$0.00"},
-        {input: Infinity, expected: "$0.00"},
-        {input: -Infinity, expected: "$0.00"},
-        {input: "invalid", expected: "$0.00"},
-        {input: "", expected: "$0.00"},
-        {input: {}, expected: "$0.00"},
-        {input: [], expected: "$0.00"},
-        {input: 42.5, expected: "$42.50"},
-        {input: -25.75, expected: "-$25.75"},
-        {input: 0, expected: "$0.00"},
+        { input: null, expected: "$0.00" },
+        { input: undefined, expected: "$0.00" },
+        { input: NaN, expected: "$0.00" },
+        { input: Infinity, expected: "$0.00" },
+        { input: -Infinity, expected: "$0.00" },
+        { input: "invalid", expected: "$0.00" },
+        { input: "", expected: "$0.00" },
+        { input: {}, expected: "$0.00" },
+        { input: [], expected: "$0.00" },
+        { input: 42.5, expected: "$42.50" },
+        { input: -25.75, expected: "-$25.75" },
+        { input: 0, expected: "$0.00" },
       ];
 
-      testCases.forEach(({input, expected}) => {
+      testCases.forEach(({ input, expected }) => {
         const result = safeBalanceFormatter(input);
         expect(result).toBe(expected);
         expect(result).not.toContain("NaN");

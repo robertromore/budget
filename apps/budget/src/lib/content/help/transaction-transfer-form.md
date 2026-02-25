@@ -18,6 +18,7 @@ Easily move money between your accounts with matching transactions.
 ## What Gets Created
 
 Two linked transactions:
+
 - **Withdrawal** (-amount) in the source account
 - **Deposit** (+amount) in the destination account
 

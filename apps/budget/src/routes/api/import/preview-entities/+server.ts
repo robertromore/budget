@@ -38,9 +38,7 @@ export const POST: RequestHandler = async ({ request }) => {
       db
         .select()
         .from(payeeTable)
-        .where(
-          and(eq(payeeTable.workspaceId, account.workspaceId), isNull(payeeTable.deletedAt))
-        ),
+        .where(and(eq(payeeTable.workspaceId, account.workspaceId), isNull(payeeTable.deletedAt))),
       db
         .select()
         .from(categoryTable)

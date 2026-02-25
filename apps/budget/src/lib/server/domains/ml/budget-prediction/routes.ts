@@ -39,10 +39,7 @@ export const budgetPredictionRoutes = t.router({
       try {
         const service = getBudgetPredictionService();
 
-        const prediction = await service.predictOverspend(
-          ctx.workspaceId,
-          input.budgetId
-        );
+        const prediction = await service.predictOverspend(ctx.workspaceId, input.budgetId);
 
         if (!prediction) {
           throw new TRPCError({
@@ -133,10 +130,7 @@ export const budgetPredictionRoutes = t.router({
       try {
         const service = getBudgetPredictionService();
 
-        const result = await service.getDailySpendingLimit(
-          ctx.workspaceId,
-          input.budgetId
-        );
+        const result = await service.getDailySpendingLimit(ctx.workspaceId, input.budgetId);
 
         return {
           budgetId: input.budgetId,
@@ -165,10 +159,7 @@ export const budgetPredictionRoutes = t.router({
       try {
         const service = getBudgetPredictionService();
 
-        const categories = await service.predictCategoryOverspend(
-          ctx.workspaceId,
-          input.budgetId
-        );
+        const categories = await service.predictCategoryOverspend(ctx.workspaceId, input.budgetId);
 
         const atRisk = categories.filter((c) => c.risk !== "none").length;
 
@@ -204,9 +195,8 @@ export const budgetPredictionRoutes = t.router({
         overallRisk: summary.overallRisk,
         totalAllocated: summary.totalAllocated,
         totalSpent: summary.totalSpent,
-        percentSpent: summary.totalAllocated > 0
-          ? (summary.totalSpent / summary.totalAllocated) * 100
-          : 0,
+        percentSpent:
+          summary.totalAllocated > 0 ? (summary.totalSpent / summary.totalAllocated) * 100 : 0,
         predictedOverspend: summary.totalPredictedOverspend,
         topRisks: summary.predictions
           .filter((p) => p.overSpendRisk !== "none")

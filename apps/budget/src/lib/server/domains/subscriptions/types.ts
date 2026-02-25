@@ -7,11 +7,7 @@ import type {
   SubscriptionPriceHistory,
   SubscriptionWithRelations,
 } from "$lib/schema/subscriptions-table";
-import type {
-  BillingCycle,
-  SubscriptionStatus,
-  SubscriptionType,
-} from "$lib/schema/subscriptions";
+import type { BillingCycle, SubscriptionStatus, SubscriptionType } from "$lib/schema/subscriptions";
 
 // ==================== RE-EXPORTS ====================
 
@@ -28,7 +24,13 @@ export type {
 // ==================== DETECTION TYPES ====================
 
 export interface DetectionMethod {
-  method: "pattern_matching" | "frequency_analysis" | "amount_analysis" | "merchant_database" | "category_heuristics" | "user_confirmation";
+  method:
+    | "pattern_matching"
+    | "frequency_analysis"
+    | "amount_analysis"
+    | "merchant_database"
+    | "category_heuristics"
+    | "user_confirmation";
   confidence: number;
   evidence: string[];
 }

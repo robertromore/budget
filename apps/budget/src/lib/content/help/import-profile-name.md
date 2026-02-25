@@ -11,6 +11,7 @@ A descriptive name for your import profile.
 ## Best Practices
 
 Use names that identify:
+
 - The bank or financial institution
 - The specific account type
 - Any distinguishing details

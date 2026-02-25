@@ -23,11 +23,13 @@ export const metricAlertRoutes = t.router({
       )
     ),
 
-  save: rateLimitedProcedure.input(createMetricAlertSchema).mutation(
-    withErrorHandler(async ({ input, ctx }) =>
-      metricAlertService.createAlert(input, ctx.workspaceId)
-    )
-  ),
+  save: rateLimitedProcedure
+    .input(createMetricAlertSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        metricAlertService.createAlert(input, ctx.workspaceId)
+      )
+    ),
 
   update: rateLimitedProcedure.input(updateMetricAlertSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
@@ -53,8 +55,6 @@ export const metricAlertRoutes = t.router({
     ),
 
   evaluate: rateLimitedProcedure.mutation(
-    withErrorHandler(async ({ ctx }) =>
-      metricAlertService.evaluateAlerts(ctx.workspaceId)
-    )
+    withErrorHandler(async ({ ctx }) => metricAlertService.evaluateAlerts(ctx.workspaceId))
   ),
 });

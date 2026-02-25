@@ -37,10 +37,12 @@ export const savingsOpportunityRoutes = t.router({
    */
   getAll: rateLimitedProcedure
     .input(
-      z.object({
-        lookbackMonths: z.number().min(4).max(24).default(12),
-        minAmount: z.number().min(0).default(5),
-      }).optional()
+      z
+        .object({
+          lookbackMonths: z.number().min(4).max(24).default(12),
+          minAmount: z.number().min(0).default(5),
+        })
+        .optional()
     )
     .query(async ({ input, ctx }) => {
       try {
@@ -128,10 +130,7 @@ export const savingsOpportunityRoutes = t.router({
       return {
         opportunities,
         count: opportunities.length,
-        totalMonthlyPotential: opportunities.reduce(
-          (sum, o) => sum + o.estimatedMonthlySavings,
-          0
-        ),
+        totalMonthlyPotential: opportunities.reduce((sum, o) => sum + o.estimatedMonthlySavings, 0),
         success: true,
       };
     } catch (error: unknown) {
@@ -154,10 +153,7 @@ export const savingsOpportunityRoutes = t.router({
       return {
         opportunities,
         count: opportunities.length,
-        totalMonthlyPotential: opportunities.reduce(
-          (sum, o) => sum + o.estimatedMonthlySavings,
-          0
-        ),
+        totalMonthlyPotential: opportunities.reduce((sum, o) => sum + o.estimatedMonthlySavings, 0),
         success: true,
       };
     } catch (error: unknown) {
@@ -180,10 +176,7 @@ export const savingsOpportunityRoutes = t.router({
       return {
         opportunities,
         count: opportunities.length,
-        totalMonthlyPotential: opportunities.reduce(
-          (sum, o) => sum + o.estimatedMonthlySavings,
-          0
-        ),
+        totalMonthlyPotential: opportunities.reduce((sum, o) => sum + o.estimatedMonthlySavings, 0),
         success: true,
       };
     } catch (error: unknown) {
@@ -206,10 +199,7 @@ export const savingsOpportunityRoutes = t.router({
       return {
         opportunities,
         count: opportunities.length,
-        totalMonthlyPotential: opportunities.reduce(
-          (sum, o) => sum + o.estimatedMonthlySavings,
-          0
-        ),
+        totalMonthlyPotential: opportunities.reduce((sum, o) => sum + o.estimatedMonthlySavings, 0),
         success: true,
       };
     } catch (error: unknown) {
@@ -232,10 +222,7 @@ export const savingsOpportunityRoutes = t.router({
       return {
         opportunities,
         count: opportunities.length,
-        totalMonthlyPotential: opportunities.reduce(
-          (sum, o) => sum + o.estimatedMonthlySavings,
-          0
-        ),
+        totalMonthlyPotential: opportunities.reduce((sum, o) => sum + o.estimatedMonthlySavings, 0),
         success: true,
       };
     } catch (error: unknown) {
@@ -281,10 +268,7 @@ export const savingsOpportunityRoutes = t.router({
       return {
         opportunities: highPriority,
         count: highPriority.length,
-        totalMonthlyPotential: highPriority.reduce(
-          (sum, o) => sum + o.estimatedMonthlySavings,
-          0
-        ),
+        totalMonthlyPotential: highPriority.reduce((sum, o) => sum + o.estimatedMonthlySavings, 0),
         success: true,
       };
     } catch (error: unknown) {

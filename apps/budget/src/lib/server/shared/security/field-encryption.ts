@@ -5,12 +5,7 @@
  * Uses the Data Encryption Key (DEK) from the key management service.
  */
 
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHmac,
-  randomBytes,
-} from "crypto";
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
 import type { EncryptionLevel } from "$lib/types/encryption";
 import { ENCRYPTED_FIELDS_BY_LEVEL } from "$lib/types/encryption";
 import { normalize } from "$lib/utils/string-utilities";
@@ -79,9 +74,7 @@ export function isEncrypted(value: string | null | undefined): boolean {
  * This allows exact-match search on encrypted fields
  */
 export function createBlindIndex(value: string, dek: Buffer): string {
-  return createHmac("sha256", dek)
-    .update(normalize(value))
-    .digest("hex");
+  return createHmac("sha256", dek).update(normalize(value)).digest("hex");
 }
 
 /**

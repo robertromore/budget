@@ -1,5 +1,17 @@
 <script lang="ts">
-import { AxisX, AxisY, MultiArea, MultiLine, MultiTooltip, Brush, InteractiveLegend, HorizontalLine, CustomLine, PercentileBands, type ChartType } from '$lib/components/layercake';
+import {
+  AxisX,
+  AxisY,
+  MultiArea,
+  MultiLine,
+  MultiTooltip,
+  Brush,
+  InteractiveLegend,
+  HorizontalLine,
+  CustomLine,
+  PercentileBands,
+  type ChartType,
+} from '$lib/components/layercake';
 import { AnalysisDropdown, ChartOverlays } from '$lib/components/charts';
 import type { TransactionsFormat } from '$lib/types';
 import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
@@ -7,7 +19,13 @@ import { timezone } from '$lib/utils/dates';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
-import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
+import {
+  calculateLinearTrend,
+  calculateHistoricalAverage,
+  calculatePercentileBands,
+  type TrendLineData,
+  type PercentileBands as PercentileBandsData,
+} from '$lib/utils/chart-statistics';
 import { calculateComprehensiveStatsForDualSeries } from '$lib/utils/comprehensive-statistics';
 import { LayerCake, Svg } from 'layercake';
 import { AnalyticsChartShell } from '$lib/components/charts';
@@ -108,34 +126,34 @@ const chartData = $derived.by(() => {
 // Linear regression line for expenses (least squares fit)
 const expenseTrendData = $derived.by((): TrendLineData | null => {
   if (!showLinearTrend || chartData.length < 2) return null;
-  const spendingData = chartData.map(d => ({ ...d, spending: d.expenses }));
+  const spendingData = chartData.map((d) => ({ ...d, spending: d.expenses }));
   return calculateLinearTrend(spendingData);
 });
 
 // Linear regression line for income
 const incomeTrendData = $derived.by((): TrendLineData | null => {
   if (!showLinearTrend || chartData.length < 2) return null;
-  const spendingData = chartData.map(d => ({ ...d, spending: d.income }));
+  const spendingData = chartData.map((d) => ({ ...d, spending: d.income }));
   return calculateLinearTrend(spendingData);
 });
 
 // Historical averages (across ALL data)
 const historicalAvgExpenses = $derived.by((): number | null => {
   if (!showHistoricalAvg || allMonthlyData.length === 0) return null;
-  const spendingData = allMonthlyData.map(d => ({ spending: d.expenses }));
+  const spendingData = allMonthlyData.map((d) => ({ spending: d.expenses }));
   return calculateHistoricalAverage(spendingData);
 });
 
 const historicalAvgIncome = $derived.by((): number | null => {
   if (!showHistoricalAvg || allMonthlyData.length === 0) return null;
-  const spendingData = allMonthlyData.map(d => ({ spending: d.income }));
+  const spendingData = allMonthlyData.map((d) => ({ spending: d.income }));
   return calculateHistoricalAverage(spendingData);
 });
 
 // Percentile bands for expenses (across ALL data)
 const expensePercentileBands = $derived.by((): PercentileBandsData | null => {
   if (!showPercentileBands || allMonthlyData.length < 4) return null;
-  const spendingData = allMonthlyData.map(d => ({ ...d, spending: d.expenses }));
+  const spendingData = allMonthlyData.map((d) => ({ ...d, spending: d.expenses }));
   return calculatePercentileBands(spendingData);
 });
 
@@ -210,7 +228,7 @@ const comprehensiveStats = $derived.by(() => {
   if (!chartData.length) return null;
 
   // Transform data to dual-series format
-  const dualSeriesData = chartData.map(d => ({
+  const dualSeriesData = chartData.map((d) => ({
     month: d.month,
     monthLabel: d.monthLabel,
     income: d.income,
@@ -224,9 +242,9 @@ const comprehensiveStats = $derived.by(() => {
 // Count active analysis overlays for badge
 const activeAnalysisCount = $derived(
   (showLinearTrend ? 1 : 0) +
-  (showForecast ? 1 : 0) +
-  (showHistoricalAvg ? 1 : 0) +
-  (showPercentileBands ? 1 : 0)
+    (showForecast ? 1 : 0) +
+    (showHistoricalAvg ? 1 : 0) +
+    (showPercentileBands ? 1 : 0)
 );
 
 // Drill-down handler for viewing transactions in a specific month
@@ -234,53 +252,62 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
   chartInteractions.openDrillDown({
     type: 'month',
     value: point.month,
-    label: `${point.monthLabel} Transactions`
+    label: `${point.monthLabel} Transactions`,
   });
 }
 </script>
 
 <AnalyticsChartShell
   data={chartData}
-  comprehensiveStats={comprehensiveStats ? {
-    summary: {
-      average: comprehensiveStats.netFlow.average,
-      median: 0,
-      total: comprehensiveStats.netFlow.total,
-      count: chartData.length
-    },
-    trend: {
-      direction: comprehensiveStats.income.trend,
-      growthRate: null,
-      slope: 0,
-      monthlyChange: 0
-    },
-    distribution: {
-      highest: { value: comprehensiveStats.income.highest.value, month: '', monthLabel: comprehensiveStats.income.highest.month },
-      lowest: { value: comprehensiveStats.expenses.highest.value, month: '', monthLabel: comprehensiveStats.expenses.highest.month },
-      range: 0,
-      p25: 0,
-      p50: 0,
-      p75: 0,
-      iqr: 0,
-      stdDev: 0,
-      coefficientOfVariation: 0
-    },
-    outliers: { count: 0, months: [] },
-    comparison: {
-      vsHistoricalAvg: null,
-      vsHistoricalAvgPercent: null,
-      vsBudgetTarget: null,
-      vsBudgetTargetPercent: null,
-      vsLastYearTotal: null,
-      vsLastYearPercent: null
-    }
-  } : null}
+  comprehensiveStats={comprehensiveStats
+    ? {
+        summary: {
+          average: comprehensiveStats.netFlow.average,
+          median: 0,
+          total: comprehensiveStats.netFlow.total,
+          count: chartData.length,
+        },
+        trend: {
+          direction: comprehensiveStats.income.trend,
+          growthRate: null,
+          slope: 0,
+          monthlyChange: 0,
+        },
+        distribution: {
+          highest: {
+            value: comprehensiveStats.income.highest.value,
+            month: '',
+            monthLabel: comprehensiveStats.income.highest.month,
+          },
+          lowest: {
+            value: comprehensiveStats.expenses.highest.value,
+            month: '',
+            monthLabel: comprehensiveStats.expenses.highest.month,
+          },
+          range: 0,
+          p25: 0,
+          p50: 0,
+          p75: 0,
+          iqr: 0,
+          stdDev: 0,
+          coefficientOfVariation: 0,
+        },
+        outliers: { count: 0, months: [] },
+        comparison: {
+          vsHistoricalAvg: null,
+          vsHistoricalAvgPercent: null,
+          vsBudgetTarget: null,
+          vsBudgetTargetPercent: null,
+          vsLastYearTotal: null,
+          vsLastYearPercent: null,
+        },
+      }
+    : null}
   supportedChartTypes={['line', 'line-area', 'area']}
   defaultChartType="line"
   emptyMessage="Add some transactions to see income vs expense trends"
   chartId="income-vs-expenses"
-  allowedPeriodGroups={['months', 'year', 'other']}
->
+  allowedPeriodGroups={['months', 'year', 'other']}>
   {#snippet title()}
     Income vs Expenses
   {/snippet}
@@ -295,8 +322,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
       bind:showForecast
       bind:showHistoricalAvg
       bind:showPercentileBands
-      forecastEnabled={false}
-    />
+      forecastEnabled={false} />
   {/snippet}
 
   {#snippet chart({ data, chartType }: { data: typeof chartData; chartType: ChartType })}
@@ -317,8 +343,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
           x="index"
           y="income"
           yDomain={[0, chartYMax]}
-          padding={{ top: 10, right: 15, bottom: 30, left: 55 }}
-        >
+          padding={{ top: 10, right: 15, bottom: 30, left: 55 }}>
           <Svg>
             <AxisY ticks={5} gridlines={true} format={(d) => currencyFormatter.format(d)} />
             <AxisX
@@ -328,8 +353,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 const point = data[idx];
                 if (!point) return '';
                 return point.monthDisplay;
-              }}
-            />
+              }} />
 
             <!-- ===== Analysis Overlays (rendered first, below main data) ===== -->
 
@@ -339,8 +363,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 p25={expensePercentileBands.p25}
                 p75={expensePercentileBands.p75}
                 fill="var(--chart-1)"
-                opacity={0.1}
-              />
+                opacity={0.1} />
             {/if}
 
             <!-- Historical average lines -->
@@ -350,8 +373,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 stroke="var(--chart-2)"
                 strokeWidth={1.5}
                 strokeDasharray="6 3"
-                label="Avg Income"
-              />
+                label="Avg Income" />
             {/if}
             {#if showHistoricalAvg && historicalAvgExpenses !== null && !expensesHidden}
               <HorizontalLine
@@ -359,8 +381,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 stroke="var(--chart-1)"
                 strokeWidth={1.5}
                 strokeDasharray="6 3"
-                label="Avg Expenses"
-              />
+                label="Avg Expenses" />
             {/if}
 
             <!-- Linear regression lines -->
@@ -370,8 +391,7 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 stroke="var(--chart-2)"
                 strokeWidth={2}
                 strokeDasharray="8 4"
-                opacity={0.7}
-              />
+                opacity={0.7} />
             {/if}
             {#if showLinearTrend && expenseTrendData && !expensesHidden}
               <CustomLine
@@ -379,33 +399,60 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 stroke="var(--chart-1)"
                 strokeWidth={2}
                 strokeDasharray="8 4"
-                opacity={0.7}
-              />
+                opacity={0.7} />
             {/if}
 
             <!-- Main chart data -->
             {#if chartType === 'line'}
               {#if !incomeHidden}
-                <MultiLine y="income" stroke={series[0].color} strokeWidth={2} opacity={anyHighlighted && !incomeHighlighted ? 0.3 : 1} />
+                <MultiLine
+                  y="income"
+                  stroke={series[0].color}
+                  strokeWidth={2}
+                  opacity={anyHighlighted && !incomeHighlighted ? 0.3 : 1} />
               {/if}
               {#if !expensesHidden}
-                <MultiLine y="expenses" stroke={series[1].color} strokeWidth={2} opacity={anyHighlighted && !expensesHighlighted ? 0.3 : 1} />
+                <MultiLine
+                  y="expenses"
+                  stroke={series[1].color}
+                  strokeWidth={2}
+                  opacity={anyHighlighted && !expensesHighlighted ? 0.3 : 1} />
               {/if}
             {:else if chartType === 'line-area'}
               {#if !incomeHidden}
-                <MultiArea y="income" fill={series[0].color} opacity={anyHighlighted && !incomeHighlighted ? 0.05 : 0.1} />
-                <MultiLine y="income" stroke={series[0].color} strokeWidth={2} opacity={anyHighlighted && !incomeHighlighted ? 0.3 : 1} />
+                <MultiArea
+                  y="income"
+                  fill={series[0].color}
+                  opacity={anyHighlighted && !incomeHighlighted ? 0.05 : 0.1} />
+                <MultiLine
+                  y="income"
+                  stroke={series[0].color}
+                  strokeWidth={2}
+                  opacity={anyHighlighted && !incomeHighlighted ? 0.3 : 1} />
               {/if}
               {#if !expensesHidden}
-                <MultiArea y="expenses" fill={series[1].color} opacity={anyHighlighted && !expensesHighlighted ? 0.05 : 0.1} />
-                <MultiLine y="expenses" stroke={series[1].color} strokeWidth={2} opacity={anyHighlighted && !expensesHighlighted ? 0.3 : 1} />
+                <MultiArea
+                  y="expenses"
+                  fill={series[1].color}
+                  opacity={anyHighlighted && !expensesHighlighted ? 0.05 : 0.1} />
+                <MultiLine
+                  y="expenses"
+                  stroke={series[1].color}
+                  strokeWidth={2}
+                  opacity={anyHighlighted && !expensesHighlighted ? 0.3 : 1} />
               {/if}
             {:else if chartType === 'area'}
               {#if !incomeHidden}
-                <MultiArea y="income" fill={series[0].color} opacity={anyHighlighted && !incomeHighlighted ? 0.1 : 0.3} />
+                <MultiArea
+                  y="income"
+                  fill={series[0].color}
+                  opacity={anyHighlighted && !incomeHighlighted ? 0.1 : 0.3} />
               {/if}
               {#if !expensesHidden}
-                <MultiArea y="expenses" fill={series[1].color} opacity={anyHighlighted && !expensesHighlighted ? 0.1 : 0.3} />
+                <MultiArea
+                  y="expenses"
+                  fill={series[1].color}
+                  opacity={anyHighlighted && !expensesHighlighted ? 0.1 : 0.3} />
               {/if}
             {/if}
 
@@ -416,25 +463,25 @@ function handlePointDblClick(point: { month: string; monthLabel: string }) {
                 } else {
                   chartInteractions.clearDateRange();
                 }
-              }}
-            />
+              }} />
             <MultiTooltip {series} ondblclick={(point) => handlePointDblClick(point)}>
               {#snippet children({ point, x })}
-                <foreignObject
-                  x={Math.min(x + 10, 160)}
-                  y={10}
-                  width="160"
-                  height="100"
-                >
-                  <div class="rounded-md border bg-popover px-3 py-1.5 text-sm shadow-md">
+                <foreignObject x={Math.min(x + 10, 160)} y={10} width="160" height="100">
+                  <div class="bg-popover rounded-md border px-3 py-1.5 text-sm shadow-md">
                     <p class="font-medium">{point.monthLabel}</p>
                     {#if !incomeHidden}
-                      <p style="color: {series[0].color}">Income: {currencyFormatter.format(point.income)}</p>
+                      <p style="color: {series[0].color}">
+                        Income: {currencyFormatter.format(point.income)}
+                      </p>
                     {/if}
                     {#if !expensesHidden}
-                      <p style="color: {series[1].color}">Expenses: {currencyFormatter.format(point.expenses)}</p>
+                      <p style="color: {series[1].color}">
+                        Expenses: {currencyFormatter.format(point.expenses)}
+                      </p>
                     {/if}
-                    <p class="text-muted-foreground mt-1 border-t pt-1 text-xs">Double-click for details</p>
+                    <p class="text-muted-foreground mt-1 border-t pt-1 text-xs">
+                      Double-click for details
+                    </p>
                   </div>
                 </foreignObject>
               {/snippet}

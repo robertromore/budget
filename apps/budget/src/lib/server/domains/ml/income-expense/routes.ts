@@ -128,10 +128,7 @@ export const incomeExpenseRoutes = t.router({
       try {
         const service = getIncomeExpenseService();
 
-        const comparison = await service.getPeriodComparison(
-          ctx.workspaceId,
-          input.periodType
-        );
+        const comparison = await service.getPeriodComparison(ctx.workspaceId, input.periodType);
 
         return {
           comparison,
@@ -165,11 +162,7 @@ export const incomeExpenseRoutes = t.router({
         await assertWorkspaceAccount(ctx.workspaceId, input.accountId);
         const service = getIncomeExpenseService();
 
-        const history = await service.getHistory(
-          ctx.workspaceId,
-          input.months,
-          input.accountId
-        );
+        const history = await service.getHistory(ctx.workspaceId, input.months, input.accountId);
 
         return {
           history,

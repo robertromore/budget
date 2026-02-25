@@ -30,17 +30,21 @@ const todayDate = currentDate;
 
 const userLocale = $derived(displayPreferences.numberFormat);
 
-const monthFmt = $derived(new DateFormatter(userLocale, {
-  month: 'long',
-}));
+const monthFmt = $derived(
+  new DateFormatter(userLocale, {
+    month: 'long',
+  })
+);
 
-const monthOptions = $derived(Array.from({ length: 12 }, (_, i) => {
-  const month = currentDate.set({ month: i + 1 });
-  return {
-    value: month.month,
-    label: monthFmt.format(month.toDate(timezone)),
-  };
-}));
+const monthOptions = $derived(
+  Array.from({ length: 12 }, (_, i) => {
+    const month = currentDate.set({ month: i + 1 });
+    return {
+      value: month.month,
+      label: monthFmt.format(month.toDate(timezone)),
+    };
+  })
+);
 
 const quarterOptions = Array.from({ length: 4 }, (_, i) => {
   const month = currentDate.set({ month: i * MONTHS_PER_QUARTER + 1 });

@@ -110,10 +110,7 @@ export function detectAmountTrend(
  * Groups amounts to detect if there are multiple distinct patterns
  * (e.g., two different subscription tiers)
  */
-export function groupAmountsByRange(
-  amounts: number[],
-  tolerance: number = 0.15
-): number[][] {
+export function groupAmountsByRange(amounts: number[], tolerance: number = 0.15): number[][] {
   if (amounts.length === 0) return [];
 
   const sorted = [...amounts].sort((a, b) => Math.abs(a) - Math.abs(b));

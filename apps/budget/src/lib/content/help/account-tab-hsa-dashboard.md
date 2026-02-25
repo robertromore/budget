@@ -11,36 +11,44 @@ Comprehensive overview of your Health Savings Account status.
 ## Account Summary
 
 ### Current Balance
+
 Available funds for medical expenses.
 
 ### Contribution Status
+
 - YTD contributions
 - Annual limit progress
 - Employer contributions
 
 ### Investment Balance
+
 For HSA accounts with investment options.
 
 ## Expense Summary
 
 ### This Year
+
 - Total medical expenses
 - Reimbursed amount
 - Unreimbursed eligible expenses
 
 ### Lifetime
+
 - Historical expense tracking
 - Cumulative savings
 
 ## Key Metrics
 
 ### Contribution Room
+
 How much more you can contribute this year.
 
 ### Unreimbursed Balance
+
 Out-of-pocket expenses eligible for future reimbursement.
 
 ### Effective Savings
+
 Tax savings from HSA contributions.
 
 ## Visualizations

@@ -5,11 +5,11 @@
  * payee-to-account transfer mappings for future imports.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -296,14 +296,17 @@ describe("Transfer Mapping Service", () => {
       // Soft delete one mapping
       await ctx.db
         .update(schema.transferMappings)
-        .set({deletedAt: now})
+        .set({ deletedAt: now })
         .where(eq(schema.transferMappings.rawPayeeString, "VENMO PAYMENT JOHN DOE"));
 
       const mappings = await ctx.db
         .select()
         .from(schema.transferMappings)
         .where(
-          and(eq(schema.transferMappings.workspaceId, ctx.workspaceId), isNull(schema.transferMappings.deletedAt))
+          and(
+            eq(schema.transferMappings.workspaceId, ctx.workspaceId),
+            isNull(schema.transferMappings.deletedAt)
+          )
         );
 
       expect(mappings).toHaveLength(2);
@@ -439,7 +442,10 @@ describe("Transfer Mapping Service", () => {
         },
       ];
 
-      const mappings = await ctx.db.insert(schema.transferMappings).values(mappingsData).returning();
+      const mappings = await ctx.db
+        .insert(schema.transferMappings)
+        .values(mappingsData)
+        .returning();
 
       expect(mappings).toHaveLength(3);
       expect(mappings.every((m) => m.trigger === "bulk_import")).toBe(true);
@@ -482,7 +488,7 @@ describe("Transfer Mapping Service", () => {
       // Soft delete all mappings to savings
       await ctx.db
         .update(schema.transferMappings)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(
           and(
             eq(schema.transferMappings.targetAccountId, ctx.savingsAccountId),
@@ -496,7 +502,10 @@ describe("Transfer Mapping Service", () => {
         .select()
         .from(schema.transferMappings)
         .where(
-          and(eq(schema.transferMappings.workspaceId, ctx.workspaceId), isNull(schema.transferMappings.deletedAt))
+          and(
+            eq(schema.transferMappings.workspaceId, ctx.workspaceId),
+            isNull(schema.transferMappings.deletedAt)
+          )
         );
 
       expect(remaining).toHaveLength(1);
@@ -569,7 +578,10 @@ describe("Transfer Mapping Service", () => {
         .select()
         .from(schema.transferMappings)
         .where(
-          and(eq(schema.transferMappings.workspaceId, ctx.workspaceId), isNull(schema.transferMappings.deletedAt))
+          and(
+            eq(schema.transferMappings.workspaceId, ctx.workspaceId),
+            isNull(schema.transferMappings.deletedAt)
+          )
         );
 
       const highConfidence = allMappings.filter((m) => m.confidence >= 0.8);

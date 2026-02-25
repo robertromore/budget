@@ -25,9 +25,6 @@ const columnDefs = $derived(columns(schedulesState!, onView, onEdit, onDelete));
   <AccountSchedulesEmptyState {accountId} {accountSlug} />
 {:else}
   <div class="space-y-4" data-tour-id="schedules-list">
-    <ScheduleDataTable
-      columns={columnDefs}
-      {schedules}
-      {onBulkDelete} />
+    <ScheduleDataTable columns={columnDefs} {schedules} {onBulkDelete} />
   </div>
 {/if}

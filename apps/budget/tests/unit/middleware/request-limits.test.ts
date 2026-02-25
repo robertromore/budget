@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest";
+import { describe, test, expect } from "vitest";
 
 describe("Request Limits Middleware Tests", () => {
   describe("Size Validation", () => {
@@ -26,7 +26,7 @@ describe("Request Limits Middleware Tests", () => {
 
   describe("Array Length Validation", () => {
     test("should accept reasonable array sizes", () => {
-      const normalArray = Array.from({length: 10}, (_, i) => ({
+      const normalArray = Array.from({ length: 10 }, (_, i) => ({
         column: `col${i}`,
         filter: "equals",
         value: [`value${i}`],
@@ -37,7 +37,7 @@ describe("Request Limits Middleware Tests", () => {
     });
 
     test("should detect oversized arrays", () => {
-      const oversizedArray = Array.from({length: 1500}, (_, i) => ({
+      const oversizedArray = Array.from({ length: 1500 }, (_, i) => ({
         item: `item${i}`,
       }));
 

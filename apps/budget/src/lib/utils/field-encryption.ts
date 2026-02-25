@@ -94,10 +94,7 @@ async function importDek(dekHex: string): Promise<CryptoKey> {
  * @returns The decrypted plaintext value
  * @throws Error if decryption fails
  */
-export async function decryptField(
-  encryptedValue: string,
-  dek: string
-): Promise<string> {
+export async function decryptField(encryptedValue: string, dek: string): Promise<string> {
   if (!browser) {
     throw new Error("Field decryption is only available in the browser");
   }
@@ -189,10 +186,7 @@ async function importDekForEncryption(dekHex: string): Promise<CryptoKey> {
  * @param dek - The Data Encryption Key (hex string)
  * @returns Encrypted value in format: enc:iv:authTag:encryptedData
  */
-export async function encryptField(
-  plaintext: string,
-  dek: string
-): Promise<string> {
+export async function encryptField(plaintext: string, dek: string): Promise<string> {
   if (!browser) {
     throw new Error("Field encryption is only available in the browser");
   }

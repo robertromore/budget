@@ -18,7 +18,7 @@ import {
 } from "$lib/schema/security";
 import type { RiskScore, RiskFactor, RiskFactorSettings } from "$lib/types/encryption";
 import { nowISOString } from "$lib/utils/dates";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 
 /**
  * Login context information for risk assessment
@@ -166,7 +166,7 @@ async function getTimePatternScore(
 
   const timeScore = (similarTimeCount / recentAccess.length) * 100;
   const dayScore = (similarDayCount / recentAccess.length) * 100;
-  const combinedScore = (timeScore * 0.7 + dayScore * 0.3);
+  const combinedScore = timeScore * 0.7 + dayScore * 0.3;
 
   return {
     score: Math.min(100, combinedScore),
@@ -208,9 +208,7 @@ export async function calculateRiskScore(
       name: "ip",
       score: ipScore,
       weight: RISK_WEIGHTS.ip,
-      details: ipResult.isKnown
-        ? `Known IP (seen ${ipResult.seenCount} times)`
-        : "New IP address",
+      details: ipResult.isKnown ? `Known IP (seen ${ipResult.seenCount} times)` : "New IP address",
     });
     totalScore += ipScore;
     totalWeight += RISK_WEIGHTS.ip;
@@ -237,7 +235,12 @@ export async function calculateRiskScore(
 
   // Check device fingerprint (if available and enabled)
   if (context.deviceFingerprint && (!riskFactorSettings || riskFactorSettings.device)) {
-    const deviceResult = await getContextTrustScore(db, userId, "device", context.deviceFingerprint);
+    const deviceResult = await getContextTrustScore(
+      db,
+      userId,
+      "device",
+      context.deviceFingerprint
+    );
     const deviceScore = deviceResult.isKnown
       ? (deviceResult.score / 100) * RISK_WEIGHTS.device
       : RISK_WEIGHTS.device * 0.2; // New devices get less benefit
@@ -267,9 +270,7 @@ export async function calculateRiskScore(
       name: "timePattern",
       score: timeScore,
       weight: RISK_WEIGHTS.timePattern,
-      details: timeResult.isUsualTime
-        ? "Access during usual time"
-        : "Access during unusual time",
+      details: timeResult.isUsualTime ? "Access during usual time" : "Access during unusual time",
     });
     totalScore += timeScore;
     totalWeight += RISK_WEIGHTS.timePattern;
@@ -435,12 +436,7 @@ export async function revokeDeviceTrust(
       explicitlyTrusted: false,
       trustScore: 0,
     })
-    .where(
-      and(
-        eq(userTrustedContexts.id, contextId),
-        eq(userTrustedContexts.userId, userId)
-      )
-    );
+    .where(and(eq(userTrustedContexts.id, contextId), eq(userTrustedContexts.userId, userId)));
 
   return result.rowsAffected > 0;
 }

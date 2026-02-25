@@ -5,12 +5,12 @@
  * This allows us to test the rollover transition again
  */
 
-import {db} from '../src/lib/server/db';
-import {envelopeAllocations} from '../src/lib/schema/budgets/envelope-allocations';
-import {budgetPeriodInstances} from '../src/lib/schema/budgets';
-import {eq} from 'drizzle-orm';
+import { db } from "../src/lib/server/db";
+import { envelopeAllocations } from "../src/lib/schema/budgets/envelope-allocations";
+import { budgetPeriodInstances } from "../src/lib/schema/budgets";
+import { eq } from "drizzle-orm";
 
-console.log('🔄 Resetting rollover test data...\n');
+console.log("🔄 Resetting rollover test data...\n");
 
 async function resetRolloverTest() {
   try {
@@ -20,7 +20,7 @@ async function resetRolloverTest() {
     });
 
     if (!octoberPeriod) {
-      console.log('❌ October period not found');
+      console.log("❌ October period not found");
       return;
     }
 
@@ -49,7 +49,9 @@ async function resetRolloverTest() {
         })
         .where(eq(envelopeAllocations.id, envelope.id));
 
-      console.log(`  ✓ Reset ${envelope.category.name}: $${envelope.allocatedAmount} available (was $${envelope.availableAmount})`);
+      console.log(
+        `  ✓ Reset ${envelope.category.name}: $${envelope.allocatedAmount} available (was $${envelope.availableAmount})`
+      );
     }
 
     // Reset the period's rollover amount
@@ -60,14 +62,14 @@ async function resetRolloverTest() {
       })
       .where(eq(budgetPeriodInstances.id, 2));
 
-    console.log('\n✅ Reset complete! October period is ready for rollover testing.\n');
-    console.log('🎯 Now you can:');
-    console.log('   1. Go to /budgets/rollover-test-budget');
-    console.log('   2. Open the Rollover Manager tab');
+    console.log("\n✅ Reset complete! October period is ready for rollover testing.\n");
+    console.log("🎯 Now you can:");
+    console.log("   1. Go to /budgets/rollover-test-budget");
+    console.log("   2. Open the Rollover Manager tab");
     console.log('   3. Click "Manual Transition"');
-    console.log('   4. Watch the rollover happen and see the notification!\n');
+    console.log("   4. Watch the rollover happen and see the notification!\n");
   } catch (error) {
-    console.error('❌ Error resetting test data:', error);
+    console.error("❌ Error resetting test data:", error);
     throw error;
   }
 }

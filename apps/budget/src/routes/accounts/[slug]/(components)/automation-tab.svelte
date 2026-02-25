@@ -82,7 +82,7 @@ function handleCreateNew() {
 }
 
 function handleEdit(id: number) {
-  const rule = rules.find(r => r.id === id);
+  const rule = rules.find((r) => r.id === id);
   if (!rule) return;
 
   editingRule = rule;
@@ -219,7 +219,7 @@ const initialFlowState = $derived.by(() => {
   {#if isLoading}
     <div class="grid gap-4 md:grid-cols-2">
       {#each { length: 3 } as _, i (i)}
-        <div class="h-40 animate-pulse rounded-lg bg-muted"></div>
+        <div class="bg-muted h-40 animate-pulse rounded-lg"></div>
       {/each}
     </div>
   {:else if rules.length === 0}
@@ -229,8 +229,9 @@ const initialFlowState = $derived.by(() => {
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold">Automation Rules</h2>
-        <p class="text-sm text-muted-foreground">
-          {rules.filter(r => r.isEnabled).length} active, {rules.filter(r => !r.isEnabled).length} paused
+        <p class="text-muted-foreground text-sm">
+          {rules.filter((r) => r.isEnabled).length} active, {rules.filter((r) => !r.isEnabled)
+            .length} paused
         </p>
       </div>
       <Button onclick={handleCreateNew}>
@@ -248,8 +249,7 @@ const initialFlowState = $derived.by(() => {
           onEdit={handleEdit}
           onDuplicate={handleDuplicate}
           onDelete={handleDelete}
-          onViewLogs={handleViewLogs}
-        />
+          onViewLogs={handleViewLogs} />
       {/each}
     </div>
   {/if}
@@ -259,7 +259,8 @@ const initialFlowState = $derived.by(() => {
 <ResponsiveSheet bind:open={sheetOpen} defaultWidth={1000} minWidth={800} maxWidth={1400}>
   {#snippet header()}
     <div class="flex items-center gap-3">
-      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
+      <div
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
         <Zap class="h-5 w-5 text-amber-600 dark:text-amber-400" />
       </div>
       <div>
@@ -284,23 +285,13 @@ const initialFlowState = $derived.by(() => {
           <div class="grid gap-6 md:grid-cols-2">
             <div class="space-y-2">
               <Label for="name">Name</Label>
-              <Input
-                id="name"
-                bind:value={name}
-                placeholder="e.g., Auto-categorize groceries"
-              />
+              <Input id="name" bind:value={name} placeholder="e.g., Auto-categorize groceries" />
             </div>
 
             <div class="space-y-2">
               <Label for="priority">Priority</Label>
-              <Input
-                id="priority"
-                type="number"
-                bind:value={priority}
-                min={-1000}
-                max={1000}
-              />
-              <p class="text-xs text-muted-foreground">
+              <Input id="priority" type="number" bind:value={priority} min={-1000} max={1000} />
+              <p class="text-muted-foreground text-xs">
                 Higher priority rules run first (-1000 to 1000)
               </p>
             </div>
@@ -311,14 +302,13 @@ const initialFlowState = $derived.by(() => {
                 id="description"
                 bind:value={description}
                 placeholder="Describe what this rule does..."
-                rows={2}
-              />
+                rows={2} />
             </div>
 
             <div class="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <Label>Enabled</Label>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                   Rule will start running immediately when saved
                 </p>
               </div>
@@ -328,7 +318,7 @@ const initialFlowState = $derived.by(() => {
             <div class="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <Label>Stop on Match</Label>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                   Don't run lower priority rules after this one matches
                 </p>
               </div>
@@ -351,10 +341,9 @@ const initialFlowState = $derived.by(() => {
             <RuleBuilder
               bind:this={ruleBuilder}
               entityType="transaction"
-              initialRuleConfig={initialRuleConfig}
-              initialFlowState={initialFlowState}
-              compact
-            />
+              {initialRuleConfig}
+              {initialFlowState}
+              compact />
           {/key}
         </Card.Content>
       </Card.Root>
@@ -363,12 +352,17 @@ const initialFlowState = $derived.by(() => {
 
   {#snippet footer()}
     <div class="flex gap-2 px-3 py-3">
-      <Button variant="outline" onclick={() => { sheetOpen = false; resetForm(); }}>
+      <Button
+        variant="outline"
+        onclick={() => {
+          sheetOpen = false;
+          resetForm();
+        }}>
         Cancel
       </Button>
       <Button onclick={handleSave} disabled={isSaving} class="flex-1">
         <Save class="mr-2 h-4 w-4" />
-        {isSaving ? 'Saving...' : (editingRule ? 'Update Rule' : 'Create Rule')}
+        {isSaving ? 'Saving...' : editingRule ? 'Update Rule' : 'Create Rule'}
       </Button>
     </div>
   {/snippet}
@@ -380,16 +374,15 @@ const initialFlowState = $derived.by(() => {
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Rule</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete this automation rule? This action cannot be undone.
-        All execution logs for this rule will also be deleted.
+        Are you sure you want to delete this automation rule? This action cannot be undone. All
+        execution logs for this rule will also be deleted.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-        onclick={confirmDelete}
-      >
+        onclick={confirmDelete}>
         Delete
       </AlertDialog.Action>
     </AlertDialog.Footer>

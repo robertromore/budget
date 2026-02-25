@@ -117,9 +117,7 @@ export function min(arr: number[]): number | undefined {
  */
 export function minBy<T>(arr: T[], valueFn: (item: T) => number): T | undefined {
   if (arr.length === 0) return undefined;
-  return arr.reduce((min, item) =>
-    valueFn(item) < valueFn(min) ? item : min
-  );
+  return arr.reduce((min, item) => (valueFn(item) < valueFn(min) ? item : min));
 }
 
 /**
@@ -137,19 +135,14 @@ export function max(arr: number[]): number | undefined {
  */
 export function maxBy<T>(arr: T[], valueFn: (item: T) => number): T | undefined {
   if (arr.length === 0) return undefined;
-  return arr.reduce((max, item) =>
-    valueFn(item) > valueFn(max) ? item : max
-  );
+  return arr.reduce((max, item) => (valueFn(item) > valueFn(max) ? item : max));
 }
 
 /**
  * Partition array into two arrays based on predicate
  * @example partition([1, 2, 3, 4, 5], x => x % 2 === 0) => [[2, 4], [1, 3, 5]]
  */
-export function partition<T>(
-  arr: T[],
-  predicate: (item: T) => boolean
-): [T[], T[]] {
+export function partition<T>(arr: T[], predicate: (item: T) => boolean): [T[], T[]] {
   const pass: T[] = [];
   const fail: T[] = [];
   for (const item of arr) {
@@ -210,10 +203,7 @@ export function sortBy<T>(arr: T[], keyFn: (item: T) => string | number): T[] {
  * @example sortByDesc([{val: 1}, {val: 3}, {val: 2}], x => x.val)
  *          => [{val: 3}, {val: 2}, {val: 1}]
  */
-export function sortByDesc<T>(
-  arr: T[],
-  keyFn: (item: T) => string | number
-): T[] {
+export function sortByDesc<T>(arr: T[], keyFn: (item: T) => string | number): T[] {
   return [...arr].sort((a, b) => {
     const aKey = keyFn(a);
     const bKey = keyFn(b);
@@ -251,11 +241,7 @@ export function skip<T>(arr: T[], n: number): T[] {
  * Find first item matching predicate or return default
  * @example findOr([1, 2, 3], x => x > 5, 0) => 0
  */
-export function findOr<T>(
-  arr: T[],
-  predicate: (item: T) => boolean,
-  defaultValue: T
-): T {
+export function findOr<T>(arr: T[], predicate: (item: T) => boolean, defaultValue: T): T {
   return arr.find(predicate) ?? defaultValue;
 }
 
@@ -305,10 +291,7 @@ export function countWhere<T>(arr: T[], predicate: (item: T) => boolean): number
  * Map and filter in one operation (removes null/undefined results)
  * @example mapAndFilter([1, 2, 3], x => x > 1 ? x * 2 : null) => [4, 6]
  */
-export function mapAndFilter<T, U>(
-  arr: T[],
-  fn: (item: T) => U | null | undefined
-): U[] {
+export function mapAndFilter<T, U>(arr: T[], fn: (item: T) => U | null | undefined): U[] {
   const result: U[] = [];
   for (const item of arr) {
     const mapped = fn(item);

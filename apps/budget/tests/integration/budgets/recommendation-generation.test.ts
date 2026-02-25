@@ -5,12 +5,15 @@
  * and manage budget recommendations.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import type {RecommendationPriority, RecommendationType} from "../../../src/lib/schema/recommendations";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type {
+  RecommendationPriority,
+  RecommendationType,
+} from "../../../src/lib/schema/recommendations";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -186,7 +189,7 @@ describe("Budget Recommendation Generation", () => {
   describe("createRecommendations (bulk)", () => {
     it("should create multiple recommendations in bulk", async () => {
       const drafts = [
-        createRecommendationDraft(ctx, {amount: 10}),
+        createRecommendationDraft(ctx, { amount: 10 }),
         createRecommendationDraft(ctx, {
           amount: 20,
           categoryId: null,
@@ -199,7 +202,10 @@ describe("Budget Recommendation Generation", () => {
         }),
       ];
 
-      const recommendations = await ctx.db.insert(schema.budgetRecommendations).values(drafts).returning();
+      const recommendations = await ctx.db
+        .insert(schema.budgetRecommendations)
+        .values(drafts)
+        .returning();
 
       expect(recommendations).toHaveLength(3);
       expect(recommendations.map((r) => r.metadata?.suggestedAmount)).toEqual([10, 20, 30]);
@@ -243,14 +249,14 @@ describe("Budget Recommendation Generation", () => {
     beforeEach(async () => {
       // Create recommendations with different statuses
       await ctx.db.insert(schema.budgetRecommendations).values([
-        createRecommendationDraft(ctx, {amount: 10, priority: "high"}),
+        createRecommendationDraft(ctx, { amount: 10, priority: "high" }),
         {
-          ...createRecommendationDraft(ctx, {amount: 20, priority: "medium"}),
+          ...createRecommendationDraft(ctx, { amount: 20, priority: "medium" }),
           status: "dismissed" as const,
           dismissedAt: new Date().toISOString(),
         },
         {
-          ...createRecommendationDraft(ctx, {amount: 30, priority: "low"}),
+          ...createRecommendationDraft(ctx, { amount: 30, priority: "low" }),
           status: "applied" as const,
           appliedAt: new Date().toISOString(),
         },
@@ -289,7 +295,7 @@ describe("Budget Recommendation Generation", () => {
     it("should exclude expired recommendations", async () => {
       // Create an expired recommendation
       const expiredDraft = {
-        ...createRecommendationDraft(ctx, {amount: 999}),
+        ...createRecommendationDraft(ctx, { amount: 999 }),
         expiresAt: new Date(Date.now() - 1000).toISOString(), // Expired 1 second ago
       };
       await ctx.db.insert(schema.budgetRecommendations).values(expiredDraft);
@@ -311,12 +317,15 @@ describe("Budget Recommendation Generation", () => {
   describe("confidence scoring", () => {
     it("should store confidence scores accurately", async () => {
       const drafts = [
-        createRecommendationDraft(ctx, {confidence: 95, amount: 100}),
-        createRecommendationDraft(ctx, {confidence: 75, amount: 200, categoryId: null}),
-        createRecommendationDraft(ctx, {confidence: 50, amount: 300, accountId: null}),
+        createRecommendationDraft(ctx, { confidence: 95, amount: 100 }),
+        createRecommendationDraft(ctx, { confidence: 75, amount: 200, categoryId: null }),
+        createRecommendationDraft(ctx, { confidence: 50, amount: 300, accountId: null }),
       ];
 
-      const recommendations = await ctx.db.insert(schema.budgetRecommendations).values(drafts).returning();
+      const recommendations = await ctx.db
+        .insert(schema.budgetRecommendations)
+        .values(drafts)
+        .returning();
 
       expect(recommendations[0].confidence).toBe(95);
       expect(recommendations[1].confidence).toBe(75);
@@ -324,11 +333,13 @@ describe("Budget Recommendation Generation", () => {
     });
 
     it("should allow querying by confidence threshold", async () => {
-      await ctx.db.insert(schema.budgetRecommendations).values([
-        createRecommendationDraft(ctx, {confidence: 90, amount: 1}),
-        createRecommendationDraft(ctx, {confidence: 70, amount: 2, categoryId: null}),
-        createRecommendationDraft(ctx, {confidence: 50, amount: 3, accountId: null}),
-      ]);
+      await ctx.db
+        .insert(schema.budgetRecommendations)
+        .values([
+          createRecommendationDraft(ctx, { confidence: 90, amount: 1 }),
+          createRecommendationDraft(ctx, { confidence: 70, amount: 2, categoryId: null }),
+          createRecommendationDraft(ctx, { confidence: 50, amount: 3, accountId: null }),
+        ]);
 
       const allRecs = await ctx.db
         .select()
@@ -391,7 +402,10 @@ describe("Budget Recommendation Generation", () => {
         expiresAt: new Date(Date.now() + 100).toISOString(), // Expires in 100ms
       };
 
-      const [rec] = await ctx.db.insert(schema.budgetRecommendations).values(expiresSoon).returning();
+      const [rec] = await ctx.db
+        .insert(schema.budgetRecommendations)
+        .values(expiresSoon)
+        .returning();
 
       // Wait for expiration
       await new Promise((resolve) => setTimeout(resolve, 150));
@@ -400,7 +414,7 @@ describe("Budget Recommendation Generation", () => {
       const now = new Date().toISOString();
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "expired", updatedAt: now})
+        .set({ status: "expired", updatedAt: now })
         .where(
           and(
             eq(schema.budgetRecommendations.id, rec.id),
@@ -435,14 +449,17 @@ describe("Budget Recommendation Generation", () => {
       });
 
       const toDelete = all.filter(
-        (r) => r.status === "expired" && r.expiresAt && new Date(r.expiresAt) < new Date(sevenDaysAgo)
+        (r) =>
+          r.status === "expired" && r.expiresAt && new Date(r.expiresAt) < new Date(sevenDaysAgo)
       );
 
       expect(toDelete).toHaveLength(1);
 
       // Delete old expired
       for (const rec of toDelete) {
-        await ctx.db.delete(schema.budgetRecommendations).where(eq(schema.budgetRecommendations.id, rec.id));
+        await ctx.db
+          .delete(schema.budgetRecommendations)
+          .where(eq(schema.budgetRecommendations.id, rec.id));
       }
 
       const remaining = await ctx.db.query.budgetRecommendations.findMany({

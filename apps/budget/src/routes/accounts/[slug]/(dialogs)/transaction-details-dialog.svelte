@@ -5,10 +5,7 @@ import * as Dialog from '$lib/components/ui/dialog';
 import { Separator } from '$lib/components/ui/separator';
 import type { Transaction } from '$lib/schema';
 import { formatCurrency } from '$lib/utils/formatters';
-import {
-  createEncryptedFieldState,
-  isEncryptedValue,
-} from '$lib/utils/use-encryption.svelte';
+import { createEncryptedFieldState, isEncryptedValue } from '$lib/utils/use-encryption.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Clock from '@lucide/svelte/icons/clock';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
@@ -53,15 +50,13 @@ let {
 } = $props();
 
 // Encrypted field states for sensitive data
-const notesState = createEncryptedFieldState(
-  () => transaction?.notes,
-  { operation: 'View transaction notes' }
-);
+const notesState = createEncryptedFieldState(() => transaction?.notes, {
+  operation: 'View transaction notes',
+});
 
-const payeeNameState = createEncryptedFieldState(
-  () => transaction?.payee?.name,
-  { operation: 'View payee name' }
-);
+const payeeNameState = createEncryptedFieldState(() => transaction?.payee?.name, {
+  operation: 'View payee name',
+});
 
 // Check if any field needs unlock
 const hasEncryptedFields = $derived(notesState.isEncrypted || payeeNameState.isEncrypted);

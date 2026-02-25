@@ -36,7 +36,7 @@ async function handleClear() {
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="ghost" class="flex size-8 p-0 data-[state=open]:bg-muted">
+      <Button {...props} variant="ghost" class="data-[state=open]:bg-muted flex size-8 p-0">
         <MoreHorizontal class="size-4" />
         <span class="sr-only">Open menu</span>
       </Button>
@@ -57,8 +57,8 @@ async function handleClear() {
     <AlertDialog.Header>
       <AlertDialog.Title>Clear {markerLabel}?</AlertDialog.Title>
       <AlertDialog.Description>
-        This will remove the {markerLabel.toLowerCase()} from this account. The account balance will
-        be recalculated using the previous balance management settings.
+        This will remove the {markerLabel.toLowerCase()} from this account. The account balance will be
+        recalculated using the previous balance management settings.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

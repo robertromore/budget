@@ -1,7 +1,7 @@
-import {describe, it, expect, beforeEach, afterEach} from "vitest";
-import {setupTestDb, seedTestData, clearTestDb} from "../setup/test-db";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {TRPCError} from "@trpc/server";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { setupTestDb, seedTestData, clearTestDb } from "../setup/test-db";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { TRPCError } from "@trpc/server";
 
 describe("Accounts CRUD Integration Tests", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
@@ -10,7 +10,7 @@ describe("Accounts CRUD Integration Tests", () => {
   beforeEach(async () => {
     testDb = await setupTestDb();
     await seedTestData(testDb);
-    const ctx = {db: testDb, isTest: true};
+    const ctx = { db: testDb, isTest: true };
     caller = createCaller(ctx as any);
   });
 
@@ -349,7 +349,7 @@ describe("Accounts CRUD Integration Tests", () => {
       });
 
       // Load the account to get calculated balance
-      const loadedAccount = await caller.accountRoutes.load({id: emptyAccount.id});
+      const loadedAccount = await caller.accountRoutes.load({ id: emptyAccount.id });
 
       // Balance should be 0, not NaN
       expect(loadedAccount.balance).toBe(0);
@@ -368,7 +368,7 @@ describe("Accounts CRUD Integration Tests", () => {
       const allAccounts = await caller.accountRoutes.all();
 
       for (const account of allAccounts) {
-        const loadedAccount = await caller.accountRoutes.load({id: account.id});
+        const loadedAccount = await caller.accountRoutes.load({ id: account.id });
 
         // Balance should be consistent
         expect(loadedAccount.balance).toBe(account.balance);
@@ -454,7 +454,7 @@ describe("Accounts CRUD Integration Tests", () => {
       expect(updated.notes).toBe("Revised notes");
 
       // Delete
-      const deleted = await caller.accountRoutes.remove({id: created.id});
+      const deleted = await caller.accountRoutes.remove({ id: created.id });
       expect(deleted.deletedAt).toBeDefined();
 
       // Verify deletion
@@ -489,7 +489,7 @@ describe("Accounts CRUD Integration Tests", () => {
 
     it("should handle concurrent operations", async () => {
       // Create multiple accounts simultaneously
-      const createPromises = Array.from({length: 5}, (_, i) =>
+      const createPromises = Array.from({ length: 5 }, (_, i) =>
         caller.accountRoutes.save({
           name: `Concurrent Account ${i}`,
           slug: `concurrent-account-${i}`,

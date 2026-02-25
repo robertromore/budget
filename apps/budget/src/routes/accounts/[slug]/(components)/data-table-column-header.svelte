@@ -32,7 +32,7 @@ const columnHelpIds: Record<string, string> = {
   balance: 'transaction-balance-column',
   notes: 'transaction-notes-column',
   status: 'transaction-status-column',
-  budget: 'transaction-budget-column'
+  budget: 'transaction-budget-column',
 };
 const helpId = $derived(columnHelpIds[column.id]);
 

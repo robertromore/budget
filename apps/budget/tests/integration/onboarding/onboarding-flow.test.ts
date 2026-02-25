@@ -5,13 +5,13 @@
  * workspace creation, initial account setup, and preferences configuration.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {createId} from "@paralleldrive/cuid2";
-import type {WorkspacePreferences, MLPreferences} from "../../../src/lib/schema/workspaces";
+import { eq } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { createId } from "@paralleldrive/cuid2";
+import type { WorkspacePreferences, MLPreferences } from "../../../src/lib/schema/workspaces";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -21,7 +21,7 @@ interface TestContext {
 
 async function setupTestContext(): Promise<TestContext> {
   const db = await setupTestDb();
-  return {db};
+  return { db };
 }
 
 describe("Onboarding Flow", () => {
@@ -286,14 +286,14 @@ describe("Onboarding Flow", () => {
 
       // Create default categories
       const defaultCategories = [
-        {name: "Groceries", slug: "groceries"},
-        {name: "Restaurants", slug: "restaurants"},
-        {name: "Transportation", slug: "transportation"},
-        {name: "Utilities", slug: "utilities"},
-        {name: "Housing", slug: "housing"},
-        {name: "Entertainment", slug: "entertainment"},
-        {name: "Shopping", slug: "shopping"},
-        {name: "Healthcare", slug: "healthcare"},
+        { name: "Groceries", slug: "groceries" },
+        { name: "Restaurants", slug: "restaurants" },
+        { name: "Transportation", slug: "transportation" },
+        { name: "Utilities", slug: "utilities" },
+        { name: "Housing", slug: "housing" },
+        { name: "Entertainment", slug: "entertainment" },
+        { name: "Shopping", slug: "shopping" },
+        { name: "Healthcare", slug: "healthcare" },
       ];
 
       await ctx.db.insert(schema.categories).values(
@@ -383,7 +383,7 @@ describe("Onboarding Flow", () => {
 
       await ctx.db
         .update(schema.workspaces)
-        .set({preferences: JSON.stringify(updatedPrefs)})
+        .set({ preferences: JSON.stringify(updatedPrefs) })
         .where(eq(schema.workspaces.id, workspace.id));
 
       const updated = await ctx.db.query.workspaces.findFirst({
@@ -423,7 +423,7 @@ describe("Onboarding Flow", () => {
 
       await ctx.db
         .update(schema.workspaces)
-        .set({preferences: JSON.stringify(completedPrefs)})
+        .set({ preferences: JSON.stringify(completedPrefs) })
         .where(eq(schema.workspaces.id, workspace.id));
 
       const updated = await ctx.db.query.workspaces.findFirst({
@@ -462,7 +462,7 @@ describe("Onboarding Flow", () => {
 
       await ctx.db
         .update(schema.workspaces)
-        .set({preferences: JSON.stringify(prefs)})
+        .set({ preferences: JSON.stringify(prefs) })
         .where(eq(schema.workspaces.id, workspace.id));
 
       const updated = await ctx.db.query.workspaces.findFirst({
@@ -591,7 +591,7 @@ describe("Onboarding Flow", () => {
           preferences: JSON.stringify({
             locale: "en-US",
             currency: "USD",
-            onboarding: {wizardCompleted: false, tourCompleted: false, tourSkipped: false},
+            onboarding: { wizardCompleted: false, tourCompleted: false, tourSkipped: false },
           }),
         })
         .returning();
@@ -617,8 +617,8 @@ describe("Onboarding Flow", () => {
 
       // Step 5: Create default categories
       await ctx.db.insert(schema.categories).values([
-        {workspaceId: workspace.id, name: "Groceries", slug: "groceries"},
-        {workspaceId: workspace.id, name: "Income", slug: "income", categoryType: "income"},
+        { workspaceId: workspace.id, name: "Groceries", slug: "groceries" },
+        { workspaceId: workspace.id, name: "Income", slug: "income", categoryType: "income" },
       ]);
 
       // Step 6: Mark onboarding complete

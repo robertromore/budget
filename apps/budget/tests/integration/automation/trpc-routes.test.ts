@@ -315,11 +315,14 @@ describe("Automation tRPC Routes Integration Tests", () => {
     describe("listByEntityType", () => {
       it("should filter rules by entity type", async () => {
         await createRule(createValidRuleInput(), context);
-        await createRule({
-          ...createValidRuleInput(),
-          name: "Account Rule",
-          trigger: { entityType: "account", event: "updated" },
-        }, context);
+        await createRule(
+          {
+            ...createValidRuleInput(),
+            name: "Account Rule",
+            trigger: { entityType: "account", event: "updated" },
+          },
+          context
+        );
 
         const transactionRules = await getRulesByEntityType("transaction", context);
         const accountRules = await getRulesByEntityType("account", context);
@@ -383,10 +386,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
 
     describe("enable/disable", () => {
       it("should enable a disabled rule", async () => {
-        const created = await createRule(
-          { ...createValidRuleInput(), isEnabled: false },
-          context
-        );
+        const created = await createRule({ ...createValidRuleInput(), isEnabled: false }, context);
 
         const enabled = await enableRule(created.id, context);
 
@@ -526,12 +526,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
         const rule = await createRule(createValidRuleInput(), context);
 
         const services = { transactions: { update: async () => {} } };
-        const result = await testRule(
-          rule.id,
-          { amount: 150 },
-          context,
-          services
-        );
+        const result = await testRule(rule.id, { amount: 150 }, context, services);
 
         expect(result.matched).toBe(true);
         expect(result.actions).toHaveLength(1);
@@ -542,12 +537,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
         const rule = await createRule(createValidRuleInput(), context);
 
         const services = { transactions: { update: async () => {} } };
-        const result = await testRule(
-          rule.id,
-          { amount: 50 },
-          context,
-          services
-        );
+        const result = await testRule(rule.id, { amount: 50 }, context, services);
 
         expect(result.matched).toBe(false);
         expect(result.actions[0].wouldExecute).toBe(false);
@@ -555,12 +545,7 @@ describe("Automation tRPC Routes Integration Tests", () => {
 
       it("should return matched=false for non-existent rule", async () => {
         const services = { transactions: { update: async () => {} } };
-        const result = await testRule(
-          99999,
-          { amount: 150 },
-          context,
-          services
-        );
+        const result = await testRule(99999, { amount: 150 }, context, services);
 
         expect(result.matched).toBe(false);
         expect(result.actions).toEqual([]);

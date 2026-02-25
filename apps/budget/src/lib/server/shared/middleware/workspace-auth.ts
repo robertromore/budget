@@ -22,20 +22,11 @@ export interface WorkspaceAuthContext extends Context {
 /**
  * Get user's membership in a workspace
  */
-async function getMembershipForUser(
-  db: Context["db"],
-  userId: string,
-  workspaceId: number
-) {
+async function getMembershipForUser(db: Context["db"], userId: string, workspaceId: number) {
   const [membership] = await db
     .select()
     .from(workspaceMembers)
-    .where(
-      and(
-        eq(workspaceMembers.userId, userId),
-        eq(workspaceMembers.workspaceId, workspaceId)
-      )
-    )
+    .where(and(eq(workspaceMembers.userId, userId), eq(workspaceMembers.workspaceId, workspaceId)))
     .limit(1);
   return membership;
 }

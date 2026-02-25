@@ -11,6 +11,7 @@ Customize which columns are visible and how they're displayed.
 ## Column Visibility
 
 Show or hide columns:
+
 - Date
 - Description
 - Payee
@@ -24,6 +25,7 @@ Show or hide columns:
 ## Column Order
 
 Drag columns to reorder:
+
 1. Click and hold column header
 2. Drag to new position
 3. Release to drop
@@ -31,6 +33,7 @@ Drag columns to reorder:
 ## Column Width
 
 Resize columns:
+
 1. Hover over column border
 2. Drag to adjust width
 3. Double-click to auto-fit
@@ -44,6 +47,7 @@ Resize columns:
 ## Saving Layout
 
 Your column configuration is automatically saved:
+
 - Per-account settings
 - Named views remember layout
 - Export includes visible columns only

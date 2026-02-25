@@ -5,10 +5,22 @@ export { default as QuickAccessSection } from "./quick-access-section.svelte";
 export { default as SearchHeader } from "./search-header.svelte";
 
 export type {
-  AdvancedPayeeSelectorProps, DisplayMode, GroupStrategy, PayeeGroup, PayeeWithMetadata, QuickAccessSections, TransactionContext
+  AdvancedPayeeSelectorProps,
+  DisplayMode,
+  GroupStrategy,
+  PayeeGroup,
+  PayeeWithMetadata,
+  QuickAccessSections,
+  TransactionContext,
 } from "./types";
 
 export {
-  debounce, formatPayeeType, getFrequentPayees, getRecentPayees, groupPayees, saveToRecentPayees, sortPayeesByName,
-  sortPayeesByRelevance
+  debounce,
+  formatPayeeType,
+  getFrequentPayees,
+  getRecentPayees,
+  groupPayees,
+  saveToRecentPayees,
+  sortPayeesByName,
+  sortPayeesByRelevance,
 } from "./utils";

@@ -4,11 +4,11 @@
  * Tests duplicate transaction detection during import.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -50,8 +50,8 @@ async function setupTestContext(): Promise<TestContext> {
  * Check if two transactions are duplicates
  */
 function isDuplicate(
-  existing: {date: string | null; amount: number; fitid: string | null},
-  incoming: {date: string; amount: number; fitid?: string}
+  existing: { date: string | null; amount: number; fitid: string | null },
+  incoming: { date: string; amount: number; fitid?: string }
 ): boolean {
   // FITID match (Financial Institution Transaction ID)
   if (incoming.fitid && existing.fitid && incoming.fitid === existing.fitid) {
@@ -90,7 +90,7 @@ describe("Duplicate Detection", () => {
       });
 
       // Import row with same FITID
-      const incoming = {date: "2024-01-15", amount: -50, fitid};
+      const incoming = { date: "2024-01-15", amount: -50, fitid };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -111,7 +111,7 @@ describe("Duplicate Detection", () => {
       });
 
       // Different amount but same FITID
-      const incoming = {date: "2024-01-15", amount: -55, fitid};
+      const incoming = { date: "2024-01-15", amount: -55, fitid };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.fitid, fitid),
@@ -129,7 +129,7 @@ describe("Duplicate Detection", () => {
         fitid: "BANK111111111",
       });
 
-      const incoming = {date: "2024-01-15", amount: -50, fitid: "BANK222222222"};
+      const incoming = { date: "2024-01-15", amount: -50, fitid: "BANK222222222" };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -150,7 +150,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-15", amount: -123.45};
+      const incoming = { date: "2024-01-15", amount: -123.45 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -167,7 +167,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-15", amount: -100.01};
+      const incoming = { date: "2024-01-15", amount: -100.01 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -184,7 +184,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-15", amount: -100.02};
+      const incoming = { date: "2024-01-15", amount: -100.02 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -201,7 +201,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-16", amount: -50};
+      const incoming = { date: "2024-01-16", amount: -50 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -214,9 +214,9 @@ describe("Duplicate Detection", () => {
   describe("batch duplicate detection", () => {
     it("should detect duplicates within import batch", async () => {
       const batch = [
-        {date: "2024-01-15", amount: -50},
-        {date: "2024-01-15", amount: -50}, // Duplicate of first
-        {date: "2024-01-16", amount: -50}, // Different date
+        { date: "2024-01-15", amount: -50 },
+        { date: "2024-01-15", amount: -50 }, // Duplicate of first
+        { date: "2024-01-16", amount: -50 }, // Different date
       ];
 
       const seen = new Set<string>();
@@ -244,9 +244,9 @@ describe("Duplicate Detection", () => {
       });
 
       const batch = [
-        {date: "2024-01-10", amount: -100}, // Duplicate of database
-        {date: "2024-01-15", amount: -50}, // New
-        {date: "2024-01-15", amount: -50}, // Duplicate within batch
+        { date: "2024-01-10", amount: -100 }, // Duplicate of database
+        { date: "2024-01-15", amount: -50 }, // New
+        { date: "2024-01-15", amount: -50 }, // Duplicate within batch
       ];
 
       const existingTxns = await ctx.db
@@ -256,18 +256,18 @@ describe("Duplicate Detection", () => {
 
       const dbKeys = new Set(existingTxns.map((t) => `${t.date}|${t.amount}`));
       const batchKeys = new Set<string>();
-      const results: Array<{index: number; status: string}> = [];
+      const results: Array<{ index: number; status: string }> = [];
 
       batch.forEach((row, index) => {
         const key = `${row.date}|${row.amount}`;
 
         if (dbKeys.has(key)) {
-          results.push({index, status: "database_duplicate"});
+          results.push({ index, status: "database_duplicate" });
         } else if (batchKeys.has(key)) {
-          results.push({index, status: "batch_duplicate"});
+          results.push({ index, status: "batch_duplicate" });
         } else {
           batchKeys.add(key);
-          results.push({index, status: "valid"});
+          results.push({ index, status: "valid" });
         }
       });
 
@@ -282,26 +282,26 @@ describe("Duplicate Detection", () => {
       type ValidationStatus = "valid" | "invalid" | "warning";
 
       function validateRow(
-        row: {date: string; amount: number},
+        row: { date: string; amount: number },
         existingKeys: Set<string>
-      ): {status: ValidationStatus; isDuplicate: boolean} {
+      ): { status: ValidationStatus; isDuplicate: boolean } {
         const key = `${row.date}|${row.amount}`;
 
         if (existingKeys.has(key)) {
-          return {status: "warning", isDuplicate: true};
+          return { status: "warning", isDuplicate: true };
         }
 
-        return {status: "valid", isDuplicate: false};
+        return { status: "valid", isDuplicate: false };
       }
 
       const existing = new Set(["2024-01-15|-50"]);
 
-      expect(validateRow({date: "2024-01-15", amount: -50}, existing)).toEqual({
+      expect(validateRow({ date: "2024-01-15", amount: -50 }, existing)).toEqual({
         status: "warning",
         isDuplicate: true,
       });
 
-      expect(validateRow({date: "2024-01-16", amount: -50}, existing)).toEqual({
+      expect(validateRow({ date: "2024-01-16", amount: -50 }, existing)).toEqual({
         status: "valid",
         isDuplicate: false,
       });
@@ -318,7 +318,7 @@ describe("Duplicate Detection", () => {
         fitid: null,
       });
 
-      const incoming = {date: "2024-01-15", amount: -50, fitid: "BANK123"};
+      const incoming = { date: "2024-01-15", amount: -50, fitid: "BANK123" };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -336,7 +336,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-15", amount: 0};
+      const incoming = { date: "2024-01-15", amount: 0 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -353,7 +353,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-15", amount: -0.01};
+      const incoming = { date: "2024-01-15", amount: -0.01 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),
@@ -370,7 +370,7 @@ describe("Duplicate Detection", () => {
         date: "2024-01-15",
       });
 
-      const incoming = {date: "2024-01-15", amount: -999999.99};
+      const incoming = { date: "2024-01-15", amount: -999999.99 };
 
       const existing = await ctx.db.query.transactions.findFirst({
         where: eq(schema.transactions.accountId, ctx.accountId),

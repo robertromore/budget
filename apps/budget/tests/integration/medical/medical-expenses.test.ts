@@ -5,11 +5,11 @@
  * HSA account linking, tax year tracking, and reimbursements.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -59,7 +59,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       accountId: checkingAccount.id,
       date: "2024-01-15",
-      amount: -150.00,
+      amount: -150.0,
       status: "cleared",
     })
     .returning();
@@ -91,9 +91,9 @@ describe("Medical Expenses", () => {
           isQualified: true,
           provider: "General Hospital",
           patientName: "John Doe",
-          amount: 150.00,
-          insuranceCovered: 50.00,
-          outOfPocket: 100.00,
+          amount: 150.0,
+          insuranceCovered: 50.0,
+          outOfPocket: 100.0,
           serviceDate: "2024-01-10",
           taxYear: 2024,
         })
@@ -101,8 +101,8 @@ describe("Medical Expenses", () => {
 
       expect(expense.expenseType).toBe("doctor_visit");
       expect(expense.isQualified).toBe(true);
-      expect(expense.amount).toBe(150.00);
-      expect(expense.outOfPocket).toBe(100.00);
+      expect(expense.amount).toBe(150.0);
+      expect(expense.outOfPocket).toBe(100.0);
     });
 
     it("should create dental expense", async () => {
@@ -114,9 +114,9 @@ describe("Medical Expenses", () => {
           expenseType: "dental_filling",
           isQualified: true,
           provider: "Family Dentistry",
-          amount: 200.00,
-          insuranceCovered: 100.00,
-          outOfPocket: 100.00,
+          amount: 200.0,
+          insuranceCovered: 100.0,
+          outOfPocket: 100.0,
           serviceDate: "2024-01-08",
           taxYear: 2024,
         })
@@ -134,9 +134,9 @@ describe("Medical Expenses", () => {
           expenseType: "eyeglasses",
           isQualified: true,
           provider: "Vision Center",
-          amount: 300.00,
-          insuranceCovered: 150.00,
-          outOfPocket: 150.00,
+          amount: 300.0,
+          insuranceCovered: 150.0,
+          outOfPocket: 150.0,
           serviceDate: "2024-01-05",
           taxYear: 2024,
         })
@@ -154,16 +154,16 @@ describe("Medical Expenses", () => {
           expenseType: "prescription",
           isQualified: true,
           provider: "CVS Pharmacy",
-          amount: 45.00,
-          insuranceCovered: 35.00,
-          outOfPocket: 10.00,
+          amount: 45.0,
+          insuranceCovered: 35.0,
+          outOfPocket: 10.0,
           serviceDate: "2024-01-12",
           taxYear: 2024,
         })
         .returning();
 
       expect(expense.expenseType).toBe("prescription");
-      expect(expense.outOfPocket).toBe(10.00);
+      expect(expense.outOfPocket).toBe(10.0);
     });
   });
 
@@ -222,9 +222,9 @@ describe("Medical Expenses", () => {
           expenseType: "physical_therapy",
           isQualified: true,
           provider: "PT Clinic",
-          amount: 100.00,
-          insuranceCovered: 80.00,
-          outOfPocket: 20.00,
+          amount: 100.0,
+          insuranceCovered: 80.0,
+          outOfPocket: 20.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
         })
@@ -242,9 +242,9 @@ describe("Medical Expenses", () => {
           expenseType: "non_qualified",
           isQualified: false,
           provider: "Spa",
-          amount: 200.00,
+          amount: 200.0,
           insuranceCovered: 0,
-          outOfPocket: 200.00,
+          outOfPocket: 200.0,
           serviceDate: "2024-01-20",
           taxYear: 2024,
           notes: "Massage - not HSA qualified",
@@ -265,7 +265,7 @@ describe("Medical Expenses", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.checkingAccountId,
           date: "2023-12-15",
-          amount: -100.00,
+          amount: -100.0,
           status: "cleared",
         })
         .returning();
@@ -275,9 +275,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: ctx.hsaAccountId,
         expenseType: "doctor_visit",
         isQualified: true,
-        amount: 100.00,
+        amount: 100.0,
         insuranceCovered: 0,
-        outOfPocket: 100.00,
+        outOfPocket: 100.0,
         serviceDate: "2023-12-10",
         taxYear: 2023,
       });
@@ -288,9 +288,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: ctx.hsaAccountId,
         expenseType: "prescription",
         isQualified: true,
-        amount: 50.00,
+        amount: 50.0,
         insuranceCovered: 0,
-        outOfPocket: 50.00,
+        outOfPocket: 50.0,
         serviceDate: "2024-01-05",
         taxYear: 2024,
       });
@@ -318,7 +318,7 @@ describe("Medical Expenses", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.checkingAccountId,
           date: "2024-02-01",
-          amount: -200.00,
+          amount: -200.0,
           status: "cleared",
         })
         .returning();
@@ -329,7 +329,7 @@ describe("Medical Expenses", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.checkingAccountId,
           date: "2024-03-01",
-          amount: -300.00,
+          amount: -300.0,
           status: "cleared",
         })
         .returning();
@@ -339,9 +339,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: ctx.hsaAccountId,
         expenseType: "doctor_visit",
         isQualified: true,
-        amount: 150.00,
-        insuranceCovered: 50.00,
-        outOfPocket: 100.00,
+        amount: 150.0,
+        insuranceCovered: 50.0,
+        outOfPocket: 100.0,
         serviceDate: "2024-01-10",
         taxYear: 2024,
       });
@@ -351,9 +351,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: ctx.hsaAccountId,
         expenseType: "dental_exam",
         isQualified: true,
-        amount: 200.00,
-        insuranceCovered: 100.00,
-        outOfPocket: 100.00,
+        amount: 200.0,
+        insuranceCovered: 100.0,
+        outOfPocket: 100.0,
         serviceDate: "2024-02-01",
         taxYear: 2024,
       });
@@ -363,9 +363,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: ctx.hsaAccountId,
         expenseType: "eyeglasses",
         isQualified: true,
-        amount: 300.00,
+        amount: 300.0,
         insuranceCovered: 0,
-        outOfPocket: 300.00,
+        outOfPocket: 300.0,
         serviceDate: "2024-03-01",
         taxYear: 2024,
       });
@@ -374,13 +374,16 @@ describe("Medical Expenses", () => {
         .select()
         .from(schema.medicalExpenses)
         .where(
-          and(eq(schema.medicalExpenses.taxYear, 2024), eq(schema.medicalExpenses.isQualified, true))
+          and(
+            eq(schema.medicalExpenses.taxYear, 2024),
+            eq(schema.medicalExpenses.isQualified, true)
+          )
         );
 
       const totalOutOfPocket = expenses.reduce((sum, e) => sum + e.outOfPocket, 0);
 
       expect(expenses).toHaveLength(3);
-      expect(totalOutOfPocket).toBe(500.00); // 100 + 100 + 300
+      expect(totalOutOfPocket).toBe(500.0); // 100 + 100 + 300
     });
   });
 
@@ -394,17 +397,17 @@ describe("Medical Expenses", () => {
           expenseType: "surgery",
           isQualified: true,
           provider: "Surgical Center",
-          amount: 5000.00,
-          insuranceCovered: 4000.00,
-          outOfPocket: 1000.00,
+          amount: 5000.0,
+          insuranceCovered: 4000.0,
+          outOfPocket: 1000.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
         })
         .returning();
 
-      expect(expense.amount).toBe(5000.00);
-      expect(expense.insuranceCovered).toBe(4000.00);
-      expect(expense.outOfPocket).toBe(1000.00);
+      expect(expense.amount).toBe(5000.0);
+      expect(expense.insuranceCovered).toBe(4000.0);
+      expect(expense.outOfPocket).toBe(1000.0);
     });
 
     it("should handle fully covered by insurance", async () => {
@@ -416,8 +419,8 @@ describe("Medical Expenses", () => {
           expenseType: "annual_physical",
           isQualified: true,
           provider: "Primary Care",
-          amount: 200.00,
-          insuranceCovered: 200.00,
+          amount: 200.0,
+          insuranceCovered: 200.0,
           outOfPocket: 0,
           serviceDate: "2024-01-20",
           taxYear: 2024,
@@ -436,9 +439,9 @@ describe("Medical Expenses", () => {
           expenseType: "chiropractor",
           isQualified: true,
           provider: "Chiro Center",
-          amount: 75.00,
+          amount: 75.0,
           insuranceCovered: 0,
-          outOfPocket: 75.00,
+          outOfPocket: 75.0,
           serviceDate: "2024-01-22",
           taxYear: 2024,
         })
@@ -462,9 +465,9 @@ describe("Medical Expenses", () => {
           patientName: "Jane Doe",
           diagnosis: "Routine checkup",
           treatmentDescription: "Annual cardiac evaluation",
-          amount: 250.00,
-          insuranceCovered: 200.00,
-          outOfPocket: 50.00,
+          amount: 250.0,
+          insuranceCovered: 200.0,
+          outOfPocket: 50.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
           notes: "Follow-up recommended in 6 months",
@@ -486,9 +489,9 @@ describe("Medical Expenses", () => {
           hsaAccountId: ctx.hsaAccountId,
           expenseType: "hospital_stay",
           isQualified: true,
-          amount: 1000.00,
-          insuranceCovered: 800.00,
-          outOfPocket: 200.00,
+          amount: 1000.0,
+          insuranceCovered: 800.0,
+          outOfPocket: 200.0,
           serviceDate: "2024-01-05", // Service happened
           paidDate: "2024-01-15", // Payment made later
           taxYear: 2024, // Based on payment date per IRS rules
@@ -509,9 +512,9 @@ describe("Medical Expenses", () => {
           hsaAccountId: ctx.hsaAccountId,
           expenseType: "doctor_visit",
           isQualified: true,
-          amount: 100.00,
+          amount: 100.0,
           insuranceCovered: 0,
-          outOfPocket: 100.00,
+          outOfPocket: 100.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
         })
@@ -521,8 +524,8 @@ describe("Medical Expenses", () => {
       await ctx.db
         .update(schema.medicalExpenses)
         .set({
-          insuranceCovered: 80.00,
-          outOfPocket: 20.00,
+          insuranceCovered: 80.0,
+          outOfPocket: 20.0,
         })
         .where(eq(schema.medicalExpenses.id, expense.id));
 
@@ -530,8 +533,8 @@ describe("Medical Expenses", () => {
         where: eq(schema.medicalExpenses.id, expense.id),
       });
 
-      expect(updated?.insuranceCovered).toBe(80.00);
-      expect(updated?.outOfPocket).toBe(20.00);
+      expect(updated?.insuranceCovered).toBe(80.0);
+      expect(updated?.outOfPocket).toBe(20.0);
     });
 
     it("should update qualification status", async () => {
@@ -542,9 +545,9 @@ describe("Medical Expenses", () => {
           hsaAccountId: ctx.hsaAccountId,
           expenseType: "other_qualified",
           isQualified: true,
-          amount: 50.00,
+          amount: 50.0,
           insuranceCovered: 0,
-          outOfPocket: 50.00,
+          outOfPocket: 50.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
         })
@@ -578,9 +581,9 @@ describe("Medical Expenses", () => {
           hsaAccountId: ctx.hsaAccountId,
           expenseType: "doctor_visit",
           isQualified: true,
-          amount: 100.00,
+          amount: 100.0,
           insuranceCovered: 0,
-          outOfPocket: 100.00,
+          outOfPocket: 100.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
         })
@@ -589,7 +592,7 @@ describe("Medical Expenses", () => {
       const now = new Date().toISOString();
       await ctx.db
         .update(schema.medicalExpenses)
-        .set({deletedAt: now})
+        .set({ deletedAt: now })
         .where(eq(schema.medicalExpenses.id, expense.id));
 
       const deleted = await ctx.db.query.medicalExpenses.findFirst({
@@ -607,9 +610,9 @@ describe("Medical Expenses", () => {
           hsaAccountId: ctx.hsaAccountId,
           expenseType: "doctor_visit",
           isQualified: true,
-          amount: 100.00,
+          amount: 100.0,
           insuranceCovered: 0,
-          outOfPocket: 100.00,
+          outOfPocket: 100.0,
           serviceDate: "2024-01-15",
           taxYear: 2024,
         })
@@ -645,7 +648,7 @@ describe("Medical Expenses", () => {
           workspaceId: ctx.workspaceId,
           accountId: ctx.checkingAccountId,
           date: "2024-02-01",
-          amount: -75.00,
+          amount: -75.0,
           status: "cleared",
         })
         .returning();
@@ -656,9 +659,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: ctx.hsaAccountId,
         expenseType: "doctor_visit",
         isQualified: true,
-        amount: 100.00,
+        amount: 100.0,
         insuranceCovered: 0,
-        outOfPocket: 100.00,
+        outOfPocket: 100.0,
         serviceDate: "2024-01-15",
         taxYear: 2024,
       });
@@ -669,9 +672,9 @@ describe("Medical Expenses", () => {
         hsaAccountId: hsaAccount2.id,
         expenseType: "prescription",
         isQualified: true,
-        amount: 75.00,
+        amount: 75.0,
         insuranceCovered: 0,
-        outOfPocket: 75.00,
+        outOfPocket: 75.0,
         serviceDate: "2024-02-01",
         taxYear: 2024,
       });

@@ -6,7 +6,8 @@ related: [payees-page-header, payees-list]
 
 # Payees Table
 
-The payees table displays all your payees with key information and quick actions.
+The payees table displays all your payees with key information and quick
+actions.
 
 ## Table Columns
 
@@ -27,12 +28,14 @@ The payees table displays all your payees with key information and quick actions
 ## Bulk Actions
 
 Select multiple payees using checkboxes to:
+
 - Delete multiple payees at once
 - Export selected payees
 
 ## Search & Filter
 
 Use the search bar to find payees by:
+
 - Name
 - Category
 - Notes

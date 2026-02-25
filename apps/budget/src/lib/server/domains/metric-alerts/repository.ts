@@ -1,8 +1,4 @@
-import {
-  metricAlerts,
-  type MetricAlert,
-  type NewMetricAlert,
-} from "$lib/schema/metric-alerts";
+import { metricAlerts, type MetricAlert, type NewMetricAlert } from "$lib/schema/metric-alerts";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { getCurrentTimestamp } from "$lib/utils/dates";
@@ -59,12 +55,7 @@ export class MetricAlertRepository extends BaseRepository<
     return await db
       .select()
       .from(metricAlerts)
-      .where(
-        and(
-          eq(metricAlerts.workspaceId, workspaceId),
-          isNull(metricAlerts.deletedAt)
-        )
-      );
+      .where(and(eq(metricAlerts.workspaceId, workspaceId), isNull(metricAlerts.deletedAt)));
   }
 
   async findAllActive(workspaceId: number): Promise<MetricAlert[]> {
@@ -117,12 +108,7 @@ export class MetricAlertRepository extends BaseRepository<
         triggerCount: (await this.findById(id, workspaceId))!.triggerCount + 1,
         updatedAt: now,
       })
-      .where(
-        and(
-          eq(metricAlerts.id, id),
-          eq(metricAlerts.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(metricAlerts.id, id), eq(metricAlerts.workspaceId, workspaceId)));
   }
 
   async markChecked(id: number, workspaceId: number): Promise<void> {
@@ -133,11 +119,6 @@ export class MetricAlertRepository extends BaseRepository<
         lastCheckedAt: now,
         updatedAt: now,
       })
-      .where(
-        and(
-          eq(metricAlerts.id, id),
-          eq(metricAlerts.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(metricAlerts.id, id), eq(metricAlerts.workspaceId, workspaceId)));
   }
 }

@@ -5,12 +5,12 @@
  * restoration, application, and reset on budget deletion.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import type {RecommendationMetadata} from "../../../src/lib/schema/recommendations";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type { RecommendationMetadata } from "../../../src/lib/schema/recommendations";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -253,13 +253,13 @@ describe("Recommendation Dismissal", () => {
       // Dismiss
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "dismissed", dismissedAt: new Date().toISOString()})
+        .set({ status: "dismissed", dismissedAt: new Date().toISOString() })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       // Restore
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "pending", dismissedAt: null})
+        .set({ status: "pending", dismissedAt: null })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       const pendingRecs = await ctx.db
@@ -427,13 +427,13 @@ describe("Recommendation Dismissal", () => {
 
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "applied", appliedAt: new Date().toISOString(), budgetId: budget1.id})
+        .set({ status: "applied", appliedAt: new Date().toISOString(), budgetId: budget1.id })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       // Reset
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "pending", appliedAt: null, budgetId: null})
+        .set({ status: "pending", appliedAt: null, budgetId: null })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       // Delete first budget
@@ -455,7 +455,7 @@ describe("Recommendation Dismissal", () => {
 
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "applied", appliedAt: new Date().toISOString(), budgetId: budget2.id})
+        .set({ status: "applied", appliedAt: new Date().toISOString(), budgetId: budget2.id })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       const updated = await ctx.db.query.budgetRecommendations.findFirst({
@@ -474,7 +474,7 @@ describe("Recommendation Dismissal", () => {
       // pending -> dismissed
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "dismissed", dismissedAt: new Date().toISOString()})
+        .set({ status: "dismissed", dismissedAt: new Date().toISOString() })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       let current = await ctx.db.query.budgetRecommendations.findFirst({
@@ -485,7 +485,7 @@ describe("Recommendation Dismissal", () => {
       // dismissed -> pending (restore)
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "pending", dismissedAt: null})
+        .set({ status: "pending", dismissedAt: null })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       current = await ctx.db.query.budgetRecommendations.findFirst({
@@ -499,7 +499,7 @@ describe("Recommendation Dismissal", () => {
 
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "applied", appliedAt: new Date().toISOString()})
+        .set({ status: "applied", appliedAt: new Date().toISOString() })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       const current = await ctx.db.query.budgetRecommendations.findFirst({
@@ -513,7 +513,7 @@ describe("Recommendation Dismissal", () => {
 
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "expired"})
+        .set({ status: "expired" })
         .where(eq(schema.budgetRecommendations.id, recommendation.id));
 
       const current = await ctx.db.query.budgetRecommendations.findFirst({
@@ -567,7 +567,7 @@ describe("Recommendation Dismissal", () => {
         status: "pending" as const,
         accountId: ctx.accountId,
         categoryId: null,
-        metadata: {suggestedType: "account-monthly"},
+        metadata: { suggestedType: "account-monthly" },
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -578,7 +578,7 @@ describe("Recommendation Dismissal", () => {
       // Dismiss only rec1
       await ctx.db
         .update(schema.budgetRecommendations)
-        .set({status: "dismissed", dismissedAt: new Date().toISOString()})
+        .set({ status: "dismissed", dismissedAt: new Date().toISOString() })
         .where(eq(schema.budgetRecommendations.id, rec1.id));
 
       const all = await ctx.db

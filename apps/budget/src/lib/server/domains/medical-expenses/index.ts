@@ -20,5 +20,10 @@ export type { UpdateReceiptData, UploadReceiptData } from "./receipt-service";
 export type { CreateClaimInput, UpdateClaimInput } from "./claim-repository";
 
 export type {
-  ApproveClaimData, CreateClaimData, DenyClaimData, PayClaimData, SubmitClaimData, UpdateClaimData
+  ApproveClaimData,
+  CreateClaimData,
+  DenyClaimData,
+  PayClaimData,
+  SubmitClaimData,
+  UpdateClaimData,
 } from "./claim-service";

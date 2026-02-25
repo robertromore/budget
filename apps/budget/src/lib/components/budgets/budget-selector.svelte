@@ -44,9 +44,8 @@ const groupedBudgets = $derived.by(() => {
 
   for (const budget of resolvedBudgets) {
     const groupLabel = budget.groupMemberships?.length
-      ? compact(budget.groupMemberships
-          .map((membership) => membership.group?.name))
-          .join(' / ') || 'Ungrouped'
+      ? compact(budget.groupMemberships.map((membership) => membership.group?.name)).join(' / ') ||
+        'Ungrouped'
       : 'Ungrouped';
 
     if (!map.has(groupLabel)) {

@@ -97,11 +97,7 @@ export const payeeAliasRoutes = t.router({
    */
   create: rateLimitedProcedure.input(createAliasSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
-      return await aliasService.createManualAlias(
-        input.rawString,
-        input.payeeId,
-        ctx.workspaceId
-      );
+      return await aliasService.createManualAlias(input.rawString, input.payeeId, ctx.workspaceId);
     })
   ),
 
@@ -122,17 +118,15 @@ export const payeeAliasRoutes = t.router({
   /**
    * Record an alias from transaction edit
    */
-  recordFromTransactionEdit: rateLimitedProcedure
-    .input(recordFromTransactionEditSchema)
-    .mutation(
-      withErrorHandler(async ({ input, ctx }) => {
-        return await aliasService.recordAliasFromTransactionEdit(
-          input.rawString,
-          input.payeeId,
-          ctx.workspaceId
-        );
-      })
-    ),
+  recordFromTransactionEdit: rateLimitedProcedure.input(recordFromTransactionEditSchema).mutation(
+    withErrorHandler(async ({ input, ctx }) => {
+      return await aliasService.recordAliasFromTransactionEdit(
+        input.rawString,
+        input.payeeId,
+        ctx.workspaceId
+      );
+    })
+  ),
 
   /**
    * Bulk create aliases (typically at end of import)
@@ -168,10 +162,7 @@ export const payeeAliasRoutes = t.router({
    */
   deleteForPayee: rateLimitedProcedure.input(payeeIdSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
-      const count = await aliasService.deleteAliasesForPayee(
-        input.payeeId,
-        ctx.workspaceId
-      );
+      const count = await aliasService.deleteAliasesForPayee(input.payeeId, ctx.workspaceId);
       return { success: true, deletedCount: count };
     })
   ),

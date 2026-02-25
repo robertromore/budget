@@ -69,8 +69,8 @@ let confirmDeleteTransaction = async () => {
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
       <AlertDialog.Description>
         {#if showTransferOption}
-          This transaction is part of a transfer. Deleting it will leave the linked transaction in
-          "{transferAccountName}" orphaned.
+          This transaction is part of a transfer. Deleting it will leave the linked transaction in "{transferAccountName}"
+          orphaned.
         {:else}
           This action cannot be undone. This will permanently delete this transaction.
         {/if}

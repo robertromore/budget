@@ -10,17 +10,23 @@ related:
 
 # Budget Template Picker
 
-This dialog helps you quickly create budgets from pre-built templates. Templates provide starting points with suggested amounts and settings for common budgeting scenarios.
+This dialog helps you quickly create budgets from pre-built templates. Templates
+provide starting points with suggested amounts and settings for common budgeting
+scenarios.
 
 ## How to Use
 
-1. **Search** - Type in the search box to filter templates by name or description
-2. **Filter by category** - Use the tabs to view templates for specific areas (Bills, Savings, Lifestyle, etc.)
-3. **Select a template** - Click on any template card to use it as a starting point for your new budget
+1. **Search** - Type in the search box to filter templates by name or
+   description
+2. **Filter by category** - Use the tabs to view templates for specific areas
+   (Bills, Savings, Lifestyle, etc.)
+3. **Select a template** - Click on any template card to use it as a starting
+   point for your new budget
 
 ## Template Information
 
 Each template card shows:
+
 - **Name and icon** - Identifies the budget type
 - **Badge** - Shows the budget type (Account Monthly, Category Envelope, etc.)
 - **Description** - Explains what the template is for

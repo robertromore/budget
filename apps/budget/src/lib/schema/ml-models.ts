@@ -29,9 +29,7 @@ export const mlModels = sqliteTable("ml_models", {
   entityId: integer("entity_id"),
 
   // Model data
-  parameters: text("parameters", { mode: "json" })
-    .notNull()
-    .$type<Record<string, unknown>>(),
+  parameters: text("parameters", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
   metrics: text("metrics", { mode: "json" }).$type<Record<string, number>>(),
 
   // Versioning
@@ -43,8 +41,12 @@ export const mlModels = sqliteTable("ml_models", {
   trainingSamples: integer("training_samples"),
 
   // Timestamps
-  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  createdAt: text("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: text("updated_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 /**
@@ -72,7 +74,9 @@ export const mlPredictions = sqliteTable("ml_predictions", {
   actualOutcome: text("actual_outcome"),
 
   // Timestamps
-  predictedAt: text("predicted_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  predictedAt: text("predicted_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
   resolvedAt: text("resolved_at"),
 });
 
@@ -105,7 +109,9 @@ export const mlTrainingData = sqliteTable("ml_training_data", {
   entityId: integer("entity_id"),
 
   // Timestamp
-  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  createdAt: text("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 /**
@@ -125,13 +131,9 @@ export const anomalyAlerts = sqliteTable("anomaly_alerts", {
   riskLevel: text("risk_level", {
     enum: ["low", "medium", "high", "critical"],
   }).notNull(),
-  scoreDetails: text("score_details", { mode: "json" })
-    .notNull()
-    .$type<Record<string, unknown>>(),
+  scoreDetails: text("score_details", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
   explanation: text("explanation").notNull(),
-  recommendedActions: text("recommended_actions", { mode: "json" })
-    .notNull()
-    .$type<string[]>(),
+  recommendedActions: text("recommended_actions", { mode: "json" }).notNull().$type<string[]>(),
 
   // Status tracking
   status: text("status", {
@@ -143,7 +145,9 @@ export const anomalyAlerts = sqliteTable("anomaly_alerts", {
   notes: text("notes"),
 
   // Timestamps
-  detectedAt: text("detected_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  detectedAt: text("detected_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 /**
@@ -180,7 +184,9 @@ export const userBehaviorEvents = sqliteTable("user_behavior_events", {
   timeToAction: integer("time_to_action"), // milliseconds
 
   // Timestamp
-  occurredAt: text("occurred_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  occurredAt: text("occurred_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 // =============================================================================

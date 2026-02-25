@@ -1,4 +1,7 @@
-import { superformInsertBudgetSchema, type SuperformInsertBudgetData } from "$lib/schema/superforms";
+import {
+  superformInsertBudgetSchema,
+  type SuperformInsertBudgetData,
+} from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { fail, redirect } from "@sveltejs/kit";
@@ -118,7 +121,7 @@ export const actions: Actions = {
       // Handle schedule linking for scheduled-expense budgets
       if (data.type === "scheduled-expense" && data.linkedScheduleId) {
         metadata["scheduledExpense"] = {
-          ...(existingMetadata["scheduledExpense"] as Record<string, unknown> || {}),
+          ...((existingMetadata["scheduledExpense"] as Record<string, unknown>) || {}),
           linkedScheduleId: data.linkedScheduleId,
           autoTrack: true,
         };

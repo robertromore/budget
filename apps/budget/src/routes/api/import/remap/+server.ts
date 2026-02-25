@@ -179,7 +179,9 @@ export const POST: RequestHandler = async ({ request }) => {
         (r) => r.validationStatus === "transfer_match"
       ).length;
       if (transferMatchCount > 0) {
-        console.log(`[Transfer Target Matching] Found ${transferMatchCount} transfer target matches`);
+        console.log(
+          `[Transfer Target Matching] Found ${transferMatchCount} transfer target matches`
+        );
       }
     }
 
@@ -219,7 +221,10 @@ export const POST: RequestHandler = async ({ request }) => {
           payee,
           authorizedAccount.workspaceId
         );
-        console.log("[TransferMapping] Match result:", match.found ? `Found: ${match.matchedOn}` : "Not found");
+        console.log(
+          "[TransferMapping] Match result:",
+          match.found ? `Found: ${match.matchedOn}` : "Not found"
+        );
 
         if (match.found && match.targetAccountId) {
           // Skip if target is current account

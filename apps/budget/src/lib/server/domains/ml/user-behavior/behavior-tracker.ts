@@ -79,10 +79,7 @@ export interface BehaviorTracker {
   /**
    * Record recommendation outcome
    */
-  recordRecommendationOutcome(
-    workspaceId: number,
-    outcome: RecommendationOutcome
-  ): void;
+  recordRecommendationOutcome(workspaceId: number, outcome: RecommendationOutcome): void;
 
   /**
    * Get interaction statistics for a workspace
@@ -108,10 +105,7 @@ export interface BehaviorTracker {
   /**
    * Get all sessions for analysis
    */
-  getAllSessions(
-    workspaceId: number,
-    options?: { daysBack?: number }
-  ): SessionStats[];
+  getAllSessions(workspaceId: number, options?: { daysBack?: number }): SessionStats[];
 
   /**
    * Build user behavior profile from tracked data
@@ -230,10 +224,7 @@ export function createBehaviorTracker(
       }
     },
 
-    recordRecommendationOutcome(
-      workspaceId: number,
-      outcome: RecommendationOutcome
-    ): void {
+    recordRecommendationOutcome(workspaceId: number, outcome: RecommendationOutcome): void {
       const interactionType =
         outcome.outcome === "accepted"
           ? "recommendation_accepted"
@@ -272,9 +263,7 @@ export function createBehaviorTracker(
       const corrected = filtered.filter(
         (i) => i.interactionType === "recommendation_corrected"
       ).length;
-      const ignored = filtered.filter(
-        (i) => i.interactionType === "recommendation_ignored"
-      ).length;
+      const ignored = filtered.filter((i) => i.interactionType === "recommendation_ignored").length;
 
       const total = accepted + rejected + corrected + ignored;
 
@@ -327,10 +316,7 @@ export function createBehaviorTracker(
       return session;
     },
 
-    getAllSessions(
-      workspaceId: number,
-      options: { daysBack?: number } = {}
-    ): SessionStats[] {
+    getAllSessions(workspaceId: number, options: { daysBack?: number } = {}): SessionStats[] {
       const { daysBack = 30 } = options;
       const cutoff = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
 
@@ -365,9 +351,7 @@ export function createBehaviorTracker(
         .filter((c): c is number => c !== undefined);
 
       const avgAcceptedConfidence =
-        confidences.length > 0
-          ? confidences.reduce((a, b) => a + b, 0) / confidences.length
-          : 0.7;
+        confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0.7;
 
       // Build category-specific sensitivity (how often user accepts recommendations per category)
       const categorySensitivity: Record<number, number> = {};
@@ -423,7 +407,9 @@ export function createBehaviorTracker(
           acceptanceRate: stats.acceptanceRate,
           correctionRate: stats.correctionRate,
           lastActiveAt:
-            allSessions.length > 0 ? allSessions[0].endTime ?? allSessions[0].startTime : nowISOString(),
+            allSessions.length > 0
+              ? (allSessions[0].endTime ?? allSessions[0].startTime)
+              : nowISOString(),
           sessionFrequency,
         },
         learningProgress: {

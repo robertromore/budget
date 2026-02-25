@@ -22,7 +22,7 @@ import TrendingUp from '@lucide/svelte/icons/trending-up';
 // Get schedules from state
 const schedulesState = SchedulesState.get();
 const allSchedules = $derived(schedulesState.all);
-const activeSchedules = $derived(allSchedules.filter(s => s.status === 'active'));
+const activeSchedules = $derived(allSchedules.filter((s) => s.status === 'active'));
 
 // Calendar state
 let currentMonth = $state(new Date());
@@ -131,15 +131,20 @@ const scheduleOccurrences = $derived.by(() => {
           Array.isArray(days) &&
           days.length > 0;
         const onThe =
-          scheduleDate.on &&
-          scheduleDate.on_type === 'the' &&
-          weeks.length &&
-          weeksDays.length;
+          scheduleDate.on && scheduleDate.on_type === 'the' && weeks.length && weeksDays.length;
 
         if (onDay) {
           futureDates = nextMonthly(startDateValue, endOfRange, interval, days, [], [], 100);
         } else if (onThe) {
-          futureDates = nextMonthly(startDateValue, endOfRange, interval, null, weeks, weeksDays, 100);
+          futureDates = nextMonthly(
+            startDateValue,
+            endOfRange,
+            interval,
+            null,
+            weeks,
+            weeksDays,
+            100
+          );
         } else {
           futureDates = nextMonthly(
             startDateValue,
@@ -195,15 +200,11 @@ const occurrencesByDate = $derived.by(() => {
 
 // Calculate monthly totals
 const monthlyIncome = $derived(
-  scheduleOccurrences
-    .filter(o => o.amount > 0)
-    .reduce((sum, o) => sum + o.amount, 0)
+  scheduleOccurrences.filter((o) => o.amount > 0).reduce((sum, o) => sum + o.amount, 0)
 );
 
 const monthlyExpenses = $derived(
-  scheduleOccurrences
-    .filter(o => o.amount < 0)
-    .reduce((sum, o) => sum + Math.abs(o.amount), 0)
+  scheduleOccurrences.filter((o) => o.amount < 0).reduce((sum, o) => sum + Math.abs(o.amount), 0)
 );
 
 const monthlyNet = $derived(monthlyIncome - monthlyExpenses);
@@ -219,7 +220,9 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 <svelte:head>
   <title>Bill Calendar - Budget App</title>
-  <meta name="description" content="View your upcoming bills and scheduled payments on a calendar" />
+  <meta
+    name="description"
+    content="View your upcoming bills and scheduled payments on a calendar" />
 </svelte:head>
 
 <div class="container mx-auto space-y-6 py-6">
@@ -235,9 +238,7 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
           <Calendar class="text-muted-foreground h-6 w-6" />
           Bill Calendar
         </h1>
-        <p class="text-muted-foreground mt-1">
-          View your upcoming bills and scheduled payments
-        </p>
+        <p class="text-muted-foreground mt-1">View your upcoming bills and scheduled payments</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -259,9 +260,7 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         <div class="text-2xl font-bold text-green-600 dark:text-green-400">
           {currencyFormatter.format(monthlyIncome)}
         </div>
-        <p class="text-muted-foreground text-xs">
-          From scheduled deposits
-        </p>
+        <p class="text-muted-foreground text-xs">From scheduled deposits</p>
       </Card.Content>
     </Card.Root>
 
@@ -274,9 +273,7 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         <div class="text-2xl font-bold text-red-600 dark:text-red-400">
           {currencyFormatter.format(monthlyExpenses)}
         </div>
-        <p class="text-muted-foreground text-xs">
-          From scheduled bills
-        </p>
+        <p class="text-muted-foreground text-xs">From scheduled bills</p>
       </Card.Content>
     </Card.Root>
 
@@ -287,13 +284,12 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       </Card.Header>
       <Card.Content>
         <div
-          class="text-2xl font-bold {monthlyNet >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}"
-        >
+          class="text-2xl font-bold {monthlyNet >= 0
+            ? 'text-green-600 dark:text-green-400'
+            : 'text-red-600 dark:text-red-400'}">
           {currencyFormatter.format(monthlyNet)}
         </div>
-        <p class="text-muted-foreground text-xs">
-          Expected monthly balance
-        </p>
+        <p class="text-muted-foreground text-xs">Expected monthly balance</p>
       </Card.Content>
     </Card.Root>
   </div>
@@ -307,9 +303,7 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
           <Button variant="outline" size="sm" onclick={previousMonth}>
             <ChevronLeft class="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onclick={goToToday}>
-            Today
-          </Button>
+          <Button variant="outline" size="sm" onclick={goToToday}>Today</Button>
           <Button variant="outline" size="sm" onclick={nextMonth}>
             <ChevronRight class="h-4 w-4" />
           </Button>
@@ -318,7 +312,8 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     </Card.Header>
     <Card.Content>
       <!-- Calendar Grid -->
-      <div class="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-gray-200 dark:bg-gray-800">
+      <div
+        class="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-gray-200 dark:bg-gray-800">
         <!-- Day Headers -->
         {#each dayNames as day}
           <div class="bg-muted p-2 text-center text-sm font-medium">
@@ -334,24 +329,21 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
           <div
             class="min-h-[100px] bg-white p-1 dark:bg-gray-950"
-            class:opacity-50={!isCurrentMonth}
-          >
+            class:opacity-50={!isCurrentMonth}>
             <!-- Date Number -->
             <div class="mb-1 flex items-center justify-between">
               <span
                 class="flex h-6 w-6 items-center justify-center rounded-full text-sm"
                 class:bg-primary={isToday}
                 class:text-primary-foreground={isToday}
-                class:font-bold={isToday}
-              >
+                class:font-bold={isToday}>
                 {date?.getDate()}
               </span>
               {#if dayOccurrences.length > 0}
                 <span
                   class="text-xs font-medium"
                   class:text-green-600={dayTotal >= 0}
-                  class:text-red-600={dayTotal < 0}
-                >
+                  class:text-red-600={dayTotal < 0}>
                   {currencyFormatter.format(dayTotal)}
                 </span>
               {/if}
@@ -364,9 +356,11 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                   <Tooltip.Trigger>
                     <button
                       type="button"
-                      class="flex w-full items-center justify-between rounded px-1 py-0.5 text-xs transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 {occ.amount > 0 ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}"
-                      onclick={() => viewSchedule(occ.schedule)}
-                    >
+                      class="flex w-full items-center justify-between rounded px-1 py-0.5 text-xs transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 {occ.amount >
+                      0
+                        ? 'bg-green-50 dark:bg-green-950/30'
+                        : 'bg-red-50 dark:bg-red-950/30'}"
+                      onclick={() => viewSchedule(occ.schedule)}>
                       <span class="truncate">{occ.schedule.name}</span>
                     </button>
                   </Tooltip.Trigger>
@@ -410,14 +404,16 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             <button
               type="button"
               class="hover:bg-muted/50 flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors"
-              onclick={() => viewSchedule(occ.schedule)}
-            >
+              onclick={() => viewSchedule(occ.schedule)}>
               <div class="flex items-center gap-3">
                 <div
-                  class="flex h-10 w-10 flex-col items-center justify-center rounded-lg text-xs {occ.amount > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}"
-                >
+                  class="flex h-10 w-10 flex-col items-center justify-center rounded-lg text-xs {occ.amount >
+                  0
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}">
                   <span class="font-bold">{occ.date.getDate()}</span>
-                  <span class="text-[10px]">{occ.date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                  <span class="text-[10px]"
+                    >{occ.date.toLocaleDateString('en-US', { month: 'short' })}</span>
                 </div>
                 <div>
                   <p class="font-medium">{occ.schedule.name}</p>
@@ -434,8 +430,7 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 <p
                   class="font-semibold"
                   class:text-green-600={occ.amount > 0}
-                  class:text-red-600={occ.amount < 0}
-                >
+                  class:text-red-600={occ.amount < 0}>
                   {currencyFormatter.format(occ.amount)}
                 </p>
                 <p class="text-muted-foreground text-xs">

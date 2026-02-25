@@ -15,4 +15,3 @@ export { transactionRoutes } from "./transactions";
 export { transferMappingRoutes } from "./transfer-mappings";
 export { utilityRoutes } from "./utility";
 export { viewsRoutes } from "./views";
-

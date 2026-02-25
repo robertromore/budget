@@ -87,10 +87,7 @@ export const getPayeeAliasStats = () =>
   });
 
 // Create a manual alias
-export const createPayeeAlias = defineMutation<
-  { rawString: string; payeeId: number },
-  PayeeAlias
->({
+export const createPayeeAlias = defineMutation<{ rawString: string; payeeId: number }, PayeeAlias>({
   mutationFn: (data) => trpc().payeeAliasRoutes.create.mutate(data),
   onSuccess: async (_data, variables) => {
     await Promise.all([

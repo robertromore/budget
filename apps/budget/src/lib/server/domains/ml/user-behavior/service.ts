@@ -27,7 +27,7 @@ import {
 import {
   createConfidenceCalibrator,
   type CalibrationReport,
-  type ConfidenceCalibrator
+  type ConfidenceCalibrator,
 } from "./confidence-calibration";
 import { nowISOString } from "$lib/utils/dates";
 
@@ -143,19 +143,12 @@ export interface UserBehaviorService {
   /**
    * Calibrate a confidence score
    */
-  calibrateConfidence(
-    workspaceId: number,
-    confidence: number,
-    entityType?: string
-  ): number;
+  calibrateConfidence(workspaceId: number, confidence: number, entityType?: string): number;
 
   /**
    * Get personalized confidence threshold
    */
-  getPersonalizedThreshold(
-    workspaceId: number,
-    targetAcceptanceRate?: number
-  ): Promise<number>;
+  getPersonalizedThreshold(workspaceId: number, targetAcceptanceRate?: number): Promise<number>;
 
   /**
    * Retrain models for a workspace
@@ -438,11 +431,7 @@ export function createUserBehaviorService(
       return calibrator.getReport();
     },
 
-    calibrateConfidence(
-      workspaceId: number,
-      confidence: number,
-      entityType?: string
-    ): number {
+    calibrateConfidence(workspaceId: number, confidence: number, entityType?: string): number {
       const calibrator = getCalibrator(workspaceId);
       return calibrator.calibrate(confidence, entityType);
     },

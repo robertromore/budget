@@ -1,5 +1,5 @@
-import { onDestroy } from 'svelte';
-import { getPageTabsContext, type PageTabsConfig } from '$lib/stores/page-tabs.svelte';
+import { onDestroy } from "svelte";
+import { getPageTabsContext, type PageTabsConfig } from "$lib/stores/page-tabs.svelte";
 
 /**
  * Hook for registering page tabs to be displayed in the header
@@ -28,13 +28,13 @@ import { getPageTabsContext, type PageTabsConfig } from '$lib/stores/page-tabs.s
  * ```
  */
 export function usePageTabs(config: PageTabsConfig) {
-	const context = getPageTabsContext();
+  const context = getPageTabsContext();
 
-	if (context) {
-		context.register(config);
+  if (context) {
+    context.register(config);
 
-		onDestroy(() => {
-			context.clear();
-		});
-	}
+    onDestroy(() => {
+      context.clear();
+    });
+  }
 }

@@ -10,7 +10,10 @@ import {
   removePayeesSchema,
   updateEnhancementFeedbackSchema,
 } from "$lib/schema";
-import { intelligenceProfileSchema, superformInsertPayeeSchema } from "$lib/schema/superforms/payees";
+import {
+  intelligenceProfileSchema,
+  superformInsertPayeeSchema,
+} from "$lib/schema/superforms/payees";
 import { normalize } from "$lib/utils/string-utilities";
 import {
   advancedSearchPayeesSchema,
@@ -22,7 +25,7 @@ import {
   payeeIdSchema,
   searchPayeesSchema,
   updateCalculatedFieldsSchema,
-  updatePayeeSchema
+  updatePayeeSchema,
 } from "$lib/server/domains/payees";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
@@ -133,7 +136,10 @@ export const payeeRoutes = t.router({
           try {
             parsedTags = JSON.parse(tags);
           } catch {
-            parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
+            parsedTags = tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean);
           }
         }
       }
@@ -227,11 +233,7 @@ export const payeeRoutes = t.router({
     )
     .mutation(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.updateIntelligenceProfile(
-          input.id,
-          ctx.workspaceId,
-          input.profile
-        )
+        payeeService.updateIntelligenceProfile(input.id, ctx.workspaceId, input.profile)
       )
     ),
 
@@ -247,10 +249,7 @@ export const payeeRoutes = t.router({
     .input(payeeIdSchema)
     .query(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.getComprehensiveIntelligenceWithProfile(
-          input.id,
-          ctx.workspaceId
-        )
+        payeeService.getComprehensiveIntelligenceWithProfile(input.id, ctx.workspaceId)
       )
     ),
 
@@ -432,7 +431,11 @@ export const payeeRoutes = t.router({
 
   detectCategoryDrift: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input, ctx }) => payeeService.detectCategoryDrift(input.id, ctx.workspaceId))),
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.detectCategoryDrift(input.id, ctx.workspaceId)
+      )
+    ),
 
   getDefaultCategoryUpdateSuggestions: publicProcedure.query(
     withErrorHandler(async () => payeeService.getDefaultCategoryUpdateSuggestions())
@@ -469,7 +472,9 @@ export const payeeRoutes = t.router({
   budgetOptimizationAnalysis: publicProcedure
     .input(payeeIdSchema)
     .query(
-      withErrorHandler(async ({ input, ctx }) => payeeService.getBudgetOptimizationAnalysis(input.id, ctx.workspaceId))
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBudgetOptimizationAnalysis(input.id, ctx.workspaceId)
+      )
     ),
 
   budgetAllocationSuggestions: publicProcedure
@@ -501,13 +506,22 @@ export const payeeRoutes = t.router({
     )
     .query(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.getBudgetForecast(input.payeeId, ctx.workspaceId, input.forecastPeriod, input.periodsAhead)
+        payeeService.getBudgetForecast(
+          input.payeeId,
+          ctx.workspaceId,
+          input.forecastPeriod,
+          input.periodsAhead
+        )
       )
     ),
 
   budgetHealthMetrics: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input, ctx }) => payeeService.getBudgetHealthMetrics(input.id, ctx.workspaceId))),
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBudgetHealthMetrics(input.id, ctx.workspaceId)
+      )
+    ),
 
   budgetRebalancingPlan: publicProcedure
     .input(
@@ -531,7 +545,11 @@ export const payeeRoutes = t.router({
     )
     .query(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.getBudgetEfficiencyAnalysis(input.payeeId, ctx.workspaceId, input.currentBudget)
+        payeeService.getBudgetEfficiencyAnalysis(
+          input.payeeId,
+          ctx.workspaceId,
+          input.currentBudget
+        )
       )
     ),
 
@@ -633,7 +651,11 @@ export const payeeRoutes = t.router({
 
   crossSystemLearning: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input, ctx }) => payeeService.getCrossSystemLearning(input.id, ctx.workspaceId))),
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getCrossSystemLearning(input.id, ctx.workspaceId)
+      )
+    ),
 
   executeAdaptiveOptimization: rateLimitedProcedure
     .input(
@@ -664,7 +686,11 @@ export const payeeRoutes = t.router({
 
   systemConfidence: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input, ctx }) => payeeService.getSystemConfidence(input.id, ctx.workspaceId))),
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getSystemConfidence(input.id, ctx.workspaceId)
+      )
+    ),
 
   detectBehaviorChanges: publicProcedure
     .input(
@@ -783,7 +809,9 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input, ctx }) => payeeService.getMLInsightsDashboard(ctx.workspaceId, input.filters))
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getMLInsightsDashboard(ctx.workspaceId, input.filters)
+      )
     ),
 
   // =====================================
@@ -806,7 +834,11 @@ export const payeeRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.validateAndEnrichPayeeContact(input.payeeId, ctx.workspaceId, input.contactOverrides)
+        payeeService.validateAndEnrichPayeeContact(
+          input.payeeId,
+          ctx.workspaceId,
+          input.contactOverrides
+        )
       );
     }),
 
@@ -863,7 +895,9 @@ export const payeeRoutes = t.router({
     }),
 
   generateContactSuggestions: publicProcedure.input(payeeIdSchema).query(async ({ input, ctx }) => {
-    return withErrorHandler(() => payeeService.generatePayeeContactSuggestions(input.id, ctx.workspaceId));
+    return withErrorHandler(() =>
+      payeeService.generatePayeeContactSuggestions(input.id, ctx.workspaceId)
+    );
   }),
 
   validateWebsiteAccessibility: publicProcedure
@@ -875,7 +909,11 @@ export const payeeRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.validatePayeeWebsiteAccessibility(input.payeeId, ctx.workspaceId, input.website)
+        payeeService.validatePayeeWebsiteAccessibility(
+          input.payeeId,
+          ctx.workspaceId,
+          input.website
+        )
       );
     }),
 
@@ -888,7 +926,11 @@ export const payeeRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.extractContactFromPayeeTransactions(input.payeeId, ctx.workspaceId, input.transactionLimit)
+        payeeService.extractContactFromPayeeTransactions(
+          input.payeeId,
+          ctx.workspaceId,
+          input.transactionLimit
+        )
       );
     }),
 
@@ -978,7 +1020,11 @@ export const payeeRoutes = t.router({
           riskLevel: input.riskLevel,
         };
 
-        return await payeeService.smartMergeContactDuplicates(duplicateDetection, ctx.workspaceId, input.options);
+        return await payeeService.smartMergeContactDuplicates(
+          duplicateDetection,
+          ctx.workspaceId,
+          input.options
+        );
       });
     }),
 
@@ -996,7 +1042,12 @@ export const payeeRoutes = t.router({
     )
     .query(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.detectSubscriptions(ctx.workspaceId, input.payeeIds, input.includeInactive, input.minConfidence)
+        payeeService.detectSubscriptions(
+          ctx.workspaceId,
+          input.payeeIds,
+          input.includeInactive,
+          input.minConfidence
+        )
       )
     ),
 
@@ -1042,7 +1093,11 @@ export const payeeRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionCostAnalysis(input.payeeId, ctx.workspaceId, input.timeframeDays)
+        payeeService.getSubscriptionCostAnalysis(
+          input.payeeId,
+          ctx.workspaceId,
+          input.timeframeDays
+        )
       );
     }),
 
@@ -1055,7 +1110,11 @@ export const payeeRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionRenewalPredictions(input.payeeIds, ctx.workspaceId, input.forecastMonths)
+        payeeService.getSubscriptionRenewalPredictions(
+          input.payeeIds,
+          ctx.workspaceId,
+          input.forecastMonths
+        )
       );
     }),
 
@@ -1066,7 +1125,9 @@ export const payeeRoutes = t.router({
       })
     )
     .query(async ({ input, ctx }) => {
-      return withErrorHandler(() => payeeService.getSubscriptionUsageAnalysis(input.payeeId, ctx.workspaceId));
+      return withErrorHandler(() =>
+        payeeService.getSubscriptionUsageAnalysis(input.payeeId, ctx.workspaceId)
+      );
     }),
 
   subscriptionCancellationAssistance: publicProcedure
@@ -1129,7 +1190,11 @@ export const payeeRoutes = t.router({
     )
     .query(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.getBulkSubscriptionAnalysis(ctx.workspaceId, input.payeeIds, input.analysisOptions)
+        payeeService.getBulkSubscriptionAnalysis(
+          ctx.workspaceId,
+          input.payeeIds,
+          input.analysisOptions
+        )
       )
     ),
 
@@ -1142,7 +1207,11 @@ export const payeeRoutes = t.router({
     )
     .query(
       withErrorHandler(async ({ input, ctx }) =>
-        payeeService.getSubscriptionsForAccount(input.accountId, ctx.workspaceId, input.minConfidence)
+        payeeService.getSubscriptionsForAccount(
+          input.accountId,
+          ctx.workspaceId,
+          input.minConfidence
+        )
       )
     ),
 
@@ -1215,7 +1284,11 @@ export const payeeRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.updateSubscriptionMetadata(input.payeeId, ctx.workspaceId, input.subscriptionMetadata)
+        payeeService.updateSubscriptionMetadata(
+          input.payeeId,
+          ctx.workspaceId,
+          input.subscriptionMetadata
+        )
       );
     }),
 
@@ -1231,11 +1304,16 @@ export const payeeRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.markSubscriptionCancelled(input.payeeId, ctx.workspaceId, input.cancellationDate, {
-          reason: input.reason,
-          refundAmount: input.refundAmount,
-          notes: input.notes,
-        })
+        payeeService.markSubscriptionCancelled(
+          input.payeeId,
+          ctx.workspaceId,
+          input.cancellationDate,
+          {
+            reason: input.reason,
+            refundAmount: input.refundAmount,
+            notes: input.notes,
+          }
+        )
       );
     }),
 
@@ -1367,12 +1445,7 @@ export const payeeRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.bulkManageTags(
-          input.payeeIds,
-          input.tags,
-          input.operation,
-          ctx.workspaceId
-        )
+        payeeService.bulkManageTags(input.payeeIds, input.tags, input.operation, ctx.workspaceId)
       );
     }),
 
@@ -1397,11 +1470,7 @@ export const payeeRoutes = t.router({
     )
     .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.bulkApplyIntelligentDefaults(
-          input.payeeIds,
-          input.options,
-          ctx.workspaceId
-        )
+        payeeService.bulkApplyIntelligentDefaults(input.payeeIds, input.options, ctx.workspaceId)
       );
     }),
 
@@ -1417,11 +1486,16 @@ export const payeeRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       return withErrorHandler(async () =>
-        payeeService.exportPayees(input.payeeIds, input.format, {
-          includeTransactionStats: input.includeTransactionStats,
-          includeContactInfo: input.includeContactInfo,
-          includeIntelligenceData: input.includeIntelligenceData,
-        }, ctx.workspaceId)
+        payeeService.exportPayees(
+          input.payeeIds,
+          input.format,
+          {
+            includeTransactionStats: input.includeTransactionStats,
+            includeContactInfo: input.includeContactInfo,
+            includeIntelligenceData: input.includeIntelligenceData,
+          },
+          ctx.workspaceId
+        )
       );
     }),
 
@@ -1764,23 +1838,56 @@ Return ONLY valid JSON, no explanation:`;
           const parsed = JSON.parse(jsonMatch[0]);
 
           // Validate and sanitize the response
-          const validPayeeTypes = ["merchant", "utility", "employer", "financial_institution", "government", "individual", "other"];
-          const validFrequencies = ["one_time", "weekly", "bi_weekly", "monthly", "quarterly", "annual", "irregular"];
-          const validPaymentMethods = ["credit_card", "debit_card", "bank_transfer", "cash", "check", "paypal", "venmo", "apple_pay", "google_pay", "crypto", "other"];
+          const validPayeeTypes = [
+            "merchant",
+            "utility",
+            "employer",
+            "financial_institution",
+            "government",
+            "individual",
+            "other",
+          ];
+          const validFrequencies = [
+            "one_time",
+            "weekly",
+            "bi_weekly",
+            "monthly",
+            "quarterly",
+            "annual",
+            "irregular",
+          ];
+          const validPaymentMethods = [
+            "credit_card",
+            "debit_card",
+            "bank_transfer",
+            "cash",
+            "check",
+            "paypal",
+            "venmo",
+            "apple_pay",
+            "google_pay",
+            "crypto",
+            "other",
+          ];
 
           // Validate MCC (should be 4-digit string)
-          const suggestedMCC = typeof parsed.suggestedMCC === "string" && /^\d{4}$/.test(parsed.suggestedMCC)
-            ? parsed.suggestedMCC
-            : null;
+          const suggestedMCC =
+            typeof parsed.suggestedMCC === "string" && /^\d{4}$/.test(parsed.suggestedMCC)
+              ? parsed.suggestedMCC
+              : null;
 
           // Validate tags (array of strings)
           const suggestedTags = Array.isArray(parsed.suggestedTags)
-            ? parsed.suggestedTags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0).map((t: string) => normalize(t))
+            ? parsed.suggestedTags
+                .filter((t: unknown) => typeof t === "string" && t.trim().length > 0)
+                .map((t: string) => normalize(t))
             : null;
 
           // Validate payment methods (array of valid payment method strings)
           const suggestedPaymentMethods = Array.isArray(parsed.suggestedPaymentMethods)
-            ? parsed.suggestedPaymentMethods.filter((m: unknown) => typeof m === "string" && validPaymentMethods.includes(m))
+            ? parsed.suggestedPaymentMethods.filter(
+                (m: unknown) => typeof m === "string" && validPaymentMethods.includes(m)
+              )
             : null;
 
           return {
@@ -1788,20 +1895,37 @@ Return ONLY valid JSON, no explanation:`;
             original: input.name,
             provider: strategy.llmProviderType,
             suggestions: {
-              enhancedName: typeof parsed.enhancedName === "string" ? parsed.enhancedName.trim() : null,
+              enhancedName:
+                typeof parsed.enhancedName === "string" ? parsed.enhancedName.trim() : null,
               payeeType: validPayeeTypes.includes(parsed.payeeType) ? parsed.payeeType : null,
-              paymentFrequency: validFrequencies.includes(parsed.paymentFrequency) ? parsed.paymentFrequency : null,
-              suggestedCategoryId: typeof parsed.suggestedCategoryId === "number" ? parsed.suggestedCategoryId : null,
-              suggestedCategoryName: typeof parsed.suggestedCategoryName === "string" ? parsed.suggestedCategoryName : null,
+              paymentFrequency: validFrequencies.includes(parsed.paymentFrequency)
+                ? parsed.paymentFrequency
+                : null,
+              suggestedCategoryId:
+                typeof parsed.suggestedCategoryId === "number" ? parsed.suggestedCategoryId : null,
+              suggestedCategoryName:
+                typeof parsed.suggestedCategoryName === "string"
+                  ? parsed.suggestedCategoryName
+                  : null,
               taxRelevant: typeof parsed.taxRelevant === "boolean" ? parsed.taxRelevant : null,
               isSeasonal: typeof parsed.isSeasonal === "boolean" ? parsed.isSeasonal : null,
-              confidence: typeof parsed.confidence === "number" ? Math.max(0, Math.min(1, parsed.confidence)) : null,
+              confidence:
+                typeof parsed.confidence === "number"
+                  ? Math.max(0, Math.min(1, parsed.confidence))
+                  : null,
               suggestedMCC,
               suggestedTags: suggestedTags && suggestedTags.length > 0 ? suggestedTags : null,
-              suggestedPaymentMethods: suggestedPaymentMethods && suggestedPaymentMethods.length > 0 ? suggestedPaymentMethods : null,
-              suggestedWebsite: typeof parsed.suggestedWebsite === "string" && parsed.suggestedWebsite.trim().length > 0
-                ? (parsed.suggestedWebsite.startsWith("http") ? parsed.suggestedWebsite : `https://${parsed.suggestedWebsite}`)
-                : null,
+              suggestedPaymentMethods:
+                suggestedPaymentMethods && suggestedPaymentMethods.length > 0
+                  ? suggestedPaymentMethods
+                  : null,
+              suggestedWebsite:
+                typeof parsed.suggestedWebsite === "string" &&
+                parsed.suggestedWebsite.trim().length > 0
+                  ? parsed.suggestedWebsite.startsWith("http")
+                    ? parsed.suggestedWebsite
+                    : `https://${parsed.suggestedWebsite}`
+                  : null,
             },
           };
         } catch (error) {
@@ -1816,42 +1940,62 @@ Return ONLY valid JSON, no explanation:`;
     ),
 
   // Explain ML insights using LLM
-  explainInsights: rateLimitedProcedure
-    .input(payeeIdSchema)
-    .mutation(
-      withErrorHandler(async ({ input, ctx }) => {
-        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-        const { workspaces } = await import("$lib/schema/workspaces");
-        const { db } = await import("$lib/server/db");
-        const { eq } = await import("drizzle-orm");
-        const { generateText } = await import("ai");
+  explainInsights: rateLimitedProcedure.input(payeeIdSchema).mutation(
+    withErrorHandler(async ({ input, ctx }) => {
+      const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+      const { workspaces } = await import("$lib/schema/workspaces");
+      const { db } = await import("$lib/server/db");
+      const { eq } = await import("drizzle-orm");
+      const { generateText } = await import("ai");
 
-        // Get workspace preferences
-        const [workspace] = await db
-          .select({ preferences: workspaces.preferences })
-          .from(workspaces)
-          .where(eq(workspaces.id, ctx.workspaceId))
-          .limit(1);
+      // Get workspace preferences
+      const [workspace] = await db
+        .select({ preferences: workspaces.preferences })
+        .from(workspaces)
+        .where(eq(workspaces.id, ctx.workspaceId))
+        .limit(1);
 
-        const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
-        const coordinator = createIntelligenceCoordinator(prefs);
-        const strategy = coordinator.getStrategy("payeeMatching");
+      const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+      const coordinator = createIntelligenceCoordinator(prefs);
+      const strategy = coordinator.getStrategy("payeeMatching");
 
-        if (!strategy.useLLM || !strategy.llmProvider) {
-          return {
-            success: false,
-            message: "LLM features are not enabled. Please configure a provider in Settings > Intelligence > LLM.",
-          };
-        }
+      if (!strategy.useLLM || !strategy.llmProvider) {
+        return {
+          success: false,
+          message:
+            "LLM features are not enabled. Please configure a provider in Settings > Intelligence > LLM.",
+        };
+      }
 
-        // Fetch existing ML insights
-        const intelligence = await payeeService.getPayeeIntelligence(input.id, ctx.workspaceId);
+      // Fetch existing ML insights
+      const intelligence = await payeeService.getPayeeIntelligence(input.id, ctx.workspaceId);
 
-        // Build prompt with ML data
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      // Build prompt with ML data
+      const dayNames = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
 
-        const prompt = `You are a helpful financial advisor analyzing spending patterns. Given the following machine learning analysis for a payee, provide a brief, friendly explanation in plain language.
+      const prompt = `You are a helpful financial advisor analyzing spending patterns. Given the following machine learning analysis for a payee, provide a brief, friendly explanation in plain language.
 
 Payee: "${intelligence.payeeName}"
 
@@ -1884,166 +2028,169 @@ Provide a concise explanation (3-5 sentences) covering:
 
 Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`;
 
-        try {
-          // All providers (including Ollama) use OpenAI-compatible API via generateText
-          const result = await generateText({
-            model: strategy.llmProvider.provider(strategy.llmProvider.model),
-            prompt,
-            maxOutputTokens: 400,
-            temperature: 0.7,
-          });
-          const explanation = result.text.trim();
+      try {
+        // All providers (including Ollama) use OpenAI-compatible API via generateText
+        const result = await generateText({
+          model: strategy.llmProvider.provider(strategy.llmProvider.model),
+          prompt,
+          maxOutputTokens: 400,
+          temperature: 0.7,
+        });
+        const explanation = result.text.trim();
 
-          // Save the explanation to the payee record
-          const { payees } = await import("$lib/schema/payees");
-          await db
-            .update(payees)
-            .set({
-              aiExplanation: explanation,
-              aiExplanationUpdatedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            })
-            .where(eq(payees.id, input.id));
+        // Save the explanation to the payee record
+        const { payees } = await import("$lib/schema/payees");
+        await db
+          .update(payees)
+          .set({
+            aiExplanation: explanation,
+            aiExplanationUpdatedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(payees.id, input.id));
 
-          return {
-            success: true,
-            payeeId: input.id,
-            payeeName: intelligence.payeeName,
-            provider: strategy.llmProviderType,
-            explanation,
-          };
-        } catch (error) {
-          console.error("LLM explanation failed:", error);
-          return {
-            success: false,
-            message: "Failed to generate explanation. Please try again.",
-          };
-        }
-      })
-    ),
+        return {
+          success: true,
+          payeeId: input.id,
+          payeeName: intelligence.payeeName,
+          provider: strategy.llmProviderType,
+          explanation,
+        };
+      } catch (error) {
+        console.error("LLM explanation failed:", error);
+        return {
+          success: false,
+          message: "Failed to generate explanation. Please try again.",
+        };
+      }
+    })
+  ),
 
   // Enrich contact information using web search + LLM
-  enrichContact: rateLimitedProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .mutation(
-      withErrorHandler(async ({ input, ctx }) => {
-        const { createSearchAdapter, WebSearchService } = await import(
-          "$lib/server/domains/web-search"
-        );
-        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-        const { workspaces } = await import("$lib/schema/workspaces");
-        const { db } = await import("$lib/server/db");
-        const { eq } = await import("drizzle-orm");
-        const { generateText } = await import("ai");
-        const { decryptApiKey } = await import("$lib/server/shared/security/encryption");
+  enrichContact: rateLimitedProcedure.input(z.object({ name: z.string().min(1) })).mutation(
+    withErrorHandler(async ({ input, ctx }) => {
+      const { createSearchAdapter, WebSearchService } =
+        await import("$lib/server/domains/web-search");
+      const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+      const { workspaces } = await import("$lib/schema/workspaces");
+      const { db } = await import("$lib/server/db");
+      const { eq } = await import("drizzle-orm");
+      const { generateText } = await import("ai");
+      const { decryptApiKey } = await import("$lib/server/shared/security/encryption");
 
-        // Get workspace preferences
-        const workspace = await db.query.workspaces.findFirst({
-          where: eq(workspaces.id, ctx.workspaceId),
-        });
+      // Get workspace preferences
+      const workspace = await db.query.workspaces.findFirst({
+        where: eq(workspaces.id, ctx.workspaceId),
+      });
 
-        if (!workspace) {
-          return { success: false, message: "Workspace not found" };
+      if (!workspace) {
+        return { success: false, message: "Workspace not found" };
+      }
+
+      const prefs = workspace.preferences
+        ? (JSON.parse(
+            workspace.preferences
+          ) as import("$lib/schema/workspaces").WorkspacePreferences)
+        : {};
+
+      const webSearchPrefs = prefs.webSearch || { enabled: true, provider: "duckduckgo" as const };
+      const llmPrefs = prefs.llm;
+
+      // Check if LLM is enabled (required for extraction)
+      if (!llmPrefs?.enabled || !llmPrefs?.defaultProvider) {
+        return {
+          success: false,
+          message:
+            "LLM is required for contact enrichment. Please configure an LLM provider in Settings → Intelligence.",
+        };
+      }
+
+      try {
+        // Create search adapter based on user preference
+        const searchProvider = webSearchPrefs.provider || "duckduckgo";
+        let adapterConfig: import("$lib/server/domains/web-search").SearchAdapterConfig = {};
+
+        if (searchProvider === "brave" && webSearchPrefs.encryptedBraveApiKey) {
+          adapterConfig.braveApiKey = decryptApiKey(webSearchPrefs.encryptedBraveApiKey);
+        } else if (searchProvider === "ollama" && webSearchPrefs.encryptedOllamaCloudApiKey) {
+          adapterConfig.ollamaApiKey = decryptApiKey(webSearchPrefs.encryptedOllamaCloudApiKey);
         }
 
-        const prefs = workspace.preferences
-          ? (JSON.parse(workspace.preferences) as import("$lib/schema/workspaces").WorkspacePreferences)
-          : {};
-
-        const webSearchPrefs = prefs.webSearch || { enabled: true, provider: "duckduckgo" as const };
-        const llmPrefs = prefs.llm;
-
-        // Check if LLM is enabled (required for extraction)
-        if (!llmPrefs?.enabled || !llmPrefs?.defaultProvider) {
-          return {
-            success: false,
-            message: "LLM is required for contact enrichment. Please configure an LLM provider in Settings → Intelligence.",
-          };
-        }
-
+        let adapter;
         try {
-          // Create search adapter based on user preference
-          const searchProvider = webSearchPrefs.provider || "duckduckgo";
-          let adapterConfig: import("$lib/server/domains/web-search").SearchAdapterConfig = {};
-
-          if (searchProvider === "brave" && webSearchPrefs.encryptedBraveApiKey) {
-            adapterConfig.braveApiKey = decryptApiKey(webSearchPrefs.encryptedBraveApiKey);
-          } else if (searchProvider === "ollama" && webSearchPrefs.encryptedOllamaCloudApiKey) {
-            adapterConfig.ollamaApiKey = decryptApiKey(webSearchPrefs.encryptedOllamaCloudApiKey);
-          }
-
-          let adapter;
-          try {
-            adapter = createSearchAdapter(searchProvider, adapterConfig);
-          } catch (adapterError) {
-            console.error("Failed to create search adapter:", adapterError);
-            return {
-              success: false,
-              message: `Failed to create ${searchProvider} search adapter: ${adapterError instanceof Error ? adapterError.message : "Unknown error"}`,
-            };
-          }
-
-          const searchService = new WebSearchService(adapter);
-
-          // Get LLM provider for extraction
-          const coordinator = createIntelligenceCoordinator(prefs);
-          const strategy = coordinator.getStrategy("categorySuggestion"); // Reuse category suggestion strategy
-
-          if (!strategy.llmProvider) {
-            return {
-              success: false,
-              message: "No LLM provider configured. Please set up an LLM provider in Settings → LLM Providers.",
-            };
-          }
-
-          // Create a text generation function using the user's LLM
-          // All providers (including Ollama) use OpenAI-compatible API via generateText
-          const generateTextFn = async (prompt: string): Promise<string> => {
-            try {
-              if (strategy.llmProvider) {
-                const result = await generateText({
-                  model: strategy.llmProvider.provider(strategy.llmProvider.model),
-                  prompt,
-                  maxOutputTokens: 500,
-                  temperature: 0.3,
-                });
-                return result.text;
-              }
-              throw new Error("No LLM provider available");
-            } catch (llmError) {
-              console.error("LLM generation failed:", llmError);
-              throw new Error(`LLM extraction failed: ${llmError instanceof Error ? llmError.message : "Unknown error"}`);
-            }
-          };
-
-          // Perform search and extraction
-          let result;
-          try {
-            result = await searchService.enrichBusinessContact(input.name, generateTextFn);
-          } catch (searchError) {
-            console.error("Web search or extraction failed:", searchError);
-            return {
-              success: false,
-              message: `Search failed: ${searchError instanceof Error ? searchError.message : "Unknown error"}`,
-            };
-          }
-
-          return {
-            success: true,
-            original: input.name,
-            searchProvider,
-            suggestions: result,
-          };
-        } catch (error) {
-          console.error("Contact enrichment failed:", error);
-          const message = error instanceof Error ? error.message : "Failed to enrich contact";
+          adapter = createSearchAdapter(searchProvider, adapterConfig);
+        } catch (adapterError) {
+          console.error("Failed to create search adapter:", adapterError);
           return {
             success: false,
-            message,
+            message: `Failed to create ${searchProvider} search adapter: ${adapterError instanceof Error ? adapterError.message : "Unknown error"}`,
           };
         }
-      })
-    ),
+
+        const searchService = new WebSearchService(adapter);
+
+        // Get LLM provider for extraction
+        const coordinator = createIntelligenceCoordinator(prefs);
+        const strategy = coordinator.getStrategy("categorySuggestion"); // Reuse category suggestion strategy
+
+        if (!strategy.llmProvider) {
+          return {
+            success: false,
+            message:
+              "No LLM provider configured. Please set up an LLM provider in Settings → LLM Providers.",
+          };
+        }
+
+        // Create a text generation function using the user's LLM
+        // All providers (including Ollama) use OpenAI-compatible API via generateText
+        const generateTextFn = async (prompt: string): Promise<string> => {
+          try {
+            if (strategy.llmProvider) {
+              const result = await generateText({
+                model: strategy.llmProvider.provider(strategy.llmProvider.model),
+                prompt,
+                maxOutputTokens: 500,
+                temperature: 0.3,
+              });
+              return result.text;
+            }
+            throw new Error("No LLM provider available");
+          } catch (llmError) {
+            console.error("LLM generation failed:", llmError);
+            throw new Error(
+              `LLM extraction failed: ${llmError instanceof Error ? llmError.message : "Unknown error"}`
+            );
+          }
+        };
+
+        // Perform search and extraction
+        let result;
+        try {
+          result = await searchService.enrichBusinessContact(input.name, generateTextFn);
+        } catch (searchError) {
+          console.error("Web search or extraction failed:", searchError);
+          return {
+            success: false,
+            message: `Search failed: ${searchError instanceof Error ? searchError.message : "Unknown error"}`,
+          };
+        }
+
+        return {
+          success: true,
+          original: input.name,
+          searchProvider,
+          suggestions: result,
+        };
+      } catch (error) {
+        console.error("Contact enrichment failed:", error);
+        const message = error instanceof Error ? error.message : "Failed to enrich contact";
+        return {
+          success: false,
+          message,
+        };
+      }
+    })
+  ),
 
   // getOperationHistory: publicProcedure
   //   .input(
@@ -2084,48 +2231,42 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
   /**
    * Record a new AI/ML enhancement for a payee field
    */
-  recordEnhancement: rateLimitedProcedure
-    .input(recordEnhancementSchema)
-    .mutation(
-      withErrorHandler(async ({ input, ctx }) => {
-        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
-        const enhancement = await trackingService.recordEnhancement({
-          ...input,
-          workspaceId: ctx.workspaceId,
-        });
-        return { success: true, enhancement };
-      })
-    ),
+  recordEnhancement: rateLimitedProcedure.input(recordEnhancementSchema).mutation(
+    withErrorHandler(async ({ input, ctx }) => {
+      const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+      const enhancement = await trackingService.recordEnhancement({
+        ...input,
+        workspaceId: ctx.workspaceId,
+      });
+      return { success: true, enhancement };
+    })
+  ),
 
   /**
    * Update feedback for an enhancement (accepted/modified)
    */
-  updateEnhancementFeedback: publicProcedure
-    .input(updateEnhancementFeedbackSchema)
-    .mutation(
-      withErrorHandler(async ({ input, ctx }) => {
-        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
-        const enhancement = await trackingService.updateFeedback(input);
-        return { success: true, enhancement };
-      })
-    ),
+  updateEnhancementFeedback: publicProcedure.input(updateEnhancementFeedbackSchema).mutation(
+    withErrorHandler(async ({ input, ctx }) => {
+      const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+      const enhancement = await trackingService.updateFeedback(input);
+      return { success: true, enhancement };
+    })
+  ),
 
   /**
    * Get enhancement history for a payee
    */
-  getPayeeEnhancements: publicProcedure
-    .input(getPayeeEnhancementsSchema)
-    .query(
-      withErrorHandler(async ({ input, ctx }) => {
-        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
-        const enhancements = await trackingService.getPayeeEnhancements(
-          input.payeeId,
-          input.fieldName,
-          input.limit
-        );
-        return enhancements;
-      })
-    ),
+  getPayeeEnhancements: publicProcedure.input(getPayeeEnhancementsSchema).query(
+    withErrorHandler(async ({ input, ctx }) => {
+      const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+      const enhancements = await trackingService.getPayeeEnhancements(
+        input.payeeId,
+        input.fieldName,
+        input.limit
+      );
+      return enhancements;
+    })
+  ),
 
   /**
    * Get enhancement summary for all fields of a payee
@@ -2143,26 +2284,22 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
   /**
    * Get AI preferences for a payee (field modes and enhanced fields)
    */
-  getPayeeAiPreferences: publicProcedure
-    .input(z.object({ payeeId: z.number().positive() }))
-    .query(
-      withErrorHandler(async ({ input, ctx }) => {
-        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
-        const preferences = await trackingService.getPayeeAiPreferences(input.payeeId);
-        return preferences;
-      })
-    ),
+  getPayeeAiPreferences: publicProcedure.input(z.object({ payeeId: z.number().positive() })).query(
+    withErrorHandler(async ({ input, ctx }) => {
+      const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+      const preferences = await trackingService.getPayeeAiPreferences(input.payeeId);
+      return preferences;
+    })
+  ),
 
   /**
    * Get enhancement statistics
    */
-  getEnhancementStats: publicProcedure
-    .input(getEnhancementStatsSchema)
-    .query(
-      withErrorHandler(async ({ input, ctx }) => {
-        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
-        const stats = await trackingService.getEnhancementStats(input.payeeId);
-        return stats;
-      })
-    ),
+  getEnhancementStats: publicProcedure.input(getEnhancementStatsSchema).query(
+    withErrorHandler(async ({ input, ctx }) => {
+      const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+      const stats = await trackingService.getEnhancementStats(input.payeeId);
+      return stats;
+    })
+  ),
 });

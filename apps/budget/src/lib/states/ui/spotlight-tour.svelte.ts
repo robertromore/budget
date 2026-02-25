@@ -422,7 +422,8 @@ class SpotlightTourState {
       skipped: false,
       stepsViewed: this.#stepsViewed,
       totalSteps: this.#steps.length,
-      subToursCompleted: this.#subToursCompleted.length > 0 ? [...this.#subToursCompleted] : undefined,
+      subToursCompleted:
+        this.#subToursCompleted.length > 0 ? [...this.#subToursCompleted] : undefined,
     };
 
     await this.#finishTour(result);
@@ -632,7 +633,9 @@ class SpotlightTourState {
 
     // If not found, try as data-tour-id
     if (elements.length === 0) {
-      elements = Array.from(document.querySelectorAll(`[data-tour-id="${selector}"]`)) as HTMLElement[];
+      elements = Array.from(
+        document.querySelectorAll(`[data-tour-id="${selector}"]`)
+      ) as HTMLElement[];
     }
 
     return elements;

@@ -1,4 +1,9 @@
-import type { AccountConnection, ExternalAccount, ProviderCredentials, SimplefinCredentials } from "$lib/schema/account-connections";
+import type {
+  AccountConnection,
+  ExternalAccount,
+  ProviderCredentials,
+  SimplefinCredentials,
+} from "$lib/schema/account-connections";
 import type { ImportRow } from "$lib/types/import";
 import type { ConnectionProviderInterface, SimpleFIN } from "../types";
 

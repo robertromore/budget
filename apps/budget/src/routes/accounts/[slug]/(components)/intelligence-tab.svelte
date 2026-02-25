@@ -1,145 +1,136 @@
 <script lang="ts">
-  import {
-    AnomalyAlertCard,
-    BudgetRiskCard,
-    ForecastSummaryCard,
-    RecurringPatternCard,
-    SavingsOpportunityCard,
-  } from "$lib/components/ml";
-  import { Badge } from "$lib/components/ui/badge";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import * as Tabs from "$lib/components/ui/tabs";
-  import { ML } from "$lib/query/ml";
-  import { formatCurrency } from "$lib/utils";
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import BarChart3 from "@lucide/svelte/icons/bar-chart-3";
-  import Bell from "@lucide/svelte/icons/bell";
-  import Calendar from "@lucide/svelte/icons/calendar";
-  import DollarSign from "@lucide/svelte/icons/dollar-sign";
-  import Lightbulb from "@lucide/svelte/icons/lightbulb";
-  import PiggyBank from "@lucide/svelte/icons/piggy-bank";
-  import Settings from "@lucide/svelte/icons/settings";
-  import TrendingDown from "@lucide/svelte/icons/trending-down";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
-  import Wallet from "@lucide/svelte/icons/wallet";
+import {
+  AnomalyAlertCard,
+  BudgetRiskCard,
+  ForecastSummaryCard,
+  RecurringPatternCard,
+  SavingsOpportunityCard,
+} from '$lib/components/ml';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import * as Tabs from '$lib/components/ui/tabs';
+import { ML } from '$lib/query/ml';
+import { formatCurrency } from '$lib/utils';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import Bell from '@lucide/svelte/icons/bell';
+import Calendar from '@lucide/svelte/icons/calendar';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Lightbulb from '@lucide/svelte/icons/lightbulb';
+import PiggyBank from '@lucide/svelte/icons/piggy-bank';
+import Settings from '@lucide/svelte/icons/settings';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Wallet from '@lucide/svelte/icons/wallet';
 
-  interface Props {
-    accountId: number;
-    accountSlug: string;
-  }
+interface Props {
+  accountId: number;
+  accountSlug: string;
+}
 
-  let { accountId, accountSlug }: Props = $props();
+let { accountId, accountSlug }: Props = $props();
 
-  // Active tab state
-  let activeTab = $state("spending");
+// Active tab state
+let activeTab = $state('spending');
 
-  // ============================================================================
-  // Spending Patterns Tab Queries (lazy loaded via enabled option)
-  // ============================================================================
-  const incomeExpenseQuery = $derived(
-    ML.getIncomeExpenseBreakdown({ accountId }).options(
-      () => ({ enabled: activeTab === "spending" })
-    )
-  );
+// ============================================================================
+// Spending Patterns Tab Queries (lazy loaded via enabled option)
+// ============================================================================
+const incomeExpenseQuery = $derived(
+  ML.getIncomeExpenseBreakdown({ accountId }).options(() => ({ enabled: activeTab === 'spending' }))
+);
 
-  const incomeExpenseHistory = $derived(
-    ML.getIncomeExpenseHistory(6, accountId).options(
-      () => ({ enabled: activeTab === "spending" })
-    )
-  );
+const incomeExpenseHistory = $derived(
+  ML.getIncomeExpenseHistory(6, accountId).options(() => ({ enabled: activeTab === 'spending' }))
+);
 
-  const anomalyAlertsQuery = ML.getAnomalyAlerts({ limit: 3, minRiskLevel: "medium" }).options(
-    () => ({ enabled: activeTab === "spending" })
-  );
+const anomalyAlertsQuery = ML.getAnomalyAlerts({ limit: 3, minRiskLevel: 'medium' }).options(
+  () => ({ enabled: activeTab === 'spending' })
+);
 
-  const recurringPatternsQuery = $derived(
-    ML.getRecurringPatterns({ accountId }).options(
-      () => ({ enabled: activeTab === "spending" })
-    )
-  );
+const recurringPatternsQuery = $derived(
+  ML.getRecurringPatterns({ accountId }).options(() => ({ enabled: activeTab === 'spending' }))
+);
 
-  const recurringSummaryQuery = $derived(
-    ML.getRecurringSummary({ accountId }).options(
-      () => ({ enabled: activeTab === "spending" })
-    )
-  );
+const recurringSummaryQuery = $derived(
+  ML.getRecurringSummary({ accountId }).options(() => ({ enabled: activeTab === 'spending' }))
+);
 
-  // ============================================================================
-  // Predictive Alerts Tab Queries (lazy loaded via enabled option)
-  // ============================================================================
-  const forecastQuery = $derived(
-    ML.getCashFlowForecast({ horizon: 30, granularity: "daily", accountId }).options(
-      () => ({ enabled: activeTab === "alerts" })
-    )
-  );
+// ============================================================================
+// Predictive Alerts Tab Queries (lazy loaded via enabled option)
+// ============================================================================
+const forecastQuery = $derived(
+  ML.getCashFlowForecast({ horizon: 30, granularity: 'daily', accountId }).options(() => ({
+    enabled: activeTab === 'alerts',
+  }))
+);
 
-  const budgetRiskQuery = ML.getBudgetsAtRisk("medium").options(
-    () => ({ enabled: activeTab === "alerts" })
-  );
+const budgetRiskQuery = ML.getBudgetsAtRisk('medium').options(() => ({
+  enabled: activeTab === 'alerts',
+}));
 
-  const missingPatternsQuery = ML.getMissingPatterns({ daysAhead: 7 }).options(
-    () => ({ enabled: activeTab === "alerts" })
-  );
+const missingPatternsQuery = ML.getMissingPatterns({ daysAhead: 7 }).options(() => ({
+  enabled: activeTab === 'alerts',
+}));
 
-  // ============================================================================
-  // Optimization Tab Queries (lazy loaded via enabled option)
-  // ============================================================================
-  const savingsQuery = ML.getSavingsOpportunities({ lookbackMonths: 6 }).options(
-    () => ({ enabled: activeTab === "optimization" })
-  );
+// ============================================================================
+// Optimization Tab Queries (lazy loaded via enabled option)
+// ============================================================================
+const savingsQuery = ML.getSavingsOpportunities({ lookbackMonths: 6 }).options(() => ({
+  enabled: activeTab === 'optimization',
+}));
 
-  const savingsSummaryQuery = ML.getSavingsSummary().options(
-    () => ({ enabled: activeTab === "optimization" })
-  );
+const savingsSummaryQuery = ML.getSavingsSummary().options(() => ({
+  enabled: activeTab === 'optimization',
+}));
 
-  const unusedSubscriptionsQuery = ML.getUnusedSubscriptions().options(
-    () => ({ enabled: activeTab === "optimization" })
-  );
+const unusedSubscriptionsQuery = ML.getUnusedSubscriptions().options(() => ({
+  enabled: activeTab === 'optimization',
+}));
 
-  const priceIncreasesQuery = ML.getPriceIncreases().options(
-    () => ({ enabled: activeTab === "optimization" })
-  );
+const priceIncreasesQuery = ML.getPriceIncreases().options(() => ({
+  enabled: activeTab === 'optimization',
+}));
 
-  const duplicateServicesQuery = ML.getDuplicateServices().options(
-    () => ({ enabled: activeTab === "optimization" })
-  );
+const duplicateServicesQuery = ML.getDuplicateServices().options(() => ({
+  enabled: activeTab === 'optimization',
+}));
 
-  // ============================================================================
-  // Derived Data
-  // ============================================================================
+// ============================================================================
+// Derived Data
+// ============================================================================
 
-  // Spending Patterns
-  const breakdown = $derived(incomeExpenseQuery.data?.breakdown);
-  const monthlyHistory = $derived(incomeExpenseHistory.data?.history ?? []);
-  const anomalies = $derived(anomalyAlertsQuery.data?.alerts ?? []);
-  const recurringPatterns = $derived(recurringPatternsQuery.data?.patterns ?? []);
-  const recurringSummary = $derived(recurringSummaryQuery.data?.summary ?? null);
+// Spending Patterns
+const breakdown = $derived(incomeExpenseQuery.data?.breakdown);
+const monthlyHistory = $derived(incomeExpenseHistory.data?.history ?? []);
+const anomalies = $derived(anomalyAlertsQuery.data?.alerts ?? []);
+const recurringPatterns = $derived(recurringPatternsQuery.data?.patterns ?? []);
+const recurringSummary = $derived(recurringSummaryQuery.data?.summary ?? null);
 
-  // Predictive Alerts
-  const forecast = $derived(forecastQuery.data);
-  const budgetsAtRisk = $derived(budgetRiskQuery.data?.budgets ?? []);
-  const missingPatterns = $derived(missingPatternsQuery.data?.missing ?? []);
+// Predictive Alerts
+const forecast = $derived(forecastQuery.data);
+const budgetsAtRisk = $derived(budgetRiskQuery.data?.budgets ?? []);
+const missingPatterns = $derived(missingPatternsQuery.data?.missing ?? []);
 
-  // Optimization
-  const savingsOpportunities = $derived(savingsQuery.data?.opportunities ?? []);
-  const savingsSummary = $derived(savingsSummaryQuery.data);
-  // Filter opportunities by type
-  const unusedSubscriptions = $derived(
-    unusedSubscriptionsQuery.data?.opportunities?.filter(o => o.type === "unused_subscription") ?? []
-  );
-  const priceIncreases = $derived(
-    priceIncreasesQuery.data?.opportunities?.filter(o => o.type === "price_increase") ?? []
-  );
-  const duplicateServices = $derived(
-    duplicateServicesQuery.data?.opportunities?.filter(o => o.type === "duplicate_service") ?? []
-  );
+// Optimization
+const savingsOpportunities = $derived(savingsQuery.data?.opportunities ?? []);
+const savingsSummary = $derived(savingsSummaryQuery.data);
+// Filter opportunities by type
+const unusedSubscriptions = $derived(
+  unusedSubscriptionsQuery.data?.opportunities?.filter((o) => o.type === 'unused_subscription') ??
+    []
+);
+const priceIncreases = $derived(
+  priceIncreasesQuery.data?.opportunities?.filter((o) => o.type === 'price_increase') ?? []
+);
+const duplicateServices = $derived(
+  duplicateServicesQuery.data?.opportunities?.filter((o) => o.type === 'duplicate_service') ?? []
+);
 
-  // Total potential savings
-  const totalMonthlySavings = $derived(
-    savingsSummary?.totalMonthlyPotential ?? 0
-  );
+// Total potential savings
+const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0);
 </script>
 
 <div class="space-y-6">
@@ -147,9 +138,7 @@
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h2 class="text-lg font-semibold">Intelligence</h2>
-      <p class="text-muted-foreground text-sm">
-        ML-powered insights and recommendations
-      </p>
+      <p class="text-muted-foreground text-sm">ML-powered insights and recommendations</p>
     </div>
     <Button variant="outline" size="sm" href="/settings/intelligence">
       <Settings class="mr-2 h-4 w-4" />
@@ -212,13 +201,17 @@
                 <div class="border-t pt-3">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium">Net Savings</span>
-                    <span class="text-lg font-bold" class:text-green-600={breakdown.currentMonth.netSavings >= 0} class:text-red-600={breakdown.currentMonth.netSavings < 0}>
+                    <span
+                      class="text-lg font-bold"
+                      class:text-green-600={breakdown.currentMonth.netSavings >= 0}
+                      class:text-red-600={breakdown.currentMonth.netSavings < 0}>
                       {formatCurrency(breakdown.currentMonth.netSavings)}
                     </span>
                   </div>
                   <div class="mt-2 flex items-center justify-between text-sm">
                     <span class="text-muted-foreground">Savings Rate</span>
-                    <Badge variant={breakdown.currentMonth.savingsRate >= 20 ? "default" : "secondary"}>
+                    <Badge
+                      variant={breakdown.currentMonth.savingsRate >= 20 ? 'default' : 'secondary'}>
                       {breakdown.currentMonth.savingsRate.toFixed(1)}%
                     </Badge>
                   </div>
@@ -250,18 +243,19 @@
             {:else if monthlyHistory.length > 0}
               <div class="space-y-2">
                 {#each monthlyHistory.slice(-6) as month}
-                  {@const maxExpense = Math.max(...monthlyHistory.map(m => Math.abs(m.expenses)))}
-                  {@const barWidth = maxExpense > 0 ? (Math.abs(month.expenses) / maxExpense) * 100 : 0}
+                  {@const maxExpense = Math.max(...monthlyHistory.map((m) => Math.abs(m.expenses)))}
+                  {@const barWidth =
+                    maxExpense > 0 ? (Math.abs(month.expenses) / maxExpense) * 100 : 0}
                   <div class="flex items-center gap-3">
                     <span class="text-muted-foreground w-12 text-xs">
                       {month.period.slice(5)}
                     </span>
                     <div class="flex-1">
-                      <div class="h-4 w-full overflow-hidden rounded-full bg-muted">
+                      <div class="bg-muted h-4 w-full overflow-hidden rounded-full">
                         <div
                           class="h-full rounded-full bg-red-500/80 transition-all"
-                          style="width: {barWidth}%"
-                        ></div>
+                          style="width: {barWidth}%">
+                        </div>
                       </div>
                     </div>
                     <span class="w-20 text-right text-sm font-medium">
@@ -312,8 +306,7 @@
                     riskLevel={alert.riskLevel}
                     explanation={alert.explanation}
                     recommendedActions={alert.recommendedActions}
-                    dimensions={alert.dimensions}
-                  />
+                    dimensions={alert.dimensions} />
                 {/each}
               </div>
             {:else}
@@ -330,8 +323,7 @@
         <!-- Recurring Patterns -->
         <RecurringPatternCard
           summary={recurringSummary}
-          topPatterns={recurringPatterns.slice(0, 4)}
-        />
+          topPatterns={recurringPatterns.slice(0, 4)} />
       </div>
     </Tabs.Content>
 
@@ -366,7 +358,9 @@
               <div>
                 {#if forecast}
                   <p class="text-2xl font-bold">
-                    {formatCurrency(forecast.predictions[forecast.predictions.length - 1]?.value ?? 0)}
+                    {formatCurrency(
+                      forecast.predictions[forecast.predictions.length - 1]?.value ?? 0
+                    )}
                   </p>
                   <p class="text-muted-foreground text-xs">30-day projected</p>
                 {:else}
@@ -404,8 +398,7 @@
             title="30-Day Cash Flow Forecast"
             predictions={forecast.predictions}
             confidence={forecast.confidence}
-            granularity="daily"
-          />
+            granularity="daily" />
         {:else}
           <Card.Root>
             <Card.Content class="flex h-[300px] items-center justify-center">
@@ -421,16 +414,18 @@
           <BudgetRiskCard
             budgetsAtRisk={budgetsAtRisk.length}
             totalBudgets={budgetRiskQuery.data?.total ?? 0}
-            overallRisk={budgetsAtRisk[0]?.overSpendRisk ?? "none"}
-            predictedOverspend={budgetsAtRisk.reduce((sum, b) => sum + Math.max(0, b.predictedOverspend), 0)}
-            topRisks={budgetsAtRisk.slice(0, 3).map(b => ({
+            overallRisk={budgetsAtRisk[0]?.overSpendRisk ?? 'none'}
+            predictedOverspend={budgetsAtRisk.reduce(
+              (sum, b) => sum + Math.max(0, b.predictedOverspend),
+              0
+            )}
+            topRisks={budgetsAtRisk.slice(0, 3).map((b) => ({
               budgetId: b.budgetId,
               budgetName: b.budgetName,
               risk: b.overSpendRisk,
               predictedOverspend: b.predictedOverspend,
               percentSpent: b.percentUsed,
-            }))}
-          />
+            }))} />
         {:else}
           <Card.Root>
             <Card.Header>
@@ -460,7 +455,9 @@
           <Card.Content>
             <div class="space-y-2">
               {#each missingPatterns.slice(0, 5) as pattern}
-                {@const daysUntil = Math.ceil((new Date(pattern.expectedDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}
+                {@const daysUntil = Math.ceil(
+                  (new Date(pattern.expectedDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                )}
                 <div class="flex items-center justify-between rounded-lg border p-3">
                   <div>
                     <p class="font-medium">{pattern.payeeName}</p>
@@ -473,7 +470,11 @@
                       {formatCurrency(pattern.expectedAmount)}
                     </p>
                     <Badge variant="outline" class="text-xs">
-                      {daysUntil < 0 ? `${Math.abs(daysUntil)} days late` : daysUntil === 0 ? 'Due today' : `In ${daysUntil} days`}
+                      {daysUntil < 0
+                        ? `${Math.abs(daysUntil)} days late`
+                        : daysUntil === 0
+                          ? 'Due today'
+                          : `In ${daysUntil} days`}
                     </Badge>
                   </div>
                 </div>
@@ -489,7 +490,7 @@
     ====================================================================== -->
     <Tabs.Content value="optimization" class="space-y-6">
       <!-- Savings Summary Header -->
-      <Card.Root class="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
+      <Card.Root class="border-green-500/20 bg-gradient-to-r from-green-500/10 to-emerald-500/10">
         <Card.Content class="py-6">
           <div class="flex flex-col items-center justify-center gap-2 text-center">
             <PiggyBank class="h-8 w-8 text-green-500" />
@@ -517,8 +518,7 @@
         <SavingsOpportunityCard
           opportunityCount={savingsOpportunities.length}
           totalMonthlyPotential={totalMonthlySavings}
-          opportunities={savingsOpportunities.slice(0, 5)}
-        />
+          opportunities={savingsOpportunities.slice(0, 5)} />
       {/if}
 
       <!-- Detailed Breakdown Grid -->
@@ -546,7 +546,9 @@
                     <div>
                       <p class="text-sm font-medium">{sub.payeeName ?? sub.title}</p>
                       <p class="text-muted-foreground text-xs">
-                        Last used: {sub.evidence.lastTransactionDate ? new Date(sub.evidence.lastTransactionDate).toLocaleDateString() : 'Unknown'}
+                        Last used: {sub.evidence.lastTransactionDate
+                          ? new Date(sub.evidence.lastTransactionDate).toLocaleDateString()
+                          : 'Unknown'}
                       </p>
                     </div>
                     <p class="font-semibold text-green-600">
@@ -582,11 +584,14 @@
             {:else if priceIncreases.length > 0}
               <div class="space-y-2">
                 {#each priceIncreases.slice(0, 3) as increase}
-                  <div class="flex items-center justify-between rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
+                  <div
+                    class="flex items-center justify-between rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
                     <div>
                       <p class="text-sm font-medium">{increase.payeeName ?? increase.title}</p>
                       <p class="text-muted-foreground text-xs">
-                        {formatCurrency(increase.evidence.previousAmount ?? 0)} → {formatCurrency(increase.evidence.currentAmount ?? 0)}
+                        {formatCurrency(increase.evidence.previousAmount ?? 0)} → {formatCurrency(
+                          increase.evidence.currentAmount ?? 0
+                        )}
                       </p>
                     </div>
                     <Badge variant="secondary" class="text-orange-500">
@@ -612,9 +617,7 @@
               <AlertTriangle class="h-4 w-4 text-blue-500" />
               Potential Duplicate Services
             </Card.Title>
-            <Card.Description>
-              Similar services that might be redundant
-            </Card.Description>
+            <Card.Description>Similar services that might be redundant</Card.Description>
           </Card.Header>
           <Card.Content>
             <div class="space-y-2">
@@ -624,7 +627,8 @@
                     <div>
                       <p class="font-medium">{duplicate.categoryName ?? duplicate.title}</p>
                       <p class="text-muted-foreground text-xs">
-                        {duplicate.evidence.similarServices?.map(s => s.payeeName).join(", ") ?? duplicate.description}
+                        {duplicate.evidence.similarServices?.map((s) => s.payeeName).join(', ') ??
+                          duplicate.description}
                       </p>
                     </div>
                     <div class="text-right">

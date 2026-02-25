@@ -34,7 +34,14 @@ interface Props {
   currentAccountId?: number;
 }
 
-let { row, onUpdate, onAliasCandidate, onTransferUpdate, temporaryPayees = [], currentAccountId }: Props = $props();
+let {
+  row,
+  onUpdate,
+  onAliasCandidate,
+  onTransferUpdate,
+  temporaryPayees = [],
+  currentAccountId,
+}: Props = $props();
 
 // Get the original payee string from the import data (before any user overrides)
 // This is set by import/+page.svelte when creating previewData
@@ -60,8 +67,12 @@ const rowIndex = $derived(row.original.rowIndex);
 const isInvalid = $derived(row.original.validationStatus === 'invalid');
 
 // Check if this row is configured as a transfer
-const transferAccountId = $derived(row.original.normalizedData['transferAccountId'] as number | null | undefined);
-const transferAccountName = $derived(row.original.normalizedData['transferAccountName'] as string | null | undefined);
+const transferAccountId = $derived(
+  row.original.normalizedData['transferAccountId'] as number | null | undefined
+);
+const transferAccountName = $derived(
+  row.original.normalizedData['transferAccountName'] as string | null | undefined
+);
 const isTransfer = $derived(!!transferAccountId);
 
 // Check for suggested transfer from saved mappings
@@ -301,9 +312,13 @@ function handleClearTransfer() {
             variant="outline"
             class={cn(
               'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
-              isTransfer && 'text-blue-600 border-blue-200',
-              hasSuggestion && 'text-amber-600 border-amber-200',
-              !isTransfer && !hasSuggestion && !selectedPayee && !selectedPayeeName && 'text-muted-foreground'
+              isTransfer && 'border-blue-200 text-blue-600',
+              hasSuggestion && 'border-amber-200 text-amber-600',
+              !isTransfer &&
+                !hasSuggestion &&
+                !selectedPayee &&
+                !selectedPayeeName &&
+                'text-muted-foreground'
             )}>
             {#if hasSuggestion}
               <Sparkles class="mr-2 h-3 w-3 text-amber-500" />
@@ -345,7 +360,10 @@ function handleClearTransfer() {
                     </Command.Item>
                   {/if}
                   {#if (selectedPayeeName || selectedPayeeId) && !searchValue.trim()}
-                    <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
+                    <Command.Item
+                      value="clear"
+                      onSelect={() => handleClear()}
+                      class="text-destructive">
                       <X class="mr-2 h-4 w-4" />
                       Clear payee
                     </Command.Item>
@@ -394,8 +412,12 @@ function handleClearTransfer() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  class="mt-1 h-6 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-                  onclick={() => handleSelectAccount(suggestedTransferAccountId!, suggestedTransferAccountName!)}>
+                  class="mt-1 h-6 text-xs text-amber-600 hover:bg-amber-100 hover:text-amber-700"
+                  onclick={() =>
+                    handleSelectAccount(
+                      suggestedTransferAccountId!,
+                      suggestedTransferAccountName!
+                    )}>
                   Accept suggestion
                 </Button>
               </div>
@@ -405,7 +427,10 @@ function handleClearTransfer() {
               <Command.List class="max-h-52">
                 <Command.Group>
                   {#if isTransfer && !accountSearchValue.trim()}
-                    <Command.Item value="clear-transfer" onSelect={() => handleClearTransfer()} class="text-destructive">
+                    <Command.Item
+                      value="clear-transfer"
+                      onSelect={() => handleClearTransfer()}
+                      class="text-destructive">
                       <X class="mr-2 h-4 w-4" />
                       Clear transfer
                     </Command.Item>
@@ -417,7 +442,7 @@ function handleClearTransfer() {
                       value={String(account.id)}
                       onSelect={() => handleSelectAccount(account.id, account.name)}>
                       <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
-                      <Wallet class="mr-2 h-4 w-4 text-muted-foreground" />
+                      <Wallet class="text-muted-foreground mr-2 h-4 w-4" />
                       {account.name}
                     </Command.Item>
                   {/each}
@@ -431,7 +456,9 @@ function handleClearTransfer() {
             <div class="border-t p-2">
               <div class="flex items-center gap-2">
                 <Checkbox id="remember-{rowIndex}" bind:checked={rememberMapping} />
-                <Label for="remember-{rowIndex}" class="text-xs text-muted-foreground cursor-pointer">
+                <Label
+                  for="remember-{rowIndex}"
+                  class="text-muted-foreground cursor-pointer text-xs">
                   Remember for future imports
                 </Label>
               </div>

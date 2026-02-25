@@ -5,8 +5,8 @@ import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { error } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
-import { existsSync } from "fs";
-import { readFile } from "fs/promises";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, request }) => {

@@ -157,8 +157,7 @@ $effect(() => {
               score={anomalyData.overallScore}
               riskLevel={anomalyData.riskLevel}
               explanation={anomalyData.explanation}
-              compact
-            />
+              compact />
           {/if}
         </div>
         <NumericInput {...props} bind:value={amount} buttonClass="w-full" />

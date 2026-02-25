@@ -1,5 +1,8 @@
 import { removeCategorySchema, type RemoveCategoryData } from "$lib/schema";
-import { superformInsertCategorySchema, type SuperformInsertCategoryData } from "$lib/schema/superforms";
+import {
+  superformInsertCategorySchema,
+  type SuperformInsertCategoryData,
+} from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";

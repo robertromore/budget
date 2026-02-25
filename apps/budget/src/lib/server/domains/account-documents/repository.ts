@@ -55,12 +55,7 @@ export class AccountDocumentRepository extends BaseRepository<
     return await db
       .select()
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.accountId, accountId),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.accountId, accountId), isNull(accountDocuments.deletedAt)))
       .orderBy(desc(accountDocuments.taxYear), desc(accountDocuments.uploadedAt))
       .execute();
   }
@@ -72,12 +67,7 @@ export class AccountDocumentRepository extends BaseRepository<
     return await db
       .select()
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.taxYear, taxYear),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.taxYear, taxYear), isNull(accountDocuments.deletedAt)))
       .orderBy(desc(accountDocuments.uploadedAt))
       .execute();
   }
@@ -139,12 +129,7 @@ export class AccountDocumentRepository extends BaseRepository<
     const result = await db
       .selectDistinct({ taxYear: accountDocuments.taxYear })
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.accountId, accountId),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.accountId, accountId), isNull(accountDocuments.deletedAt)))
       .orderBy(desc(accountDocuments.taxYear))
       .execute();
 
@@ -158,12 +143,7 @@ export class AccountDocumentRepository extends BaseRepository<
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.accountId, accountId),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.accountId, accountId), isNull(accountDocuments.deletedAt)))
       .execute();
 
     return result[0]?.count || 0;
@@ -176,12 +156,7 @@ export class AccountDocumentRepository extends BaseRepository<
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.taxYear, taxYear),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.taxYear, taxYear), isNull(accountDocuments.deletedAt)))
       .execute();
 
     return result[0]?.count || 0;
@@ -199,12 +174,7 @@ export class AccountDocumentRepository extends BaseRepository<
         count: sql<number>`count(*)`,
       })
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.taxYear, taxYear),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.taxYear, taxYear), isNull(accountDocuments.deletedAt)))
       .groupBy(accountDocuments.documentType)
       .execute();
 
@@ -222,10 +192,7 @@ export class AccountDocumentRepository extends BaseRepository<
       .select()
       .from(accountDocuments)
       .where(
-        and(
-          eq(accountDocuments.extractionStatus, "pending"),
-          isNull(accountDocuments.deletedAt)
-        )
+        and(eq(accountDocuments.extractionStatus, "pending"), isNull(accountDocuments.deletedAt))
       )
       .limit(limit)
       .orderBy(accountDocuments.uploadedAt)
@@ -239,12 +206,7 @@ export class AccountDocumentRepository extends BaseRepository<
     return await db
       .select()
       .from(accountDocuments)
-      .where(
-        and(
-          eq(accountDocuments.extractionStatus, status),
-          isNull(accountDocuments.deletedAt)
-        )
-      )
+      .where(and(eq(accountDocuments.extractionStatus, status), isNull(accountDocuments.deletedAt)))
       .orderBy(desc(accountDocuments.uploadedAt))
       .execute();
   }

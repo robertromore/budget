@@ -195,7 +195,12 @@ export function extractDateString(date: unknown): string {
   if (typeof date === "string") {
     return date.split("T")[0];
   }
-  if (date && typeof date === "object" && "toDate" in date && typeof (date as { toDate: unknown }).toDate === "function") {
+  if (
+    date &&
+    typeof date === "object" &&
+    "toDate" in date &&
+    typeof (date as { toDate: unknown }).toDate === "function"
+  ) {
     // Handle DateValue from @internationalized/date
     const dateObj = (date as { toDate: (tz: string) => Date }).toDate("UTC");
     return dateObj.toISOString().split("T")[0];

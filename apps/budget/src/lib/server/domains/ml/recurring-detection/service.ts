@@ -23,7 +23,7 @@ import type {
   RecurringDetectionConfig,
   RecurringDetectionSummary,
   RecurringFrequency,
-  RecurringPattern
+  RecurringPattern,
 } from "../types";
 
 // =============================================================================
@@ -149,11 +149,7 @@ export class RecurringTransactionDetectionService {
       .select()
       .from(payees)
       .where(
-        and(
-          eq(payees.id, payeeId),
-          eq(payees.workspaceId, workspaceId),
-          isNull(payees.deletedAt)
-        )
+        and(eq(payees.id, payeeId), eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt))
       )
       .limit(1);
 
@@ -369,10 +365,7 @@ export class RecurringTransactionDetectionService {
         accountId: transactions.accountId,
       })
       .from(transactions)
-      .leftJoin(
-        payees,
-        and(eq(transactions.payeeId, payees.id), isNull(payees.deletedAt))
-      )
+      .leftJoin(payees, and(eq(transactions.payeeId, payees.id), isNull(payees.deletedAt)))
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
       .where(
         and(
@@ -507,9 +500,7 @@ export class RecurringTransactionDetectionService {
     // Calculate confidence based on interval and amount consistency
     const intervalCV = avgInterval > 0 ? intervalStdDev / avgInterval : 1;
     const amountCV =
-      Math.abs(amountStats.average) > 0
-        ? amountStats.stdDev / Math.abs(amountStats.average)
-        : 1;
+      Math.abs(amountStats.average) > 0 ? amountStats.stdDev / Math.abs(amountStats.average) : 1;
 
     // Confidence scoring
     const intervalScore = Math.max(0, 1 - intervalCV);
@@ -531,8 +522,7 @@ export class RecurringTransactionDetectionService {
     const nextPredicted = this.predictNextDate(lastDate, frequency, Math.round(avgInterval));
 
     // Check if pattern is still active
-    const daysSinceLast =
-      (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceLast = (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
     const isActive = daysSinceLast < avgInterval * 2;
 
     // Get most common category
@@ -571,7 +561,8 @@ export class RecurringTransactionDetectionService {
       amountMax: amountStats.max,
       amountType,
       typicalDayOfMonth,
-      typicalDayOfWeek: frequency === "weekly" || frequency === "biweekly" ? typicalDayOfWeek : undefined,
+      typicalDayOfWeek:
+        frequency === "weekly" || frequency === "biweekly" ? typicalDayOfWeek : undefined,
       lastOccurrence: sorted[sorted.length - 1].date,
       nextPredicted: nextPredicted.toISOString().split("T")[0],
       matchingTransactions: sorted.map((t) => ({
@@ -765,11 +756,7 @@ export class RecurringTransactionDetectionService {
   /**
    * Predict next occurrence date
    */
-  private predictNextDate(
-    lastDate: Date,
-    frequency: RecurringFrequency,
-    interval: number
-  ): Date {
+  private predictNextDate(lastDate: Date, frequency: RecurringFrequency, interval: number): Date {
     const next = new Date(lastDate);
 
     switch (frequency) {
@@ -846,9 +833,7 @@ export class RecurringTransactionDetectionService {
   /**
    * Detect amount anomalies
    */
-  private detectAmountAnomalies(
-    pattern: RecurringPattern
-  ): PatternAnalysis["anomalies"] {
+  private detectAmountAnomalies(pattern: RecurringPattern): PatternAnalysis["anomalies"] {
     const anomalies: PatternAnalysis["anomalies"] = [];
     const threshold = 2; // 2 standard deviations
 

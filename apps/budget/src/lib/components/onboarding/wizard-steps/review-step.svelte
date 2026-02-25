@@ -18,7 +18,9 @@ import Check from '@lucide/svelte/icons/check';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 
 const formData = $derived(onboardingWizardStore.typedFormData);
-const isComplete = $derived(onboardingWizardStore.validateStep('review', onboardingWizardStore.formData));
+const isComplete = $derived(
+  onboardingWizardStore.validateStep('review', onboardingWizardStore.formData)
+);
 
 function goToStep(index: number) {
   onboardingWizardStore.goToStep(index);
@@ -36,8 +38,8 @@ function formatCurrency(amount: number): string {
 <div class="space-y-6">
   <!-- Header -->
   <div class="text-center">
-    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-      <Sparkles class="h-6 w-6 text-primary" />
+    <div class="bg-primary/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+      <Sparkles class="text-primary h-6 w-6" />
     </div>
     <h3 class="text-lg font-semibold">Review Your Setup</h3>
     <p class="text-muted-foreground mt-1 text-sm">
@@ -51,16 +53,24 @@ function formatCurrency(amount: number): string {
     <div class="group relative rounded-lg border p-4">
       <button
         type="button"
-        class="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+        class="absolute top-3 right-3 opacity-0 transition-opacity group-hover:opacity-100"
         onclick={() => goToStep(0)}>
-        <Edit class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        <Edit class="text-muted-foreground hover:text-foreground h-4 w-4" />
       </button>
-      <Label class="text-sm font-medium text-muted-foreground">Income</Label>
+      <Label class="text-muted-foreground text-sm font-medium">Income</Label>
       <div class="mt-2 space-y-1">
-        <p>{INCOME_SOURCE_LABELS[formData.incomeSource!]} · {INCOME_FREQUENCY_LABELS[formData.incomeFrequency!]}</p>
-        <p class="text-muted-foreground text-sm">{EMPLOYMENT_STATUS_LABELS[formData.employmentStatus!]}</p>
+        <p>
+          {INCOME_SOURCE_LABELS[formData.incomeSource!]} · {INCOME_FREQUENCY_LABELS[
+            formData.incomeFrequency!
+          ]}
+        </p>
+        <p class="text-muted-foreground text-sm">
+          {EMPLOYMENT_STATUS_LABELS[formData.employmentStatus!]}
+        </p>
         {#if formData.primaryIncomeAmount}
-          <p class="text-muted-foreground text-sm">~{formatCurrency(formData.primaryIncomeAmount)} per period</p>
+          <p class="text-muted-foreground text-sm">
+            ~{formatCurrency(formData.primaryIncomeAmount)} per period
+          </p>
         {/if}
       </div>
     </div>
@@ -69,11 +79,11 @@ function formatCurrency(amount: number): string {
     <div class="group relative rounded-lg border p-4">
       <button
         type="button"
-        class="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+        class="absolute top-3 right-3 opacity-0 transition-opacity group-hover:opacity-100"
         onclick={() => goToStep(1)}>
-        <Edit class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        <Edit class="text-muted-foreground hover:text-foreground h-4 w-4" />
       </button>
-      <Label class="text-sm font-medium text-muted-foreground">Household & Goals</Label>
+      <Label class="text-muted-foreground text-sm font-medium">Household & Goals</Label>
       <div class="mt-2 space-y-2">
         <p>{HOUSEHOLD_TYPE_LABELS[formData.householdType!]}</p>
         <div class="flex flex-wrap gap-1">
@@ -88,11 +98,11 @@ function formatCurrency(amount: number): string {
     <div class="group relative rounded-lg border p-4">
       <button
         type="button"
-        class="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+        class="absolute top-3 right-3 opacity-0 transition-opacity group-hover:opacity-100"
         onclick={() => goToStep(2)}>
-        <Edit class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        <Edit class="text-muted-foreground hover:text-foreground h-4 w-4" />
       </button>
-      <Label class="text-sm font-medium text-muted-foreground">Accounts to Create</Label>
+      <Label class="text-muted-foreground text-sm font-medium">Accounts to Create</Label>
       <div class="mt-2 flex flex-wrap gap-1">
         {#each formData.accountsToTrack ?? [] as account}
           <Badge variant="outline" class="text-xs">{ACCOUNT_TYPE_LABELS[account]}</Badge>
@@ -104,11 +114,11 @@ function formatCurrency(amount: number): string {
     <div class="group relative rounded-lg border p-4">
       <button
         type="button"
-        class="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+        class="absolute top-3 right-3 opacity-0 transition-opacity group-hover:opacity-100"
         onclick={() => goToStep(3)}>
-        <Edit class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        <Edit class="text-muted-foreground hover:text-foreground h-4 w-4" />
       </button>
-      <Label class="text-sm font-medium text-muted-foreground">Spending Categories</Label>
+      <Label class="text-muted-foreground text-sm font-medium">Spending Categories</Label>
       <div class="mt-2 flex flex-wrap gap-1">
         {#each formData.spendingAreas ?? [] as area}
           <Badge variant="outline" class="text-xs">{SPENDING_AREA_LABELS[area]}</Badge>
@@ -121,11 +131,11 @@ function formatCurrency(amount: number): string {
       <div class="group relative rounded-lg border p-4">
         <button
           type="button"
-          class="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+          class="absolute top-3 right-3 opacity-0 transition-opacity group-hover:opacity-100"
           onclick={() => goToStep(4)}>
-          <Edit class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          <Edit class="text-muted-foreground hover:text-foreground h-4 w-4" />
         </button>
-        <Label class="text-sm font-medium text-muted-foreground">Debt Tracking</Label>
+        <Label class="text-muted-foreground text-sm font-medium">Debt Tracking</Label>
         <div class="mt-2 space-y-1">
           {#each formData.debtOverview ?? [] as debt}
             <p class="text-sm">
@@ -143,11 +153,11 @@ function formatCurrency(amount: number): string {
     <div class="group relative rounded-lg border p-4">
       <button
         type="button"
-        class="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+        class="absolute top-3 right-3 opacity-0 transition-opacity group-hover:opacity-100"
         onclick={() => goToStep(5)}>
-        <Edit class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        <Edit class="text-muted-foreground hover:text-foreground h-4 w-4" />
       </button>
-      <Label class="text-sm font-medium text-muted-foreground">Preferences</Label>
+      <Label class="text-muted-foreground text-sm font-medium">Preferences</Label>
       <div class="mt-2 text-sm">
         <p>{formData.currency} · {formData.locale} · {formData.dateFormat}</p>
       </div>
@@ -155,9 +165,9 @@ function formatCurrency(amount: number): string {
   </div>
 
   <!-- What happens next -->
-  <div class="bg-primary/5 rounded-lg border border-primary/20 p-4">
+  <div class="bg-primary/5 border-primary/20 rounded-lg border p-4">
     <h4 class="font-medium">What happens when you complete setup:</h4>
-    <ul class="mt-2 space-y-1 text-sm text-muted-foreground">
+    <ul class="text-muted-foreground mt-2 space-y-1 text-sm">
       <li class="flex items-center gap-2">
         <Check class="h-4 w-4 text-green-500" />
         Create {formData.accountsToTrack?.length ?? 0} starter accounts

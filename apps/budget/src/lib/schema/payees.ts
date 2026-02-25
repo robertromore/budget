@@ -4,13 +4,7 @@
 // for automatic categorization, transaction automation, and analytics support.
 
 import { relations, sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  real,
-  sqliteTable,
-  text
-} from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { budgets } from "./budgets";
@@ -146,8 +140,12 @@ export const payees = sqliteTable(
     // Advanced Features Fields
     alertThreshold: real("alert_threshold"),
     isSeasonal: integer("is_seasonal", { mode: "boolean" }).default(false).notNull(),
-    subscriptionInfo: text("subscription_info", { mode: "json" }).$type<SubscriptionInfo | null>().default(null),
-    aiPreferences: text("ai_preferences", { mode: "json" }).$type<PayeeAiPreferences | null>().default(null),
+    subscriptionInfo: text("subscription_info", { mode: "json" })
+      .$type<SubscriptionInfo | null>()
+      .default(null),
+    aiPreferences: text("ai_preferences", { mode: "json" })
+      .$type<PayeeAiPreferences | null>()
+      .default(null),
     tags: text("tags"),
 
     // Payment Processing Fields

@@ -10,7 +10,8 @@ interface Props {
 let { onCreateNew }: Props = $props();
 </script>
 
-<div class="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+<div
+  class="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
   <Zap class="text-muted-foreground mb-4 h-12 w-12" />
   <h3 class="mb-2 text-lg font-semibold">No Automation Rules</h3>
   <p class="text-muted-foreground mb-4 max-w-sm text-sm">

@@ -159,12 +159,12 @@ interface SchedulesExtraFields {
   account?: any;
   category?: any;
   budget?: any;
-  priceHistory?: typeof schedulePriceHistory.$inferSelect[];
+  priceHistory?: (typeof schedulePriceHistory.$inferSelect)[];
 }
 
 export type Schedule = typeof schedules.$inferSelect & Partial<SchedulesExtraFields>;
 
 // Extended type for schedules with subscription features
 export interface ScheduleWithSubscription extends Schedule {
-  priceHistory?: typeof schedulePriceHistory.$inferSelect[];
+  priceHistory?: (typeof schedulePriceHistory.$inferSelect)[];
 }

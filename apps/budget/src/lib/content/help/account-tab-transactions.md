@@ -11,17 +11,20 @@ The primary view for managing your account's transactions.
 ## Features
 
 ### Transaction Table
+
 - View all transactions in chronological order
 - Sort by date, amount, payee, or category
 - Search and filter transactions
 - Inline editing for quick updates
 
 ### Quick Actions
+
 - Add new transactions
 - Bulk edit multiple transactions
 - Delete or categorize in batches
 
 ### Running Balance
+
 - See balance after each transaction
 - Track account history over time
 

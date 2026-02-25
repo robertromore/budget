@@ -1,34 +1,34 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import * as Tooltip from "$lib/components/ui/tooltip";
-  import { IntelligenceInputSettings } from "$lib/query/intelligence-input-settings";
-  import { LLMSettings } from "$lib/query";
-  import { intelligenceInputMode } from "$lib/states/ui/intelligence-input.svelte";
-  import { Kbd } from "$lib/components/ui/kbd";
-  import { cn } from "$lib/utils";
-  import Brain from "@lucide/svelte/icons/brain";
+import { Button } from '$lib/components/ui/button';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { IntelligenceInputSettings } from '$lib/query/intelligence-input-settings';
+import { LLMSettings } from '$lib/query';
+import { intelligenceInputMode } from '$lib/states/ui/intelligence-input.svelte';
+import { Kbd } from '$lib/components/ui/kbd';
+import { cn } from '$lib/utils';
+import Brain from '@lucide/svelte/icons/brain';
 
-  // Fetch preferences from query layer
-  const preferencesQuery = IntelligenceInputSettings.getPreferences().options();
-  const llmPreferencesQuery = LLMSettings.getPreferences().options();
+// Fetch preferences from query layer
+const preferencesQuery = IntelligenceInputSettings.getPreferences().options();
+const llmPreferencesQuery = LLMSettings.getPreferences().options();
 
-  // Sync state with preferences
-  $effect(() => {
-    if (preferencesQuery.data) {
-      intelligenceInputMode.setEnabled(preferencesQuery.data.enabled);
-      intelligenceInputMode.setDefaultMode(preferencesQuery.data.defaultMode);
-      intelligenceInputMode.loadFieldModes(preferencesQuery.data.fieldModes);
-    }
-  });
+// Sync state with preferences
+$effect(() => {
+  if (preferencesQuery.data) {
+    intelligenceInputMode.setEnabled(preferencesQuery.data.enabled);
+    intelligenceInputMode.setDefaultMode(preferencesQuery.data.defaultMode);
+    intelligenceInputMode.loadFieldModes(preferencesQuery.data.fieldModes);
+  }
+});
 
-  // Sync LLM enabled state
-  $effect(() => {
-    intelligenceInputMode.setLLMEnabled(llmPreferencesQuery.data?.enabled ?? false);
-  });
+// Sync LLM enabled state
+$effect(() => {
+  intelligenceInputMode.setLLMEnabled(llmPreferencesQuery.data?.enabled ?? false);
+});
 
-  const isActive = $derived(intelligenceInputMode.isActive);
-  const isEnabled = $derived(intelligenceInputMode.isEnabled);
-  const showInHeader = $derived(preferencesQuery.data?.showInHeader ?? true);
+const isActive = $derived(intelligenceInputMode.isActive);
+const isEnabled = $derived(intelligenceInputMode.isEnabled);
+const showInHeader = $derived(preferencesQuery.data?.showInHeader ?? true);
 </script>
 
 {#if isEnabled && showInHeader}
@@ -40,28 +40,25 @@
           variant="ghost"
           size="icon"
           onclick={() => intelligenceInputMode.toggle()}
-          aria-label={isActive ? "Exit intelligence mode" : "Enter intelligence mode"}
+          aria-label={isActive ? 'Exit intelligence mode' : 'Enter intelligence mode'}
           aria-pressed={isActive}
           data-help-id="intelligence-input-button"
           data-help-title="Intelligence Input Mode"
           class={cn(
-            "relative h-8 w-8",
-            isActive && "bg-violet-600 text-white hover:bg-violet-700"
-          )}
-        >
+            'relative h-8 w-8',
+            isActive && 'bg-violet-600 text-white hover:bg-violet-700'
+          )}>
           <Brain class="h-4 w-4" />
           {#if isActive}
-            <span
-              class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500"
-            ></span>
+            <span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500"></span>
           {/if}
         </Button>
       {/snippet}
     </Tooltip.Trigger>
     <Tooltip.Content>
       <p>
-        {isActive ? "Exit intelligence mode" : "Intelligence mode"}
-        <Kbd class="ml-2">{navigator?.platform?.includes("Mac") ? "⌘" : "Ctrl"}⇧I</Kbd>
+        {isActive ? 'Exit intelligence mode' : 'Intelligence mode'}
+        <Kbd class="ml-2">{navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'}⇧I</Kbd>
       </p>
     </Tooltip.Content>
   </Tooltip.Root>

@@ -78,12 +78,7 @@ export const extractionStatusKeys = [
 export type ExtractionStatus = (typeof extractionStatusKeys)[number];
 
 // Extraction method enum
-export const extractionMethodKeys = [
-  "pdf-parse",
-  "tesseract",
-  "ai-vision",
-  "none",
-] as const;
+export const extractionMethodKeys = ["pdf-parse", "tesseract", "ai-vision", "none"] as const;
 export type ExtractionMethod = (typeof extractionMethodKeys)[number];
 
 export const accountDocuments = sqliteTable(

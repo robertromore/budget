@@ -18,6 +18,7 @@ The notes column displays optional memos or descriptions for transactions.
 ## Inline Editing
 
 Click any notes cell to edit:
+
 1. A text input appears
 2. Type your note
 3. Press [[Enter]] or click outside to save
@@ -33,6 +34,7 @@ Click any notes cell to edit:
 ## Search Integration
 
 Notes are included in transaction search:
+
 - Search keywords match note content
 - Use search to find specific memos
 - Combine with filters for precision

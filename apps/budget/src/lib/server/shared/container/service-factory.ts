@@ -560,10 +560,7 @@ export class ServiceFactory {
     if (!this.instances.has(key)) {
       this.instances.set(
         key,
-        new AccountDocumentService(
-          this.getAccountDocumentRepository(),
-          this.getAccountRepository()
-        )
+        new AccountDocumentService(this.getAccountDocumentRepository(), this.getAccountRepository())
       );
     }
     return this.instances.get(key) as AccountDocumentService;

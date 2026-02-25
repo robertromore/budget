@@ -1,8 +1,8 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {eq} from "drizzle-orm";
-import {payees, users, workspaces, workspaceMembers} from "$lib/schema";
-import {setupTestDb, clearTestDb} from "../setup/test-db";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { eq } from "drizzle-orm";
+import { payees, users, workspaces, workspaceMembers } from "$lib/schema";
+import { setupTestDb, clearTestDb } from "../setup/test-db";
 
 describe("Payees tRPC Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -10,7 +10,7 @@ describe("Payees tRPC Integration Tests", () => {
   let workspaceId: number;
   let payeeCounter = 0;
 
-  function buildPayee(values: {name: string; notes?: string | null; deletedAt?: string}) {
+  function buildPayee(values: { name: string; notes?: string | null; deletedAt?: string }) {
     payeeCounter += 1;
     const baseSlug =
       values.name
@@ -82,8 +82,8 @@ describe("Payees tRPC Integration Tests", () => {
     test("should return all non-deleted payees", async () => {
       // Create test payees
       await db.insert(payees).values([
-        buildPayee({name: "Grocery Store", notes: "Local supermarket"}),
-        buildPayee({name: "Gas Station", notes: null}),
+        buildPayee({ name: "Grocery Store", notes: "Local supermarket" }),
+        buildPayee({ name: "Gas Station", notes: null }),
         buildPayee({
           name: "Deleted Payee",
           notes: "Should not appear",
@@ -100,7 +100,7 @@ describe("Payees tRPC Integration Tests", () => {
     });
 
     test("should include all required payee fields", async () => {
-      await db.insert(payees).values(buildPayee({name: "Test Payee", notes: "Test notes"}));
+      await db.insert(payees).values(buildPayee({ name: "Test Payee", notes: "Test notes" }));
 
       const result = await caller.payeeRoutes.all();
 
@@ -120,10 +120,10 @@ describe("Payees tRPC Integration Tests", () => {
     test("should load specific payee by ID", async () => {
       const [inserted] = await db
         .insert(payees)
-        .values(buildPayee({name: "Restaurant", notes: "Favorite dining spot"}))
+        .values(buildPayee({ name: "Restaurant", notes: "Favorite dining spot" }))
         .returning();
 
-      const result = await caller.payeeRoutes.load({id: inserted.id});
+      const result = await caller.payeeRoutes.load({ id: inserted.id });
 
       expect(result.id).toBe(inserted.id);
       expect(result.name).toBe("Restaurant");
@@ -131,7 +131,7 @@ describe("Payees tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent payee", async () => {
-      await expect(caller.payeeRoutes.load({id: 999})).rejects.toThrow(
+      await expect(caller.payeeRoutes.load({ id: 999 })).rejects.toThrow(
         "Payee with ID 999 not found"
       );
     });
@@ -139,10 +139,10 @@ describe("Payees tRPC Integration Tests", () => {
     test("should load deleted payee by ID", async () => {
       const [inserted] = await db
         .insert(payees)
-        .values(buildPayee({name: "Deleted Payee", deletedAt: "2023-01-01T00:00:00Z"}))
+        .values(buildPayee({ name: "Deleted Payee", deletedAt: "2023-01-01T00:00:00Z" }))
         .returning();
 
-      const result = await caller.payeeRoutes.load({id: inserted.id});
+      const result = await caller.payeeRoutes.load({ id: inserted.id });
       expect(result.id).toBe(inserted.id);
       expect(result.deletedAt).toBeTruthy();
     });
@@ -150,10 +150,10 @@ describe("Payees tRPC Integration Tests", () => {
     test("should handle string ID input (coercion)", async () => {
       const [inserted] = await db
         .insert(payees)
-        .values(buildPayee({name: "Coercion Test"}))
+        .values(buildPayee({ name: "Coercion Test" }))
         .returning();
 
-      const result = await caller.payeeRoutes.load({id: inserted.id.toString() as any});
+      const result = await caller.payeeRoutes.load({ id: inserted.id.toString() as any });
       expect(result.id).toBe(inserted.id);
     });
   });
@@ -181,7 +181,7 @@ describe("Payees tRPC Integration Tests", () => {
       });
 
       test("should create payee with only name (notes optional)", async () => {
-        const result = await caller.payeeRoutes.save({name: "Minimal Payee"});
+        const result = await caller.payeeRoutes.save({ name: "Minimal Payee" });
 
         expect(result.name).toBe("Minimal Payee");
         expect(result.notes).toBeNull();
@@ -192,7 +192,7 @@ describe("Payees tRPC Integration Tests", () => {
       test("should update existing payee", async () => {
         const [existing] = await db
           .insert(payees)
-          .values(buildPayee({name: "Original Name", notes: "Original notes"}))
+          .values(buildPayee({ name: "Original Name", notes: "Original notes" }))
           .returning();
 
         const result = await caller.payeeRoutes.save({
@@ -214,7 +214,7 @@ describe("Payees tRPC Integration Tests", () => {
       test("should clear notes when set to null", async () => {
         const [existing] = await db
           .insert(payees)
-          .values(buildPayee({name: "Payee with Notes", notes: "Original notes"}))
+          .values(buildPayee({ name: "Payee with Notes", notes: "Original notes" }))
           .returning();
 
         const result = await caller.payeeRoutes.save({
@@ -238,12 +238,14 @@ describe("Payees tRPC Integration Tests", () => {
 
     describe("Validation errors", () => {
       test("should reject empty name", async () => {
-        await expect(caller.payeeRoutes.save({name: ""})).rejects.toThrow("Payee name is required");
+        await expect(caller.payeeRoutes.save({ name: "" })).rejects.toThrow(
+          "Payee name is required"
+        );
       });
 
       test("should reject name longer than 50 characters", async () => {
         const longName = "a".repeat(51);
-        await expect(caller.payeeRoutes.save({name: longName})).rejects.toThrow(
+        await expect(caller.payeeRoutes.save({ name: longName })).rejects.toThrow(
           "Payee name must be less than 50 characters"
         );
       });
@@ -268,7 +270,7 @@ describe("Payees tRPC Integration Tests", () => {
         ];
 
         for (const invalidName of invalidNames) {
-          await expect(caller.payeeRoutes.save({name: invalidName})).rejects.toThrow(
+          await expect(caller.payeeRoutes.save({ name: invalidName })).rejects.toThrow(
             "Payee name contains invalid characters"
           );
         }
@@ -287,7 +289,7 @@ describe("Payees tRPC Integration Tests", () => {
         ];
 
         for (const validName of validNames) {
-          const result = await caller.payeeRoutes.save({name: validName});
+          const result = await caller.payeeRoutes.save({ name: validName });
           expect(result.name).toBe(validName);
         }
 
@@ -311,10 +313,10 @@ describe("Payees tRPC Integration Tests", () => {
     test("should soft delete payee by setting deletedAt", async () => {
       const [payee] = await db
         .insert(payees)
-        .values(buildPayee({name: "To Be Deleted"}))
+        .values(buildPayee({ name: "To Be Deleted" }))
         .returning();
 
-      const result = await caller.payeeRoutes.remove({id: payee.id});
+      const result = await caller.payeeRoutes.remove({ id: payee.id });
 
       expect(result.id).toBe(payee.id);
       expect(result.deletedAt).toBeTruthy();
@@ -326,7 +328,7 @@ describe("Payees tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent payee", async () => {
-      await expect(caller.payeeRoutes.remove({id: 999})).rejects.toThrow(
+      await expect(caller.payeeRoutes.remove({ id: 999 })).rejects.toThrow(
         "Payee with ID 999 not found"
       );
     });
@@ -342,15 +344,15 @@ describe("Payees tRPC Integration Tests", () => {
       const payees1 = await db
         .insert(payees)
         .values([
-          buildPayee({name: "Payee 1"}),
-          buildPayee({name: "Payee 2"}),
-          buildPayee({name: "Payee 3"}),
+          buildPayee({ name: "Payee 1" }),
+          buildPayee({ name: "Payee 2" }),
+          buildPayee({ name: "Payee 3" }),
         ])
         .returning();
 
       const idsToDelete = [payees1[0].id, payees1[2].id]; // Delete first and third
 
-      const result = await caller.payeeRoutes.delete({entities: idsToDelete});
+      const result = await caller.payeeRoutes.delete({ entities: idsToDelete });
 
       expect(result.deletedCount).toBe(2);
       expect(result.errors).toEqual([]);
@@ -362,13 +364,13 @@ describe("Payees tRPC Integration Tests", () => {
     });
 
     test("should handle empty array", async () => {
-      await expect(caller.payeeRoutes.delete({entities: []})).rejects.toThrow(
+      await expect(caller.payeeRoutes.delete({ entities: [] })).rejects.toThrow(
         "No payee IDs provided"
       );
     });
 
     test("should handle non-existent IDs gracefully", async () => {
-      const result = await caller.payeeRoutes.delete({entities: [999, 1000]});
+      const result = await caller.payeeRoutes.delete({ entities: [999, 1000] });
       expect(result.deletedCount).toBe(0);
       expect(result.errors).toHaveLength(2);
     });
@@ -376,7 +378,7 @@ describe("Payees tRPC Integration Tests", () => {
     test("should handle mix of valid and invalid IDs", async () => {
       const [validPayee] = await db
         .insert(payees)
-        .values(buildPayee({name: "Valid Payee"}))
+        .values(buildPayee({ name: "Valid Payee" }))
         .returning();
 
       const result = await caller.payeeRoutes.delete({
@@ -392,27 +394,27 @@ describe("Payees tRPC Integration Tests", () => {
     test("should apply rate limiting to save operation", async () => {
       // This test verifies rate limiting is applied but doesn't test the actual limits
       // as that would require multiple rapid requests which could be flaky
-      const result = await caller.payeeRoutes.save({name: "Rate Limited Test"});
+      const result = await caller.payeeRoutes.save({ name: "Rate Limited Test" });
       expect(result.name).toBe("Rate Limited Test");
     });
 
     test("should apply rate limiting to remove operation", async () => {
       const [payee] = await db
         .insert(payees)
-        .values(buildPayee({name: "Rate Limited Delete"}))
+        .values(buildPayee({ name: "Rate Limited Delete" }))
         .returning();
 
-      const result = await caller.payeeRoutes.remove({id: payee.id});
+      const result = await caller.payeeRoutes.remove({ id: payee.id });
       expect(result.deletedAt).toBeTruthy();
     });
 
     test("should apply rate limiting to bulk delete operation", async () => {
       const [payee] = await db
         .insert(payees)
-        .values(buildPayee({name: "Rate Limited Bulk Delete"}))
+        .values(buildPayee({ name: "Rate Limited Bulk Delete" }))
         .returning();
 
-      const result = await caller.payeeRoutes.delete({entities: [payee.id]});
+      const result = await caller.payeeRoutes.delete({ entities: [payee.id] });
       expect(result.deletedCount).toBe(1);
       expect(result.errors).toEqual([]);
     });
@@ -421,8 +423,8 @@ describe("Payees tRPC Integration Tests", () => {
   describe("Data integrity", () => {
     test("should handle concurrent operations", async () => {
       // Create multiple payees simultaneously
-      const promises = Array.from({length: 5}, (_, i) =>
-        caller.payeeRoutes.save({name: `Concurrent Payee ${i}`})
+      const promises = Array.from({ length: 5 }, (_, i) =>
+        caller.payeeRoutes.save({ name: `Concurrent Payee ${i}` })
       );
 
       const results = await Promise.all(promises);
@@ -459,7 +461,7 @@ describe("Payees tRPC Integration Tests", () => {
       ];
 
       for (const name of numericNames) {
-        const result = await caller.payeeRoutes.save({name});
+        const result = await caller.payeeRoutes.save({ name });
         expect(result.name).toBe(name);
       }
     });
@@ -468,7 +470,7 @@ describe("Payees tRPC Integration Tests", () => {
       const names = ["UPPERCASE", "lowercase", "MixedCase", "CamelCase"];
 
       for (const name of names) {
-        const result = await caller.payeeRoutes.save({name});
+        const result = await caller.payeeRoutes.save({ name });
         expect(result.name).toBe(name); // Should preserve original case
       }
 
@@ -488,7 +490,7 @@ describe("Payees tRPC Integration Tests", () => {
 
       // Values are trimmed before storage; internal whitespace is preserved.
       for (const name of names) {
-        const result = await caller.payeeRoutes.save({name});
+        const result = await caller.payeeRoutes.save({ name });
         expect(result.name).toBe(name.trim());
       }
 
@@ -500,8 +502,8 @@ describe("Payees tRPC Integration Tests", () => {
       // System should allow duplicate names (business requirement)
       const duplicateName = "Duplicate Store";
 
-      const payee1 = await caller.payeeRoutes.save({name: duplicateName});
-      const payee2 = await caller.payeeRoutes.save({name: duplicateName});
+      const payee1 = await caller.payeeRoutes.save({ name: duplicateName });
+      const payee2 = await caller.payeeRoutes.save({ name: duplicateName });
 
       expect(payee1.name).toBe(duplicateName);
       expect(payee2.name).toBe(duplicateName);

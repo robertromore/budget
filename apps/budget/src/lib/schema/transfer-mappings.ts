@@ -72,7 +72,10 @@ export const transferMappings = sqliteTable(
     index("transfer_mappings_normalized_idx").on(table.normalizedString),
 
     // Composite indexes for mapping matching
-    index("transfer_mappings_workspace_normalized_idx").on(table.workspaceId, table.normalizedString),
+    index("transfer_mappings_workspace_normalized_idx").on(
+      table.workspaceId,
+      table.normalizedString
+    ),
 
     // Unique constraint: one raw string maps to one account per workspace
     uniqueIndex("transfer_mappings_workspace_raw_unique_idx").on(
@@ -114,7 +117,8 @@ export const insertTransferMappingSchema = createInsertSchema(transferMappings);
 
 export const formInsertTransferMappingSchema = createInsertSchema(transferMappings, {
   workspaceId: (schema) => schema.optional(),
-  rawPayeeString: (schema) => schema.min(1, "Payee string is required").max(500, "Payee string too long"),
+  rawPayeeString: (schema) =>
+    schema.min(1, "Payee string is required").max(500, "Payee string too long"),
   normalizedString: (schema) => schema.max(500).optional().nullable(),
   targetAccountId: (schema) => schema.positive("Invalid target account ID"),
   trigger: (schema) => schema,

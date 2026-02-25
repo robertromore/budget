@@ -6,7 +6,8 @@ related: [intelligence-input-button, settings-llm]
 
 # AI Assistant
 
-The AI Assistant is your personal financial advisor, available to answer questions about your budget, spending, and finances.
+The AI Assistant is your personal financial advisor, available to answer
+questions about your budget, spending, and finances.
 
 ## Opening the Chat
 

@@ -11,7 +11,9 @@ import { nowISOString } from "$lib/utils/dates";
 import { z } from "zod";
 
 const payeeCategoryService = lazyService(() => serviceFactory.getPayeeCategoryService());
-const payeeCategoryRecommendationService = lazyService(() => serviceFactory.getPayeeCategoryRecommendationService());
+const payeeCategoryRecommendationService = lazyService(() =>
+  serviceFactory.getPayeeCategoryRecommendationService()
+);
 
 export const payeeCategoriesRoutes = t.router({
   // ================================================================================

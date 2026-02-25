@@ -208,9 +208,8 @@ export const mlHealthRoutes = t.router({
         return {
           scores,
           total: scores.length,
-          highRiskCount: scores.filter(
-            (s) => s.riskLevel === "high" || s.riskLevel === "critical"
-          ).length,
+          highRiskCount: scores.filter((s) => s.riskLevel === "high" || s.riskLevel === "critical")
+            .length,
         };
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";

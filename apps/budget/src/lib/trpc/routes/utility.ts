@@ -24,8 +24,14 @@ const createUsageRecordSchema = z.object({
   transactionId: z.number().int().positive().optional(),
   periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  statementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  statementDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   usageAmount: z.number().min(0, "Usage amount must be non-negative"),
   usageUnit: z.enum(usageUnitEnum),
   meterReadingStart: z.number().optional(),
@@ -43,10 +49,24 @@ const createUsageRecordSchema = z.object({
 const updateUsageRecordSchema = z.object({
   id: z.number().int().positive(),
   transactionId: z.number().int().positive().optional().nullable(),
-  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  statementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  periodStart: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  periodEnd: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .nullable(),
+  statementDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .nullable(),
   usageAmount: z.number().min(0).optional(),
   usageUnit: z.enum(usageUnitEnum).optional(),
   meterReadingStart: z.number().optional().nullable(),
@@ -74,7 +94,10 @@ const rateTierSchema = z.object({
   usageMax: z.number().positive().optional(),
   ratePerUnit: z.number().positive(),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  expirationDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 const setRateTiersSchema = z.object({

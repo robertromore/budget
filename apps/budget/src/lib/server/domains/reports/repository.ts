@@ -34,10 +34,7 @@ export class ReportTemplateRepository extends BaseRepository<
   /**
    * Create a new report template
    */
-  override async create(
-    data: NewReportTemplate,
-    workspaceId: number
-  ): Promise<ReportTemplate> {
+  override async create(data: NewReportTemplate, workspaceId: number): Promise<ReportTemplate> {
     const [template] = await db
       .insert(reportTemplates)
       .values({ ...data, workspaceId })
@@ -53,19 +50,11 @@ export class ReportTemplateRepository extends BaseRepository<
   /**
    * Find template by ID with workspace filtering
    */
-  override async findById(
-    id: number,
-    workspaceId: number
-  ): Promise<ReportTemplate | null> {
+  override async findById(id: number, workspaceId: number): Promise<ReportTemplate | null> {
     const result = await db
       .select()
       .from(reportTemplates)
-      .where(
-        and(
-          eq(reportTemplates.id, id),
-          eq(reportTemplates.workspaceId, workspaceId)
-        )
-      )
+      .where(and(eq(reportTemplates.id, id), eq(reportTemplates.workspaceId, workspaceId)))
       .limit(1);
 
     return result[0] || null;
@@ -108,12 +97,7 @@ export class ReportTemplateRepository extends BaseRepository<
     const result = await db
       .select()
       .from(reportTemplates)
-      .where(
-        and(
-          eq(reportTemplates.workspaceId, workspaceId),
-          eq(reportTemplates.isDefault, true)
-        )
-      )
+      .where(and(eq(reportTemplates.workspaceId, workspaceId), eq(reportTemplates.isDefault, true)))
       .limit(1);
 
     return result[0] || null;
@@ -133,12 +117,7 @@ export class ReportTemplateRepository extends BaseRepository<
         ...data,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(
-        and(
-          eq(reportTemplates.id, id),
-          eq(reportTemplates.workspaceId, workspaceId)
-        )
-      )
+      .where(and(eq(reportTemplates.id, id), eq(reportTemplates.workspaceId, workspaceId)))
       .returning();
 
     if (!updated) {
@@ -154,12 +133,7 @@ export class ReportTemplateRepository extends BaseRepository<
   override async delete(id: number, workspaceId: number): Promise<void> {
     await db
       .delete(reportTemplates)
-      .where(
-        and(
-          eq(reportTemplates.id, id),
-          eq(reportTemplates.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(reportTemplates.id, id), eq(reportTemplates.workspaceId, workspaceId)));
   }
 
   /**
@@ -171,10 +145,7 @@ export class ReportTemplateRepository extends BaseRepository<
       .update(reportTemplates)
       .set({ isDefault: false, updatedAt: getCurrentTimestamp() })
       .where(
-        and(
-          eq(reportTemplates.workspaceId, workspaceId),
-          eq(reportTemplates.isDefault, true)
-        )
+        and(eq(reportTemplates.workspaceId, workspaceId), eq(reportTemplates.isDefault, true))
       );
 
     // Then set the new default
@@ -195,11 +166,6 @@ export class ReportTemplateRepository extends BaseRepository<
         lastUsedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       })
-      .where(
-        and(
-          eq(reportTemplates.id, id),
-          eq(reportTemplates.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(reportTemplates.id, id), eq(reportTemplates.workspaceId, workspaceId)));
   }
 }

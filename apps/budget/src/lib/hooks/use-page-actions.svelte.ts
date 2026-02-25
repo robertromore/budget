@@ -1,5 +1,5 @@
-import { onDestroy } from 'svelte';
-import { getPageActionsContext, type PageAction } from '$lib/stores/page-actions.svelte';
+import { onDestroy } from "svelte";
+import { getPageActionsContext, type PageAction } from "$lib/stores/page-actions.svelte";
 
 /**
  * Hook for registering page actions to be displayed in the header
@@ -27,13 +27,13 @@ import { getPageActionsContext, type PageAction } from '$lib/stores/page-actions
  * ```
  */
 export function usePageActions(actions: PageAction[]) {
-	const context = getPageActionsContext();
+  const context = getPageActionsContext();
 
-	if (context) {
-		context.register(actions);
+  if (context) {
+    context.register(actions);
 
-		onDestroy(() => {
-			context.clear();
-		});
-	}
+    onDestroy(() => {
+      context.clear();
+    });
+  }
 }

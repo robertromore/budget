@@ -1,17 +1,17 @@
-import { renderComponent } from '$lib/components/ui/data-table';
-import type { BudgetEnforcementLevel, BudgetProgressStatus } from '$lib/schema/budgets';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
-import type { ColumnDef } from '@tanstack/table-core';
-import { formatCurrency } from '$lib/utils/formatters';
-import { calculateActualSpent } from '$lib/utils/budget-calculations';
-import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
-import BudgetTypeCell from '../../../budgets/(components)/(cells)/budget-type-cell.svelte';
-import BudgetStatusCell from '../../../budgets/(components)/(cells)/budget-status-cell.svelte';
-import BudgetNameCell from '../../../budgets/(components)/(cells)/budget-name-cell.svelte';
-import BudgetRemainingCell from '../../../budgets/(components)/(cells)/budget-remaining-cell.svelte';
-import BudgetActionsCell from '../../../budgets/(components)/(cells)/budget-actions-cell.svelte';
-import BudgetSelectionCheckboxCell from '../(components)/(cells)/budget-selection-checkbox-cell.svelte';
-import SelectAllCheckboxCell from '../(components)/(cells)/select-all-checkbox-cell.svelte';
+import { renderComponent } from "$lib/components/ui/data-table";
+import type { BudgetEnforcementLevel, BudgetProgressStatus } from "$lib/schema/budgets";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import type { ColumnDef } from "@tanstack/table-core";
+import { formatCurrency } from "$lib/utils/formatters";
+import { calculateActualSpent } from "$lib/utils/budget-calculations";
+import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
+import BudgetTypeCell from "../../../budgets/(components)/(cells)/budget-type-cell.svelte";
+import BudgetStatusCell from "../../../budgets/(components)/(cells)/budget-status-cell.svelte";
+import BudgetNameCell from "../../../budgets/(components)/(cells)/budget-name-cell.svelte";
+import BudgetRemainingCell from "../../../budgets/(components)/(cells)/budget-remaining-cell.svelte";
+import BudgetActionsCell from "../../../budgets/(components)/(cells)/budget-actions-cell.svelte";
+import BudgetSelectionCheckboxCell from "../(components)/(cells)/budget-selection-checkbox-cell.svelte";
+import SelectAllCheckboxCell from "../(components)/(cells)/select-all-checkbox-cell.svelte";
 
 interface BudgetColumnActions {
   onView: (budget: BudgetWithRelations) => void;
@@ -36,7 +36,7 @@ function getAllocated(budget: BudgetWithRelations): number {
   }
 
   // Fall back to budget metadata
-  const metadataAmount = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as
+  const metadataAmount = (budget.metadata as Record<string, unknown>)?.["allocatedAmount"] as
     | number
     | undefined;
   if (metadataAmount) {
@@ -51,25 +51,25 @@ function getConsumed(budget: BudgetWithRelations): number {
 }
 
 function resolveStatus(budget: BudgetWithRelations): BudgetProgressStatus {
-  if (budget.status !== 'active') return 'paused';
+  if (budget.status !== "active") return "paused";
   const allocated = getAllocated(budget);
   const consumed = getConsumed(budget);
-  if (!allocated) return 'setup_needed';
+  if (!allocated) return "setup_needed";
 
   const ratio = consumed / allocated;
-  if (ratio > 1) return 'over';
-  if (ratio >= 0.8) return 'approaching';
-  return 'on_track';
+  if (ratio > 1) return "over";
+  if (ratio >= 0.8) return "approaching";
+  return "on_track";
 }
 
 function resolveEnforcement(budget: BudgetWithRelations): BudgetEnforcementLevel {
-  return (budget.enforcementLevel ?? 'warning') as BudgetEnforcementLevel;
+  return (budget.enforcementLevel ?? "warning") as BudgetEnforcementLevel;
 }
 
 export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelations>[] {
   return [
     {
-      id: 'select-col',
+      id: "select-col",
       header: ({ table }) => {
         return renderComponent(SelectAllCheckboxCell, { table });
       },
@@ -85,9 +85,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       enableHiding: false,
     },
     {
-      accessorKey: 'name',
-      id: 'name',
-      header: 'Name',
+      accessorKey: "name",
+      id: "name",
+      header: "Name",
       cell: (info) => {
         const budget = info.row.original;
         return renderComponent(BudgetNameCell, {
@@ -98,9 +98,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       enableSorting: true,
     },
     {
-      accessorKey: 'type',
-      id: 'type',
-      header: 'Type',
+      accessorKey: "type",
+      id: "type",
+      header: "Type",
       cell: (info) => {
         const budget = info.row.original;
         return renderComponent(BudgetTypeCell, {
@@ -111,9 +111,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       enableSorting: true,
     },
     {
-      accessorKey: 'scope',
-      id: 'scope',
-      header: 'Scope',
+      accessorKey: "scope",
+      id: "scope",
+      header: "Scope",
       cell: (info) => {
         const scope = info.getValue() as string;
         return scope.charAt(0).toUpperCase() + scope.slice(1);
@@ -122,8 +122,8 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       enableSorting: true,
     },
     {
-      id: 'allocated',
-      header: 'Allocated',
+      id: "allocated",
+      header: "Allocated",
       cell: (info) => {
         const budget = info.row.original;
         const allocated = getAllocated(budget);
@@ -138,8 +138,8 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
     },
     {
-      id: 'consumed',
-      header: 'Consumed',
+      id: "consumed",
+      header: "Consumed",
       cell: (info) => {
         const budget = info.row.original;
         const consumed = getConsumed(budget);
@@ -154,8 +154,8 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
     },
     {
-      id: 'remaining',
-      header: 'Remaining',
+      id: "remaining",
+      header: "Remaining",
       cell: (info) => {
         const budget = info.row.original;
         return renderComponent(BudgetRemainingCell, {
@@ -171,8 +171,8 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
     },
     {
-      id: 'progress',
-      header: 'Progress',
+      id: "progress",
+      header: "Progress",
       cell: (info) => {
         const budget = info.row.original;
         const allocated = getAllocated(budget);
@@ -185,17 +185,17 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
           allocated,
           status,
           enforcementLevel: enforcement,
-          consumedLabel: budget.type === 'goal-based' ? 'Saved' : 'Spent',
-          label: '',
+          consumedLabel: budget.type === "goal-based" ? "Saved" : "Spent",
+          label: "",
         });
       },
       enableColumnFilter: false,
       enableSorting: false,
     },
     {
-      accessorKey: 'status',
-      id: 'status',
-      header: 'Status',
+      accessorKey: "status",
+      id: "status",
+      header: "Status",
       cell: (info) => {
         const budget = info.row.original;
         return renderComponent(BudgetStatusCell, {
@@ -206,8 +206,8 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       enableSorting: true,
     },
     {
-      id: 'actions',
-      header: '',
+      id: "actions",
+      header: "",
       cell: (info) => {
         const budget = info.row.original;
         return renderComponent(BudgetActionsCell, {

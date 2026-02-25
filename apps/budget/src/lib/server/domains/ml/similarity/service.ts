@@ -9,17 +9,14 @@ import { categories, payees } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
-import type {
-  MerchantCanonical,
-  PayeeSimilarityMatch
-} from "../types";
+import type { MerchantCanonical, PayeeSimilarityMatch } from "../types";
 import { createLSHIndex, type LSHIndex } from "./lsh-index";
 import { createMerchantCanonicalizer, type MerchantCanonicalizer } from "./merchant-canonicalizer";
 import {
   computeCompositeSimilarity,
   createTFIDFVectorizer,
   normalizeText,
-  type TFIDFVectorizer
+  type TFIDFVectorizer,
 } from "./text-similarity";
 
 // =============================================================================
@@ -293,7 +290,8 @@ export function createSimilarityService(
             payeeId: m.payeeId,
             payeeName: m.payeeName,
             similarityScore: m.similarityScore,
-            matchType: m.matchType === "exact" ? "exact" : m.matchType === "semantic" ? "semantic" : "fuzzy",
+            matchType:
+              m.matchType === "exact" ? "exact" : m.matchType === "semantic" ? "semantic" : "fuzzy",
             category: data?.categoryId
               ? {
                   id: data.categoryId,
@@ -315,7 +313,10 @@ export function createSimilarityService(
       return canonicalizer.matchPayee(workspaceId, transactionDescription);
     },
 
-    async getCanonical(workspaceId: number, merchantName: string): Promise<MerchantCanonical | null> {
+    async getCanonical(
+      workspaceId: number,
+      merchantName: string
+    ): Promise<MerchantCanonical | null> {
       const canonicalizer = getCanonicalizer(workspaceId);
       return canonicalizer.getCanonical(workspaceId, merchantName);
     },
@@ -513,7 +514,7 @@ export function createSimilarityService(
         lshIndex.add(payee.id, textToIndex, {
           categoryId: payee.defaultCategoryId,
           categoryName: payee.defaultCategoryId
-            ? categoryMap.get(payee.defaultCategoryId) ?? undefined
+            ? (categoryMap.get(payee.defaultCategoryId) ?? undefined)
             : undefined,
           transactionCount: 0, // Not tracked in schema
         });

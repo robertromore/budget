@@ -6,11 +6,13 @@ related: [budget-summary, budget-tabs, budgets-list]
 
 # Budgets Page
 
-The Budgets page helps you manage your spending by setting up budgets for different categories.
+The Budgets page helps you manage your spending by setting up budgets for
+different categories.
 
 ## Overview
 
 Budgets allow you to:
+
 - Set spending limits for categories
 - Track actual spending vs. budgeted amounts
 - Get alerts when approaching or exceeding limits

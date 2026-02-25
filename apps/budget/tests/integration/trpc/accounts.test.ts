@@ -1,7 +1,7 @@
-import {describe, it, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {TRPCError} from "@trpc/server";
-import {setupTestDb, clearTestDb, seedTestData} from "../setup/test-db";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { TRPCError } from "@trpc/server";
+import { setupTestDb, clearTestDb, seedTestData } from "../setup/test-db";
 
 describe("Accounts Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -9,7 +9,7 @@ describe("Accounts Integration Tests", () => {
 
   beforeEach(async () => {
     db = await setupTestDb();
-    const ctx = {db, isTest: true};
+    const ctx = { db, isTest: true };
     caller = createCaller(ctx as any);
   });
 
@@ -27,7 +27,7 @@ describe("Accounts Integration Tests", () => {
 
     it("should return all non-deleted accounts with transactions", async () => {
       // Seed test data
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
 
       const result = await caller.accountRoutes.all();
 
@@ -57,10 +57,10 @@ describe("Accounts Integration Tests", () => {
     });
 
     it("should not return deleted accounts", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
 
       // Delete one account
-      await caller.accountRoutes.remove({id: accounts[0].id});
+      await caller.accountRoutes.remove({ id: accounts[0].id });
 
       const result = await caller.accountRoutes.all();
       expect(result).toHaveLength(1);
@@ -85,9 +85,9 @@ describe("Accounts Integration Tests", () => {
 
   describe("accounts.load - Load Single Account", () => {
     it("should return account with transactions when valid ID provided", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
 
-      const result = await caller.accountRoutes.load({id: accounts[0].id});
+      const result = await caller.accountRoutes.load({ id: accounts[0].id });
 
       expect(result).toEqual(
         expect.objectContaining({
@@ -110,10 +110,10 @@ describe("Accounts Integration Tests", () => {
     });
 
     it("should throw NOT_FOUND error for non-existent account", async () => {
-      await expect(caller.accountRoutes.load({id: 99999})).rejects.toThrow(TRPCError);
+      await expect(caller.accountRoutes.load({ id: 99999 })).rejects.toThrow(TRPCError);
 
       try {
-        await caller.accountRoutes.load({id: 99999});
+        await caller.accountRoutes.load({ id: 99999 });
       } catch (error) {
         expect(error).toBeInstanceOf(TRPCError);
         expect((error as TRPCError).code).toBe("NOT_FOUND");
@@ -122,27 +122,27 @@ describe("Accounts Integration Tests", () => {
     });
 
     it("should throw NOT_FOUND error for deleted account", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
 
       // Delete the account
-      await caller.accountRoutes.remove({id: accounts[0].id});
+      await caller.accountRoutes.remove({ id: accounts[0].id });
 
-      await expect(caller.accountRoutes.load({id: accounts[0].id})).rejects.toThrow(TRPCError);
+      await expect(caller.accountRoutes.load({ id: accounts[0].id })).rejects.toThrow(TRPCError);
     });
 
     it("should handle string ID conversion", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
 
       // Test with string ID (should be coerced to number)
-      const result = await caller.accountRoutes.load({id: accounts[0].id.toString() as any});
+      const result = await caller.accountRoutes.load({ id: accounts[0].id.toString() as any });
 
       expect(result.id).toBe(accounts[0].id);
     });
 
     it("should reject invalid ID formats", async () => {
-      await expect(caller.accountRoutes.load({id: "invalid" as any})).rejects.toThrow();
+      await expect(caller.accountRoutes.load({ id: "invalid" as any })).rejects.toThrow();
 
-      await expect(caller.accountRoutes.load({id: -1})).rejects.toThrow();
+      await expect(caller.accountRoutes.load({ id: -1 })).rejects.toThrow();
     });
   });
 
@@ -186,29 +186,29 @@ describe("Accounts Integration Tests", () => {
 
     it("should auto-generate slug from name", async () => {
       const testCases = [
-        {name: "Test Account", expectedSlug: "test-account"},
-        {name: "Account with Multiple Words", expectedSlug: "account-with-multiple-words"},
-        {name: "UPPERCASE ACCOUNT", expectedSlug: "uppercase-account"},
+        { name: "Test Account", expectedSlug: "test-account" },
+        { name: "Account with Multiple Words", expectedSlug: "account-with-multiple-words" },
+        { name: "UPPERCASE ACCOUNT", expectedSlug: "uppercase-account" },
       ];
 
-      for (const {name, expectedSlug} of testCases) {
-        const result = await caller.accountRoutes.save({name});
+      for (const { name, expectedSlug } of testCases) {
+        const result = await caller.accountRoutes.save({ name });
         expect(result.slug).toBe(expectedSlug);
       }
     });
 
     it("should reject account names that are too short", async () => {
-      await expect(caller.accountRoutes.save({name: "a"})).rejects.toThrow();
+      await expect(caller.accountRoutes.save({ name: "a" })).rejects.toThrow();
     });
 
     it("should reject account names that are too long", async () => {
       const longName = "a".repeat(51);
-      await expect(caller.accountRoutes.save({name: longName})).rejects.toThrow();
+      await expect(caller.accountRoutes.save({ name: longName })).rejects.toThrow();
     });
 
     it("should reject account names with invalid characters", async () => {
       await expect(
-        caller.accountRoutes.save({name: "test<script>alert('xss')</script>"})
+        caller.accountRoutes.save({ name: "test<script>alert('xss')</script>" })
       ).rejects.toThrow();
     });
 
@@ -235,7 +235,7 @@ describe("Accounts Integration Tests", () => {
 
   describe("accounts.save - Update Account", () => {
     it("should update existing account with valid data", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
       const accountToUpdate = accounts[0];
 
       const updatedData = {
@@ -276,7 +276,7 @@ describe("Accounts Integration Tests", () => {
     });
 
     it("should update only provided fields", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
       const accountToUpdate = accounts[0];
       const originalName = accountToUpdate.name;
 
@@ -293,10 +293,10 @@ describe("Accounts Integration Tests", () => {
 
   describe("accounts.remove - Delete Account", () => {
     it("should soft delete existing account", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
       const accountToDelete = accounts[0];
 
-      const result = await caller.accountRoutes.remove({id: accountToDelete.id});
+      const result = await caller.accountRoutes.remove({ id: accountToDelete.id });
 
       expect(result).toEqual(
         expect.objectContaining({
@@ -311,10 +311,10 @@ describe("Accounts Integration Tests", () => {
     });
 
     it("should throw NOT_FOUND error for non-existent account", async () => {
-      await expect(caller.accountRoutes.remove({id: 99999})).rejects.toThrow(TRPCError);
+      await expect(caller.accountRoutes.remove({ id: 99999 })).rejects.toThrow(TRPCError);
 
       try {
-        await caller.accountRoutes.remove({id: 99999});
+        await caller.accountRoutes.remove({ id: 99999 });
       } catch (error) {
         expect(error).toBeInstanceOf(TRPCError);
         expect((error as TRPCError).code).toBe("NOT_FOUND");
@@ -327,18 +327,18 @@ describe("Accounts Integration Tests", () => {
     });
 
     it("should reject negative account IDs", async () => {
-      await expect(caller.accountRoutes.remove({id: -1})).rejects.toThrow();
+      await expect(caller.accountRoutes.remove({ id: -1 })).rejects.toThrow();
     });
 
     it("should not permanently delete account data", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
       const accountToDelete = accounts[0];
 
-      await caller.accountRoutes.remove({id: accountToDelete.id});
+      await caller.accountRoutes.remove({ id: accountToDelete.id });
 
       // Check that the account still exists in the database with deletedAt timestamp
       const deletedAccount = await db.query.accounts.findFirst({
-        where: (accounts, {eq}) => eq(accounts.id, accountToDelete.id),
+        where: (accounts, { eq }) => eq(accounts.id, accountToDelete.id),
       });
 
       expect(deletedAccount).toBeDefined();
@@ -357,7 +357,7 @@ describe("Accounts Integration Tests", () => {
       expect(created.id).toBeDefined();
 
       // Read account
-      const loaded = await caller.accountRoutes.load({id: created.id});
+      const loaded = await caller.accountRoutes.load({ id: created.id });
       expect(loaded.name).toBe("Lifecycle Test Account");
 
       // Update account
@@ -369,27 +369,27 @@ describe("Accounts Integration Tests", () => {
       expect(updated.name).toBe("Updated Lifecycle Account");
 
       // Delete account
-      const deleted = await caller.accountRoutes.remove({id: created.id});
+      const deleted = await caller.accountRoutes.remove({ id: created.id });
       expect(deleted.deletedAt).toBeDefined();
 
       // Verify deletion
-      await expect(caller.accountRoutes.load({id: created.id})).rejects.toThrow(TRPCError);
+      await expect(caller.accountRoutes.load({ id: created.id })).rejects.toThrow(TRPCError);
     });
 
     it("should maintain referential integrity with transactions", async () => {
-      const {accounts} = await seedTestData(db);
+      const { accounts } = await seedTestData(db);
       const accountWithTransactions = accounts[0];
 
       // Verify account has transactions
-      const loadedAccount = await caller.accountRoutes.load({id: accountWithTransactions.id});
+      const loadedAccount = await caller.accountRoutes.load({ id: accountWithTransactions.id });
       expect(loadedAccount.transactions.length).toBeGreaterThan(0);
 
       // Delete account
-      await caller.accountRoutes.remove({id: accountWithTransactions.id});
+      await caller.accountRoutes.remove({ id: accountWithTransactions.id });
 
       // Transactions should still exist but account should not be accessible
       // This tests soft delete behavior
-      await expect(caller.accountRoutes.load({id: accountWithTransactions.id})).rejects.toThrow(
+      await expect(caller.accountRoutes.load({ id: accountWithTransactions.id })).rejects.toThrow(
         TRPCError
       );
     });
@@ -403,7 +403,7 @@ describe("Accounts Integration Tests", () => {
       const created = await caller.accountRoutes.save(accountData);
 
       // Simulate concurrent updates
-      const updatePromises = Array.from({length: 5}, (_, index) =>
+      const updatePromises = Array.from({ length: 5 }, (_, index) =>
         caller.accountRoutes.save({
           id: created.id,
           notes: `Concurrent update ${index}`,
@@ -418,7 +418,7 @@ describe("Accounts Integration Tests", () => {
       });
 
       // Final state should be consistent
-      const final = await caller.accountRoutes.load({id: created.id});
+      const final = await caller.accountRoutes.load({ id: created.id });
       expect(final.notes).toMatch(/^Concurrent update \d$/);
     });
   });

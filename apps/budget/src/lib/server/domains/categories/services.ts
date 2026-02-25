@@ -480,10 +480,7 @@ export class CategoryService {
   /**
    * Get detailed category statistics including monthly average and amount range
    */
-  async getCategoryDetailedStats(
-    id: number,
-    workspaceId: number
-  ): Promise<CategoryDetailedStats> {
+  async getCategoryDetailedStats(id: number, workspaceId: number): Promise<CategoryDetailedStats> {
     await this.getCategoryById(id, workspaceId); // Verify exists
     return await this.repository.getDetailedStats(id, workspaceId);
   }

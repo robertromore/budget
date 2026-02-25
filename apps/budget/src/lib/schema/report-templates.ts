@@ -128,7 +128,12 @@ export const PREDEFINED_TEMPLATES: Record<
         annotations: false,
       },
       charts: { pieChart: true, barChart: true, lineChart: false },
-      display: { showCurrency: true, showPercentages: true, groupByCategory: true, sortBy: "amount" },
+      display: {
+        showCurrency: true,
+        showPercentages: true,
+        groupByCategory: true,
+        sortBy: "amount",
+      },
     },
   },
   budget_vs_actual: {
@@ -190,7 +195,12 @@ export const PREDEFINED_TEMPLATES: Record<
         annotations: true,
       },
       charts: { pieChart: false, barChart: false, lineChart: false },
-      display: { showCurrency: true, showPercentages: false, groupByCategory: true, sortBy: "category" },
+      display: {
+        showCurrency: true,
+        showPercentages: false,
+        groupByCategory: true,
+        sortBy: "category",
+      },
     },
   },
 };
@@ -223,8 +233,12 @@ export const reportTemplates = sqliteTable(
     useCount: integer("use_count").default(0),
 
     // Timestamps
-    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     index("report_templates_workspace_idx").on(table.workspaceId),

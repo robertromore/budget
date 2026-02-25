@@ -5,13 +5,13 @@
  * preferences, and account management.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {createId} from "@paralleldrive/cuid2";
-import type {UserPreferences} from "../../../src/lib/schema/users";
+import { eq } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { createId } from "@paralleldrive/cuid2";
+import type { UserPreferences } from "../../../src/lib/schema/users";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -21,7 +21,7 @@ interface TestContext {
 
 async function setupTestContext(): Promise<TestContext> {
   const db = await setupTestDb();
-  return {db};
+  return { db };
 }
 
 describe("Authentication", () => {
@@ -163,10 +163,7 @@ describe("Authentication", () => {
         })
         .returning();
 
-      await ctx.db
-        .update(schema.users)
-        .set({role: "admin"})
-        .where(eq(schema.users.id, user.id));
+      await ctx.db.update(schema.users).set({ role: "admin" }).where(eq(schema.users.id, user.id));
 
       const updated = await ctx.db.query.users.findFirst({
         where: eq(schema.users.id, user.id),
@@ -208,7 +205,7 @@ describe("Authentication", () => {
 
       await ctx.db
         .update(schema.users)
-        .set({emailVerified: true})
+        .set({ emailVerified: true })
         .where(eq(schema.users.id, user.id));
 
       const verified = await ctx.db.query.users.findFirst({
@@ -270,7 +267,7 @@ describe("Authentication", () => {
 
       await ctx.db
         .update(schema.users)
-        .set({preferences: JSON.stringify(updatedPrefs)})
+        .set({ preferences: JSON.stringify(updatedPrefs) })
         .where(eq(schema.users.id, user.id));
 
       const updated = await ctx.db.query.users.findFirst({
@@ -338,7 +335,7 @@ describe("Authentication", () => {
 
       await ctx.db
         .update(schema.users)
-        .set({image: "https://example.com/new.jpg"})
+        .set({ image: "https://example.com/new.jpg" })
         .where(eq(schema.users.id, user.id));
 
       const updated = await ctx.db.query.users.findFirst({
@@ -414,10 +411,7 @@ describe("Authentication", () => {
         .returning();
 
       const now = new Date();
-      await ctx.db
-        .update(schema.users)
-        .set({deletedAt: now})
-        .where(eq(schema.users.id, user.id));
+      await ctx.db.update(schema.users).set({ deletedAt: now }).where(eq(schema.users.id, user.id));
 
       const deleted = await ctx.db.query.users.findFirst({
         where: eq(schema.users.id, user.id),
@@ -441,7 +435,7 @@ describe("Authentication", () => {
 
       await ctx.db
         .update(schema.users)
-        .set({deletedAt: null})
+        .set({ deletedAt: null })
         .where(eq(schema.users.id, user.id));
 
       const restored = await ctx.db.query.users.findFirst({
@@ -467,7 +461,7 @@ describe("Authentication", () => {
 
       await ctx.db
         .update(schema.users)
-        .set({name: "Updated Name"})
+        .set({ name: "Updated Name" })
         .where(eq(schema.users.id, user.id));
 
       const updated = await ctx.db.query.users.findFirst({

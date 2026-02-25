@@ -11,6 +11,7 @@ A step-by-step wizard that walks you through creating a transaction.
 ## When to Use
 
 Guided entry is helpful when:
+
 - You're new to the app
 - You want suggestions at each step
 - You need help categorizing transactions
@@ -21,24 +22,29 @@ Guided entry is helpful when:
 The wizard guides you through each field one at a time:
 
 ### Step 1: Amount
+
 - Enter the transaction value
 - Clear explanation of positive vs negative
 
 ### Step 2: Date
+
 - Select from calendar
 - Quick options for common dates
 
 ### Step 3: Payee
+
 - Smart suggestions based on history
 - Create new payees inline
 - Search existing payees
 
 ### Step 4: Category
+
 - Recommendations based on payee
 - Browse all categories
 - See typical choices
 
 ### Step 5: Review
+
 - Confirm all entries
 - Make final adjustments
 - Submit the transaction
@@ -46,6 +52,7 @@ The wizard guides you through each field one at a time:
 ## Smart Suggestions
 
 The wizard learns from your patterns:
+
 - Frequently used payees appear first
 - Categories match payee history
 - Amount predictions for recurring transactions

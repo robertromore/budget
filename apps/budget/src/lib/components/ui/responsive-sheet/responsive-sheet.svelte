@@ -105,7 +105,8 @@ $effect(() => {
 // Adjacent mode: add padding to main content when panel is open
 $effect(() => {
   if (adjacent && open && isDesktop.current) {
-    const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
+    const mainContent =
+      document.querySelector('main') || document.querySelector('[data-main-content]');
     if (mainContent) {
       const element = mainContent as HTMLElement;
       const paddingProp = side === 'right' ? 'paddingRight' : 'paddingLeft';
@@ -129,7 +130,10 @@ $effect(() => {
   {/if}
   {#if open}
     <aside
-      class="bg-background border-border fixed top-0 z-40 flex h-full flex-col border-l shadow-lg {side === 'right' ? 'right-0' : 'left-0 border-l-0 border-r'} {className || ''}"
+      class="bg-background border-border fixed top-0 z-40 flex h-full flex-col border-l shadow-lg {side ===
+      'right'
+        ? 'right-0'
+        : 'left-0 border-r border-l-0'} {className || ''}"
       style="width: {sheetWidth}px;"
       transition:fly={{ x: side === 'right' ? sheetWidth : -sheetWidth, duration: 200 }}
       data-tour-id={dataTourId}>

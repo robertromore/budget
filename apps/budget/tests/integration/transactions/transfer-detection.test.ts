@@ -5,12 +5,12 @@
  * and unlinking transfers.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {createId} from "@paralleldrive/cuid2";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { createId } from "@paralleldrive/cuid2";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -102,12 +102,12 @@ describe("Transfer Detection", () => {
       // Link them bidirectionally
       await ctx.db
         .update(schema.transactions)
-        .set({transferTransactionId: toTxn.id})
+        .set({ transferTransactionId: toTxn.id })
         .where(eq(schema.transactions.id, fromTxn.id));
 
       await ctx.db
         .update(schema.transactions)
-        .set({transferTransactionId: fromTxn.id})
+        .set({ transferTransactionId: fromTxn.id })
         .where(eq(schema.transactions.id, toTxn.id));
 
       // Verify
@@ -278,11 +278,11 @@ describe("Transfer Detection", () => {
       // Link them
       await ctx.db
         .update(schema.transactions)
-        .set({transferTransactionId: txns[1].id})
+        .set({ transferTransactionId: txns[1].id })
         .where(eq(schema.transactions.id, txns[0].id));
       await ctx.db
         .update(schema.transactions)
-        .set({transferTransactionId: txns[0].id})
+        .set({ transferTransactionId: txns[0].id })
         .where(eq(schema.transactions.id, txns[1].id));
 
       // Unlink both

@@ -1,22 +1,21 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
-
 
 /**
  * Integration tests for edit account functionality from PR #47
  * Tests the edit account feature added to the accounts page
  */
 describeE2E("Edit Account Functionality", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/accounts");
     await expect(page).toHaveTitle(/Budget/);
     await page.waitForLoadState("networkidle");
   });
 
-  test("should display edit buttons on account cards", async ({page}) => {
+  test("should display edit buttons on account cards", async ({ page }) => {
     // Check if account cards are present
     const accountCards = page.locator('[role="article"], .card, a[href*="/accounts/"]').first();
 
@@ -31,7 +30,7 @@ describeE2E("Edit Account Functionality", () => {
     }
   });
 
-  test("should open edit dialog when edit button is clicked", async ({page}) => {
+  test("should open edit dialog when edit button is clicked", async ({ page }) => {
     // Look for edit buttons
     const editButton = page
       .locator('button:has-text("Edit"), a:has-text("Edit"), button[aria-label*="edit" i]')
@@ -52,7 +51,7 @@ describeE2E("Edit Account Functionality", () => {
     }
   });
 
-  test("should have proper accessibility attributes on edit buttons", async ({page}) => {
+  test("should have proper accessibility attributes on edit buttons", async ({ page }) => {
     const editButtons = page.locator('button:has-text("Edit"), button[aria-label*="edit" i]');
     const buttonCount = await editButtons.count();
 
@@ -74,7 +73,7 @@ describeE2E("Edit Account Functionality", () => {
     }
   });
 
-  test("should handle keyboard navigation for edit buttons", async ({page}) => {
+  test("should handle keyboard navigation for edit buttons", async ({ page }) => {
     const editButtons = page.locator('button:has-text("Edit"), button[aria-label*="edit" i]');
     const buttonCount = await editButtons.count();
 
@@ -122,9 +121,9 @@ describeE2E("Edit Account Functionality", () => {
     }
   });
 
-  test("should maintain responsive layout with edit buttons", async ({page}) => {
+  test("should maintain responsive layout with edit buttons", async ({ page }) => {
     // Test on mobile viewport
-    await page.setViewportSize({width: 375, height: 667});
+    await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState("networkidle");
 
@@ -161,7 +160,7 @@ describeE2E("Edit Account Functionality", () => {
     }
   });
 
-  test("should not break existing account card functionality", async ({page}) => {
+  test("should not break existing account card functionality", async ({ page }) => {
     // Account links should still work
     const accountLinks = page.locator('a[href*="/accounts/"]');
     const linkCount = await accountLinks.count();
@@ -183,7 +182,7 @@ describeE2E("Edit Account Functionality", () => {
     }
   });
 
-  test("should handle edit functionality for multiple accounts", async ({page}) => {
+  test("should handle edit functionality for multiple accounts", async ({ page }) => {
     const editButtons = page.locator('button:has-text("Edit"), button[aria-label*="edit" i]');
     const buttonCount = await editButtons.count();
 

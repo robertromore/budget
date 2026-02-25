@@ -25,6 +25,7 @@ Bring in transactions from your bank or financial institution.
 ## Import Profiles
 
 Save column mappings for repeated imports:
+
 - Create profiles for each bank format
 - Auto-detect files by name pattern
 - Reuse settings for future imports
@@ -32,6 +33,7 @@ Save column mappings for repeated imports:
 ## Duplicate Detection
 
 The system checks for:
+
 - Same date, amount, and payee
 - Similar transactions within range
 - Already imported entries

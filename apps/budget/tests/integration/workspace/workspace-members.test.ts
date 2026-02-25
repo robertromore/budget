@@ -4,12 +4,12 @@
  * Tests the workspace member system for managing user access to workspaces.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, desc} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {createId} from "@paralleldrive/cuid2";
+import { eq, and, desc } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { createId } from "@paralleldrive/cuid2";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -216,7 +216,10 @@ describe("Workspace Members", () => {
         .select()
         .from(schema.workspaceMembers)
         .where(
-          and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.userId, ctx.adminId))
+          and(
+            eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+            eq(schema.workspaceMembers.userId, ctx.adminId)
+          )
         )
         .limit(1);
 
@@ -263,7 +266,10 @@ describe("Workspace Members", () => {
         .select()
         .from(schema.workspaceMembers)
         .where(
-          and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.role, "owner"))
+          and(
+            eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+            eq(schema.workspaceMembers.role, "owner")
+          )
         )
         .limit(1);
 
@@ -275,7 +281,12 @@ describe("Workspace Members", () => {
       const [defaultMembership] = await ctx.db
         .select()
         .from(schema.workspaceMembers)
-        .where(and(eq(schema.workspaceMembers.userId, ctx.ownerId), eq(schema.workspaceMembers.isDefault, true)))
+        .where(
+          and(
+            eq(schema.workspaceMembers.userId, ctx.ownerId),
+            eq(schema.workspaceMembers.isDefault, true)
+          )
+        )
         .limit(1);
 
       expect(defaultMembership).toBeDefined();
@@ -312,7 +323,7 @@ describe("Workspace Members", () => {
     it("should update member role", async () => {
       const [updated] = await ctx.db
         .update(schema.workspaceMembers)
-        .set({role: "viewer"})
+        .set({ role: "viewer" })
         .where(
           and(
             eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
@@ -345,15 +356,18 @@ describe("Workspace Members", () => {
       // Clear existing defaults
       await ctx.db
         .update(schema.workspaceMembers)
-        .set({isDefault: false})
+        .set({ isDefault: false })
         .where(eq(schema.workspaceMembers.userId, ctx.ownerId));
 
       // Set new default
       const [updated] = await ctx.db
         .update(schema.workspaceMembers)
-        .set({isDefault: true})
+        .set({ isDefault: true })
         .where(
-          and(eq(schema.workspaceMembers.userId, ctx.ownerId), eq(schema.workspaceMembers.workspaceId, workspace2.id))
+          and(
+            eq(schema.workspaceMembers.userId, ctx.ownerId),
+            eq(schema.workspaceMembers.workspaceId, workspace2.id)
+          )
         )
         .returning();
 
@@ -363,7 +377,12 @@ describe("Workspace Members", () => {
       const defaults = await ctx.db
         .select()
         .from(schema.workspaceMembers)
-        .where(and(eq(schema.workspaceMembers.userId, ctx.ownerId), eq(schema.workspaceMembers.isDefault, true)));
+        .where(
+          and(
+            eq(schema.workspaceMembers.userId, ctx.ownerId),
+            eq(schema.workspaceMembers.isDefault, true)
+          )
+        );
 
       expect(defaults).toHaveLength(1);
       expect(defaults[0].workspaceId).toBe(workspace2.id);
@@ -395,7 +414,10 @@ describe("Workspace Members", () => {
         .select()
         .from(schema.workspaceMembers)
         .where(
-          and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.userId, ctx.adminId))
+          and(
+            eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+            eq(schema.workspaceMembers.userId, ctx.adminId)
+          )
         );
       expect(before).toBeDefined();
 
@@ -403,7 +425,10 @@ describe("Workspace Members", () => {
       await ctx.db
         .delete(schema.workspaceMembers)
         .where(
-          and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.userId, ctx.adminId))
+          and(
+            eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+            eq(schema.workspaceMembers.userId, ctx.adminId)
+          )
         );
 
       // Verify gone
@@ -411,7 +436,10 @@ describe("Workspace Members", () => {
         .select()
         .from(schema.workspaceMembers)
         .where(
-          and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.userId, ctx.adminId))
+          and(
+            eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+            eq(schema.workspaceMembers.userId, ctx.adminId)
+          )
         );
       expect(after).toBeUndefined();
     });
@@ -420,7 +448,10 @@ describe("Workspace Members", () => {
       await ctx.db
         .delete(schema.workspaceMembers)
         .where(
-          and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.userId, ctx.adminId))
+          and(
+            eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+            eq(schema.workspaceMembers.userId, ctx.adminId)
+          )
         );
 
       const remaining = await ctx.db
@@ -491,7 +522,10 @@ describe("Workspace Members", () => {
           .select()
           .from(schema.workspaceMembers)
           .where(
-            and(eq(schema.workspaceMembers.workspaceId, ctx.workspaceId), eq(schema.workspaceMembers.userId, userId))
+            and(
+              eq(schema.workspaceMembers.workspaceId, ctx.workspaceId),
+              eq(schema.workspaceMembers.userId, userId)
+            )
           );
 
         if (!membership) return false;

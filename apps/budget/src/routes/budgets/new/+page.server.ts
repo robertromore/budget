@@ -1,6 +1,9 @@
 import { getBudgetTemplateById } from "$lib/constants/budget-templates";
 import type { BudgetMetadata } from "$lib/schema/budgets";
-import { superformInsertBudgetSchema, type SuperformInsertBudgetData } from "$lib/schema/superforms";
+import {
+  superformInsertBudgetSchema,
+  type SuperformInsertBudgetData,
+} from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import type { Actions, ServerLoadEvent } from "@sveltejs/kit";
@@ -93,9 +96,10 @@ export const actions: Actions = {
         defaultPeriod: {
           type: data.periodType || "monthly",
           startDay: data.startDay || 1,
-          ...(data.periodType === "custom" && data.intervalCount && {
-            intervalCount: data.intervalCount,
-          }),
+          ...(data.periodType === "custom" &&
+            data.intervalCount && {
+              intervalCount: data.intervalCount,
+            }),
         },
       };
 

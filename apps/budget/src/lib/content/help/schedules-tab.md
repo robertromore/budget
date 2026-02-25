@@ -6,7 +6,8 @@ related: [account-tabs, budgets-tab, transaction-table]
 
 # Schedules Tab
 
-Set up and manage recurring transactions like bills, subscriptions, and regular transfers.
+Set up and manage recurring transactions like bills, subscriptions, and regular
+transfers.
 
 ## Schedule Types
 
@@ -17,14 +18,14 @@ Set up and manage recurring transactions like bills, subscriptions, and regular 
 
 ## Schedule Properties
 
-| Field | Description |
-|-------|-------------|
-| Amount | Transaction value |
-| Frequency | How often it repeats |
-| Start Date | When to begin |
-| End Date | When to stop (optional) |
-| Payee | Who receives payment |
-| Category | Budget category |
+| Field      | Description             |
+| ---------- | ----------------------- |
+| Amount     | Transaction value       |
+| Frequency  | How often it repeats    |
+| Start Date | When to begin           |
+| End Date   | When to stop (optional) |
+| Payee      | Who receives payment    |
+| Category   | Budget category         |
 
 ## Frequency Options
 
@@ -36,6 +37,7 @@ Set up and manage recurring transactions like bills, subscriptions, and regular 
 ## AI Recommendations
 
 The **Recommendations** button shows:
+
 - Detected recurring patterns
 - Suggested new schedules
 - Patterns from your transactions

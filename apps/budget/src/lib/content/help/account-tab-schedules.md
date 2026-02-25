@@ -11,6 +11,7 @@ Create and manage scheduled transactions for this account.
 ## What Are Schedules?
 
 Schedules automate recurring transactions:
+
 - Monthly bills (rent, utilities)
 - Subscriptions (streaming, software)
 - Regular transfers (savings contributions)
@@ -19,6 +20,7 @@ Schedules automate recurring transactions:
 ## Schedule List
 
 View all schedules linked to this account:
+
 - **Name** - Description of the schedule
 - **Amount** - Transaction value
 - **Frequency** - How often it repeats
@@ -43,6 +45,7 @@ View all schedules linked to this account:
 ## Recommendations
 
 The system can suggest schedules based on:
+
 - Detected recurring patterns
 - Similar transaction frequencies
 - Payment history analysis

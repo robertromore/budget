@@ -6,11 +6,13 @@ related: [payees-table, payees-list]
 
 # Payees Page
 
-Payees are merchants, companies, or people you transact with. This page helps you manage and organize all your payees.
+Payees are merchants, companies, or people you transact with. This page helps
+you manage and organize all your payees.
 
 ## Overview
 
 Use this page to:
+
 - View all your payees in one place
 - Add new payees manually
 - Set default categories for automatic categorization

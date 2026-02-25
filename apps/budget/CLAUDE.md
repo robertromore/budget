@@ -404,13 +404,15 @@ The accessor object doesn't need to be reactive.
 
 ### Field-Level Encryption System
 
-**Optional encryption for sensitive financial data at workspace and user levels.**
+**Optional encryption for sensitive financial data at workspace and user
+levels.**
 
 #### Encryption Levels
 
 - **Level 0 (None)**: Data stored in plaintext, all features available
 - **Level 1 (Basic)**: Key fields encrypted, all features available
-- **Level 2 (Enhanced PII)**: Additional PII fields encrypted, text search limited
+- **Level 2 (Enhanced PII)**: Additional PII fields encrypted, text search
+  limited
 - **Level 3 (Maximum)**: All text fields encrypted, search/ML disabled
 - **Level 4 (Zero-Knowledge)**: Client-side encryption, most features disabled
 
@@ -419,24 +421,33 @@ The accessor object doesn't need to be reactive.
 Settings can be configured at multiple levels with inheritance:
 
 - **User Level**: Default encryption preferences (`/settings/security`)
-- **Workspace Level**: Can inherit or override user level (`/settings/workspace/security`)
+- **Workspace Level**: Can inherit or override user level
+  (`/settings/workspace/security`)
 - **Account Level**: Can increase (not decrease) from workspace level
 
 #### Key Architecture
 
-- **User Encryption Key (UEK)**: Generated once, stored only by user (like SSH key)
+- **User Encryption Key (UEK)**: Generated once, stored only by user (like SSH
+  key)
 - **Data Encryption Key (DEK)**: Random 256-bit AES key, encrypted with UEK
-- **Envelope Encryption**: Server stores encrypted DEK, cannot decrypt without user key
+- **Envelope Encryption**: Server stores encrypted DEK, cannot decrypt without
+  user key
 
 #### Core Files
 
 - **Types**: `src/lib/types/encryption.ts` - EncryptionLevel, field mappings
-- **Client Utils**: `src/lib/utils/field-encryption.ts` - Web Crypto API decryption
-- **Reactive Helpers**: `src/lib/utils/use-encryption.svelte.ts` - Component integration
-- **Unlock State**: `src/lib/states/ui/encryption-unlock.svelte.ts` - Unlock dialog state
-- **Unlock Dialog**: `src/lib/components/dialogs/encryption-unlock-dialog.svelte`
-- **Query Layer**: `src/lib/query/security.ts` - Encryption settings queries/mutations
-- **tRPC Routes**: `src/lib/trpc/routes/security.ts` - Backend encryption endpoints
+- **Client Utils**: `src/lib/utils/field-encryption.ts` - Web Crypto API
+  decryption
+- **Reactive Helpers**: `src/lib/utils/use-encryption.svelte.ts` - Component
+  integration
+- **Unlock State**: `src/lib/states/ui/encryption-unlock.svelte.ts` - Unlock
+  dialog state
+- **Unlock Dialog**:
+  `src/lib/components/dialogs/encryption-unlock-dialog.svelte`
+- **Query Layer**: `src/lib/query/security.ts` - Encryption settings
+  queries/mutations
+- **tRPC Routes**: `src/lib/trpc/routes/security.ts` - Backend encryption
+  endpoints
 
 #### Usage Pattern
 
@@ -444,17 +455,16 @@ Settings can be configured at multiple levels with inheritance:
 import {
   createEncryptedFieldState,
   encryptFieldValue,
-  isFieldEncrypted
+  isFieldEncrypted,
 } from '$lib/utils/use-encryption.svelte';
 
 // Check if field should be encrypted
 const nameIsEncrypted = $derived(isFieldEncrypted('accounts.name'));
 
 // Create reactive state for encrypted field display
-const nameState = createEncryptedFieldState(
-  () => account.name,
-  { operation: 'View account name' }
-);
+const nameState = createEncryptedFieldState(() => account.name, {
+  operation: 'View account name',
+});
 
 // Encrypt before saving
 if (nameIsEncrypted) {
@@ -2313,8 +2323,7 @@ Reusable components for AI interfaces:
 <ChatPanel
   messages={chat.messages}
   onSend={(message) => chat.sendMessage(message)}
-  isStreaming={chat.isStreaming}
-></ChatPanel>
+  isStreaming={chat.isStreaming}></ChatPanel>
 ```
 
 ## Contextual Help System
@@ -2365,9 +2374,7 @@ Markdown documentation files organized by feature:
 Components register for help by adding a `data-help-id` attribute:
 
 ```svelte
-<Button data-help-id="add-transaction-button">
-  Add Transaction
-</Button>
+<Button data-help-id="add-transaction-button">Add Transaction</Button>
 ```
 
 The corresponding help content is in
@@ -2471,12 +2478,12 @@ Chapter IDs use path-like syntax for nesting:
 
 ```typescript
 // Top-level chapters
-chapter: "getting-started"
-chapter: "account-tabs"
+chapter: 'getting-started';
+chapter: 'account-tabs';
 
 // Nested chapters (use "/" delimiter)
-chapter: "account-tabs/import"
-chapter: "account-tabs/import/cleanup"
+chapter: 'account-tabs/import';
+chapter: 'account-tabs/import/cleanup';
 ```
 
 The TOC automatically builds a tree structure based on these paths, with
@@ -2563,8 +2570,7 @@ To spotlight sheet/modal content, use the `dataTourId` prop on ResponsiveSheet:
 <ResponsiveSheet
   bind:open={sheetOpen}
   dataTourId="my-sheet-content"
-  hideOverlay={isTourActive}
->
+  hideOverlay={isTourActive}>
   <!-- Sheet content -->
 </ResponsiveSheet>
 ```
@@ -2602,10 +2608,11 @@ New users are presented with a choice screen before beginning onboarding:
 
 The flow is implemented in:
 
-- **OnboardingChoice component** (`src/lib/components/onboarding/onboarding-choice.svelte`):
-  Choice screen with two cards
-- **Onboarding page** (`src/routes/onboarding/+page.svelte`): Conditionally shows
-  choice or wizard based on `showWizard` URL param
+- **OnboardingChoice component**
+  (`src/lib/components/onboarding/onboarding-choice.svelte`): Choice screen with
+  two cards
+- **Onboarding page** (`src/routes/onboarding/+page.svelte`): Conditionally
+  shows choice or wizard based on `showWizard` URL param
 
 Tour completion handling:
 
@@ -2679,8 +2686,7 @@ conditional display:
   <Tooltip.Root
     disableHoverableContent
     delayDuration={300}
-    open={dropdownOpen ? false : undefined}
-  >
+    open={dropdownOpen ? false : undefined}>
     <Tooltip.Trigger>
       {#snippet child({ props: tooltipProps })}
         <DropdownMenu.Trigger>
@@ -2714,8 +2720,9 @@ Display keyboard shortcuts with consistent styling:
 <Tooltip.Content>
   <p>
     Feature Name
-    <kbd class="bg-accent-foreground ml-2 rounded px-1.5 py-0.5 font-mono text-xs">
-      {navigator?.platform?.includes("Mac") ? "Cmd" : "Ctrl"}+Shift+K
+    <kbd
+      class="bg-accent-foreground ml-2 rounded px-1.5 py-0.5 font-mono text-xs">
+      {navigator?.platform?.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+K
     </kbd>
   </p>
 </Tooltip.Content>
@@ -2723,8 +2730,8 @@ Display keyboard shortcuts with consistent styling:
 
 ## Rule-Based Automation System
 
-**Visual and natural language rule builder for automating actions based on entity
-events and conditions.**
+**Visual and natural language rule builder for automating actions based on
+entity events and conditions.**
 
 ### System Overview
 
@@ -2745,8 +2752,8 @@ The rule builder supports two synchronized views:
 - **Natural Language Builder**: Structured template interface with inline
   dropdowns
 
-Both views share a single `RuleConfig` as the source of truth, with bidirectional
-synchronization.
+Both views share a single `RuleConfig` as the source of truth, with
+bidirectional synchronization.
 
 ### Component Structure
 
@@ -2785,14 +2792,14 @@ src/lib/components/automation/
 
 ### Supported Entity Types
 
-| Entity      | Trigger Events                                              |
-| ----------- | ----------------------------------------------------------- |
-| Transaction | created, updated, deleted, imported, categorized, cleared   |
-| Account     | created, updated, balanceChanged, reconciled                |
-| Payee       | created, updated, merged                                    |
-| Category    | created, updated, spendingThresholdReached                  |
-| Schedule    | created, due, executed, skipped                             |
-| Budget      | created, updated, overspent, threshold, periodReset         |
+| Entity      | Trigger Events                                            |
+| ----------- | --------------------------------------------------------- |
+| Transaction | created, updated, deleted, imported, categorized, cleared |
+| Account     | created, updated, balanceChanged, reconciled              |
+| Payee       | created, updated, merged                                  |
+| Category    | created, updated, spendingThresholdReached                |
+| Schedule    | created, due, executed, skipped                           |
+| Budget      | created, updated, overspent, threshold, periodReset       |
 
 ### Condition Field Types
 
@@ -2851,8 +2858,8 @@ function duplicateNode(nodeId: string) {
 
 #### Date Input Loop Prevention
 
-When using DateInput with reactive state, add equality guards to prevent infinite
-loops:
+When using DateInput with reactive state, add equality guards to prevent
+infinite loops:
 
 ```typescript
 // Sync local values to date states (only when they differ)
@@ -2903,8 +2910,8 @@ export function isHorizontalLayout(direction: LayoutDirection): boolean {
 
 ### Rule Engine Architecture
 
-The automation system uses a trigger-based architecture where rules are evaluated
-when entity events occur.
+The automation system uses a trigger-based architecture where rules are
+evaluated when entity events occur.
 
 #### File Structure
 
@@ -2923,10 +2930,10 @@ src/lib/server/domains/automation/
 Rules are triggered from entity services using `triggerTransactionAutomation()`:
 
 ```typescript
-import { triggerTransactionAutomation } from "../automation/trigger";
+import { triggerTransactionAutomation } from '../automation/trigger';
 
 // In TransactionService.createTransaction():
-return this.triggerAutomationAndRefresh("created", transaction, workspaceId);
+return this.triggerAutomationAndRefresh('created', transaction, workspaceId);
 ```
 
 The `triggerAutomationAndRefresh()` method:
@@ -2940,18 +2947,18 @@ The `triggerAutomationAndRefresh()` method:
 
 Two patterns are available:
 
-- **Synchronous (recommended for create/update)**: Waits for automation, refreshes
-  data before returning. UI immediately reflects changes.
+- **Synchronous (recommended for create/update)**: Waits for automation,
+  refreshes data before returning. UI immediately reflects changes.
 
   ```typescript
-  return this.triggerAutomationAndRefresh("created", transaction, workspaceId);
+  return this.triggerAutomationAndRefresh('created', transaction, workspaceId);
   ```
 
-- **Fire-and-forget (for delete)**: Triggers automation without waiting. Used when
-  the entity is being removed.
+- **Fire-and-forget (for delete)**: Triggers automation without waiting. Used
+  when the entity is being removed.
 
   ```typescript
-  this.triggerAutomationFireAndForget("deleted", transaction, workspaceId);
+  this.triggerAutomationFireAndForget('deleted', transaction, workspaceId);
   ```
 
 #### ESM Import Requirements
@@ -2960,10 +2967,10 @@ The action executor uses ESM imports only. Never use CommonJS `require()`:
 
 ```typescript
 // ✅ Correct - ESM import
-import { actionDefinitions } from "$lib/types/automation";
+import { actionDefinitions } from '$lib/types/automation';
 
 // ❌ Wrong - CommonJS require causes "require is not defined" error
-const { actionDefinitions } = require("$lib/types/automation");
+const { actionDefinitions } = require('$lib/types/automation');
 ```
 
 ### Database Schema
@@ -3044,8 +3051,7 @@ to force a remount:
   <ColumnMapper
     initialMapping={matchedProfile?.mapping ?? undefined}
     {rawColumns}
-    {sampleData}
-  ></ColumnMapper>
+    {sampleData}></ColumnMapper>
 {/key}
 ```
 

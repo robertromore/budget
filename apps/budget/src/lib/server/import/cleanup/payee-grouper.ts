@@ -6,11 +6,7 @@
  */
 
 import type { Payee } from "$lib/schema/payees";
-import type {
-  PayeeGroup,
-  PayeeGroupMember,
-  ExistingPayeeMatch,
-} from "$lib/types/import";
+import type { PayeeGroup, PayeeGroupMember, ExistingPayeeMatch } from "$lib/types/import";
 import { accounts as accountsTable } from "$lib/schema/accounts";
 import { db } from "$lib/server/db";
 import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
@@ -321,10 +317,15 @@ export class PayeeGrouper {
     // Split into words and process each
     return cleaned
       .split(" ")
-      .filter(word => word.length > 0)
+      .filter((word) => word.length > 0)
       .map((word) => {
         // Check if word is an acronym (all uppercase, 2-5 chars)
-        if (word.length >= 2 && word.length <= 5 && word === word.toUpperCase() && /^[A-Z]+$/.test(word)) {
+        if (
+          word.length >= 2 &&
+          word.length <= 5 &&
+          word === word.toUpperCase() &&
+          /^[A-Z]+$/.test(word)
+        ) {
           return word; // Keep acronyms as-is
         }
 
@@ -447,13 +448,25 @@ export class PayeeGrouper {
     const aliasService = getPayeeAliasService();
     const transferService = getTransferMappingService();
 
-    console.log("[PayeeGrouper.applySavedChoices] Checking saved choices for", groups.length, "groups, workspaceId:", workspaceId);
+    console.log(
+      "[PayeeGrouper.applySavedChoices] Checking saved choices for",
+      groups.length,
+      "groups, workspaceId:",
+      workspaceId
+    );
 
     return Promise.all(
       groups.map(async (group) => {
         // Skip groups that are already auto-accepted with high confidence existing match
-        if (group.userDecision === "accept" && group.existingMatch && group.existingMatch.confidence >= 0.95) {
-          console.log("[PayeeGrouper.applySavedChoices] Skipping already accepted group:", group.canonicalName);
+        if (
+          group.userDecision === "accept" &&
+          group.existingMatch &&
+          group.existingMatch.confidence >= 0.95
+        ) {
+          console.log(
+            "[PayeeGrouper.applySavedChoices] Skipping already accepted group:",
+            group.canonicalName
+          );
           // Ensure canonical name uses the existing payee's clean name
           return {
             ...group,
@@ -463,7 +476,12 @@ export class PayeeGrouper {
 
         // Check each member's original payee string for saved choices
         for (const member of group.members) {
-          console.log("[PayeeGrouper.applySavedChoices] Checking member:", member.originalPayee, "for group:", group.canonicalName);
+          console.log(
+            "[PayeeGrouper.applySavedChoices] Checking member:",
+            member.originalPayee,
+            "for group:",
+            group.canonicalName
+          );
 
           // Check for transfer mapping first (higher priority - user explicitly marked as transfer)
           const transferMatch = await transferService.findTransferMapping(
@@ -494,10 +512,7 @@ export class PayeeGrouper {
           }
 
           // Check for payee alias (user confirmed a payee mapping)
-          const aliasMatch = await aliasService.findPayeeByAlias(
-            member.originalPayee,
-            workspaceId
-          );
+          const aliasMatch = await aliasService.findPayeeByAlias(member.originalPayee, workspaceId);
           if (aliasMatch && aliasMatch.confidence >= 0.8) {
             // Find matching existing payee
             const matchedPayee = existingPayees.find((p) => p.id === aliasMatch.payeeId);

@@ -17,7 +17,8 @@ Set the currency symbol displayed before monetary values.
 
 ## How It Works
 
-The symbol appears before all currency amounts throughout the app. You can enter any text, including multi-character currency codes like "USD" or "EUR".
+The symbol appears before all currency amounts throughout the app. You can enter
+any text, including multi-character currency codes like "USD" or "EUR".
 
 ## Tips
 

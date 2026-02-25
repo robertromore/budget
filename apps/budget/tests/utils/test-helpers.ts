@@ -1,5 +1,5 @@
-import {expect, vi} from "vitest";
-import type {MockedFunction} from "vitest";
+import { expect, vi } from "vitest";
+import type { MockedFunction } from "vitest";
 
 export interface TestUser {
   id: number;
@@ -57,7 +57,7 @@ export class TestDataFactory {
   }
 
   static createMultipleAccounts(count: number): TestAccount[] {
-    return Array.from({length: count}, (_, index) =>
+    return Array.from({ length: count }, (_, index) =>
       this.createAccount({
         id: index + 1,
         name: `Test Account ${index + 1}`,
@@ -67,7 +67,7 @@ export class TestDataFactory {
   }
 
   static createMultipleTransactions(accountId: number, count: number): TestTransaction[] {
-    return Array.from({length: count}, (_, index) =>
+    return Array.from({ length: count }, (_, index) =>
       this.createTransaction({
         id: index + 1,
         accountId,
@@ -141,8 +141,8 @@ export class TestAssertions {
     expected: T,
     excludeKeys: (keyof T)[]
   ): void {
-    const actualFiltered = {...actual};
-    const expectedFiltered = {...expected};
+    const actualFiltered = { ...actual };
+    const expectedFiltered = { ...expected };
 
     excludeKeys.forEach((key) => {
       delete actualFiltered[key];
@@ -332,7 +332,7 @@ export class APITestHelpers {
   /**
    * Assert API response structure and status
    */
-  static expectAPISuccess<T>(response: {success: boolean; data?: T; error?: any}): T {
+  static expectAPISuccess<T>(response: { success: boolean; data?: T; error?: any }): T {
     expect(response.success).toBe(true);
     expect(response.data).toBeDefined();
     expect(response.error).toBeUndefined();
@@ -343,7 +343,7 @@ export class APITestHelpers {
    * Assert API error response
    */
   static expectAPIError(
-    response: {success: boolean; data?: any; error?: any},
+    response: { success: boolean; data?: any; error?: any },
     expectedError?: string | RegExp
   ): void {
     expect(response.success).toBe(false);
@@ -366,7 +366,7 @@ export class APITestHelpers {
     maxRequests: number,
     windowMs: number
   ): Promise<void> {
-    const promises = Array.from({length: maxRequests + 1}, () => apiCall());
+    const promises = Array.from({ length: maxRequests + 1 }, () => apiCall());
     const results = await Promise.allSettled(promises);
 
     // First maxRequests should succeed

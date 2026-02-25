@@ -7,11 +7,7 @@
  */
 
 export { PayeeGrouper, createPayeeGrouper } from "./payee-grouper";
-export type {
-  PayeeGrouperConfig,
-  PayeeGroupInput,
-  PayeeGrouperResult,
-} from "./payee-grouper";
+export type { PayeeGrouperConfig, PayeeGroupInput, PayeeGrouperResult } from "./payee-grouper";
 
 export { CategorySuggester, createCategorySuggester } from "./category-suggester";
 export type {

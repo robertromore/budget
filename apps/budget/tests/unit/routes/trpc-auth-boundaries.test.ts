@@ -34,7 +34,9 @@ describe("tRPC auth boundary regressions", () => {
     await expectUnauthorized(() => caller.authRoutes.sessions());
     await expectUnauthorized(() => caller.authRoutes.revokeOtherSessions());
     await expectUnauthorized(() => caller.authRoutes.requestEmailVerification());
-    await expectUnauthorized(() => caller.authRoutes.deleteAccount({ password: "CurrentPass123!" }));
+    await expectUnauthorized(() =>
+      caller.authRoutes.deleteAccount({ password: "CurrentPass123!" })
+    );
   });
 
   it("rejects unauthenticated access to protected workspace invitation procedures", async () => {

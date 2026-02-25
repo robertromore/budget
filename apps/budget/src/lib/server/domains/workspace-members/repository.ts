@@ -43,19 +43,13 @@ export class WorkspaceMemberRepository {
   /**
    * Find membership by workspace and user
    */
-  async findMembership(
-    workspaceId: number,
-    userId: string
-  ): Promise<WorkspaceMember | null> {
+  async findMembership(workspaceId: number, userId: string): Promise<WorkspaceMember | null> {
     try {
       const [membership] = await db
         .select()
         .from(workspaceMembers)
         .where(
-          and(
-            eq(workspaceMembers.workspaceId, workspaceId),
-            eq(workspaceMembers.userId, userId)
-          )
+          and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId))
         )
         .limit(1);
 
@@ -68,10 +62,7 @@ export class WorkspaceMemberRepository {
   /**
    * Find membership or throw error
    */
-  async findMembershipOrThrow(
-    workspaceId: number,
-    userId: string
-  ): Promise<WorkspaceMember> {
+  async findMembershipOrThrow(workspaceId: number, userId: string): Promise<WorkspaceMember> {
     const membership = await this.findMembership(workspaceId, userId);
     if (!membership) {
       throw new NotFoundError("Workspace membership");
@@ -139,12 +130,7 @@ export class WorkspaceMemberRepository {
         })
         .from(workspaceMembers)
         .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-        .where(
-          and(
-            eq(workspaceMembers.userId, userId),
-            isNull(workspaces.deletedAt)
-          )
-        )
+        .where(and(eq(workspaceMembers.userId, userId), isNull(workspaces.deletedAt)))
         .orderBy(desc(workspaceMembers.isDefault), desc(workspaceMembers.joinedAt));
 
       return memberships;
@@ -220,10 +206,7 @@ export class WorkspaceMemberRepository {
         .from(workspaceMembers)
         .innerJoin(users, eq(workspaceMembers.userId, users.id))
         .where(
-          and(
-            eq(workspaceMembers.workspaceId, workspaceId),
-            eq(workspaceMembers.role, "owner")
-          )
+          and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.role, "owner"))
         )
         .limit(1);
 
@@ -288,10 +271,7 @@ export class WorkspaceMemberRepository {
         .update(workspaceMembers)
         .set({ role })
         .where(
-          and(
-            eq(workspaceMembers.workspaceId, workspaceId),
-            eq(workspaceMembers.userId, userId)
-          )
+          and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId))
         )
         .returning();
 
@@ -322,10 +302,7 @@ export class WorkspaceMemberRepository {
         .update(workspaceMembers)
         .set({ isDefault: true })
         .where(
-          and(
-            eq(workspaceMembers.userId, userId),
-            eq(workspaceMembers.workspaceId, workspaceId)
-          )
+          and(eq(workspaceMembers.userId, userId), eq(workspaceMembers.workspaceId, workspaceId))
         )
         .returning();
 
@@ -349,10 +326,7 @@ export class WorkspaceMemberRepository {
       await db
         .delete(workspaceMembers)
         .where(
-          and(
-            eq(workspaceMembers.workspaceId, workspaceId),
-            eq(workspaceMembers.userId, userId)
-          )
+          and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId))
         );
     } catch (error) {
       if (error instanceof NotFoundError) throw error;

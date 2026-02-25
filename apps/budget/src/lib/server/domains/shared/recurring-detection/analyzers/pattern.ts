@@ -58,7 +58,11 @@ export function analyzePattern(
   }
 
   // Step 3: Check subscription patterns (most specific)
-  const subscriptionResult = checkSubscriptionPattern(normalizedName, Math.abs(amount), merchantCode);
+  const subscriptionResult = checkSubscriptionPattern(
+    normalizedName,
+    Math.abs(amount),
+    merchantCode
+  );
   if (subscriptionResult.matched && subscriptionResult.confidence >= 0.5) {
     return {
       matched: true,
@@ -327,10 +331,7 @@ export function calculatePatternScore(result: PatternMatchResult): number {
 /**
  * Suggests a display name based on matched patterns
  */
-export function suggestDisplayName(
-  originalPayeeName: string,
-  result: PatternMatchResult
-): string {
+export function suggestDisplayName(originalPayeeName: string, result: PatternMatchResult): string {
   if (result.matchedKeywords.length > 0) {
     // Use the matched keyword as a base
     const keyword = result.matchedKeywords[0];

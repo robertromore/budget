@@ -2,9 +2,9 @@ import type { AccountDocument, DocumentType } from "$lib/schema/account-document
 import { ALLOWED_DOCUMENT_MIMES, MAX_DOCUMENT_SIZE } from "$lib/schema/account-documents";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { existsSync } from "fs";
-import { mkdir, unlink, writeFile } from "fs/promises";
-import { join } from "path";
+import { existsSync } from "node:fs";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { AccountDocumentRepository } from "./repository";
 import type { AccountRepository } from "../accounts/repository";
 

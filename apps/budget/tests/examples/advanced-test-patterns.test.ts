@@ -1,4 +1,4 @@
-import {describe, it, beforeEach} from "vitest";
+import { describe, it, beforeEach } from "vitest";
 import {
   TestDataFactory,
   TestAssertions,
@@ -48,8 +48,8 @@ describe("Advanced Test Patterns Examples", () => {
     });
 
     it("should compare objects excluding specific keys", () => {
-      const obj1 = {id: 1, name: "Test", createdAt: "2023-01-01"};
-      const obj2 = {id: 2, name: "Test", createdAt: "2023-01-02"};
+      const obj1 = { id: 1, name: "Test", createdAt: "2023-01-01" };
+      const obj2 = { id: 2, name: "Test", createdAt: "2023-01-02" };
 
       TestAssertions.expectEqualExcluding(obj1, obj2, ["id", "createdAt"]);
     });
@@ -58,9 +58,9 @@ describe("Advanced Test Patterns Examples", () => {
   describe("TestMocks", () => {
     it("should create sequential mocks", async () => {
       const mockFn = TestMocks.createSequentialMock([
-        {success: true, data: "first"},
-        {success: true, data: "second"},
-        {success: false, error: "third call fails"},
+        { success: true, data: "first" },
+        { success: true, data: "second" },
+        { success: false, error: "third call fails" },
       ]);
 
       const result1 = mockFn();
@@ -74,7 +74,7 @@ describe("Advanced Test Patterns Examples", () => {
 
     it("should create failing mocks", () => {
       const mockFn = TestMocks.createFailingMock(
-        {success: true},
+        { success: true },
         [2, 4], // Fail on 2nd and 4th calls
         new Error("Simulated failure")
       );
@@ -111,7 +111,7 @@ describe("Advanced Test Patterns Examples", () => {
 
     it("should measure execution time", async () => {
       const fastFunction = () => {
-        return Array.from({length: 100}, (_, i) => i * 2);
+        return Array.from({ length: 100 }, (_, i) => i * 2);
       };
 
       const result = TestEnvironment.withTiming(fastFunction, 50)();
@@ -120,7 +120,7 @@ describe("Advanced Test Patterns Examples", () => {
 
     it("should create isolated test context", async () => {
       const context = TestEnvironment.createTestContext(
-        () => ({data: "test", connections: []}),
+        () => ({ data: "test", connections: [] }),
         (ctx) => {
           ctx.connections.length = 0; // Cleanup
         }
@@ -138,7 +138,7 @@ describe("Advanced Test Patterns Examples", () => {
     it("should validate API success responses", () => {
       const successResponse = {
         success: true,
-        data: {id: 1, name: "Test Account"},
+        data: { id: 1, name: "Test Account" },
       };
 
       const data = APITestHelpers.expectAPISuccess(successResponse);
@@ -149,7 +149,7 @@ describe("Advanced Test Patterns Examples", () => {
     it("should validate API error responses", () => {
       const errorResponse = {
         success: false,
-        error: {message: "Invalid input data"},
+        error: { message: "Invalid input data" },
       };
 
       APITestHelpers.expectAPIError(errorResponse, "Invalid input");
@@ -162,7 +162,7 @@ describe("Advanced Test Patterns Examples", () => {
         if (requestCount > 3) {
           throw new Error("Rate limit exceeded");
         }
-        return {success: true};
+        return { success: true };
       };
 
       await APITestHelpers.testRateLimit(mockAPICall, 3, 1000);
@@ -172,15 +172,15 @@ describe("Advanced Test Patterns Examples", () => {
 
   describe("ComponentTestHelpers", () => {
     it("should create mock stores", async () => {
-      const store = ComponentTestHelpers.createMockStore({count: 0});
+      const store = ComponentTestHelpers.createMockStore({ count: 0 });
       const values: number[] = [];
 
       const unsubscribe = store.subscribe((value) => {
         values.push(value.count);
       });
 
-      store.update((current) => ({count: current.count + 1}));
-      store.set({count: 5});
+      store.update((current) => ({ count: current.count + 1 }));
+      store.set({ count: 5 });
 
       expect(values).toEqual([0, 1, 5]); // Initial, update, set
       unsubscribe();
@@ -200,18 +200,19 @@ describe("Advanced Test Patterns Examples", () => {
     });
 
     it("should test form validation", async () => {
-      const validData = {name: "Test", email: "test@example.com"};
+      const validData = { name: "Test", email: "test@example.com" };
       const invalidCases = [
-        {field: "name" as const, value: "", expectedError: "Name is required"},
-        {field: "email" as const, value: "invalid", expectedError: "Invalid email"},
+        { field: "name" as const, value: "", expectedError: "Name is required" },
+        { field: "email" as const, value: "invalid", expectedError: "Invalid email" },
       ];
 
       const formHelper = ComponentTestHelpers.createFormTestHelper(validData, invalidCases);
 
       const mockSubmit = async (data: typeof validData) => {
-        if (!data.name) return {success: false, error: {message: "Name is required"}};
-        if (!data.email.includes("@")) return {success: false, error: {message: "Invalid email"}};
-        return {success: true};
+        if (!data.name) return { success: false, error: { message: "Name is required" } };
+        if (!data.email.includes("@"))
+          return { success: false, error: { message: "Invalid email" } };
+        return { success: true };
       };
 
       await formHelper.testValidSubmission(mockSubmit);
@@ -219,7 +220,7 @@ describe("Advanced Test Patterns Examples", () => {
     });
 
     it("should mock intersection observer", () => {
-      const {mockIntersect, restore} = ComponentTestHelpers.mockIntersectionObserver();
+      const { mockIntersect, restore } = ComponentTestHelpers.mockIntersectionObserver();
 
       const mockElement = {} as Element;
       const observer = new IntersectionObserver(() => {});
@@ -227,16 +228,16 @@ describe("Advanced Test Patterns Examples", () => {
       expect(observer.observe).toBeDefined();
 
       // Simulate intersection
-      mockIntersect([{target: mockElement, isIntersecting: true}]);
+      mockIntersect([{ target: mockElement, isIntersecting: true }]);
 
       restore();
     });
 
     it("should test data table helpers", () => {
       const data = [
-        {id: 1, name: "Alice", age: 30},
-        {id: 2, name: "Bob", age: 25},
-        {id: 3, name: "Charlie", age: 35},
+        { id: 1, name: "Alice", age: 30 },
+        { id: 2, name: "Bob", age: 25 },
+        { id: 3, name: "Charlie", age: 35 },
       ];
 
       const tableHelper = ComponentTestHelpers.createDataTableTestHelper<(typeof data)[0]>();
@@ -277,7 +278,7 @@ describe("Advanced Test Patterns Examples", () => {
       const simulatedRender = async () => {
         // Simulate some work
         await new Promise((resolve) => setTimeout(resolve, 10));
-        return {rendered: true};
+        return { rendered: true };
       };
 
       const result = await ComponentTestHelpers.measureRenderTime(simulatedRender, 50);
@@ -294,15 +295,15 @@ describe("Advanced Test Patterns Examples", () => {
     beforeEach(() => {
       const accounts = TestDataFactory.createMultipleAccounts(3);
       const mockAPI = TestMocks.createSequentialMock([
-        {success: true, data: accounts},
-        {success: true, data: accounts[0]},
+        { success: true, data: accounts },
+        { success: true, data: accounts[0] },
       ]);
 
-      testContext = {accounts, mockAPI};
+      testContext = { accounts, mockAPI };
     });
 
     it("should demonstrate integrated testing pattern", async () => {
-      const {accounts, mockAPI} = testContext;
+      const { accounts, mockAPI } = testContext;
 
       // Test data structure
       TestAssertions.expectArrayLength(accounts, 3);
@@ -322,8 +323,8 @@ describe("Advanced Test Patterns Examples", () => {
       expect(singleAccount).toEqual(accounts[0]);
 
       // Test component state
-      const store = ComponentTestHelpers.createMockStore({selectedAccount: null});
-      store.set({selectedAccount: singleAccount});
+      const store = ComponentTestHelpers.createMockStore({ selectedAccount: null });
+      store.set({ selectedAccount: singleAccount });
 
       expect(store.get().selectedAccount).toEqual(accounts[0]);
     });

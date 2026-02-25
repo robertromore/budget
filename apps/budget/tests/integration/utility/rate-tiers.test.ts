@@ -5,11 +5,11 @@
  * tier creation, cost calculation, and effective date handling.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, lte, gte, isNull, or} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, lte, gte, isNull, or } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -100,14 +100,14 @@ describe("Utility Rate Tiers", () => {
           tierOrder: 1,
           usageMin: 0,
           usageMax: 500,
-          ratePerUnit: 0.10,
+          ratePerUnit: 0.1,
           effectiveDate: "2024-01-01",
         })
         .returning();
 
       expect(tier).toBeDefined();
       expect(tier.tierName).toBe("Baseline");
-      expect(tier.ratePerUnit).toBe(0.10);
+      expect(tier.ratePerUnit).toBe(0.1);
     });
 
     it("should create multiple tiers for tiered pricing", async () => {
@@ -118,7 +118,7 @@ describe("Utility Rate Tiers", () => {
           tierOrder: 1,
           usageMin: 0,
           usageMax: 500,
-          ratePerUnit: 0.10,
+          ratePerUnit: 0.1,
           effectiveDate: "2024-01-01",
         },
         {
@@ -136,7 +136,7 @@ describe("Utility Rate Tiers", () => {
           tierOrder: 3,
           usageMin: 1000,
           usageMax: null, // Unlimited
-          ratePerUnit: 0.20,
+          ratePerUnit: 0.2,
           effectiveDate: "2024-01-01",
         },
       ]);
@@ -155,16 +155,16 @@ describe("Utility Rate Tiers", () => {
 
   describe("cost calculation", () => {
     const standardTiers: RateTier[] = [
-      {tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.10},
-      {tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: 1000, ratePerUnit: 0.15},
-      {tierName: "Tier 3", tierOrder: 3, usageMin: 1000, usageMax: null, ratePerUnit: 0.20},
+      { tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.1 },
+      { tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: 1000, ratePerUnit: 0.15 },
+      { tierName: "Tier 3", tierOrder: 3, usageMin: 1000, usageMax: null, ratePerUnit: 0.2 },
     ];
 
     it("should calculate cost within first tier", () => {
       const usage = 400;
       const cost = calculateTieredCost(usage, standardTiers);
 
-      expect(cost).toBe(40.00); // 400 * 0.10
+      expect(cost).toBe(40.0); // 400 * 0.10
     });
 
     it("should calculate cost spanning two tiers", () => {
@@ -173,7 +173,7 @@ describe("Utility Rate Tiers", () => {
 
       // First 500 at $0.10 = $50.00
       // Next 200 at $0.15 = $30.00
-      expect(cost).toBe(80.00);
+      expect(cost).toBe(80.0);
     });
 
     it("should calculate cost spanning all tiers", () => {
@@ -183,14 +183,14 @@ describe("Utility Rate Tiers", () => {
       // First 500 at $0.10 = $50.00
       // Next 500 at $0.15 = $75.00
       // Next 500 at $0.20 = $100.00
-      expect(cost).toBe(225.00);
+      expect(cost).toBe(225.0);
     });
 
     it("should handle exact tier boundaries", () => {
       const usage = 500;
       const cost = calculateTieredCost(usage, standardTiers);
 
-      expect(cost).toBe(50.00); // 500 * 0.10
+      expect(cost).toBe(50.0); // 500 * 0.10
     });
 
     it("should handle zero usage", () => {
@@ -221,7 +221,7 @@ describe("Utility Rate Tiers", () => {
           tierOrder: 1,
           usageMin: 0,
           usageMax: 500,
-          ratePerUnit: 0.10,
+          ratePerUnit: 0.1,
           effectiveDate: "2024-01-01",
         },
       ]);
@@ -244,7 +244,7 @@ describe("Utility Rate Tiers", () => {
         );
 
       expect(tiers).toHaveLength(1);
-      expect(tiers[0].ratePerUnit).toBe(0.10); // Current rate
+      expect(tiers[0].ratePerUnit).toBe(0.1); // Current rate
     });
 
     it("should handle rate changes mid-year", async () => {
@@ -256,7 +256,7 @@ describe("Utility Rate Tiers", () => {
           tierOrder: 1,
           usageMin: 0,
           usageMax: null,
-          ratePerUnit: 0.10,
+          ratePerUnit: 0.1,
           effectiveDate: "2024-01-01",
           expirationDate: "2024-06-30",
         },
@@ -284,7 +284,7 @@ describe("Utility Rate Tiers", () => {
         ),
       });
 
-      expect(marchTiers?.ratePerUnit).toBe(0.10);
+      expect(marchTiers?.ratePerUnit).toBe(0.1);
 
       // Check rate in September
       const septTiers = await ctx.db.query.utilityRateTiers.findFirst({
@@ -305,8 +305,8 @@ describe("Utility Rate Tiers", () => {
   describe("tier validation", () => {
     it("should not have overlapping tiers", () => {
       const tiers: RateTier[] = [
-        {tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.10},
-        {tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: 1000, ratePerUnit: 0.15},
+        { tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.1 },
+        { tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: 1000, ratePerUnit: 0.15 },
       ];
 
       // Validate no overlaps
@@ -326,8 +326,8 @@ describe("Utility Rate Tiers", () => {
 
     it("should detect gaps in tiers", () => {
       const tiersWithGap: RateTier[] = [
-        {tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 400, ratePerUnit: 0.10},
-        {tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: 1000, ratePerUnit: 0.15}, // Gap: 400-500
+        { tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 400, ratePerUnit: 0.1 },
+        { tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: 1000, ratePerUnit: 0.15 }, // Gap: 400-500
       ];
 
       const hasGap = (t: RateTier[]): boolean => {
@@ -346,8 +346,8 @@ describe("Utility Rate Tiers", () => {
 
     it("should ensure last tier has no max (unlimited)", () => {
       const tiers: RateTier[] = [
-        {tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.10},
-        {tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: null, ratePerUnit: 0.15},
+        { tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.1 },
+        { tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: null, ratePerUnit: 0.15 },
       ];
 
       const lastTier = tiers[tiers.length - 1];
@@ -421,7 +421,7 @@ describe("Utility Rate Tiers", () => {
       // 3000 * 0.003 = $9
       // 2000 * 0.005 = $10
       // Total = $19
-      expect(cost).toBe(19.00);
+      expect(cost).toBe(19.0);
     });
   });
 
@@ -459,7 +459,7 @@ describe("Utility Rate Tiers", () => {
           tierOrder: 1,
           usageMin: 0,
           usageMax: 500,
-          ratePerUnit: 0.10,
+          ratePerUnit: 0.1,
           effectiveDate: "2024-10-01",
           expirationDate: "2025-05-31",
         },
@@ -501,15 +501,15 @@ describe("Utility Rate Tiers", () => {
           )
         );
 
-      expect(novTiers[0].ratePerUnit).toBe(0.10); // Winter rate
+      expect(novTiers[0].ratePerUnit).toBe(0.1); // Winter rate
     });
   });
 
   describe("bill projection", () => {
     it("should project bill based on tiers and usage", () => {
       const tiers: RateTier[] = [
-        {tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.10},
-        {tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: null, ratePerUnit: 0.15},
+        { tierName: "Tier 1", tierOrder: 1, usageMin: 0, usageMax: 500, ratePerUnit: 0.1 },
+        { tierName: "Tier 2", tierOrder: 2, usageMin: 500, usageMax: null, ratePerUnit: 0.15 },
       ];
 
       const projectBill = (
@@ -521,7 +521,7 @@ describe("Utility Rate Tiers", () => {
         return baseCharge + usageCost;
       };
 
-      const baseCharge = 15.00;
+      const baseCharge = 15.0;
       const estimatedUsage = 800;
 
       const projectedBill = projectBill(estimatedUsage, tiers, baseCharge);
@@ -530,7 +530,7 @@ describe("Utility Rate Tiers", () => {
       // Tier 1: 500 * 0.10 = $50
       // Tier 2: 300 * 0.15 = $45
       // Total: $110
-      expect(projectedBill).toBe(110.00);
+      expect(projectedBill).toBe(110.0);
     });
   });
 });

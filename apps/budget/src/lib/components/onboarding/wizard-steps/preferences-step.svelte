@@ -29,7 +29,11 @@ const locales = [
   { value: 'ja-JP', label: 'Japanese (Japan)' },
 ];
 
-const dateFormats: { value: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'; label: string; example: string }[] = [
+const dateFormats: {
+  value: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
+  label: string;
+  example: string;
+}[] = [
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY', example: '12/31/2024' },
   { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY', example: '31/12/2024' },
   { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD', example: '2024-12-31' },
@@ -40,15 +44,16 @@ const dateFormats: { value: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'; label: s
   <!-- Currency -->
   <div class="space-y-3">
     <div class="flex items-center gap-2">
-      <DollarSign class="h-5 w-5 text-muted-foreground" />
+      <DollarSign class="text-muted-foreground h-5 w-5" />
       <Label class="text-base font-medium">Currency</Label>
     </div>
-    <p class="text-muted-foreground text-sm">
-      Select your primary currency for budgeting.
-    </p>
-    <Select.Root type="single" value={formData.currency} onValueChange={(v) => v && onboardingWizardStore.setCurrency(v)}>
+    <p class="text-muted-foreground text-sm">Select your primary currency for budgeting.</p>
+    <Select.Root
+      type="single"
+      value={formData.currency}
+      onValueChange={(v) => v && onboardingWizardStore.setCurrency(v)}>
       <Select.Trigger class="w-full max-w-xs">
-        {currencies.find(c => c.value === formData.currency)?.label ?? 'Select currency'}
+        {currencies.find((c) => c.value === formData.currency)?.label ?? 'Select currency'}
       </Select.Trigger>
       <Select.Content>
         {#each currencies as currency}
@@ -61,15 +66,16 @@ const dateFormats: { value: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'; label: s
   <!-- Locale -->
   <div class="space-y-3">
     <div class="flex items-center gap-2">
-      <Globe class="h-5 w-5 text-muted-foreground" />
+      <Globe class="text-muted-foreground h-5 w-5" />
       <Label class="text-base font-medium">Language & Region</Label>
     </div>
-    <p class="text-muted-foreground text-sm">
-      Affects number formatting and display language.
-    </p>
-    <Select.Root type="single" value={formData.locale} onValueChange={(v) => v && onboardingWizardStore.setLocale(v)}>
+    <p class="text-muted-foreground text-sm">Affects number formatting and display language.</p>
+    <Select.Root
+      type="single"
+      value={formData.locale}
+      onValueChange={(v) => v && onboardingWizardStore.setLocale(v)}>
       <Select.Trigger class="w-full max-w-xs">
-        {locales.find(l => l.value === formData.locale)?.label ?? 'Select locale'}
+        {locales.find((l) => l.value === formData.locale)?.label ?? 'Select locale'}
       </Select.Trigger>
       <Select.Content>
         {#each locales as locale}
@@ -82,18 +88,18 @@ const dateFormats: { value: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'; label: s
   <!-- Date Format -->
   <div class="space-y-3">
     <div class="flex items-center gap-2">
-      <Calendar class="h-5 w-5 text-muted-foreground" />
+      <Calendar class="text-muted-foreground h-5 w-5" />
       <Label class="text-base font-medium">Date Format</Label>
     </div>
-    <p class="text-muted-foreground text-sm">
-      Choose how dates are displayed throughout the app.
-    </p>
+    <p class="text-muted-foreground text-sm">Choose how dates are displayed throughout the app.</p>
     <div class="grid gap-3 sm:grid-cols-3">
       {#each dateFormats as format}
         {@const isSelected = formData.dateFormat === format.value}
         <button
           type="button"
-          class="border-border hover:border-primary flex flex-col items-center gap-1 rounded-lg border p-4 transition-colors {isSelected ? 'border-primary bg-primary/5' : ''}"
+          class="border-border hover:border-primary flex flex-col items-center gap-1 rounded-lg border p-4 transition-colors {isSelected
+            ? 'border-primary bg-primary/5'
+            : ''}"
           onclick={() => onboardingWizardStore.setDateFormat(format.value)}>
           <span class="font-medium">{format.label}</span>
           <span class="text-muted-foreground text-xs">{format.example}</span>

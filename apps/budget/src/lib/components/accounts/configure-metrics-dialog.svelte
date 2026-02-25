@@ -28,9 +28,9 @@ interface Props {
 let { account, open = $bindable(false), onOpenChange, onSave }: Props = $props();
 
 // Initialize selected metrics from account or defaults
-let selectedMetrics = $state(new SvelteSet<MetricId>(
-  new Set(getEnabledMetrics((() => account)()))
-));
+let selectedMetrics = $state(
+  new SvelteSet<MetricId>(new Set(getEnabledMetrics((() => account)())))
+);
 
 // Group metrics by category
 const metricsByCategory = $derived(() => {
@@ -103,7 +103,9 @@ function isMetricAvailable(metric: (typeof AVAILABLE_METRICS)[number]): boolean 
 
 // Reset to defaults
 function resetToDefaults() {
-  selectedMetrics = new SvelteSet(AVAILABLE_METRICS.filter((m) => m.defaultEnabled).map((m) => m.id));
+  selectedMetrics = new SvelteSet(
+    AVAILABLE_METRICS.filter((m) => m.defaultEnabled).map((m) => m.id)
+  );
 }
 </script>
 

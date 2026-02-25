@@ -47,7 +47,7 @@ let convertSimilar = $state(false);
 // Auto-select account when preselectedAccountId is provided
 $effect(() => {
   if (preselectedAccountId && availableAccounts.length > 0 && !selectedAccount) {
-    const account = availableAccounts.find(a => a.id === preselectedAccountId);
+    const account = availableAccounts.find((a) => a.id === preselectedAccountId);
     if (account) {
       selectedAccount = { id: account.id, name: account.name };
     }
@@ -65,9 +65,8 @@ const absAmount = $derived(Math.abs(transaction.amount));
 
 // Get transaction ID (handles string IDs from scheduled transactions)
 // svelte-ignore state_referenced_locally
-const transactionId = typeof transaction.id === 'number'
-  ? transaction.id
-  : parseInt(transaction.id as string);
+const transactionId =
+  typeof transaction.id === 'number' ? transaction.id : parseInt(transaction.id as string);
 
 // Query for similar payee transactions - the .options() method creates and returns the query store
 const similarQuery = rpc.transactions.findSimilarPayeeTransactions(transactionId).options();
@@ -90,10 +89,7 @@ async function handleSubmit() {
   try {
     if (convertSimilar && similarCount > 0) {
       // Bulk convert including similar transactions
-      const allTransactionIds = [
-        transactionId,
-        ...similarTransactions.map((t) => t.id),
-      ];
+      const allTransactionIds = [transactionId, ...similarTransactions.map((t) => t.id)];
 
       const result = await convertBulkMutation.mutateAsync({
         transactionIds: allTransactionIds,
@@ -120,9 +116,10 @@ async function handleSubmit() {
         rawPayeeString: payeeStringForMapping ?? undefined,
       });
 
-      const successMessage = rememberMapping && payeeStringForMapping
-        ? 'Transaction converted to transfer (mapping saved)'
-        : 'Transaction converted to transfer';
+      const successMessage =
+        rememberMapping && payeeStringForMapping
+          ? 'Transaction converted to transfer (mapping saved)'
+          : 'Transaction converted to transfer';
       toast.success(successMessage);
     }
 
@@ -165,7 +162,7 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
         {#if transaction.notes}
           <div class="mt-1 flex items-center justify-between text-sm">
             <span class="text-muted-foreground">Notes</span>
-            <span class="truncate max-w-[200px]">{transaction.notes}</span>
+            <span class="max-w-[200px] truncate">{transaction.notes}</span>
           </div>
         {/if}
       </div>
@@ -176,7 +173,7 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
           <div class="text-muted-foreground text-xs">
             {isOutgoing ? 'From' : 'To'}
           </div>
-          <div class="font-medium text-sm">Current Account</div>
+          <div class="text-sm font-medium">Current Account</div>
         </div>
         {#if isOutgoing}
           <ArrowRight class="h-5 w-5 text-blue-500" />
@@ -187,7 +184,7 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
           <div class="text-muted-foreground text-xs">
             {isOutgoing ? 'To' : 'From'}
           </div>
-          <div class="font-medium text-sm">
+          <div class="text-sm font-medium">
             {selectedAccount?.name || 'Select account'}
           </div>
         </div>
@@ -208,14 +205,14 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
 
       <!-- Similar transactions checkbox -->
       {#if similarCount > 0}
-        <div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+        <div
+          class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
           <div class="flex items-start gap-3">
-            <Checkbox
-              id="convert-similar"
-              bind:checked={convertSimilar}
-              class="mt-0.5" />
+            <Checkbox id="convert-similar" bind:checked={convertSimilar} class="mt-0.5" />
             <div class="space-y-1">
-              <Label for="convert-similar" class="text-sm font-medium cursor-pointer flex items-center gap-2">
+              <Label
+                for="convert-similar"
+                class="flex cursor-pointer items-center gap-2 text-sm font-medium">
                 <Users class="h-4 w-4 text-blue-600" />
                 Also convert {similarCount} similar transaction{similarCount > 1 ? 's' : ''}
               </Label>
@@ -230,12 +227,9 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
       <!-- Remember mapping checkbox -->
       {#if payeeStringForMapping}
         <div class="flex items-start gap-3">
-          <Checkbox
-            id="remember-mapping"
-            bind:checked={rememberMapping}
-            class="mt-0.5" />
+          <Checkbox id="remember-mapping" bind:checked={rememberMapping} class="mt-0.5" />
           <div class="space-y-1">
-            <Label for="remember-mapping" class="text-sm font-normal cursor-pointer">
+            <Label for="remember-mapping" class="cursor-pointer text-sm font-normal">
               Remember for future imports
             </Label>
             <p class="text-muted-foreground text-xs">
@@ -248,7 +242,8 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
       {/if}
 
       <p class="text-muted-foreground text-xs">
-        This will create a matching transaction in the selected account and link them as a transfer pair.
+        This will create a matching transaction in the selected account and link them as a transfer
+        pair.
       </p>
     </div>
 

@@ -258,7 +258,15 @@ export function defineQuery<TParams, TData, TError = Error>(
 export function defineMutation<TVariables, TData, TError = Error>(
   config: DefineMutationConfig<TVariables, TData, TError>
 ): MutationWrapper<TVariables, TData, TError> {
-  const { mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage, importance = "normal" } = config;
+  const {
+    mutationFn,
+    options = {},
+    onSuccess,
+    onError,
+    successMessage,
+    errorMessage,
+    importance = "normal",
+  } = config;
 
   // Create the mutation with enhanced error handling and notifications
   const createMutationWithConfig = () =>
@@ -331,7 +339,9 @@ export function defineMutation<TVariables, TData, TError = Error>(
         // Show success toast if message provided
         if (successMessage) {
           const message =
-            typeof successMessage === "function" ? successMessage(result, variables) : successMessage;
+            typeof successMessage === "function"
+              ? successMessage(result, variables)
+              : successMessage;
           toast.success(message, { importance });
         }
 

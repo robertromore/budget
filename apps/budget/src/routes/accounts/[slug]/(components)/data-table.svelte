@@ -539,10 +539,12 @@ const canRender = $derived(isContextReady && isViewsInitialized);
       <TransactionBulkActions {table} allTransactions={transactions || []} {onBulkDelete} />
     {/if}
 
-    <div class={cn(
-      "max-w-full overflow-x-auto rounded-md border",
-      stickyHeader && "max-h-[calc(100vh-16rem)] overflow-y-auto"
-    )} data-tour-id="transactions-table-header">
+    <div
+      class={cn(
+        'max-w-full overflow-x-auto rounded-md border',
+        stickyHeader && 'max-h-[calc(100vh-16rem)] overflow-y-auto'
+      )}
+      data-tour-id="transactions-table-header">
       <DndContext
         {sensors}
         modifiers={[restrictToHorizontalAxis]}
@@ -589,10 +591,16 @@ const canRender = $derived(isContextReady && isViewsInitialized);
                 class={cn(
                   'data-[state=selected]:border-l-primary data-[state=selected]:border-l-4',
                   isTransfer && 'border-l-2 border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20',
-                  isArchived && 'border-l-2 border-l-gray-400 bg-gray-100/50 opacity-60 dark:bg-gray-800/30',
-                  isAdjustment && 'border-l-2 border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20',
-                  isReconciliationMarker && markerType === 'reconciliation' && 'border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/30 font-medium',
-                  isReconciliationMarker && markerType === 'balance-reset' && 'border-l-4 border-l-purple-500 bg-purple-50/50 dark:bg-purple-950/30 font-medium'
+                  isArchived &&
+                    'border-l-2 border-l-gray-400 bg-gray-100/50 opacity-60 dark:bg-gray-800/30',
+                  isAdjustment &&
+                    'border-l-2 border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20',
+                  isReconciliationMarker &&
+                    markerType === 'reconciliation' &&
+                    'border-l-4 border-l-green-500 bg-green-50/50 font-medium dark:bg-green-950/30',
+                  isReconciliationMarker &&
+                    markerType === 'balance-reset' &&
+                    'border-l-4 border-l-purple-500 bg-purple-50/50 font-medium dark:bg-purple-950/30'
                 )}>
                 {#each row.getVisibleCells() as cell (cell.id)}
                   {@const isActive = activeColumnId === cell.column.id}
@@ -615,7 +623,8 @@ const canRender = $derived(isContextReady && isViewsInitialized);
                         context={cell.getContext()} />
                     </Table.Cell>
                   {:else if cell.getIsPlaceholder()}
-                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}></Table.Cell>
+                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}
+                    ></Table.Cell>
                   {:else if cell.column.columnDef.cell}
                     <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}>
                       <FlexRender
@@ -623,7 +632,8 @@ const canRender = $derived(isContextReady && isViewsInitialized);
                         context={cell.getContext()} />
                     </Table.Cell>
                   {:else}
-                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}></Table.Cell>
+                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}
+                    ></Table.Cell>
                   {/if}
                 {/each}
               </Table.Row>

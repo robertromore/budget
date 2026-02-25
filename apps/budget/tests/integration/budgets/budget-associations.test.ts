@@ -5,11 +5,11 @@
  * association types, and finding applicable budgets.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, or, inArray} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, or, inArray } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -148,7 +148,9 @@ describe("Budget Associations", () => {
         .where(eq(schema.budgetAccounts.budgetId, budget.id));
 
       expect(associations).toHaveLength(2);
-      expect(associations.map((a) => a.accountId).sort()).toEqual([ctx.accountId, ctx.account2Id].sort());
+      expect(associations.map((a) => a.accountId).sort()).toEqual(
+        [ctx.accountId, ctx.account2Id].sort()
+      );
     });
 
     it("should support different association types per account", async () => {
@@ -242,8 +244,8 @@ describe("Budget Associations", () => {
         .returning();
 
       await ctx.db.insert(schema.budgetCategories).values([
-        {budgetId: budget.id, categoryId: ctx.categoryId},
-        {budgetId: budget.id, categoryId: ctx.category2Id},
+        { budgetId: budget.id, categoryId: ctx.categoryId },
+        { budgetId: budget.id, categoryId: ctx.category2Id },
       ]);
 
       const associations = await ctx.db
@@ -400,14 +402,14 @@ describe("Budget Associations", () => {
       // Find all applicable budgets for a transaction with this account and category
       const accountBudgetIds = (
         await ctx.db
-          .select({budgetId: schema.budgetAccounts.budgetId})
+          .select({ budgetId: schema.budgetAccounts.budgetId })
           .from(schema.budgetAccounts)
           .where(eq(schema.budgetAccounts.accountId, ctx.accountId))
       ).map((r) => r.budgetId);
 
       const categoryBudgetIds = (
         await ctx.db
-          .select({budgetId: schema.budgetCategories.budgetId})
+          .select({ budgetId: schema.budgetCategories.budgetId })
           .from(schema.budgetCategories)
           .where(eq(schema.budgetCategories.categoryId, ctx.categoryId))
       ).map((r) => r.budgetId);
@@ -449,8 +451,8 @@ describe("Budget Associations", () => {
         .returning();
 
       await ctx.db.insert(schema.budgetAccounts).values([
-        {budgetId: activeBudget.id, accountId: ctx.accountId, associationType: "spending"},
-        {budgetId: inactiveBudget.id, accountId: ctx.accountId, associationType: "spending"},
+        { budgetId: activeBudget.id, accountId: ctx.accountId, associationType: "spending" },
+        { budgetId: inactiveBudget.id, accountId: ctx.accountId, associationType: "spending" },
       ]);
 
       // Find active budgets only
@@ -494,7 +496,9 @@ describe("Budget Associations", () => {
       });
 
       // Sync: replace with account2
-      await ctx.db.delete(schema.budgetAccounts).where(eq(schema.budgetAccounts.budgetId, budget.id));
+      await ctx.db
+        .delete(schema.budgetAccounts)
+        .where(eq(schema.budgetAccounts.budgetId, budget.id));
 
       await ctx.db.insert(schema.budgetAccounts).values({
         budgetId: budget.id,
@@ -534,13 +538,19 @@ describe("Budget Associations", () => {
       // Update association type
       await ctx.db
         .update(schema.budgetAccounts)
-        .set({associationType: "source"})
+        .set({ associationType: "source" })
         .where(
-          and(eq(schema.budgetAccounts.budgetId, budget.id), eq(schema.budgetAccounts.accountId, ctx.accountId))
+          and(
+            eq(schema.budgetAccounts.budgetId, budget.id),
+            eq(schema.budgetAccounts.accountId, ctx.accountId)
+          )
         );
 
       const updated = await ctx.db.query.budgetAccounts.findFirst({
-        where: and(eq(schema.budgetAccounts.budgetId, budget.id), eq(schema.budgetAccounts.accountId, ctx.accountId)),
+        where: and(
+          eq(schema.budgetAccounts.budgetId, budget.id),
+          eq(schema.budgetAccounts.accountId, ctx.accountId)
+        ),
       });
 
       expect(updated?.associationType).toBe("source");
@@ -585,13 +595,16 @@ describe("Budget Associations", () => {
           status: "active",
           enforcementLevel: "warning",
           metadata: {
-            scheduledExpense: {linkedScheduleId: schedule.id},
+            scheduledExpense: { linkedScheduleId: schedule.id },
           },
         })
         .returning();
 
       // Link schedule to budget
-      await ctx.db.update(schema.schedules).set({budgetId: budget.id}).where(eq(schema.schedules.id, schedule.id));
+      await ctx.db
+        .update(schema.schedules)
+        .set({ budgetId: budget.id })
+        .where(eq(schema.schedules.id, schedule.id));
 
       // Find budget via schedule
       const linkedSchedule = await ctx.db.query.schedules.findFirst({
@@ -625,7 +638,10 @@ describe("Budget Associations", () => {
 
       // Check if association already exists before inserting
       const existing = await ctx.db.query.budgetAccounts.findFirst({
-        where: and(eq(schema.budgetAccounts.budgetId, budget.id), eq(schema.budgetAccounts.accountId, ctx.accountId)),
+        where: and(
+          eq(schema.budgetAccounts.budgetId, budget.id),
+          eq(schema.budgetAccounts.accountId, ctx.accountId)
+        ),
       });
 
       expect(existing).toBeDefined();

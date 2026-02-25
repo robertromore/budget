@@ -17,7 +17,7 @@ import {
   getRecentPayees,
   getSuggestedPayees,
   groupPayees,
-  saveToRecentPayees
+  saveToRecentPayees,
 } from './utils';
 
 let {
@@ -71,10 +71,7 @@ const quickAccessSections = $derived.by((): QuickAccessSections => {
   const recent = showQuickAccess ? getRecentPayees(allPayees, 5) : [];
   const frequent = showQuickAccess ? getFrequentPayees(allPayees, 5) : [];
 
-  const excludeIds = new Set([
-    ...recent.map((p) => p.id),
-    ...frequent.map((p) => p.id),
-  ]);
+  const excludeIds = new Set([...recent.map((p) => p.id), ...frequent.map((p) => p.id)]);
 
   const suggested = enableMLSuggestions
     ? getSuggestedPayees(allPayees, transactionContext, excludeIds, 5)

@@ -220,8 +220,8 @@ const effectiveFeatures = $derived<DataTableFeatures>({
                   <Table.Cell colspan={columns.length} class="h-24 text-center">
                     <div class="flex items-center justify-center gap-2">
                       <div
-                        class="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
-                      ></div>
+                        class="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent">
+                      </div>
                       <span class="text-muted-foreground">Loading...</span>
                     </div>
                   </Table.Cell>

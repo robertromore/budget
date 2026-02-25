@@ -72,7 +72,10 @@ export function extractFeatures(
   // Category-specific acceptance rate
   if (features.categoryId !== undefined) {
     const categoryRate = context.profile.preferences.categorySensitivity[features.categoryId];
-    featureMap.set("category_acceptance_rate", categoryRate ?? context.profile.engagement.acceptanceRate);
+    featureMap.set(
+      "category_acceptance_rate",
+      categoryRate ?? context.profile.engagement.acceptanceRate
+    );
   } else {
     featureMap.set("category_acceptance_rate", context.profile.engagement.acceptanceRate);
   }
@@ -207,10 +210,7 @@ export interface AcceptancePredictor {
   /**
    * Predict acceptance probability for a recommendation
    */
-  predict(
-    features: RecommendationFeatures,
-    context: PredictionContext
-  ): AcceptancePrediction;
+  predict(features: RecommendationFeatures, context: PredictionContext): AcceptancePrediction;
 
   /**
    * Batch predict for multiple recommendations
@@ -246,10 +246,7 @@ export function createAcceptancePredictor(
   const w = { ...DEFAULT_WEIGHTS, ...weights };
 
   return {
-    predict(
-      features: RecommendationFeatures,
-      context: PredictionContext
-    ): AcceptancePrediction {
+    predict(features: RecommendationFeatures, context: PredictionContext): AcceptancePrediction {
       const extractedFeatures = extractFeatures(features, context);
 
       // Ensemble prediction (weighted average of models)
@@ -258,7 +255,8 @@ export function createAcceptancePredictor(
 
       // Weighted ensemble (favor logistic for calibration)
       const calibration = context.profile.learningProgress.confidenceCalibration;
-      const ensemblePred = logisticPred * (0.6 + 0.2 * calibration) + bayesPred * (0.4 - 0.2 * calibration);
+      const ensemblePred =
+        logisticPred * (0.6 + 0.2 * calibration) + bayesPred * (0.4 - 0.2 * calibration);
 
       // Clamp to valid range
       const predictedAcceptance = Math.max(0.01, Math.min(0.99, ensemblePred));
@@ -357,8 +355,7 @@ export function createAcceptancePredictor(
       }
 
       // Historical acceptance contribution
-      const historicalContrib =
-        (context.profile.engagement.acceptanceRate - 0.5) * 0.5 * 2;
+      const historicalContrib = (context.profile.engagement.acceptanceRate - 0.5) * 0.5 * 2;
       factors.push({
         factor: "historical_behavior",
         contribution: historicalContrib,
@@ -366,7 +363,10 @@ export function createAcceptancePredictor(
       });
 
       // Session fatigue
-      if (context.sessionRecommendationCount !== undefined && context.sessionRecommendationCount > 5) {
+      if (
+        context.sessionRecommendationCount !== undefined &&
+        context.sessionRecommendationCount > 5
+      ) {
         const fatigueContrib = -w.fatigueDecay * context.sessionRecommendationCount;
         factors.push({
           factor: "session_fatigue",

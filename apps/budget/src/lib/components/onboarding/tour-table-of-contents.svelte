@@ -1,16 +1,16 @@
 <script lang="ts">
-import { spotlightTour, type ChapterNode } from "$lib/states/ui/spotlight-tour.svelte";
-import { Button } from "$lib/components/ui/button";
-import * as Collapsible from "$lib/components/ui/collapsible";
-import type { TourStep } from "$lib/types/spotlight-tour";
-import Check from "@lucide/svelte/icons/check";
-import ChevronDown from "@lucide/svelte/icons/chevron-down";
-import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-import ChevronRight from "@lucide/svelte/icons/chevron-right";
-import Circle from "@lucide/svelte/icons/circle";
-import List from "@lucide/svelte/icons/list";
-import Loader2 from "@lucide/svelte/icons/loader-2";
-import X from "@lucide/svelte/icons/x";
+import { spotlightTour, type ChapterNode } from '$lib/states/ui/spotlight-tour.svelte';
+import { Button } from '$lib/components/ui/button';
+import * as Collapsible from '$lib/components/ui/collapsible';
+import type { TourStep } from '$lib/types/spotlight-tour';
+import Check from '@lucide/svelte/icons/check';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import Circle from '@lucide/svelte/icons/circle';
+import List from '@lucide/svelte/icons/list';
+import Loader2 from '@lucide/svelte/icons/loader-2';
+import X from '@lucide/svelte/icons/x';
 
 const chaptersWithSteps = $derived(spotlightTour.chaptersWithSteps);
 const currentStepIndex = $derived(spotlightTour.currentStepIndex);
@@ -25,9 +25,9 @@ const TOC_WIDTH = 272;
 
 // Determine which side to position the TOC based on target element location
 const positionSide = $derived.by(() => {
-  if (!targetRect) return "right"; // Default to right
+  if (!targetRect) return 'right'; // Default to right
 
-  const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 1920;
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
   const targetCenterX = targetRect.left + targetRect.width / 2;
 
   // If target is in the right half of the screen, position TOC on the left
@@ -35,10 +35,10 @@ const positionSide = $derived.by(() => {
   const wouldOverlapRight = targetRect.right > viewportWidth - TOC_WIDTH - 16;
 
   if (targetCenterX > viewportWidth / 2 || wouldOverlapRight) {
-    return "left";
+    return 'left';
   }
 
-  return "right";
+  return 'right';
 });
 
 // Track which chapters are "owned" by steps (rendered inline, not as separate sections)
@@ -80,16 +80,16 @@ let drillDownRoot = $state<string | null>(null);
 const shouldDrillDown = $derived.by(() => {
   const currentChapter = spotlightTour.currentChapter;
   if (!currentChapter) return false;
-  const depth = currentChapter.split("/").length;
+  const depth = currentChapter.split('/').length;
   return depth >= 3;
 });
 
 // Auto-set drill-down root when entering deep chapters
 $effect(() => {
   if (shouldDrillDown && spotlightTour.currentChapter) {
-    const parts = spotlightTour.currentChapter.split("/");
+    const parts = spotlightTour.currentChapter.split('/');
     // Show from the 2nd level (e.g., "account-page/import" for depth 3+)
-    const newRoot = parts.slice(0, 2).join("/");
+    const newRoot = parts.slice(0, 2).join('/');
     if (drillDownRoot !== newRoot) {
       drillDownRoot = newRoot;
     }
@@ -111,9 +111,9 @@ $effect(() => {
     // Expand the current chapter
     newExpanded.add(currentChapter);
     // Also expand all parent chapters
-    const parts = currentChapter.split("/");
+    const parts = currentChapter.split('/');
     for (let i = 1; i < parts.length; i++) {
-      newExpanded.add(parts.slice(0, i).join("/"));
+      newExpanded.add(parts.slice(0, i).join('/'));
     }
     if (newExpanded.size !== expandedChapters.size) {
       expandedChapters = newExpanded;
@@ -135,10 +135,10 @@ async function goToStep(index: number) {
   await spotlightTour.goToStep(index);
 }
 
-function getStepStatus(index: number): "completed" | "current" | "upcoming" {
-  if (index < currentStepIndex) return "completed";
-  if (index === currentStepIndex) return "current";
-  return "upcoming";
+function getStepStatus(index: number): 'completed' | 'current' | 'upcoming' {
+  if (index < currentStepIndex) return 'completed';
+  if (index === currentStepIndex) return 'current';
+  return 'upcoming';
 }
 
 /**
@@ -217,14 +217,12 @@ function getCurrentSteps(node: ChapterNode): number {
   <Collapsible.Root
     open={isExpanded}
     onOpenChange={() => toggleChapter(node.chapter.id)}
-    class="mb-1"
-  >
+    class="mb-1">
     <Collapsible.Trigger
-      class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent {isCurrent
+      class="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors {isCurrent
         ? 'bg-accent/50 font-medium'
         : ''}"
-      style="padding-left: {depth * 8 + 8}px"
-    >
+      style="padding-left: {depth * 8 + 8}px">
       {#if hasContent}
         {#if isExpanded}
           <ChevronDown class="h-4 w-4 shrink-0" />
@@ -247,26 +245,27 @@ function getCurrentSteps(node: ChapterNode): number {
     </Collapsible.Trigger>
 
     <Collapsible.Content>
-      <div class="border-l ml-2" style="margin-left: {depth * 8 + 16}px">
+      <div class="ml-2 border-l" style="margin-left: {depth * 8 + 16}px">
         <!-- Render own steps first -->
         {#each node.steps as { step, index }}
           {@const status = getStepStatus(index)}
-          {@const childChapter = step.childChapterId ? findChapterNode(chaptersWithSteps, step.childChapterId) : null}
+          {@const childChapter = step.childChapterId
+            ? findChapterNode(chaptersWithSteps, step.childChapterId)
+            : null}
 
           <button
-            class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors hover:bg-accent {status ===
+            class="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors {status ===
             'current'
               ? 'bg-primary/10 text-primary font-medium'
               : 'text-muted-foreground'}"
             onclick={() => goToStep(index)}
-            disabled={isSettingUp}
-          >
-            {#if visitedSteps.has(index) && status !== "current"}
+            disabled={isSettingUp}>
+            {#if visitedSteps.has(index) && status !== 'current'}
               <Check class="h-3 w-3 text-green-500" />
-            {:else if status === "current"}
-              <Circle class="h-3 w-3 fill-primary text-primary" />
+            {:else if status === 'current'}
+              <Circle class="fill-primary text-primary h-3 w-3" />
             {:else}
-              <Circle class="h-3 w-3 text-muted-foreground/50" />
+              <Circle class="text-muted-foreground/50 h-3 w-3" />
             {/if}
 
             <span class="truncate">{step.title}</span>
@@ -278,19 +277,18 @@ function getCurrentSteps(node: ChapterNode): number {
               {#each childChapter.steps as childStep}
                 {@const childStatus = getStepStatus(childStep.index)}
                 <button
-                  class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors hover:bg-accent {childStatus ===
+                  class="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors {childStatus ===
                   'current'
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-muted-foreground'}"
                   onclick={() => goToStep(childStep.index)}
-                  disabled={isSettingUp}
-                >
-                  {#if visitedSteps.has(childStep.index) && childStatus !== "current"}
+                  disabled={isSettingUp}>
+                  {#if visitedSteps.has(childStep.index) && childStatus !== 'current'}
                     <Check class="h-3 w-3 text-green-500" />
-                  {:else if childStatus === "current"}
-                    <Circle class="h-3 w-3 fill-primary text-primary" />
+                  {:else if childStatus === 'current'}
+                    <Circle class="fill-primary text-primary h-3 w-3" />
                   {:else}
-                    <Circle class="h-3 w-3 text-muted-foreground/50" />
+                    <Circle class="text-muted-foreground/50 h-3 w-3" />
                   {/if}
 
                   <span class="truncate">{childStep.step.title}</span>
@@ -301,7 +299,7 @@ function getCurrentSteps(node: ChapterNode): number {
         {/each}
 
         <!-- Then render child chapters (excluding owned ones) -->
-        {#each node.children.filter(c => !ownedChapterIds.has(c.chapter.id)) as childNode}
+        {#each node.children.filter((c) => !ownedChapterIds.has(c.chapter.id)) as childNode}
           {@render chapterItem(childNode, depth + 1)}
         {/each}
       </div>
@@ -312,14 +310,14 @@ function getCurrentSteps(node: ChapterNode): number {
 {#if true}
   <div
     class="tour-toc animate-in fade-in-0 fixed top-4 z-9999 max-h-[calc(100vh-8rem)] w-64 transition-[left,right] duration-300
-      {positionSide === 'left' ? 'left-4 slide-in-from-left-5' : 'right-4 slide-in-from-right-5'}"
-  >
+      {positionSide === 'left' ? 'slide-in-from-left-5 left-4' : 'slide-in-from-right-5 right-4'}">
     {#if isOpen}
       <div class="bg-popover text-popover-foreground relative rounded-lg border shadow-lg">
         <!-- Loading overlay -->
         {#if isSettingUp}
-          <div class="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-popover/80">
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <div
+            class="bg-popover/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg">
+            <div class="text-muted-foreground flex items-center gap-2 text-sm">
               <Loader2 class="h-4 w-4 animate-spin" />
               <span>Setting up...</span>
             </div>
@@ -332,12 +330,7 @@ function getCurrentSteps(node: ChapterNode): number {
             <List class="h-4 w-4" />
             <span class="text-sm font-medium">Tour Guide</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            class="h-6 w-6 p-0"
-            onclick={() => (isOpen = false)}
-          >
+          <Button variant="ghost" size="sm" class="h-6 w-6 p-0" onclick={() => (isOpen = false)}>
             <X class="h-4 w-4" />
           </Button>
         </div>
@@ -347,9 +340,8 @@ function getCurrentSteps(node: ChapterNode): number {
           {#if drillDownRoot}
             <!-- Drill-down view: show "Go Up" button and filtered chapters -->
             <button
-              class="mb-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onclick={goUp}
-            >
+              class="text-muted-foreground hover:bg-accent hover:text-foreground mb-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors"
+              onclick={goUp}>
               <ChevronLeft class="h-4 w-4" />
               <span>Back to overview</span>
             </button>
@@ -374,8 +366,8 @@ function getCurrentSteps(node: ChapterNode): number {
           <div class="bg-muted mt-1 h-1 w-full overflow-hidden rounded-full">
             <div
               class="bg-primary h-full transition-all duration-300"
-              style:width="{spotlightTour.progress}%"
-            ></div>
+              style:width="{spotlightTour.progress}%">
+            </div>
           </div>
         </div>
       </div>
@@ -385,8 +377,7 @@ function getCurrentSteps(node: ChapterNode): number {
         variant="outline"
         size="sm"
         class="bg-popover shadow-lg"
-        onclick={() => (isOpen = true)}
-      >
+        onclick={() => (isOpen = true)}>
         <List class="mr-2 h-4 w-4" />
         Tour Guide
       </Button>
@@ -395,7 +386,7 @@ function getCurrentSteps(node: ChapterNode): number {
 {/if}
 
 <style>
-  .tour-toc {
-    pointer-events: auto;
-  }
+.tour-toc {
+  pointer-events: auto;
+}
 </style>

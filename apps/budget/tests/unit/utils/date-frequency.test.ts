@@ -1,6 +1,6 @@
-import {describe, it, expect} from "vitest";
-import {CalendarDate} from "@internationalized/date";
-import {nextMonthly} from "../../../src/lib/utils/date-frequency";
+import { describe, it, expect } from "vitest";
+import { CalendarDate } from "@internationalized/date";
+import { nextMonthly } from "../../../src/lib/utils/date-frequency";
 
 describe("nextMonthly", () => {
   describe("Specific day of month pattern", () => {

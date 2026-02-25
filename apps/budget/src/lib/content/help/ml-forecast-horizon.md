@@ -17,6 +17,7 @@ Set the default number of days for cash flow predictions.
 ## Accuracy Considerations
 
 Shorter horizons are more accurate:
+
 - **7-30 days**: High confidence
 - **30-90 days**: Good confidence
 - **90-365 days**: Lower confidence, useful for trends

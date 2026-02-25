@@ -1,5 +1,5 @@
-import {tick} from "svelte";
-import {expect, vi} from "vitest";
+import { tick } from "svelte";
+import { expect, vi } from "vitest";
 
 /**
  * Component testing utilities for Svelte 5
@@ -17,7 +17,7 @@ export class ComponentTestHelpers {
   /**
    * Create a mock Svelte context
    */
-  static createMockContext<T>(value: T): {get: () => T; set: (newValue: T) => void} {
+  static createMockContext<T>(value: T): { get: () => T; set: (newValue: T) => void } {
     let contextValue = value;
     return {
       get: () => contextValue,
@@ -36,7 +36,7 @@ export class ComponentTestHelpers {
     validProps: T
   ): void {
     requiredProps.forEach((propName) => {
-      const propsWithoutRequired = {...validProps};
+      const propsWithoutRequired = { ...validProps };
       delete propsWithoutRequired[propName];
 
       expect(() => {
@@ -104,7 +104,7 @@ export class ComponentTestHelpers {
    */
   static createFormTestHelper<T extends Record<string, any>>(
     validData: T,
-    invalidCases: Array<{field: keyof T; value: any; expectedError: string | RegExp}>
+    invalidCases: Array<{ field: keyof T; value: any; expectedError: string | RegExp }>
   ): {
     testValidSubmission: (submitFn: (data: T) => Promise<any>) => Promise<void>;
     testInvalidSubmissions: (submitFn: (data: T) => Promise<any>) => Promise<void>;
@@ -138,7 +138,7 @@ export class ComponentTestHelpers {
    * Mock intersection observer for testing lazy loading
    */
   static mockIntersectionObserver(): {
-    mockIntersect: (entries: Array<{target: Element; isIntersecting: boolean}>) => void;
+    mockIntersect: (entries: Array<{ target: Element; isIntersecting: boolean }>) => void;
     restore: () => void;
   } {
     const globalScope = globalThis as typeof globalThis & {
@@ -261,7 +261,7 @@ export class ComponentTestHelpers {
 
       expectKeyboardNavigation: (element, keys) => {
         keys.forEach((key) => {
-          const event = new KeyboardEvent("keydown", {key});
+          const event = new KeyboardEvent("keydown", { key });
           element.dispatchEvent(event);
           // Assertions would depend on expected behavior
           expect(event.defaultPrevented).toBeDefined();
@@ -343,7 +343,7 @@ export class InteractionTestHelpers {
 
     for (const char of text) {
       element.value += char;
-      element.dispatchEvent(new Event("input", {bubbles: true}));
+      element.dispatchEvent(new Event("input", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
@@ -373,7 +373,7 @@ export class InteractionTestHelpers {
    */
   static async testResponsiveComponent(
     element: Element,
-    breakpoints: Array<{width: number; expectedClass?: string; expectedBehavior?: string}>
+    breakpoints: Array<{ width: number; expectedClass?: string; expectedBehavior?: string }>
   ): Promise<void> {
     for (const breakpoint of breakpoints) {
       // Mock window resize

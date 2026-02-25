@@ -5,13 +5,16 @@
  * configuration, and template types.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import type {ReportConfig} from "../../../src/lib/schema/report-templates";
-import {DEFAULT_REPORT_CONFIG, PREDEFINED_TEMPLATES} from "../../../src/lib/schema/report-templates";
+import { eq } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type { ReportConfig } from "../../../src/lib/schema/report-templates";
+import {
+  DEFAULT_REPORT_CONFIG,
+  PREDEFINED_TEMPLATES,
+} from "../../../src/lib/schema/report-templates";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -63,7 +66,7 @@ describe("Report Templates", () => {
 
     it("should create template with custom config", async () => {
       const customConfig: ReportConfig = {
-        dateRange: {type: "custom", startDate: "2024-01-01", endDate: "2024-12-31"},
+        dateRange: { type: "custom", startDate: "2024-01-01", endDate: "2024-12-31" },
         accountIds: [1, 2, 3],
         sections: {
           summaryStats: true,
@@ -170,7 +173,7 @@ describe("Report Templates", () => {
     it("should handle selected period date range", async () => {
       const config: ReportConfig = {
         ...DEFAULT_REPORT_CONFIG,
-        dateRange: {type: "selected"},
+        dateRange: { type: "selected" },
       };
 
       const [template] = await ctx.db
@@ -189,7 +192,7 @@ describe("Report Templates", () => {
     it("should handle YTD date range", async () => {
       const config: ReportConfig = {
         ...DEFAULT_REPORT_CONFIG,
-        dateRange: {type: "ytd"},
+        dateRange: { type: "ytd" },
       };
 
       const [template] = await ctx.db
@@ -208,7 +211,7 @@ describe("Report Templates", () => {
     it("should handle last year date range", async () => {
       const config: ReportConfig = {
         ...DEFAULT_REPORT_CONFIG,
-        dateRange: {type: "last_year"},
+        dateRange: { type: "last_year" },
       };
 
       const [template] = await ctx.db
@@ -342,12 +345,12 @@ describe("Report Templates", () => {
       // Change default to template 2
       await ctx.db
         .update(schema.reportTemplates)
-        .set({isDefault: false})
+        .set({ isDefault: false })
         .where(eq(schema.reportTemplates.id, template1.id));
 
       await ctx.db
         .update(schema.reportTemplates)
-        .set({isDefault: true})
+        .set({ isDefault: true })
         .where(eq(schema.reportTemplates.id, template2.id));
 
       const t1 = await ctx.db.query.reportTemplates.findFirst({

@@ -5,12 +5,12 @@
  * roles, permissions, invitations, and workspace isolation.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {createId} from "@paralleldrive/cuid2";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { createId } from "@paralleldrive/cuid2";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -156,7 +156,7 @@ describe("Workspace Management", () => {
 
       await ctx.db
         .update(schema.workspaceMembers)
-        .set({role: "admin"})
+        .set({ role: "admin" })
         .where(eq(schema.workspaceMembers.id, member.id));
 
       const updated = await ctx.db.query.workspaceMembers.findFirst({
@@ -183,9 +183,7 @@ describe("Workspace Management", () => {
         })
         .returning();
 
-      await ctx.db
-        .delete(schema.workspaceMembers)
-        .where(eq(schema.workspaceMembers.id, member.id));
+      await ctx.db.delete(schema.workspaceMembers).where(eq(schema.workspaceMembers.id, member.id));
 
       const removed = await ctx.db.query.workspaceMembers.findFirst({
         where: eq(schema.workspaceMembers.id, member.id),
@@ -214,7 +212,7 @@ describe("Workspace Management", () => {
       // Change default to second workspace
       await ctx.db
         .update(schema.workspaceMembers)
-        .set({isDefault: false})
+        .set({ isDefault: false })
         .where(
           and(
             eq(schema.workspaceMembers.userId, ctx.ownerId),
@@ -224,7 +222,7 @@ describe("Workspace Management", () => {
 
       await ctx.db
         .update(schema.workspaceMembers)
-        .set({isDefault: true})
+        .set({ isDefault: true })
         .where(
           and(
             eq(schema.workspaceMembers.userId, ctx.ownerId),
@@ -398,7 +396,7 @@ describe("Workspace Management", () => {
 
       await ctx.db
         .update(schema.workspaceInvitations)
-        .set({status: "revoked"})
+        .set({ status: "revoked" })
         .where(eq(schema.workspaceInvitations.id, invitation.id));
 
       const updated = await ctx.db.query.workspaceInvitations.findFirst({
@@ -426,7 +424,7 @@ describe("Workspace Management", () => {
       // Mark as expired (would be done by cron job or check)
       await ctx.db
         .update(schema.workspaceInvitations)
-        .set({status: "expired"})
+        .set({ status: "expired" })
         .where(eq(schema.workspaceInvitations.id, invitation.id));
 
       const updated = await ctx.db.query.workspaceInvitations.findFirst({
@@ -440,9 +438,30 @@ describe("Workspace Management", () => {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       await ctx.db.insert(schema.workspaceInvitations).values([
-        {workspaceId: ctx.workspaceId, email: "pending1@example.com", role: "viewer", invitedBy: ctx.ownerId, expiresAt, status: "pending"},
-        {workspaceId: ctx.workspaceId, email: "pending2@example.com", role: "editor", invitedBy: ctx.ownerId, expiresAt, status: "pending"},
-        {workspaceId: ctx.workspaceId, email: "accepted@example.com", role: "viewer", invitedBy: ctx.ownerId, expiresAt, status: "accepted"},
+        {
+          workspaceId: ctx.workspaceId,
+          email: "pending1@example.com",
+          role: "viewer",
+          invitedBy: ctx.ownerId,
+          expiresAt,
+          status: "pending",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          email: "pending2@example.com",
+          role: "editor",
+          invitedBy: ctx.ownerId,
+          expiresAt,
+          status: "pending",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          email: "accepted@example.com",
+          role: "viewer",
+          invitedBy: ctx.ownerId,
+          expiresAt,
+          status: "accepted",
+        },
       ]);
 
       const pending = await ctx.db
@@ -466,13 +485,13 @@ describe("Workspace Management", () => {
       const user3Id = createId();
 
       await ctx.db.insert(schema.users).values([
-        {id: user2Id, name: "User 2", email: "user2@example.com"},
-        {id: user3Id, name: "User 3", email: "user3@example.com"},
+        { id: user2Id, name: "User 2", email: "user2@example.com" },
+        { id: user3Id, name: "User 3", email: "user3@example.com" },
       ]);
 
       await ctx.db.insert(schema.workspaceMembers).values([
-        {workspaceId: ctx.workspaceId, userId: user2Id, role: "admin"},
-        {workspaceId: ctx.workspaceId, userId: user3Id, role: "viewer"},
+        { workspaceId: ctx.workspaceId, userId: user2Id, role: "admin" },
+        { workspaceId: ctx.workspaceId, userId: user3Id, role: "viewer" },
       ]);
 
       const members = await ctx.db
@@ -627,8 +646,8 @@ describe("Workspace Management", () => {
 
       // User is member of both workspaces
       await ctx.db.insert(schema.workspaceMembers).values([
-        {workspaceId: ctx.workspaceId, userId, role: "admin"},
-        {workspaceId: workspace2.id, userId, role: "viewer"},
+        { workspaceId: ctx.workspaceId, userId, role: "admin" },
+        { workspaceId: workspace2.id, userId, role: "viewer" },
       ]);
 
       const ws1Members = await ctx.db

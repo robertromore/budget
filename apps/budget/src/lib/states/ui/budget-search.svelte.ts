@@ -26,7 +26,10 @@ interface BudgetSearchState {
  */
 class BudgetSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState<"grid" | "list">("budget-search-view-mode", "list");
+  private viewModeState = createLocalStorageState<"grid" | "list">(
+    "budget-search-view-mode",
+    "list"
+  );
   private sortByState = createLocalStorageState<
     "name" | "created" | "type" | "allocated" | "consumed" | "remaining"
   >("budget-search-sort-by", "name");

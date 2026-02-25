@@ -28,6 +28,8 @@ export interface ModalHelpContext {
   currentIndex: number;
 }
 
+const EMPTY_MODAL_HELP_ELEMENTS = new Map<string, HTMLElement>();
+
 // =============================================================================
 // Core State
 // =============================================================================
@@ -101,7 +103,7 @@ class HelpModeState {
   }
 
   get modalElements() {
-    return this.#modalContext?.elements ?? new Map();
+    return this.#modalContext?.elements ?? EMPTY_MODAL_HELP_ELEMENTS;
   }
 
   // ==========================================================================
@@ -176,9 +178,7 @@ class HelpModeState {
         const rect = el.getBoundingClientRect();
         // Check for explicit order attribute
         const order = el.getAttribute("data-help-order");
-        const sortKey = order
-          ? parseInt(order, 10)
-          : rect.top * 10000 + rect.left;
+        const sortKey = order ? parseInt(order, 10) : rect.top * 10000 + rect.left;
         return { id, sortKey };
       })
       .sort((a, b) => a.sortKey - b.sortKey)
@@ -213,9 +213,7 @@ class HelpModeState {
   navigatePrevious() {
     if (this.#sortedIds.length === 0) return;
 
-    this.#currentIndex =
-      (this.#currentIndex - 1 + this.#sortedIds.length) %
-      this.#sortedIds.length;
+    this.#currentIndex = (this.#currentIndex - 1 + this.#sortedIds.length) % this.#sortedIds.length;
     this.#highlightedId = this.#sortedIds[this.#currentIndex];
     this.scrollHighlightedIntoView();
   }
@@ -355,9 +353,7 @@ class HelpModeState {
       .map(([id, el]) => {
         const rect = el.getBoundingClientRect();
         const order = el.getAttribute("data-help-order");
-        const sortKey = order
-          ? parseInt(order, 10)
-          : rect.top * 10000 + rect.left;
+        const sortKey = order ? parseInt(order, 10) : rect.top * 10000 + rect.left;
         return { id, sortKey };
       })
       .sort((a, b) => a.sortKey - b.sortKey)
@@ -382,8 +378,7 @@ class HelpModeState {
     if (!this.#modalContext || this.#modalContext.sortedIds.length === 0) return;
 
     const len = this.#modalContext.sortedIds.length;
-    this.#modalContext.currentIndex =
-      (this.#modalContext.currentIndex - 1 + len) % len;
+    this.#modalContext.currentIndex = (this.#modalContext.currentIndex - 1 + len) % len;
     this.#highlightedId = this.#modalContext.sortedIds[this.#modalContext.currentIndex];
   }
 

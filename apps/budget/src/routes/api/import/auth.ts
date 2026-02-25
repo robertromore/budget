@@ -77,7 +77,10 @@ export function parseRequiredPositiveInt(value: unknown, fieldName: string): num
   return parsed;
 }
 
-export async function requireImportAccountAccess(userId: string, accountId: number): Promise<{
+export async function requireImportAccountAccess(
+  userId: string,
+  accountId: number
+): Promise<{
   id: number;
   workspaceId: number;
 }> {

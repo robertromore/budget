@@ -1,7 +1,7 @@
-import {describe, it, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {TRPCError} from "@trpc/server";
-import {setupTestDb, clearTestDb, seedTestData} from "../setup/test-db";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { TRPCError } from "@trpc/server";
+import { setupTestDb, clearTestDb, seedTestData } from "../setup/test-db";
 
 describe("Accounts Validation and Error Scenarios Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -9,7 +9,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
 
   beforeEach(async () => {
     db = await setupTestDb();
-    const ctx = {db, isTest: true};
+    const ctx = { db, isTest: true };
     caller = createCaller(ctx as any);
   });
 
@@ -22,18 +22,18 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
   describe("Input Validation Tests", () => {
     describe("Account Name Validation", () => {
       it("should reject empty account names", async () => {
-        await expect(caller.accountRoutes.save({name: ""})).rejects.toThrow();
+        await expect(caller.accountRoutes.save({ name: "" })).rejects.toThrow();
       });
 
       it("should reject account names that are too short", async () => {
-        await expect(caller.accountRoutes.save({name: "A"})).rejects.toThrow(
+        await expect(caller.accountRoutes.save({ name: "A" })).rejects.toThrow(
           "Account name must be at least 2 characters"
         );
       });
 
       it("should reject account names that are too long", async () => {
         const longName = "A".repeat(51);
-        await expect(caller.accountRoutes.save({name: longName})).rejects.toThrow(
+        await expect(caller.accountRoutes.save({ name: longName })).rejects.toThrow(
           "Account name must be less than 50 characters"
         );
       });
@@ -47,7 +47,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
         ];
 
         for (const name of invalidNames) {
-          await expect(caller.accountRoutes.save({name})).rejects.toThrow(
+          await expect(caller.accountRoutes.save({ name })).rejects.toThrow(
             "Account name contains invalid characters"
           );
         }
@@ -65,21 +65,21 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
         ];
 
         for (const name of validNames) {
-          const result = await caller.accountRoutes.save({name});
+          const result = await caller.accountRoutes.save({ name });
           expect(result.name).toBe(name);
         }
       });
 
       it("should handle special characters in names correctly", async () => {
         const specialCases = [
-          {input: "Test Account (Primary)", expected: "Test Account (Primary)"},
-          {input: "Account_Quoted", expected: "Account_Quoted"},
-          {input: "Account & Company", expected: "Account & Company"},
-          {input: "Account - Branch", expected: "Account - Branch"},
+          { input: "Test Account (Primary)", expected: "Test Account (Primary)" },
+          { input: "Account_Quoted", expected: "Account_Quoted" },
+          { input: "Account & Company", expected: "Account & Company" },
+          { input: "Account - Branch", expected: "Account - Branch" },
         ];
 
-        for (const {input, expected} of specialCases) {
-          const result = await caller.accountRoutes.save({name: input});
+        for (const { input, expected } of specialCases) {
+          const result = await caller.accountRoutes.save({ name: input });
           expect(result.name).toBe(expected);
         }
       });
@@ -182,8 +182,7 @@ describe("Accounts Validation and Error Scenarios Integration Tests", () => {
       });
 
       it("should preserve special characters in notes", async () => {
-        const specialNotes =
-          "Notes with allowed symbols: ()_-:/?,./% and ampersand &!";
+        const specialNotes = "Notes with allowed symbols: ()_-:/?,./% and ampersand &!";
         const result = await caller.accountRoutes.save({
           name: "Test Account",
           notes: specialNotes,
@@ -206,21 +205,21 @@ Final line`;
 
     describe("ID Validation", () => {
       it("should reject negative account IDs", async () => {
-        await expect(caller.accountRoutes.load({id: -1})).rejects.toThrow();
+        await expect(caller.accountRoutes.load({ id: -1 })).rejects.toThrow();
 
-        await expect(caller.accountRoutes.save({id: -1, name: "Test"})).rejects.toThrow();
+        await expect(caller.accountRoutes.save({ id: -1, name: "Test" })).rejects.toThrow();
 
-        await expect(caller.accountRoutes.remove({id: -1})).rejects.toThrow();
+        await expect(caller.accountRoutes.remove({ id: -1 })).rejects.toThrow();
       });
 
       it("should reject zero as account ID", async () => {
-        await expect(caller.accountRoutes.load({id: 0})).rejects.toThrow();
+        await expect(caller.accountRoutes.load({ id: 0 })).rejects.toThrow();
 
-        await expect(caller.accountRoutes.remove({id: 0})).rejects.toThrow();
+        await expect(caller.accountRoutes.remove({ id: 0 })).rejects.toThrow();
       });
 
       it("should handle string IDs that can be coerced", async () => {
-        const {accounts} = await seedTestData(db);
+        const { accounts } = await seedTestData(db);
         const validId = accounts[0].id;
 
         // String representation of valid ID should work
@@ -231,13 +230,13 @@ Final line`;
       });
 
       it("should reject non-numeric string IDs", async () => {
-        await expect(caller.accountRoutes.load({id: "invalid" as any})).rejects.toThrow();
+        await expect(caller.accountRoutes.load({ id: "invalid" as any })).rejects.toThrow();
 
-        await expect(caller.accountRoutes.load({id: "abc123" as any})).rejects.toThrow();
+        await expect(caller.accountRoutes.load({ id: "abc123" as any })).rejects.toThrow();
       });
 
       it("should reject decimal IDs", async () => {
-        await expect(caller.accountRoutes.load({id: 1.5 as any})).rejects.toThrow();
+        await expect(caller.accountRoutes.load({ id: 1.5 as any })).rejects.toThrow();
       });
     });
   });
@@ -268,8 +267,8 @@ Final line`;
       it("should handle duplicate names gracefully", async () => {
         const name = "Duplicate Account";
 
-        const account1 = await caller.accountRoutes.save({name});
-        const account2 = await caller.accountRoutes.save({name});
+        const account1 = await caller.accountRoutes.save({ name });
+        const account2 = await caller.accountRoutes.save({ name });
 
         // Both should be created successfully with different IDs
         expect(account1.id).not.toBe(account2.id);
@@ -280,7 +279,7 @@ Final line`;
 
     describe("Account Updates", () => {
       it("should preserve unchanged fields during partial updates", async () => {
-        const {accounts} = await seedTestData(db);
+        const { accounts } = await seedTestData(db);
         const originalAccount = accounts[0];
 
         if (!originalAccount) {
@@ -300,7 +299,7 @@ Final line`;
       });
 
       it("should update timestamp when account is modified", async () => {
-        const {accounts} = await seedTestData(db);
+        const { accounts } = await seedTestData(db);
         const originalAccount = accounts[0];
 
         if (!originalAccount) {
@@ -332,7 +331,7 @@ Final line`;
 
     describe("Account Deletion", () => {
       it("should soft delete accounts", async () => {
-        const {accounts} = await seedTestData(db);
+        const { accounts } = await seedTestData(db);
         const accountToDelete = accounts[0];
 
         if (!accountToDelete) {
@@ -348,13 +347,13 @@ Final line`;
       });
 
       it("should not affect other accounts when deleting", async () => {
-        const {accounts} = await seedTestData(db);
+        const { accounts } = await seedTestData(db);
 
         if (!accounts[0] || !accounts[1]) {
           throw new Error("Insufficient test accounts found");
         }
 
-        await caller.accountRoutes.remove({id: accounts[0].id});
+        await caller.accountRoutes.remove({ id: accounts[0].id });
 
         // Other accounts should still be accessible
         const remainingAccount = await caller.accountRoutes.load({
@@ -364,21 +363,21 @@ Final line`;
       });
 
       it("should handle deletion of non-existent accounts", async () => {
-        await expect(caller.accountRoutes.remove({id: 99999})).rejects.toThrow(TRPCError);
+        await expect(caller.accountRoutes.remove({ id: 99999 })).rejects.toThrow(TRPCError);
       });
 
       it("should prevent access to deleted accounts", async () => {
-        const {accounts} = await seedTestData(db);
+        const { accounts } = await seedTestData(db);
         const accountToDelete = accounts[0];
 
         if (!accountToDelete) {
           throw new Error("No test account found");
         }
 
-        await caller.accountRoutes.remove({id: accountToDelete.id});
+        await caller.accountRoutes.remove({ id: accountToDelete.id });
 
         // Should not be able to load deleted account
-        await expect(caller.accountRoutes.load({id: accountToDelete.id})).rejects.toThrow(
+        await expect(caller.accountRoutes.load({ id: accountToDelete.id })).rejects.toThrow(
           TRPCError
         );
 
@@ -394,14 +393,14 @@ Final line`;
       it("should handle database connection failures", async () => {
         // Create a caller with invalid database
         const invalidDb = null as any;
-        const invalidCaller = createCaller({db: invalidDb} as any);
+        const invalidCaller = createCaller({ db: invalidDb } as any);
 
         await expect(invalidCaller.accountRoutes.all()).rejects.toThrow();
       });
 
       it("should provide meaningful error messages", async () => {
         try {
-          await caller.accountRoutes.load({id: 99999});
+          await caller.accountRoutes.load({ id: 99999 });
         } catch (error) {
           expect(error).toBeInstanceOf(TRPCError);
           expect((error as TRPCError).code).toBe("NOT_FOUND");
@@ -574,7 +573,7 @@ Final line`;
         ];
 
         for (const attempt of sqlInjectionAttempts) {
-          await expect(caller.accountRoutes.load({id: attempt as any})).rejects.toThrow();
+          await expect(caller.accountRoutes.load({ id: attempt as any })).rejects.toThrow();
         }
       });
 

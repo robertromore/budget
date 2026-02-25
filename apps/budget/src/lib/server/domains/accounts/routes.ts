@@ -2,7 +2,7 @@ import { removeAccountSchema } from "$lib/schema/accounts";
 import {
   authenticatedProcedure,
   publicProcedure,
-  rateLimitedProcedure
+  rateLimitedProcedure,
 } from "$lib/server/shared/trpc/procedures";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";

@@ -15,7 +15,13 @@ import { workspaceRoleEnum } from "./workspace-members";
  * - expired: Invitation passed its expiration date
  * - revoked: Admin cancelled the invitation
  */
-export const invitationStatusEnum = ["pending", "accepted", "declined", "expired", "revoked"] as const;
+export const invitationStatusEnum = [
+  "pending",
+  "accepted",
+  "declined",
+  "expired",
+  "revoked",
+] as const;
 export type InvitationStatus = (typeof invitationStatusEnum)[number];
 
 /**
@@ -103,11 +109,18 @@ export const insertWorkspaceInvitationSchema = createInsertSchema(workspaceInvit
       .pipe(z.string().email("Invalid email address")),
   role: (schema) => schema.pipe(z.enum(workspaceRoleEnum)),
   status: (schema) => schema.pipe(z.enum(invitationStatusEnum)),
-  message: (schema) => schema.pipe(z.string().max(500, "Message must be less than 500 characters")).optional().nullable(),
+  message: (schema) =>
+    schema
+      .pipe(z.string().max(500, "Message must be less than 500 characters"))
+      .optional()
+      .nullable(),
 });
 
 export const formCreateInvitationSchema = z.object({
-  email: z.string().email("Invalid email address").transform((val) => val.toLowerCase()),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .transform((val) => val.toLowerCase()),
   role: z.enum(["admin", "editor", "viewer"]), // Cannot invite as owner
   message: z.string().max(500, "Message must be less than 500 characters").optional(),
 });

@@ -16,7 +16,7 @@ import {
   normalizeIIFTransactionType,
   parseIIFDate,
   sanitizeText,
-  validateFileType
+  validateFileType,
 } from "../utils";
 
 export class IIFProcessor implements FileProcessor {

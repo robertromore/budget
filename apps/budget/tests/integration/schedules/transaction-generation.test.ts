@@ -1,6 +1,6 @@
-import {describe, it, expect, beforeEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {createTestContext} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { createTestContext } from "../setup/test-db";
 
 describe("Transaction Generation from Schedules Tests", () => {
   let caller: ReturnType<typeof createCaller>;
@@ -100,8 +100,8 @@ describe("Transaction Generation from Schedules Tests", () => {
 
     it("should create transactions matching schedule amounts", async () => {
       const amountConfigs = [
-        {type: "exact", amount: 100.0, expectedAmount: 100.0},
-        {type: "approximate", amount: 150.0, expectedAmount: 150.0},
+        { type: "exact", amount: 100.0, expectedAmount: 100.0 },
+        { type: "approximate", amount: 150.0, expectedAmount: 150.0 },
       ];
 
       for (const config of amountConfigs) {
@@ -189,7 +189,7 @@ describe("Transaction Generation from Schedules Tests", () => {
       });
 
       // Load the schedule with its transactions relation
-      const loadedSchedule = await caller.scheduleRoutes.load({id: schedule.id});
+      const loadedSchedule = await caller.scheduleRoutes.load({ id: schedule.id });
 
       expect(loadedSchedule.transactions).toBeDefined();
       expect(Array.isArray(loadedSchedule.transactions)).toBe(true);
@@ -258,7 +258,7 @@ describe("Transaction Generation from Schedules Tests", () => {
       });
 
       // Delete the schedule
-      await caller.scheduleRoutes.remove({id: schedule.id});
+      await caller.scheduleRoutes.remove({ id: schedule.id });
 
       // The transaction should still exist independently
       expect(transaction).toBeDefined();
@@ -266,7 +266,7 @@ describe("Transaction Generation from Schedules Tests", () => {
       expect(transaction.status).toBe("scheduled");
 
       // Try to load the schedule (should fail)
-      expect(caller.scheduleRoutes.load({id: schedule.id})).rejects.toThrow();
+      expect(caller.scheduleRoutes.load({ id: schedule.id })).rejects.toThrow();
     });
   });
 
@@ -476,7 +476,7 @@ describe("Transaction Generation from Schedules Tests", () => {
       const startTime = Date.now();
 
       // Create multiple transactions in parallel
-      const transactionPromises = Array.from({length: 5}, (_, i) =>
+      const transactionPromises = Array.from({ length: 5 }, (_, i) =>
         caller.transactionRoutes.save({
           accountId: testAccountId,
           payeeId: testPayeeId,

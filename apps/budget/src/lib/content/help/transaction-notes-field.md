@@ -32,6 +32,7 @@ Add optional notes, memos, or descriptions to the transaction.
 ## Search Integration
 
 Notes are included in transaction search:
+
 - Search for keywords in notes
 - Filter by transactions with/without notes
 - Notes are indexed for fast searching

@@ -88,8 +88,17 @@ export type { AliasCandidate };
 export function createImportPreviewColumns(
   actions: ImportPreviewColumnActions = {}
 ): ColumnDef<ImportRow>[] {
-  const { onPayeeUpdate, onPayeeAliasCandidate, onCategoryUpdate, onDescriptionUpdate, onTransferAccountUpdate, temporaryPayees, temporaryCategories, categorySuggestions, currentAccountId } =
-    actions;
+  const {
+    onPayeeUpdate,
+    onPayeeAliasCandidate,
+    onCategoryUpdate,
+    onDescriptionUpdate,
+    onTransferAccountUpdate,
+    temporaryPayees,
+    temporaryCategories,
+    categorySuggestions,
+    currentAccountId,
+  } = actions;
 
   return [
     // Selection column
@@ -257,7 +266,7 @@ export function createImportPreviewColumns(
           title: "Category",
         }),
       cell: ({ row }) => {
-        const suggestion = categorySuggestions?.find(s => s.rowIndex === row.original.rowIndex);
+        const suggestion = categorySuggestions?.find((s) => s.rowIndex === row.original.rowIndex);
         return renderComponent(ImportTableCategoryCell, {
           row,
           ...(onCategoryUpdate ? { onUpdate: onCategoryUpdate } : {}),

@@ -13,14 +13,18 @@
 
 import { db } from "../src/lib/server/db";
 import { schedules, schedulePriceHistory } from "../src/lib/schema";
-import {
-  subscriptions,
-  subscriptionPriceHistory,
-} from "../src/lib/schema/subscriptions-table";
+import { subscriptions, subscriptionPriceHistory } from "../src/lib/schema/subscriptions-table";
 import { scheduleDates } from "../src/lib/schema/schedule-dates";
 import { eq, and, sql } from "drizzle-orm";
-import type { ScheduleSubscriptionType, ScheduleSubscriptionStatus } from "../src/lib/schema/schedules";
-import type { BillingCycle, SubscriptionType, SubscriptionStatus } from "../src/lib/schema/subscriptions";
+import type {
+  ScheduleSubscriptionType,
+  ScheduleSubscriptionStatus,
+} from "../src/lib/schema/schedules";
+import type {
+  BillingCycle,
+  SubscriptionType,
+  SubscriptionStatus,
+} from "../src/lib/schema/subscriptions";
 
 console.log("🔄 Starting subscription to schedule migration...\n");
 
@@ -104,10 +108,7 @@ async function migrateSubscriptionsToSchedules(): Promise<MigrationStats> {
         let existingSchedule = null;
         if (sub.payeeId && sub.accountId) {
           existingSchedule = await db.query.schedules.findFirst({
-            where: and(
-              eq(schedules.payeeId, sub.payeeId),
-              eq(schedules.accountId, sub.accountId)
-            ),
+            where: and(eq(schedules.payeeId, sub.payeeId), eq(schedules.accountId, sub.accountId)),
           });
         }
 
@@ -115,7 +116,9 @@ async function migrateSubscriptionsToSchedules(): Promise<MigrationStats> {
 
         if (existingSchedule) {
           // Update existing schedule with subscription data
-          console.log(`   Updating existing schedule: ${existingSchedule.name} (ID: ${existingSchedule.id})`);
+          console.log(
+            `   Updating existing schedule: ${existingSchedule.name} (ID: ${existingSchedule.id})`
+          );
 
           await db
             .update(schedules)
@@ -127,7 +130,9 @@ async function migrateSubscriptionsToSchedules(): Promise<MigrationStats> {
               detectionConfidence: sub.detectionConfidence ?? undefined,
               isUserConfirmed: sub.isUserConfirmed ?? false,
               detectedAt: sub.createdAt,
-              alertPreferences: sub.alertPreferences ? JSON.stringify(sub.alertPreferences) : undefined,
+              alertPreferences: sub.alertPreferences
+                ? JSON.stringify(sub.alertPreferences)
+                : undefined,
             })
             .where(eq(schedules.id, existingSchedule.id));
 
@@ -164,7 +169,10 @@ async function migrateSubscriptionsToSchedules(): Promise<MigrationStats> {
           }
 
           // Generate unique slug
-          const baseSlug = sub.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30);
+          const baseSlug = sub.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .slice(0, 30);
           const timestamp = Date.now().toString(36);
           const slug = `${baseSlug}-${timestamp}`;
 
@@ -192,7 +200,9 @@ async function migrateSubscriptionsToSchedules(): Promise<MigrationStats> {
               detectionConfidence: sub.detectionConfidence ?? undefined,
               isUserConfirmed: sub.isUserConfirmed ?? false,
               detectedAt: sub.createdAt,
-              alertPreferences: sub.alertPreferences ? JSON.stringify(sub.alertPreferences) : undefined,
+              alertPreferences: sub.alertPreferences
+                ? JSON.stringify(sub.alertPreferences)
+                : undefined,
             })
             .returning();
 
@@ -236,7 +246,6 @@ async function migrateSubscriptionsToSchedules(): Promise<MigrationStats> {
             },
           })
           .where(eq(subscriptions.id, sub.id));
-
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.log(`   ❌ Error: ${errorMessage}`);

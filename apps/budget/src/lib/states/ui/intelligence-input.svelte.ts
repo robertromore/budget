@@ -35,6 +35,8 @@ export interface ModalIntelligenceContext {
   currentIndex: number;
 }
 
+const EMPTY_MODAL_INTELLIGENCE_ELEMENTS = new Map<string, HTMLElement>();
+
 export interface IntelligenceTriggerDetail {
   inputId: string;
   action: string | null;
@@ -161,7 +163,7 @@ class IntelligenceInputModeState {
   }
 
   get modalElements() {
-    return this.#modalContext?.elements ?? new Map();
+    return this.#modalContext?.elements ?? EMPTY_MODAL_INTELLIGENCE_ELEMENTS;
   }
 
   get defaultMode() {
@@ -273,9 +275,7 @@ class IntelligenceInputModeState {
       .map(([id, el]) => {
         const rect = el.getBoundingClientRect();
         const order = el.getAttribute("data-intelligence-order");
-        const sortKey = order
-          ? parseInt(order, 10)
-          : rect.top * 10000 + rect.left;
+        const sortKey = order ? parseInt(order, 10) : rect.top * 10000 + rect.left;
         return { id, sortKey };
       })
       .sort((a, b) => a.sortKey - b.sortKey)
@@ -310,9 +310,7 @@ class IntelligenceInputModeState {
   navigatePrevious() {
     if (this.#sortedIds.length === 0) return;
 
-    this.#currentIndex =
-      (this.#currentIndex - 1 + this.#sortedIds.length) %
-      this.#sortedIds.length;
+    this.#currentIndex = (this.#currentIndex - 1 + this.#sortedIds.length) % this.#sortedIds.length;
     this.#highlightedId = this.#sortedIds[this.#currentIndex];
     this.scrollHighlightedIntoView();
   }
@@ -401,9 +399,7 @@ class IntelligenceInputModeState {
    * Register handlers for multiple input IDs
    * Returns unregister function that removes all handlers
    */
-  registerHandlers(
-    handlers: Record<string, IntelligenceHandler>
-  ): () => void {
+  registerHandlers(handlers: Record<string, IntelligenceHandler>): () => void {
     const unregisters: (() => void)[] = [];
     for (const [inputId, handler] of Object.entries(handlers)) {
       unregisters.push(this.registerHandler(inputId, handler));
@@ -653,9 +649,7 @@ class IntelligenceInputModeState {
       .map(([id, el]) => {
         const rect = el.getBoundingClientRect();
         const order = el.getAttribute("data-intelligence-order");
-        const sortKey = order
-          ? parseInt(order, 10)
-          : rect.top * 10000 + rect.left;
+        const sortKey = order ? parseInt(order, 10) : rect.top * 10000 + rect.left;
         return { id, sortKey };
       })
       .sort((a, b) => a.sortKey - b.sortKey)
@@ -666,28 +660,22 @@ class IntelligenceInputModeState {
    * Navigate to next element within modal
    */
   navigateNextInModal() {
-    if (!this.#modalContext || this.#modalContext.sortedIds.length === 0)
-      return;
+    if (!this.#modalContext || this.#modalContext.sortedIds.length === 0) return;
 
     this.#modalContext.currentIndex =
-      (this.#modalContext.currentIndex + 1) %
-      this.#modalContext.sortedIds.length;
-    this.#highlightedId =
-      this.#modalContext.sortedIds[this.#modalContext.currentIndex];
+      (this.#modalContext.currentIndex + 1) % this.#modalContext.sortedIds.length;
+    this.#highlightedId = this.#modalContext.sortedIds[this.#modalContext.currentIndex];
   }
 
   /**
    * Navigate to previous element within modal
    */
   navigatePreviousInModal() {
-    if (!this.#modalContext || this.#modalContext.sortedIds.length === 0)
-      return;
+    if (!this.#modalContext || this.#modalContext.sortedIds.length === 0) return;
 
     const len = this.#modalContext.sortedIds.length;
-    this.#modalContext.currentIndex =
-      (this.#modalContext.currentIndex - 1 + len) % len;
-    this.#highlightedId =
-      this.#modalContext.sortedIds[this.#modalContext.currentIndex];
+    this.#modalContext.currentIndex = (this.#modalContext.currentIndex - 1 + len) % len;
+    this.#highlightedId = this.#modalContext.sortedIds[this.#modalContext.currentIndex];
   }
 
   /**
@@ -741,10 +729,7 @@ class IntelligenceInputModeState {
     if (!modesAttr) {
       modes = ["ml", "llm"];
     } else {
-      modes = modesAttr.split(",").filter((m) => m === "ml" || m === "llm") as (
-        | "ml"
-        | "llm"
-      )[];
+      modes = modesAttr.split(",").filter((m) => m === "ml" || m === "llm") as ("ml" | "llm")[];
     }
     // Filter out LLM if it's not enabled
     if (!this.#isLLMEnabled) {

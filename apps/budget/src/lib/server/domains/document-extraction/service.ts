@@ -92,7 +92,12 @@ export class DocumentExtractionService {
           // Note: For full PDF OCR support, you'd need to convert PDF pages to images first
           // This is a simplified version that only works if the file is already an image
           if (this.isImage(mimeType)) {
-            result = await this.performExtraction(filePath, mimeType, "tesseract", tesseractLanguage);
+            result = await this.performExtraction(
+              filePath,
+              mimeType,
+              "tesseract",
+              tesseractLanguage
+            );
           }
         }
 
@@ -155,10 +160,7 @@ export class DocumentExtractionService {
   /**
    * Re-extract a document with a specific method
    */
-  async reExtract(
-    documentId: number,
-    method: DocumentExtractionMethod
-  ): Promise<ExtractionResult> {
+  async reExtract(documentId: number, method: DocumentExtractionMethod): Promise<ExtractionResult> {
     const document = await this.documentRepository.findById(documentId);
     if (!document) {
       throw new Error(`Document not found: ${documentId}`);
@@ -239,7 +241,8 @@ export class DocumentExtractionService {
               success: false,
               text: null,
               method: "tesseract",
-              error: "Tesseract OCR cannot process PDFs directly. Use PDF Parse or AI Vision instead.",
+              error:
+                "Tesseract OCR cannot process PDFs directly. Use PDF Parse or AI Vision instead.",
             };
           }
 

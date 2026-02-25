@@ -23,7 +23,12 @@ import {
 } from "$lib/schema/utility-usage";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
-import type { ImportOptions, ImportResult, ImportRow, TransferTargetMatch } from "$lib/types/import";
+import type {
+  ImportOptions,
+  ImportResult,
+  ImportRow,
+  TransferTargetMatch,
+} from "$lib/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 import type { z } from "zod/v4";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
@@ -131,14 +136,17 @@ export class ImportOrchestrator {
     };
 
     // Initialize per-file tracking for multi-file imports
-    const fileStats = new Map<string, {
-      fileName: string;
-      imported: number;
-      duplicates: number;
-      errors: number;
-      reconciled: number;
-      transfers: number;
-    }>();
+    const fileStats = new Map<
+      string,
+      {
+        fileName: string;
+        imported: number;
+        duplicates: number;
+        errors: number;
+        reconciled: number;
+        transfers: number;
+      }
+    >();
 
     // Initialize stats for each unique source file
     for (const row of rows) {
@@ -399,7 +407,11 @@ export class ImportOrchestrator {
       }
 
       // Process category dismissals (negative feedback for learning)
-      console.log(`[ImportOrchestrator] categoryDismissals received:`, categoryDismissals?.length || 0, categoryDismissals);
+      console.log(
+        `[ImportOrchestrator] categoryDismissals received:`,
+        categoryDismissals?.length || 0,
+        categoryDismissals
+      );
       if (categoryDismissals && categoryDismissals.length > 0) {
         try {
           await this.recordCategoryDismissals(categoryDismissals, workspaceId);
@@ -455,7 +467,10 @@ export class ImportOrchestrator {
       wasAiSuggested?: boolean;
     }>,
     account?: typeof accountTable.$inferSelect
-  ): Promise<{ transaction: z.infer<typeof selectTransactionSchema> | null; utilityRecordCreated: boolean }> {
+  ): Promise<{
+    transaction: z.infer<typeof selectTransactionSchema> | null;
+    utilityRecordCreated: boolean;
+  }> {
     const normalized = row.normalizedData;
 
     // Check if this row should be imported as a transfer
@@ -481,7 +496,10 @@ export class ImportOrchestrator {
       const explicitPayee = existingPayees.find((p) => p.id === normalized["payeeId"]);
       if (explicitPayee) {
         payeeId = explicitPayee.id;
-        logger.debug("Using explicit payeeId from user selection", { payeeId, payeeName: explicitPayee.name });
+        logger.debug("Using explicit payeeId from user selection", {
+          payeeId,
+          payeeName: explicitPayee.name,
+        });
       }
     }
 
@@ -505,8 +523,10 @@ export class ImportOrchestrator {
 
         // Update existing payee name if the cleaned version is better (e.g., properly capitalized)
         // Only update if the names differ (case-insensitive match means different casing)
-        if (payeeMatch.payee.name !== cleanedPayeeName &&
-            payeeMatch.payee.name?.toLowerCase() === cleanedPayeeName.toLowerCase()) {
+        if (
+          payeeMatch.payee.name !== cleanedPayeeName &&
+          payeeMatch.payee.name?.toLowerCase() === cleanedPayeeName.toLowerCase()
+        ) {
           try {
             await db
               .update(payeeTable)
@@ -517,7 +537,7 @@ export class ImportOrchestrator {
             logger.debug("Updated existing payee name to cleaned version", {
               payeeId,
               oldName: payeeMatch.payee.name,
-              newName: cleanedPayeeName
+              newName: cleanedPayeeName,
             });
           } catch (updateError) {
             logger.warn("Failed to update payee name", { payeeId, error: updateError });
@@ -546,8 +566,10 @@ export class ImportOrchestrator {
             payeeId = existingBySlug.id;
 
             // Update existing payee name if the cleaned version is better
-            if (existingBySlug.name !== cleanedPayeeName &&
-                existingBySlug.name?.toLowerCase() === cleanedPayeeName.toLowerCase()) {
+            if (
+              existingBySlug.name !== cleanedPayeeName &&
+              existingBySlug.name?.toLowerCase() === cleanedPayeeName.toLowerCase()
+            ) {
               try {
                 await db
                   .update(payeeTable)
@@ -578,7 +600,7 @@ export class ImportOrchestrator {
                 if (createdPayeeMappings) {
                   createdPayeeMappings.push({
                     originalName: (normalized["originalPayee"] || normalized["payee"]) as string, // The raw import string
-                    normalizedName: cleanedPayeeName,   // What we stored in payee.name
+                    normalizedName: cleanedPayeeName, // What we stored in payee.name
                     payeeId: newPayee.id,
                   });
                 }
@@ -608,7 +630,8 @@ export class ImportOrchestrator {
                     // Track the mapping for alias creation
                     if (createdPayeeMappings) {
                       createdPayeeMappings.push({
-                        originalName: (normalized["originalPayee"] || normalized["payee"]) as string,
+                        originalName: (normalized["originalPayee"] ||
+                          normalized["payee"]) as string,
                         normalizedName: cleanedPayeeName,
                         payeeId: restored.id,
                       });
@@ -642,12 +665,18 @@ export class ImportOrchestrator {
       const explicitCategory = existingCategories.find((c) => c.id === normalized["categoryId"]);
       if (explicitCategory) {
         categoryId = explicitCategory.id;
-        logger.debug("Using explicit categoryId from user selection", { categoryId, categoryName: explicitCategory.name });
+        logger.debug("Using explicit categoryId from user selection", {
+          categoryId,
+          categoryName: explicitCategory.name,
+        });
       }
     }
 
     // If no explicit categoryId, try to match by name or other methods
-    if (!categoryId && (normalized["category"] || normalized["payee"] || normalized["description"])) {
+    if (
+      !categoryId &&
+      (normalized["category"] || normalized["payee"] || normalized["description"])
+    ) {
       // If explicit category name is provided, try exact match first
       let categoryMatch: any = null;
       if (normalized["category"]) {
@@ -737,7 +766,10 @@ export class ImportOrchestrator {
                 );
               }
             } catch (error) {
-              logger.error("Failed to create category", { error, category: normalized["category"] });
+              logger.error("Failed to create category", {
+                error,
+                category: normalized["category"],
+              });
               // If it failed due to unique constraint, check for soft-deleted category
               // Filter by workspaceId to only use categories from the current workspace
               const existing = await db
@@ -812,8 +844,7 @@ export class ImportOrchestrator {
               !selectedEntities.categories ||
               selectedEntities.categories.length === 0 ||
               selectedEntities.categories.some(
-                (selected) =>
-                  normalize(selected) === normalize(suggestedCategoryName)
+                (selected) => normalize(selected) === normalize(suggestedCategoryName)
               );
 
             if (isSelected) {
@@ -1004,10 +1035,11 @@ export class ImportOrchestrator {
     // Create utility usage record if this is a utility account with usage data
     let utilityRecordCreated = false;
     if (account?.accountType === "utility" && transaction) {
-      const hasUsageData = normalized["usageAmount"] !== undefined ||
-                          normalized["periodStart"] !== undefined ||
-                          normalized["meterReadingStart"] !== undefined ||
-                          normalized["meterReadingEnd"] !== undefined;
+      const hasUsageData =
+        normalized["usageAmount"] !== undefined ||
+        normalized["periodStart"] !== undefined ||
+        normalized["meterReadingStart"] !== undefined ||
+        normalized["meterReadingEnd"] !== undefined;
 
       if (hasUsageData) {
         try {
@@ -1023,7 +1055,7 @@ export class ImportOrchestrator {
           // Don't fail the import if utility record creation fails
           logger.warn("Failed to create utility usage record", {
             transactionId: transaction.id,
-            error: error instanceof Error ? error.message : "Unknown error"
+            error: error instanceof Error ? error.message : "Unknown error",
           });
         }
       }
@@ -1062,14 +1094,17 @@ export class ImportOrchestrator {
     const meterReadingStart = normalized["meterReadingStart"] as number | undefined;
     const meterReadingEnd = normalized["meterReadingEnd"] as number | undefined;
 
-    if (usageAmount === undefined && meterReadingStart !== undefined && meterReadingEnd !== undefined) {
+    if (
+      usageAmount === undefined &&
+      meterReadingStart !== undefined &&
+      meterReadingEnd !== undefined
+    ) {
       usageAmount = calculateUsageFromReadings(meterReadingStart, meterReadingEnd);
     }
 
     // Determine usage unit
-    const usageUnit = (normalized["usageUnit"] as UsageUnit) ||
-                      DEFAULT_UNITS_BY_SUBTYPE[utilitySubtype] ||
-                      "units";
+    const usageUnit =
+      (normalized["usageUnit"] as UsageUnit) || DEFAULT_UNITS_BY_SUBTYPE[utilitySubtype] || "units";
 
     // Get cost breakdown
     const baseCharge = normalized["baseCharge"] as number | undefined;
@@ -1085,39 +1120,44 @@ export class ImportOrchestrator {
     }
 
     // Calculate days in period and average daily usage
-    const daysInPeriod = Math.ceil(
-      (new Date(effectivePeriodEnd).getTime() - new Date(effectivePeriodStart).getTime()) /
-      (1000 * 60 * 60 * 24)
-    ) + 1;
+    const daysInPeriod =
+      Math.ceil(
+        (new Date(effectivePeriodEnd).getTime() - new Date(effectivePeriodStart).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ) + 1;
 
-    const averageDailyUsage = usageAmount !== undefined
-      ? calculateAverageDailyUsage(usageAmount, effectivePeriodStart, effectivePeriodEnd)
-      : undefined;
+    const averageDailyUsage =
+      usageAmount !== undefined
+        ? calculateAverageDailyUsage(usageAmount, effectivePeriodStart, effectivePeriodEnd)
+        : undefined;
 
     // Create the utility usage record
-    const [usageRecord] = await db.insert(utilityUsage).values({
-      workspaceId,
-      accountId,
-      transactionId,
-      periodStart: effectivePeriodStart,
-      periodEnd: effectivePeriodEnd,
-      dueDate: normalized["dueDate"] as string | undefined,
-      usageAmount: usageAmount ?? 0,
-      usageUnit,
-      meterReadingStart,
-      meterReadingEnd,
-      ratePerUnit,
-      baseCharge,
-      usageCost,
-      taxes,
-      fees,
-      totalAmount,
-      daysInPeriod,
-      averageDailyUsage,
-      notes: normalized["notes"] as string | undefined,
-      importedFrom,
-      rawImportData: JSON.stringify(normalized),
-    }).returning();
+    const [usageRecord] = await db
+      .insert(utilityUsage)
+      .values({
+        workspaceId,
+        accountId,
+        transactionId,
+        periodStart: effectivePeriodStart,
+        periodEnd: effectivePeriodEnd,
+        dueDate: normalized["dueDate"] as string | undefined,
+        usageAmount: usageAmount ?? 0,
+        usageUnit,
+        meterReadingStart,
+        meterReadingEnd,
+        ratePerUnit,
+        baseCharge,
+        usageCost,
+        taxes,
+        fees,
+        totalAmount,
+        daysInPeriod,
+        averageDailyUsage,
+        notes: normalized["notes"] as string | undefined,
+        importedFrom,
+        rawImportData: JSON.stringify(normalized),
+      })
+      .returning();
 
     logger.debug("Created utility usage record", {
       id: usageRecord?.id,
@@ -1188,7 +1228,8 @@ export class ImportOrchestrator {
     if (normalized["rememberTransferMapping"]) {
       // Use the original raw payee string from the import file for mapping lookup
       // Priority: row.originalPayee > normalizedData["originalPayee"] > normalizedData["payee"]
-      const rawPayeeString = row.originalPayee || normalized["originalPayee"] || normalized["payee"] as string;
+      const rawPayeeString =
+        row.originalPayee || normalized["originalPayee"] || (normalized["payee"] as string);
       if (rawPayeeString && rawPayeeString.trim()) {
         try {
           console.log("[TransferMapping] Saving transfer mapping:", {
@@ -1257,7 +1298,9 @@ export class ImportOrchestrator {
    * Get existing transfer target transactions in an account
    * These are transactions that were created as the "target" side of transfers from other accounts
    */
-  private async getTransferTargets(accountId: number): Promise<z.infer<typeof selectTransactionSchema>[]> {
+  private async getTransferTargets(
+    accountId: number
+  ): Promise<z.infer<typeof selectTransactionSchema>[]> {
     return db
       .select()
       .from(transactionTable)
@@ -1286,16 +1329,16 @@ export class ImportOrchestrator {
     }
 
     // Get account names for display
-    const accountIds = [...new Set(transferTargets.map((t) => t.transferAccountId).filter(Boolean))] as number[];
+    const accountIds = [
+      ...new Set(transferTargets.map((t) => t.transferAccountId).filter(Boolean)),
+    ] as number[];
     const accountNames = new Map<number, string>();
 
     if (accountIds.length > 0) {
       const accountRecords = await db
         .select({ id: accountTable.id, name: accountTable.name })
         .from(accountTable)
-        .where(and(
-          isNull(accountTable.deletedAt)
-        ));
+        .where(and(isNull(accountTable.deletedAt)));
 
       for (const acc of accountRecords) {
         accountNames.set(acc.id, acc.name);
@@ -1383,7 +1426,7 @@ export class ImportOrchestrator {
     const [updated] = await db
       .update(transactionTable)
       .set({
-        originalPayeeName: (row.originalPayee || normalized["payee"]) as string || undefined,
+        originalPayeeName: ((row.originalPayee || normalized["payee"]) as string) || undefined,
         importedAt: new Date().toISOString(),
         status: "cleared", // Mark as cleared since we have bank confirmation
         updatedAt: new Date().toISOString(),
@@ -1549,8 +1592,7 @@ export class ImportOrchestrator {
           successCount++;
         } catch (insertError) {
           // Log the specific error for debugging
-          const errorMsg =
-            insertError instanceof Error ? insertError.message : String(insertError);
+          const errorMsg = insertError instanceof Error ? insertError.message : String(insertError);
           errors.push({ record, error: errorMsg });
           // Continue with other records - don't let one failure stop all learning
         }

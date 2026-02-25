@@ -6,11 +6,13 @@ related: [intelligence-page-header]
 
 # ML Insights
 
-The insights grid provides quick access to key machine learning-powered analytics.
+The insights grid provides quick access to key machine learning-powered
+analytics.
 
 ## Income vs Expenses Card
 
 Compares your income and expenses for the current month:
+
 - This month's income and expenses
 - Last month's comparison
 - Income and expense trends
@@ -19,6 +21,7 @@ Compares your income and expenses for the current month:
 ## Budget Risk Card
 
 Monitors your budgets for potential overspending:
+
 - Number of budgets at risk
 - Overall risk assessment
 - Predicted overspend amount
@@ -27,6 +30,7 @@ Monitors your budgets for potential overspending:
 ## Savings Opportunity Card
 
 Identifies potential ways to save money:
+
 - Number of opportunities found
 - Total monthly savings potential
 - Top savings opportunity details
@@ -34,6 +38,7 @@ Identifies potential ways to save money:
 ## How It Works
 
 The ML system analyzes your transaction history to:
+
 - Detect spending patterns
 - Predict future expenses
 - Identify unusual spending

@@ -71,30 +71,33 @@ function handleChooseSetup() {
 }
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-background to-muted/20 px-4 py-8">
+<div class="from-background to-muted/20 min-h-screen bg-gradient-to-br px-4 py-8">
   <div class="mx-auto w-full max-w-3xl">
     <!-- Header -->
     <div class="mb-12 text-center">
-      <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-        <Sparkles class="h-8 w-8 text-primary" />
+      <div
+        class="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+        <Sparkles class="text-primary h-8 w-8" />
       </div>
       <h1 class="text-3xl font-bold sm:text-4xl">Welcome to Budget</h1>
-      <p class="text-muted-foreground mt-3 text-lg">
-        How would you like to get started?
-      </p>
+      <p class="text-muted-foreground mt-3 text-lg">How would you like to get started?</p>
     </div>
 
     <!-- Choice Cards -->
     <div class="grid gap-6 md:grid-cols-2">
       <!-- Tour First Option -->
-      <Card class="relative cursor-pointer border-2 transition-all hover:border-primary hover:shadow-lg" onclick={handleStartTour}>
+      <Card
+        class="hover:border-primary relative cursor-pointer border-2 transition-all hover:shadow-lg"
+        onclick={handleStartTour}>
         <div class="absolute -top-3 left-4">
-          <span class="bg-primary text-primary-foreground rounded-full px-3 py-1 text-xs font-medium">
+          <span
+            class="bg-primary text-primary-foreground rounded-full px-3 py-1 text-xs font-medium">
             Recommended
           </span>
         </div>
         <CardHeader class="pt-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+          <div
+            class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
             <Map class="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
           <CardTitle class="text-xl">Take a Tour First</CardTitle>
@@ -118,7 +121,7 @@ function handleChooseSetup() {
             </li>
           </ul>
 
-          <div class="flex items-center gap-2 text-muted-foreground text-sm">
+          <div class="text-muted-foreground flex items-center gap-2 text-sm">
             <Clock class="h-4 w-4" />
             <span>About 5 minutes</span>
           </div>
@@ -136,9 +139,12 @@ function handleChooseSetup() {
       </Card>
 
       <!-- Setup Now Option -->
-      <Card class="cursor-pointer border-2 transition-all hover:border-primary hover:shadow-lg" onclick={handleChooseSetup}>
+      <Card
+        class="hover:border-primary cursor-pointer border-2 transition-all hover:shadow-lg"
+        onclick={handleChooseSetup}>
         <CardHeader class="pt-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+          <div
+            class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
             <Settings class="h-6 w-6 text-amber-600 dark:text-amber-400" />
           </div>
           <CardTitle class="text-xl">Set Up My Account</CardTitle>
@@ -162,7 +168,7 @@ function handleChooseSetup() {
             </li>
           </ul>
 
-          <div class="flex items-center gap-2 text-muted-foreground text-sm">
+          <div class="text-muted-foreground flex items-center gap-2 text-sm">
             <Clock class="h-4 w-4" />
             <span>About 3 minutes</span>
           </div>

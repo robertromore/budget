@@ -34,9 +34,7 @@ export const monthAnnotations = sqliteTable(
     note: text("note"),
 
     // Flags
-    flaggedForReview: integer("flagged_for_review", { mode: "boolean" }).default(
-      false
-    ),
+    flaggedForReview: integer("flagged_for_review", { mode: "boolean" }).default(false),
 
     // Tags for categorization (stored as JSON array)
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
@@ -51,33 +49,27 @@ export const monthAnnotations = sqliteTable(
   },
   (table) => [
     index("month_annotations_workspace_id_idx").on(table.workspaceId),
-    index("month_annotations_workspace_month_idx").on(
-      table.workspaceId,
-      table.month
-    ),
+    index("month_annotations_workspace_month_idx").on(table.workspaceId, table.month),
     index("month_annotations_account_idx").on(table.accountId),
     index("month_annotations_category_idx").on(table.categoryId),
     index("month_annotations_flagged_idx").on(table.flaggedForReview),
   ]
 );
 
-export const monthAnnotationsRelations = relations(
-  monthAnnotations,
-  ({ one }) => ({
-    workspace: one(workspaces, {
-      fields: [monthAnnotations.workspaceId],
-      references: [workspaces.id],
-    }),
-    account: one(accounts, {
-      fields: [monthAnnotations.accountId],
-      references: [accounts.id],
-    }),
-    category: one(categories, {
-      fields: [monthAnnotations.categoryId],
-      references: [categories.id],
-    }),
-  })
-);
+export const monthAnnotationsRelations = relations(monthAnnotations, ({ one }) => ({
+  workspace: one(workspaces, {
+    fields: [monthAnnotations.workspaceId],
+    references: [workspaces.id],
+  }),
+  account: one(accounts, {
+    fields: [monthAnnotations.accountId],
+    references: [accounts.id],
+  }),
+  category: one(categories, {
+    fields: [monthAnnotations.categoryId],
+    references: [categories.id],
+  }),
+}));
 
 // Zod schemas
 export const selectMonthAnnotationSchema = createSelectSchema(monthAnnotations);
@@ -97,9 +89,7 @@ export type AnnotationTag = (typeof ANNOTATION_TAGS)[number];
 
 // Schema for creating an annotation
 export const createAnnotationSchema = z.object({
-  month: z
-    .string()
-    .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
   accountId: z.number().int().positive().optional(),
   categoryId: z.number().int().positive().optional(),
   note: z.string().max(500).optional(),

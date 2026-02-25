@@ -11,6 +11,7 @@ Automatically search the web to find contact information for payees.
 ## What It Does
 
 When enabled, the app can search for:
+
 - Business phone numbers
 - Physical addresses
 - Website URLs

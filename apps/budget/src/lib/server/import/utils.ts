@@ -311,7 +311,6 @@ export function validateFileType(fileName: string, acceptedTypes: string[]): boo
   return acceptedTypes.includes(extension);
 }
 
-
 /**
  * Detect delimiter in CSV text
  */

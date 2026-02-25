@@ -114,7 +114,7 @@ const groupedAnalytics = $derived.by(() => {
     <div class="w-56 shrink-0 space-y-4">
       {#each groupedAnalytics as [category, analytics]}
         <div class="space-y-1">
-          <h3 class="text-muted-foreground px-2 text-xs font-semibold uppercase tracking-wider">
+          <h3 class="text-muted-foreground px-2 text-xs font-semibold tracking-wider uppercase">
             {category}
           </h3>
           <div class="space-y-0.5">
@@ -126,8 +126,7 @@ const groupedAnalytics = $derived.by(() => {
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                 )}
-                onclick={() => (selectedAnalytic = analytic.id)}
-              >
+                onclick={() => (selectedAnalytic = analytic.id)}>
                 <analytic.icon class="h-4 w-4 shrink-0" />
                 <span class="truncate">{analytic.title}</span>
               </button>
@@ -150,7 +149,7 @@ const groupedAnalytics = $derived.by(() => {
         {:else if effectiveSelectedAnalytic === 'credit-payoff'}
           <CreditPayoffChart {account} {transactions} />
 
-        <!-- Time-Based -->
+          <!-- Time-Based -->
         {:else if effectiveSelectedAnalytic === 'monthly-spending'}
           <div data-tour-id="analytics-trend-chart">
             <MonthlySpendingChart accountId={Number(accountId)} />
@@ -166,7 +165,7 @@ const groupedAnalytics = $derived.by(() => {
         {:else if effectiveSelectedAnalytic === 'weekday-patterns'}
           <WeekdayPatternsChart {transactions} />
 
-        <!-- Category Analysis -->
+          <!-- Category Analysis -->
         {:else if effectiveSelectedAnalytic === 'category-composition'}
           <CategoryCompositionChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'top-categories'}
@@ -178,7 +177,7 @@ const groupedAnalytics = $derived.by(() => {
         {:else if effectiveSelectedAnalytic === 'category-trends'}
           <CategoryTrendsChart {transactions} />
 
-        <!-- Behavioral Insights -->
+          <!-- Behavioral Insights -->
         {:else if effectiveSelectedAnalytic === 'spending-distribution'}
           <SpendingDistributionChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'outlier-detection'}
@@ -186,13 +185,13 @@ const groupedAnalytics = $derived.by(() => {
         {:else if effectiveSelectedAnalytic === 'recurring-spending'}
           <RecurringSpendingChart {transactions} />
 
-        <!-- Financial Health -->
+          <!-- Financial Health -->
         {:else if effectiveSelectedAnalytic === 'savings-rate'}
           <SavingsRateChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'cash-flow'}
           <CashFlowChart {transactions} />
 
-        <!-- Payee Analysis -->
+          <!-- Payee Analysis -->
         {:else if effectiveSelectedAnalytic === 'top-payees'}
           <PayeeRankingsChart {transactions} />
         {:else if effectiveSelectedAnalytic === 'payee-frequency'}
@@ -202,7 +201,7 @@ const groupedAnalytics = $derived.by(() => {
         {:else if effectiveSelectedAnalytic === 'new-payees'}
           <NewPayeesChart {transactions} />
 
-        <!-- Transaction Analysis -->
+          <!-- Transaction Analysis -->
         {:else if effectiveSelectedAnalytic === 'transaction-explorer'}
           <TransactionExplorerChart {transactions} />
         {/if}

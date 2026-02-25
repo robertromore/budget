@@ -1,5 +1,19 @@
 <script lang="ts">
-import { Area, AxisX, AxisY, Bar, Brush, CustomLine, HorizontalLine, Line, PercentileBands, Scatter, Tooltip, TrendDots, type ChartType } from '$lib/components/layercake';
+import {
+  Area,
+  AxisX,
+  AxisY,
+  Bar,
+  Brush,
+  CustomLine,
+  HorizontalLine,
+  Line,
+  PercentileBands,
+  Scatter,
+  Tooltip,
+  TrendDots,
+  type ChartType,
+} from '$lib/components/layercake';
 import { ChartSelectionPanel } from '$lib/components/charts';
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -9,7 +23,14 @@ import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import { chartSelection, type SelectedDataPoint } from '$lib/states/ui/chart-selection.svelte';
 import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
-import { calculateLinearTrend, calculateHistoricalAverage, calculatePercentileBands, getTrendValueAtIndex, type TrendLineData, type PercentileBands as PercentileBandsData } from '$lib/utils/chart-statistics';
+import {
+  calculateLinearTrend,
+  calculateHistoricalAverage,
+  calculatePercentileBands,
+  getTrendValueAtIndex,
+  type TrendLineData,
+  type PercentileBands as PercentileBandsData,
+} from '$lib/utils/chart-statistics';
 import { calculateComprehensiveStats } from '$lib/utils/comprehensive-statistics';
 import { toDateString } from '$lib/utils/date-formatters';
 import { LayerCake, Svg } from 'layercake';
@@ -49,7 +70,7 @@ const budgetsQuery = getByAccount(accountId).options();
 // Fetch forecast data (enabled when showForecast toggle is on)
 // svelte-ignore state_referenced_locally
 const forecastQuery = getMonthlySpendingForecast(accountId, 3).options(() => ({
-  enabled: showForecast
+  enabled: showForecast,
 }));
 
 // Get monthly budget target from budgets
@@ -58,7 +79,9 @@ const budgetTarget = $derived.by(() => {
   if (!budgets?.length) return null;
 
   // Find a budget linked to this account (account-monthly or category-envelope types)
-  const linkedBudget = budgets.find((b) => b.type === 'account-monthly' || b.type === 'category-envelope');
+  const linkedBudget = budgets.find(
+    (b) => b.type === 'account-monthly' || b.type === 'category-envelope'
+  );
   if (!linkedBudget) return null;
 
   // Find a monthly period template
@@ -86,7 +109,12 @@ function getStatusColor(d: { spending: number }): string {
 }
 
 // Convert a data point to SelectedDataPoint format
-function toSelectedPoint(d: { month: string; monthLabel: string; date: Date; spending: number }): SelectedDataPoint {
+function toSelectedPoint(d: {
+  month: string;
+  monthLabel: string;
+  date: Date;
+  spending: number;
+}): SelectedDataPoint {
   return {
     id: d.month,
     label: d.monthLabel,
@@ -94,12 +122,15 @@ function toSelectedPoint(d: { month: string; monthLabel: string; date: Date; spe
     value: d.spending,
     accountId: accountId,
     accountSlug: slug,
-    rawData: d as Record<string, unknown>
+    rawData: d as Record<string, unknown>,
   };
 }
 
 // Handle click on data point - click to select, double-click for drill-down
-function handlePointClick(d: { month: string; monthLabel: string; date: Date; spending: number }, event: MouseEvent) {
+function handlePointClick(
+  d: { month: string; monthLabel: string; date: Date; spending: number },
+  event: MouseEvent
+) {
   // Toggle selection on click
   chartSelection.toggle(toSelectedPoint(d));
 }
@@ -109,7 +140,7 @@ function handlePointDblClick(d: { month: string; monthLabel: string }) {
   chartInteractions.openDrillDown({
     type: 'month',
     value: d.month,
-    label: `${d.monthLabel} Transactions`
+    label: `${d.monthLabel} Transactions`,
   });
 }
 
@@ -230,8 +261,20 @@ function createPlaceholderMonth(monthStr: string) {
   const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, 1, 12, 0, 0));
 
   // Generate labels
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                      'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
   const monthName = monthNames[parseInt(month) - 1];
   const shortMonth = monthName.slice(0, 3);
 
@@ -257,7 +300,7 @@ const filteredMonthlyData = $derived.by(() => {
   const period = effectivePeriod;
 
   // Create a map of actual data by month for quick lookup
-  const dataByMonth = new Map<string, typeof monthlySpendingData[0]>();
+  const dataByMonth = new Map<string, (typeof monthlySpendingData)[0]>();
   for (const item of monthlySpendingData) {
     dataByMonth.set(item.month, item);
   }
@@ -368,45 +411,60 @@ const forecastData = $derived.by(() => {
 
   const startIndex = lastPoint.index + 1;
 
-  return forecastQuery.data.predictions.map((pred: { date: string; value: number; lowerBound: number; upperBound: number; confidence: number }, i: number) => {
-    // Parse date (expected format: "YYYY-MM-DD" or "YYYY-MM")
-    // Use UTC noon to avoid timezone boundary issues
-    const dateStr = pred.date || '';
-    let date: Date;
+  return forecastQuery.data.predictions.map(
+    (
+      pred: {
+        date: string;
+        value: number;
+        lowerBound: number;
+        upperBound: number;
+        confidence: number;
+      },
+      i: number
+    ) => {
+      // Parse date (expected format: "YYYY-MM-DD" or "YYYY-MM")
+      // Use UTC noon to avoid timezone boundary issues
+      const dateStr = pred.date || '';
+      let date: Date;
 
-    if (dateStr.includes('-')) {
-      const parts = dateStr.split('-');
-      if (parts.length >= 2) {
-        date = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, 1, 12, 0, 0));
+      if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length >= 2) {
+          date = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, 1, 12, 0, 0));
+        } else {
+          // Fallback: offset from last point using UTC
+          const baseDate = lastPoint.date;
+          date = new Date(
+            Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth() + i + 1, 1, 12, 0, 0)
+          );
+        }
       } else {
         // Fallback: offset from last point using UTC
         const baseDate = lastPoint.date;
-        date = new Date(Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth() + i + 1, 1, 12, 0, 0));
+        date = new Date(
+          Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth() + i + 1, 1, 12, 0, 0)
+        );
       }
-    } else {
-      // Fallback: offset from last point using UTC
-      const baseDate = lastPoint.date;
-      date = new Date(Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth() + i + 1, 1, 12, 0, 0));
+
+      // Generate short label for forecast month
+      const month = date.toLocaleString('default', { month: 'short', timeZone: 'UTC' });
+      const year = String(date.getUTCFullYear()).slice(-2);
+      const shortLabel = `${month} '${year}`;
+
+      const index = startIndex + i;
+      return {
+        date,
+        shortLabel,
+        index,
+        x: index,
+        y: pred.value,
+        predicted: pred.value,
+        lower: pred.lowerBound,
+        upper: pred.upperBound,
+        confidence: pred.confidence,
+      };
     }
-
-    // Generate short label for forecast month
-    const month = date.toLocaleString('default', { month: 'short', timeZone: 'UTC' });
-    const year = String(date.getUTCFullYear()).slice(-2);
-    const shortLabel = `${month} '${year}`;
-
-    const index = startIndex + i;
-    return {
-      date,
-      shortLabel,
-      index,
-      x: index,
-      y: pred.value,
-      predicted: pred.value,
-      lower: pred.lowerBound,
-      upper: pred.upperBound,
-      confidence: pred.confidence
-    };
-  });
+  );
 });
 
 // Compute xDomain using indices for even spacing
@@ -432,11 +490,11 @@ const chartXDomain = $derived.by((): [number, number] | undefined => {
 const chartYMax = $derived.by((): number | null => {
   if (!filteredMonthlyData.length) return null;
 
-  let maxValue = Math.max(...filteredMonthlyData.map(d => d.spending));
+  let maxValue = Math.max(...filteredMonthlyData.map((d) => d.spending));
 
   // Include forecast values in y-domain if enabled
   if (showForecast && forecastData.length > 0) {
-    const maxForecastValue = Math.max(...forecastData.map(d => d.upper || d.y));
+    const maxForecastValue = Math.max(...forecastData.map((d) => d.upper || d.y));
     if (maxForecastValue > maxValue) {
       maxValue = maxForecastValue;
     }
@@ -485,11 +543,11 @@ const xAxisTickValues = $derived.by((): number[] => {
   if (!filteredMonthlyData.length) return [];
 
   // Get all data point indices
-  const allIndices = filteredMonthlyData.map(d => d.index);
+  const allIndices = filteredMonthlyData.map((d) => d.index);
 
   // If we have forecast data, include those indices too
   if (showForecast && forecastData.length > 0) {
-    forecastData.forEach(d => allIndices.push(d.index));
+    forecastData.forEach((d) => allIndices.push(d.index));
   }
 
   // Dynamic max ticks based on data length:
@@ -557,9 +615,10 @@ const summaryStats = $derived.by(() => {
 
   // Get latest month's change from previous
   const latestChange = filteredMonthlyData[filteredMonthlyData.length - 1]?.changeFromPrevious;
-  const changeIndicator = latestChange !== null && latestChange !== undefined
-    ? `${latestChange > 0 ? '+' : ''}${formatPercentRaw(latestChange, 1)} vs prev`
-    : undefined;
+  const changeIndicator =
+    latestChange !== null && latestChange !== undefined
+      ? `${latestChange > 0 ? '+' : ''}${formatPercentRaw(latestChange, 1)} vs prev`
+      : undefined;
 
   return [
     {
@@ -590,24 +649,25 @@ const comprehensiveStats = $derived.by(() => {
   if (!filteredMonthlyData.length) return null;
 
   // Transform data to the format expected by calculateComprehensiveStats
-  const filtered = filteredMonthlyData.map(d => ({
+  const filtered = filteredMonthlyData.map((d) => ({
     month: d.month,
     monthLabel: d.monthLabel,
     spending: d.spending,
-    date: d.date
+    date: d.date,
   }));
 
-  const allTime = monthlySpendingData.map(d => ({
+  const allTime = monthlySpendingData.map((d) => ({
     month: d.month,
     monthLabel: d.monthLabel,
     spending: d.spending,
-    date: d.date
+    date: d.date,
   }));
 
   // Calculate year-over-year total from last year's data
-  const lastYearTotal = filteredMonthlyData.reduce((sum, d) => {
-    return sum + (d.previousYearSpending ?? 0);
-  }, 0) || null;
+  const lastYearTotal =
+    filteredMonthlyData.reduce((sum, d) => {
+      return sum + (d.previousYearSpending ?? 0);
+    }, 0) || null;
 
   return calculateComprehensiveStats(filtered, allTime, budgetTarget, lastYearTotal);
 });
@@ -626,7 +686,11 @@ const activeOverlays = $derived.by(() => {
   }
   // Analysis overlays
   if (showLinearTrend && linearTrendData) {
-    overlays.push({ label: `Regression (${linearTrendData.direction})`, color: 'var(--chart-4)', dashed: true });
+    overlays.push({
+      label: `Regression (${linearTrendData.direction})`,
+      color: 'var(--chart-4)',
+      dashed: true,
+    });
   }
   if (showForecast && forecastData.length > 0) {
     overlays.push({ label: 'Forecast', color: 'var(--chart-2)', dashed: true });
@@ -643,9 +707,9 @@ const activeOverlays = $derived.by(() => {
 // Count active analysis overlays for badge
 const activeAnalysisCount = $derived(
   (showLinearTrend ? 1 : 0) +
-  (showForecast ? 1 : 0) +
-  (showHistoricalAvg ? 1 : 0) +
-  (showPercentileBands ? 1 : 0)
+    (showForecast ? 1 : 0) +
+    (showHistoricalAvg ? 1 : 0) +
+    (showPercentileBands ? 1 : 0)
 );
 </script>
 
@@ -658,8 +722,7 @@ const activeAnalysisCount = $derived(
   defaultChartType="line-area"
   emptyMessage="Add some expense transactions to see spending trends"
   chartId="monthly-spending"
-  allowedPeriodGroups={['months', 'year', 'other']}
->
+  allowedPeriodGroups={['months', 'year', 'other']}>
   {#snippet title()}
     Monthly Spending Trends
   {/snippet}
@@ -674,8 +737,7 @@ const activeAnalysisCount = $derived(
         <Button
           variant={showComparison ? 'default' : 'ghost'}
           size="sm"
-          onclick={() => (showComparison = !showComparison)}
-        >
+          onclick={() => (showComparison = !showComparison)}>
           vs Last Year
         </Button>
       {/if}
@@ -683,8 +745,7 @@ const activeAnalysisCount = $derived(
         <Button
           variant={showTrendLine ? 'default' : 'ghost'}
           size="sm"
-          onclick={() => (showTrendLine = !showTrendLine)}
-        >
+          onclick={() => (showTrendLine = !showTrendLine)}>
           Average
         </Button>
       {/if}
@@ -692,8 +753,7 @@ const activeAnalysisCount = $derived(
         <Button
           variant={showBudgetLine ? 'default' : 'ghost'}
           size="sm"
-          onclick={() => (showBudgetLine = !showBudgetLine)}
-        >
+          onclick={() => (showBudgetLine = !showBudgetLine)}>
           Budget
         </Button>
       {/if}
@@ -702,11 +762,16 @@ const activeAnalysisCount = $derived(
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           {#snippet child({ props })}
-            <Button {...props} variant={activeAnalysisCount > 0 ? 'default' : 'ghost'} size="sm" class="gap-1">
+            <Button
+              {...props}
+              variant={activeAnalysisCount > 0 ? 'default' : 'ghost'}
+              size="sm"
+              class="gap-1">
               <TrendingUp class="h-4 w-4" />
               Analysis
               {#if activeAnalysisCount > 0}
-                <span class="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-xs">{activeAnalysisCount}</span>
+                <span class="bg-primary-foreground/20 ml-1 rounded-full px-1.5 text-xs"
+                  >{activeAnalysisCount}</span>
               {/if}
               <ChevronDown class="h-3 w-3" />
             </Button>
@@ -723,19 +788,26 @@ const activeAnalysisCount = $derived(
           </DropdownMenu.CheckboxItem>
           <DropdownMenu.CheckboxItem bind:checked={showForecast}>
             <span class="flex items-center gap-2">
-              <span class="h-0.5 w-3" style="background: repeating-linear-gradient(90deg, var(--chart-2) 0px, var(--chart-2) 2px, transparent 2px, transparent 4px);"></span>
+              <span
+                class="h-0.5 w-3"
+                style="background: repeating-linear-gradient(90deg, var(--chart-2) 0px, var(--chart-2) 2px, transparent 2px, transparent 4px);"
+              ></span>
               Forecast (3 months)
             </span>
           </DropdownMenu.CheckboxItem>
           <DropdownMenu.CheckboxItem bind:checked={showHistoricalAvg}>
             <span class="flex items-center gap-2">
-              <span class="h-0.5 w-3" style="background: repeating-linear-gradient(90deg, var(--chart-6) 0px, var(--chart-6) 3px, transparent 3px, transparent 6px);"></span>
+              <span
+                class="h-0.5 w-3"
+                style="background: repeating-linear-gradient(90deg, var(--chart-6) 0px, var(--chart-6) 3px, transparent 3px, transparent 6px);"
+              ></span>
               Historical Average
             </span>
           </DropdownMenu.CheckboxItem>
           <DropdownMenu.CheckboxItem bind:checked={showPercentileBands}>
             <span class="flex items-center gap-2">
-              <span class="h-2 w-3 rounded-sm opacity-30" style="background-color: var(--chart-3);"></span>
+              <span class="h-2 w-3 rounded-sm opacity-30" style="background-color: var(--chart-3);"
+              ></span>
               Percentile Bands
             </span>
           </DropdownMenu.CheckboxItem>
@@ -747,13 +819,12 @@ const activeAnalysisCount = $derived(
   {#snippet chart({ data, chartType }: { data: typeof filteredMonthlyData; chartType: ChartType })}
     <div class="h-full w-full pb-20">
       <LayerCake
-        data={data}
+        {data}
         x="index"
         y="spending"
         xDomain={chartXDomain}
         yDomain={[0, chartYMax]}
-        padding={{ top: 10, right: 15, bottom: 30, left: 55 }}
-      >
+        padding={{ top: 10, right: 15, bottom: 30, left: 55 }}>
         <Svg>
           <AxisY ticks={5} gridlines={true} format={(d) => currencyFormatter.format(d)} />
           <AxisX
@@ -762,8 +833,7 @@ const activeAnalysisCount = $derived(
               // Look up label by index
               const index = typeof d === 'number' ? d : 0;
               return indexToLabelMap.get(index) ?? '';
-            }}
-          />
+            }} />
 
           <!-- ===== Analysis Overlays (rendered first, below main data) ===== -->
 
@@ -773,8 +843,7 @@ const activeAnalysisCount = $derived(
               p25={percentileBands.p25}
               p75={percentileBands.p75}
               fill="var(--chart-3)"
-              opacity={0.15}
-            />
+              opacity={0.15} />
           {/if}
 
           <!-- Historical average horizontal line -->
@@ -784,8 +853,7 @@ const activeAnalysisCount = $derived(
               stroke="var(--chart-6)"
               strokeWidth={1.5}
               strokeDasharray="6 3"
-              label="Avg"
-            />
+              label="Avg" />
           {/if}
 
           <!-- Budget target line -->
@@ -795,8 +863,7 @@ const activeAnalysisCount = $derived(
               stroke="var(--chart-5)"
               strokeWidth={1.5}
               strokeDasharray="8 4"
-              label="Budget"
-            />
+              label="Budget" />
           {/if}
 
           <!-- Linear regression line -->
@@ -806,8 +873,7 @@ const activeAnalysisCount = $derived(
               stroke="var(--chart-4)"
               strokeWidth={2}
               strokeDasharray="8 4"
-              opacity={0.7}
-            />
+              opacity={0.7} />
           {/if}
 
           <!-- Forecast line (dashed to indicate predictions) -->
@@ -817,8 +883,7 @@ const activeAnalysisCount = $derived(
               stroke="var(--chart-2)"
               strokeWidth={2}
               strokeDasharray="4 2"
-              opacity={0.8}
-            />
+              opacity={0.8} />
           {/if}
 
           <!-- Main chart data -->
@@ -826,44 +891,53 @@ const activeAnalysisCount = $derived(
             <Area fill="var(--chart-1)" opacity={0.1} />
             <Line stroke="var(--chart-1)" strokeWidth={2} />
             <Scatter
-              fill={(d) => chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
-              radius={(d) => chartSelection.isSelected(d.month) ? 6 : 4}
+              fill={(d) =>
+                chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
+              radius={(d) => (chartSelection.isSelected(d.month) ? 6 : 4)}
               hoverRadius={7}
-              stroke={(d) => chartSelection.isSelected(d.month) ? 'var(--primary-foreground)' : 'var(--background)'}
+              stroke={(d) =>
+                chartSelection.isSelected(d.month)
+                  ? 'var(--primary-foreground)'
+                  : 'var(--background)'}
               strokeWidth={2}
               onclick={(d, e) => handlePointClick(d, e)}
-              ondblclick={(d) => handlePointDblClick(d)}
-            />
+              ondblclick={(d) => handlePointDblClick(d)} />
           {:else if chartType === 'line'}
             <Line stroke="var(--chart-1)" strokeWidth={2} />
             <Scatter
-              fill={(d) => chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
-              radius={(d) => chartSelection.isSelected(d.month) ? 6 : 4}
+              fill={(d) =>
+                chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
+              radius={(d) => (chartSelection.isSelected(d.month) ? 6 : 4)}
               hoverRadius={7}
-              stroke={(d) => chartSelection.isSelected(d.month) ? 'var(--primary-foreground)' : 'var(--background)'}
+              stroke={(d) =>
+                chartSelection.isSelected(d.month)
+                  ? 'var(--primary-foreground)'
+                  : 'var(--background)'}
               strokeWidth={2}
               onclick={(d, e) => handlePointClick(d, e)}
-              ondblclick={(d) => handlePointDblClick(d)}
-            />
+              ondblclick={(d) => handlePointDblClick(d)} />
           {:else if chartType === 'area'}
             <Area fill="var(--chart-1)" opacity={0.3} />
             <Scatter
-              fill={(d) => chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
-              radius={(d) => chartSelection.isSelected(d.month) ? 6 : 4}
+              fill={(d) =>
+                chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
+              radius={(d) => (chartSelection.isSelected(d.month) ? 6 : 4)}
               hoverRadius={7}
-              stroke={(d) => chartSelection.isSelected(d.month) ? 'var(--primary-foreground)' : 'var(--background)'}
+              stroke={(d) =>
+                chartSelection.isSelected(d.month)
+                  ? 'var(--primary-foreground)'
+                  : 'var(--background)'}
               strokeWidth={2}
               onclick={(d, e) => handlePointClick(d, e)}
-              ondblclick={(d) => handlePointDblClick(d)}
-            />
+              ondblclick={(d) => handlePointDblClick(d)} />
           {:else if chartType === 'bar'}
             <Bar
-              fill={(d) => chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
-              opacity={(d) => chartSelection.isSelected(d.month) ? 1 : 0.85}
+              fill={(d) =>
+                chartSelection.isSelected(d.month) ? 'var(--primary)' : getStatusColor(d)}
+              opacity={(d) => (chartSelection.isSelected(d.month) ? 1 : 0.85)}
               hoverOpacity={1}
               onclick={(d, e) => handlePointClick(d, e)}
-              ondblclick={(d) => handlePointDblClick(d)}
-            />
+              ondblclick={(d) => handlePointDblClick(d)} />
           {/if}
 
           <!-- Year-over-year comparison overlay -->
@@ -873,8 +947,7 @@ const activeAnalysisCount = $derived(
               stroke="var(--chart-4)"
               strokeWidth={1.5}
               strokeDasharray="4 4"
-              opacity={0.7}
-            />
+              opacity={0.7} />
           {/if}
 
           <!-- Rolling average trend line -->
@@ -883,32 +956,29 @@ const activeAnalysisCount = $derived(
               data={rollingAverageData}
               stroke="var(--chart-2)"
               strokeWidth={2}
-              opacity={0.8}
-            />
-            <TrendDots
-              trendData={rollingAverageData}
-              fill="var(--chart-2)"
-              radius={4}
-            />
+              opacity={0.8} />
+            <TrendDots trendData={rollingAverageData} fill="var(--chart-2)" radius={4} />
           {/if}
 
           <!-- Tooltip for hover - uses external hover from Brush -->
           <Tooltip
             barMode={chartType === 'bar'}
             dot={chartType !== 'bar'}
-            externalHoverX={brushHoverX}
-          >
+            externalHoverX={brushHoverX}>
             {#snippet children({ point, x, y })}
               <foreignObject
                 x={Math.min(x + 20, 180)}
                 y={0}
                 width="180"
                 height="250"
-                style="overflow: visible; pointer-events: none;"
-              >
-                <div class="rounded-md border bg-popover px-3 py-2 text-sm shadow-md" style="pointer-events: none;">
+                style="overflow: visible; pointer-events: none;">
+                <div
+                  class="bg-popover rounded-md border px-3 py-2 text-sm shadow-md"
+                  style="pointer-events: none;">
                   <p class="font-medium">{point.monthLabel}</p>
-                  <p class="font-semibold" style="color: {getStatusColor(point)};">{currencyFormatter.format(point.spending)}</p>
+                  <p class="font-semibold" style="color: {getStatusColor(point)};">
+                    {currencyFormatter.format(point.spending)}
+                  </p>
 
                   <!-- Budget progress bar -->
                   {#if budgetTarget}
@@ -916,23 +986,32 @@ const activeAnalysisCount = $derived(
                     {@const percentUsed = Math.round(ratio * 100)}
                     {@const overUnder = point.spending - budgetTarget}
                     <div class="mt-1 flex items-center gap-2">
-                      <div class="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                      <div class="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
                         <div
                           class="h-full rounded-full"
-                          style="width: {Math.min(percentUsed, 100)}%; background-color: {getStatusColor(point)};"
-                        ></div>
+                          style="width: {Math.min(
+                            percentUsed,
+                            100
+                          )}%; background-color: {getStatusColor(point)};">
+                        </div>
                       </div>
                       <span class="text-xs tabular-nums">{percentUsed}%</span>
                     </div>
                     <p class="text-xs" style="color: {getStatusColor(point)}">
-                      {overUnder > 0 ? `${currencyFormatter.format(overUnder)} over budget` : `${currencyFormatter.format(Math.abs(overUnder))} under budget`}
+                      {overUnder > 0
+                        ? `${currencyFormatter.format(overUnder)} over budget`
+                        : `${currencyFormatter.format(Math.abs(overUnder))} under budget`}
                     </p>
                   {/if}
 
                   <!-- Change from previous month -->
                   {#if point.changeFromPrevious !== null && point.changeFromPrevious !== undefined}
-                    <p class="text-xs" class:text-destructive={point.changeFromPrevious > 0} class:text-green-600={point.changeFromPrevious < 0}>
-                      {point.changeFromPrevious > 0 ? '↑' : '↓'} {formatPercentRaw(Math.abs(point.changeFromPrevious), 1)} vs prev month
+                    <p
+                      class="text-xs"
+                      class:text-destructive={point.changeFromPrevious > 0}
+                      class:text-green-600={point.changeFromPrevious < 0}>
+                      {point.changeFromPrevious > 0 ? '↑' : '↓'}
+                      {formatPercentRaw(Math.abs(point.changeFromPrevious), 1)} vs prev month
                     </p>
                   {/if}
 
@@ -945,10 +1024,10 @@ const activeAnalysisCount = $derived(
 
                   <!-- Rolling average trend -->
                   {#if showTrendLine}
-                    {@const trendPoint = rollingAverageData.find(d => d.month === point.month)}
+                    {@const trendPoint = rollingAverageData.find((d) => d.month === point.month)}
                     {#if trendPoint}
                       {@const diff = point.spending - trendPoint.average}
-                      {@const diffPercent = ((diff / trendPoint.average) * 100)}
+                      {@const diffPercent = (diff / trendPoint.average) * 100}
                       <p class="text-xs" style="color: var(--chart-2);">
                         3-mo avg: {currencyFormatter.format(trendPoint.average)}
                         <span class="text-muted-foreground">
@@ -960,13 +1039,15 @@ const activeAnalysisCount = $derived(
 
                   <!-- Analysis overlays section -->
                   {#if showLinearTrend || showHistoricalAvg || showPercentileBands}
-                    <div class="mt-1 border-t pt-1 space-y-0.5">
+                    <div class="mt-1 space-y-0.5 border-t pt-1">
                       <!-- Linear regression value at this point -->
                       {#if showLinearTrend && linearTrendData}
-                        {@const pointIndex = filteredMonthlyData.findIndex(d => d.month === point.month)}
+                        {@const pointIndex = filteredMonthlyData.findIndex(
+                          (d) => d.month === point.month
+                        )}
                         {@const regressionValue = getTrendValueAtIndex(linearTrendData, pointIndex)}
                         {@const diffFromRegression = point.spending - regressionValue}
-                        {@const diffPercent = ((diffFromRegression / regressionValue) * 100)}
+                        {@const diffPercent = (diffFromRegression / regressionValue) * 100}
                         <p class="text-xs" style="color: var(--primary);">
                           Regression: {currencyFormatter.format(regressionValue)}
                           <span class="text-muted-foreground">
@@ -978,7 +1059,7 @@ const activeAnalysisCount = $derived(
                       <!-- Historical average comparison -->
                       {#if showHistoricalAvg && historicalAverage !== null}
                         {@const diffFromAvg = point.spending - historicalAverage}
-                        {@const diffPercent = ((diffFromAvg / historicalAverage) * 100)}
+                        {@const diffPercent = (diffFromAvg / historicalAverage) * 100}
                         <p class="text-xs" style="color: var(--chart-6);">
                           Hist. avg: {currencyFormatter.format(historicalAverage)}
                           <span class="text-muted-foreground">
@@ -990,7 +1071,14 @@ const activeAnalysisCount = $derived(
                       <!-- Percentile position -->
                       {#if showPercentileBands && percentileBands}
                         {@const spending = point.spending}
-                        {@const position = spending < percentileBands.p25 ? 'below 25th' : spending > percentileBands.p75 ? 'above 75th' : spending < percentileBands.p50 ? '25th-50th' : '50th-75th'}
+                        {@const position =
+                          spending < percentileBands.p25
+                            ? 'below 25th'
+                            : spending > percentileBands.p75
+                              ? 'above 75th'
+                              : spending < percentileBands.p50
+                                ? '25th-50th'
+                                : '50th-75th'}
                         <p class="text-xs" style="color: var(--chart-3);">
                           Percentile: {position}
                         </p>
@@ -1001,10 +1089,13 @@ const activeAnalysisCount = $derived(
                   <!-- Top categories breakdown -->
                   {#if point.topCategories?.length}
                     <div class="mt-2 border-t pt-2">
-                      <p class="text-muted-foreground text-xs mb-1">Top Categories</p>
+                      <p class="text-muted-foreground mb-1 text-xs">Top Categories</p>
                       {#each point.topCategories.slice(0, 3) as cat}
                         <p class="text-xs">
-                          {cat.categoryName}: {currencyFormatter.format(cat.amount)} ({formatPercentRaw(cat.percentage, 0)})
+                          {cat.categoryName}: {currencyFormatter.format(cat.amount)} ({formatPercentRaw(
+                            cat.percentage,
+                            0
+                          )})
                         </p>
                       {/each}
                     </div>
@@ -1018,12 +1109,11 @@ const activeAnalysisCount = $derived(
           <Brush
             onbrush={handleBrushSelect}
             onclick={handleBrushClick}
-            onhover={(x) => brushHoverX = x}
+            onhover={(x) => (brushHoverX = x)}
             fill="var(--primary)"
             opacity={0.15}
             cursor={chartType === 'bar' ? 'pointer' : 'crosshair'}
-            captureEvents={chartType !== 'bar'}
-          />
+            captureEvents={chartType !== 'bar'} />
         </Svg>
       </LayerCake>
 
@@ -1038,8 +1128,14 @@ const activeAnalysisCount = $derived(
             <div class="flex items-center gap-2">
               <div
                 class="h-0.5 w-4"
-                style="background-color: {overlay.color}; {overlay.dashed ? 'background: repeating-linear-gradient(90deg, ' + overlay.color + ' 0px, ' + overlay.color + ' 4px, transparent 4px, transparent 8px);' : ''}"
-              ></div>
+                style="background-color: {overlay.color}; {overlay.dashed
+                  ? 'background: repeating-linear-gradient(90deg, ' +
+                    overlay.color +
+                    ' 0px, ' +
+                    overlay.color +
+                    ' 4px, transparent 4px, transparent 8px);'
+                  : ''}">
+              </div>
               <span class="text-xs">{overlay.label}</span>
             </div>
           {/each}
@@ -1066,7 +1162,7 @@ const activeAnalysisCount = $derived(
 
       <!-- Selection hint -->
       {#if !chartSelection.isActive}
-        <p class="mt-2 text-center text-xs text-muted-foreground">
+        <p class="text-muted-foreground mt-2 text-center text-xs">
           Click points to select, or drag to select a range
         </p>
       {/if}

@@ -17,25 +17,33 @@ Perform operations on multiple selected transactions at once.
 ## Available Actions
 
 ### Bulk Categorize
+
 Assign the same category to all selected:
+
 - Opens category selector
 - All selected transactions updated
 - Useful after import
 
 ### Bulk Delete
+
 Remove all selected transactions:
+
 - Confirmation dialog appears
 - Shows count to be deleted
 - Cannot be undone
 
 ### Bulk Status Change
+
 Update status for all selected:
+
 - Mark as cleared
 - Mark as reconciled
 - Reset to pending
 
 ### Bulk Export
+
 Export selected to file:
+
 - CSV format
 - All visible columns
 - Includes only selected rows
@@ -43,6 +51,7 @@ Export selected to file:
 ## Confirmation
 
 Destructive actions require confirmation:
+
 - Delete shows transaction count
 - Category change shows affected count
 - Cancel available before applying

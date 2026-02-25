@@ -6,7 +6,8 @@ parent: budget-template-picker
 
 # Template Cards
 
-Each card represents a pre-configured budget template you can use as a starting point.
+Each card represents a pre-configured budget template you can use as a starting
+point.
 
 ## Card Information
 
@@ -21,7 +22,8 @@ Each card represents a pre-configured budget template you can use as a starting 
 
 ## How to Select
 
-Click or tap any card to use that template. You'll be taken to the budget creation page with the template settings pre-filled.
+Click or tap any card to use that template. You'll be taken to the budget
+creation page with the template settings pre-filled.
 
 ## Tips
 

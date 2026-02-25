@@ -11,18 +11,21 @@ Choose how the app handles budget limits and overspending.
 ## Enforcement Levels
 
 ### Strict
+
 - Shows warnings when approaching limit (80%, 90%)
 - Blocks or warns for transactions exceeding budget
 - Best for hard spending limits
 - Recommended for: Credit cards, discretionary spending
 
 ### Flexible
+
 - Shows progress and warnings
 - Allows overspending with visual indicators
 - Best for guidelines rather than hard limits
 - Recommended for: Variable expenses, new budgets
 
 ### Tracking Only
+
 - No warnings or limits
 - Simply tracks spending for reporting
 - Best for observation before setting limits
@@ -31,6 +34,7 @@ Choose how the app handles budget limits and overspending.
 ## Warning Thresholds
 
 For Strict and Flexible modes:
+
 - **80%** - First warning (yellow)
 - **90%** - Second warning (orange)
 - **100%** - Limit reached (red)
@@ -39,6 +43,7 @@ For Strict and Flexible modes:
 ## Notifications
 
 Based on enforcement level, you may receive:
+
 - In-app alerts when adding transactions
 - Summary notifications at period end
 - Weekly digest with budget status

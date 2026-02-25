@@ -1,12 +1,11 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Schedule Workflows - End-to-End Tests", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/");
 
     // Wait for page to load and navigate to schedules
@@ -20,7 +19,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     }
   });
 
-  test("should complete full schedule lifecycle - create, view, edit, delete", async ({page}) => {
+  test("should complete full schedule lifecycle - create, view, edit, delete", async ({ page }) => {
     // Step 1: Create a new schedule
     const addButton = page.locator(
       'button:has-text("Add Schedule"), button[aria-label*="Add"], button[title*="Add"]'
@@ -36,7 +35,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     // Select payee (create one if needed)
     const payeeSelect = page.locator('select[name="payeeId"], [data-testid="payee-select"]');
     if (await payeeSelect.isVisible()) {
-      await payeeSelect.selectOption({index: 1}); // Select first available payee
+      await payeeSelect.selectOption({ index: 1 }); // Select first available payee
     } else {
       // Look for payee input or create button
       const payeeInput = page.locator('input[name="payee"], input[placeholder*="payee"]');
@@ -48,7 +47,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     // Select account
     const accountSelect = page.locator('select[name="accountId"], [data-testid="account-select"]');
     if (await accountSelect.isVisible()) {
-      await accountSelect.selectOption({index: 1}); // Select first available account
+      await accountSelect.selectOption({ index: 1 }); // Select first available account
     }
 
     // Set as recurring monthly
@@ -127,7 +126,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     await expect(page.locator('text="Monthly Rent Payment"')).not.toBeVisible();
   });
 
-  test("should handle recurring schedule configuration", async ({page}) => {
+  test("should handle recurring schedule configuration", async ({ page }) => {
     // Create a recurring schedule with different frequencies
     const addButton = page.locator('button:has-text("Add Schedule"), button[aria-label*="Add"]');
     await addButton.click();
@@ -139,12 +138,12 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     // Select payee and account (using first available options)
     const payeeSelect = page.locator('select[name="payeeId"]');
     if (await payeeSelect.isVisible()) {
-      await payeeSelect.selectOption({index: 1});
+      await payeeSelect.selectOption({ index: 1 });
     }
 
     const accountSelect = page.locator('select[name="accountId"]');
     if (await accountSelect.isVisible()) {
-      await accountSelect.selectOption({index: 1});
+      await accountSelect.selectOption({ index: 1 });
     }
 
     // Enable recurring
@@ -181,7 +180,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     await expect(recurringIndicator.first()).toBeVisible();
   });
 
-  test("should handle different amount types", async ({page}) => {
+  test("should handle different amount types", async ({ page }) => {
     // Test exact amount
     await page.locator('button:has-text("Add Schedule")').click();
 
@@ -198,7 +197,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     const selects = await page.locator("select").all();
     for (const select of selects) {
       if (await select.locator("option").first().isVisible()) {
-        await select.selectOption({index: 1});
+        await select.selectOption({ index: 1 });
       }
     }
 
@@ -232,7 +231,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     for (const select of selects2) {
       const options = await select.locator("option").count();
       if (options > 1) {
-        await select.selectOption({index: 1});
+        await select.selectOption({ index: 1 });
       }
     }
 
@@ -244,7 +243,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     await expect(page.locator('text="$100", text="$200"').first()).toBeVisible();
   });
 
-  test("should handle schedule status changes", async ({page}) => {
+  test("should handle schedule status changes", async ({ page }) => {
     // Create an active schedule
     await page.locator('button:has-text("Add Schedule")').click();
 
@@ -260,12 +259,12 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     // Fill required fields
     const payeeSelect = page.locator('select[name="payeeId"]');
     if (await payeeSelect.isVisible()) {
-      await payeeSelect.selectOption({index: 1});
+      await payeeSelect.selectOption({ index: 1 });
     }
 
     const accountSelect = page.locator('select[name="accountId"]');
     if (await accountSelect.isVisible()) {
-      await accountSelect.selectOption({index: 1});
+      await accountSelect.selectOption({ index: 1 });
     }
 
     await page.locator('button[type="submit"]').click();
@@ -297,7 +296,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     }
   });
 
-  test("should handle form validation errors", async ({page}) => {
+  test("should handle form validation errors", async ({ page }) => {
     await page.locator('button:has-text("Add Schedule")').click();
 
     // Try to save without required fields
@@ -344,7 +343,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     for (const select of selects) {
       const options = await select.locator("option").count();
       if (options > 1) {
-        await select.selectOption({index: 1});
+        await select.selectOption({ index: 1 });
       }
     }
 
@@ -356,12 +355,12 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     await expect(page.locator('text="Valid Schedule Name"')).toBeVisible();
   });
 
-  test("should handle schedule search and filtering", async ({page}) => {
+  test("should handle schedule search and filtering", async ({ page }) => {
     // Create multiple schedules for testing
     const schedules = [
-      {name: "Monthly Rent", amount: "1200", status: "active"},
-      {name: "Weekly Groceries", amount: "150", status: "active"},
-      {name: "Annual Insurance", amount: "800", status: "inactive"},
+      { name: "Monthly Rent", amount: "1200", status: "active" },
+      { name: "Weekly Groceries", amount: "150", status: "active" },
+      { name: "Annual Insurance", amount: "800", status: "inactive" },
     ];
 
     for (const schedule of schedules) {
@@ -380,7 +379,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
       for (const select of selects) {
         const options = await select.locator("option").count();
         if (options > 1) {
-          await select.selectOption({index: 1});
+          await select.selectOption({ index: 1 });
         }
       }
 
@@ -440,7 +439,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
     }
   });
 
-  test("should handle bulk schedule operations", async ({page}) => {
+  test("should handle bulk schedule operations", async ({ page }) => {
     // Create multiple schedules
     const scheduleNames = ["Schedule A", "Schedule B", "Schedule C"];
 
@@ -455,7 +454,7 @@ describeE2E("Schedule Workflows - End-to-End Tests", () => {
       for (const select of selects) {
         const options = await select.locator("option").count();
         if (options > 1) {
-          await select.selectOption({index: 1});
+          await select.selectOption({ index: 1 });
         }
       }
 

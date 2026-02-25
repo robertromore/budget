@@ -11,21 +11,25 @@ Visualize your financial data with interactive charts and insights.
 ## Available Charts
 
 ### Monthly Spending
+
 - Track expenses over time
 - Compare month-to-month trends
 - Identify seasonal patterns
 
 ### Income vs Expenses
+
 - Side-by-side comparison
 - Net savings calculation
 - Trend analysis
 
 ### Top Categories
+
 - Where your money goes
 - Category breakdown by amount
 - Percentage of total spending
 
 ### Top Payees
+
 - Highest spending merchants
 - Transaction frequency
 - Average transaction size
@@ -39,6 +43,7 @@ Visualize your financial data with interactive charts and insights.
 ## Debt Account View
 
 For credit cards and loans:
+
 - Payment progress tracking
 - Interest calculations
 - Payoff projections

@@ -34,17 +34,21 @@ const suggestCategoriesSchema = z.object({
   rows: z.array(categorySuggestInputSchema),
 });
 
-const payeeGrouperConfigSchema = z.object({
-  groupingThreshold: z.number().min(0).max(1).optional(),
-  existingMatchThreshold: z.number().min(0).max(1).optional(),
-  autoAcceptThreshold: z.number().min(0).max(1).optional(),
-}).optional();
+const payeeGrouperConfigSchema = z
+  .object({
+    groupingThreshold: z.number().min(0).max(1).optional(),
+    existingMatchThreshold: z.number().min(0).max(1).optional(),
+    autoAcceptThreshold: z.number().min(0).max(1).optional(),
+  })
+  .optional();
 
-const categorySuggesterConfigSchema = z.object({
-  minConfidence: z.number().min(0).max(1).optional(),
-  autoFillThreshold: z.number().min(0).max(1).optional(),
-  maxSuggestions: z.number().int().min(1).max(10).optional(),
-}).optional();
+const categorySuggesterConfigSchema = z
+  .object({
+    minConfidence: z.number().min(0).max(1).optional(),
+    autoFillThreshold: z.number().min(0).max(1).optional(),
+    maxSuggestions: z.number().int().min(1).max(10).optional(),
+  })
+  .optional();
 
 export const importCleanupRoutes = t.router({
   /**
@@ -114,8 +118,9 @@ export const importCleanupRoutes = t.router({
 
         // Filter rows for category suggestions - only include rows with amount and date
         const rowsForCategorySuggestion = input.rows
-          .filter((r): r is typeof r & { amount: number; date: string } =>
-            r.amount !== undefined && r.date !== undefined
+          .filter(
+            (r): r is typeof r & { amount: number; date: string } =>
+              r.amount !== undefined && r.date !== undefined
           )
           .map((row) => ({
             rowIndex: row.rowIndex,

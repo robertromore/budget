@@ -1,16 +1,15 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
-
 
 /**
  * Integration tests for filter URL persistence from PR #42
  * Tests that filter states are properly saved to and restored from URL parameters
  */
 describeE2E("Filter URL Persistence", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     // Navigate to accounts page to start
     await page.goto("/accounts");
     await expect(page).toHaveTitle(/Budget/);
@@ -20,7 +19,7 @@ describeE2E("Filter URL Persistence", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("should persist view selection in URL parameters", async ({page}) => {
+  test("should persist view selection in URL parameters", async ({ page }) => {
     // Wait for the page to load completely
     await page.waitForSelector('[data-testid="view-selector"], .view-selector, [role="combobox"]', {
       state: "visible",
@@ -48,7 +47,7 @@ describeE2E("Filter URL Persistence", () => {
     }
   });
 
-  test("should persist filter selections in URL parameters", async ({page}) => {
+  test("should persist filter selections in URL parameters", async ({ page }) => {
     // Wait for filter components to load
     await page.waitForSelector('.filter-component, [role="combobox"]', {
       state: "visible",
@@ -87,7 +86,7 @@ describeE2E("Filter URL Persistence", () => {
     }
   });
 
-  test("should restore filter state from URL on page load", async ({page}) => {
+  test("should restore filter state from URL on page load", async ({ page }) => {
     // Navigate to a URL with filter parameters
     const accountUrl = page.url();
     const urlWithFilters = `${accountUrl}?view=custom&filters=category:1,2`;
@@ -104,7 +103,7 @@ describeE2E("Filter URL Persistence", () => {
     expect(currentUrl).toContain(accountUrl.split("?")[0]); // Should still be on the account page
   });
 
-  test("should handle invalid URL parameters gracefully", async ({page}) => {
+  test("should handle invalid URL parameters gracefully", async ({ page }) => {
     const accountUrl = page.url();
     const urlWithInvalidFilters = `${accountUrl}?view=invalid&filters=malformed`;
 
@@ -120,7 +119,7 @@ describeE2E("Filter URL Persistence", () => {
     await expect(pageContent).toBeVisible();
   });
 
-  test("should clear URL parameters when filters are cleared", async ({page}) => {
+  test("should clear URL parameters when filters are cleared", async ({ page }) => {
     // First set some filters (if possible)
     const initialUrl = page.url();
 

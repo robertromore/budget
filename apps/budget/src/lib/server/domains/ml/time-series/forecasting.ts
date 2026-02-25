@@ -15,7 +15,7 @@ import type {
   CashFlowPrediction,
   ForecastMetrics,
   ForecastPrediction,
-  TimeSeriesForecast
+  TimeSeriesForecast,
 } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
 import { nowISOString } from "$lib/utils/dates";
@@ -329,7 +329,9 @@ export class TimeSeriesForecastingService {
 
     // Initialize level and trend
     const level: number[] = [firstSeasonMean];
-    const trend: number[] = [(mean(values.slice(seasonLength, seasonLength * 2)) - firstSeasonMean) / seasonLength];
+    const trend: number[] = [
+      (mean(values.slice(seasonLength, seasonLength * 2)) - firstSeasonMean) / seasonLength,
+    ];
 
     // Calculate smoothed values
     for (let i = 1; i < n; i++) {
@@ -454,7 +456,11 @@ export class TimeSeriesForecastingService {
   /**
    * Linear Trend Forecast
    */
-  linearTrendForecast(values: number[], horizon: number, confidenceLevel: number): TimeSeriesForecast {
+  linearTrendForecast(
+    values: number[],
+    horizon: number,
+    confidenceLevel: number
+  ): TimeSeriesForecast {
     const n = values.length;
 
     // Create x-y pairs
@@ -476,7 +482,7 @@ export class TimeSeriesForecastingService {
     const predictions: ForecastPrediction[] = [];
     for (let h = 1; h <= horizon; h++) {
       const forecast = line(n - 1 + h);
-      const intervalWidth = zScore * residualStd * Math.sqrt(1 + (1 / n) + Math.pow(h, 2) / n);
+      const intervalWidth = zScore * residualStd * Math.sqrt(1 + 1 / n + Math.pow(h, 2) / n);
       predictions.push({
         date: "",
         value: Math.max(0, forecast),
@@ -506,7 +512,10 @@ export class TimeSeriesForecastingService {
   /**
    * Combine multiple forecasts using weighted average
    */
-  private combineForecasts(forecasts: TimeSeriesForecast[], actualValues: number[]): TimeSeriesForecast {
+  private combineForecasts(
+    forecasts: TimeSeriesForecast[],
+    actualValues: number[]
+  ): TimeSeriesForecast {
     if (forecasts.length === 0) {
       throw new Error("No forecasts to combine");
     }
@@ -658,11 +667,7 @@ export class TimeSeriesForecastingService {
     accountId?: number
   ): Promise<HistoricalDataPoint[]> {
     const dateFormat =
-      granularity === "daily"
-        ? "%Y-%m-%d"
-        : granularity === "weekly"
-          ? "%Y-W%W"
-          : "%Y-%m";
+      granularity === "daily" ? "%Y-%m-%d" : granularity === "weekly" ? "%Y-W%W" : "%Y-%m";
 
     // Get account IDs for workspace filtering
     let accountIds: number[];
@@ -863,11 +868,7 @@ export class TimeSeriesForecastingService {
     expensePredictions: ForecastPrediction[];
   }> {
     const dateFormat =
-      granularity === "daily"
-        ? "%Y-%m-%d"
-        : granularity === "weekly"
-          ? "%Y-W%W"
-          : "%Y-%m";
+      granularity === "daily" ? "%Y-%m-%d" : granularity === "weekly" ? "%Y-W%W" : "%Y-%m";
 
     // Get account IDs for workspace filtering
     let accountIds: number[];
@@ -946,7 +947,11 @@ export class TimeSeriesForecastingService {
   /**
    * Add period to date based on granularity
    */
-  private addPeriod(date: Date, granularity: "daily" | "weekly" | "monthly", periods: number): Date {
+  private addPeriod(
+    date: Date,
+    granularity: "daily" | "weekly" | "monthly",
+    periods: number
+  ): Date {
     const result = new Date(date);
     if (granularity === "daily") {
       result.setDate(result.getDate() + periods);

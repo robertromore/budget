@@ -3,12 +3,7 @@ import { goto } from '$app/navigation';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
-import {
-  executeAutoAdd,
-  getById,
-  remove,
-  toggleStatus,
-} from '$lib/query/schedules';
+import { executeAutoAdd, getById, remove, toggleStatus } from '$lib/query/schedules';
 import type { PageData } from './$types';
 // Import extracted components
 import {
@@ -37,10 +32,12 @@ let { data }: { data: PageData } = $props();
 
 // Create reactive query that updates when the data prop changes (route changes)
 const scheduleQuery = $derived(
-  data.schedule?.id ? getById(data.schedule.id).options(() => ({
-    enabled: true,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  })) : null
+  data.schedule?.id
+    ? getById(data.schedule.id).options(() => ({
+        enabled: true,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+      }))
+    : null
 );
 const toggleStatusMutation = toggleStatus().options();
 const executeAutoAddMutation = executeAutoAdd().options();

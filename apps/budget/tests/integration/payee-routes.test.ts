@@ -14,7 +14,14 @@ describe("Payee Routes Caller Integration Tests", () => {
     targetWorkspaceId: number,
     values: {
       name: string;
-      payeeType?: "merchant" | "utility" | "employer" | "financial_institution" | "government" | "individual" | "other";
+      payeeType?:
+        | "merchant"
+        | "utility"
+        | "employer"
+        | "financial_institution"
+        | "government"
+        | "individual"
+        | "other";
       taxRelevant?: boolean;
       isActive?: boolean;
       deletedAt?: string | null;
@@ -102,12 +109,14 @@ describe("Payee Routes Caller Integration Tests", () => {
   });
 
   test("search returns only active matching payees in the caller workspace", async () => {
-    await db.insert(payees).values([
-      buildPayee(workspaceId, { name: "Coffee Shop", isActive: true }),
-      buildPayee(workspaceId, { name: "Coffee Roaster", isActive: false }),
-      buildPayee(workspaceId, { name: "Coffee Archive", deletedAt: "2026-01-01" }),
-      buildPayee(secondaryWorkspaceId, { name: "Coffee External", isActive: true }),
-    ]);
+    await db
+      .insert(payees)
+      .values([
+        buildPayee(workspaceId, { name: "Coffee Shop", isActive: true }),
+        buildPayee(workspaceId, { name: "Coffee Roaster", isActive: false }),
+        buildPayee(workspaceId, { name: "Coffee Archive", deletedAt: "2026-01-01" }),
+        buildPayee(secondaryWorkspaceId, { name: "Coffee External", isActive: true }),
+      ]);
 
     const results = await caller.payeeRoutes.search({ query: "Coffee" });
 
@@ -117,9 +126,21 @@ describe("Payee Routes Caller Integration Tests", () => {
 
   test("searchAdvanced filters by type and tax flags", async () => {
     await db.insert(payees).values([
-      buildPayee(workspaceId, { name: "General Merchant", payeeType: "merchant", taxRelevant: false }),
-      buildPayee(workspaceId, { name: "Utility Standard", payeeType: "utility", taxRelevant: false }),
-      buildPayee(workspaceId, { name: "Utility Tax Relevant", payeeType: "utility", taxRelevant: true }),
+      buildPayee(workspaceId, {
+        name: "General Merchant",
+        payeeType: "merchant",
+        taxRelevant: false,
+      }),
+      buildPayee(workspaceId, {
+        name: "Utility Standard",
+        payeeType: "utility",
+        taxRelevant: false,
+      }),
+      buildPayee(workspaceId, {
+        name: "Utility Tax Relevant",
+        payeeType: "utility",
+        taxRelevant: true,
+      }),
     ]);
 
     const results = await caller.payeeRoutes.searchAdvanced({
@@ -134,11 +155,13 @@ describe("Payee Routes Caller Integration Tests", () => {
   });
 
   test("byType returns only payees of the requested type", async () => {
-    await db.insert(payees).values([
-      buildPayee(workspaceId, { name: "Employer Payroll", payeeType: "employer" }),
-      buildPayee(workspaceId, { name: "Primary Employer", payeeType: "employer" }),
-      buildPayee(workspaceId, { name: "Utility Bill", payeeType: "utility" }),
-    ]);
+    await db
+      .insert(payees)
+      .values([
+        buildPayee(workspaceId, { name: "Employer Payroll", payeeType: "employer" }),
+        buildPayee(workspaceId, { name: "Primary Employer", payeeType: "employer" }),
+        buildPayee(workspaceId, { name: "Utility Bill", payeeType: "utility" }),
+      ]);
 
     const results = await caller.payeeRoutes.byType({ payeeType: "employer" });
 
@@ -181,12 +204,12 @@ describe("Payee Routes Caller Integration Tests", () => {
       event: {} as any,
     } as any);
 
-    await expect(
-      unauthorizedCaller.payeeRoutes.search({ query: "Coffee" })
-    ).rejects.toThrow("You must be logged in to perform this action");
+    await expect(unauthorizedCaller.payeeRoutes.search({ query: "Coffee" })).rejects.toThrow(
+      "You must be logged in to perform this action"
+    );
 
-    await expect(
-      unauthorizedCaller.payeeRoutes.save({ name: "Blocked Write" })
-    ).rejects.toThrow("You must be logged in to perform this action");
+    await expect(unauthorizedCaller.payeeRoutes.save({ name: "Blocked Write" })).rejects.toThrow(
+      "You must be logged in to perform this action"
+    );
   });
 });

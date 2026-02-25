@@ -2,10 +2,7 @@
 import { Label } from '$lib/components/ui/label';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { onboardingWizardStore } from '$lib/stores/onboarding-wizard.svelte';
-import {
-  SPENDING_AREA_LABELS,
-  type SpendingArea,
-} from '$lib/types/onboarding';
+import { SPENDING_AREA_LABELS, type SpendingArea } from '$lib/types/onboarding';
 import Home from '@lucide/svelte/icons/home';
 import Car from '@lucide/svelte/icons/car';
 import ShoppingCart from '@lucide/svelte/icons/shopping-cart';
@@ -51,7 +48,9 @@ const spendingAreas: { area: SpendingArea; icon: typeof Home }[] = [
     {#each spendingAreas as { area, icon: Icon }}
       {@const isSelected = formData.spendingAreas?.includes(area) ?? false}
       <div
-        class="border-border hover:border-primary flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 text-center transition-colors {isSelected ? 'border-primary bg-primary/5' : ''}"
+        class="border-border hover:border-primary flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 text-center transition-colors {isSelected
+          ? 'border-primary bg-primary/5'
+          : ''}"
         role="button"
         tabindex="0"
         onclick={() => onboardingWizardStore.toggleSpendingArea(area)}
@@ -69,7 +68,9 @@ const spendingAreas: { area: SpendingArea; icon: typeof Home }[] = [
     <p class="text-destructive text-sm">Please select at least one spending area.</p>
   {:else}
     <p class="text-muted-foreground text-sm">
-      {formData.spendingAreas?.length} spending area{formData.spendingAreas?.length === 1 ? '' : 's'} selected
+      {formData.spendingAreas?.length} spending area{formData.spendingAreas?.length === 1
+        ? ''
+        : 's'} selected
     </p>
   {/if}
 </div>

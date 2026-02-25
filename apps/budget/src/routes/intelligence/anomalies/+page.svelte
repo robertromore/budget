@@ -1,44 +1,44 @@
 <script lang="ts">
-  import { AnomalyAlertCard } from "$lib/components/ml";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Label } from "$lib/components/ui/label";
-  import * as Select from "$lib/components/ui/select";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { ML } from "$lib/query/ml";
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-  import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
-  import Scan from "@lucide/svelte/icons/scan";
-  import ShieldAlert from "@lucide/svelte/icons/shield-alert";
+import { AnomalyAlertCard } from '$lib/components/ml';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import { ML } from '$lib/query/ml';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
+import Scan from '@lucide/svelte/icons/scan';
+import ShieldAlert from '@lucide/svelte/icons/shield-alert';
 
-  // Filter state
-  let minRiskLevel = $state<"low" | "medium" | "high" | "critical">("medium");
-  let limit = $state(20);
+// Filter state
+let minRiskLevel = $state<'low' | 'medium' | 'high' | 'critical'>('medium');
+let limit = $state(20);
 
-  // Queries - use $derived for reactive filter updates
-  const anomalyAlertsQuery = $derived(ML.getAnomalyAlerts({ limit, minRiskLevel }).options());
+// Queries - use $derived for reactive filter updates
+const anomalyAlertsQuery = $derived(ML.getAnomalyAlerts({ limit, minRiskLevel }).options());
 
-  // Mutations - use .options() for reactive interface
-  const scanAndAlertMutation = ML.scanAndAlert().options();
+// Mutations - use .options() for reactive interface
+const scanAndAlertMutation = ML.scanAndAlert().options();
 
-  function handleScan() {
-    scanAndAlertMutation.mutate({ days: 7, minRiskLevel: "high" });
-  }
+function handleScan() {
+  scanAndAlertMutation.mutate({ days: 7, minRiskLevel: 'high' });
+}
 
-  const riskLevelOptions = [
-    { value: "low", label: "Low & Above" },
-    { value: "medium", label: "Medium & Above" },
-    { value: "high", label: "High & Above" },
-    { value: "critical", label: "Critical Only" },
-  ];
+const riskLevelOptions = [
+  { value: 'low', label: 'Low & Above' },
+  { value: 'medium', label: 'Medium & Above' },
+  { value: 'high', label: 'High & Above' },
+  { value: 'critical', label: 'Critical Only' },
+];
 
-  const limitOptions = [
-    { value: 10, label: "10 Results" },
-    { value: 20, label: "20 Results" },
-    { value: 50, label: "50 Results" },
-    { value: 100, label: "100 Results" },
-  ];
+const limitOptions = [
+  { value: 10, label: '10 Results' },
+  { value: 20, label: '20 Results' },
+  { value: 50, label: '50 Results' },
+  { value: 100, label: '100 Results' },
+];
 </script>
 
 <svelte:head>
@@ -64,11 +64,7 @@
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <Button
-        variant="outline"
-        onclick={handleScan}
-        disabled={scanAndAlertMutation.isPending}
-      >
+      <Button variant="outline" onclick={handleScan} disabled={scanAndAlertMutation.isPending}>
         <Scan class="mr-2 h-4 w-4 {scanAndAlertMutation.isPending ? 'animate-pulse' : ''}" />
         Scan Recent
       </Button>
@@ -86,8 +82,7 @@
             value={minRiskLevel}
             onValueChange={(v) => {
               if (v) minRiskLevel = v as typeof minRiskLevel;
-            }}
-          >
+            }}>
             <Select.Trigger class="w-45">
               {riskLevelOptions.find((o) => o.value === minRiskLevel)?.label}
             </Select.Trigger>
@@ -106,8 +101,7 @@
             value={limit.toString()}
             onValueChange={(v) => {
               if (v) limit = parseInt(v);
-            }}
-          >
+            }}>
             <Select.Trigger class="w-35">
               {limitOptions.find((o) => o.value === limit)?.label}
             </Select.Trigger>
@@ -123,8 +117,7 @@
           variant="ghost"
           size="sm"
           onclick={() => anomalyAlertsQuery.refetch()}
-          disabled={anomalyAlertsQuery.isFetching}
-        >
+          disabled={anomalyAlertsQuery.isFetching}>
           <RefreshCcw class="mr-2 h-4 w-4 {anomalyAlertsQuery.isFetching ? 'animate-spin' : ''}" />
           Refresh
         </Button>
@@ -137,8 +130,8 @@
     <Card.Root class="border-green-500/50 bg-green-500/5">
       <Card.Content class="py-4">
         <p class="text-sm">
-          Scanned {scanAndAlertMutation.data.transactionsScanned} transactions,
-          created {scanAndAlertMutation.data.alertsCreated} new alerts.
+          Scanned {scanAndAlertMutation.data.transactionsScanned} transactions, created {scanAndAlertMutation
+            .data.alertsCreated} new alerts.
         </p>
       </Card.Content>
     </Card.Root>
@@ -154,7 +147,7 @@
   {:else if anomalyAlertsQuery.error}
     <Card.Root class="border-destructive">
       <Card.Content class="pt-6">
-        <div class="flex items-center gap-2 text-destructive">
+        <div class="text-destructive flex items-center gap-2">
           <AlertTriangle class="h-5 w-5" />
           <p>Failed to load anomaly alerts</p>
         </div>
@@ -168,12 +161,8 @@
       <Card.Content class="py-12 text-center">
         <AlertTriangle class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
         <h3 class="text-lg font-semibold">No Anomalies Found</h3>
-        <p class="text-muted-foreground mt-1">
-          No transactions match the current filter criteria.
-        </p>
-        <Button variant="outline" class="mt-4" onclick={handleScan}>
-          Scan for New Anomalies
-        </Button>
+        <p class="text-muted-foreground mt-1">No transactions match the current filter criteria.</p>
+        <Button variant="outline" class="mt-4" onclick={handleScan}>Scan for New Anomalies</Button>
       </Card.Content>
     </Card.Root>
   {:else if anomalyAlertsQuery.data}
@@ -191,8 +180,7 @@
           }}
           onDismiss={() => {
             // TODO: Implement dismiss functionality
-          }}
-        />
+          }} />
       {/each}
     </div>
   {/if}

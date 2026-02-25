@@ -211,8 +211,8 @@ export class BudgetGroupAnalysisService {
     const averageSimilarity = comparisons > 0 ? totalSimilarity / comparisons : 0;
 
     // Find common categories
-    const allCategories = budgets.flatMap(
-      (b) => compact(b.categories.map((c) => c.category?.name))
+    const allCategories = budgets.flatMap((b) =>
+      compact(b.categories.map((c) => c.category?.name))
     );
     const categoryFreq = new Map<string, number>();
     allCategories.forEach((cat) => {
@@ -571,8 +571,7 @@ export class BudgetGroupAnalysisService {
   private suggestNameFromAccounts(accountIds: number[], budgets: BudgetWithRelations[]): string {
     if (accountIds.length === 0) return "Budget Group";
 
-    const accountNames = compact(budgets
-      .flatMap((b) => b.accounts.map((a) => a.account?.name)));
+    const accountNames = compact(budgets.flatMap((b) => b.accounts.map((a) => a.account?.name)));
 
     if (accountNames.length > 0) {
       return `${accountNames[0]} Budgets`;
@@ -783,8 +782,7 @@ export class BudgetGroupAnalysisService {
           expiresAt.setDate(expiresAt.getDate() + 30);
 
           // Merge into the larger group
-          const [target, source] =
-            g1.budgets.length >= g2.budgets.length ? [g1, g2] : [g2, g1];
+          const [target, source] = g1.budgets.length >= g2.budgets.length ? [g1, g2] : [g2, g1];
 
           recommendations.push({
             type: "merge_budget_groups",

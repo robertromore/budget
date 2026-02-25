@@ -165,9 +165,7 @@ describe("ruleToFlow", () => {
       const triggerNode = nodes.find((n) => n.type === "trigger");
       const actionNode = nodes.find((n) => n.type === "action");
 
-      const edge = edges.find(
-        (e) => e.source === triggerNode?.id && e.target === actionNode?.id
-      );
+      const edge = edges.find((e) => e.source === triggerNode?.id && e.target === actionNode?.id);
       expect(edge).toBeDefined();
     });
   });
@@ -179,7 +177,9 @@ describe("ruleToFlow", () => {
 
       const conditionNodes = nodes.filter((n) => n.type === "condition");
       // May have group node instead of individual conditions for multiple
-      expect(conditionNodes.length + nodes.filter((n) => n.type === "group").length).toBeGreaterThan(0);
+      expect(
+        conditionNodes.length + nodes.filter((n) => n.type === "group").length
+      ).toBeGreaterThan(0);
     });
 
     it("should preserve condition properties", () => {
@@ -248,9 +248,7 @@ describe("ruleToFlow", () => {
       const rule = createRuleWithNestedGroups();
       const { nodes } = ruleToFlow(rule);
 
-      const groupNode = nodes.find(
-        (n) => n.type === "group" && n.data.operator === "OR"
-      );
+      const groupNode = nodes.find((n) => n.type === "group" && n.data.operator === "OR");
       expect(groupNode).toBeDefined();
     });
   });
@@ -306,9 +304,7 @@ describe("ruleToFlow", () => {
         conditions: {
           id: "group-root",
           operator: "AND",
-          conditions: [
-            { id: "condition-1", field: "name", operator: "contains", value: "Amazon" },
-          ],
+          conditions: [{ id: "condition-1", field: "name", operator: "contains", value: "Amazon" }],
         },
         actions: [{ id: "action-1", type: "setPayeeDefaultCategory", params: {} }],
       };
@@ -418,9 +414,7 @@ describe("importFlowState", () => {
           data: { type: "setCategory", params: { categoryId: 5 } },
         },
       ],
-      edges: [
-        { id: "edge-1", source: "trigger-1", target: "action-1" },
-      ],
+      edges: [{ id: "edge-1", source: "trigger-1", target: "action-1" }],
     };
 
     const result = importFlowState(flowState, "transaction");
@@ -489,9 +483,7 @@ describe("importFlowState", () => {
         { id: "group-1", type: "group", position: { x: 0, y: 0 }, data: { operator: "OR" } },
         { id: "condition-1", type: "condition", position: { x: 0, y: 100 }, data: {} },
       ],
-      edges: [
-        { id: "edge-1", source: "group-1", target: "condition-1", sourceHandle: "out-1" },
-      ],
+      edges: [{ id: "edge-1", source: "group-1", target: "condition-1", sourceHandle: "out-1" }],
     };
 
     const result = importFlowState(flowState, "transaction");

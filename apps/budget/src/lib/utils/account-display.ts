@@ -1,5 +1,8 @@
 import { isDebtAccount, type Account } from "$lib/schema/accounts";
-import { formatCurrency as formatCurrencyFromFormatters, formatPercentRaw } from "$lib/utils/formatters";
+import {
+  formatCurrency as formatCurrencyFromFormatters,
+  formatPercentRaw,
+} from "$lib/utils/formatters";
 
 export type BalanceColor = "positive" | "negative" | "neutral";
 

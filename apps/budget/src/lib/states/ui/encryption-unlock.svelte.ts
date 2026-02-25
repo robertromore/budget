@@ -43,10 +43,7 @@ interface CachedKeyData {
   cachedAt: string;
 }
 
-function cacheEncryptedKey(
-  preference: "session" | "device",
-  data: CachedKeyData
-): void {
+function cacheEncryptedKey(preference: "session" | "device", data: CachedKeyData): void {
   if (!browser) return;
 
   const storage = preference === "session" ? sessionStorage : localStorage;
@@ -191,10 +188,7 @@ class EncryptionUnlockState {
    * Submit the encryption key for verification.
    * Called from the unlock dialog when user enters their key.
    */
-  async submitKey(
-    userKey: string,
-    cachePreference: CachePreference
-  ): Promise<void> {
+  async submitKey(userKey: string, cachePreference: CachePreference): Promise<void> {
     this.#isVerifying = true;
     this.#errorMessage = null;
 
@@ -232,8 +226,7 @@ class EncryptionUnlockState {
       this.#isDialogOpen = false;
       this.#unlockContext = null;
     } catch (error) {
-      this.#errorMessage =
-        error instanceof Error ? error.message : "Invalid encryption key";
+      this.#errorMessage = error instanceof Error ? error.message : "Invalid encryption key";
     } finally {
       this.#isVerifying = false;
     }
@@ -320,9 +313,7 @@ export const encryptionUnlock = new EncryptionUnlockState();
  * const decrypted = decryptField(encryptedData, dek);
  * ```
  */
-export function requestEncryptionUnlock(
-  context?: UnlockContext
-): Promise<string> {
+export function requestEncryptionUnlock(context?: UnlockContext): Promise<string> {
   return encryptionUnlock.requestUnlock(context);
 }
 

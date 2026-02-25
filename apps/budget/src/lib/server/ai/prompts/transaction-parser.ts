@@ -54,54 +54,54 @@ Always return valid JSON matching the schema.`;
  * Examples for few-shot learning (optional, for improved accuracy).
  */
 export const TRANSACTION_PARSER_EXAMPLES = [
-	{
-		input: 'SQ *BLUE BOTTLE COFF',
-		output: {
-			merchantName: 'Blue Bottle Coffee',
-			merchantCategory: 'dining',
-			transactionType: 'purchase',
-			isRecurring: false,
-			confidence: 0.92
-		}
-	},
-	{
-		input: 'AMZN MKTP US*2K8X7Y9Z0',
-		output: {
-			merchantName: 'Amazon',
-			merchantCategory: 'shopping',
-			transactionType: 'purchase',
-			isRecurring: false,
-			confidence: 0.95
-		}
-	},
-	{
-		input: 'NETFLIX.COM',
-		output: {
-			merchantName: 'Netflix',
-			merchantCategory: 'subscriptions',
-			transactionType: 'subscription',
-			isRecurring: true,
-			confidence: 0.98
-		}
-	},
-	{
-		input: 'SHELL OIL 57442711',
-		output: {
-			merchantName: 'Shell',
-			merchantCategory: 'gas',
-			transactionType: 'purchase',
-			isRecurring: false,
-			confidence: 0.94
-		}
-	},
-	{
-		input: 'UBER *TRIP',
-		output: {
-			merchantName: 'Uber',
-			merchantCategory: 'transportation',
-			transactionType: 'purchase',
-			isRecurring: false,
-			confidence: 0.96
-		}
-	}
+  {
+    input: "SQ *BLUE BOTTLE COFF",
+    output: {
+      merchantName: "Blue Bottle Coffee",
+      merchantCategory: "dining",
+      transactionType: "purchase",
+      isRecurring: false,
+      confidence: 0.92,
+    },
+  },
+  {
+    input: "AMZN MKTP US*2K8X7Y9Z0",
+    output: {
+      merchantName: "Amazon",
+      merchantCategory: "shopping",
+      transactionType: "purchase",
+      isRecurring: false,
+      confidence: 0.95,
+    },
+  },
+  {
+    input: "NETFLIX.COM",
+    output: {
+      merchantName: "Netflix",
+      merchantCategory: "subscriptions",
+      transactionType: "subscription",
+      isRecurring: true,
+      confidence: 0.98,
+    },
+  },
+  {
+    input: "SHELL OIL 57442711",
+    output: {
+      merchantName: "Shell",
+      merchantCategory: "gas",
+      transactionType: "purchase",
+      isRecurring: false,
+      confidence: 0.94,
+    },
+  },
+  {
+    input: "UBER *TRIP",
+    output: {
+      merchantName: "Uber",
+      merchantCategory: "transportation",
+      transactionType: "purchase",
+      isRecurring: false,
+      confidence: 0.96,
+    },
+  },
 ];

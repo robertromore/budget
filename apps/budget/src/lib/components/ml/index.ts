@@ -10,4 +10,3 @@ export { default as RecurringPatternCard } from "./recurring-pattern-card.svelte
 export { default as SavingsOpportunityCard } from "./savings-opportunity-card.svelte";
 export { default as SimilarPayeeCard } from "./similar-payee-card.svelte";
 export { default as TransactionAnomalyIndicator } from "./transaction-anomaly-indicator.svelte";
-

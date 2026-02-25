@@ -23,6 +23,7 @@ The amount column shows the monetary value of each transaction.
 ## Inline Editing
 
 Click any amount cell to edit:
+
 1. A numeric input appears
 2. Type the new value
 3. Press [[Enter]] or click outside to save
@@ -38,6 +39,7 @@ Click any amount cell to edit:
 ## Filtering
 
 Filter by amount:
+
 - Greater than a value
 - Less than a value
 - Between a range
@@ -52,6 +54,7 @@ Filter by amount:
 ## Aggregation
 
 When rows are grouped:
+
 - Shows sum of grouped transactions
 - Subtotals update dynamically
 - Helps identify spending patterns

@@ -271,7 +271,8 @@ export function jaroWinklerSimilarity(text1: string, text2: string): number {
     k++;
   }
 
-  const jaro = (matches / s1.length + matches / s2.length + (matches - transpositions / 2) / matches) / 3;
+  const jaro =
+    (matches / s1.length + matches / s2.length + (matches - transpositions / 2) / matches) / 3;
 
   // Winkler modification (boost for common prefix)
   let prefix = 0;
@@ -747,7 +748,22 @@ export function normalizeMerchantName(description: string): string {
  */
 function toTitleCase(str: string): string {
   // List of words that should remain lowercase (unless first word)
-  const lowercaseWords = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "the", "to"]);
+  const lowercaseWords = new Set([
+    "a",
+    "an",
+    "and",
+    "as",
+    "at",
+    "but",
+    "by",
+    "for",
+    "in",
+    "of",
+    "on",
+    "or",
+    "the",
+    "to",
+  ]);
 
   return str
     .split(" ")

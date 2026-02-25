@@ -29,12 +29,12 @@ let userOverride = $state(false);
 // Format reason for display
 function formatReason(reason: CategorySuggestionReason): string {
   const labels: Record<CategorySuggestionReason, string> = {
-    'payee_match': 'Payee',
-    'payee_history': 'History',
-    'amount_pattern': 'Amount',
-    'time_pattern': 'Timing',
-    'similar_transaction': 'Similar',
-    'ml_prediction': 'AI'
+    payee_match: 'Payee',
+    payee_history: 'History',
+    amount_pattern: 'Amount',
+    time_pattern: 'Timing',
+    similar_transaction: 'Similar',
+    ml_prediction: 'AI',
   };
   return labels[reason] || reason;
 }
@@ -65,9 +65,13 @@ const categoriesArray = $derived(
 );
 
 // Get the current value from the row data (includes entityOverrides applied by parent)
-const externalCategoryName = $derived(row.original.normalizedData['category'] as string | undefined);
+const externalCategoryName = $derived(
+  row.original.normalizedData['category'] as string | undefined
+);
 // Explicit categoryId from alias match or user selection
-const externalCategoryId = $derived(row.original.normalizedData['categoryId'] as number | null | undefined);
+const externalCategoryId = $derived(
+  row.original.normalizedData['categoryId'] as number | null | undefined
+);
 
 // Local state for the selected category - using private vars for accessor pattern
 let _selectedCategoryName = $state<string>('');
@@ -81,8 +85,7 @@ let lastSyncedCategoryId = $state<number | null | undefined>(undefined);
 $effect(() => {
   // Detect if external data has changed since last sync
   const externalChanged =
-    externalCategoryName !== lastSyncedCategoryName ||
-    externalCategoryId !== lastSyncedCategoryId;
+    externalCategoryName !== lastSyncedCategoryName || externalCategoryId !== lastSyncedCategoryId;
 
   if (externalChanged) {
     lastSyncedCategoryName = externalCategoryName;
@@ -266,7 +269,7 @@ function handleClear() {
             {/if}
             <span class="truncate">{displayName}</span>
             {#if isAISuggested && suggestionConfidence > 0}
-              <Badge variant="secondary" class="ml-auto shrink-0 text-[10px] px-1 py-0">
+              <Badge variant="secondary" class="ml-auto shrink-0 px-1 py-0 text-[10px]">
                 {suggestionConfidence}%
               </Badge>
             {/if}
@@ -274,77 +277,82 @@ function handleClear() {
         {/snippet}
       </Popover.Trigger>
       <Popover.Content class="w-[250px] p-0" align="start">
-      <Command.Root shouldFilter={false}>
-        <Command.Input placeholder="Search or create category..." bind:value={searchValue} />
-        <Command.List class="max-h-[300px]">
-          <Command.Group>
-            {#if selectedCategoryName.get() || selectedCategoryId.get()}
-              <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
-                <X class="mr-2 h-4 w-4" />
-                Clear category
-              </Command.Item>
-              <Command.Separator />
-            {/if}
-            {#if suggestion && suggestion.suggestions.length > 0 && !searchValue}
-              <Command.Group heading="AI Suggestions">
-                {#each suggestion.suggestions.slice(0, 3) as opt, i}
-                  {@const isSelected = selectedCategoryId.get() === opt.categoryId}
-                  <Command.Item
-                    value={`suggestion-${i}`}
-                    onSelect={() => handleSuggestionSelect(opt)}>
-                    <div class="flex w-full items-center">
-                      <Sparkles class={cn('mr-2 h-4 w-4 text-amber-500', isSelected && 'opacity-100', !isSelected && 'opacity-50')} />
-                      <span class="flex-1 truncate">{opt.categoryName}</span>
-                      <div class="ml-2 flex items-center gap-1.5">
-                        <Badge variant="outline" class="text-[10px] px-1 py-0">
-                          {formatReason(opt.reason)}
-                        </Badge>
-                        <span class="text-muted-foreground text-[10px]">
-                          {Math.round(opt.confidence * 100)}%
-                        </span>
+        <Command.Root shouldFilter={false}>
+          <Command.Input placeholder="Search or create category..." bind:value={searchValue} />
+          <Command.List class="max-h-[300px]">
+            <Command.Group>
+              {#if selectedCategoryName.get() || selectedCategoryId.get()}
+                <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
+                  <X class="mr-2 h-4 w-4" />
+                  Clear category
+                </Command.Item>
+                <Command.Separator />
+              {/if}
+              {#if suggestion && suggestion.suggestions.length > 0 && !searchValue}
+                <Command.Group heading="AI Suggestions">
+                  {#each suggestion.suggestions.slice(0, 3) as opt, i}
+                    {@const isSelected = selectedCategoryId.get() === opt.categoryId}
+                    <Command.Item
+                      value={`suggestion-${i}`}
+                      onSelect={() => handleSuggestionSelect(opt)}>
+                      <div class="flex w-full items-center">
+                        <Sparkles
+                          class={cn(
+                            'mr-2 h-4 w-4 text-amber-500',
+                            isSelected && 'opacity-100',
+                            !isSelected && 'opacity-50'
+                          )} />
+                        <span class="flex-1 truncate">{opt.categoryName}</span>
+                        <div class="ml-2 flex items-center gap-1.5">
+                          <Badge variant="outline" class="px-1 py-0 text-[10px]">
+                            {formatReason(opt.reason)}
+                          </Badge>
+                          <span class="text-muted-foreground text-[10px]">
+                            {Math.round(opt.confidence * 100)}%
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </Command.Item>
-                {/each}
-              </Command.Group>
-              <Command.Separator />
-            {/if}
-            {#if showCreateOption}
-              <Command.Item
-                value="create-new"
-                onSelect={() => handleCreateNew()}
-                class="text-primary">
-                <Check class="mr-2 h-4 w-4 text-transparent" />
-                Create "{searchValue.trim()}"
-              </Command.Item>
-            {/if}
-            {#each visibleCategories as category (category.id)}
-              {@const isSelected = selectedCategoryId.get() === category.id}
-              <Command.Item
-                value={String(category.id)}
-                onSelect={() => handleSelect(category.id, category.name || '')}>
-                <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
-                {category.name}
-              </Command.Item>
-            {/each}
-            {#if visibleTemporaryCategories.length > 0}
-              <Command.Separator />
-              <Command.Group heading="Temporary (Will be created)">
-                {#each visibleTemporaryCategories as tempCategory}
-                  {@const isSelected = selectedCategoryName.get() === tempCategory}
-                  <Command.Item
-                    value={tempCategory}
-                    onSelect={() => handleSelectTemporary(tempCategory)}
-                    class="text-blue-600">
-                    <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
-                    {tempCategory}
-                  </Command.Item>
-                {/each}
-              </Command.Group>
-            {/if}
-          </Command.Group>
-        </Command.List>
-      </Command.Root>
+                    </Command.Item>
+                  {/each}
+                </Command.Group>
+                <Command.Separator />
+              {/if}
+              {#if showCreateOption}
+                <Command.Item
+                  value="create-new"
+                  onSelect={() => handleCreateNew()}
+                  class="text-primary">
+                  <Check class="mr-2 h-4 w-4 text-transparent" />
+                  Create "{searchValue.trim()}"
+                </Command.Item>
+              {/if}
+              {#each visibleCategories as category (category.id)}
+                {@const isSelected = selectedCategoryId.get() === category.id}
+                <Command.Item
+                  value={String(category.id)}
+                  onSelect={() => handleSelect(category.id, category.name || '')}>
+                  <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
+                  {category.name}
+                </Command.Item>
+              {/each}
+              {#if visibleTemporaryCategories.length > 0}
+                <Command.Separator />
+                <Command.Group heading="Temporary (Will be created)">
+                  {#each visibleTemporaryCategories as tempCategory}
+                    {@const isSelected = selectedCategoryName.get() === tempCategory}
+                    <Command.Item
+                      value={tempCategory}
+                      onSelect={() => handleSelectTemporary(tempCategory)}
+                      class="text-blue-600">
+                      <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
+                      {tempCategory}
+                    </Command.Item>
+                  {/each}
+                </Command.Group>
+              {/if}
+            </Command.Group>
+          </Command.List>
+        </Command.Root>
       </Popover.Content>
     </Popover.Root>
   {/if}

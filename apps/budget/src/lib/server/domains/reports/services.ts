@@ -246,10 +246,7 @@ export function calculateStatistics(transactions: TransactionForReport[]): Repor
 export function calculateCategoryBreakdown(
   transactions: TransactionForReport[]
 ): CategoryBreakdown[] {
-  const categoryMap = new Map<
-    number | null,
-    { name: string; amount: number; count: number }
-  >();
+  const categoryMap = new Map<number | null, { name: string; amount: number; count: number }>();
 
   let totalExpenses = 0;
 
@@ -293,10 +290,7 @@ export function calculateCategoryBreakdown(
  * Calculate monthly trend data from transactions
  */
 export function calculateMonthlyTrend(transactions: TransactionForReport[]): MonthlyData[] {
-  const monthMap = new Map<
-    string,
-    { income: number; expenses: number; count: number }
-  >();
+  const monthMap = new Map<string, { income: number; expenses: number; count: number }>();
 
   for (const tx of transactions) {
     const month = tx.date.slice(0, 7);

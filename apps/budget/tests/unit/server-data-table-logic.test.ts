@@ -1,4 +1,4 @@
-import {describe, it, expect} from "vitest";
+import { describe, it, expect } from "vitest";
 
 describe("ServerDataTable Logic", () => {
   describe("Column ID Mapping", () => {
@@ -48,13 +48,13 @@ describe("ServerDataTable Logic", () => {
         ];
       };
 
-      expect(convertSortingState("date", "desc")).toEqual([{id: "date", desc: true}]);
+      expect(convertSortingState("date", "desc")).toEqual([{ id: "date", desc: true }]);
 
-      expect(convertSortingState("amount", "asc")).toEqual([{id: "amount", desc: false}]);
+      expect(convertSortingState("amount", "asc")).toEqual([{ id: "amount", desc: false }]);
     });
 
     it("should handle sorting change logic", () => {
-      const handleSortingChange = (newSort: {id: string; desc: boolean}) => {
+      const handleSortingChange = (newSort: { id: string; desc: boolean }) => {
         const columnIdMap: Record<string, "date" | "amount" | "notes"> = {
           date: "date",
           amount: "amount",
@@ -73,17 +73,17 @@ describe("ServerDataTable Logic", () => {
         };
       };
 
-      expect(handleSortingChange({id: "amount", desc: true})).toEqual({
+      expect(handleSortingChange({ id: "amount", desc: true })).toEqual({
         field: "amount",
         order: "desc",
       });
 
-      expect(handleSortingChange({id: "transaction-date", desc: false})).toEqual({
+      expect(handleSortingChange({ id: "transaction-date", desc: false })).toEqual({
         field: "date",
         order: "asc",
       });
 
-      expect(handleSortingChange({id: "unknown", desc: true})).toEqual({
+      expect(handleSortingChange({ id: "unknown", desc: true })).toEqual({
         field: "date",
         order: "desc",
       });
@@ -146,11 +146,11 @@ describe("ServerDataTable Logic", () => {
         newPageSize: number
       ) => {
         if (newPageSize !== currentPageSize) {
-          return {type: "pageSize", value: newPageSize};
+          return { type: "pageSize", value: newPageSize };
         } else if (newPage !== currentPage) {
-          return {type: "page", value: newPage};
+          return { type: "page", value: newPage };
         }
-        return {type: "none", value: null};
+        return { type: "none", value: null };
       };
 
       expect(determinePaginationAction(0, 50, 0, 100)).toEqual({
@@ -175,7 +175,7 @@ describe("ServerDataTable Logic", () => {
       const safeSortingHandler = (sortingFn: () => void) => {
         try {
           sortingFn();
-          return {success: true, error: null};
+          return { success: true, error: null };
         } catch (error) {
           return {
             success: false,
@@ -246,8 +246,8 @@ describe("ServerDataTable Logic", () => {
   describe("Table State Synchronization", () => {
     it("should sync table state with server state correctly", () => {
       interface TableState {
-        sorting: Array<{id: string; desc: boolean}>;
-        pagination: {pageIndex: number; pageSize: number};
+        sorting: Array<{ id: string; desc: boolean }>;
+        pagination: { pageIndex: number; pageSize: number };
       }
 
       interface ServerState {
@@ -288,15 +288,15 @@ describe("ServerDataTable Logic", () => {
       };
 
       expect(syncTableStateWithServer(serverState)).toEqual({
-        sorting: [{id: "amount", desc: true}],
-        pagination: {pageIndex: 2, pageSize: 25},
+        sorting: [{ id: "amount", desc: true }],
+        pagination: { pageIndex: 2, pageSize: 25 },
       });
     });
 
     it("should detect state changes correctly", () => {
       const hasStateChanged = (
-        oldState: {page: number; pageSize: number; sortBy: string; sortOrder: string},
-        newState: {page: number; pageSize: number; sortBy: string; sortOrder: string}
+        oldState: { page: number; pageSize: number; sortBy: string; sortOrder: string },
+        newState: { page: number; pageSize: number; sortBy: string; sortOrder: string }
       ) => {
         return (
           oldState.page !== newState.page ||
@@ -306,9 +306,9 @@ describe("ServerDataTable Logic", () => {
         );
       };
 
-      const state1 = {page: 0, pageSize: 50, sortBy: "date", sortOrder: "desc"};
-      const state2 = {page: 1, pageSize: 50, sortBy: "date", sortOrder: "desc"};
-      const state3 = {page: 0, pageSize: 50, sortBy: "date", sortOrder: "desc"};
+      const state1 = { page: 0, pageSize: 50, sortBy: "date", sortOrder: "desc" };
+      const state2 = { page: 1, pageSize: 50, sortBy: "date", sortOrder: "desc" };
+      const state3 = { page: 0, pageSize: 50, sortBy: "date", sortOrder: "desc" };
 
       expect(hasStateChanged(state1, state2)).toBe(true);
       expect(hasStateChanged(state1, state3)).toBe(false);
@@ -342,8 +342,8 @@ describe("ServerDataTable Logic", () => {
         amount: 100.5,
         notes: "Test transaction",
         status: "cleared",
-        payee: {name: "Test Payee"},
-        category: {name: "Test Category"},
+        payee: { name: "Test Payee" },
+        category: { name: "Test Category" },
       };
 
       expect(formatTransactionForDisplay(mockTransaction)).toEqual({
@@ -424,9 +424,9 @@ describe("ServerDataTable Logic", () => {
   describe("Performance Optimizations", () => {
     it("should batch multiple state updates efficiently", () => {
       let updateCount = 0;
-      const updates: Array<{type: string; value: any}> = [];
+      const updates: Array<{ type: string; value: any }> = [];
 
-      const batchStateUpdates = (newUpdates: Array<{type: string; value: any}>) => {
+      const batchStateUpdates = (newUpdates: Array<{ type: string; value: any }>) => {
         // Simulate batching by collecting all updates
         updates.push(...newUpdates);
         updateCount++;
@@ -444,9 +444,9 @@ describe("ServerDataTable Logic", () => {
       };
 
       const multipleUpdates = [
-        {type: "page", value: 1},
-        {type: "sortBy", value: "amount"},
-        {type: "sortOrder", value: "desc"},
+        { type: "page", value: 1 },
+        { type: "sortBy", value: "amount" },
+        { type: "sortOrder", value: "desc" },
       ];
 
       const result = batchStateUpdates(multipleUpdates);
@@ -474,7 +474,7 @@ describe("ServerDataTable Logic", () => {
 
         // Simulate column creation work
         columnCreationCount++;
-        const columns = dependencies.map((dep) => ({id: dep, header: dep}));
+        const columns = dependencies.map((dep) => ({ id: dep, header: dep }));
 
         columnCache.set(cacheKey, columns);
         return columns;

@@ -208,10 +208,23 @@ const ACCOUNT_DEFAULTS: Record<AccountToTrack, Partial<AccountConfig>> = {
  */
 const SPENDING_AREA_CATEGORIES: Record<SpendingArea, string[]> = {
   housing: ["housing", "rent-mortgage", "utilities", "internet-phone", "home-insurance"],
-  transportation: ["transportation", "gas-fuel", "car-payment", "car-insurance", "car-maintenance", "public-transit"],
+  transportation: [
+    "transportation",
+    "gas-fuel",
+    "car-payment",
+    "car-insurance",
+    "car-maintenance",
+    "public-transit",
+  ],
   "food-groceries": ["groceries"],
   "food-dining": ["food-dining", "restaurants", "fast-food", "coffee-shops"],
-  entertainment: ["entertainment", "streaming-services", "movies-shows", "hobbies", "sports-recreation"],
+  entertainment: [
+    "entertainment",
+    "streaming-services",
+    "movies-shows",
+    "hobbies",
+    "sports-recreation",
+  ],
   healthcare: ["healthcare", "health-insurance", "medical-expenses", "prescriptions", "dental"],
   education: ["education", "tuition", "books-supplies", "online-courses"],
   "personal-care": ["personal-care", "haircuts-salon", "gym-fitness"],
@@ -249,13 +262,7 @@ const DEBT_TYPE_CATEGORIES: Record<DebtType, string[]> = {
 /**
  * Categories that are core and should always be included
  */
-const CORE_CATEGORY_SLUGS = [
-  "income",
-  "salary",
-  "transfer",
-  "miscellaneous",
-  "fees-charges",
-];
+const CORE_CATEGORY_SLUGS = ["income", "salary", "transfer", "miscellaneous", "fees-charges"];
 
 /**
  * Categories added based on household type
@@ -505,7 +512,10 @@ export class SmartDefaultsGenerator {
     }
 
     // Add essential budgets if spending areas include them
-    if (formData.spendingAreas.includes("food-groceries") && !addedTemplates.has("monthly-groceries")) {
+    if (
+      formData.spendingAreas.includes("food-groceries") &&
+      !addedTemplates.has("monthly-groceries")
+    ) {
       const template = BUDGET_TEMPLATES.find((t) => t.id === "monthly-groceries");
       if (template) {
         budgets.push(this.createBudgetConfig(template, formData));
@@ -605,7 +615,10 @@ export class SmartDefaultsGenerator {
   /**
    * Get filtered default categories based on generated filters
    */
-  getFilteredCategories(filters: { includeSlugs: string[]; excludeSlugs: string[] }): typeof defaultCategories {
+  getFilteredCategories(filters: {
+    includeSlugs: string[];
+    excludeSlugs: string[];
+  }): typeof defaultCategories {
     return defaultCategories.filter((cat) => filters.includeSlugs.includes(cat.slug));
   }
 }

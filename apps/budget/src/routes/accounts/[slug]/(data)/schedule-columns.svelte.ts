@@ -1,38 +1,38 @@
-import { GenericFacetedFilter, type FacetedFilterOption } from '$lib/components/data-table';
-import { renderComponent } from '$lib/components/ui/data-table';
-import type { Schedule } from '$lib/schema/schedules';
-import type { SchedulesState } from '$lib/states/entities/schedules.svelte';
-import Archive from '@lucide/svelte/icons/archive';
-import Calendar from '@lucide/svelte/icons/calendar';
-import CircleCheck from '@lucide/svelte/icons/circle-check';
-import Pause from '@lucide/svelte/icons/pause';
-import Repeat from '@lucide/svelte/icons/repeat';
-import type { Column, ColumnDef } from '@tanstack/table-core';
-import ScheduleActionsCell from '../../../schedules/(components)/(cells)/schedule-actions-cell.svelte';
-import ScheduleAmountCell from '../../../schedules/(components)/(cells)/schedule-amount-cell.svelte';
-import ScheduleNameCell from '../../../schedules/(components)/(cells)/schedule-name-cell.svelte';
-import SchedulePatternCell from '../../../schedules/(components)/(cells)/schedule-pattern-cell.svelte';
-import ScheduleStatusCell from '../../../schedules/(components)/(cells)/schedule-status-cell.svelte';
-import ScheduleColumnHeader from '../../../schedules/(components)/schedule-column-header.svelte';
-import SelectionCheckboxCell from '../(components)/(cells)/selection-checkbox-cell.svelte';
-import SelectAllCheckboxCell from '../(components)/(cells)/select-all-checkbox-cell.svelte';
+import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
+import { renderComponent } from "$lib/components/ui/data-table";
+import type { Schedule } from "$lib/schema/schedules";
+import type { SchedulesState } from "$lib/states/entities/schedules.svelte";
+import Archive from "@lucide/svelte/icons/archive";
+import Calendar from "@lucide/svelte/icons/calendar";
+import CircleCheck from "@lucide/svelte/icons/circle-check";
+import Pause from "@lucide/svelte/icons/pause";
+import Repeat from "@lucide/svelte/icons/repeat";
+import type { Column, ColumnDef } from "@tanstack/table-core";
+import ScheduleActionsCell from "../../../schedules/(components)/(cells)/schedule-actions-cell.svelte";
+import ScheduleAmountCell from "../../../schedules/(components)/(cells)/schedule-amount-cell.svelte";
+import ScheduleNameCell from "../../../schedules/(components)/(cells)/schedule-name-cell.svelte";
+import SchedulePatternCell from "../../../schedules/(components)/(cells)/schedule-pattern-cell.svelte";
+import ScheduleStatusCell from "../../../schedules/(components)/(cells)/schedule-status-cell.svelte";
+import ScheduleColumnHeader from "../../../schedules/(components)/schedule-column-header.svelte";
+import SelectionCheckboxCell from "../(components)/(cells)/selection-checkbox-cell.svelte";
+import SelectAllCheckboxCell from "../(components)/(cells)/select-all-checkbox-cell.svelte";
 
 // Filter options for schedule status
 const scheduleStatusOptions: FacetedFilterOption[] = [
-  { label: 'Active', value: 'active', icon: CircleCheck },
-  { label: 'Paused', value: 'paused', icon: Pause },
-  { label: 'Archived', value: 'archived', icon: Archive },
+  { label: "Active", value: "active", icon: CircleCheck },
+  { label: "Paused", value: "paused", icon: Pause },
+  { label: "Archived", value: "archived", icon: Archive },
 ];
 
 // Filter options for frequency
 const frequencyOptions: FacetedFilterOption[] = [
-  { label: 'One-time', value: 'once', icon: Calendar },
-  { label: 'Daily', value: 'daily', icon: Repeat },
-  { label: 'Weekly', value: 'weekly', icon: Repeat },
-  { label: 'Bi-weekly', value: 'biweekly', icon: Repeat },
-  { label: 'Monthly', value: 'monthly', icon: Repeat },
-  { label: 'Quarterly', value: 'quarterly', icon: Repeat },
-  { label: 'Yearly', value: 'yearly', icon: Repeat },
+  { label: "One-time", value: "once", icon: Calendar },
+  { label: "Daily", value: "daily", icon: Repeat },
+  { label: "Weekly", value: "weekly", icon: Repeat },
+  { label: "Bi-weekly", value: "biweekly", icon: Repeat },
+  { label: "Monthly", value: "monthly", icon: Repeat },
+  { label: "Quarterly", value: "quarterly", icon: Repeat },
+  { label: "Yearly", value: "yearly", icon: Repeat },
 ];
 
 // Custom filter function for array-based multi-select filters with operator support
@@ -40,7 +40,7 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
   if (!filterValue) return true;
 
   // Handle new format with operator
-  if (typeof filterValue === 'object' && 'operator' in filterValue && 'values' in filterValue) {
+  if (typeof filterValue === "object" && "operator" in filterValue && "values" in filterValue) {
     const { operator, values } = filterValue as { operator: string; values: string[] };
     if (!values || values.length === 0) return true;
 
@@ -48,7 +48,7 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
     const isIncluded = values.includes(rowValue);
 
     // "is not one of" operator
-    if (operator === 'arrNotIncludesSome') {
+    if (operator === "arrNotIncludesSome") {
       return !isIncluded;
     }
     // "is one of" operator (default)
@@ -73,7 +73,7 @@ export const columns = (
 ): ColumnDef<Schedule>[] => {
   return [
     {
-      id: 'select-col',
+      id: "select-col",
       header: ({ table }) => {
         return renderComponent(SelectAllCheckboxCell, { table });
       },
@@ -89,151 +89,151 @@ export const columns = (
       enableHiding: false,
     },
     {
-      accessorKey: 'seq',
+      accessorKey: "seq",
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: '#',
+          title: "#",
         }),
       cell: (info) => {
         const value = info.getValue();
-        return value !== null && value !== undefined ? value : '—';
+        return value !== null && value !== undefined ? value : "—";
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: false,
       meta: {
-        label: '#',
+        label: "#",
         hiddenByDefault: true,
       },
     },
     {
-      accessorKey: 'name',
-      id: 'name',
+      accessorKey: "name",
+      id: "name",
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: 'Name',
+          title: "Name",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleNameCell, { schedule });
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       meta: {
-        label: 'Name',
+        label: "Name",
       },
     },
     {
-      accessorKey: 'amount',
-      id: 'amount',
+      accessorKey: "amount",
+      id: "amount",
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: 'Amount',
+          title: "Amount",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleAmountCell, { schedule });
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: false,
       meta: {
-        label: 'Amount',
+        label: "Amount",
       },
     },
     {
-      accessorFn: (row) => row.scheduleDate?.frequency || 'once',
-      id: 'frequency',
+      accessorFn: (row) => row.scheduleDate?.frequency || "once",
+      id: "frequency",
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: 'Frequency',
+          title: "Frequency",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(SchedulePatternCell, { schedule });
       },
       sortingFn: (rowA, rowB) => {
-        const a = rowA.original.scheduleDate?.frequency || 'once';
-        const b = rowB.original.scheduleDate?.frequency || 'once';
+        const a = rowA.original.scheduleDate?.frequency || "once";
+        const b = rowB.original.scheduleDate?.frequency || "once";
         return a.localeCompare(b);
       },
       enableColumnFilter: true,
       filterFn: arrIncludesFilter,
       meta: {
-        label: 'Frequency',
+        label: "Frequency",
         facetedFilter: (column: Column<Schedule, unknown>) => ({
-          name: 'Frequency',
+          name: "Frequency",
           icon: Repeat,
           column,
           value: [],
           component: () =>
             renderComponent(GenericFacetedFilter as any, {
               column,
-              title: 'Frequency',
+              title: "Frequency",
               options: frequencyOptions,
             }),
         }),
       },
     },
     {
-      accessorKey: 'payee',
-      id: 'payee',
+      accessorKey: "payee",
+      id: "payee",
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: 'Payee',
+          title: "Payee",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return schedule.payee?.name || '-';
+        return schedule.payee?.name || "-";
       },
       sortingFn: (rowA, rowB) => {
-        const a = rowA.original.payee?.name || '';
-        const b = rowB.original.payee?.name || '';
+        const a = rowA.original.payee?.name || "";
+        const b = rowB.original.payee?.name || "";
         return a.localeCompare(b);
       },
       enableColumnFilter: false,
       meta: {
-        label: 'Payee',
+        label: "Payee",
       },
     },
     // Note: Account column intentionally omitted since we're on the account detail page
     {
-      accessorKey: 'status',
-      id: 'status',
+      accessorKey: "status",
+      id: "status",
       header: ({ column }) =>
         renderComponent(ScheduleColumnHeader as any, {
           column,
-          title: 'Status',
+          title: "Status",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleStatusCell, { schedule });
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       filterFn: arrIncludesFilter,
       meta: {
-        label: 'Status',
+        label: "Status",
         facetedFilter: (column: Column<Schedule, unknown>) => ({
-          name: 'Status',
+          name: "Status",
           icon: CircleCheck,
           column,
           value: [],
           component: () =>
             renderComponent(GenericFacetedFilter as any, {
               column,
-              title: 'Status',
+              title: "Status",
               options: scheduleStatusOptions,
             }),
         }),
       },
     },
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleActionsCell, {

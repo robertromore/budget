@@ -271,7 +271,10 @@ const chartConfig = {
                   {currencyFormatter.format(analytics.totalSpending || 0)}
                 </div>
                 <p class="text-muted-foreground text-xs">
-                  {analytics.spendingTrend > 0 ? '+' : ''}{formatPercentRaw(analytics.spendingTrend ?? 0, 1)}
+                  {analytics.spendingTrend > 0 ? '+' : ''}{formatPercentRaw(
+                    analytics.spendingTrend ?? 0,
+                    1
+                  )}
                   from last period
                 </p>
               </Card.Content>

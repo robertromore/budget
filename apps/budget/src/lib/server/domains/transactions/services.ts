@@ -248,10 +248,7 @@ export class TransactionService {
 
     // Verify payee exists if provided
     if (data.payeeId) {
-      const payeeExists = await this.payeeService.verifyPayeeExists(
-        data.payeeId,
-        workspaceId
-      );
+      const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId, workspaceId);
       if (!payeeExists) {
         throw new NotFoundError("Payee", data.payeeId);
       }
@@ -474,10 +471,7 @@ export class TransactionService {
     // Verify payee exists if provided
     if (data.payeeId !== undefined) {
       if (data.payeeId) {
-        const payeeExists = await this.payeeService.verifyPayeeExists(
-          data.payeeId,
-          workspaceId
-        );
+        const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId, workspaceId);
         if (!payeeExists) {
           throw new NotFoundError("Payee", data.payeeId);
         }
@@ -699,9 +693,8 @@ export class TransactionService {
         }
 
         if (rawPayeeString) {
-          const { getCategoryAliasService } = await import(
-            "$lib/server/domains/categories/alias-service"
-          );
+          const { getCategoryAliasService } =
+            await import("$lib/server/domains/categories/alias-service");
           const categoryAliasService = getCategoryAliasService();
 
           await categoryAliasService.recordAliasFromTransactionEdit(
@@ -732,20 +725,29 @@ export class TransactionService {
     invalidateAccountCache(updatedTransaction.accountId);
 
     // Trigger automation rules for transaction update and return refreshed data
-    let result = await this.triggerAutomationAndRefresh("updated", updatedTransaction, workspaceId, existingTransaction);
+    let result = await this.triggerAutomationAndRefresh(
+      "updated",
+      updatedTransaction,
+      workspaceId,
+      existingTransaction
+    );
 
     // Also trigger specialized events if applicable
-    if (
-      data.categoryId !== undefined &&
-      data.categoryId !== existingTransaction.categoryId
-    ) {
-      result = await this.triggerAutomationAndRefresh("categorized", result, workspaceId, existingTransaction);
+    if (data.categoryId !== undefined && data.categoryId !== existingTransaction.categoryId) {
+      result = await this.triggerAutomationAndRefresh(
+        "categorized",
+        result,
+        workspaceId,
+        existingTransaction
+      );
     }
-    if (
-      data.status === "cleared" &&
-      existingTransaction.status !== "cleared"
-    ) {
-      result = await this.triggerAutomationAndRefresh("cleared", result, workspaceId, existingTransaction);
+    if (data.status === "cleared" && existingTransaction.status !== "cleared") {
+      result = await this.triggerAutomationAndRefresh(
+        "cleared",
+        result,
+        workspaceId,
+        existingTransaction
+      );
     }
 
     return result;
@@ -797,9 +799,7 @@ export class TransactionService {
     const normalizedSearchName = normalize(originalPayeeName);
     const transactionsToUpdate = matchingTransactions.filter(
       (t) =>
-        t.id !== transactionId &&
-        t.payee?.name &&
-        normalize(t.payee.name) === normalizedSearchName
+        t.id !== transactionId && t.payee?.name && normalize(t.payee.name) === normalizedSearchName
     );
 
     // Update all matching transactions
@@ -877,9 +877,7 @@ export class TransactionService {
       const normalizedPayeeName = normalize(payeeName);
       transactionsToUpdate = allTransactions.filter(
         (t) =>
-          t.id !== transactionId &&
-          t.payee?.name &&
-          normalize(t.payee.name) === normalizedPayeeName
+          t.id !== transactionId && t.payee?.name && normalize(t.payee.name) === normalizedPayeeName
       );
     } else if (matchBy === "category") {
       // Match by previous category ID
@@ -906,9 +904,8 @@ export class TransactionService {
     // When bulk updating by payee, this trains the system for future imports
     if (newCategoryId && matchBy === "payee" && transactionsToUpdate.length > 0) {
       try {
-        const { getCategoryAliasService } = await import(
-          "$lib/server/domains/categories/alias-service"
-        );
+        const { getCategoryAliasService } =
+          await import("$lib/server/domains/categories/alias-service");
         const categoryAliasService = getCategoryAliasService();
 
         // Use the payee name as the raw string for the alias
@@ -921,8 +918,7 @@ export class TransactionService {
             {
               payeeId: originalTransaction.payeeId ?? undefined,
               // Use the first transaction's amount sign to determine type
-              amountType:
-                transactionsToUpdate[0].amount < 0 ? "expense" : "income",
+              amountType: transactionsToUpdate[0].amount < 0 ? "expense" : "income",
             }
           );
 
@@ -1230,11 +1226,7 @@ export class TransactionService {
       })
       .from(transactions)
       .where(
-        and(
-          eq(transactions.accountId, accountId),
-          isNull(transactions.deletedAt),
-          sql`amount < 0`
-        )
+        and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt), sql`amount < 0`)
       )
       .groupBy(sql`strftime('%Y-%m', date)`)
       .orderBy(sql`strftime('%Y-%m', date)`);
@@ -1257,7 +1249,10 @@ export class TransactionService {
         )
       )
       .groupBy(sql`strftime('%Y-%m', ${transactions.date})`, transactions.categoryId)
-      .orderBy(sql`strftime('%Y-%m', ${transactions.date})`, sql`sum(abs(${transactions.amount})) DESC`);
+      .orderBy(
+        sql`strftime('%Y-%m', ${transactions.date})`,
+        sql`sum(abs(${transactions.amount})) DESC`
+      );
 
     // Build a map of month -> spending for YoY lookup and rolling average
     const spendingByMonth = new Map<string, number>();
@@ -1266,7 +1261,10 @@ export class TransactionService {
     }
 
     // Build a map of month -> top categories
-    const categoriesByMonth = new Map<string, Array<{ categoryId: number | null; categoryName: string; amount: number }>>();
+    const categoriesByMonth = new Map<
+      string,
+      Array<{ categoryId: number | null; categoryName: string; amount: number }>
+    >();
     for (const row of categoryResult) {
       if (!categoriesByMonth.has(row.month)) {
         categoriesByMonth.set(row.month, []);
@@ -1306,8 +1304,20 @@ export class TransactionService {
       }));
 
       // Parse month string to get proper label (avoid timezone issues)
-      const monthNames = ["January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"];
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
       const monthIndex = parseInt(monthNum) - 1;
       const monthLabel = `${monthNames[monthIndex]} ${year}`;
 
@@ -1349,10 +1359,7 @@ export class TransactionService {
     const payee = await this.payeeService.getPayeeById(payeeId, workspaceId);
 
     // Get payee intelligence data
-    const intelligence = await this.getPayeeTransactionIntelligence(
-      payeeId,
-      workspaceId
-    );
+    const intelligence = await this.getPayeeTransactionIntelligence(payeeId, workspaceId);
 
     let confidence = 0;
     let reasoning = "Based on payee settings";
@@ -1468,10 +1475,7 @@ export class TransactionService {
           // Fetch actual category name
           let categoryName = `Category ${categoryId}`;
           try {
-            const category = await this.categoryService.getCategoryById(
-              categoryId,
-              workspaceId
-            );
+            const category = await this.categoryService.getCategoryById(categoryId, workspaceId);
             categoryName = category.name ?? `Category ${categoryId}`;
           } catch (error) {
             logger.warn("Failed to fetch category", { error, categoryId });
@@ -1544,7 +1548,13 @@ export class TransactionService {
     const intelligence = await this.getPayeeTransactionIntelligence(payeeId, workspaceId);
 
     // Prepare update data with proper typing
-    type PaymentFrequencyType = "weekly" | "bi_weekly" | "monthly" | "quarterly" | "annual" | "irregular";
+    type PaymentFrequencyType =
+      | "weekly"
+      | "bi_weekly"
+      | "monthly"
+      | "quarterly"
+      | "annual"
+      | "irregular";
     interface PayeeIntelligenceUpdate {
       lastTransactionDate: string | null;
       avgAmount?: number;
@@ -1571,7 +1581,8 @@ export class TransactionService {
         infrequent: "irregular",
       } as const;
 
-      const mappedFrequency = frequencyMap[intelligence.typicalFrequency as keyof typeof frequencyMap];
+      const mappedFrequency =
+        frequencyMap[intelligence.typicalFrequency as keyof typeof frequencyMap];
       updateData.paymentFrequency = (mappedFrequency || "irregular") as PaymentFrequencyType;
     }
 
@@ -2039,7 +2050,11 @@ export class TransactionService {
     transactionId: number,
     targetAccountId: number,
     workspaceId: number
-  ): Promise<{ transferId: string; sourceTransaction: Transaction; targetTransaction: Transaction }> {
+  ): Promise<{
+    transferId: string;
+    sourceTransaction: Transaction;
+    targetTransaction: Transaction;
+  }> {
     const { createId } = await import("@paralleldrive/cuid2");
 
     // Get the existing transaction
@@ -2153,7 +2168,10 @@ export class TransactionService {
     return {
       transferId,
       sourceTransaction: updatedSourceTransaction,
-      targetTransaction: await this.repository.findByIdWithRelations(targetTransaction.id, workspaceId),
+      targetTransaction: await this.repository.findByIdWithRelations(
+        targetTransaction.id,
+        workspaceId
+      ),
     };
   }
 
@@ -2171,7 +2189,10 @@ export class TransactionService {
     count: number;
   }> {
     // Get the source transaction with its payee
-    const sourceTransaction = await this.repository.findByIdWithRelations(transactionId, workspaceId);
+    const sourceTransaction = await this.repository.findByIdWithRelations(
+      transactionId,
+      workspaceId
+    );
     if (!sourceTransaction) {
       throw new NotFoundError("Transaction", transactionId);
     }

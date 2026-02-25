@@ -124,17 +124,19 @@ export const importProfileRoutes = t.router({
   }),
 
   // Set a profile as the default for an account
-  setAccountDefault: publicProcedure.input(setAccountDefaultSchema).mutation(async ({ input, ctx }) => {
-    try {
-      return await importProfileService.setAccountDefault(
-        input.profileId,
-        input.accountId,
-        ctx.workspaceId
-      );
-    } catch (error) {
-      throw translateDomainError(error);
-    }
-  }),
+  setAccountDefault: publicProcedure
+    .input(setAccountDefaultSchema)
+    .mutation(async ({ input, ctx }) => {
+      try {
+        return await importProfileService.setAccountDefault(
+          input.profileId,
+          input.accountId,
+          ctx.workspaceId
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
 
   // Generate a column signature from headers (utility endpoint)
   generateSignature: publicProcedure.input(generateSignatureSchema).query(({ input }) => {

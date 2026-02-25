@@ -19,7 +19,10 @@ import { budgets, categories, predictionFeedback, transactions, workspaces } fro
 import { db } from "$lib/server/db";
 import { compact, isEmptyObject, isNotEmptyObject } from "$lib/utils";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { extractMerchantName, merchantSimilarity } from "$lib/server/domains/ml/similarity/text-similarity";
+import {
+  extractMerchantName,
+  merchantSimilarity,
+} from "$lib/server/domains/ml/similarity/text-similarity";
 import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
@@ -77,7 +80,9 @@ import type {
   FieldRecommendation,
   PayeeAddress,
   PayeeIntelligenceSummary,
-  PayeeTags, PaymentMethodReference, SubscriptionInfo,
+  PayeeTags,
+  PaymentMethodReference,
+  SubscriptionInfo,
 } from "./types";
 import { createIntelligenceCoordinator } from "$lib/server/ai/intelligence-coordinator";
 import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$lib/schema/workspaces";
@@ -981,9 +986,7 @@ export class PayeeService {
           if (!affectedPayeeIds.includes(payee.id)) {
             affectedPayeeIds.push(payee.id);
           }
-          details.push(
-            `${dryRun ? "Would clean" : "Cleaned"} tags for "${payee.name}"`
-          );
+          details.push(`${dryRun ? "Would clean" : "Cleaned"} tags for "${payee.name}"`);
         }
       } catch (error) {
         details.push(
@@ -992,7 +995,9 @@ export class PayeeService {
       }
     }
 
-    details.push(`Fix data summary: ${affectedCount} fixes across ${affectedPayeeIds.length} payees`);
+    details.push(
+      `Fix data summary: ${affectedCount} fixes across ${affectedPayeeIds.length} payees`
+    );
 
     return { affectedCount, details, affectedPayeeIds };
   }
@@ -1164,7 +1169,10 @@ export class PayeeService {
    * Get comprehensive intelligence analysis with profile filters applied
    * Supports ML and AI enhancement based on workspace preferences and per-payee overrides
    */
-  async getComprehensiveIntelligenceWithProfile(id: number, workspaceId: number): Promise<{
+  async getComprehensiveIntelligenceWithProfile(
+    id: number,
+    workspaceId: number
+  ): Promise<{
     payee: Payee;
     profile: IntelligenceProfile | null;
     spendingAnalysis: SpendingAnalysis;
@@ -1304,17 +1312,23 @@ export class PayeeService {
       reasoning.push("Employer payees typically represent income (positive amounts)");
     } else if (payeeType === "merchant" || payeeType === "utility") {
       filters.amountSign = "negative";
-      reasoning.push(`${payeeType === "merchant" ? "Merchant" : "Utility"} payees typically represent expenses (negative amounts)`);
+      reasoning.push(
+        `${payeeType === "merchant" ? "Merchant" : "Utility"} payees typically represent expenses (negative amounts)`
+      );
     } else if (payeeType === "financial_institution") {
       // Analyze transaction history to determine if primarily income or expense
       if (stats) {
         const avgAmount = stats.avgAmount;
         if (avgAmount > 0) {
           filters.amountSign = "positive";
-          reasoning.push("Transaction history shows primarily positive amounts (likely interest/dividends)");
+          reasoning.push(
+            "Transaction history shows primarily positive amounts (likely interest/dividends)"
+          );
         } else if (avgAmount < 0) {
           filters.amountSign = "negative";
-          reasoning.push("Transaction history shows primarily negative amounts (likely payments/fees)");
+          reasoning.push(
+            "Transaction history shows primarily negative amounts (likely payments/fees)"
+          );
         }
       }
     } else if (payeeType === "government") {
@@ -1336,16 +1350,17 @@ export class PayeeService {
       // Query to get transaction amount distribution
       const txnData = await db
         .select({
-          positiveCount: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN 1 ELSE 0 END)`.as("positive_count"),
-          negativeCount: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN 1 ELSE 0 END)`.as("negative_count"),
+          positiveCount:
+            sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN 1 ELSE 0 END)`.as(
+              "positive_count"
+            ),
+          negativeCount:
+            sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN 1 ELSE 0 END)`.as(
+              "negative_count"
+            ),
         })
         .from(transactions)
-        .where(
-          and(
-            eq(transactions.payeeId, id),
-            isNull(transactions.deletedAt)
-          )
-        );
+        .where(and(eq(transactions.payeeId, id), isNull(transactions.deletedAt)));
 
       if (txnData[0]) {
         const positiveCount = Number(txnData[0].positiveCount) || 0;
@@ -1357,10 +1372,14 @@ export class PayeeService {
 
           if (positiveRatio >= 0.8) {
             filters.amountSign = "positive";
-            reasoning.push(`${Math.round(positiveRatio * 100)}% of transactions are positive (income)`);
+            reasoning.push(
+              `${Math.round(positiveRatio * 100)}% of transactions are positive (income)`
+            );
           } else if (positiveRatio <= 0.2) {
             filters.amountSign = "negative";
-            reasoning.push(`${Math.round((1 - positiveRatio) * 100)}% of transactions are negative (expenses)`);
+            reasoning.push(
+              `${Math.round((1 - positiveRatio) * 100)}% of transactions are negative (expenses)`
+            );
           } else {
             reasoning.push("Mixed transaction types detected - no amount filter recommended");
           }
@@ -1416,7 +1435,10 @@ export class PayeeService {
   /**
    * Auto-update calculated fields for all payees or specific payee
    */
-  async updateCalculatedFields(payeeId: number | undefined, workspaceId: number): Promise<BulkUpdateResult> {
+  async updateCalculatedFields(
+    payeeId: number | undefined,
+    workspaceId: number
+  ): Promise<BulkUpdateResult> {
     if (payeeId) {
       try {
         await this.repository.updateCalculatedFields(payeeId, workspaceId);
@@ -1660,7 +1682,10 @@ export class PayeeService {
   /**
    * Analyze comprehensive spending patterns for a payee using advanced algorithms
    */
-  async analyzeAdvancedSpendingPatterns(id: number, workspaceId: number): Promise<SpendingAnalysis> {
+  async analyzeAdvancedSpendingPatterns(
+    id: number,
+    workspaceId: number
+  ): Promise<SpendingAnalysis> {
     await this.getPayeeById(id, workspaceId); // Verify exists
     return await this.intelligenceService.analyzeSpendingPatterns(id);
   }
@@ -1684,7 +1709,10 @@ export class PayeeService {
   /**
    * Advanced frequency pattern analysis with irregular pattern support
    */
-  async analyzeAdvancedFrequencyPatterns(id: number, workspaceId: number): Promise<FrequencyAnalysis> {
+  async analyzeAdvancedFrequencyPatterns(
+    id: number,
+    workspaceId: number
+  ): Promise<FrequencyAnalysis> {
     await this.getPayeeById(id, workspaceId); // Verify exists
     return await this.intelligenceService.analyzeFrequencyPattern(id);
   }
@@ -1700,7 +1728,10 @@ export class PayeeService {
   /**
    * Generate smart budget allocation suggestions with seasonal adjustments
    */
-  async generateBudgetAllocationSuggestion(id: number, workspaceId: number): Promise<BudgetAllocationSuggestion> {
+  async generateBudgetAllocationSuggestion(
+    id: number,
+    workspaceId: number
+  ): Promise<BudgetAllocationSuggestion> {
     await this.getPayeeById(id, workspaceId); // Verify exists
     return await this.intelligenceService.suggestBudgetAllocation(id);
   }
@@ -1708,7 +1739,10 @@ export class PayeeService {
   /**
    * Calculate comprehensive confidence scores for all intelligence predictions
    */
-  async calculateIntelligenceConfidence(id: number, workspaceId: number): Promise<ConfidenceMetrics> {
+  async calculateIntelligenceConfidence(
+    id: number,
+    workspaceId: number
+  ): Promise<ConfidenceMetrics> {
     await this.getPayeeById(id, workspaceId); // Verify exists
     return await this.intelligenceService.calculateConfidenceScores(id);
   }
@@ -1716,7 +1750,10 @@ export class PayeeService {
   /**
    * Get comprehensive payee intelligence analysis combining all advanced features
    */
-  async getComprehensiveIntelligence(id: number, workspaceId: number): Promise<{
+  async getComprehensiveIntelligence(
+    id: number,
+    workspaceId: number
+  ): Promise<{
     payee: Payee;
     spendingAnalysis: SpendingAnalysis;
     seasonalPatterns: SeasonalPattern[];
@@ -2180,7 +2217,11 @@ export class PayeeService {
     const payee = await this.getPayeeById(payeeId, workspaceId);
 
     // Get learning-based recommendation
-    const learningRecommendation = await this.getCategoryRecommendation(payeeId, workspaceId, context);
+    const learningRecommendation = await this.getCategoryRecommendation(
+      payeeId,
+      workspaceId,
+      context
+    );
 
     // Get intelligence-based analysis
     const [budgetSuggestion, confidenceMetrics] = await Promise.all([
@@ -2290,9 +2331,13 @@ export class PayeeService {
     for (const suggestion of filteredSuggestions) {
       try {
         if (!dryRun) {
-          await this.updatePayee(suggestion.payeeId, {
-            defaultCategoryId: suggestion.suggestedCategoryId,
-          }, workspaceId);
+          await this.updatePayee(
+            suggestion.payeeId,
+            {
+              defaultCategoryId: suggestion.suggestedCategoryId,
+            },
+            workspaceId
+          );
         }
 
         updatedPayees.push({
@@ -2924,7 +2969,8 @@ export class PayeeService {
     const { payeeIds, insightTypes, priorityFilter, timeRange } = filters;
 
     // Get relevant payees
-    const targetPayeeIds = payeeIds || (await this.repository.findAll(workspaceId)).data.map((p) => p.id);
+    const targetPayeeIds =
+      payeeIds || (await this.repository.findAll(workspaceId)).data.map((p) => p.id);
 
     // Validate payee IDs
     if (payeeIds) {
@@ -3245,7 +3291,10 @@ export class PayeeService {
   /**
    * Generate contact suggestions for a specific payee
    */
-  async generatePayeeContactSuggestions(payeeId: number, workspaceId: number): Promise<ContactSuggestion[]> {
+  async generatePayeeContactSuggestions(
+    payeeId: number,
+    workspaceId: number
+  ): Promise<ContactSuggestion[]> {
     const payee = await this.getPayeeById(payeeId, workspaceId);
 
     const contactData: {
@@ -3575,9 +3624,13 @@ export class PayeeService {
                 try {
                   const currentValue = payee[suggestion.field as keyof Payee];
                   if (!currentValue) {
-                    await this.updatePayee(payeeId, {
-                      [suggestion.field]: suggestion.suggestedValue,
-                    }, workspaceId);
+                    await this.updatePayee(
+                      payeeId,
+                      {
+                        [suggestion.field]: suggestion.suggestedValue,
+                      },
+                      workspaceId
+                    );
                     applied.push({
                       field: suggestion.field,
                       oldValue: currentValue,
@@ -3672,7 +3725,10 @@ export class PayeeService {
     const { dryRun = false, preserveHistory = true, conflictResolution = "best" } = options;
 
     const primaryPayee = await this.getPayeeById(duplicateDetection.primaryPayeeId, workspaceId);
-    const duplicatePayee = await this.getPayeeById(duplicateDetection.duplicatePayeeId, workspaceId);
+    const duplicatePayee = await this.getPayeeById(
+      duplicateDetection.duplicatePayeeId,
+      workspaceId
+    );
 
     const conflicts: Array<{
       field: string;
@@ -3752,7 +3808,11 @@ export class PayeeService {
 
     if (!dryRun) {
       // Update the primary payee with merged data
-      mergedPayee = await this.updatePayee(duplicateDetection.primaryPayeeId, mergedData, workspaceId);
+      mergedPayee = await this.updatePayee(
+        duplicateDetection.primaryPayeeId,
+        mergedData,
+        workspaceId
+      );
 
       // Merge the duplicate payee (this would reassign transactions in a full implementation)
       await this.mergePayees(
@@ -3858,7 +3918,10 @@ export class PayeeService {
   /**
    * Get subscription lifecycle analysis for a payee
    */
-  async getSubscriptionLifecycleAnalysis(payeeId: number, workspaceId: number): Promise<SubscriptionLifecycle> {
+  async getSubscriptionLifecycleAnalysis(
+    payeeId: number,
+    workspaceId: number
+  ): Promise<SubscriptionLifecycle> {
     // Verify payee exists
     await this.getPayeeById(payeeId, workspaceId);
 
@@ -3898,7 +3961,10 @@ export class PayeeService {
   /**
    * Get subscription usage analysis for a payee
    */
-  async getSubscriptionUsageAnalysis(payeeId: number, workspaceId: number): Promise<SubscriptionUsageAnalysis> {
+  async getSubscriptionUsageAnalysis(
+    payeeId: number,
+    workspaceId: number
+  ): Promise<SubscriptionUsageAnalysis> {
     // Verify payee exists
     await this.getPayeeById(payeeId, workspaceId);
 
@@ -4029,9 +4095,13 @@ export class PayeeService {
     };
 
     // Update the payee's subscription info
-    return await this.updatePayee(payeeId, {
-      subscriptionInfo,
-    }, workspaceId);
+    return await this.updatePayee(
+      payeeId,
+      {
+        subscriptionInfo,
+      },
+      workspaceId
+    );
   }
 
   /**
@@ -4081,18 +4151,25 @@ export class PayeeService {
     };
 
     // Update the payee
-    return await this.updatePayee(payeeId, {
-      subscriptionInfo: updatedSubscriptionInfo,
-      notes: payee.notes
-        ? `${payee.notes}\n\nCancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ""}${details.notes ? `\n${details.notes}` : ""}`
-        : `Cancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ""}${details.notes ? `\n${details.notes}` : ""}`,
-    }, workspaceId);
+    return await this.updatePayee(
+      payeeId,
+      {
+        subscriptionInfo: updatedSubscriptionInfo,
+        notes: payee.notes
+          ? `${payee.notes}\n\nCancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ""}${details.notes ? `\n${details.notes}` : ""}`
+          : `Cancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ""}${details.notes ? `\n${details.notes}` : ""}`,
+      },
+      workspaceId
+    );
   }
 
   /**
    * Get subscription value optimization analysis
    */
-  async getSubscriptionValueOptimization(payeeIds: number[], workspaceId: number): Promise<
+  async getSubscriptionValueOptimization(
+    payeeIds: number[],
+    workspaceId: number
+  ): Promise<
     Array<{
       payeeId: number;
       currentValue: number;
@@ -4134,7 +4211,10 @@ export class PayeeService {
   /**
    * Get subscription competitor analysis
    */
-  async getSubscriptionCompetitorAnalysis(payeeId: number, workspaceId: number): Promise<{
+  async getSubscriptionCompetitorAnalysis(
+    payeeId: number,
+    workspaceId: number
+  ): Promise<{
     currentService: {
       name: string;
       cost: number;
@@ -4251,9 +4331,13 @@ export class PayeeService {
     };
 
     // Update the payee
-    return await this.updatePayee(payeeId, {
-      subscriptionInfo: updatedSubscriptionInfo,
-    }, workspaceId);
+    return await this.updatePayee(
+      payeeId,
+      {
+        subscriptionInfo: updatedSubscriptionInfo,
+      },
+      workspaceId
+    );
   }
 
   /**
@@ -4328,7 +4412,7 @@ export class PayeeService {
 
         const payee = payees.find((p) => p.id === detection.payeeId);
         const budgetId = payee?.defaultBudgetId ?? null;
-        const budgetName = budgetId ? budgetMap.get(budgetId) ?? null : null;
+        const budgetName = budgetId ? (budgetMap.get(budgetId) ?? null) : null;
 
         return {
           payeeId: detection.payeeId,
@@ -4523,7 +4607,9 @@ export class PayeeService {
           throw new ValidationError("JSON data must be an array of payee objects");
         }
       } catch (e) {
-        throw new ValidationError(`Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`);
+        throw new ValidationError(
+          `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`
+        );
       }
     } else {
       // Parse CSV
@@ -4553,11 +4639,7 @@ export class PayeeService {
 
           if (options.updateExisting) {
             // Update existing payee
-            await this.updatePayee(
-              existing.id,
-              this.recordToPayeeData(record),
-              workspaceId
-            );
+            await this.updatePayee(existing.id, this.recordToPayeeData(record), workspaceId);
             result.updated++;
             continue;
           }
@@ -4716,25 +4798,35 @@ export class PayeeService {
       pairs: Array<{ primaryName: string; duplicateName: string }>;
       prompt: string;
       rawResponse: string;
-      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      parsedResult: {
+        pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+      } | null;
       error?: string;
     }>;
     detectionMethod: "simple" | "ml" | "llm" | "llm_direct";
     totalPairsAnalyzed?: number;
   }> {
-    logger.info("Finding duplicate payees", { similarityThreshold, includeInactive, groupingStrategy, detectionMethod });
+    logger.info("Finding duplicate payees", {
+      similarityThreshold,
+      includeInactive,
+      groupingStrategy,
+      detectionMethod,
+    });
 
     // Get all payees
     let payees = await this.repository.findAllPayees(workspaceId);
 
     if (!includeInactive) {
-      payees = payees.filter(p => p.isActive);
+      payees = payees.filter((p) => p.isActive);
     }
 
     // LLM Direct mode: bypass ML pre-filter entirely, send all pairs directly to LLM
     if (detectionMethod === "llm_direct") {
       const totalPairs = (payees.length * (payees.length - 1)) / 2;
-      logger.info("LLM Direct mode: bypassing ML pre-filter", { payeeCount: payees.length, totalPairs });
+      logger.info("LLM Direct mode: bypassing ML pre-filter", {
+        payeeCount: payees.length,
+        totalPairs,
+      });
 
       try {
         const { groups, llmLog, totalPairsAnalyzed } = await this.analyzeAllPairsWithLLM(
@@ -4755,15 +4847,17 @@ export class PayeeService {
         logger.warn("LLM direct analysis failed", { error });
         return {
           groups: [],
-          llmLog: [{
-            timestamp: nowISOString(),
-            batchIndex: 0,
-            pairs: [],
-            prompt: "",
-            rawResponse: "",
-            parsedResult: null,
-            error: `LLM analysis failed: ${error instanceof Error ? error.message : String(error)}.`,
-          }],
+          llmLog: [
+            {
+              timestamp: nowISOString(),
+              batchIndex: 0,
+              pairs: [],
+              prompt: "",
+              rawResponse: "",
+              parsedResult: null,
+              error: `LLM analysis failed: ${error instanceof Error ? error.message : String(error)}.`,
+            },
+          ],
           detectionMethod,
           totalPairsAnalyzed: 0,
         };
@@ -4800,9 +4894,10 @@ export class PayeeService {
         processedPairs.add(pairKey);
 
         const similarities = this.comparePayers(payeeA, payeeB, groupingStrategy, mlMethod);
-        const avgScore = similarities.length > 0
-          ? similarities.reduce((sum, s) => sum + s.confidence, 0) / similarities.length
-          : 0;
+        const avgScore =
+          similarities.length > 0
+            ? similarities.reduce((sum, s) => sum + s.confidence, 0) / similarities.length
+            : 0;
 
         if (avgScore >= similarityThreshold && similarities.length > 0) {
           // Determine which is primary (prefer one with more data)
@@ -4811,7 +4906,7 @@ export class PayeeService {
           const [primary, duplicate] = scoreA >= scoreB ? [payeeA, payeeB] : [payeeB, payeeA];
 
           // Check if primary already has a group
-          const existingGroup = duplicateGroups.find(g => g.primaryPayeeId === primary.id);
+          const existingGroup = duplicateGroups.find((g) => g.primaryPayeeId === primary.id);
           if (existingGroup) {
             existingGroup.duplicatePayeeIds.push(duplicate.id);
             existingGroup.similarityScore = Math.max(existingGroup.similarityScore, avgScore);
@@ -4829,7 +4924,10 @@ export class PayeeService {
       }
     }
 
-    logger.info("Found duplicate groups (pre-LLM)", { count: duplicateGroups.length, detectionMethod });
+    logger.info("Found duplicate groups (pre-LLM)", {
+      count: duplicateGroups.length,
+      detectionMethod,
+    });
 
     // LLM mode: refine ML candidates with LLM
     if (detectionMethod === "llm") {
@@ -4837,26 +4935,29 @@ export class PayeeService {
         // No candidates found by ML pre-filter
         return {
           groups: [],
-          llmLog: [{
-            timestamp: nowISOString(),
-            batchIndex: 0,
-            pairs: [],
-            prompt: "",
-            rawResponse: "",
-            parsedResult: null,
-            error: "No duplicate candidates found by ML pre-filter. LLM refinement skipped because there are no potential duplicates to analyze.",
-          }],
+          llmLog: [
+            {
+              timestamp: nowISOString(),
+              batchIndex: 0,
+              pairs: [],
+              prompt: "",
+              rawResponse: "",
+              parsedResult: null,
+              error:
+                "No duplicate candidates found by ML pre-filter. LLM refinement skipped because there are no potential duplicates to analyze.",
+            },
+          ],
           detectionMethod,
           totalPairsAnalyzed: 0,
         };
       }
 
       try {
-        const { groups: refinedGroups, llmLog, totalPairsAnalyzed } = await this.refineDuplicatesWithLLM(
-          duplicateGroups,
-          payees,
-          workspaceId
-        );
+        const {
+          groups: refinedGroups,
+          llmLog,
+          totalPairsAnalyzed,
+        } = await this.refineDuplicatesWithLLM(duplicateGroups, payees, workspaceId);
         logger.info("LLM refined duplicate groups", {
           original: duplicateGroups.length,
           refined: refinedGroups.length,
@@ -4872,15 +4973,17 @@ export class PayeeService {
         logger.warn("LLM refinement failed, using ML results", { error });
         return {
           groups: duplicateGroups,
-          llmLog: [{
-            timestamp: nowISOString(),
-            batchIndex: 0,
-            pairs: [],
-            prompt: "",
-            rawResponse: "",
-            parsedResult: null,
-            error: `LLM refinement failed: ${error instanceof Error ? error.message : String(error)}. Falling back to ML detection results.`,
-          }],
+          llmLog: [
+            {
+              timestamp: nowISOString(),
+              batchIndex: 0,
+              pairs: [],
+              prompt: "",
+              rawResponse: "",
+              parsedResult: null,
+              error: `LLM refinement failed: ${error instanceof Error ? error.message : String(error)}. Falling back to ML detection results.`,
+            },
+          ],
           detectionMethod,
           totalPairsAnalyzed: 0,
         };
@@ -4921,7 +5024,9 @@ export class PayeeService {
       pairs: Array<{ primaryName: string; duplicateName: string }>;
       prompt: string;
       rawResponse: string;
-      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      parsedResult: {
+        pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+      } | null;
       error?: string;
     }>;
     totalPairsAnalyzed: number;
@@ -4939,7 +5044,9 @@ export class PayeeService {
       pairs: Array<{ primaryName: string; duplicateName: string }>;
       prompt: string;
       rawResponse: string;
-      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      parsedResult: {
+        pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+      } | null;
       error?: string;
     }> = [];
 
@@ -4986,22 +5093,25 @@ export class PayeeService {
         }
       }
 
-      const errorDetails = diagnostics.length > 0
-        ? `Diagnostics:\n${diagnostics.join("\n")}`
-        : "Unknown configuration issue";
+      const errorDetails =
+        diagnostics.length > 0
+          ? `Diagnostics:\n${diagnostics.join("\n")}`
+          : "Unknown configuration issue";
 
       // Return a log entry indicating LLM was not available
       return {
         groups: candidates,
-        llmLog: [{
-          timestamp: nowISOString(),
-          batchIndex: 0,
-          pairs: [],
-          prompt: "",
-          rawResponse: "",
-          parsedResult: null,
-          error: `LLM not available. ${errorDetails}\n\nPlease configure in Settings → Intelligence → LLM Settings. Falling back to ML detection results.`,
-        }],
+        llmLog: [
+          {
+            timestamp: nowISOString(),
+            batchIndex: 0,
+            pairs: [],
+            prompt: "",
+            rawResponse: "",
+            parsedResult: null,
+            error: `LLM not available. ${errorDetails}\n\nPlease configure in Settings → Intelligence → LLM Settings. Falling back to ML detection results.`,
+          },
+        ],
         totalPairsAnalyzed: 0,
       };
     }
@@ -5068,7 +5178,7 @@ Respond in JSON format only:
 }`;
 
       // Create log entry for this batch
-      const logEntry: typeof llmLog[number] = {
+      const logEntry: (typeof llmLog)[number] = {
         timestamp: nowISOString(),
         batchIndex,
         pairs: batch.map((p) => ({
@@ -5146,7 +5256,8 @@ Respond in JSON format only:
           ...group,
           duplicatePayeeIds: confirmedDuplicates,
           similarityScore: maxConfidence,
-          recommendedAction: maxConfidence >= 0.95 ? "merge" : maxConfidence >= 0.8 ? "review" : "ignore",
+          recommendedAction:
+            maxConfidence >= 0.95 ? "merge" : maxConfidence >= 0.8 ? "review" : "ignore",
           riskLevel: maxConfidence >= 0.95 ? "low" : maxConfidence >= 0.8 ? "medium" : "high",
           similarities: group.similarities.map((s) => ({
             ...s,
@@ -5192,7 +5303,9 @@ Respond in JSON format only:
       pairs: Array<{ primaryName: string; duplicateName: string }>;
       prompt: string;
       rawResponse: string;
-      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      parsedResult: {
+        pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+      } | null;
       error?: string;
     }>;
     totalPairsAnalyzed: number;
@@ -5209,7 +5322,9 @@ Respond in JSON format only:
       pairs: Array<{ primaryName: string; duplicateName: string }>;
       prompt: string;
       rawResponse: string;
-      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      parsedResult: {
+        pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+      } | null;
       error?: string;
     }> = [];
 
@@ -5243,21 +5358,24 @@ Respond in JSON format only:
         }
       }
 
-      const errorDetails = diagnostics.length > 0
-        ? `Diagnostics:\n${diagnostics.join("\n")}`
-        : "Unknown configuration issue";
+      const errorDetails =
+        diagnostics.length > 0
+          ? `Diagnostics:\n${diagnostics.join("\n")}`
+          : "Unknown configuration issue";
 
       return {
         groups: [],
-        llmLog: [{
-          timestamp: nowISOString(),
-          batchIndex: 0,
-          pairs: [],
-          prompt: "",
-          rawResponse: "",
-          parsedResult: null,
-          error: `LLM not available. ${errorDetails}\n\nPlease configure in Settings → Intelligence → LLM Settings.`,
-        }],
+        llmLog: [
+          {
+            timestamp: nowISOString(),
+            batchIndex: 0,
+            pairs: [],
+            prompt: "",
+            rawResponse: "",
+            parsedResult: null,
+            error: `LLM not available. ${errorDetails}\n\nPlease configure in Settings → Intelligence → LLM Settings.`,
+          },
+        ],
         totalPairsAnalyzed: 0,
       };
     }
@@ -5293,7 +5411,10 @@ Respond in JSON format only:
       const batchIndex = Math.floor(i / BATCH_SIZE);
 
       const pairsText = batch
-        .map((p, idx) => `${idx + 1}. "${p.payeeA.name || 'Unknown'}" vs "${p.payeeB.name || 'Unknown'}"`)
+        .map(
+          (p, idx) =>
+            `${idx + 1}. "${p.payeeA.name || "Unknown"}" vs "${p.payeeB.name || "Unknown"}"`
+        )
         .join("\n");
 
       const prompt = `You are analyzing payee/merchant names for potential duplicates.
@@ -5315,7 +5436,7 @@ Respond in JSON format only:
   ]
 }`;
 
-      const logEntry: typeof llmLog[number] = {
+      const logEntry: (typeof llmLog)[number] = {
         timestamp: nowISOString(),
         batchIndex,
         pairs: batch.map((p) => ({
@@ -5368,27 +5489,29 @@ Respond in JSON format only:
     }
 
     // Build groups from LLM matches
-    const groupMap = new Map<number, {
-      primaryPayeeId: number;
-      duplicatePayeeIds: number[];
-      maxConfidence: number;
-    }>();
+    const groupMap = new Map<
+      number,
+      {
+        primaryPayeeId: number;
+        duplicatePayeeIds: number[];
+        maxConfidence: number;
+      }
+    >();
 
     for (const [key, result] of llmResults.entries()) {
       if (!result.isMatch) continue;
 
       const [idA, idB] = key.split("-").map(Number);
-      const payeeA = payees.find(p => p.id === idA);
-      const payeeB = payees.find(p => p.id === idB);
+      const payeeA = payees.find((p) => p.id === idA);
+      const payeeB = payees.find((p) => p.id === idB);
 
       if (!payeeA || !payeeB) continue;
 
       // Determine primary (prefer one with more data)
       const scoreA = this.calculateDataCompleteness(payeeA);
       const scoreB = this.calculateDataCompleteness(payeeB);
-      const [primaryId, duplicateId] = scoreA >= scoreB
-        ? [payeeA.id, payeeB.id]
-        : [payeeB.id, payeeA.id];
+      const [primaryId, duplicateId] =
+        scoreA >= scoreB ? [payeeA.id, payeeB.id] : [payeeB.id, payeeA.id];
 
       const existing = groupMap.get(primaryId);
       if (existing) {
@@ -5406,23 +5529,31 @@ Respond in JSON format only:
     }
 
     // Convert to output format
-    const groups = Array.from(groupMap.values()).map(g => {
-      const primary = payees.find(p => p.id === g.primaryPayeeId)!;
-      const duplicates = compact(g.duplicatePayeeIds.map(id => payees.find(p => p.id === id)!));
+    const groups = Array.from(groupMap.values()).map((g) => {
+      const primary = payees.find((p) => p.id === g.primaryPayeeId)!;
+      const duplicates = compact(g.duplicatePayeeIds.map((id) => payees.find((p) => p.id === id)!));
 
       return {
         primaryPayeeId: g.primaryPayeeId,
         duplicatePayeeIds: g.duplicatePayeeIds,
         similarityScore: g.maxConfidence,
-        similarities: duplicates.map(dup => ({
+        similarities: duplicates.map((dup) => ({
           field: "name" as const,
           primaryValue: primary.name || "",
           duplicateValue: dup.name || "",
           matchType: "semantic" as const,
           confidence: g.maxConfidence,
         })),
-        recommendedAction: (g.maxConfidence >= 0.95 ? "merge" : g.maxConfidence >= 0.8 ? "review" : "ignore") as "merge" | "review" | "ignore",
-        riskLevel: (g.maxConfidence >= 0.95 ? "low" : g.maxConfidence >= 0.8 ? "medium" : "high") as "low" | "medium" | "high",
+        recommendedAction: (g.maxConfidence >= 0.95
+          ? "merge"
+          : g.maxConfidence >= 0.8
+            ? "review"
+            : "ignore") as "merge" | "review" | "ignore",
+        riskLevel: (g.maxConfidence >= 0.95
+          ? "low"
+          : g.maxConfidence >= 0.8
+            ? "medium"
+            : "high") as "low" | "medium" | "high",
       };
     });
 
@@ -5545,8 +5676,14 @@ Respond in JSON format only:
 
       // Website
       if (payeeA.website && payeeB.website) {
-        const websiteA = payeeA.website.toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
-        const websiteB = payeeB.website.toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+        const websiteA = payeeA.website
+          .toLowerCase()
+          .replace(/^https?:\/\//, "")
+          .replace(/\/$/, "");
+        const websiteB = payeeB.website
+          .toLowerCase()
+          .replace(/^https?:\/\//, "")
+          .replace(/\/$/, "");
         if (websiteA === websiteB) {
           similarities.push({
             field: "website",
@@ -5683,7 +5820,9 @@ Respond in JSON format only:
         await this.deletePayee(dupId, workspaceId);
         deletedIds.push(dupId);
       } catch (e) {
-        warnings.push(`Failed to delete payee ${dupId}: ${e instanceof Error ? e.message : "Unknown error"}`);
+        warnings.push(
+          `Failed to delete payee ${dupId}: ${e instanceof Error ? e.message : "Unknown error"}`
+        );
       }
     }
 
@@ -5842,8 +5981,7 @@ Respond in JSON format only:
 
       if (f.originalAmount !== null && f.correctedAmount !== null) {
         const pctDiff =
-          Math.abs(f.correctedAmount - f.originalAmount) /
-          Math.max(Math.abs(f.originalAmount), 1);
+          Math.abs(f.correctedAmount - f.originalAmount) / Math.max(Math.abs(f.originalAmount), 1);
         amountDeviations.push(pctDiff * 100);
       }
     }

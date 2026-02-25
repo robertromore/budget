@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script>
       // Apply user preferences before page renders to prevent flash
-      (function() {
+      (function () {
         try {
           var root = document.documentElement;
 
@@ -20,18 +20,78 @@
 
           // Theme presets (matching theme-presets.ts)
           var themePresets = {
-            zinc: { primary: '240 5.9% 10%', primaryFg: '0 0% 98%', accent: '240 4.8% 95.9%', accentFg: '240 5.9% 10%' },
-            slate: { primary: '215.4 16.3% 46.9%', primaryFg: '210 40% 98%', accent: '210 40% 96.1%', accentFg: '222.2 47.4% 11.2%' },
-            stone: { primary: '25 5.3% 44.7%', primaryFg: '60 9.1% 97.8%', accent: '60 4.8% 95.9%', accentFg: '24 9.8% 10%' },
-            gray: { primary: '220 8.9% 46.1%', primaryFg: '210 20% 98%', accent: '220 14.3% 95.9%', accentFg: '220.9 39.3% 11%' },
-            neutral: { primary: '0 0% 45.1%', primaryFg: '0 0% 98%', accent: '0 0% 96.1%', accentFg: '0 0% 9%' },
-            red: { primary: '0 72.2% 50.6%', primaryFg: '0 85.7% 97.3%', accent: '0 100% 96.5%', accentFg: '0 74% 42%' },
-            rose: { primary: '346.8 77.2% 49.8%', primaryFg: '355.7 100% 97.3%', accent: '355.7 100% 96.7%', accentFg: '343.4 79.7% 34.7%' },
-            orange: { primary: '24.6 95% 53.1%', primaryFg: '33.3 100% 96.5%', accent: '33.3 100% 96.5%', accentFg: '20.5 90.2% 48.2%' },
-            green: { primary: '142.1 76.2% 36.3%', primaryFg: '138.5 76.5% 96.7%', accent: '138.5 76.5% 96.7%', accentFg: '140.6 90.2% 24.7%' },
-            blue: { primary: '221.2 83.2% 53.3%', primaryFg: '210 40% 98%', accent: '210 40% 96.1%', accentFg: '222.2 47.4% 11.2%' },
-            yellow: { primary: '47.9 95.8% 53.1%', primaryFg: '48 96.5% 88.8%', accent: '48 96.5% 88.8%', accentFg: '25.7 90.4% 37.3%' },
-            violet: { primary: '262.1 83.3% 57.8%', primaryFg: '270 91.3% 95.1%', accent: '270 95.2% 95.1%', accentFg: '263.4 70% 50.4%' }
+            zinc: {
+              primary: '240 5.9% 10%',
+              primaryFg: '0 0% 98%',
+              accent: '240 4.8% 95.9%',
+              accentFg: '240 5.9% 10%',
+            },
+            slate: {
+              primary: '215.4 16.3% 46.9%',
+              primaryFg: '210 40% 98%',
+              accent: '210 40% 96.1%',
+              accentFg: '222.2 47.4% 11.2%',
+            },
+            stone: {
+              primary: '25 5.3% 44.7%',
+              primaryFg: '60 9.1% 97.8%',
+              accent: '60 4.8% 95.9%',
+              accentFg: '24 9.8% 10%',
+            },
+            gray: {
+              primary: '220 8.9% 46.1%',
+              primaryFg: '210 20% 98%',
+              accent: '220 14.3% 95.9%',
+              accentFg: '220.9 39.3% 11%',
+            },
+            neutral: {
+              primary: '0 0% 45.1%',
+              primaryFg: '0 0% 98%',
+              accent: '0 0% 96.1%',
+              accentFg: '0 0% 9%',
+            },
+            red: {
+              primary: '0 72.2% 50.6%',
+              primaryFg: '0 85.7% 97.3%',
+              accent: '0 100% 96.5%',
+              accentFg: '0 74% 42%',
+            },
+            rose: {
+              primary: '346.8 77.2% 49.8%',
+              primaryFg: '355.7 100% 97.3%',
+              accent: '355.7 100% 96.7%',
+              accentFg: '343.4 79.7% 34.7%',
+            },
+            orange: {
+              primary: '24.6 95% 53.1%',
+              primaryFg: '33.3 100% 96.5%',
+              accent: '33.3 100% 96.5%',
+              accentFg: '20.5 90.2% 48.2%',
+            },
+            green: {
+              primary: '142.1 76.2% 36.3%',
+              primaryFg: '138.5 76.5% 96.7%',
+              accent: '138.5 76.5% 96.7%',
+              accentFg: '140.6 90.2% 24.7%',
+            },
+            blue: {
+              primary: '221.2 83.2% 53.3%',
+              primaryFg: '210 40% 98%',
+              accent: '210 40% 96.1%',
+              accentFg: '222.2 47.4% 11.2%',
+            },
+            yellow: {
+              primary: '47.9 95.8% 53.1%',
+              primaryFg: '48 96.5% 88.8%',
+              accent: '48 96.5% 88.8%',
+              accentFg: '25.7 90.4% 37.3%',
+            },
+            violet: {
+              primary: '262.1 83.3% 57.8%',
+              primaryFg: '270 91.3% 95.1%',
+              accent: '270 95.2% 95.1%',
+              accentFg: '263.4 70% 50.4%',
+            },
           };
 
           // Helper to convert hex to OKLCH (simplified for preload)

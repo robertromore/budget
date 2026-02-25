@@ -4,10 +4,7 @@
  * Business logic for managing automation rules.
  */
 
-import type {
-  AutomationRule,
-  AutomationRuleLog
-} from "$lib/schema/automation-rules";
+import type { AutomationRule, AutomationRuleLog } from "$lib/schema/automation-rules";
 import type { db } from "$lib/server/db";
 import type {
   ActionConfig,
@@ -122,9 +119,7 @@ export async function getRule(
 /**
  * Get all rules for a workspace
  */
-export async function getRules(
-  context: AutomationContext
-): Promise<AutomationRule[]> {
+export async function getRules(context: AutomationContext): Promise<AutomationRule[]> {
   const repository = new AutomationRepository(context.db, context.workspaceId);
   return repository.findAll();
 }
@@ -187,10 +182,7 @@ function hasAccountIdCondition(conditions: ConditionGroup, accountId: number): b
 /**
  * Delete a rule
  */
-export async function deleteRule(
-  id: number,
-  context: AutomationContext
-): Promise<boolean> {
+export async function deleteRule(id: number, context: AutomationContext): Promise<boolean> {
   const repository = new AutomationRepository(context.db, context.workspaceId);
   return repository.delete(id);
 }

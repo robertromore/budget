@@ -6,7 +6,10 @@
  */
 
 import type { CategorySuggestion, CategorySuggestionOption } from "$lib/types/import";
-import { createSmartCategoryService, type SmartCategoryService } from "$lib/server/domains/ml/smart-categories/service";
+import {
+  createSmartCategoryService,
+  type SmartCategoryService,
+} from "$lib/server/domains/ml/smart-categories/service";
 import { createMLModelStore } from "$lib/server/domains/ml/model-store";
 
 /**
@@ -55,9 +58,7 @@ export interface CategorySuggesterResult {
 /**
  * Map reason codes from SmartCategoryService to import types
  */
-function mapReasonCode(
-  reasonCode: string
-): CategorySuggestionOption["reason"] {
+function mapReasonCode(reasonCode: string): CategorySuggestionOption["reason"] {
   const mapping: Record<string, CategorySuggestionOption["reason"]> = {
     payee_match: "payee_match",
     amount_pattern: "amount_pattern",

@@ -6,17 +6,21 @@ related: [account-tabs, add-transaction-button, transaction-table]
 
 # Account Page
 
-The account page is your central hub for managing a single financial account. View all transactions, analyze spending patterns, and configure account settings.
+The account page is your central hub for managing a single financial account.
+View all transactions, analyze spending patterns, and configure account
+settings.
 
 ## Page Header
 
 The header displays:
+
 - **Account Name** - The name you've given this account
 - **Status Indicator** - Green dot shows the account is active
 
 ## Quick Actions
 
 Depending on your account type:
+
 - **Add Transaction** - Manually enter a new transaction
 - **Add Expense** - For HSA accounts, add a medical expense
 

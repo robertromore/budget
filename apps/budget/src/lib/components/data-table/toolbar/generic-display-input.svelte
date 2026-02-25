@@ -13,7 +13,10 @@ import { Separator } from '$lib/components/ui/separator';
 import { Switch } from '$lib/components/ui/switch';
 import { displayPreferences } from '$lib/stores/display-preferences.svelte';
 import { cn } from '$lib/utils';
-import { default as ChevronDown, default as CircleChevronDown } from '@lucide/svelte/icons/chevron-down';
+import {
+  default as ChevronDown,
+  default as CircleChevronDown,
+} from '@lucide/svelte/icons/chevron-down';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import CircleChevronUp from '@lucide/svelte/icons/chevron-up';
 import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
@@ -214,7 +217,11 @@ const useSheet = $derived(displayPreferences.tableDisplayMode === 'sheet');
     {#if groupableColumns.length > 0 && onGroupingChange}
       <div class="grid grid-cols-3 items-center gap-4">
         <Label for="grouping">Grouping</Label>
-        <Select.Root type="multiple" name="grouping" value={grouping} onValueChange={(v) => onGroupingChange(v)}>
+        <Select.Root
+          type="multiple"
+          name="grouping"
+          value={grouping}
+          onValueChange={(v) => onGroupingChange(v)}>
           <Select.Trigger class="w-[180px]">
             {#if grouping.length === 0}
               <Badge variant="secondary">none selected</Badge>
@@ -303,7 +310,11 @@ const useSheet = $derived(displayPreferences.tableDisplayMode === 'sheet');
 
     <div class="grid grid-cols-3 items-center gap-4">
       <Label>Visibility</Label>
-      <Select.Root type="multiple" name="visibility" value={visibilityIds} onValueChange={handleVisibilityChange}>
+      <Select.Root
+        type="multiple"
+        name="visibility"
+        value={visibilityIds}
+        onValueChange={handleVisibilityChange}>
         <Select.Trigger class="text-muted-foreground w-[180px]">
           {#if visibleColumns.length === 0}
             <Badge variant="secondary">none selected</Badge>
@@ -380,10 +391,7 @@ const useSheet = $derived(displayPreferences.tableDisplayMode === 'sheet');
         class="size-4 transition-transform duration-200 [[data-state=open]>&]:rotate-90" />
     </Collapsible.Trigger>
     <Collapsible.Content class="pt-2">
-      <ColumnOrderManager
-        columns={allVisibleColumns}
-        {columnOrder}
-        onUpdate={updateColumnOrder} />
+      <ColumnOrderManager columns={allVisibleColumns} {columnOrder} onUpdate={updateColumnOrder} />
     </Collapsible.Content>
   </Collapsible.Root>
 

@@ -6,7 +6,11 @@ import { accounts } from "./accounts";
 import { categories } from "./categories";
 import { workspaces } from "./workspaces";
 
-export const metricTypeEnum = ["monthly_spending", "category_spending", "account_spending"] as const;
+export const metricTypeEnum = [
+  "monthly_spending",
+  "category_spending",
+  "account_spending",
+] as const;
 export type MetricType = (typeof metricTypeEnum)[number];
 
 export const conditionTypeEnum = ["above", "below"] as const;

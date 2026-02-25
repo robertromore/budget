@@ -1,4 +1,4 @@
-import {describe, it, expect} from "vitest";
+import { describe, it, expect } from "vitest";
 
 type NavigationCommand = "first" | "previous" | "next" | "last";
 
@@ -6,10 +6,10 @@ describe("ServerDataTablePagination Logic", () => {
   describe("Page Size Management", () => {
     it("should validate page size options", () => {
       const pageSizeOptions = [
-        {value: "10", label: "10 per page"},
-        {value: "25", label: "25 per page"},
-        {value: "50", label: "50 per page"},
-        {value: "100", label: "100 per page"},
+        { value: "10", label: "10 per page" },
+        { value: "25", label: "25 per page" },
+        { value: "50", label: "50 per page" },
+        { value: "100", label: "100 per page" },
       ];
 
       const validatePageSize = (value: string) => {
@@ -295,7 +295,7 @@ describe("ServerDataTablePagination Logic", () => {
         const cacheKey = `${page}-${pageSize}-${totalCount}`;
 
         if (paginationCache.has(cacheKey)) {
-          return {...paginationCache.get(cacheKey), fromCache: true};
+          return { ...paginationCache.get(cacheKey), fromCache: true };
         }
 
         const result = {
@@ -327,16 +327,16 @@ describe("ServerDataTablePagination Logic", () => {
 
     it("should batch navigation updates", () => {
       let updateCount = 0;
-      const updates: Array<{type: string; value: any}> = [];
+      const updates: Array<{ type: string; value: any }> = [];
 
       const batchNavigationUpdates = (newPage: number, newPageSize?: number) => {
-        const batch: Array<{type: string; value: any}> = [];
+        const batch: Array<{ type: string; value: any }> = [];
 
         if (newPageSize !== undefined) {
-          batch.push({type: "pageSize", value: newPageSize});
+          batch.push({ type: "pageSize", value: newPageSize });
         }
 
-        batch.push({type: "page", value: newPage});
+        batch.push({ type: "page", value: newPage });
 
         // Simulate single update operation
         updateCount++;

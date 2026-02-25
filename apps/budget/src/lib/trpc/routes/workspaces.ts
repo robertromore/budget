@@ -49,12 +49,7 @@ export const workspaceRoutes = t.router({
         })
         .from(workspaces)
         .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
-        .where(
-          and(
-            eq(workspaceMembers.userId, ctx.userId),
-            isNull(workspaces.deletedAt)
-          )
-        )
+        .where(and(eq(workspaceMembers.userId, ctx.userId), isNull(workspaces.deletedAt)))
         .orderBy(workspaces.displayName);
 
       return results;

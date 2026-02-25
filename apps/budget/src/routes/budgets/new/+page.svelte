@@ -71,7 +71,7 @@ const formData = $derived.by(() => {
   {/if}
 
   <ManageBudgetForm
-    formData={formData}
+    {formData}
     accounts={data.accounts}
     categories={data.categories}
     payees={data.payees}

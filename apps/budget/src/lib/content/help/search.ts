@@ -122,9 +122,7 @@ let documents: HelpSearchDocument[] = [];
 /**
  * Build the search index from raw help content
  */
-export function buildSearchIndex(
-  helpContent: Record<string, string>
-): Fuse<HelpSearchDocument> {
+export function buildSearchIndex(helpContent: Record<string, string>): Fuse<HelpSearchDocument> {
   documents = Object.entries(helpContent).map(([id, rawContent]) => {
     const { frontmatter, body } = parseFrontmatter(rawContent);
     const plainContent = stripMarkdown(body);
@@ -158,9 +156,7 @@ export function buildSearchIndex(
 /**
  * Get or create the search index
  */
-export function getSearchIndex(
-  helpContent: Record<string, string>
-): Fuse<HelpSearchDocument> {
+export function getSearchIndex(helpContent: Record<string, string>): Fuse<HelpSearchDocument> {
   if (!searchIndex) {
     return buildSearchIndex(helpContent);
   }
@@ -202,11 +198,7 @@ export function highlightMatches(text: string, query: string): string {
 /**
  * Get a content snippet around the first match
  */
-export function getSnippet(
-  content: string,
-  query: string,
-  maxLength = 150
-): string {
+export function getSnippet(content: string, query: string, maxLength = 150): string {
   if (!content) return "";
 
   const terms = query
@@ -216,9 +208,7 @@ export function getSnippet(
 
   if (terms.length === 0) {
     // No valid terms, return start of content
-    return content.length > maxLength
-      ? content.slice(0, maxLength) + "…"
-      : content;
+    return content.length > maxLength ? content.slice(0, maxLength) + "…" : content;
   }
 
   // Find the first matching term position
@@ -234,9 +224,7 @@ export function getSnippet(
 
   if (firstMatchPos === -1) {
     // No match found, return start of content
-    return content.length > maxLength
-      ? content.slice(0, maxLength) + "…"
-      : content;
+    return content.length > maxLength ? content.slice(0, maxLength) + "…" : content;
   }
 
   // Extract context around the match
@@ -287,9 +275,7 @@ export function searchHelp(
 /**
  * Get all help documents for browsing (no search query)
  */
-export function getAllHelpDocuments(
-  helpContent: Record<string, string>
-): HelpSearchDocument[] {
+export function getAllHelpDocuments(helpContent: Record<string, string>): HelpSearchDocument[] {
   // Ensure documents are built
   if (documents.length === 0) {
     buildSearchIndex(helpContent);

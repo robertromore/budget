@@ -31,15 +31,45 @@ interface SubscriptionPattern {
 const SUBSCRIPTION_PATTERNS: Record<SubscriptionType, SubscriptionPattern> = {
   entertainment: {
     keywords: [
-      "netflix", "spotify", "hulu", "disney+", "disney plus", "amazon prime", "youtube premium",
-      "youtube music", "apple music", "apple tv", "hbo", "hbo max", "peacock", "paramount+",
-      "showtime", "starz", "crunchyroll", "audible", "kindle unlimited", "twitch", "funimation",
-      "dazn", "espn+", "sling", "fubo", "philo", "discovery+", "tidal", "deezer", "pandora",
-      "iheartradio", "sirius", "siriusxm"
+      "netflix",
+      "spotify",
+      "hulu",
+      "disney+",
+      "disney plus",
+      "amazon prime",
+      "youtube premium",
+      "youtube music",
+      "apple music",
+      "apple tv",
+      "hbo",
+      "hbo max",
+      "peacock",
+      "paramount+",
+      "showtime",
+      "starz",
+      "crunchyroll",
+      "audible",
+      "kindle unlimited",
+      "twitch",
+      "funimation",
+      "dazn",
+      "espn+",
+      "sling",
+      "fubo",
+      "philo",
+      "discovery+",
+      "tidal",
+      "deezer",
+      "pandora",
+      "iheartradio",
+      "sirius",
+      "siriusxm",
     ],
     regexPatterns: [
-      /streaming/i, /music subscription/i, /video on demand/i,
-      /\b(tv|television)\s*(plus|premium|subscription)/i
+      /streaming/i,
+      /music subscription/i,
+      /video on demand/i,
+      /\b(tv|television)\s*(plus|premium|subscription)/i,
     ],
     merchantCodes: ["5815", "5735", "5968", "7922"],
     typicalBillingCycles: ["monthly", "annual"],
@@ -47,14 +77,39 @@ const SUBSCRIPTION_PATTERNS: Record<SubscriptionType, SubscriptionPattern> = {
   },
   utilities: {
     keywords: [
-      "electric", "electricity", "gas", "water", "sewer", "trash", "garbage", "internet",
-      "broadband", "cable", "comcast", "xfinity", "spectrum", "verizon fios", "at&t",
-      "centurylink", "cox", "frontier", "optimum", "windstream", "pge", "sce", "sdge",
-      "con edison", "duke energy", "dominion", "national grid"
+      "electric",
+      "electricity",
+      "gas",
+      "water",
+      "sewer",
+      "trash",
+      "garbage",
+      "internet",
+      "broadband",
+      "cable",
+      "comcast",
+      "xfinity",
+      "spectrum",
+      "verizon fios",
+      "at&t",
+      "centurylink",
+      "cox",
+      "frontier",
+      "optimum",
+      "windstream",
+      "pge",
+      "sce",
+      "sdge",
+      "con edison",
+      "duke energy",
+      "dominion",
+      "national grid",
     ],
     regexPatterns: [
       /\b(electric|gas|water)\s*(company|utility|service)/i,
-      /utility\s*bill/i, /\bpower\b/i, /\benergy\b/i
+      /utility\s*bill/i,
+      /\bpower\b/i,
+      /\benergy\b/i,
     ],
     merchantCodes: ["4814", "4899", "4900", "4816"],
     typicalBillingCycles: ["monthly"],
@@ -62,16 +117,54 @@ const SUBSCRIPTION_PATTERNS: Record<SubscriptionType, SubscriptionPattern> = {
   },
   software: {
     keywords: [
-      "adobe", "microsoft 365", "microsoft office", "google workspace", "dropbox", "zoom",
-      "slack", "notion", "figma", "canva", "grammarly", "lastpass", "1password", "dashlane",
-      "nordvpn", "expressvpn", "surfshark", "github", "gitlab", "jetbrains", "intellij",
-      "webstorm", "sketch", "invision", "asana", "monday.com", "trello", "evernote",
-      "todoist", "mailchimp", "hubspot", "salesforce", "quickbooks", "freshbooks",
-      "xero", "wave", "squarespace", "wix", "shopify", "webflow", "wordpress"
+      "adobe",
+      "microsoft 365",
+      "microsoft office",
+      "google workspace",
+      "dropbox",
+      "zoom",
+      "slack",
+      "notion",
+      "figma",
+      "canva",
+      "grammarly",
+      "lastpass",
+      "1password",
+      "dashlane",
+      "nordvpn",
+      "expressvpn",
+      "surfshark",
+      "github",
+      "gitlab",
+      "jetbrains",
+      "intellij",
+      "webstorm",
+      "sketch",
+      "invision",
+      "asana",
+      "monday.com",
+      "trello",
+      "evernote",
+      "todoist",
+      "mailchimp",
+      "hubspot",
+      "salesforce",
+      "quickbooks",
+      "freshbooks",
+      "xero",
+      "wave",
+      "squarespace",
+      "wix",
+      "shopify",
+      "webflow",
+      "wordpress",
     ],
     regexPatterns: [
-      /\bsaas\b/i, /software\s*subscription/i, /\bcloud\s*service/i,
-      /\bapp\s*subscription/i, /\blicense\b/i
+      /\bsaas\b/i,
+      /software\s*subscription/i,
+      /\bcloud\s*service/i,
+      /\bapp\s*subscription/i,
+      /\blicense\b/i,
     ],
     merchantCodes: ["5734", "5045", "7372", "7379"],
     typicalBillingCycles: ["monthly", "annual"],
@@ -79,55 +172,106 @@ const SUBSCRIPTION_PATTERNS: Record<SubscriptionType, SubscriptionPattern> = {
   },
   membership: {
     keywords: [
-      "gym", "fitness", "planet fitness", "la fitness", "equinox", "orangetheory",
-      "crossfit", "24 hour fitness", "gold's gym", "anytime fitness", "ymca", "costco",
-      "sam's club", "bj's", "amazon prime", "aaa", "roadside assistance", "museum",
-      "zoo", "country club", "golf club", "tennis club", "wine club", "book club"
+      "gym",
+      "fitness",
+      "planet fitness",
+      "la fitness",
+      "equinox",
+      "orangetheory",
+      "crossfit",
+      "24 hour fitness",
+      "gold's gym",
+      "anytime fitness",
+      "ymca",
+      "costco",
+      "sam's club",
+      "bj's",
+      "amazon prime",
+      "aaa",
+      "roadside assistance",
+      "museum",
+      "zoo",
+      "country club",
+      "golf club",
+      "tennis club",
+      "wine club",
+      "book club",
     ],
-    regexPatterns: [
-      /\bmembership\b/i, /\bclub\b/i, /\bfitness\b/i, /\bgym\b/i,
-      /\bwholesale\b/i
-    ],
+    regexPatterns: [/\bmembership\b/i, /\bclub\b/i, /\bfitness\b/i, /\bgym\b/i, /\bwholesale\b/i],
     merchantCodes: ["7991", "7996", "7941", "7997", "5300"],
     typicalBillingCycles: ["monthly", "annual"],
     typicalCostRange: { min: 10, max: 500 },
   },
   communication: {
     keywords: [
-      "verizon", "at&t", "att", "t-mobile", "tmobile", "sprint", "us cellular",
-      "mint mobile", "cricket", "metro pcs", "metropcs", "boost mobile", "visible",
-      "google fi", "republic wireless", "ting", "straight talk"
+      "verizon",
+      "at&t",
+      "att",
+      "t-mobile",
+      "tmobile",
+      "sprint",
+      "us cellular",
+      "mint mobile",
+      "cricket",
+      "metro pcs",
+      "metropcs",
+      "boost mobile",
+      "visible",
+      "google fi",
+      "republic wireless",
+      "ting",
+      "straight talk",
     ],
-    regexPatterns: [
-      /\b(cellular|mobile|wireless)\s*service/i, /\bphone\s*plan\b/i,
-      /\bcarrier\b/i
-    ],
+    regexPatterns: [/\b(cellular|mobile|wireless)\s*service/i, /\bphone\s*plan\b/i, /\bcarrier\b/i],
     merchantCodes: ["4814", "4812"],
     typicalBillingCycles: ["monthly"],
     typicalCostRange: { min: 15, max: 200 },
   },
   finance: {
     keywords: [
-      "credit karma", "credit sesame", "mint", "personal capital", "ynab",
-      "you need a budget", "acorns", "robinhood gold", "wealthfront", "betterment",
-      "sofi", "nerdwallet", "truebill", "trim", "rocket money"
+      "credit karma",
+      "credit sesame",
+      "mint",
+      "personal capital",
+      "ynab",
+      "you need a budget",
+      "acorns",
+      "robinhood gold",
+      "wealthfront",
+      "betterment",
+      "sofi",
+      "nerdwallet",
+      "truebill",
+      "trim",
+      "rocket money",
     ],
-    regexPatterns: [
-      /\bfinance\s*app\b/i, /\binvestment\s*service\b/i, /\bbudget\s*app\b/i
-    ],
+    regexPatterns: [/\bfinance\s*app\b/i, /\binvestment\s*service\b/i, /\bbudget\s*app\b/i],
     merchantCodes: ["6012", "6211", "6051"],
     typicalBillingCycles: ["monthly", "annual"],
     typicalCostRange: { min: 5, max: 100 },
   },
   shopping: {
     keywords: [
-      "amazon prime", "walmart+", "walmart plus", "instacart", "shipt", "doordash pass",
-      "uber one", "uber eats pass", "grubhub+", "postmates", "rent the runway",
-      "stitch fix", "trunk club", "thredup", "poshmark"
+      "amazon prime",
+      "walmart+",
+      "walmart plus",
+      "instacart",
+      "shipt",
+      "doordash pass",
+      "uber one",
+      "uber eats pass",
+      "grubhub+",
+      "postmates",
+      "rent the runway",
+      "stitch fix",
+      "trunk club",
+      "thredup",
+      "poshmark",
     ],
     regexPatterns: [
-      /\bdelivery\s*subscription\b/i, /\bshopping\s*pass\b/i,
-      /\bpremium\s*membership\b/i
+      /\bdelivery\s*subscription\b/i,
+      /\bshopping\s*pass\b/i,
+      /\bpremium\s*membership\b/i,
     ],
     merchantCodes: ["5411", "5912", "5311", "5999"],
     typicalBillingCycles: ["monthly", "annual"],
@@ -135,14 +279,37 @@ const SUBSCRIPTION_PATTERNS: Record<SubscriptionType, SubscriptionPattern> = {
   },
   health: {
     keywords: [
-      "headspace", "calm", "noom", "weight watchers", "ww", "myfitnesspal", "strava",
-      "peloton", "beachbody", "fitbit premium", "apple fitness+", "nike training",
-      "teladoc", "betterhelp", "talkspace", "cerebral", "hims", "hers", "ro",
-      "nurx", "care/of", "ritual", "athletic greens"
+      "headspace",
+      "calm",
+      "noom",
+      "weight watchers",
+      "ww",
+      "myfitnesspal",
+      "strava",
+      "peloton",
+      "beachbody",
+      "fitbit premium",
+      "apple fitness+",
+      "nike training",
+      "teladoc",
+      "betterhelp",
+      "talkspace",
+      "cerebral",
+      "hims",
+      "hers",
+      "ro",
+      "nurx",
+      "care/of",
+      "ritual",
+      "athletic greens",
     ],
     regexPatterns: [
-      /\bhealth\s*app\b/i, /\bwellness\b/i, /\btherapy\b/i, /\bmeditation\b/i,
-      /\bmental\s*health\b/i, /\btelehealth\b/i
+      /\bhealth\s*app\b/i,
+      /\bwellness\b/i,
+      /\btherapy\b/i,
+      /\bmeditation\b/i,
+      /\bmental\s*health\b/i,
+      /\btelehealth\b/i,
     ],
     merchantCodes: ["8011", "8021", "8031", "8041", "8099"],
     typicalBillingCycles: ["monthly", "annual"],
@@ -150,13 +317,32 @@ const SUBSCRIPTION_PATTERNS: Record<SubscriptionType, SubscriptionPattern> = {
   },
   education: {
     keywords: [
-      "coursera", "udemy", "skillshare", "masterclass", "linkedin learning", "pluralsight",
-      "codecademy", "treehouse", "datacamp", "brilliant", "duolingo", "babbel", "rosetta stone",
-      "blinkist", "scribd", "medium", "substack", "patreon", "curiosity stream"
+      "coursera",
+      "udemy",
+      "skillshare",
+      "masterclass",
+      "linkedin learning",
+      "pluralsight",
+      "codecademy",
+      "treehouse",
+      "datacamp",
+      "brilliant",
+      "duolingo",
+      "babbel",
+      "rosetta stone",
+      "blinkist",
+      "scribd",
+      "medium",
+      "substack",
+      "patreon",
+      "curiosity stream",
     ],
     regexPatterns: [
-      /\beducation\b/i, /\blearning\s*platform\b/i, /\bcourse\b/i,
-      /\btraining\b/i, /\btutorial\b/i
+      /\beducation\b/i,
+      /\blearning\s*platform\b/i,
+      /\bcourse\b/i,
+      /\btraining\b/i,
+      /\btutorial\b/i,
     ],
     merchantCodes: ["8220", "8241", "8244", "8249", "8299"],
     typicalBillingCycles: ["monthly", "annual"],
@@ -384,20 +570,26 @@ export class SubscriptionDetectionService {
     const subscriptionFrequencies = ["monthly", "quarterly", "annual", "weekly", "yearly"];
     const normalizedFrequency = frequency.toLowerCase();
 
-    if (subscriptionFrequencies.some(f => normalizedFrequency.includes(f))) {
+    if (subscriptionFrequencies.some((f) => normalizedFrequency.includes(f))) {
       return {
         confidence: 0.8,
         evidence: [`${frequency} frequency is typical for subscriptions`],
       };
     }
 
-    return { confidence: 0.2, evidence: [`${frequency} frequency is less common for subscriptions`] };
+    return {
+      confidence: 0.2,
+      evidence: [`${frequency} frequency is less common for subscriptions`],
+    };
   }
 
   /**
    * Analyze if amount is within typical range for subscription type
    */
-  private analyzeAmount(amount: number, type: SubscriptionType): {
+  private analyzeAmount(
+    amount: number,
+    type: SubscriptionType
+  ): {
     confidence: number;
     evidence: string[];
   } {
@@ -407,7 +599,9 @@ export class SubscriptionDetectionService {
     if (amount >= min && amount <= max) {
       return {
         confidence: 0.7,
-        evidence: [`Amount $${amount.toFixed(2)} is within typical range for ${type} subscriptions`],
+        evidence: [
+          `Amount $${amount.toFixed(2)} is within typical range for ${type} subscriptions`,
+        ],
       };
     }
 
@@ -617,7 +811,8 @@ export class SubscriptionDetectionService {
         accountId: pattern.accountId,
         accountName: pattern.accountName,
         detectionConfidence: pattern.overallConfidence / 100,
-        subscriptionType: pattern.subscriptionType ?? this.inferSubscriptionType(pattern.patternType),
+        subscriptionType:
+          pattern.subscriptionType ?? this.inferSubscriptionType(pattern.patternType),
         billingCycle,
         estimatedAmount: Math.abs(pattern.amount.median),
         amountVariance,

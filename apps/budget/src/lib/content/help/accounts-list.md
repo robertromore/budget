@@ -6,7 +6,8 @@ related: [sidebar, transaction-table]
 
 # Accounts List
 
-Your accounts represent different financial holdings like checking, savings, credit cards, or investment accounts.
+Your accounts represent different financial holdings like checking, savings,
+credit cards, or investment accounts.
 
 ## Account Types
 

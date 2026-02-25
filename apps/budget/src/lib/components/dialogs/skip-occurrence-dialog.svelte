@@ -8,7 +8,7 @@ import { skipOccurrence } from '$lib/query/schedules';
 import {
   closeSkipOccurrenceDialog,
   skipOccurrenceData,
-  skipOccurrenceDialog
+  skipOccurrenceDialog,
 } from '$lib/states/ui/global.svelte';
 import CalendarX from '@lucide/svelte/icons/calendar-x';
 import FastForward from '@lucide/svelte/icons/fast-forward';
@@ -30,7 +30,7 @@ const formattedDate = $derived.by(() => {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
 });
 
@@ -43,12 +43,12 @@ async function handleSkip() {
       scheduleId: _skipOccurrenceData.scheduleId,
       date: _skipOccurrenceData.date,
       skipType,
-      reason: reason.trim() || undefined
+      reason: reason.trim() || undefined,
     });
 
     const actionText = skipType === 'single' ? 'skipped' : 'pushed forward';
     toast.success(`Occurrence ${actionText}`, {
-      description: `${formattedDate} has been ${actionText}`
+      description: `${formattedDate} has been ${actionText}`,
     });
 
     handleClose();
@@ -73,42 +73,48 @@ function handleOpenChange(open: boolean) {
 }
 </script>
 
-<Dialog.Root
-  open={_skipOccurrenceDialog.current}
-  onOpenChange={handleOpenChange}>
+<Dialog.Root open={_skipOccurrenceDialog.current} onOpenChange={handleOpenChange}>
   <Dialog.Content class="sm:max-w-md">
     <Dialog.Header>
       <Dialog.Title>Skip Scheduled Transaction</Dialog.Title>
       <Dialog.Description>
-        Choose how to handle the scheduled occurrence for <strong>{_skipOccurrenceData.scheduleName}</strong> on {formattedDate}.
+        Choose how to handle the scheduled occurrence for <strong
+          >{_skipOccurrenceData.scheduleName}</strong>
+        on {formattedDate}.
       </Dialog.Description>
     </Dialog.Header>
 
     <div class="space-y-6 py-4">
       <RadioGroup.Root bind:value={skipType} class="space-y-3">
         <div
-          class="flex items-start space-x-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 {skipType === 'single' ? 'border-primary bg-primary/5' : ''}">
+          class="hover:bg-muted/50 flex items-start space-x-3 rounded-lg border p-4 transition-colors {skipType ===
+          'single'
+            ? 'border-primary bg-primary/5'
+            : ''}">
           <RadioGroup.Item value="single" id="skip-single" class="mt-0.5" />
           <div class="flex-1 space-y-1">
-            <Label for="skip-single" class="flex items-center gap-2 font-medium cursor-pointer">
+            <Label for="skip-single" class="flex cursor-pointer items-center gap-2 font-medium">
               <CalendarX class="h-4 w-4" />
               Skip this occurrence only
             </Label>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-muted-foreground text-sm">
               Only skip the {formattedDate} occurrence. Future occurrences remain unchanged.
             </p>
           </div>
         </div>
 
         <div
-          class="flex items-start space-x-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 {skipType === 'push_forward' ? 'border-primary bg-primary/5' : ''}">
+          class="hover:bg-muted/50 flex items-start space-x-3 rounded-lg border p-4 transition-colors {skipType ===
+          'push_forward'
+            ? 'border-primary bg-primary/5'
+            : ''}">
           <RadioGroup.Item value="push_forward" id="skip-push" class="mt-0.5" />
           <div class="flex-1 space-y-1">
-            <Label for="skip-push" class="flex items-center gap-2 font-medium cursor-pointer">
+            <Label for="skip-push" class="flex cursor-pointer items-center gap-2 font-medium">
               <FastForward class="h-4 w-4" />
               Push all dates forward
             </Label>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-muted-foreground text-sm">
               Skip this occurrence and shift all future occurrences forward by one interval.
             </p>
           </div>
@@ -120,18 +126,15 @@ function handleOpenChange(open: boolean) {
         <Input
           id="reason"
           placeholder="e.g., Payment made early, Holiday postponement"
-          bind:value={reason}
-        />
+          bind:value={reason} />
       </div>
     </div>
 
     <Dialog.Footer class="flex-col gap-2 sm:flex-row">
-      <Button variant="outline" onclick={handleClose} disabled={isSubmitting}>
-        Cancel
-      </Button>
+      <Button variant="outline" onclick={handleClose} disabled={isSubmitting}>Cancel</Button>
       <Button onclick={handleSkip} disabled={isSubmitting}>
         {#if isSubmitting}
-          <span class="animate-spin mr-2">...</span>
+          <span class="mr-2 animate-spin">...</span>
         {/if}
         {skipType === 'single' ? 'Skip Occurrence' : 'Push Forward'}
       </Button>

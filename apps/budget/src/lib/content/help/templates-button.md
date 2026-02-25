@@ -14,6 +14,7 @@ Click this button to browse and select from pre-built budget templates.
 ## What are Templates?
 
 Templates are pre-configured budget setups for common scenarios:
+
 - Monthly bills and subscriptions
 - Savings goals
 - Lifestyle spending categories

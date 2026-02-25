@@ -67,10 +67,10 @@ export const settingsRoutes = t.router({
     try {
       // Tables to preserve (auth-related tables that should not be deleted)
       const protectedTables = new Set([
-        "user",           // User accounts
-        "session",        // Auth sessions
-        "auth_account",   // OAuth accounts (Better Auth)
-        "verification",   // Email/password verification tokens
+        "user", // User accounts
+        "session", // Auth sessions
+        "auth_account", // OAuth accounts (Better Auth)
+        "verification", // Email/password verification tokens
       ]);
 
       // Get all table names from sqlite_master
@@ -83,9 +83,7 @@ export const settingsRoutes = t.router({
       `);
 
       // Filter out protected auth tables
-      const tableNames = allTables
-        .map((t) => t.name)
-        .filter((name) => !protectedTables.has(name));
+      const tableNames = allTables.map((t) => t.name).filter((name) => !protectedTables.has(name));
 
       if (tableNames.length === 0) {
         return { deleted: 0, tables: [] };
@@ -137,22 +135,29 @@ export const settingsRoutes = t.router({
       const ml: MLPreferences = {
         enabled: parsed.ml?.enabled ?? DEFAULT_ML_PREFERENCES.enabled,
         features: {
-          forecasting: parsed.ml?.features?.forecasting ?? DEFAULT_ML_PREFERENCES.features.forecasting,
+          forecasting:
+            parsed.ml?.features?.forecasting ?? DEFAULT_ML_PREFERENCES.features.forecasting,
           anomalyDetection:
-            parsed.ml?.features?.anomalyDetection ?? DEFAULT_ML_PREFERENCES.features.anomalyDetection,
+            parsed.ml?.features?.anomalyDetection ??
+            DEFAULT_ML_PREFERENCES.features.anomalyDetection,
           similarity: parsed.ml?.features?.similarity ?? DEFAULT_ML_PREFERENCES.features.similarity,
-          userBehavior: parsed.ml?.features?.userBehavior ?? DEFAULT_ML_PREFERENCES.features.userBehavior,
+          userBehavior:
+            parsed.ml?.features?.userBehavior ?? DEFAULT_ML_PREFERENCES.features.userBehavior,
         },
         config: {
           anomalySensitivity:
-            parsed.ml?.config?.anomalySensitivity ?? DEFAULT_ML_PREFERENCES.config.anomalySensitivity,
-          forecastHorizon: parsed.ml?.config?.forecastHorizon ?? DEFAULT_ML_PREFERENCES.config.forecastHorizon,
+            parsed.ml?.config?.anomalySensitivity ??
+            DEFAULT_ML_PREFERENCES.config.anomalySensitivity,
+          forecastHorizon:
+            parsed.ml?.config?.forecastHorizon ?? DEFAULT_ML_PREFERENCES.config.forecastHorizon,
           similarityThreshold:
-            parsed.ml?.config?.similarityThreshold ?? DEFAULT_ML_PREFERENCES.config.similarityThreshold,
+            parsed.ml?.config?.similarityThreshold ??
+            DEFAULT_ML_PREFERENCES.config.similarityThreshold,
         },
         duplicateDetection: {
           defaultMethod:
-            parsed.ml?.duplicateDetection?.defaultMethod ?? DEFAULT_ML_PREFERENCES.duplicateDetection.defaultMethod,
+            parsed.ml?.duplicateDetection?.defaultMethod ??
+            DEFAULT_ML_PREFERENCES.duplicateDetection.defaultMethod,
         },
       };
 
@@ -192,13 +197,16 @@ export const settingsRoutes = t.router({
           config: {
             anomalySensitivity:
               input.config?.anomalySensitivity ?? currentML.config?.anomalySensitivity ?? "medium",
-            forecastHorizon: input.config?.forecastHorizon ?? currentML.config?.forecastHorizon ?? 30,
+            forecastHorizon:
+              input.config?.forecastHorizon ?? currentML.config?.forecastHorizon ?? 30,
             similarityThreshold:
               input.config?.similarityThreshold ?? currentML.config?.similarityThreshold ?? 0.6,
           },
           duplicateDetection: {
             defaultMethod:
-              input.duplicateDetection?.defaultMethod ?? currentML.duplicateDetection?.defaultMethod ?? "ml",
+              input.duplicateDetection?.defaultMethod ??
+              currentML.duplicateDetection?.defaultMethod ??
+              "ml",
           },
         };
 
@@ -326,11 +334,15 @@ export const settingsRoutes = t.router({
           // Only update API keys if provided (encrypt before storing)
           encryptedBraveApiKey:
             input.braveApiKey !== undefined
-              ? input.braveApiKey ? encryptApiKey(input.braveApiKey) : undefined // Empty string clears the key
+              ? input.braveApiKey
+                ? encryptApiKey(input.braveApiKey)
+                : undefined // Empty string clears the key
               : currentWebSearch.encryptedBraveApiKey,
           encryptedOllamaCloudApiKey:
             input.ollamaCloudApiKey !== undefined
-              ? input.ollamaCloudApiKey ? encryptApiKey(input.ollamaCloudApiKey) : undefined
+              ? input.ollamaCloudApiKey
+                ? encryptApiKey(input.ollamaCloudApiKey)
+                : undefined
               : currentWebSearch.encryptedOllamaCloudApiKey,
         };
 
@@ -421,12 +433,16 @@ export const settingsRoutes = t.router({
 
       // Deep merge with defaults to ensure all fields exist
       const intelligenceInput: IntelligenceInputPreferences = {
-        enabled: parsed.intelligenceInput?.enabled ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.enabled,
+        enabled:
+          parsed.intelligenceInput?.enabled ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.enabled,
         showInHeader:
-          parsed.intelligenceInput?.showInHeader ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.showInHeader,
+          parsed.intelligenceInput?.showInHeader ??
+          DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.showInHeader,
         defaultMode:
-          parsed.intelligenceInput?.defaultMode ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.defaultMode,
-        fieldModes: parsed.intelligenceInput?.fieldModes ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.fieldModes,
+          parsed.intelligenceInput?.defaultMode ??
+          DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.defaultMode,
+        fieldModes:
+          parsed.intelligenceInput?.fieldModes ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES.fieldModes,
       };
 
       return intelligenceInput;
@@ -450,7 +466,8 @@ export const settingsRoutes = t.router({
           .limit(1);
 
         const currentPrefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
-        const currentIntelligenceInput = currentPrefs.intelligenceInput ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES;
+        const currentIntelligenceInput =
+          currentPrefs.intelligenceInput ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES;
 
         // Build updated intelligence input preferences
         const updatedIntelligenceInput: IntelligenceInputPreferences = {
@@ -493,7 +510,8 @@ export const settingsRoutes = t.router({
           .limit(1);
 
         const currentPrefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
-        const currentIntelligenceInput = currentPrefs.intelligenceInput ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES;
+        const currentIntelligenceInput =
+          currentPrefs.intelligenceInput ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES;
 
         const updatedIntelligenceInput: IntelligenceInputPreferences = {
           ...currentIntelligenceInput,
@@ -538,7 +556,8 @@ export const settingsRoutes = t.router({
           .limit(1);
 
         const currentPrefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
-        const currentIntelligenceInput = currentPrefs.intelligenceInput ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES;
+        const currentIntelligenceInput =
+          currentPrefs.intelligenceInput ?? DEFAULT_INTELLIGENCE_INPUT_PREFERENCES;
 
         const updatedIntelligenceInput: IntelligenceInputPreferences = {
           ...currentIntelligenceInput,

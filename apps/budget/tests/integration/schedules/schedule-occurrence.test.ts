@@ -5,11 +5,11 @@
  * frequency handling, and date interval logic.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -263,7 +263,10 @@ describe("Schedule Occurrence", () => {
         .returning();
 
       // Link schedule to date
-      await ctx.db.update(schema.schedules).set({dateId: scheduleDate.id}).where(eq(schema.schedules.id, schedule.id));
+      await ctx.db
+        .update(schema.schedules)
+        .set({ dateId: scheduleDate.id })
+        .where(eq(schema.schedules.id, schedule.id));
 
       const fullSchedule = await ctx.db.query.schedules.findFirst({
         where: eq(schema.schedules.id, schedule.id),
@@ -324,11 +327,11 @@ describe("Schedule Occurrence", () => {
 
   describe("frequency display limits", () => {
     it("should apply smart limits based on frequency", () => {
-      const limits: Record<string, {maxOccurrences: number; maxDaysAhead: number}> = {
-        daily: {maxOccurrences: 7, maxDaysAhead: 14},
-        weekly: {maxOccurrences: 6, maxDaysAhead: 45},
-        monthly: {maxOccurrences: 6, maxDaysAhead: 180},
-        yearly: {maxOccurrences: 3, maxDaysAhead: 1095},
+      const limits: Record<string, { maxOccurrences: number; maxDaysAhead: number }> = {
+        daily: { maxOccurrences: 7, maxDaysAhead: 14 },
+        weekly: { maxOccurrences: 6, maxDaysAhead: 45 },
+        monthly: { maxOccurrences: 6, maxDaysAhead: 180 },
+        yearly: { maxOccurrences: 3, maxDaysAhead: 1095 },
       };
 
       expect(limits.daily.maxOccurrences).toBe(7);

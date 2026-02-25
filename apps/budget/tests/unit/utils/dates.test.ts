@@ -1,5 +1,5 @@
-import {describe, it, expect} from "vitest";
-import {CalendarDate} from "@internationalized/date";
+import { describe, it, expect } from "vitest";
+import { CalendarDate } from "@internationalized/date";
 import {
   getNextWeekday,
   getNextWeekdayFlexible,
@@ -436,12 +436,12 @@ describe("DateValue utility functions", () => {
 
     it("should handle various string date formats", () => {
       const formats = [
-        {input: "2024-01-01", expected: {year: 2024, month: 1, day: 1}},
-        {input: "2024-12-31", expected: {year: 2024, month: 12, day: 31}},
-        {input: "2023-06-15", expected: {year: 2023, month: 6, day: 15}},
+        { input: "2024-01-01", expected: { year: 2024, month: 1, day: 1 } },
+        { input: "2024-12-31", expected: { year: 2024, month: 12, day: 31 } },
+        { input: "2023-06-15", expected: { year: 2023, month: 6, day: 15 } },
       ];
 
-      formats.forEach(({input, expected}) => {
+      formats.forEach(({ input, expected }) => {
         const result = ensureDateValue(input);
         expect(result.year).toBe(expected.year);
         expect(result.month).toBe(expected.month);
@@ -534,13 +534,13 @@ describe("DateValue utility functions", () => {
 
     it("should handle various CalendarDate inputs", () => {
       const testCases = [
-        {year: 2024, month: 1, day: 15},
-        {year: 2025, month: 7, day: 4},
-        {year: 2023, month: 12, day: 31},
-        {year: 2024, month: 2, day: 29}, // Leap year
+        { year: 2024, month: 1, day: 15 },
+        { year: 2025, month: 7, day: 4 },
+        { year: 2023, month: 12, day: 31 },
+        { year: 2024, month: 2, day: 29 }, // Leap year
       ];
 
-      testCases.forEach(({year, month, day}) => {
+      testCases.forEach(({ year, month, day }) => {
         const calendarDate = new CalendarDate(year, month, day);
         const result = dateValueToJSDate(calendarDate);
 
@@ -578,9 +578,9 @@ describe("DateValue utility functions", () => {
     it("should work together in chart data transformation pipeline", () => {
       // Simulate the actual usage pattern in chart data transformations
       const mockData = [
-        {date: "2024-01-15", value: 100},
-        {date: new Date(2024, 1, 15), value: 200},
-        {date: new CalendarDate(2024, 3, 15), value: 300},
+        { date: "2024-01-15", value: 100 },
+        { date: new Date(2024, 1, 15), value: 200 },
+        { date: new CalendarDate(2024, 3, 15), value: 300 },
       ];
 
       const transformedData = mockData.map((item) => {
@@ -589,7 +589,7 @@ describe("DateValue utility functions", () => {
         return {
           x: jsDate,
           y: item.value,
-          metadata: {dateValue, originalDate: item.date},
+          metadata: { dateValue, originalDate: item.date },
         };
       });
 
@@ -609,10 +609,10 @@ describe("DateValue utility functions", () => {
 
     it("should handle edge cases in chart data transformation", () => {
       const edgeCaseData = [
-        {date: null, value: 100},
-        {date: undefined, value: 200},
-        {date: "", value: 300},
-        {date: "invalid", value: 400},
+        { date: null, value: 100 },
+        { date: undefined, value: 200 },
+        { date: "", value: 300 },
+        { date: "invalid", value: 400 },
       ];
 
       edgeCaseData.forEach((item) => {

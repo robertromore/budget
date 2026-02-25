@@ -17,22 +17,27 @@ A guided, step-by-step process for entering transactions with smart suggestions.
 ## Steps
 
 ### Step 1: Amount
+
 - Enter the transaction value
 - Use +/- to indicate income or expense
 
 ### Step 2: Date
+
 - Select when it occurred
 - Defaults to today
 
 ### Step 3: Payee
+
 - Choose from suggestions or create new
 - Based on common payees
 
 ### Step 4: Category
+
 - Suggested based on payee
 - Or select from your categories
 
 ### Step 5: Review
+
 - Confirm all details
 - Make any final adjustments
 

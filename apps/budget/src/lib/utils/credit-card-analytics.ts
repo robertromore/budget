@@ -116,10 +116,7 @@ export function calculateMonthlyUtilization(
   }
 
   // Group transactions by month
-  const dataByMonth = new Map<
-    string,
-    { charges: number; payments: number; netChange: number }
-  >();
+  const dataByMonth = new Map<string, { charges: number; payments: number; netChange: number }>();
 
   for (const tx of transactions) {
     const dateStr = getDateString(tx.date);
@@ -144,9 +141,7 @@ export function calculateMonthlyUtilization(
   }
 
   // Sort months chronologically
-  const sortedMonths = Array.from(dataByMonth.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
+  const sortedMonths = Array.from(dataByMonth.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
   // Calculate running balance and utilization
   // Start from the first month with a reasonable estimate
@@ -163,14 +158,11 @@ export function calculateMonthlyUtilization(
 
     // Utilization is based on charges made this month, not ending balance
     // This shows how much of the credit limit was actually USED, even if paid off
-    const utilization =
-      creditLimit > 0 ? (data.charges / creditLimit) * 100 : 0;
+    const utilization = creditLimit > 0 ? (data.charges / creditLimit) * 100 : 0;
     const availableCredit = Math.max(0, creditLimit - endingBalance);
 
     const [year, monthNum] = month.split("-");
-    const date = new Date(
-      Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0)
-    );
+    const date = new Date(Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0));
     const monthLabel = date.toLocaleDateString("en-US", {
       month: "long",
       year: "numeric",
@@ -243,15 +235,11 @@ export function analyzePayments(
   }
 
   // Sort and calculate payment status
-  const sortedMonths = Array.from(dataByMonth.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
+  const sortedMonths = Array.from(dataByMonth.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
   return sortedMonths.map(([month, data], idx) => {
     const [year, monthNum] = month.split("-");
-    const date = new Date(
-      Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0)
-    );
+    const date = new Date(Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0));
     const monthLabel = date.toLocaleDateString("en-US", {
       month: "long",
       year: "numeric",
@@ -307,11 +295,7 @@ export function calculatePayoffScenarios(
   const monthlyRate = (interestRate || 0) / 100 / 12;
 
   // Helper to calculate a single scenario
-  function calculateScenario(
-    id: string,
-    label: string,
-    payment: number
-  ): PayoffScenario | null {
+  function calculateScenario(id: string, label: string, payment: number): PayoffScenario | null {
     if (payment <= 0) return null;
 
     // Check if payment can cover interest
@@ -385,21 +369,13 @@ export function calculatePayoffScenarios(
 
   // Scenario 1: Minimum payment
   if (minimumPayment > 0) {
-    const minScenario = calculateScenario(
-      "minimum",
-      "Minimum Payment",
-      minimumPayment
-    );
+    const minScenario = calculateScenario("minimum", "Minimum Payment", minimumPayment);
     if (minScenario) scenarios.push(minScenario);
   }
 
   // Scenario 2: 2x minimum
   if (minimumPayment > 0) {
-    const doubleScenario = calculateScenario(
-      "double",
-      "2x Minimum",
-      minimumPayment * 2
-    );
+    const doubleScenario = calculateScenario("double", "2x Minimum", minimumPayment * 2);
     if (doubleScenario) scenarios.push(doubleScenario);
   }
 
@@ -407,32 +383,19 @@ export function calculatePayoffScenarios(
   const targetMonths = 12;
   if (monthlyRate > 0) {
     // Use loan payment formula: P = (r * PV) / (1 - (1 + r)^-n)
-    const payFor12 =
-      (monthlyRate * balance) / (1 - Math.pow(1 + monthlyRate, -targetMonths));
-    const twelveMonthScenario = calculateScenario(
-      "twelve-months",
-      "Pay in 12 Months",
-      payFor12
-    );
+    const payFor12 = (monthlyRate * balance) / (1 - Math.pow(1 + monthlyRate, -targetMonths));
+    const twelveMonthScenario = calculateScenario("twelve-months", "Pay in 12 Months", payFor12);
     if (twelveMonthScenario) scenarios.push(twelveMonthScenario);
   } else {
     // No interest - just divide
     const payFor12 = balance / targetMonths;
-    const twelveMonthScenario = calculateScenario(
-      "twelve-months",
-      "Pay in 12 Months",
-      payFor12
-    );
+    const twelveMonthScenario = calculateScenario("twelve-months", "Pay in 12 Months", payFor12);
     if (twelveMonthScenario) scenarios.push(twelveMonthScenario);
   }
 
   // Scenario 4: Custom payment (if provided)
   if (customPayment && customPayment > 0) {
-    const customScenario = calculateScenario(
-      "custom",
-      "Custom Payment",
-      customPayment
-    );
+    const customScenario = calculateScenario("custom", "Custom Payment", customPayment);
     if (customScenario) scenarios.push(customScenario);
   }
 
@@ -457,10 +420,7 @@ export function calculateBalanceHistory(
   }
 
   // Group transactions by month
-  const dataByMonth = new Map<
-    string,
-    { charges: number; payments: number }
-  >();
+  const dataByMonth = new Map<string, { charges: number; payments: number }>();
 
   for (const tx of transactions) {
     const dateStr = getDateString(tx.date);
@@ -482,9 +442,7 @@ export function calculateBalanceHistory(
   }
 
   // Sort months chronologically (oldest first)
-  const sortedMonths = Array.from(dataByMonth.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
+  const sortedMonths = Array.from(dataByMonth.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
   if (sortedMonths.length === 0) {
     return [];
@@ -513,14 +471,11 @@ export function calculateBalanceHistory(
   return sortedMonths.map(([month, data], idx) => {
     const endingBalance = endingBalances[idx];
 
-    const utilization =
-      creditLimit > 0 ? (endingBalance / creditLimit) * 100 : 0;
+    const utilization = creditLimit > 0 ? (endingBalance / creditLimit) * 100 : 0;
     const availableCredit = Math.max(0, (creditLimit || 0) - endingBalance);
 
     const [year, monthNum] = month.split("-");
-    const date = new Date(
-      Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0)
-    );
+    const date = new Date(Date.UTC(parseInt(year), parseInt(monthNum) - 1, 15, 12, 0, 0));
     const monthLabel = date.toLocaleDateString("en-US", {
       month: "long",
       year: "numeric",
@@ -550,10 +505,7 @@ export function calculateBalanceHistory(
  * - Positive balance = credit/overpayment → return 0 (no debt to pay off)
  * - Zero balance = no debt → return 0
  */
-export function getCurrentBalance(
-  account: Account,
-  transactions: TransactionsFormat[]
-): number {
+export function getCurrentBalance(account: Account, transactions: TransactionsFormat[]): number {
   // If account has a balance, check if it's debt (negative)
   if (account.balance !== undefined && account.balance !== null) {
     // Negative balance means debt - return the absolute value as the debt amount

@@ -11,21 +11,25 @@ Interactive charts and visualizations for understanding your financial patterns.
 ## Available Charts
 
 ### Spending Over Time
+
 - Monthly expense trends
 - Year-over-year comparisons
 - Seasonal pattern detection
 
 ### Income vs Expenses
+
 - Net savings visualization
 - Cash flow analysis
 - Balance projections
 
 ### Category Breakdown
+
 - Pie/donut charts by category
 - Spending distribution
 - Budget comparison
 
 ### Top Payees
+
 - Highest spending merchants
 - Transaction frequency analysis
 - Average transaction amounts
@@ -39,6 +43,7 @@ Interactive charts and visualizations for understanding your financial patterns.
 ## For Debt Accounts
 
 Credit cards and loans show:
+
 - Payment progress tracking
 - Interest accumulation
 - Payoff timeline projections

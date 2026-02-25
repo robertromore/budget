@@ -101,7 +101,8 @@ export class UtilityUsageRepository extends BaseRepository<
     // Calculate days in period
     const startDate = new Date(input.periodStart);
     const endDate = new Date(input.periodEnd);
-    const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const daysInPeriod =
+      Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
     // Calculate average daily usage
     const averageDailyUsage = calculateAverageDailyUsage(
@@ -184,9 +185,7 @@ export class UtilityUsageRepository extends BaseRepository<
     // Build where conditions
     const conditions = [eq(utilityUsage.accountId, accountId)];
     if (year) {
-      conditions.push(
-        sql`strftime('%Y', ${utilityUsage.periodStart}) = ${year.toString()}`
-      );
+      conditions.push(sql`strftime('%Y', ${utilityUsage.periodStart}) = ${year.toString()}`);
     }
 
     const result = await db
@@ -250,9 +249,7 @@ export class UtilityUsageRepository extends BaseRepository<
   /**
    * Get year-over-year comparison data
    */
-  async getYearOverYearComparison(
-    accountId: number
-  ): Promise<
+  async getYearOverYearComparison(accountId: number): Promise<
     Array<{
       month: number;
       year: number;

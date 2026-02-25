@@ -18,19 +18,21 @@ For HSA (Health Savings Account) accounts, record qualified medical expenses.
 
 ## Expense Details
 
-| Field | Description |
-|-------|-------------|
-| Amount | Cost of the expense |
-| Date | When incurred |
-| Provider | Doctor, pharmacy, etc. |
+| Field    | Description             |
+| -------- | ----------------------- |
+| Amount   | Cost of the expense     |
+| Date     | When incurred           |
+| Provider | Doctor, pharmacy, etc.  |
 | Category | Type of medical expense |
-| Receipt | Attach documentation |
-| Notes | Additional details |
+| Receipt  | Attach documentation    |
+| Notes    | Additional details      |
 
 ## Entry Methods
 
 ### Guided Setup
+
 Step-by-step wizard for complete documentation:
+
 1. Select expense type
 2. Enter amount and date
 3. Add provider details
@@ -38,7 +40,9 @@ Step-by-step wizard for complete documentation:
 5. Review and submit
 
 ### Manual Form
+
 Quick entry for familiar expenses:
+
 - All fields on one form
 - Faster for simple entries
 - Full control over details

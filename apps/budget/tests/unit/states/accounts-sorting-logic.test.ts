@@ -1,6 +1,6 @@
-import {describe, test, expect} from "vitest";
-import type {Account} from "$lib/schema";
-import {sortAccounts} from "$lib/states/entities/accounts-sorting";
+import { describe, test, expect } from "vitest";
+import type { Account } from "$lib/schema";
+import { sortAccounts } from "$lib/states/entities/accounts-sorting";
 
 // Mock accounts data for testing
 const mockAccounts = [
@@ -215,9 +215,9 @@ describe("Account Sorting Logic", () => {
   describe("Case Sensitivity", () => {
     test("should handle different case names correctly", () => {
       const mixedCaseAccounts: Account[] = [
-        {...mockAccounts[0], name: "apple Account"},
-        {...mockAccounts[1], name: "Banana Account"},
-        {...mockAccounts[2], name: "cherry Account"},
+        { ...mockAccounts[0], name: "apple Account" },
+        { ...mockAccounts[1], name: "Banana Account" },
+        { ...mockAccounts[2], name: "cherry Account" },
       ];
 
       const sorted = sortAccounts(mixedCaseAccounts, "name", "asc");

@@ -1,7 +1,11 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import { archiveTransaction, unarchiveTransaction, getTransactionDetail } from '$lib/query/transactions';
+import {
+  archiveTransaction,
+  unarchiveTransaction,
+  getTransactionDetail,
+} from '$lib/query/transactions';
 import type { Transaction } from '$lib/schema';
 import type { TransactionsFormat } from '$lib/types';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
@@ -37,11 +41,11 @@ const isTransfer = $derived(transaction.isTransfer === true);
 const isArchived = $derived(transaction.isArchived === true);
 
 async function handleToggleArchive() {
-	if (isArchived) {
-		await unarchiveTransaction.execute({ id });
-	} else {
-		await archiveTransaction.execute({ id });
-	}
+  if (isArchived) {
+    await unarchiveTransaction.execute({ id });
+  } else {
+    await archiveTransaction.execute({ id });
+  }
 }
 
 // Fetch transaction details when opening the details dialog

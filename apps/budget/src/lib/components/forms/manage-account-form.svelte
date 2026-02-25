@@ -14,7 +14,13 @@ import { Textarea } from '$lib/components/ui/textarea';
 import { WizardFormWrapper } from '$lib/components/wizard';
 import AccountWizard from '$lib/components/wizard/account-wizard.svelte';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
-import { accountTypeEnum, utilitySubtypeEnum, type Account, type AccountType, type UtilitySubtype } from '$lib/schema';
+import {
+  accountTypeEnum,
+  utilitySubtypeEnum,
+  type Account,
+  type AccountType,
+  type UtilitySubtype,
+} from '$lib/schema';
 import { superformInsertAccountSchema } from '$lib/schema/superforms';
 import Zap from '@lucide/svelte/icons/zap';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
@@ -65,7 +71,6 @@ const resolvedFormId =
 
 // Keep mode as 'manual' during SSR and initial hydration
 let mode = $state<'manual' | 'wizard'>('manual');
-
 
 const entityForm = useEntityForm({
   formData: manageAccountForm,
@@ -763,8 +768,9 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                       }}>
                       <Select.Trigger {...props}>
                         {$formData.utilitySubtype
-                          ? utilitySubtypeOptions.find((opt) => opt.value === $formData.utilitySubtype)
-                              ?.label
+                          ? utilitySubtypeOptions.find(
+                              (opt) => opt.value === $formData.utilitySubtype
+                            )?.label
                           : 'Select utility type'}
                       </Select.Trigger>
                       <Select.Content>

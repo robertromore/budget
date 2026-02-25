@@ -69,8 +69,25 @@ const OFFSET = 16; // Gap between target and tooltip
 const VIEWPORT_PADDING = 16;
 
 // All placement options to try, in order of preference per direction
-type Placement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'right';
-const PLACEMENTS: Placement[] = ['bottom', 'top', 'right', 'left', 'bottom-start', 'bottom-end', 'top-start', 'top-end'];
+type Placement =
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end'
+  | 'left'
+  | 'right';
+const PLACEMENTS: Placement[] = [
+  'bottom',
+  'top',
+  'right',
+  'left',
+  'bottom-start',
+  'bottom-end',
+  'top-start',
+  'top-end',
+];
 
 /**
  * Calculate position for a given placement
@@ -142,10 +159,21 @@ function calculateOverlapArea(tooltipTop: number, tooltipLeft: number, target: D
 /**
  * Clamp position to viewport bounds
  */
-function clampToViewport(top: number, left: number, viewportWidth: number, viewportHeight: number): { top: number; left: number } {
+function clampToViewport(
+  top: number,
+  left: number,
+  viewportWidth: number,
+  viewportHeight: number
+): { top: number; left: number } {
   return {
-    left: Math.max(VIEWPORT_PADDING, Math.min(left, viewportWidth - TOOLTIP_WIDTH - VIEWPORT_PADDING)),
-    top: Math.max(VIEWPORT_PADDING, Math.min(top, viewportHeight - TOOLTIP_HEIGHT_ESTIMATE - VIEWPORT_PADDING)),
+    left: Math.max(
+      VIEWPORT_PADDING,
+      Math.min(left, viewportWidth - TOOLTIP_WIDTH - VIEWPORT_PADDING)
+    ),
+    top: Math.max(
+      VIEWPORT_PADDING,
+      Math.min(top, viewportHeight - TOOLTIP_HEIGHT_ESTIMATE - VIEWPORT_PADDING)
+    ),
   };
 }
 
@@ -215,7 +243,10 @@ const tooltipStyle = $derived.by(() => {
     if (maxSpace === spaceBelow && spaceBelow >= TOOLTIP_HEIGHT_ESTIMATE) {
       bestPosition = { top: targetRect.bottom + OFFSET, left: bestPosition.left };
     } else if (maxSpace === spaceAbove && spaceAbove >= TOOLTIP_HEIGHT_ESTIMATE) {
-      bestPosition = { top: targetRect.top - OFFSET - TOOLTIP_HEIGHT_ESTIMATE, left: bestPosition.left };
+      bestPosition = {
+        top: targetRect.top - OFFSET - TOOLTIP_HEIGHT_ESTIMATE,
+        left: bestPosition.left,
+      };
     } else if (maxSpace === spaceRight && spaceRight >= TOOLTIP_WIDTH) {
       bestPosition = { top: bestPosition.top, left: targetRect.right + OFFSET };
     } else if (maxSpace === spaceLeft && spaceLeft >= TOOLTIP_WIDTH) {
@@ -223,7 +254,12 @@ const tooltipStyle = $derived.by(() => {
     }
 
     // Re-clamp after adjustment
-    bestPosition = clampToViewport(bestPosition.top, bestPosition.left, viewportWidth, viewportHeight);
+    bestPosition = clampToViewport(
+      bestPosition.top,
+      bestPosition.left,
+      viewportWidth,
+      viewportHeight
+    );
   }
 
   return {
@@ -240,20 +276,13 @@ const tooltipStyle = $derived.by(() => {
   style:position={tooltipStyle.position}
   style:top={tooltipStyle.top}
   style:left={tooltipStyle.left}
-  style:transform={tooltipStyle.transform}
->
+  style:transform={tooltipStyle.transform}>
   <!-- Header with step counter and skip button -->
   <div class="border-border flex items-center justify-between border-b p-3">
     <span class="text-muted-foreground text-xs font-medium">
       Step {currentIndex + 1} of {totalSteps}
     </span>
-    <Button
-      variant="ghost"
-      size="icon"
-      class="h-6 w-6"
-      onclick={onSkip}
-      aria-label="Skip tour"
-    >
+    <Button variant="ghost" size="icon" class="h-6 w-6" onclick={onSkip} aria-label="Skip tour">
       <X class="h-4 w-4" />
     </Button>
   </div>
@@ -273,13 +302,7 @@ const tooltipStyle = $derived.by(() => {
 
   <!-- Navigation buttons -->
   <div class="border-border flex items-center justify-between border-t p-3">
-    <Button
-      variant="ghost"
-      size="sm"
-      onclick={onPrevious}
-      disabled={isFirstStep}
-      class="gap-1"
-    >
+    <Button variant="ghost" size="sm" onclick={onPrevious} disabled={isFirstStep} class="gap-1">
       <ArrowLeft class="h-4 w-4" />
       Back
     </Button>
@@ -291,19 +314,14 @@ const tooltipStyle = $derived.by(() => {
           variant="outline"
           size="sm"
           onclick={() => onEnterBranch?.(branch.id)}
-          class="gap-1"
-        >
+          class="gap-1">
           <BookOpen class="h-4 w-4" />
           {branch.label}
         </Button>
       {/each}
 
       <!-- Next/Finish/Return button -->
-      <Button
-        size="sm"
-        onclick={onNext}
-        class="gap-1"
-      >
+      <Button size="sm" onclick={onNext} class="gap-1">
         {nextButtonText}
         {#if isLastStep && isInSubTour}
           <CornerDownRight class="h-4 w-4" />
@@ -326,10 +344,10 @@ const tooltipStyle = $derived.by(() => {
 </div>
 
 <style>
-  .spotlight-tooltip {
-    width: 320px;
-    max-width: calc(100vw - 32px);
-    pointer-events: auto;
-    z-index: 10000;
-  }
+.spotlight-tooltip {
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  pointer-events: auto;
+  z-index: 10000;
+}
 </style>

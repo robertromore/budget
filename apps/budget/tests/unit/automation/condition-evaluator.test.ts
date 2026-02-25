@@ -723,9 +723,7 @@ describe("Condition Groups", () => {
     });
 
     it("should handle single condition", () => {
-      const group = createTestConditionGroup("AND", [
-        createTestCondition("amount", "lessThan", 0),
-      ]);
+      const group = createTestConditionGroup("AND", [createTestCondition("amount", "lessThan", 0)]);
       const entity = createTestTransaction({ amount: -50 });
       expect(evaluateConditionGroup(group, entity)).toBe(true);
     });

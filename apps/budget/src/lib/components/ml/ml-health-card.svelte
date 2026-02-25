@@ -1,92 +1,83 @@
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
-  import * as Card from "$lib/components/ui/card";
-  import { cn, formatPercent } from "$lib/utils";
-  import Activity from "@lucide/svelte/icons/activity";
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import CheckCircle2 from "@lucide/svelte/icons/check-circle-2";
-  import CircleDashed from "@lucide/svelte/icons/circle-dashed";
-  import Clock from "@lucide/svelte/icons/clock";
-  import WifiOff from "@lucide/svelte/icons/wifi-off";
-  import XCircle from "@lucide/svelte/icons/x-circle";
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import { cn, formatPercent } from '$lib/utils';
+import Activity from '@lucide/svelte/icons/activity';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import CircleDashed from '@lucide/svelte/icons/circle-dashed';
+import Clock from '@lucide/svelte/icons/clock';
+import WifiOff from '@lucide/svelte/icons/wifi-off';
+import XCircle from '@lucide/svelte/icons/x-circle';
 
-  interface Props {
-    serviceName: string;
-    status: "healthy" | "degraded" | "error" | "offline" | "no_data" | (string & {});
-    metrics?: {
-      modelsLoaded?: number;
-      predictionLatencyMs?: number;
-      errorRate?: number;
-      accuracy?: number;
-    };
-    issues?: string[];
-    lastCheck?: string;
-    class?: string;
-  }
+interface Props {
+  serviceName: string;
+  status: 'healthy' | 'degraded' | 'error' | 'offline' | 'no_data' | (string & {});
+  metrics?: {
+    modelsLoaded?: number;
+    predictionLatencyMs?: number;
+    errorRate?: number;
+    accuracy?: number;
+  };
+  issues?: string[];
+  lastCheck?: string;
+  class?: string;
+}
 
-  let {
-    serviceName,
-    status,
-    metrics,
-    issues = [],
-    lastCheck,
-    class: className,
-  }: Props = $props();
+let { serviceName, status, metrics, issues = [], lastCheck, class: className }: Props = $props();
 
-  const statusConfig = {
-    healthy: {
-      icon: CheckCircle2,
-      variant: "default" as const,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-      label: "Healthy",
-    },
-    degraded: {
-      icon: AlertTriangle,
-      variant: "secondary" as const,
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-500/10",
-      label: "Degraded",
-    },
-    error: {
-      icon: XCircle,
-      variant: "destructive" as const,
-      color: "text-red-500",
-      bgColor: "bg-red-500/10",
-      label: "Error",
-    },
-    offline: {
-      icon: WifiOff,
-      variant: "outline" as const,
-      color: "text-muted-foreground",
-      bgColor: "bg-muted/10",
-      label: "Offline",
-    },
-    no_data: {
-      icon: CircleDashed,
-      variant: "outline" as const,
-      color: "text-muted-foreground",
-      bgColor: "bg-muted/10",
-      label: "No Data",
-    },
-    // Fallback for unknown status values
-    unknown: {
-      icon: Activity,
-      variant: "outline" as const,
-      color: "text-muted-foreground",
-      bgColor: "bg-muted/10",
-      label: "Unknown",
-    },
-  } as const;
+const statusConfig = {
+  healthy: {
+    icon: CheckCircle2,
+    variant: 'default' as const,
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    label: 'Healthy',
+  },
+  degraded: {
+    icon: AlertTriangle,
+    variant: 'secondary' as const,
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    label: 'Degraded',
+  },
+  error: {
+    icon: XCircle,
+    variant: 'destructive' as const,
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    label: 'Error',
+  },
+  offline: {
+    icon: WifiOff,
+    variant: 'outline' as const,
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted/10',
+    label: 'Offline',
+  },
+  no_data: {
+    icon: CircleDashed,
+    variant: 'outline' as const,
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted/10',
+    label: 'No Data',
+  },
+  // Fallback for unknown status values
+  unknown: {
+    icon: Activity,
+    variant: 'outline' as const,
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted/10',
+    label: 'Unknown',
+  },
+} as const;
 
-  type StatusKey = keyof typeof statusConfig;
-  const config = $derived(
-    statusConfig[status as StatusKey] ?? statusConfig.unknown
-  );
+type StatusKey = keyof typeof statusConfig;
+const config = $derived(statusConfig[status as StatusKey] ?? statusConfig.unknown);
 </script>
 
-<Card.Root class={cn("relative overflow-hidden", className)}>
-  <div class={cn("absolute inset-0 opacity-5", config.bgColor)}></div>
+<Card.Root class={cn('relative overflow-hidden', className)}>
+  <div class={cn('absolute inset-0 opacity-5', config.bgColor)}></div>
   <Card.Header class="relative pb-2">
     <div class="flex items-center justify-between">
       <Card.Title class="text-sm font-medium">{serviceName}</Card.Title>

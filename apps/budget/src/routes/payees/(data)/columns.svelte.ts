@@ -39,7 +39,14 @@ const statusOptions: FacetedFilterOption[] = [
 ];
 
 // Known payee types (everything else is treated as "other")
-const knownPayeeTypes = ["merchant", "utility", "employer", "financial_institution", "government", "individual"];
+const knownPayeeTypes = [
+  "merchant",
+  "utility",
+  "employer",
+  "financial_institution",
+  "government",
+  "individual",
+];
 
 interface PayeeColumnActions {
   onView: (payee: Payee) => void;
@@ -118,11 +125,11 @@ export function columns(actions: PayeeColumnActions): ColumnDef<Payee>[] {
         if (!filterValue) return true;
         const value = row.getValue(columnId) as string;
         // Handle { operator, values } format from GenericFacetedFilter
-        if (typeof filterValue === 'object' && 'values' in filterValue) {
+        if (typeof filterValue === "object" && "values" in filterValue) {
           const { operator, values } = filterValue as { operator: string; values: string[] };
           if (!values || values.length === 0) return true;
           const isIncluded = values.includes(value);
-          return operator === 'arrNotIncludesSome' ? !isIncluded : isIncluded;
+          return operator === "arrNotIncludesSome" ? !isIncluded : isIncluded;
         }
         // Handle array format
         if (Array.isArray(filterValue)) {
@@ -218,11 +225,11 @@ export function columns(actions: PayeeColumnActions): ColumnDef<Payee>[] {
         if (!filterValue) return true;
         const value = row.getValue(columnId) as string;
         // Handle { operator, values } format from GenericFacetedFilter
-        if (typeof filterValue === 'object' && 'values' in filterValue) {
+        if (typeof filterValue === "object" && "values" in filterValue) {
           const { operator, values } = filterValue as { operator: string; values: string[] };
           if (!values || values.length === 0) return true;
           const isIncluded = values.includes(value);
-          return operator === 'arrNotIncludesSome' ? !isIncluded : isIncluded;
+          return operator === "arrNotIncludesSome" ? !isIncluded : isIncluded;
         }
         // Handle array format
         if (Array.isArray(filterValue)) {

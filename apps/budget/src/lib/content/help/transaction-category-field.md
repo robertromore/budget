@@ -17,12 +17,14 @@ Categories help organize transactions for budgeting and reporting.
 ## Category Hierarchy
 
 Categories can be organized in groups:
+
 - **Parent categories** (e.g., "Food")
 - **Sub-categories** (e.g., "Food > Groceries", "Food > Dining Out")
 
 ## Smart Categorization
 
 When AI intelligence is enabled:
+
 - Categories are suggested based on payee
 - Similar transactions inform recommendations
 - Confidence scores indicate suggestion quality

@@ -1,18 +1,17 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Schedule Form Integration", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/schedules");
     await page.waitForLoadState("networkidle");
   });
 
   describeE2E("Add Schedule Dialog", () => {
-    test("should open add schedule dialog", async ({page}) => {
+    test("should open add schedule dialog", async ({ page }) => {
       // Click the "Add Schedule" button in sidebar
       await page.click('[title="Add Schedule"]');
 
@@ -27,7 +26,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator('[name="amount"]')).toBeVisible();
     });
 
-    test("should close dialog on cancel", async ({page}) => {
+    test("should close dialog on cancel", async ({ page }) => {
       await page.click('[title="Add Schedule"]');
       await expect(page.locator('[data-testid="add-schedule-dialog"]')).toBeVisible();
 
@@ -35,7 +34,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator('[data-testid="add-schedule-dialog"]')).not.toBeVisible();
     });
 
-    test("should close dialog on escape key", async ({page}) => {
+    test("should close dialog on escape key", async ({ page }) => {
       await page.click('[title="Add Schedule"]');
       await expect(page.locator('[data-testid="add-schedule-dialog"]')).toBeVisible();
 
@@ -45,12 +44,12 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Schedule Form Validation", () => {
-    test.beforeEach(async ({page}) => {
+    test.beforeEach(async ({ page }) => {
       await page.click('[title="Add Schedule"]');
       await page.waitForSelector('[data-testid="add-schedule-dialog"]');
     });
 
-    test("should show validation errors for empty required fields", async ({page}) => {
+    test("should show validation errors for empty required fields", async ({ page }) => {
       // Try to submit empty form
       await page.click("text=Save");
 
@@ -60,7 +59,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator("text=Account is required")).toBeVisible();
     });
 
-    test("should validate schedule name length", async ({page}) => {
+    test("should validate schedule name length", async ({ page }) => {
       // Test name too short
       await page.fill('[name="name"]', "a");
       await page.click("text=Save");
@@ -75,20 +74,20 @@ describeE2E("Schedule Form Integration", () => {
       ).toBeVisible();
     });
 
-    test("should validate schedule name characters", async ({page}) => {
+    test("should validate schedule name characters", async ({ page }) => {
       await page.fill('[name="name"]', "Invalid@Name!");
       await page.click("text=Save");
       await expect(page.locator("text=Schedule name contains invalid characters")).toBeVisible();
     });
 
-    test("should validate amount is positive", async ({page}) => {
+    test("should validate amount is positive", async ({ page }) => {
       await page.fill('[name="name"]', "Test Schedule");
       await page.fill('[name="amount"]', "-100");
       await page.click("text=Save");
       await expect(page.locator("text=Amount must be positive")).toBeVisible();
     });
 
-    test("should validate range amounts", async ({page}) => {
+    test("should validate range amounts", async ({ page }) => {
       // Select range amount type
       await page.click('[data-testid="amount-type-range"]');
 
@@ -102,16 +101,16 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Schedule Form Functionality", () => {
-    test.beforeEach(async ({page}) => {
+    test.beforeEach(async ({ page }) => {
       await page.click('[title="Add Schedule"]');
       await page.waitForSelector('[data-testid="add-schedule-dialog"]');
     });
 
-    test("should create exact amount schedule successfully", async ({page}) => {
+    test("should create exact amount schedule successfully", async ({ page }) => {
       // Fill in required fields
       await page.fill('[name="name"]', "Monthly Rent");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "1500");
 
       // Submit form
@@ -128,10 +127,10 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator('[data-testid="amount-type-exact"]')).toBeVisible();
     });
 
-    test("should create range amount schedule successfully", async ({page}) => {
+    test("should create range amount schedule successfully", async ({ page }) => {
       await page.fill('[name="name"]', "Variable Utilities");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
 
       // Select range amount type
       await page.click('[data-testid="amount-type-range"]');
@@ -150,10 +149,10 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator('[data-testid="amount-type-range"]')).toBeVisible();
     });
 
-    test("should create approximate amount schedule successfully", async ({page}) => {
+    test("should create approximate amount schedule successfully", async ({ page }) => {
       await page.fill('[name="name"]', "Approximate Groceries");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
 
       // Select approximate amount type
       await page.click('[data-testid="amount-type-approximate"]');
@@ -171,10 +170,10 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator('[data-testid="amount-type-approximate"]')).toBeVisible();
     });
 
-    test("should toggle recurring schedule options", async ({page}) => {
+    test("should toggle recurring schedule options", async ({ page }) => {
       await page.fill('[name="name"]', "Recurring Test");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "100");
 
       // Enable recurring
@@ -191,10 +190,10 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator('[data-testid="recurring-date-input"]')).not.toBeVisible();
     });
 
-    test("should configure auto-add option", async ({page}) => {
+    test("should configure auto-add option", async ({ page }) => {
       await page.fill('[name="name"]', "Auto Add Test");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "50");
 
       // Enable auto-add
@@ -208,19 +207,19 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Recurring Date Configuration", () => {
-    test.beforeEach(async ({page}) => {
+    test.beforeEach(async ({ page }) => {
       await page.click('[title="Add Schedule"]');
       await page.waitForSelector('[data-testid="add-schedule-dialog"]');
 
       // Fill basic fields and enable recurring
       await page.fill('[name="name"]', "Recurring Schedule");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "100");
       await page.check('[data-testid="recurring-checkbox"]');
     });
 
-    test("should configure daily recurrence", async ({page}) => {
+    test("should configure daily recurrence", async ({ page }) => {
       await page.selectOption('[data-testid="frequency-selector"]', "daily");
       await page.fill('[data-testid="interval-input"]', "2"); // Every 2 days
 
@@ -232,7 +231,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator("text=Every 2 days")).toBeVisible();
     });
 
-    test("should configure weekly recurrence", async ({page}) => {
+    test("should configure weekly recurrence", async ({ page }) => {
       await page.selectOption('[data-testid="frequency-selector"]', "weekly");
       await page.fill('[data-testid="interval-input"]', "1"); // Every week
 
@@ -248,7 +247,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator("text=Weekly on Mon, Fri")).toBeVisible();
     });
 
-    test("should configure monthly recurrence", async ({page}) => {
+    test("should configure monthly recurrence", async ({ page }) => {
       await page.selectOption('[data-testid="frequency-selector"]', "monthly");
       await page.fill('[data-testid="interval-input"]', "3"); // Every 3 months (quarterly)
 
@@ -260,7 +259,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator("text=Every 3 months")).toBeVisible();
     });
 
-    test("should configure yearly recurrence", async ({page}) => {
+    test("should configure yearly recurrence", async ({ page }) => {
       await page.selectOption('[data-testid="frequency-selector"]', "yearly");
 
       await page.click("text=Save");
@@ -271,7 +270,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator("text=Yearly")).toBeVisible();
     });
 
-    test("should set end conditions", async ({page}) => {
+    test("should set end conditions", async ({ page }) => {
       await page.selectOption('[data-testid="frequency-selector"]', "monthly");
 
       // Set limit
@@ -286,7 +285,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(scheduleRow.locator("text=12 occurrences")).toBeVisible();
     });
 
-    test("should configure weekend adjustments", async ({page}) => {
+    test("should configure weekend adjustments", async ({ page }) => {
       await page.selectOption('[data-testid="frequency-selector"]', "weekly");
 
       // Configure weekend adjustment
@@ -303,18 +302,18 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Edit Schedule", () => {
-    test.beforeEach(async ({page}) => {
+    test.beforeEach(async ({ page }) => {
       // Create a test schedule first
       await page.click('[title="Add Schedule"]');
       await page.fill('[name="name"]', "Test Schedule for Edit");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "100");
       await page.click("text=Save");
       await page.waitForSelector('[data-testid="schedule-row"]:has-text("Test Schedule for Edit")');
     });
 
-    test("should open edit dialog", async ({page}) => {
+    test("should open edit dialog", async ({ page }) => {
       const scheduleRow = page.locator(
         '[data-testid="schedule-row"]:has-text("Test Schedule for Edit")'
       );
@@ -329,7 +328,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator('[name="amount"]')).toHaveValue("100");
     });
 
-    test("should update schedule successfully", async ({page}) => {
+    test("should update schedule successfully", async ({ page }) => {
       const scheduleRow = page.locator(
         '[data-testid="schedule-row"]:has-text("Test Schedule for Edit")'
       );
@@ -348,7 +347,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator("text=$250.00")).toBeVisible();
     });
 
-    test("should handle edit validation errors", async ({page}) => {
+    test("should handle edit validation errors", async ({ page }) => {
       const scheduleRow = page.locator(
         '[data-testid="schedule-row"]:has-text("Test Schedule for Edit")'
       );
@@ -366,18 +365,18 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Delete Schedule", () => {
-    test.beforeEach(async ({page}) => {
+    test.beforeEach(async ({ page }) => {
       // Create a test schedule to delete
       await page.click('[title="Add Schedule"]');
       await page.fill('[name="name"]', "Schedule to Delete");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "75");
       await page.click("text=Save");
       await page.waitForSelector('[data-testid="schedule-row"]:has-text("Schedule to Delete")');
     });
 
-    test("should show delete confirmation dialog", async ({page}) => {
+    test("should show delete confirmation dialog", async ({ page }) => {
       const scheduleRow = page.locator(
         '[data-testid="schedule-row"]:has-text("Schedule to Delete")'
       );
@@ -391,7 +390,7 @@ describeE2E("Schedule Form Integration", () => {
       ).toBeVisible();
     });
 
-    test("should cancel delete operation", async ({page}) => {
+    test("should cancel delete operation", async ({ page }) => {
       const scheduleRow = page.locator(
         '[data-testid="schedule-row"]:has-text("Schedule to Delete")'
       );
@@ -404,7 +403,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator("text=Schedule to Delete")).toBeVisible(); // Still exists
     });
 
-    test("should delete schedule successfully", async ({page}) => {
+    test("should delete schedule successfully", async ({ page }) => {
       const scheduleRow = page.locator(
         '[data-testid="schedule-row"]:has-text("Schedule to Delete")'
       );
@@ -419,25 +418,25 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Schedule Status Management", () => {
-    test.beforeEach(async ({page}) => {
+    test.beforeEach(async ({ page }) => {
       // Create active and inactive schedules for testing
       await page.click('[title="Add Schedule"]');
       await page.fill('[name="name"]', "Active Schedule");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "100");
       await page.click("text=Save");
 
       await page.click('[title="Add Schedule"]');
       await page.fill('[name="name"]', "Inactive Schedule");
-      await page.selectOption('[name="payeeId"]', {index: 1});
-      await page.selectOption('[name="accountId"]', {index: 1});
+      await page.selectOption('[name="payeeId"]', { index: 1 });
+      await page.selectOption('[name="accountId"]', { index: 1 });
       await page.fill('[name="amount"]', "50");
       await page.selectOption('[name="status"]', "inactive");
       await page.click("text=Save");
     });
 
-    test("should toggle schedule status", async ({page}) => {
+    test("should toggle schedule status", async ({ page }) => {
       const activeSchedule = page.locator(
         '[data-testid="schedule-row"]:has-text("Active Schedule")'
       );
@@ -451,7 +450,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(activeSchedule.locator('[data-testid="status-active"]')).toBeVisible();
     });
 
-    test("should filter schedules by status", async ({page}) => {
+    test("should filter schedules by status", async ({ page }) => {
       // Initially both schedules should be visible
       await expect(page.locator("text=Active Schedule")).toBeVisible();
       await expect(page.locator("text=Inactive Schedule")).toBeVisible();
@@ -474,7 +473,7 @@ describeE2E("Schedule Form Integration", () => {
   });
 
   describeE2E("Accessibility", () => {
-    test("add schedule dialog should be accessible", async ({page}) => {
+    test("add schedule dialog should be accessible", async ({ page }) => {
       await page.click('[title="Add Schedule"]');
 
       // Check dialog ARIA attributes
@@ -490,7 +489,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator('label[for="amount"]')).toBeVisible();
     });
 
-    test("should support keyboard navigation in forms", async ({page}) => {
+    test("should support keyboard navigation in forms", async ({ page }) => {
       await page.click('[title="Add Schedule"]');
 
       // Tab through form fields
@@ -507,7 +506,7 @@ describeE2E("Schedule Form Integration", () => {
       await expect(page.locator('[name="amount"]')).toBeFocused();
     });
 
-    test("should announce form validation errors to screen readers", async ({page}) => {
+    test("should announce form validation errors to screen readers", async ({ page }) => {
       await page.click('[title="Add Schedule"]');
       await page.click("text=Save"); // Submit empty form
 

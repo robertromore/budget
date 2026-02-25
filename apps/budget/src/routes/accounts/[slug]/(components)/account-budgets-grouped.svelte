@@ -84,7 +84,8 @@ function getBudgetsForSection(key: keyof GroupedAccountBudgets): BudgetWithRelat
         {@const Icon = section.icon}
         <Collapsible.Root bind:open={openSections[section.key]}>
           <div class="rounded-lg border">
-            <Collapsible.Trigger class="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+            <Collapsible.Trigger
+              class="hover:bg-muted/50 flex w-full items-center justify-between p-4 transition-colors">
               <div class="flex items-center gap-3">
                 <Icon class="h-5 w-5 {section.iconClass}" />
                 <div class="flex flex-col items-start">
@@ -92,12 +93,15 @@ function getBudgetsForSection(key: keyof GroupedAccountBudgets): BudgetWithRelat
                     <span class="font-medium">{section.title}</span>
                     <Badge variant="secondary" class="text-xs">{budgets.length}</Badge>
                   </div>
-                  <span class="text-xs text-muted-foreground">{section.description}</span>
+                  <span class="text-muted-foreground text-xs">{section.description}</span>
                 </div>
               </div>
               <ChevronDown
-                class="h-4 w-4 text-muted-foreground transition-transform duration-200 {openSections[section.key] ? 'rotate-180' : ''}"
-              />
+                class="text-muted-foreground h-4 w-4 transition-transform duration-200 {openSections[
+                  section.key
+                ]
+                  ? 'rotate-180'
+                  : ''}" />
             </Collapsible.Trigger>
             <Collapsible.Content>
               <div class="border-t p-4">
@@ -111,8 +115,7 @@ function getBudgetsForSection(key: keyof GroupedAccountBudgets): BudgetWithRelat
                   {onArchive}
                   {onDelete}
                   {onBulkDelete}
-                  {onBulkArchive}
-                />
+                  {onBulkArchive} />
               </div>
             </Collapsible.Content>
           </div>

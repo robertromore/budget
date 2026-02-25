@@ -20,8 +20,8 @@ import { getContext } from 'svelte';
 
 // Get sheet controls from layout
 const sheets = getContext<{
-	openGroupManagement: () => void;
-	openSeedDefaultCategories: () => void;
+  openGroupManagement: () => void;
+  openSeedDefaultCategories: () => void;
 }>('categories-sheets');
 import type { CategoryTreeNode } from '$lib/types/categories';
 import { goto } from '$app/navigation';
@@ -48,9 +48,7 @@ const categories = $derived(categoriesState.categories.values());
 
 // Use demo data when in demo mode (no conversion needed - already Category type)
 const categoriesArray = $derived<Category[]>(
-  isDemoView
-    ? demoMode.demoCategories
-    : Array.from(categories)
+  isDemoView ? demoMode.demoCategories : Array.from(categories)
 );
 const hasNoCategories = $derived(categoriesArray.length === 0);
 
@@ -95,7 +93,6 @@ const displayedCategories = $derived.by(() => {
     };
   });
 });
-
 
 const shouldShowNoCategories = $derived.by(() => {
   return !search.query.trim() && hasNoCategories;
@@ -255,7 +252,11 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 
 <div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="categories-page-header" data-help-title="Categories Page" data-tour-id="categories-page">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+    data-help-id="categories-page-header"
+    data-help-title="Categories Page"
+    data-tour-id="categories-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
       <p class="text-muted-foreground">
@@ -269,11 +270,17 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     <div class="flex items-center gap-2">
       {#if showSecondaryOnPage}
         <SeedDefaultCategoriesButton data-tour-id="seed-categories-button" />
-        <Button variant="outline" onclick={() => sheets.openGroupManagement()} data-tour-id="categories-groups-button">
+        <Button
+          variant="outline"
+          onclick={() => sheets.openGroupManagement()}
+          data-tour-id="categories-groups-button">
           <FolderCog class="mr-2 h-4 w-4" />
           Group Management
         </Button>
-        <Button variant="outline" href="/categories/analytics" data-tour-id="categories-analytics-button">
+        <Button
+          variant="outline"
+          href="/categories/analytics"
+          data-tour-id="categories-analytics-button">
           <BarChart3 class="mr-2 h-4 w-4" />
           Analytics
         </Button>
@@ -343,19 +350,22 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     </div>
   {:else}
     <!-- Search Results -->
-    <div data-help-id="categories-list" data-help-title="Categories List" data-tour-id="categories-list">
-    <CategorySearchResults
-      categories={displayedCategories}
-      isLoading={isSearching}
-      searchQuery={search.query}
-      viewMode={search.viewMode}
-      {isReorderMode}
-      onView={viewCategory}
-      onEdit={editCategory}
-      onDelete={deleteCategory}
-      onBulkDelete={bulkDeleteCategories}
-      onViewAnalytics={viewAnalytics}
-      onReorder={handleReorder} />
+    <div
+      data-help-id="categories-list"
+      data-help-title="Categories List"
+      data-tour-id="categories-list">
+      <CategorySearchResults
+        categories={displayedCategories}
+        isLoading={isSearching}
+        searchQuery={search.query}
+        viewMode={search.viewMode}
+        {isReorderMode}
+        onView={viewCategory}
+        onEdit={editCategory}
+        onDelete={deleteCategory}
+        onBulkDelete={bulkDeleteCategories}
+        onViewAnalytics={viewAnalytics}
+        onReorder={handleReorder} />
     </div>
   {/if}
 

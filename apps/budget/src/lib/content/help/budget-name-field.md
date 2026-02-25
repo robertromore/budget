@@ -6,7 +6,8 @@ related: [budget-type-field, budget-amount-field]
 
 # Budget Name
 
-Give your budget a clear, descriptive name that helps you identify it at a glance.
+Give your budget a clear, descriptive name that helps you identify it at a
+glance.
 
 ## Naming Tips
 
@@ -16,12 +17,13 @@ Give your budget a clear, descriptive name that helps you identify it at a glanc
 
 ## Examples
 
-| Budget Type | Good Names |
-|------------|------------|
+| Budget Type      | Good Names                                |
+| ---------------- | ----------------------------------------- |
 | Monthly expenses | "Groceries", "Utilities", "Entertainment" |
-| Savings goals | "Emergency Fund", "House Down Payment" |
-| Projects | "Kitchen Renovation", "Wedding" |
+| Savings goals    | "Emergency Fund", "House Down Payment"    |
+| Projects         | "Kitchen Renovation", "Wedding"           |
 
 ## Character Limit
 
-Names can be up to 100 characters, but shorter names work better in lists and reports.
+Names can be up to 100 characters, but shorter names work better in lists and
+reports.

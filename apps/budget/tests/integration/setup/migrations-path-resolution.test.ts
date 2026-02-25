@@ -39,9 +39,7 @@ describe("Integration test DB migration path resolution", () => {
       const existsSpy = vi.spyOn(fs, "existsSync");
       existsSpy.mockReturnValue(false);
 
-      expect(() => resolver.resolve()).toThrow(
-        "Could not locate drizzle migrations folder."
-      );
+      expect(() => resolver.resolve()).toThrow("Could not locate drizzle migrations folder.");
       expect(existsSpy).toHaveBeenCalledTimes(3);
     });
   }

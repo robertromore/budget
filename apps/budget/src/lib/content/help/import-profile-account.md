@@ -11,6 +11,7 @@ Link this import profile to a specific account.
 ## Benefits
 
 When an account is associated:
+
 - Transactions import directly to that account
 - No need to select destination each time
 - Speeds up the import workflow
@@ -24,6 +25,7 @@ When an account is associated:
 ## Default Profile
 
 When marked as default:
+
 - Auto-selected when importing to this account
 - Only one profile per account can be default
 - Useful for your most common import source

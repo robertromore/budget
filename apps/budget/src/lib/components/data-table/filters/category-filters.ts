@@ -1,10 +1,6 @@
 import type { TopCategoryData } from "$lib/types";
 import type { Row } from "@tanstack/table-core";
-import type {
-  AmountFilterValue,
-  FilterRegistry,
-  TextFilterValue
-} from "./filter-registry";
+import type { AmountFilterValue, FilterRegistry, TextFilterValue } from "./filter-registry";
 
 /**
  * Filter categories by amount range

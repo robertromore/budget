@@ -1,9 +1,6 @@
 import type { MonthAnnotation } from "$lib/schema/month-annotations";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import {
-  AnnotationRepository,
-  type UpdateAnnotationData,
-} from "./repository";
+import { AnnotationRepository, type UpdateAnnotationData } from "./repository";
 
 export interface CreateAnnotationData {
   month: string;
@@ -114,10 +111,7 @@ export class AnnotationService {
   /**
    * Get an annotation by ID
    */
-  async getAnnotationById(
-    id: number,
-    workspaceId: number
-  ): Promise<MonthAnnotation> {
+  async getAnnotationById(id: number, workspaceId: number): Promise<MonthAnnotation> {
     const annotation = await this.repository.findById(id, workspaceId);
     if (!annotation) {
       throw new NotFoundError("MonthAnnotation", id);

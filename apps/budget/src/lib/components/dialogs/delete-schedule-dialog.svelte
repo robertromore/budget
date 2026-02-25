@@ -14,9 +14,7 @@ const _deleteScheduleDialog = $derived(deleteScheduleDialog);
 const _deleteScheduleId = $derived(deleteScheduleId);
 
 // Fetch all budgets to check for linked ones
-const budgetsQuery = $derived(
-  _deleteScheduleId.current > 0 ? listBudgets().options() : null
-);
+const budgetsQuery = $derived(_deleteScheduleId.current > 0 ? listBudgets().options() : null);
 
 // Find budgets linked to this schedule
 const linkedBudgets = $derived.by(() => {
@@ -25,7 +23,8 @@ const linkedBudgets = $derived.by(() => {
   return budgetsQuery.data.filter((budget) => {
     if (!budget.metadata) return false;
     const metadata = budget.metadata as BudgetMetadata;
-    const linkedScheduleId = metadata.scheduledExpense?.linkedScheduleId || metadata.goal?.linkedScheduleId;
+    const linkedScheduleId =
+      metadata.scheduledExpense?.linkedScheduleId || metadata.goal?.linkedScheduleId;
     return linkedScheduleId === _deleteScheduleId.current;
   });
 });
@@ -98,11 +97,13 @@ const confirmDeleteSchedule = async () => {
           </Label>
           <p class="text-muted-foreground text-xs">
             {#if linkedBudgets.length === 1}
-              The budget "{linkedBudgets[0].name}" is linked to this schedule. Check this box to delete
-              it as well, or leave unchecked to keep the budget.
+              The budget "{linkedBudgets[0].name}" is linked to this schedule. Check this box to
+              delete it as well, or leave unchecked to keep the budget.
             {:else}
-              The following budgets are linked to this schedule: {linkedBudgets.map(b => b.name).join(', ')}.
-              Check this box to delete them as well, or leave unchecked to keep the budgets.
+              The following budgets are linked to this schedule: {linkedBudgets
+                .map((b) => b.name)
+                .join(', ')}. Check this box to delete them as well, or leave unchecked to keep the
+              budgets.
             {/if}
           </p>
         </div>

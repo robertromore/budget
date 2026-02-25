@@ -64,9 +64,7 @@ export class RuleEngine {
     ];
 
     for (const entityType of entityTypes) {
-      const unsubscribe = automationEvents.onAll(entityType, (event) =>
-        this.handleEvent(event)
-      );
+      const unsubscribe = automationEvents.onAll(entityType, (event) => this.handleEvent(event));
       this.unsubscribers.push(unsubscribe);
     }
 
@@ -95,10 +93,7 @@ export class RuleEngine {
 
     try {
       // Find all enabled rules that match this trigger
-      const rules = await this.repository.findByTrigger(
-        event.entityType,
-        event.event
-      );
+      const rules = await this.repository.findByTrigger(event.entityType, event.event);
 
       // Sort by priority (higher first)
       rules.sort((a, b) => b.priority - a.priority);
@@ -178,9 +173,7 @@ export class RuleEngine {
       actionsExecuted: actionResults,
       executionTimeMs: Date.now() - startTime,
       entitySnapshot: entity,
-      errorMessage: allSuccessful
-        ? undefined
-        : actionResults.find((r) => !r.success)?.error,
+      errorMessage: allSuccessful ? undefined : actionResults.find((r) => !r.success)?.error,
     });
 
     // Update rule stats

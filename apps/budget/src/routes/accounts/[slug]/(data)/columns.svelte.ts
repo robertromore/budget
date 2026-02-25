@@ -186,7 +186,11 @@ export const columns = (
       cell: (info) => {
         const transaction = info.row.original;
         // Show dash for upcoming scheduled transactions, markers, or no seq assigned
-        if (transaction.status === "scheduled" || transaction.isReconciliationMarker || info.getValue() === null) {
+        if (
+          transaction.status === "scheduled" ||
+          transaction.isReconciliationMarker ||
+          info.getValue() === null
+        ) {
           return "—";
         }
         return info.getValue();
@@ -258,14 +262,11 @@ export const columns = (
           icon: CalendarDays,
           column,
           value: [],
-            component: () =>
-              renderComponent(
-                DataTableFacetedFilterDateWithOperators as any,
-                {
-                  column,
-                  title: "Date",
-                }
-              ),
+          component: () =>
+            renderComponent(DataTableFacetedFilterDateWithOperators as any, {
+              column,
+              title: "Date",
+            }),
         }),
         availableFilters: [
           {
@@ -319,7 +320,8 @@ export const columns = (
             component: EditablePayeeCell,
             props: {
               value: info.getValue() as number | null,
-              onUpdateValue: (new_value: number | null) => updateHandler(info, "payeeId", new_value),
+              onUpdateValue: (new_value: number | null) =>
+                updateHandler(info, "payeeId", new_value),
               accounts: transferAccounts,
               currentAccountId: transaction.accountId,
               onTransferSelect: onTransferSelect
@@ -396,7 +398,7 @@ export const columns = (
         if (transaction.status === "scheduled") {
           return renderComponent(ReadOnlyCellWithIcon, {
             value: notes || "—",
-            icon: StickyNote
+            icon: StickyNote,
           });
         }
 

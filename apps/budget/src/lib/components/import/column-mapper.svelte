@@ -93,7 +93,12 @@ $effect(() => {
           mappedField = 'notes';
         }
         // Profile uses 'inflow'/'outflow' (or legacy 'debit'/'credit'), component uses 'debit/credit'
-        else if (field === 'inflow' || field === 'outflow' || field === 'debit' || field === 'credit') {
+        else if (
+          field === 'inflow' ||
+          field === 'outflow' ||
+          field === 'debit' ||
+          field === 'credit'
+        ) {
           mappedField = 'debit/credit';
         }
         invertedMapping[column] = mappedField;
@@ -236,7 +241,9 @@ function handleFieldChange(field: string, newValue: string) {
     delete newMapping[newValue];
 
     // Find if there's another column still mapped to the old field
-    const remainingColumn = Object.entries(newMapping).find(([, target]) => target === oldField)?.[0];
+    const remainingColumn = Object.entries(newMapping).find(
+      ([, target]) => target === oldField
+    )?.[0];
     fieldSelectValues[oldField] = remainingColumn || '';
   }
 
@@ -275,12 +282,13 @@ const previewMappings = $derived.by(() => {
           return {
             field: { value: 'debit/credit', label: isDebit ? 'Debit' : 'Credit' },
             column: col,
-            isDebit
+            isDebit,
           };
         });
       }
-      const col = Object.entries(columnMapping)
-        .find(([c, target]) => target === f.value && rawColumns.includes(c))?.[0];
+      const col = Object.entries(columnMapping).find(
+        ([c, target]) => target === f.value && rawColumns.includes(c)
+      )?.[0];
       return col ? [{ field: f, column: col, isDebit: false }] : [];
     });
 });

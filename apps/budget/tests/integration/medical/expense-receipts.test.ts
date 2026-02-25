@@ -5,11 +5,11 @@
  * Supports images and PDFs with metadata tracking.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -113,7 +113,15 @@ describe("Expense Receipts", () => {
     });
 
     it("should support all receipt types", async () => {
-      const receiptTypes = ["receipt", "bill", "invoice", "eob", "statement", "prescription", "other"] as const;
+      const receiptTypes = [
+        "receipt",
+        "bill",
+        "invoice",
+        "eob",
+        "statement",
+        "prescription",
+        "other",
+      ] as const;
 
       for (const receiptType of receiptTypes) {
         const [receipt] = await ctx.db
@@ -203,9 +211,30 @@ describe("Expense Receipts", () => {
   describe("receipt queries", () => {
     beforeEach(async () => {
       await ctx.db.insert(schema.expenseReceipts).values([
-        {medicalExpenseId: ctx.medicalExpenseId, receiptType: "receipt", fileName: "receipt1.pdf", fileSize: 50000, mimeType: "application/pdf", storagePath: "/r1.pdf"},
-        {medicalExpenseId: ctx.medicalExpenseId, receiptType: "eob", fileName: "eob1.pdf", fileSize: 75000, mimeType: "application/pdf", storagePath: "/e1.pdf"},
-        {medicalExpenseId: ctx.medicalExpenseId, receiptType: "bill", fileName: "bill1.jpg", fileSize: 100000, mimeType: "image/jpeg", storagePath: "/b1.jpg"},
+        {
+          medicalExpenseId: ctx.medicalExpenseId,
+          receiptType: "receipt",
+          fileName: "receipt1.pdf",
+          fileSize: 50000,
+          mimeType: "application/pdf",
+          storagePath: "/r1.pdf",
+        },
+        {
+          medicalExpenseId: ctx.medicalExpenseId,
+          receiptType: "eob",
+          fileName: "eob1.pdf",
+          fileSize: 75000,
+          mimeType: "application/pdf",
+          storagePath: "/e1.pdf",
+        },
+        {
+          medicalExpenseId: ctx.medicalExpenseId,
+          receiptType: "bill",
+          fileName: "bill1.jpg",
+          fileSize: 100000,
+          mimeType: "image/jpeg",
+          storagePath: "/b1.jpg",
+        },
       ]);
     });
 
@@ -255,7 +284,7 @@ describe("Expense Receipts", () => {
 
       await ctx.db
         .update(schema.expenseReceipts)
-        .set({description: "Updated description"})
+        .set({ description: "Updated description" })
         .where(eq(schema.expenseReceipts.id, receipt.id));
 
       const [updated] = await ctx.db
@@ -281,7 +310,7 @@ describe("Expense Receipts", () => {
       const extractedText = "City Medical Center\nDate: 01/15/2024\nAmount: $250.00";
       await ctx.db
         .update(schema.expenseReceipts)
-        .set({extractedText})
+        .set({ extractedText })
         .where(eq(schema.expenseReceipts.id, receipt.id));
 
       const [updated] = await ctx.db
@@ -308,7 +337,7 @@ describe("Expense Receipts", () => {
 
       await ctx.db
         .update(schema.expenseReceipts)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(eq(schema.expenseReceipts.id, receipt.id));
 
       // Should not find in active query
@@ -316,10 +345,7 @@ describe("Expense Receipts", () => {
         .select()
         .from(schema.expenseReceipts)
         .where(
-          and(
-            eq(schema.expenseReceipts.id, receipt.id),
-            isNull(schema.expenseReceipts.deletedAt)
-          )
+          and(eq(schema.expenseReceipts.id, receipt.id), isNull(schema.expenseReceipts.deletedAt))
         );
 
       expect(activeReceipts).toHaveLength(0);
@@ -365,8 +391,20 @@ describe("Expense Receipts", () => {
 
       // Add receipts to both expenses
       await ctx.db.insert(schema.expenseReceipts).values([
-        {medicalExpenseId: ctx.medicalExpenseId, fileName: "exp1.pdf", fileSize: 10000, mimeType: "application/pdf", storagePath: "/e1.pdf"},
-        {medicalExpenseId: expense2.id, fileName: "exp2.pdf", fileSize: 20000, mimeType: "application/pdf", storagePath: "/e2.pdf"},
+        {
+          medicalExpenseId: ctx.medicalExpenseId,
+          fileName: "exp1.pdf",
+          fileSize: 10000,
+          mimeType: "application/pdf",
+          storagePath: "/e1.pdf",
+        },
+        {
+          medicalExpenseId: expense2.id,
+          fileName: "exp2.pdf",
+          fileSize: 20000,
+          mimeType: "application/pdf",
+          storagePath: "/e2.pdf",
+        },
       ]);
 
       const exp1Receipts = await ctx.db
@@ -402,7 +440,10 @@ describe("Expense Receipts", () => {
           amount: schema.medicalExpenses.amount,
         })
         .from(schema.expenseReceipts)
-        .innerJoin(schema.medicalExpenses, eq(schema.expenseReceipts.medicalExpenseId, schema.medicalExpenses.id))
+        .innerJoin(
+          schema.medicalExpenses,
+          eq(schema.expenseReceipts.medicalExpenseId, schema.medicalExpenses.id)
+        )
         .where(eq(schema.expenseReceipts.medicalExpenseId, ctx.medicalExpenseId));
 
       expect(results).toHaveLength(1);

@@ -4,11 +4,11 @@
  * Tests alias creation, lookup, and learning from user actions.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -102,7 +102,7 @@ describe("Payee Aliases", () => {
           payeeId: ctx.payeeId,
           rawString,
           normalizedString: normalizeString(rawString),
-                    confidence: 1.0,
+          confidence: 1.0,
           matchCount: 1,
           trigger: "import_confirmation",
         })
@@ -124,7 +124,7 @@ describe("Payee Aliases", () => {
         payeeId: ctx.payeeId,
         rawString,
         normalizedString: normalizeString(rawString),
-                confidence: 1.0,
+        confidence: 1.0,
         matchCount: 1,
         trigger: "import_confirmation",
       });
@@ -141,7 +141,7 @@ describe("Payee Aliases", () => {
 
       await ctx.db
         .update(schema.payeeAliases)
-        .set({matchCount: (existing!.matchCount ?? 0) + 1})
+        .set({ matchCount: (existing!.matchCount ?? 0) + 1 })
         .where(eq(schema.payeeAliases.id, existing!.id));
 
       const updated = await ctx.db.query.payeeAliases.findFirst({
@@ -161,13 +161,16 @@ describe("Payee Aliases", () => {
         payeeId: ctx.payeeId,
         rawString,
         normalizedString: normalizeString(rawString),
-                confidence: 1.0,
+        confidence: 1.0,
         matchCount: 1,
         trigger: "import_confirmation",
       });
 
       const match = await ctx.db.query.payeeAliases.findFirst({
-        where: and(eq(schema.payeeAliases.workspaceId, ctx.workspaceId), eq(schema.payeeAliases.rawString, rawString)),
+        where: and(
+          eq(schema.payeeAliases.workspaceId, ctx.workspaceId),
+          eq(schema.payeeAliases.rawString, rawString)
+        ),
       });
 
       expect(match?.payeeId).toBe(ctx.payeeId);
@@ -181,7 +184,7 @@ describe("Payee Aliases", () => {
         payeeId: ctx.payeeId,
         rawString,
         normalizedString: normalizeString(rawString),
-                confidence: 1.0,
+        confidence: 1.0,
         matchCount: 1,
         trigger: "import_confirmation",
       });
@@ -239,7 +242,7 @@ describe("Payee Aliases", () => {
           payeeId: ctx.payeeId,
           rawString: "TEST PAYEE",
           normalizedString: "test payee",
-                    confidence: 1.0,
+          confidence: 1.0,
           matchCount: 1,
           trigger: "import_confirmation",
         })
@@ -256,7 +259,7 @@ describe("Payee Aliases", () => {
           payeeId: ctx.payeeId,
           rawString: "TEST PAYEE",
           normalizedString: "test payee",
-                    confidence: 1.0,
+          confidence: 1.0,
           matchCount: 1,
           trigger: "transaction_edit",
         })
@@ -273,7 +276,7 @@ describe("Payee Aliases", () => {
           payeeId: ctx.payeeId,
           rawString: "TEST PAYEE",
           normalizedString: "test payee",
-                    confidence: 1.0,
+          confidence: 1.0,
           matchCount: 1,
           trigger: "manual_creation",
         })
@@ -301,7 +304,7 @@ describe("Payee Aliases", () => {
         payeeId: payee2.id,
         rawString: "WALMART SUPERCENTER #5678",
         normalizedString: "walmart supercenter #5678",
-                confidence: 1.0,
+        confidence: 1.0,
         matchCount: 1,
         trigger: "import_confirmation",
       });
@@ -309,7 +312,7 @@ describe("Payee Aliases", () => {
       // Merge: move payee2's aliases to payee1
       await ctx.db
         .update(schema.payeeAliases)
-        .set({payeeId: ctx.payeeId})
+        .set({ payeeId: ctx.payeeId })
         .where(eq(schema.payeeAliases.payeeId, payee2.id));
 
       // Verify aliases moved
@@ -376,7 +379,7 @@ describe("Payee Aliases", () => {
         payeeId: ctx.payeeId,
         rawString: raw,
         normalizedString: normalizeString(raw),
-                confidence: 1.0,
+        confidence: 1.0,
         matchCount: 1,
         trigger: "bulk_import" as const,
       }));

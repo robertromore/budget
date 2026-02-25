@@ -5,12 +5,12 @@
  * column mapping, profile matching, and account defaults.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import {generateColumnSignature} from "../../../src/lib/schema/import-profiles";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { generateColumnSignature } from "../../../src/lib/schema/import-profiles";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -286,7 +286,7 @@ describe("Import Profiles", () => {
       // Clear existing defaults before setting new one
       await ctx.db
         .update(schema.importProfiles)
-        .set({isAccountDefault: false})
+        .set({ isAccountDefault: false })
         .where(
           and(
             eq(schema.importProfiles.accountId, ctx.accountId),
@@ -297,7 +297,7 @@ describe("Import Profiles", () => {
       // Set new default
       await ctx.db
         .update(schema.importProfiles)
-        .set({isAccountDefault: true})
+        .set({ isAccountDefault: true })
         .where(eq(schema.importProfiles.id, second.id));
 
       // Check only one default exists
@@ -346,7 +346,7 @@ describe("Import Profiles", () => {
 
       await ctx.db
         .update(schema.importProfiles)
-        .set({mapping: updatedMapping})
+        .set({ mapping: updatedMapping })
         .where(eq(schema.importProfiles.id, profile.id));
 
       const updated = await ctx.db.query.importProfiles.findFirst({
@@ -456,7 +456,7 @@ describe("Import Profiles", () => {
       // Manual cleanup since SQLite FK "set null" may not work in test DB
       await ctx.db
         .update(schema.importProfiles)
-        .set({accountId: null})
+        .set({ accountId: null })
         .where(eq(schema.importProfiles.accountId, ctx.accountId));
 
       // Delete account

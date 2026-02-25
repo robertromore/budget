@@ -1254,15 +1254,17 @@ export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
   errorMessage: "Failed to apply recommendation",
 });
 
-export const resetAppliedRecommendation = defineMutation<number, BudgetRecommendationWithRelations>({
-  mutationFn: (id) => trpc().budgetRoutes.resetAppliedRecommendation.mutate({ id }),
-  onSuccess: (_, id) => {
-    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
-    cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
-  },
-  successMessage: "Recommendation reset - you can now reapply it",
-  errorMessage: "Failed to reset recommendation",
-});
+export const resetAppliedRecommendation = defineMutation<number, BudgetRecommendationWithRelations>(
+  {
+    mutationFn: (id) => trpc().budgetRoutes.resetAppliedRecommendation.mutate({ id }),
+    onSuccess: (_, id) => {
+      cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+      cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
+    },
+    successMessage: "Recommendation reset - you can now reapply it",
+    errorMessage: "Failed to reset recommendation",
+  }
+);
 
 export const deleteRecommendation = defineMutation<number, { success: boolean }>({
   mutationFn: (id) => trpc().budgetRoutes.deleteRecommendation.mutate({ id }),

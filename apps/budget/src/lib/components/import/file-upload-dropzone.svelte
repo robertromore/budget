@@ -301,11 +301,10 @@ function openFilePicker() {
           {/each}
         </div>
         {#if selectedFiles.length > 1}
-          <div class="text-muted-foreground mt-3 flex items-center justify-between border-t pt-3 text-sm">
+          <div
+            class="text-muted-foreground mt-3 flex items-center justify-between border-t pt-3 text-sm">
             <span>Total: {formatFileSize(selectedFiles.reduce((sum, f) => sum + f.size, 0))}</span>
-            <Button variant="ghost" size="sm" onclick={clearFile}>
-              Clear All
-            </Button>
+            <Button variant="ghost" size="sm" onclick={clearFile}>Clear All</Button>
           </div>
         {/if}
       </Card.Content>

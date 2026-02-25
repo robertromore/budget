@@ -51,7 +51,6 @@ function handleAddReceipt(expenseId: number) {
   showReceiptUpload = true;
 }
 
-
 // Calculate contribution progress
 const contributionLimit = $derived(hsaAccount?.hsaContributionLimit || 0);
 const contributionProgress = $derived(

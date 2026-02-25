@@ -115,7 +115,10 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
     if (suggestions.suggestedTags && suggestions.suggestedTags.length > 0) {
       // Merge with existing tags if present
       const existingTags = $formData.tags
-        ? $formData.tags.split(',').map((t: string) => normalize(t)).filter(Boolean)
+        ? $formData.tags
+            .split(',')
+            .map((t: string) => normalize(t))
+            .filter(Boolean)
         : [];
       const newTags = [...new Set([...existingTags, ...suggestions.suggestedTags])];
       $formData.tags = newTags.join(', ');
@@ -124,9 +127,7 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
   if (scope === 'all' || scope === 'preferredPaymentMethods') {
     if (suggestions.suggestedPaymentMethods && suggestions.suggestedPaymentMethods.length > 0) {
       // Format payment methods nicely (replace underscores with spaces)
-      const formatted = suggestions.suggestedPaymentMethods.map((m) =>
-        m.replace(/_/g, ' ')
-      );
+      const formatted = suggestions.suggestedPaymentMethods.map((m) => m.replace(/_/g, ' '));
       $formData.preferredPaymentMethods = formatted.join(', ');
     }
   }
@@ -158,15 +159,13 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
                   title: 'Infer MCC',
                   modes: ['llm'],
                   order: 20,
-                  onTrigger: async () => handleFieldAction('merchantCategoryCode')
-                }}
-              >
+                  onTrigger: async () => handleFieldAction('merchantCategoryCode'),
+                }}>
                 <Input
                   {...props}
                   bind:value={$formData.merchantCategoryCode}
                   placeholder="4-digit MCC"
-                  maxlength={4}
-                />
+                  maxlength={4} />
               </div>
               <IntelligenceModeToggle
                 mode={fieldModes.merchantCategoryCode}
@@ -174,12 +173,11 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
                 onAction={() => handleFieldAction('merchantCategoryCode')}
                 isPending={isGlobalApplying || enhancingField === 'merchantCategoryCode'}
                 disabled={!payeeName?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('merchantCategoryCode')}
                 enhancedAt={getEnhancementInfo('merchantCategoryCode')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('merchantCategoryCode')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('merchantCategoryCode')?.lastConfidence} />
             </div>
             <Form.Description>Standard industry classification code</Form.Description>
             <Form.FieldErrors />
@@ -273,14 +271,9 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
                 title: 'Suggest Tags',
                 modes: ['llm'],
                 order: 21,
-                onTrigger: async () => handleFieldAction('tags')
-              }}
-            >
-              <Input
-                {...props}
-                bind:value={$formData.tags}
-                placeholder="comma, separated, tags"
-              />
+                onTrigger: async () => handleFieldAction('tags'),
+              }}>
+              <Input {...props} bind:value={$formData.tags} placeholder="comma, separated, tags" />
             </div>
             <IntelligenceModeToggle
               mode={fieldModes.tags}
@@ -288,12 +281,11 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
               onAction={() => handleFieldAction('tags')}
               isPending={isGlobalApplying || enhancingField === 'tags'}
               disabled={!payeeName?.trim()}
-              disabledModes={disabledModes}
+              {disabledModes}
               variant="icon"
               isEnhanced={isFieldEnhanced('tags')}
               enhancedAt={getEnhancementInfo('tags')?.lastEnhancedAt}
-              enhancedConfidence={getEnhancementInfo('tags')?.lastConfidence}
-            />
+              enhancedConfidence={getEnhancementInfo('tags')?.lastConfidence} />
           </div>
           <Form.Description>Comma-separated tags for organization</Form.Description>
           <Form.FieldErrors />
@@ -314,14 +306,12 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
                 title: 'Suggest Payment Methods',
                 modes: ['llm'],
                 order: 22,
-                onTrigger: async () => handleFieldAction('preferredPaymentMethods')
-              }}
-            >
+                onTrigger: async () => handleFieldAction('preferredPaymentMethods'),
+              }}>
               <Input
                 {...props}
                 bind:value={$formData.preferredPaymentMethods}
-                placeholder="credit card, bank transfer, cash"
-              />
+                placeholder="credit card, bank transfer, cash" />
             </div>
             <IntelligenceModeToggle
               mode={fieldModes.preferredPaymentMethods}
@@ -329,12 +319,11 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
               onAction={() => handleFieldAction('preferredPaymentMethods')}
               isPending={isGlobalApplying || enhancingField === 'preferredPaymentMethods'}
               disabled={!payeeName?.trim()}
-              disabledModes={disabledModes}
+              {disabledModes}
               variant="icon"
               isEnhanced={isFieldEnhanced('preferredPaymentMethods')}
               enhancedAt={getEnhancementInfo('preferredPaymentMethods')?.lastEnhancedAt}
-              enhancedConfidence={getEnhancementInfo('preferredPaymentMethods')?.lastConfidence}
-            />
+              enhancedConfidence={getEnhancementInfo('preferredPaymentMethods')?.lastConfidence} />
           </div>
           <Form.Description>Comma-separated list of accepted payment methods</Form.Description>
           <Form.FieldErrors />
@@ -344,12 +333,14 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
 
     <!-- Advanced Settings (Collapsible) -->
     <Collapsible.Root class="mt-4">
-      <Collapsible.Trigger class="flex w-full items-center justify-between rounded-lg border p-3 hover:bg-muted/50">
+      <Collapsible.Trigger
+        class="hover:bg-muted/50 flex w-full items-center justify-between rounded-lg border p-3">
         <div class="flex items-center gap-2">
-          <Settings class="h-4 w-4 text-muted-foreground" />
+          <Settings class="text-muted-foreground h-4 w-4" />
           <span class="text-sm font-medium">Advanced Settings</span>
         </div>
-        <ChevronDown class="h-4 w-4 text-muted-foreground transition-transform in-data-[state=open]:rotate-180" />
+        <ChevronDown
+          class="text-muted-foreground h-4 w-4 transition-transform in-data-[state=open]:rotate-180" />
       </Collapsible.Trigger>
       <Collapsible.Content class="pt-4">
         <Form.Field form={entityForm} name="subscriptionInfo">
@@ -360,10 +351,10 @@ function applySuggestions(suggestions: PayeeDetailsSuggestions, scope: string | 
                 {...props}
                 bind:value={$formData.subscriptionInfo}
                 placeholder="JSON metadata for subscription details"
-                rows={4}
-              />
+                rows={4} />
               <Form.Description>
-                Advanced subscription configuration in JSON format. Used for detailed billing tracking.
+                Advanced subscription configuration in JSON format. Used for detailed billing
+                tracking.
               </Form.Description>
               <Form.FieldErrors />
             {/snippet}

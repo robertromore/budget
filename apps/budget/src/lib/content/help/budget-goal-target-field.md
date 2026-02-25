@@ -13,16 +13,19 @@ Set the total amount you want to save for this goal.
 Consider these factors when setting your goal:
 
 ### Emergency Fund
+
 - 3-6 months of essential expenses
 - Start with $1,000, then build to full amount
 - Calculate: Monthly expenses x desired months
 
 ### Large Purchases
+
 - Total cost including taxes and fees
 - Add 10-20% buffer for price increases
 - Factor in any down payments already saved
 
 ### Debt Payoff
+
 - Total remaining balance
 - Include estimated interest if paying over time
 - Consider targeting specific debts first
@@ -30,6 +33,7 @@ Consider these factors when setting your goal:
 ## Progress Tracking
 
 Once set, you'll see:
+
 - Current progress percentage
 - Amount remaining
 - Days until target date

@@ -11,5 +11,12 @@
 
 export { incomeExpenseRoutes } from "./routes";
 export {
-  createIncomeExpenseService, type IncomeExpenseBreakdown, type IncomeExpenseForecast, type IncomeExpenseHistory, type IncomeExpenseService, type PeriodComparison, type TrendDirection, type TrendIndicator
+  createIncomeExpenseService,
+  type IncomeExpenseBreakdown,
+  type IncomeExpenseForecast,
+  type IncomeExpenseHistory,
+  type IncomeExpenseService,
+  type PeriodComparison,
+  type TrendDirection,
+  type TrendIndicator,
 } from "./service";

@@ -1,99 +1,97 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
-  import { ForecastSummaryCard } from "$lib/components/ml";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Label } from "$lib/components/ui/label";
-  import * as Select from "$lib/components/ui/select";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { ML } from "$lib/query/ml";
-  import { AccountsState } from "$lib/states/entities";
-  import { getPageTabsContext } from "$lib/stores/page-tabs.svelte";
-  import { formatCurrency, formatPercent } from "$lib/utils";
-  import ArrowDown from "@lucide/svelte/icons/arrow-down";
-  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-  import ArrowUp from "@lucide/svelte/icons/arrow-up";
-  import Brain from "@lucide/svelte/icons/brain";
-  import Calendar from "@lucide/svelte/icons/calendar";
-  import ChartLine from "@lucide/svelte/icons/chart-line";
-  import List from "@lucide/svelte/icons/list";
-  import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
-  import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
-  import Upload from "@lucide/svelte/icons/upload";
-  import Wallet from "@lucide/svelte/icons/wallet";
-  import { onDestroy } from "svelte";
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { ForecastSummaryCard } from '$lib/components/ml';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import { ML } from '$lib/query/ml';
+import { AccountsState } from '$lib/states/entities';
+import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
+import { formatCurrency, formatPercent } from '$lib/utils';
+import ArrowDown from '@lucide/svelte/icons/arrow-down';
+import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+import ArrowUp from '@lucide/svelte/icons/arrow-up';
+import Brain from '@lucide/svelte/icons/brain';
+import Calendar from '@lucide/svelte/icons/calendar';
+import ChartLine from '@lucide/svelte/icons/chart-line';
+import List from '@lucide/svelte/icons/list';
+import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
+import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Upload from '@lucide/svelte/icons/upload';
+import Wallet from '@lucide/svelte/icons/wallet';
+import { onDestroy } from 'svelte';
 
-  // Get account from state
-  const accountsState = AccountsState.get();
-  const accountSlug = $derived(page.params.slug ?? "");
-  const account = $derived(accountsState.getBySlug(accountSlug));
-  const accountId = $derived(account?.id);
+// Get account from state
+const accountsState = AccountsState.get();
+const accountSlug = $derived(page.params.slug ?? '');
+const account = $derived(accountsState.getBySlug(accountSlug));
+const accountId = $derived(account?.id);
 
-  // Tab navigation - register with pageTabsContext for header tabs
-  const pageTabsContext = getPageTabsContext();
+// Tab navigation - register with pageTabsContext for header tabs
+const pageTabsContext = getPageTabsContext();
 
-  function handleTabChange(value: string) {
-    if (value === "intelligence") {
-      goto(`/accounts/${accountSlug}/intelligence`);
-    } else if (value === "transactions") {
-      goto(`/accounts/${accountSlug}`);
-    } else {
-      goto(`/accounts/${accountSlug}?tab=${value}`);
-    }
+function handleTabChange(value: string) {
+  if (value === 'intelligence') {
+    goto(`/accounts/${accountSlug}/intelligence`);
+  } else if (value === 'transactions') {
+    goto(`/accounts/${accountSlug}`);
+  } else {
+    goto(`/accounts/${accountSlug}?tab=${value}`);
   }
+}
 
-  $effect(() => {
-    if (pageTabsContext) {
-      pageTabsContext.register({
-        tabs: [
-          { id: "transactions", label: "Transactions", icon: List },
-          { id: "analytics", label: "Analytics", icon: ChartLine },
-          { id: "intelligence", label: "Intelligence", icon: Brain },
-          { id: "schedules", label: "Schedules", icon: Calendar },
-          { id: "budgets", label: "Budgets", icon: Wallet },
-          { id: "import", label: "Import", icon: Upload },
-          { id: "settings", label: "Settings", icon: SlidersHorizontal },
-        ],
-        activeTab: "intelligence",
-        onTabChange: handleTabChange,
-      });
-    }
-  });
+$effect(() => {
+  if (pageTabsContext) {
+    pageTabsContext.register({
+      tabs: [
+        { id: 'transactions', label: 'Transactions', icon: List },
+        { id: 'analytics', label: 'Analytics', icon: ChartLine },
+        { id: 'intelligence', label: 'Intelligence', icon: Brain },
+        { id: 'schedules', label: 'Schedules', icon: Calendar },
+        { id: 'budgets', label: 'Budgets', icon: Wallet },
+        { id: 'import', label: 'Import', icon: Upload },
+        { id: 'settings', label: 'Settings', icon: SlidersHorizontal },
+      ],
+      activeTab: 'intelligence',
+      onTabChange: handleTabChange,
+    });
+  }
+});
 
-  onDestroy(() => {
-    pageTabsContext?.clear();
-  });
+onDestroy(() => {
+  pageTabsContext?.clear();
+});
 
-  // Filter state
-  let horizon = $state(30);
-  let granularity = $state<"daily" | "weekly" | "monthly">("monthly");
+// Filter state
+let horizon = $state(30);
+let granularity = $state<'daily' | 'weekly' | 'monthly'>('monthly');
 
-  // Query - account-specific forecast using .options() for reactive interface
-  const forecastQuery = $derived(
-    accountId
-      ? ML.getCashFlowForecast({ horizon, granularity, accountId }).options()
-      : null
-  );
+// Query - account-specific forecast using .options() for reactive interface
+const forecastQuery = $derived(
+  accountId ? ML.getCashFlowForecast({ horizon, granularity, accountId }).options() : null
+);
 
-  const horizonOptions = [
-    { value: 7, label: "7 Days" },
-    { value: 14, label: "14 Days" },
-    { value: 30, label: "30 Days" },
-    { value: 60, label: "60 Days" },
-    { value: 90, label: "90 Days" },
-  ];
+const horizonOptions = [
+  { value: 7, label: '7 Days' },
+  { value: 14, label: '14 Days' },
+  { value: 30, label: '30 Days' },
+  { value: 60, label: '60 Days' },
+  { value: 90, label: '90 Days' },
+];
 
-  const granularityOptions = [
-    { value: "daily", label: "Daily" },
-    { value: "weekly", label: "Weekly" },
-    { value: "monthly", label: "Monthly" },
-  ];
+const granularityOptions = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+];
 </script>
 
 <svelte:head>
-  <title>Forecast - {account?.name ?? "Account"} - Budget App</title>
+  <title>Forecast - {account?.name ?? 'Account'} - Budget App</title>
   <meta name="description" content="Cash flow forecast for {account?.name ?? 'account'}" />
 </svelte:head>
 
@@ -110,7 +108,7 @@
           <h1 class="text-2xl font-bold tracking-tight">Forecast</h1>
         </div>
         <p class="text-muted-foreground">
-          {account?.name ?? "Account"} cash flow predictions
+          {account?.name ?? 'Account'} cash flow predictions
         </p>
       </div>
     </div>
@@ -127,8 +125,7 @@
             value={horizon.toString()}
             onValueChange={(v) => {
               if (v) horizon = parseInt(v);
-            }}
-          >
+            }}>
             <Select.Trigger class="w-35">
               {horizonOptions.find((o) => o.value === horizon)?.label}
             </Select.Trigger>
@@ -147,8 +144,7 @@
             value={granularity}
             onValueChange={(v) => {
               if (v) granularity = v as typeof granularity;
-            }}
-          >
+            }}>
             <Select.Trigger class="w-35">
               {granularityOptions.find((o) => o.value === granularity)?.label}
             </Select.Trigger>
@@ -165,8 +161,7 @@
             variant="ghost"
             size="sm"
             onclick={() => forecastQuery?.refetch()}
-            disabled={forecastQuery?.isFetching}
-          >
+            disabled={forecastQuery?.isFetching}>
             <RefreshCcw class="mr-2 h-4 w-4 {forecastQuery?.isFetching ? 'animate-spin' : ''}" />
             Refresh
           </Button>
@@ -204,8 +199,7 @@
         predictions={forecastQuery.data.predictions}
         confidence={forecastQuery.data.confidence}
         currentValue={account?.balance}
-        {granularity}
-      />
+        {granularity} />
 
       <!-- Income vs Expenses -->
       <div class="grid gap-4">

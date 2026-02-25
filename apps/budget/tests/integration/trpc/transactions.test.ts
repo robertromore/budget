@@ -1,6 +1,6 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {eq} from "drizzle-orm";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { eq } from "drizzle-orm";
 import {
   transactions,
   accounts,
@@ -10,8 +10,8 @@ import {
   workspaces,
   workspaceMembers,
 } from "$lib/schema";
-import {setupTestDb, clearTestDb} from "../setup/test-db";
-import {parseDate, today, getLocalTimeZone} from "@internationalized/date";
+import { setupTestDb, clearTestDb } from "../setup/test-db";
+import { parseDate, today, getLocalTimeZone } from "@internationalized/date";
 
 describe("Transactions tRPC Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -107,7 +107,7 @@ describe("Transactions tRPC Integration Tests", () => {
 
   describe("transactions.forAccount", () => {
     test("should return empty array when account has no transactions", async () => {
-      await expect(caller.transactionRoutes.forAccount({accountId: 999999})).rejects.toThrow(
+      await expect(caller.transactionRoutes.forAccount({ accountId: 999999 })).rejects.toThrow(
         "Account with ID 999999 not found"
       );
     });
@@ -125,7 +125,7 @@ describe("Transactions tRPC Integration Tests", () => {
         })
         .returning();
 
-      const result = await caller.transactionRoutes.forAccount({accountId: testAccount.id});
+      const result = await caller.transactionRoutes.forAccount({ accountId: testAccount.id });
 
       expect(result.length).toBe(1);
       expect(result[0].id).toBe(transaction.id);
@@ -145,10 +145,10 @@ describe("Transactions tRPC Integration Tests", () => {
       // Soft delete the transaction
       await db
         .update(transactions)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(eq(transactions.id, transaction.id));
 
-      const result = await caller.transactionRoutes.forAccount({accountId: testAccount.id});
+      const result = await caller.transactionRoutes.forAccount({ accountId: testAccount.id });
       expect(result).toEqual([]);
     });
   });
@@ -546,7 +546,7 @@ describe("Transactions tRPC Integration Tests", () => {
         })
         .returning();
 
-      const result = await caller.transactionRoutes.delete({id: transaction.id});
+      const result = await caller.transactionRoutes.delete({ id: transaction.id });
       expect(result.success).toBe(true);
 
       // Verify transaction is soft deleted by querying database directly
@@ -561,15 +561,15 @@ describe("Transactions tRPC Integration Tests", () => {
       const transactions1 = await db
         .insert(transactions)
         .values([
-          {accountId: testAccount.id, amount: 100.0, date: "2023-01-15"},
-          {accountId: testAccount.id, amount: 50.0, date: "2023-01-16"},
-          {accountId: testAccount.id, amount: 25.0, date: "2023-01-17"},
+          { accountId: testAccount.id, amount: 100.0, date: "2023-01-15" },
+          { accountId: testAccount.id, amount: 50.0, date: "2023-01-16" },
+          { accountId: testAccount.id, amount: 25.0, date: "2023-01-17" },
         ])
         .returning();
 
       const idsToDelete = [transactions1[0].id, transactions1[2].id];
 
-      const result = await caller.transactionRoutes.bulkDelete({ids: idsToDelete});
+      const result = await caller.transactionRoutes.bulkDelete({ ids: idsToDelete });
 
       expect(result.success).toBe(true);
       expect(result.count).toBe(2);
@@ -585,25 +585,25 @@ describe("Transactions tRPC Integration Tests", () => {
     });
 
     test("should reject empty bulk delete payload", async () => {
-      await expect(caller.transactionRoutes.bulkDelete({ids: []})).rejects.toThrow(
+      await expect(caller.transactionRoutes.bulkDelete({ ids: [] })).rejects.toThrow(
         "At least one ID is required"
       );
     });
 
     test("should handle non-existent transaction IDs", async () => {
-      await expect(caller.transactionRoutes.bulkDelete({ids: [999, 1000]})).rejects.toThrow(
+      await expect(caller.transactionRoutes.bulkDelete({ ids: [999, 1000] })).rejects.toThrow(
         "Transaction with ID 999 not found"
       );
     });
 
     test("should require positive IDs for bulk delete", async () => {
-      await expect(caller.transactionRoutes.bulkDelete({ids: [1, -2]})).rejects.toThrow(
+      await expect(caller.transactionRoutes.bulkDelete({ ids: [1, -2] })).rejects.toThrow(
         "Too small: expected number to be >0"
       );
     });
 
     test("should require positive transaction ID for delete", async () => {
-      await expect(caller.transactionRoutes.delete({id: -1})).rejects.toThrow(
+      await expect(caller.transactionRoutes.delete({ id: -1 })).rejects.toThrow(
         "Too small: expected number to be >0"
       );
     });
@@ -629,7 +629,7 @@ describe("Transactions tRPC Integration Tests", () => {
         })
         .returning();
 
-      const result = await caller.transactionRoutes.delete({id: transaction.id});
+      const result = await caller.transactionRoutes.delete({ id: transaction.id });
       expect(result.success).toBe(true);
     });
   });
@@ -658,7 +658,7 @@ describe("Transactions tRPC Integration Tests", () => {
     });
 
     test("should handle concurrent transaction creation", async () => {
-      const promises = Array.from({length: 5}, (_, i) =>
+      const promises = Array.from({ length: 5 }, (_, i) =>
         caller.transactionRoutes.save({
           accountId: testAccount.id,
           amount: (i + 1) * 10.0,

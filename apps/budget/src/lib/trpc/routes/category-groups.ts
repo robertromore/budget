@@ -10,7 +10,9 @@ import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";
 
 const categoryGroupService = lazyService(() => serviceFactory.getCategoryGroupService());
-const recommendationService = lazyService(() => serviceFactory.getCategoryGroupRecommendationService());
+const recommendationService = lazyService(() =>
+  serviceFactory.getCategoryGroupRecommendationService()
+);
 const settingsService = lazyService(() => serviceFactory.getCategoryGroupSettingsService());
 
 export const categoryGroupsRoutes = t.router({

@@ -44,9 +44,10 @@ function needsOnboarding(workspace: { preferences?: string | null } | null): boo
   if (!workspace?.preferences) return true;
 
   try {
-    const prefs = typeof workspace.preferences === "string"
-      ? JSON.parse(workspace.preferences)
-      : workspace.preferences;
+    const prefs =
+      typeof workspace.preferences === "string"
+        ? JSON.parse(workspace.preferences)
+        : workspace.preferences;
 
     const onboarding = prefs?.onboarding;
     return !(onboarding?.wizardCompleted || onboarding?.wizardSkipped);

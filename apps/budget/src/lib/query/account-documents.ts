@@ -48,8 +48,7 @@ export const getDocumentsByAccount = (accountId: number, taxYear?: number) => {
     queryKey: taxYear
       ? accountDocumentKeys.byAccountAndYear(accountId, taxYear)
       : accountDocumentKeys.byAccount(accountId),
-    queryFn: () =>
-      trpc().accountDocumentsRouter.getByAccount.query({ accountId, taxYear }),
+    queryFn: () => trpc().accountDocumentsRouter.getByAccount.query({ accountId, taxYear }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },

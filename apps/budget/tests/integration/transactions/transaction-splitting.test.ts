@@ -5,11 +5,11 @@
  * is divided into multiple child transactions.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, isNull, sql} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, isNull, sql } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -208,9 +208,27 @@ describe("Transaction Splitting", () => {
 
       // Create 3 children
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -40.0, date: "2024-01-15"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -35.0, date: "2024-01-15"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -25.0, date: "2024-01-15"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          parentId: parent.id,
+          amount: -40.0,
+          date: "2024-01-15",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          parentId: parent.id,
+          amount: -35.0,
+          date: "2024-01-15",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          parentId: parent.id,
+          amount: -25.0,
+          date: "2024-01-15",
+        },
       ]);
 
       const children = await ctx.db
@@ -321,7 +339,7 @@ describe("Transaction Splitting", () => {
       // Update child amount
       await ctx.db
         .update(schema.transactions)
-        .set({amount: -60.0})
+        .set({ amount: -60.0 })
         .where(eq(schema.transactions.id, child.id));
 
       const updated = await ctx.db.query.transactions.findFirst({
@@ -357,7 +375,7 @@ describe("Transaction Splitting", () => {
       // Change category
       await ctx.db
         .update(schema.transactions)
-        .set({categoryId: ctx.householdId})
+        .set({ categoryId: ctx.householdId })
         .where(eq(schema.transactions.id, child.id));
 
       const updated = await ctx.db.query.transactions.findFirst({
@@ -381,8 +399,20 @@ describe("Transaction Splitting", () => {
         .returning();
 
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -60.0, date: "2024-01-15"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -40.0, date: "2024-01-15"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          parentId: parent.id,
+          amount: -60.0,
+          date: "2024-01-15",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          parentId: parent.id,
+          amount: -40.0,
+          date: "2024-01-15",
+        },
       ]);
 
       // Delete children first, then parent (proper cascade order)
@@ -412,8 +442,20 @@ describe("Transaction Splitting", () => {
       const children = await ctx.db
         .insert(schema.transactions)
         .values([
-          {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -60.0, date: "2024-01-15"},
-          {workspaceId: ctx.workspaceId, accountId: ctx.accountId, parentId: parent.id, amount: -40.0, date: "2024-01-15"},
+          {
+            workspaceId: ctx.workspaceId,
+            accountId: ctx.accountId,
+            parentId: parent.id,
+            amount: -60.0,
+            date: "2024-01-15",
+          },
+          {
+            workspaceId: ctx.workspaceId,
+            accountId: ctx.accountId,
+            parentId: parent.id,
+            amount: -40.0,
+            date: "2024-01-15",
+          },
         ])
         .returning();
 
@@ -532,10 +574,10 @@ describe("Transaction Splitting", () => {
       // When calculating running balance, only count parent transactions
       // Children are for category allocation, not balance
       const transactions = [
-        {id: 1, parentId: null, amount: -100.0}, // Parent - counts
-        {id: 2, parentId: 1, amount: -60.0}, // Child - ignored for balance
-        {id: 3, parentId: 1, amount: -40.0}, // Child - ignored for balance
-        {id: 4, parentId: null, amount: 50.0}, // Regular transaction - counts
+        { id: 1, parentId: null, amount: -100.0 }, // Parent - counts
+        { id: 2, parentId: 1, amount: -60.0 }, // Child - ignored for balance
+        { id: 3, parentId: 1, amount: -40.0 }, // Child - ignored for balance
+        { id: 4, parentId: null, amount: 50.0 }, // Regular transaction - counts
       ];
 
       const balanceTransactions = transactions.filter((t) => t.parentId === null);

@@ -9,7 +9,12 @@ import type { Transaction } from '$lib/schema';
 import type { Schedule } from '$lib/schema/schedules';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
-import { deleteBudgetDialog, deleteBudgetId, deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
+import {
+  deleteBudgetDialog,
+  deleteBudgetId,
+  deleteScheduleDialog,
+  deleteScheduleId,
+} from '$lib/states/ui/global.svelte';
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
 import { parseDate } from '@internationalized/date';
@@ -39,7 +44,10 @@ import ScheduleRecommendationsPanel from '$lib/components/schedules/schedule-rec
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import { rpc } from '$lib/query';
 import { getByAccount as getBudgetsByAccount, getRelatedBudgets } from '$lib/query/budgets';
-import { getByAccount as getSchedulesByAccount, bulkRemove as bulkRemoveSchedules } from '$lib/query/schedules';
+import {
+  getByAccount as getSchedulesByAccount,
+  bulkRemove as bulkRemoveSchedules,
+} from '$lib/query/schedules';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { arePayeesSimilar } from '$lib/utils/payee-matching';
@@ -91,15 +99,19 @@ function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
     budgetId: null,
     createdAt: now,
     updatedAt: now,
-    payee: demoSchedule.payee ? { id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any : null,
-    category: demoSchedule.category ? { id: demoSchedule.category.id, name: demoSchedule.category.name } as any : null,
+    payee: demoSchedule.payee
+      ? ({ id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any)
+      : null,
+    category: demoSchedule.category
+      ? ({ id: demoSchedule.category.id, name: demoSchedule.category.name } as any)
+      : null,
     scheduleDate: {
       id: demoSchedule.id,
       frequency: demoSchedule.frequency,
       interval: demoSchedule.interval,
       nextOccurrence: demoSchedule.nextOccurrence,
     } as any,
-	} as unknown as Schedule;
+  } as unknown as Schedule;
 }
 
 // Define valid tab values
@@ -133,7 +145,9 @@ const isDemoSlug = $derived(accountSlug === 'demo-checking');
 
 // Fetch account by slug to get ID for queries (skip in demo mode or for demo slug)
 const accountQuery = $derived(
-  accountSlug && !isDemoView && !isDemoSlug ? rpc.accounts.getAccountDetail(accountSlug).options() : undefined
+  accountSlug && !isDemoView && !isDemoSlug
+    ? rpc.accounts.getAccountDetail(accountSlug).options()
+    : undefined
 );
 
 // Use demo account data when in demo mode, otherwise use real query data
@@ -227,7 +241,9 @@ const transactionsQuery = $derived.by(() => {
     : undefined;
 });
 const summaryQuery = $derived(
-  accountId && !isDemoView ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined
+  accountId && !isDemoView
+    ? rpc.transactions.getAccountSummary(Number(accountId)).options()
+    : undefined
 );
 const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
 const schedulesQuery = $derived(
@@ -246,7 +262,14 @@ const budgets = $derived(budgetsQuery?.data ?? []);
 const groupedBudgetsQuery = $derived(
   accountId && !isDemoView ? getRelatedBudgets(Number(accountId)).options() : undefined
 );
-const groupedBudgets = $derived(groupedBudgetsQuery?.data ?? { spendingLimits: [], savingsGoals: [], recurringExpenses: [], totalCount: 0 });
+const groupedBudgets = $derived(
+  groupedBudgetsQuery?.data ?? {
+    spendingLimits: [],
+    savingsGoals: [],
+    recurringExpenses: [],
+    totalCount: 0,
+  }
+);
 
 // Query for all accounts (for transfer selection) - only on client
 const allAccountsQuery = $derived(
@@ -254,7 +277,7 @@ const allAccountsQuery = $derived(
 );
 const transferAccounts = $derived.by(() => {
   const accounts = allAccountsQuery?.data ?? [];
-  return accounts.map(a => ({
+  return accounts.map((a) => ({
     id: a.id,
     name: a.name,
     accountType: a.accountType,
@@ -773,7 +796,7 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
 // Handle transfer conversion from payee selector - opens dialog for bulk conversion options
 const handleTransferSelect = (transactionId: number, targetAccountId: number) => {
   // Find the transaction from formattedTransactions
-  const transaction = formattedTransactions.find(t => t.id === transactionId);
+  const transaction = formattedTransactions.find((t) => t.id === transactionId);
   if (transaction) {
     convertToTransferTransaction = transaction;
     preselectedTransferAccountId = targetAccountId;
@@ -870,10 +893,7 @@ const confirmBulkPayeeUpdate = async () => {
     });
 
     // Also update categories if the user opted in and there's a default category
-    if (
-      bulkPayeeUpdateDialog.updateCategories &&
-      bulkPayeeUpdateDialog.newPayeeDefaultCategoryId
-    ) {
+    if (bulkPayeeUpdateDialog.updateCategories && bulkPayeeUpdateDialog.newPayeeDefaultCategoryId) {
       // Update the original transaction's category first
       await updateTransactionMutation.mutateAsync({
         id: bulkPayeeUpdateDialog.transactionId,
@@ -1039,7 +1059,11 @@ $effect(() => {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between" data-help-id="account-page-header" data-help-title="Account Page" data-tour-id="account-header">
+  <div
+    class="flex items-center justify-between"
+    data-help-id="account-page-header"
+    data-help-title="Account Page"
+    data-tour-id="account-header">
     <div>
       <div class="flex items-center gap-2">
         <h1 class="text-2xl font-bold tracking-tight">
@@ -1049,7 +1073,7 @@ $effect(() => {
           <div class="h-3 w-3 rounded-full bg-green-500" title="Active account"></div>
         {/if}
         {#if isDemoView}
-          <Badge variant="outline" class="text-amber-600 border-amber-300">Demo</Badge>
+          <Badge variant="outline" class="border-amber-300 text-amber-600">Demo</Badge>
         {/if}
       </div>
     </div>
@@ -1057,14 +1081,21 @@ $effect(() => {
     <!-- Action Buttons (only show on transactions tab) -->
     {#if !isAccountNotFound && activeTab === 'transactions'}
       <div class="flex items-center space-x-2">
-
         {#if isHsaAccount}
-          <Button onclick={handleAddExpense} data-help-id="add-expense-button" data-help-title="Add Medical Expense">
+          <Button
+            onclick={handleAddExpense}
+            data-help-id="add-expense-button"
+            data-help-title="Add Medical Expense">
             <HeartPulse class="mr-2 h-4 w-4" />
             Add Expense
           </Button>
         {:else}
-          <Button onclick={() => (addTransactionDialogOpen = true)} data-help-id="add-transaction-button" data-help-title="Add Transaction" data-help-modal="add-transaction" data-tour-id="add-transaction-button">
+          <Button
+            onclick={() => (addTransactionDialogOpen = true)}
+            data-help-id="add-transaction-button"
+            data-help-title="Add Transaction"
+            data-help-modal="add-transaction"
+            data-tour-id="add-transaction-button">
             <Plus class="mr-2 h-4 w-4" />
             Add Transaction
           </Button>
@@ -1108,58 +1139,117 @@ $effect(() => {
       <Tabs.Root
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as TabValue)}
-        class="tabs-connected w-full"
-      >
+        class="tabs-connected w-full">
         <Tabs.List class="tabs-connected-list">
-          <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-transactions" data-help-title="Transactions Tab" data-tour-id="transactions-tab">
+          <Tabs.Trigger
+            value="transactions"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-transactions"
+            data-help-title="Transactions Tab"
+            data-tour-id="transactions-tab">
             <List class="mr-2 h-4 w-4" />
             Transactions
           </Tabs.Trigger>
           {#if isHsaAccount}
-            <Tabs.Trigger value="hsa-expenses" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-hsa-expenses" data-help-title="Medical Expenses Tab"
-              >Medical Expenses</Tabs.Trigger>
-            <Tabs.Trigger value="hsa-dashboard" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-hsa-dashboard" data-help-title="HSA Dashboard Tab"
-              >HSA Dashboard</Tabs.Trigger>
+            <Tabs.Trigger
+              value="hsa-expenses"
+              class="tabs-connected-trigger px-6 font-medium"
+              data-help-id="account-tab-hsa-expenses"
+              data-help-title="Medical Expenses Tab">Medical Expenses</Tabs.Trigger>
+            <Tabs.Trigger
+              value="hsa-dashboard"
+              class="tabs-connected-trigger px-6 font-medium"
+              data-help-id="account-tab-hsa-dashboard"
+              data-help-title="HSA Dashboard Tab">HSA Dashboard</Tabs.Trigger>
           {/if}
           {#if isUtilityAccount}
-            <Tabs.Trigger value="utility-dashboard" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-utility-dashboard" data-help-title="Utility Usage Tab">
+            <Tabs.Trigger
+              value="utility-dashboard"
+              class="tabs-connected-trigger px-6 font-medium"
+              data-help-id="account-tab-utility-dashboard"
+              data-help-title="Utility Usage Tab">
               <Zap class="mr-2 h-4 w-4" />
               Usage
             </Tabs.Trigger>
           {/if}
-          <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-analytics" data-help-title="Analytics Tab" data-tour-id="analytics-tab">
+          <Tabs.Trigger
+            value="analytics"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-analytics"
+            data-help-title="Analytics Tab"
+            data-tour-id="analytics-tab">
             <ChartLine class="mr-2 h-4 w-4" />
             Analytics
           </Tabs.Trigger>
-          <Tabs.Trigger value="subscriptions" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-subscriptions" data-help-title="Subscriptions Tab" data-tour-id="subscriptions-tab">
+          <Tabs.Trigger
+            value="subscriptions"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-subscriptions"
+            data-help-title="Subscriptions Tab"
+            data-tour-id="subscriptions-tab">
             <RefreshCw class="mr-2 h-4 w-4" />
             Subscriptions
           </Tabs.Trigger>
-          <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-intelligence" data-help-title="Intelligence Tab" data-tour-id="intelligence-tab">
+          <Tabs.Trigger
+            value="intelligence"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-intelligence"
+            data-help-title="Intelligence Tab"
+            data-tour-id="intelligence-tab">
             <Brain class="mr-2 h-4 w-4" />
             Intelligence
           </Tabs.Trigger>
-          <Tabs.Trigger value="automation" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-automation" data-help-title="Automation Tab" data-tour-id="automation-tab">
+          <Tabs.Trigger
+            value="automation"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-automation"
+            data-help-title="Automation Tab"
+            data-tour-id="automation-tab">
             <Zap class="mr-2 h-4 w-4" />
             Automation
           </Tabs.Trigger>
-          <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-schedules" data-help-title="Schedules Tab" data-tour-id="schedules-tab">
+          <Tabs.Trigger
+            value="schedules"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-schedules"
+            data-help-title="Schedules Tab"
+            data-tour-id="schedules-tab">
             <Calendar class="mr-2 h-4 w-4" />
             Schedules
           </Tabs.Trigger>
-          <Tabs.Trigger value="budgets" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-budgets" data-help-title="Budgets Tab" data-tour-id="budgets-tab">
+          <Tabs.Trigger
+            value="budgets"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-budgets"
+            data-help-title="Budgets Tab"
+            data-tour-id="budgets-tab">
             <Wallet class="mr-2 h-4 w-4" />
             Budgets
           </Tabs.Trigger>
-          <Tabs.Trigger value="documents" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-documents" data-help-title="Documents Tab" data-tour-id="documents-tab">
+          <Tabs.Trigger
+            value="documents"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-documents"
+            data-help-title="Documents Tab"
+            data-tour-id="documents-tab">
             <FolderOpen class="mr-2 h-4 w-4" />
             Documents
           </Tabs.Trigger>
-          <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab" data-tour-id="import-tab">
+          <Tabs.Trigger
+            value="import"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-import"
+            data-help-title="Import Tab"
+            data-tour-id="import-tab">
             <Upload class="mr-2 h-4 w-4" />
             Import
           </Tabs.Trigger>
-          <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-settings" data-help-title="Settings Tab" data-tour-id="settings-tab">
+          <Tabs.Trigger
+            value="settings"
+            class="tabs-connected-trigger px-6 font-medium"
+            data-help-id="account-tab-settings"
+            data-help-title="Settings Tab"
+            data-tour-id="settings-tab">
             <SlidersHorizontal class="mr-2 h-4 w-4" />
             Settings
           </Tabs.Trigger>
@@ -1167,185 +1257,228 @@ $effect(() => {
 
         <!-- Transactions Tab Content -->
         <Tabs.Content value="transactions" class="tabs-connected-content space-y-4">
-        <TransactionTableContainer
-          {isLoading}
-          transactions={Array.isArray(transactions) ? transactions : []}
-          {categoriesState}
-          {payeesState}
-          views={data.views}
-          {columns}
-          {formattedTransactions}
-          {updateTransactionData}
-          {searchTransactions}
-          {budgetCount}
-          onScheduleClick={handleScheduleClick}
-          onBulkDelete={handleBulkDelete}
-          {transferAccounts}
-          onTransferSelect={handleTransferSelect}
-          bind:table />
+          <TransactionTableContainer
+            {isLoading}
+            transactions={Array.isArray(transactions) ? transactions : []}
+            {categoriesState}
+            {payeesState}
+            views={data.views}
+            {columns}
+            {formattedTransactions}
+            {updateTransactionData}
+            {searchTransactions}
+            {budgetCount}
+            onScheduleClick={handleScheduleClick}
+            onBulkDelete={handleBulkDelete}
+            {transferAccounts}
+            onTransferSelect={handleTransferSelect}
+            bind:table />
 
-        <!-- Add Transaction Dialog -->
-        <AddTransactionDialog
-          bind:open={addTransactionDialogOpen}
-          account={account || null}
-          payees={payees.map((p) => ({ id: p.id, name: p.name || 'Unknown Payee' }))}
-          categories={categories.map((c) => ({ id: c.id, name: c.name || 'Unknown Category' }))}
-          onSubmit={submitTransaction} />
-      </Tabs.Content>
+          <!-- Add Transaction Dialog -->
+          <AddTransactionDialog
+            bind:open={addTransactionDialogOpen}
+            account={account || null}
+            payees={payees.map((p) => ({ id: p.id, name: p.name || 'Unknown Payee' }))}
+            categories={categories.map((c) => ({ id: c.id, name: c.name || 'Unknown Category' }))}
+            onSubmit={submitTransaction} />
+        </Tabs.Content>
 
-      <!-- HSA Medical Expenses Tab Content -->
-      {#if isHsaAccount}
-        <Tabs.Content value="hsa-expenses" class="tabs-connected-content space-y-4">
-          {#if accountData}
-            <ExpenseTableContainer
-              hsaAccountId={accountData.id}
-              views={data.expenseViews || []}
-              onEdit={handleEditExpense} />
+        <!-- HSA Medical Expenses Tab Content -->
+        {#if isHsaAccount}
+          <Tabs.Content value="hsa-expenses" class="tabs-connected-content space-y-4">
+            {#if accountData}
+              <ExpenseTableContainer
+                hsaAccountId={accountData.id}
+                views={data.expenseViews || []}
+                onEdit={handleEditExpense} />
+            {/if}
+          </Tabs.Content>
+
+          <!-- HSA Dashboard Tab Content -->
+          <Tabs.Content value="hsa-dashboard" class="tabs-connected-content space-y-4">
+            {#if accountData}
+              <HsaDashboard account={accountData} />
+            {/if}
+          </Tabs.Content>
+        {/if}
+
+        <!-- Utility Dashboard Tab Content -->
+        {#if isUtilityAccount}
+          <Tabs.Content value="utility-dashboard" class="tabs-connected-content space-y-4">
+            {#if accountData}
+              <UtilityDashboard account={accountData} />
+            {/if}
+          </Tabs.Content>
+        {/if}
+
+        <!-- Analytics Tab Content -->
+        <Tabs.Content
+          value="analytics"
+          class="tabs-connected-content space-y-4"
+          data-help-id="analytics-tab"
+          data-help-title="Analytics Tab">
+          {#if transactions && !isLoading && activeTab === 'analytics'}
+            <AnalyticsDashboard
+              transactions={formattedTransactions}
+              accountId={accountId + ''}
+              accountType={accountData?.accountType ?? undefined}
+              account={accountData} />
+          {:else if isLoading}
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+              </div>
+              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
+            </div>
           {/if}
         </Tabs.Content>
 
-        <!-- HSA Dashboard Tab Content -->
-        <Tabs.Content value="hsa-dashboard" class="tabs-connected-content space-y-4">
-          {#if accountData}
-            <HsaDashboard account={accountData} />
+        <!-- Subscriptions Tab Content -->
+        <Tabs.Content
+          value="subscriptions"
+          class="tabs-connected-content space-y-4"
+          data-help-id="subscriptions-tab"
+          data-help-title="Subscriptions Tab">
+          {#if accountId && accountSlug && activeTab === 'subscriptions'}
+            <SubscriptionsTab accountId={Number(accountId)} {accountSlug} />
           {/if}
         </Tabs.Content>
-      {/if}
 
-      <!-- Utility Dashboard Tab Content -->
-      {#if isUtilityAccount}
-        <Tabs.Content value="utility-dashboard" class="tabs-connected-content space-y-4">
-          {#if accountData}
-            <UtilityDashboard account={accountData} />
+        <!-- Schedules Tab Content -->
+        <Tabs.Content
+          value="schedules"
+          class="tabs-connected-content space-y-4"
+          data-help-id="schedules-tab"
+          data-help-title="Schedules Tab">
+          {#if schedules && !isLoading && activeTab === 'schedules'}
+            <div class="flex items-center justify-between" data-tour-id="schedules-upcoming">
+              <div></div>
+              <Button
+                variant="outline"
+                onclick={() => (scheduleRecommendationsSheetOpen = true)}
+                data-tour-id="schedules-frequency">
+                <Sparkles class="mr-2 h-4 w-4" />
+                Recommendations
+              </Button>
+            </div>
+            <AccountSchedulesTable
+              {schedules}
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              onView={viewSchedule}
+              onEdit={editSchedule}
+              onDelete={deleteSchedule}
+              onBulkDelete={bulkDeleteSchedules} />
+          {:else if isLoading}
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+              </div>
+              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
+            </div>
           {/if}
         </Tabs.Content>
-      {/if}
 
-      <!-- Analytics Tab Content -->
-      <Tabs.Content value="analytics" class="tabs-connected-content space-y-4" data-help-id="analytics-tab" data-help-title="Analytics Tab">
-        {#if transactions && !isLoading && activeTab === 'analytics'}
-          <AnalyticsDashboard
-            transactions={formattedTransactions}
-            accountId={accountId + ''}
-            accountType={accountData?.accountType ?? undefined}
-            account={accountData}
-          />
-        {:else if isLoading}
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-              <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+        <!-- Budgets Tab Content -->
+        <Tabs.Content
+          value="budgets"
+          class="tabs-connected-content space-y-4"
+          data-help-id="budgets-tab"
+          data-help-title="Budgets Tab">
+          {#if groupedBudgets && !isLoading && activeTab === 'budgets'}
+            <div class="flex items-center justify-between" data-tour-id="budgets-progress">
+              <div></div>
+              <Button
+                variant="outline"
+                onclick={() => (budgetRecommendationsSheetOpen = true)}
+                data-tour-id="budgets-allocation">
+                <Sparkles class="mr-2 h-4 w-4" />
+                Recommendations
+              </Button>
             </div>
-            <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-          </div>
-        {/if}
-      </Tabs.Content>
-
-      <!-- Subscriptions Tab Content -->
-      <Tabs.Content value="subscriptions" class="tabs-connected-content space-y-4" data-help-id="subscriptions-tab" data-help-title="Subscriptions Tab">
-        {#if accountId && accountSlug && activeTab === 'subscriptions'}
-          <SubscriptionsTab accountId={Number(accountId)} {accountSlug} />
-        {/if}
-      </Tabs.Content>
-
-      <!-- Schedules Tab Content -->
-      <Tabs.Content value="schedules" class="tabs-connected-content space-y-4" data-help-id="schedules-tab" data-help-title="Schedules Tab">
-        {#if schedules && !isLoading && activeTab === 'schedules'}
-          <div class="flex items-center justify-between" data-tour-id="schedules-upcoming">
-            <div></div>
-            <Button variant="outline" onclick={() => (scheduleRecommendationsSheetOpen = true)} data-tour-id="schedules-frequency">
-              <Sparkles class="mr-2 h-4 w-4" />
-              Recommendations
-            </Button>
-          </div>
-          <AccountSchedulesTable
-            {schedules}
-            accountId={Number(accountId)}
-            accountSlug={accountSlug || ''}
-            onView={viewSchedule}
-            onEdit={editSchedule}
-            onDelete={deleteSchedule}
-            onBulkDelete={bulkDeleteSchedules} />
-        {:else if isLoading}
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-              <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+            <AccountBudgetsGrouped
+              {groupedBudgets}
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              onView={viewBudget}
+              onEdit={editBudget}
+              onDuplicate={handleDuplicateBudget}
+              onArchive={archiveBudget}
+              onDelete={handleDeleteBudget}
+              onBulkDelete={bulkDeleteBudgets}
+              onBulkArchive={bulkArchiveBudgets} />
+          {:else if isLoading}
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+              </div>
+              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
-            <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-          </div>
-        {/if}
-      </Tabs.Content>
+          {/if}
+        </Tabs.Content>
 
-      <!-- Budgets Tab Content -->
-      <Tabs.Content value="budgets" class="tabs-connected-content space-y-4" data-help-id="budgets-tab" data-help-title="Budgets Tab">
-        {#if groupedBudgets && !isLoading && activeTab === 'budgets'}
-          <div class="flex items-center justify-between" data-tour-id="budgets-progress">
-            <div></div>
-            <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)} data-tour-id="budgets-allocation">
-              <Sparkles class="mr-2 h-4 w-4" />
-              Recommendations
-            </Button>
-          </div>
-          <AccountBudgetsGrouped
-            {groupedBudgets}
-            accountId={Number(accountId)}
-            accountSlug={accountSlug || ''}
-            onView={viewBudget}
-            onEdit={editBudget}
-            onDuplicate={handleDuplicateBudget}
-            onArchive={archiveBudget}
-            onDelete={handleDeleteBudget}
-            onBulkDelete={bulkDeleteBudgets}
-            onBulkArchive={bulkArchiveBudgets} />
-        {:else if isLoading}
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-              <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
-            </div>
-            <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-          </div>
-        {/if}
-      </Tabs.Content>
+        <!-- Import Tab Content -->
+        <Tabs.Content
+          value="import"
+          class="tabs-connected-content"
+          data-help-id="import-tab"
+          data-help-title="Import Tab">
+          {#if accountData && accountId && activeTab === 'import'}
+            <ImportTab
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              accountName={accountData.name || 'Account'} />
+          {/if}
+        </Tabs.Content>
 
-      <!-- Import Tab Content -->
-      <Tabs.Content value="import" class="tabs-connected-content" data-help-id="import-tab" data-help-title="Import Tab">
-        {#if accountData && accountId && activeTab === 'import'}
-          <ImportTab
-            accountId={Number(accountId)}
-            accountSlug={accountSlug || ''}
-            accountName={accountData.name || 'Account'} />
-        {/if}
-      </Tabs.Content>
+        <!-- Intelligence Tab Content -->
+        <Tabs.Content
+          value="intelligence"
+          class="tabs-connected-content"
+          data-help-id="intelligence-tab"
+          data-help-title="Intelligence Tab">
+          {#if accountId && accountSlug && activeTab === 'intelligence'}
+            <IntelligenceTab {accountId} {accountSlug} />
+          {/if}
+        </Tabs.Content>
 
-      <!-- Intelligence Tab Content -->
-      <Tabs.Content value="intelligence" class="tabs-connected-content" data-help-id="intelligence-tab" data-help-title="Intelligence Tab">
-        {#if accountId && accountSlug && activeTab === 'intelligence'}
-          <IntelligenceTab accountId={accountId} {accountSlug} />
-        {/if}
-      </Tabs.Content>
+        <!-- Automation Tab Content -->
+        <Tabs.Content
+          value="automation"
+          class="tabs-connected-content"
+          data-help-id="automation-tab"
+          data-help-title="Automation Tab">
+          {#if accountId && accountSlug && activeTab === 'automation'}
+            <AutomationTab accountId={Number(accountId)} {accountSlug} />
+          {/if}
+        </Tabs.Content>
 
-      <!-- Automation Tab Content -->
-      <Tabs.Content value="automation" class="tabs-connected-content" data-help-id="automation-tab" data-help-title="Automation Tab">
-        {#if accountId && accountSlug && activeTab === 'automation'}
-          <AutomationTab accountId={Number(accountId)} {accountSlug} />
-        {/if}
-      </Tabs.Content>
+        <!-- Documents Tab Content -->
+        <Tabs.Content
+          value="documents"
+          class="tabs-connected-content"
+          data-help-id="account-documents-tab"
+          data-help-title="Documents Tab">
+          {#if accountId && accountData && activeTab === 'documents'}
+            <DocumentsTab
+              accountId={Number(accountId)}
+              accountName={accountData.name || 'Account'} />
+          {/if}
+        </Tabs.Content>
 
-      <!-- Documents Tab Content -->
-      <Tabs.Content value="documents" class="tabs-connected-content" data-help-id="account-documents-tab" data-help-title="Documents Tab">
-        {#if accountId && accountData && activeTab === 'documents'}
-          <DocumentsTab accountId={Number(accountId)} accountName={accountData.name || 'Account'} />
-        {/if}
-      </Tabs.Content>
-
-      <!-- Settings Tab Content -->
-      <Tabs.Content value="settings" class="tabs-connected-content" data-help-id="account-settings-tab" data-help-title="Account Settings">
-        {#if accountData && activeTab === 'settings'}
-          <SettingsTab account={accountData} />
-        {/if}
-      </Tabs.Content>
+        <!-- Settings Tab Content -->
+        <Tabs.Content
+          value="settings"
+          class="tabs-connected-content"
+          data-help-id="account-settings-tab"
+          data-help-title="Account Settings">
+          {#if accountData && activeTab === 'settings'}
+            <SettingsTab account={accountData} />
+          {/if}
+        </Tabs.Content>
       </Tabs.Root>
     {:else}
       <!-- Content rendered directly when tabs are in header -->
@@ -1389,8 +1522,7 @@ $effect(() => {
               transactions={formattedTransactions}
               accountId={accountId + ''}
               accountType={accountData?.accountType ?? undefined}
-              account={accountData}
-            />
+              account={accountData} />
           {:else if isLoading}
             <div class="space-y-4">
               <div class="flex items-center justify-between">
@@ -1461,7 +1593,9 @@ $effect(() => {
           {/if}
         {:else if activeTab === 'documents'}
           {#if accountId && accountData}
-            <DocumentsTab accountId={Number(accountId)} accountName={accountData.name || 'Account'} />
+            <DocumentsTab
+              accountId={Number(accountId)}
+              accountName={accountData.name || 'Account'} />
           {/if}
         {:else if activeTab === 'import'}
           {#if accountData && accountId}
@@ -1542,7 +1676,8 @@ $effect(() => {
             Delete {schedulesToDelete.length} Schedule{schedulesToDelete.length > 1 ? 's' : ''}
           </AlertDialog.Title>
           <AlertDialog.Description>
-            Are you sure you want to delete {schedulesToDelete.length} schedule{schedulesToDelete.length > 1
+            Are you sure you want to delete {schedulesToDelete.length} schedule{schedulesToDelete.length >
+            1
               ? 's'
               : ''}? This action cannot be undone. Any transactions linked to these schedules will
             have their schedule reference removed.
@@ -1581,8 +1716,7 @@ $effect(() => {
       <ConvertToTransferDialog
         transaction={convertToTransferTransaction}
         bind:dialogOpen={convertToTransferDialogOpen}
-        preselectedAccountId={preselectedTransferAccountId}
-      />
+        preselectedAccountId={preselectedTransferAccountId} />
     {/if}
 
     <!-- HSA Add/Edit Expense Sheet -->
@@ -1698,22 +1832,20 @@ $effect(() => {
 
         <!-- Category update option -->
         {#if bulkPayeeUpdateDialog.newPayeeDefaultCategoryId}
-          <div class="flex items-start gap-3 rounded-lg border bg-muted/50 p-3">
+          <div class="bg-muted/50 flex items-start gap-3 rounded-lg border p-3">
             <Checkbox
               id="update-categories"
               checked={bulkPayeeUpdateDialog.updateCategories}
               onCheckedChange={(checked) => {
                 bulkPayeeUpdateDialog.updateCategories = checked === true;
-              }}
-            />
+              }} />
             <div class="grid gap-1.5 leading-none">
               <Label
                 for="update-categories"
-                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
+                class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Also update category to "{bulkPayeeUpdateDialog.newPayeeDefaultCategoryName}"
               </Label>
-              <p class="text-xs text-muted-foreground">
+              <p class="text-muted-foreground text-xs">
                 Apply the new payee's default category to these transactions
               </p>
             </div>
@@ -1775,8 +1907,8 @@ $effect(() => {
             {:else if bulkCategoryUpdateDialog.matchCountByCategory > 0}
               <p class="text-sm">
                 Found <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other
-                transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the
-                same previous category.
+                transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the same
+                previous category.
               </p>
             {/if}
           </AlertDialog.Description>
@@ -1813,7 +1945,11 @@ $effect(() => {
   {/if}
 
   <!-- Budget Recommendations Sheet -->
-  <ResponsiveSheet bind:open={budgetRecommendationsSheetOpen} defaultWidth={800} minWidth={600} maxWidth={1200}>
+  <ResponsiveSheet
+    bind:open={budgetRecommendationsSheetOpen}
+    defaultWidth={800}
+    minWidth={600}
+    maxWidth={1200}>
     {#snippet header()}
       <div>
         <h2 class="text-lg font-semibold">Budget Recommendations</h2>
@@ -1831,7 +1967,11 @@ $effect(() => {
   </ResponsiveSheet>
 
   <!-- Schedule Recommendations Sheet -->
-  <ResponsiveSheet bind:open={scheduleRecommendationsSheetOpen} defaultWidth={800} minWidth={600} maxWidth={1200}>
+  <ResponsiveSheet
+    bind:open={scheduleRecommendationsSheetOpen}
+    defaultWidth={800}
+    minWidth={600}
+    maxWidth={1200}>
     {#snippet header()}
       <div>
         <h2 class="text-lg font-semibold">Schedule Recommendations</h2>

@@ -1,5 +1,5 @@
-import {describe, test, expect, beforeEach} from "vitest";
-import type {Schedule} from "$lib/schema";
+import { describe, test, expect, beforeEach } from "vitest";
+import type { Schedule } from "$lib/schema";
 
 // Mock schedules data for testing
 const mockSchedules = [
@@ -304,7 +304,10 @@ describe("SchedulesState", () => {
     });
 
     test("should return empty array when no active schedules exist", () => {
-      const allInactiveSchedules = mockSchedules.map((s) => ({...s, status: "inactive" as const}));
+      const allInactiveSchedules = mockSchedules.map((s) => ({
+        ...s,
+        status: "inactive" as const,
+      }));
       const inactiveState = new TestSchedulesState(allInactiveSchedules);
 
       const activeSchedules = inactiveState.getActiveSchedules();
@@ -312,7 +315,7 @@ describe("SchedulesState", () => {
     });
 
     test("should return empty array when no inactive schedules exist", () => {
-      const allActiveSchedules = mockSchedules.map((s) => ({...s, status: "active" as const}));
+      const allActiveSchedules = mockSchedules.map((s) => ({ ...s, status: "active" as const }));
       const activeState = new TestSchedulesState(allActiveSchedules);
 
       const inactiveSchedules = activeState.getInactiveSchedules();
@@ -542,7 +545,7 @@ describe("SchedulesState", () => {
 
       schedulesState.addSchedule(newSchedule);
       schedulesState.removeSchedule(3);
-      schedulesState.updateSchedule({...newSchedule, amount: 200});
+      schedulesState.updateSchedule({ ...newSchedule, amount: 200 });
 
       expect(schedulesState.count).toBe(5); // 5 original - 1 removed + 1 added
       expect(schedulesState.getById(10)?.amount).toBe(200);

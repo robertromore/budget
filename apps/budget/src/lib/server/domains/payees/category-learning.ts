@@ -140,12 +140,7 @@ export class CategoryLearningService {
       );
     } else if (wasAiSuggested && aiSuggestedCategoryId === categoryId) {
       // AI was correct and user accepted - record positive reinforcement
-      await this.recordPositiveReinforcement(
-        payeeId,
-        categoryId,
-        aiConfidence ?? 0.7,
-        workspaceId
-      );
+      await this.recordPositiveReinforcement(payeeId, categoryId, aiConfidence ?? 0.7, workspaceId);
     }
     // If not AI suggested, it's just a user assignment - no learning needed here
     // as the category alias system handles this via raw string → category mapping
@@ -343,10 +338,7 @@ export class CategoryLearningService {
    * Calculate penalty based on dismissal count for a payee-category combination.
    * Returns a value between 0 and 0.6 (max 60% penalty).
    */
-  private async calculateDismissalPenalty(
-    payeeId: number,
-    categoryId: number
-  ): Promise<number> {
+  private async calculateDismissalPenalty(payeeId: number, categoryId: number): Promise<number> {
     // Count dismissals where this category was dismissed for this payee
     // Dismissals are recorded with fromCategoryId = the dismissed category
     // and toCategoryId = null
@@ -1272,5 +1264,9 @@ export class CategoryLearningService {
 
 // Re-export types for external use
 export type {
-  CategoryCorrection, CategoryDrift, CategoryRecommendation, CorrectionPattern, LearningMetrics
+  CategoryCorrection,
+  CategoryDrift,
+  CategoryRecommendation,
+  CorrectionPattern,
+  LearningMetrics,
 } from "$lib/schema";

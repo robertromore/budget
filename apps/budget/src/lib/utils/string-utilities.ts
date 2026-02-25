@@ -65,9 +65,7 @@ export function toCamelCase(str: string): string {
     .toLowerCase()
     .replace(/[^\w\s]/g, "")
     .split(/\s+/)
-    .map((word, index) =>
-      index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
-    )
+    .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
     .join("");
 }
 
@@ -140,11 +138,7 @@ export function getInitials(name: string, maxInitials = 2): string {
  * @example pluralize(5, "item") => "items"
  * @example pluralize(5, "category", "categories") => "categories"
  */
-export function pluralize(
-  count: number,
-  singular: string,
-  plural?: string
-): string {
+export function pluralize(count: number, singular: string, plural?: string): string {
   if (count === 1) return singular;
   return plural ?? singular + "s";
 }
@@ -237,11 +231,7 @@ export function capitalize(str: string): string {
  * Pad string to minimum length
  * @example padStart("5", 3, "0") => "005"
  */
-export function padStart(
-  str: string | number,
-  length: number,
-  char = " "
-): string {
+export function padStart(str: string | number, length: number, char = " "): string {
   return String(str).padStart(length, char);
 }
 
@@ -249,11 +239,7 @@ export function padStart(
  * Pad string to minimum length (end)
  * @example padEnd("5", 3, "0") => "500"
  */
-export function padEnd(
-  str: string | number,
-  length: number,
-  char = " "
-): string {
+export function padEnd(str: string | number, length: number, char = " "): string {
   return String(str).padEnd(length, char);
 }
 

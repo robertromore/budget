@@ -50,12 +50,7 @@ export class AutomationRepository {
     const [rule] = await this.db
       .select()
       .from(automationRules)
-      .where(
-        and(
-          eq(automationRules.id, id),
-          eq(automationRules.workspaceId, this.workspaceId)
-        )
-      );
+      .where(and(eq(automationRules.id, id), eq(automationRules.workspaceId, this.workspaceId)));
     return rule;
   }
 
@@ -78,10 +73,7 @@ export class AutomationRepository {
       .select()
       .from(automationRules)
       .where(
-        and(
-          eq(automationRules.workspaceId, this.workspaceId),
-          eq(automationRules.isEnabled, true)
-        )
+        and(eq(automationRules.workspaceId, this.workspaceId), eq(automationRules.isEnabled, true))
       )
       .orderBy(desc(automationRules.priority));
 
@@ -100,10 +92,7 @@ export class AutomationRepository {
       .select()
       .from(automationRules)
       .where(
-        and(
-          eq(automationRules.workspaceId, this.workspaceId),
-          eq(automationRules.isEnabled, true)
-        )
+        and(eq(automationRules.workspaceId, this.workspaceId), eq(automationRules.isEnabled, true))
       )
       .orderBy(desc(automationRules.priority));
 
@@ -127,12 +116,7 @@ export class AutomationRepository {
         ...data,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where(
-        and(
-          eq(automationRules.id, id),
-          eq(automationRules.workspaceId, this.workspaceId)
-        )
-      )
+      .where(and(eq(automationRules.id, id), eq(automationRules.workspaceId, this.workspaceId)))
       .returning();
     return rule;
   }
@@ -143,12 +127,7 @@ export class AutomationRepository {
   async delete(id: number): Promise<boolean> {
     const result = await this.db
       .delete(automationRules)
-      .where(
-        and(
-          eq(automationRules.id, id),
-          eq(automationRules.workspaceId, this.workspaceId)
-        )
-      );
+      .where(and(eq(automationRules.id, id), eq(automationRules.workspaceId, this.workspaceId)));
     return true;
   }
 
@@ -176,12 +155,7 @@ export class AutomationRepository {
         lastTriggeredAt: sql`CURRENT_TIMESTAMP`,
         triggerCount: sql`${automationRules.triggerCount} + 1`,
       })
-      .where(
-        and(
-          eq(automationRules.id, id),
-          eq(automationRules.workspaceId, this.workspaceId)
-        )
-      );
+      .where(and(eq(automationRules.id, id), eq(automationRules.workspaceId, this.workspaceId)));
   }
 
   /**
@@ -191,7 +165,15 @@ export class AutomationRepository {
     const original = await this.findById(id);
     if (!original) return undefined;
 
-    const { id: _, workspaceId: __, createdAt, updatedAt, lastTriggeredAt, triggerCount, ...data } = original;
+    const {
+      id: _,
+      workspaceId: __,
+      createdAt,
+      updatedAt,
+      lastTriggeredAt,
+      triggerCount,
+      ...data
+    } = original;
     return this.create({
       ...data,
       name: newName || `${original.name} (copy)`,
@@ -207,10 +189,7 @@ export class AutomationRepository {
    * Create a log entry
    */
   async createLog(data: NewAutomationRuleLog): Promise<AutomationRuleLog> {
-    const [log] = await this.db
-      .insert(automationRuleLogs)
-      .values(data)
-      .returning();
+    const [log] = await this.db.insert(automationRuleLogs).values(data).returning();
     return log;
   }
 

@@ -6,7 +6,8 @@ related: [sidebar]
 
 # Budgets List
 
-Budgets help you plan and control spending by setting limits for different expense categories.
+Budgets help you plan and control spending by setting limits for different
+expense categories.
 
 ## Budget Status
 

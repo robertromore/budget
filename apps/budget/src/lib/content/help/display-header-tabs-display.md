@@ -11,10 +11,13 @@ Control the visual style of tabs when displayed in the header.
 ## Options
 
 ### Icon with text
+
 Show both the icon and text label on header tabs. Best for clarity.
 
 ### Icon only
-Show only icons on header tabs. Hover to see the label. Best for a compact header.
+
+Show only icons on header tabs. Hover to see the label. Best for a compact
+header.
 
 ## Tips
 

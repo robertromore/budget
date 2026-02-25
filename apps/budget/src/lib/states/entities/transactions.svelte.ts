@@ -100,7 +100,9 @@ export class TransactionsState {
 
   refreshAll() {
     if (this.accountId) {
-      this.accountTransactionsQuery = rpc.transactions.getAccountTransactions(this.accountId).options();
+      this.accountTransactionsQuery = rpc.transactions
+        .getAccountTransactions(this.accountId)
+        .options();
       this.summaryQuery = rpc.transactions.getAccountSummary(this.accountId).options();
     }
     this.refreshList();

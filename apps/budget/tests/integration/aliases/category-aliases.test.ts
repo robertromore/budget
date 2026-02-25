@@ -5,11 +5,11 @@
  * Maps raw imported strings to category IDs with context awareness.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -95,7 +95,13 @@ describe("Category Aliases", () => {
     });
 
     it("should support all trigger types", async () => {
-      const triggers = ["import_confirmation", "transaction_edit", "manual_creation", "bulk_import", "ai_accepted"] as const;
+      const triggers = [
+        "import_confirmation",
+        "transaction_edit",
+        "manual_creation",
+        "bulk_import",
+        "ai_accepted",
+      ] as const;
 
       for (const trigger of triggers) {
         const [alias] = await ctx.db
@@ -164,8 +170,22 @@ describe("Category Aliases", () => {
   describe("alias lookups", () => {
     beforeEach(async () => {
       await ctx.db.insert(schema.categoryAliases).values([
-        {workspaceId: ctx.workspaceId, rawString: "NETFLIX MONTHLY", normalizedString: "netflix monthly", categoryId: ctx.categoryId, trigger: "import_confirmation", amountType: "expense"},
-        {workspaceId: ctx.workspaceId, rawString: "SPOTIFY PREMIUM", normalizedString: "spotify premium", categoryId: ctx.categoryId, trigger: "manual_creation", amountType: "expense"},
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "NETFLIX MONTHLY",
+          normalizedString: "netflix monthly",
+          categoryId: ctx.categoryId,
+          trigger: "import_confirmation",
+          amountType: "expense",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "SPOTIFY PREMIUM",
+          normalizedString: "spotify premium",
+          categoryId: ctx.categoryId,
+          trigger: "manual_creation",
+          amountType: "expense",
+        },
       ]);
     });
 
@@ -232,7 +252,7 @@ describe("Category Aliases", () => {
 
       await ctx.db
         .update(schema.categoryAliases)
-        .set({matchCount: 10, lastMatchedAt: new Date().toISOString()})
+        .set({ matchCount: 10, lastMatchedAt: new Date().toISOString() })
         .where(eq(schema.categoryAliases.id, alias.id));
 
       const [updated] = await ctx.db
@@ -258,7 +278,7 @@ describe("Category Aliases", () => {
 
       await ctx.db
         .update(schema.categoryAliases)
-        .set({confidence: 0.98})
+        .set({ confidence: 0.98 })
         .where(eq(schema.categoryAliases.id, alias.id));
 
       const [updated] = await ctx.db
@@ -284,7 +304,7 @@ describe("Category Aliases", () => {
 
       await ctx.db
         .update(schema.categoryAliases)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(eq(schema.categoryAliases.id, alias.id));
 
       // Should not find in active query
@@ -292,10 +312,7 @@ describe("Category Aliases", () => {
         .select()
         .from(schema.categoryAliases)
         .where(
-          and(
-            eq(schema.categoryAliases.id, alias.id),
-            isNull(schema.categoryAliases.deletedAt)
-          )
+          and(eq(schema.categoryAliases.id, alias.id), isNull(schema.categoryAliases.deletedAt))
         );
 
       expect(activeAliases).toHaveLength(0);
@@ -323,8 +340,18 @@ describe("Category Aliases", () => {
 
       // Same raw string, different categories
       await ctx.db.insert(schema.categoryAliases).values([
-        {workspaceId: ctx.workspaceId, rawString: "SHARED STRING", categoryId: ctx.categoryId, trigger: "manual_creation"},
-        {workspaceId: ctx.workspaceId, rawString: "SHARED STRING", categoryId: category2.id, trigger: "manual_creation"},
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "SHARED STRING",
+          categoryId: ctx.categoryId,
+          trigger: "manual_creation",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "SHARED STRING",
+          categoryId: category2.id,
+          trigger: "manual_creation",
+        },
       ]);
 
       const aliases = await ctx.db
@@ -365,9 +392,24 @@ describe("Category Aliases", () => {
       const aliases = await ctx.db
         .insert(schema.categoryAliases)
         .values([
-          {workspaceId: ctx.workspaceId, rawString: "BULK CAT 1", categoryId: ctx.categoryId, trigger: "bulk_import"},
-          {workspaceId: ctx.workspaceId, rawString: "BULK CAT 2", categoryId: ctx.categoryId, trigger: "bulk_import"},
-          {workspaceId: ctx.workspaceId, rawString: "BULK CAT 3", categoryId: ctx.categoryId, trigger: "bulk_import"},
+          {
+            workspaceId: ctx.workspaceId,
+            rawString: "BULK CAT 1",
+            categoryId: ctx.categoryId,
+            trigger: "bulk_import",
+          },
+          {
+            workspaceId: ctx.workspaceId,
+            rawString: "BULK CAT 2",
+            categoryId: ctx.categoryId,
+            trigger: "bulk_import",
+          },
+          {
+            workspaceId: ctx.workspaceId,
+            rawString: "BULK CAT 3",
+            categoryId: ctx.categoryId,
+            trigger: "bulk_import",
+          },
         ])
         .returning();
 
@@ -395,8 +437,18 @@ describe("Category Aliases", () => {
         .returning();
 
       await ctx.db.insert(schema.categoryAliases).values([
-        {workspaceId: ctx.workspaceId, rawString: "SAME ALIAS", categoryId: ctx.categoryId, trigger: "manual_creation"},
-        {workspaceId: workspace2.id, rawString: "SAME ALIAS", categoryId: category2.id, trigger: "manual_creation"},
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "SAME ALIAS",
+          categoryId: ctx.categoryId,
+          trigger: "manual_creation",
+        },
+        {
+          workspaceId: workspace2.id,
+          rawString: "SAME ALIAS",
+          categoryId: category2.id,
+          trigger: "manual_creation",
+        },
       ]);
 
       const ws1Aliases = await ctx.db

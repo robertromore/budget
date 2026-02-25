@@ -5,11 +5,11 @@
  * Includes conversations and messages with context tracking.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull, desc} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull, desc } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -63,7 +63,7 @@ describe("AI Conversations", () => {
         page: "/budgets",
         entityType: "budget" as const,
         entityId: 123,
-        data: {budgetName: "Monthly Budget"},
+        data: { budgetName: "Monthly Budget" },
       };
 
       const [conversation] = await ctx.db
@@ -132,7 +132,9 @@ describe("AI Conversations", () => {
         .returning();
 
       expect(message.role).toBe("assistant");
-      expect(message.reasoning).toBe("User is asking about budget creation. Providing step-by-step guidance.");
+      expect(message.reasoning).toBe(
+        "User is asking about budget creation. Providing step-by-step guidance."
+      );
     });
 
     it("should track tools used by assistant", async () => {
@@ -181,14 +183,14 @@ describe("AI Conversations", () => {
 
       // Add messages
       await ctx.db.insert(schema.aiConversationMessages).values([
-        {conversationId: conversation.id, role: "user", content: "Hello"},
-        {conversationId: conversation.id, role: "assistant", content: "Hi there!"},
+        { conversationId: conversation.id, role: "user", content: "Hello" },
+        { conversationId: conversation.id, role: "assistant", content: "Hi there!" },
       ]);
 
       // Update message count
       await ctx.db
         .update(schema.aiConversations)
-        .set({messageCount: 2})
+        .set({ messageCount: 2 })
         .where(eq(schema.aiConversations.id, conversation.id));
 
       const [updated] = await ctx.db
@@ -210,7 +212,7 @@ describe("AI Conversations", () => {
 
       await ctx.db
         .update(schema.aiConversations)
-        .set({summary: "Discussion about creating and managing budgets"})
+        .set({ summary: "Discussion about creating and managing budgets" })
         .where(eq(schema.aiConversations.id, conversation.id));
 
       const [updated] = await ctx.db
@@ -234,7 +236,7 @@ describe("AI Conversations", () => {
 
       await ctx.db
         .update(schema.aiConversations)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(eq(schema.aiConversations.id, conversation.id));
 
       const activeConvos = await ctx.db
@@ -257,16 +259,16 @@ describe("AI Conversations", () => {
       const convos = await ctx.db
         .insert(schema.aiConversations)
         .values([
-          {workspaceId: ctx.workspaceId, title: "Budget Help", messageCount: 5},
-          {workspaceId: ctx.workspaceId, title: "Category Questions", messageCount: 3},
-          {workspaceId: ctx.workspaceId, title: "Import Assistance", messageCount: 10},
+          { workspaceId: ctx.workspaceId, title: "Budget Help", messageCount: 5 },
+          { workspaceId: ctx.workspaceId, title: "Category Questions", messageCount: 3 },
+          { workspaceId: ctx.workspaceId, title: "Import Assistance", messageCount: 10 },
         ])
         .returning();
 
       // Add messages to first conversation
       await ctx.db.insert(schema.aiConversationMessages).values([
-        {conversationId: convos[0].id, role: "user", content: "Question 1"},
-        {conversationId: convos[0].id, role: "assistant", content: "Answer 1"},
+        { conversationId: convos[0].id, role: "user", content: "Question 1" },
+        { conversationId: convos[0].id, role: "assistant", content: "Answer 1" },
       ]);
     });
 
@@ -320,8 +322,8 @@ describe("AI Conversations", () => {
         .returning();
 
       await ctx.db.insert(schema.aiConversations).values([
-        {workspaceId: ctx.workspaceId, title: "WS1 Convo"},
-        {workspaceId: workspace2.id, title: "WS2 Convo"},
+        { workspaceId: ctx.workspaceId, title: "WS1 Convo" },
+        { workspaceId: workspace2.id, title: "WS2 Convo" },
       ]);
 
       const ws1Convos = await ctx.db

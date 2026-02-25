@@ -1,38 +1,38 @@
 <script lang="ts">
-  import { ForecastSummaryCard } from "$lib/components/ml";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Label } from "$lib/components/ui/label";
-  import * as Select from "$lib/components/ui/select";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { ML } from "$lib/query/ml";
-  import { formatCurrency, formatPercent } from "$lib/utils";
-  import ArrowDown from "@lucide/svelte/icons/arrow-down";
-  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-  import ArrowUp from "@lucide/svelte/icons/arrow-up";
-  import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
+import { ForecastSummaryCard } from '$lib/components/ml';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import { ML } from '$lib/query/ml';
+import { formatCurrency, formatPercent } from '$lib/utils';
+import ArrowDown from '@lucide/svelte/icons/arrow-down';
+import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+import ArrowUp from '@lucide/svelte/icons/arrow-up';
+import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 
-  // Filter state
-  let horizon = $state(30);
-  let granularity = $state<"daily" | "weekly" | "monthly">("monthly");
+// Filter state
+let horizon = $state(30);
+let granularity = $state<'daily' | 'weekly' | 'monthly'>('monthly');
 
-  // Queries - use $derived for reactive filter updates
-  const forecastQuery = $derived(ML.getCashFlowForecast({ horizon, granularity }).options());
+// Queries - use $derived for reactive filter updates
+const forecastQuery = $derived(ML.getCashFlowForecast({ horizon, granularity }).options());
 
-  const horizonOptions = [
-    { value: 7, label: "7 Days" },
-    { value: 14, label: "14 Days" },
-    { value: 30, label: "30 Days" },
-    { value: 60, label: "60 Days" },
-    { value: 90, label: "90 Days" },
-  ];
+const horizonOptions = [
+  { value: 7, label: '7 Days' },
+  { value: 14, label: '14 Days' },
+  { value: 30, label: '30 Days' },
+  { value: 60, label: '60 Days' },
+  { value: 90, label: '90 Days' },
+];
 
-  const granularityOptions = [
-    { value: "daily", label: "Daily" },
-    { value: "weekly", label: "Weekly" },
-    { value: "monthly", label: "Monthly" },
-  ];
+const granularityOptions = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+];
 </script>
 
 <svelte:head>
@@ -68,8 +68,7 @@
             value={horizon.toString()}
             onValueChange={(v) => {
               if (v) horizon = parseInt(v);
-            }}
-          >
+            }}>
             <Select.Trigger class="w-35">
               {horizonOptions.find((o) => o.value === horizon)?.label}
             </Select.Trigger>
@@ -88,8 +87,7 @@
             value={granularity}
             onValueChange={(v) => {
               if (v) granularity = v as typeof granularity;
-            }}
-          >
+            }}>
             <Select.Trigger class="w-35">
               {granularityOptions.find((o) => o.value === granularity)?.label}
             </Select.Trigger>
@@ -105,8 +103,7 @@
           variant="ghost"
           size="sm"
           onclick={() => forecastQuery.refetch()}
-          disabled={forecastQuery.isFetching}
-        >
+          disabled={forecastQuery.isFetching}>
           <RefreshCcw class="mr-2 h-4 w-4 {forecastQuery.isFetching ? 'animate-spin' : ''}" />
           Refresh
         </Button>
@@ -136,8 +133,7 @@
         title="Net Cash Flow"
         predictions={forecastQuery.data.predictions}
         confidence={forecastQuery.data.confidence}
-        {granularity}
-      />
+        {granularity} />
 
       <!-- Income vs Expenses -->
       <div class="grid gap-4">

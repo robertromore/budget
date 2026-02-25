@@ -153,13 +153,9 @@ const nextOccurrences = $derived.by(() => {
       }
       case 'monthly': {
         // Determine which pattern to use (matching model logic)
-        const onDay =
-          value.on && value.on_type === 'day' && value.days && value.days.length > 0;
+        const onDay = value.on && value.on_type === 'day' && value.days && value.days.length > 0;
         const onThe =
-          value.on &&
-          value.on_type === 'the' &&
-          value.weeks?.length &&
-          value.weeks_days?.length;
+          value.on && value.on_type === 'the' && value.weeks?.length && value.weeks_days?.length;
 
         if (onDay) {
           dates = nextMonthly(startDate, endDate, interval, value.days, [], [], limit);

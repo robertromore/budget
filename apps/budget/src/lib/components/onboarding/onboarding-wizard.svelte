@@ -34,7 +34,9 @@ let submitError = $state<string | null>(null);
 
 const currentStep = $derived(onboardingWizardStore.currentStep);
 const isReviewStep = $derived(currentStep?.id === 'review');
-const canComplete = $derived(onboardingWizardStore.validateStep('review', onboardingWizardStore.formData));
+const canComplete = $derived(
+  onboardingWizardStore.validateStep('review', onboardingWizardStore.formData)
+);
 
 onMount(() => {
   // Initialize the wizard
@@ -105,12 +107,13 @@ async function handleSkipWizard() {
 }
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-background to-muted/20 px-4 py-8">
+<div class="from-background to-muted/20 min-h-screen bg-gradient-to-br px-4 py-8">
   <div class="mx-auto w-full max-w-4xl">
     <!-- Header -->
     <div class="mb-8 text-center">
-      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-        <Sparkles class="h-7 w-7 text-primary" />
+      <div
+        class="bg-primary/10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+        <Sparkles class="text-primary h-7 w-7" />
       </div>
       <h1 class="text-2xl font-bold sm:text-3xl">Welcome to Budget</h1>
       <p class="text-muted-foreground mt-2">
@@ -173,10 +176,7 @@ async function handleSkipWizard() {
           <PreferencesStep />
         </WizardStep>
 
-        <WizardStep
-          wizardStore={onboardingWizardStore}
-          stepId="review"
-          showNavigation={false}>
+        <WizardStep wizardStore={onboardingWizardStore} stepId="review" showNavigation={false}>
           <ReviewStep />
 
           <!-- Custom navigation for review step -->
@@ -202,7 +202,7 @@ async function handleSkipWizard() {
           </div>
 
           {#if submitError}
-            <p class="mt-4 text-center text-sm text-destructive">{submitError}</p>
+            <p class="text-destructive mt-4 text-center text-sm">{submitError}</p>
           {/if}
         </WizardStep>
       </CardContent>

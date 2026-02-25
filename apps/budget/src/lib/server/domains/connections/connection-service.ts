@@ -10,7 +10,12 @@ import type {
 } from "$lib/schema/account-connections";
 import { ConnectionRepository } from "./connection-repository";
 import { encryptCredentials, decryptCredentials } from "./credential-encryption";
-import type { ConnectionProviderInterface, ConnectionStats, SyncOptions, SyncResult } from "./types";
+import type {
+  ConnectionProviderInterface,
+  ConnectionStats,
+  SyncOptions,
+  SyncResult,
+} from "./types";
 import { SimpleFINProvider } from "./providers/simplefin";
 import { TellerProvider } from "./providers/teller";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
@@ -234,7 +239,10 @@ export class ConnectionService {
 
     try {
       // Decrypt credentials for provider
-      const credentials = decryptCredentials<ProviderCredentials>(connection.encryptedCredentials, workspaceId);
+      const credentials = decryptCredentials<ProviderCredentials>(
+        connection.encryptedCredentials,
+        workspaceId
+      );
 
       // Fetch transactions from provider
       const rows = await provider.fetchTransactions(connection, credentials, options.since);
@@ -255,17 +263,13 @@ export class ConnectionService {
       // Run through import pipeline if there are transactions
       if (rows.length > 0) {
         const orchestrator = new ImportOrchestrator();
-        const importResult = await orchestrator.processImport(
-          connection.accountId,
-          rows,
-          {
-            allowPartialImport: true,
-            createMissingPayees: true,
-            createMissingCategories: false, // Don't auto-create categories from sync
-            skipDuplicates: true,
-            fileName: `bank-sync:${connection.provider}:${nowISOString()}`,
-          }
-        );
+        const importResult = await orchestrator.processImport(connection.accountId, rows, {
+          allowPartialImport: true,
+          createMissingPayees: true,
+          createMissingCategories: false, // Don't auto-create categories from sync
+          skipDuplicates: true,
+          fileName: `bank-sync:${connection.provider}:${nowISOString()}`,
+        });
 
         stats.transactionsImported = importResult.transactionsCreated;
         stats.duplicatesSkipped = importResult.summary.totalRows - importResult.transactionsCreated;

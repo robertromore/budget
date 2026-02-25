@@ -144,13 +144,10 @@ export const insertAutomationRuleLogSchema = createInsertSchema(automationRuleLo
 // Form schemas with validation
 export const formInsertAutomationRuleSchema = createInsertSchema(automationRules, {
   name: (schema) =>
-    schema
-      .min(1, "Rule name is required")
-      .max(100, "Rule name must be less than 100 characters"),
+    schema.min(1, "Rule name is required").max(100, "Rule name must be less than 100 characters"),
   description: (schema) =>
     schema.max(500, "Description must be less than 500 characters").optional().nullable(),
-  priority: (schema) =>
-    schema.min(-1000, "Priority too low").max(1000, "Priority too high"),
+  priority: (schema) => schema.min(-1000, "Priority too low").max(1000, "Priority too high"),
 });
 
 // TypeScript types

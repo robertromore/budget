@@ -3,8 +3,26 @@ import { categories, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { formatDayOrdinal } from "$lib/utils/date-formatters";
 import { parseISOString, dateDifference } from "$lib/utils/dates";
-import { and, asc, count, desc, eq, gt, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
-import { createIntelligenceCoordinator, type StrategyResult } from "$lib/server/ai/intelligence-coordinator";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
+import {
+  createIntelligenceCoordinator,
+  type StrategyResult,
+} from "$lib/server/ai/intelligence-coordinator";
 import type { ProviderInstance } from "$lib/server/ai/providers";
 import { generateText } from "ai";
 
@@ -235,14 +253,8 @@ export class PayeeIntelligenceService {
   /**
    * Build SQL filter conditions based on intelligence profile settings
    */
-  private buildFilterConditions(
-    payeeId: number,
-    profile?: IntelligenceProfile | null
-  ): SQL[] {
-    const conditions: SQL[] = [
-      eq(transactions.payeeId, payeeId),
-      isNull(transactions.deletedAt),
-    ];
+  private buildFilterConditions(payeeId: number, profile?: IntelligenceProfile | null): SQL[] {
+    const conditions: SQL[] = [eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)];
 
     // If profile is not enabled or doesn't exist, return base conditions
     if (!profile?.enabled || !profile?.filters) {
@@ -308,10 +320,7 @@ export class PayeeIntelligenceService {
     // Exclude transfers filter
     if (filters.excludeTransfers) {
       categoryConditions.push(
-        or(
-          isNull(categories.categoryType),
-          sql`${categories.categoryType} != 'transfer'`
-        )!
+        or(isNull(categories.categoryType), sql`${categories.categoryType} != 'transfer'`)!
       );
     }
 
@@ -319,9 +328,7 @@ export class PayeeIntelligenceService {
       return null;
     }
 
-    return categoryConditions.length === 1
-      ? categoryConditions[0]!
-      : and(...categoryConditions)!;
+    return categoryConditions.length === 1 ? categoryConditions[0]! : and(...categoryConditions)!;
   }
 
   /**
@@ -345,12 +352,13 @@ export class PayeeIntelligenceService {
 
     // Join with categories if we need category filtering
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
+      query = query.leftJoin(
+        categories,
+        eq(transactions.categoryId, categories.id)
+      ) as unknown as typeof query;
     }
 
-    const allConditions = categoryFilter
-      ? [...baseConditions, categoryFilter]
-      : baseConditions;
+    const allConditions = categoryFilter ? [...baseConditions, categoryFilter] : baseConditions;
 
     const transactionData = await query
       .where(and(...allConditions))
@@ -395,8 +403,7 @@ export class PayeeIntelligenceService {
     const lastDateStr = transactionData[transactionData.length - 1]?.date;
     const firstDate = firstDateStr ? parseISOString(firstDateStr) : null;
     const lastDate = lastDateStr ? parseISOString(lastDateStr) : null;
-    const timeSpanDays =
-      firstDate && lastDate ? dateDifference(lastDate, firstDate, "days") : 0;
+    const timeSpanDays = firstDate && lastDate ? dateDifference(lastDate, firstDate, "days") : 0;
 
     return {
       payeeId,
@@ -442,12 +449,13 @@ export class PayeeIntelligenceService {
       .from(transactions);
 
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
+      query = query.leftJoin(
+        categories,
+        eq(transactions.categoryId, categories.id)
+      ) as unknown as typeof query;
     }
 
-    const allConditions = categoryFilter
-      ? [...baseConditions, categoryFilter]
-      : baseConditions;
+    const allConditions = categoryFilter ? [...baseConditions, categoryFilter] : baseConditions;
 
     const monthlyData = await query
       .where(and(...allConditions))
@@ -524,12 +532,13 @@ export class PayeeIntelligenceService {
       .from(transactions);
 
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
+      query = query.leftJoin(
+        categories,
+        eq(transactions.categoryId, categories.id)
+      ) as unknown as typeof query;
     }
 
-    const allConditions = categoryFilter
-      ? [...baseConditions, categoryFilter]
-      : baseConditions;
+    const allConditions = categoryFilter ? [...baseConditions, categoryFilter] : baseConditions;
 
     const dayOfWeekData = await query
       .where(and(...allConditions))
@@ -567,17 +576,16 @@ export class PayeeIntelligenceService {
     const baseConditions = this.buildFilterConditions(payeeId, profile);
     const categoryFilter = this.buildCategoryFilter(profile);
 
-    let query = db
-      .select({ date: transactions.date })
-      .from(transactions);
+    let query = db.select({ date: transactions.date }).from(transactions);
 
     if (categoryFilter) {
-      query = query.leftJoin(categories, eq(transactions.categoryId, categories.id)) as unknown as typeof query;
+      query = query.leftJoin(
+        categories,
+        eq(transactions.categoryId, categories.id)
+      ) as unknown as typeof query;
     }
 
-    const allConditions = categoryFilter
-      ? [...baseConditions, categoryFilter]
-      : baseConditions;
+    const allConditions = categoryFilter ? [...baseConditions, categoryFilter] : baseConditions;
 
     const transactionDates = await query
       .where(and(...allConditions))
@@ -732,15 +740,16 @@ export class PayeeIntelligenceService {
         predictedDate = this.getNextBiMonthlyDate(now, monthlyPattern.commonDays);
         predictionMethod = "frequency_based";
         confidence = monthlyPattern.confidence * 0.95;
-        reasoning = `Bi-monthly pattern detected: transactions typically occur on the ${monthlyPattern.commonDays.map(d => formatDayOrdinal(d)).join(" and ")}`;
+        reasoning = `Bi-monthly pattern detected: transactions typically occur on the ${monthlyPattern.commonDays.map((d) => formatDayOrdinal(d)).join(" and ")}`;
       } else if (monthlyPattern.isMonthly && monthlyPattern.primaryDayOfMonth) {
         // Monthly pattern (single day)
         predictedDate = this.getNextDayOfMonthDate(now, monthlyPattern.primaryDayOfMonth);
         predictionMethod = "frequency_based";
         confidence = monthlyPattern.confidence * 0.95;
-        const dayDesc = monthlyPattern.primaryDayOfMonth === 31
-          ? "end of month"
-          : formatDayOrdinal(monthlyPattern.primaryDayOfMonth);
+        const dayDesc =
+          monthlyPattern.primaryDayOfMonth === 31
+            ? "end of month"
+            : formatDayOrdinal(monthlyPattern.primaryDayOfMonth);
         reasoning = `Monthly pattern detected: transactions typically occur on the ${dayDesc}`;
       } else {
         // Fall through to interval-based
@@ -754,14 +763,20 @@ export class PayeeIntelligenceService {
     }
 
     // Method 2: Frequency-based prediction (fallback or when day-of-month pattern not detected)
-    if (!nextTransactionDate && frequencyAnalysis.detectedFrequency && frequencyAnalysis.confidence > 0.5) {
+    if (
+      !nextTransactionDate &&
+      frequencyAnalysis.detectedFrequency &&
+      frequencyAnalysis.confidence > 0.5
+    ) {
       const lastDate = new Date(lastTransactionDate);
       let predictedDate = new Date(lastDate);
       predictedDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
 
       // If predicted date is in the past, advance to future
       while (predictedDate <= now) {
-        predictedDate.setDate(predictedDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
+        predictedDate.setDate(
+          predictedDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween)
+        );
       }
 
       nextTransactionDate = predictedDate.toISOString().split("T")[0] ?? null;
@@ -910,9 +925,10 @@ export class PayeeIntelligenceService {
       // Blend ML prediction with statistical prediction
       // Weight ML higher when it has good confidence
       const mlWeight = Math.min(0.7, mlConfidence);
-      const blendedAmount = prediction.predictedAmount !== null
-        ? (prediction.predictedAmount * (1 - mlWeight)) + ((mlPredictedAmount ?? 0) * mlWeight)
-        : mlPredictedAmount;
+      const blendedAmount =
+        prediction.predictedAmount !== null
+          ? prediction.predictedAmount * (1 - mlWeight) + (mlPredictedAmount ?? 0) * mlWeight
+          : mlPredictedAmount;
 
       // Adjust confidence based on ML
       const blendedConfidence = Math.min(1, (prediction.confidence + mlConfidence) / 1.5);
@@ -998,7 +1014,7 @@ Suggested Monthly Allocation: $${Math.abs(suggestion.suggestedMonthlyAllocation 
 Allocation Range: $${Math.abs(suggestion.allocationRange.min / 100).toFixed(2)} - $${Math.abs(suggestion.allocationRange.max / 100).toFixed(2)}
 Confidence: ${Math.round(suggestion.confidence * 100)}%
 Statistical Reasoning: ${suggestion.reasoning}
-${suggestion.seasonalAdjustments.length > 0 ? `Seasonal Adjustments: ${suggestion.seasonalAdjustments.map(a => `${a.monthName}: ${a.adjustmentPercent > 0 ? "+" : ""}${Math.round(a.adjustmentPercent)}%`).join(", ")}` : ""}
+${suggestion.seasonalAdjustments.length > 0 ? `Seasonal Adjustments: ${suggestion.seasonalAdjustments.map((a) => `${a.monthName}: ${a.adjustmentPercent > 0 ? "+" : ""}${Math.round(a.adjustmentPercent)}%`).join(", ")}` : ""}
 
 Write a helpful explanation of this budget recommendation. Focus on:
 1. Why this amount makes sense based on their history
@@ -1122,9 +1138,7 @@ Keep the tone helpful and actionable.`;
     const baseConditions = this.buildFilterConditions(payeeId, profile);
     const categoryFilter = this.buildCategoryFilter(profile);
 
-    const allConditions = categoryFilter
-      ? [...baseConditions, categoryFilter]
-      : baseConditions;
+    const allConditions = categoryFilter ? [...baseConditions, categoryFilter] : baseConditions;
 
     const categoryData = await db
       .select({
@@ -1333,7 +1347,7 @@ Keep the tone helpful and actionable.`;
 
     // Sort clusters by total count
     const sortedClusters = clusters
-      .map(cluster => ({
+      .map((cluster) => ({
         centerDay: cluster.centerDay,
         count: cluster.count,
         days: cluster.days,
@@ -1355,7 +1369,8 @@ Keep the tone helpful and actionable.`;
     if (
       secondCluster &&
       topTwoClustersPercent >= 0.5 && // At least 50% on two clusters (forgiving for real-world data)
-      topCluster.count >= 2 && secondCluster.count >= 2
+      topCluster.count >= 2 &&
+      secondCluster.count >= 2
     ) {
       const days = [topCluster.centerDay, secondCluster.centerDay].sort((a, b) => a - b);
 
@@ -1373,7 +1388,8 @@ Keep the tone helpful and actionable.`;
     }
 
     // Detect monthly pattern using clusters
-    if (topClusterPercent >= 0.4 && topCluster.count >= 3) { // Forgiving threshold for real-world data
+    if (topClusterPercent >= 0.4 && topCluster.count >= 3) {
+      // Forgiving threshold for real-world data
       return {
         commonDays: [topCluster.centerDay],
         isBiMonthly: false,
@@ -1385,10 +1401,7 @@ Keep the tone helpful and actionable.`;
 
     // Check for end-of-month patterns (days 28-31 should be grouped)
     const endOfMonthDays = [28, 29, 30, 31];
-    const endOfMonthCount = endOfMonthDays.reduce(
-      (sum, day) => sum + (dayCounts.get(day) || 0),
-      0
-    );
+    const endOfMonthCount = endOfMonthDays.reduce((sum, day) => sum + (dayCounts.get(day) || 0), 0);
     const endOfMonthPercent = endOfMonthCount / totalTransactions;
 
     if (endOfMonthPercent >= 0.4 && endOfMonthCount >= 3) {
@@ -1586,7 +1599,6 @@ Keep the tone helpful and actionable.`;
   }
 
   private inferGapReason(gapDays: number, startMonth: number, endMonth: number): string {
-
     if (gapDays >= 300) return "Extended hiatus or service cancellation";
     if (gapDays >= 150) return "Possible seasonal break or temporary suspension";
     if (gapDays >= 60) {

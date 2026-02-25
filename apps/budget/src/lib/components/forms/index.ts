@@ -4,4 +4,3 @@ export { default as ManageCategoryForm } from "./manage-category-form.svelte";
 export { default as ManagePayeeDialogForm } from "./manage-payee-dialog-form.svelte";
 export { default as ManagePayeeForm } from "./manage-payee-form.svelte";
 export { default as ManageScheduleForm } from "./manage-schedule-form.svelte";
-

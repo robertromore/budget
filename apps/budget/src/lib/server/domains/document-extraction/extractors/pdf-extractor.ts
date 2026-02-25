@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { readFile } from "node:fs/promises";
 import { PDFParse } from "pdf-parse";
 
 export interface PdfExtractionResult {

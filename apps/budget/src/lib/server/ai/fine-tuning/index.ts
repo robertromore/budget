@@ -25,27 +25,20 @@
  */
 
 // Synthetic data generator (shareable, privacy-safe)
-export {
-	generateTrainingDataset,
-	exportToJSONL,
-	exportToAlpaca,
-} from "./generator";
+export { generateTrainingDataset, exportToJSONL, exportToAlpaca } from "./generator";
 
 // Real data generator (personalized, private)
-export {
-	generateRealDataset,
-	exportRealToJSONL,
-} from "./real-data-generator";
+export { generateRealDataset, exportRealToJSONL } from "./real-data-generator";
 
 // Types and utilities
 export {
-	BUDGET_ASSISTANT_SYSTEM_PROMPT,
-	toAlpacaFormat,
-	toShareGPTFormat,
-	toJSONLFormat,
-	type TrainingExample,
-	type TrainingMessage,
-	type TrainingCategory,
-	type TrainingDataset,
-	type ExportFormat,
+  BUDGET_ASSISTANT_SYSTEM_PROMPT,
+  toAlpacaFormat,
+  toShareGPTFormat,
+  toJSONLFormat,
+  type TrainingExample,
+  type TrainingMessage,
+  type TrainingCategory,
+  type TrainingDataset,
+  type ExportFormat,
 } from "./types";

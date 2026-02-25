@@ -237,10 +237,7 @@ export type NewUtilityRateTier = typeof utilityRateTiers.$inferInsert;
 /**
  * Calculate usage from meter readings
  */
-export function calculateUsageFromReadings(
-  startReading: number,
-  endReading: number
-): number {
+export function calculateUsageFromReadings(startReading: number, endReading: number): number {
   return Math.abs(endReading - startReading);
 }
 

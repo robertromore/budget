@@ -5,11 +5,11 @@
  * correction recording, pattern analysis, and learning state management.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -56,8 +56,8 @@ async function setupTestContext(): Promise<TestContext> {
   const categories = await db
     .insert(schema.categories)
     .values([
-      {workspaceId: workspace.id, name: "Groceries", slug: "groceries"},
-      {workspaceId: workspace.id, name: "Shopping", slug: "shopping"},
+      { workspaceId: workspace.id, name: "Groceries", slug: "groceries" },
+      { workspaceId: workspace.id, name: "Shopping", slug: "shopping" },
     ])
     .returning();
 
@@ -67,7 +67,7 @@ async function setupTestContext(): Promise<TestContext> {
       workspaceId: workspace.id,
       accountId: account.id,
       date: "2024-01-15",
-      amount: -75.50,
+      amount: -75.5,
       payeeId: payee.id,
       categoryId: categories[1].id, // Initially Shopping
       status: "cleared",
@@ -103,7 +103,7 @@ describe("Category Corrections", () => {
           fromCategoryId: ctx.category2Id, // Shopping
           toCategoryId: ctx.category1Id, // Groceries
           correctionTrigger: "manual_user_correction",
-          transactionAmount: -75.50,
+          transactionAmount: -75.5,
           transactionDate: "2024-01-15",
         })
         .returning();
@@ -123,7 +123,7 @@ describe("Category Corrections", () => {
           fromCategoryId: null, // AI suggested nothing
           toCategoryId: ctx.category1Id,
           correctionTrigger: "import_category_override",
-          transactionAmount: -75.50,
+          transactionAmount: -75.5,
         })
         .returning();
 
@@ -179,7 +179,7 @@ describe("Category Corrections", () => {
           toCategoryId: ctx.category1Id,
           correctionTrigger: "manual_user_correction",
           correctionContext: "transaction_amount_medium",
-          transactionAmount: -75.50,
+          transactionAmount: -75.5,
           transactionDate: "2024-01-15",
         })
         .returning();
@@ -229,7 +229,7 @@ describe("Category Corrections", () => {
     });
 
     it("should record amount range pattern", async () => {
-      const amountRange = {min: 50, max: 100};
+      const amountRange = { min: 50, max: 100 };
 
       const [correction] = await ctx.db
         .insert(schema.payeeCategoryCorrections)
@@ -320,7 +320,7 @@ describe("Category Corrections", () => {
       // Increment epoch for model update
       await ctx.db
         .update(schema.payeeCategoryCorrections)
-        .set({learningEpoch: 2})
+        .set({ learningEpoch: 2 })
         .where(eq(schema.payeeCategoryCorrections.id, correction.id));
 
       const updated = await ctx.db.query.payeeCategoryCorrections.findFirst({
@@ -478,9 +478,7 @@ describe("Category Corrections", () => {
       const importOverrides = await ctx.db
         .select()
         .from(schema.payeeCategoryCorrections)
-        .where(
-          eq(schema.payeeCategoryCorrections.correctionTrigger, "import_category_override")
-        );
+        .where(eq(schema.payeeCategoryCorrections.correctionTrigger, "import_category_override"));
 
       expect(importOverrides).toHaveLength(2);
     });
@@ -502,7 +500,7 @@ describe("Category Corrections", () => {
       const now = new Date().toISOString();
       await ctx.db
         .update(schema.payeeCategoryCorrections)
-        .set({deletedAt: now})
+        .set({ deletedAt: now })
         .where(eq(schema.payeeCategoryCorrections.id, correction.id));
 
       const deleted = await ctx.db.query.payeeCategoryCorrections.findFirst({
@@ -556,7 +554,7 @@ describe("Category Corrections", () => {
 
       const [category] = await ctx.db
         .insert(schema.categories)
-        .values({workspaceId: workspace2.id, name: "Other", slug: "other"})
+        .values({ workspaceId: workspace2.id, name: "Other", slug: "other" })
         .returning();
 
       await ctx.db.insert(schema.payeeCategoryCorrections).values([

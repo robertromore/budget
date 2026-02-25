@@ -1,15 +1,15 @@
 <script lang="ts">
-  import * as Tabs from "$lib/components/ui/tabs";
-  import { Button } from "$lib/components/ui/button";
+import * as Tabs from '$lib/components/ui/tabs';
+import { Button } from '$lib/components/ui/button';
 
-  import DuplicateDetectionPanel from "./(components)/duplicate-detection-panel.svelte";
-  import NameNormalizationPanel from "./(components)/name-normalization-panel.svelte";
+import DuplicateDetectionPanel from './(components)/duplicate-detection-panel.svelte';
+import NameNormalizationPanel from './(components)/name-normalization-panel.svelte';
 
-  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-  import GitMerge from "@lucide/svelte/icons/git-merge";
-  import Wand2 from "@lucide/svelte/icons/wand-2";
+import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+import GitMerge from '@lucide/svelte/icons/git-merge';
+import Wand2 from '@lucide/svelte/icons/wand-2';
 
-  let activeTab = $state("duplicates");
+let activeTab = $state('duplicates');
 </script>
 
 <svelte:head>
@@ -27,9 +27,7 @@
       </Button>
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Payee Cleanup</h1>
-        <p class="text-muted-foreground">
-          Detect duplicates, normalize names, and merge payees
-        </p>
+        <p class="text-muted-foreground">Detect duplicates, normalize names, and merge payees</p>
       </div>
     </div>
   </div>

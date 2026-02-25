@@ -26,9 +26,7 @@ interface Props {
 let { budgetId, startDate, endDate, periodId }: Props = $props();
 
 // Fetch period analytics for allocation info
-const periodQuery = $derived(
-  periodId ? getPeriodAnalytics(periodId).options() : null
-);
+const periodQuery = $derived(periodId ? getPeriodAnalytics(periodId).options() : null);
 const periodData = $derived(periodQuery?.data);
 const allocation = $derived(periodData?.totalAllocated ?? 0);
 
@@ -42,15 +40,15 @@ const isLoading = $derived(dailyQuery?.isLoading || periodQuery?.isLoading);
 // Calculate period duration in days
 const periodDays = $derived.by(() => {
   if (!startDate || !endDate) return 0;
-  return Math.ceil(
-    (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)
-  ) + 1;
+  return (
+    Math.ceil(
+      (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)
+    ) + 1
+  );
 });
 
 // Calculate ideal daily burn rate
-const idealDailyBurn = $derived(
-  periodDays > 0 && allocation > 0 ? allocation / periodDays : 0
-);
+const idealDailyBurn = $derived(periodDays > 0 && allocation > 0 ? allocation / periodDays : 0);
 
 // Transform data with cumulative spending
 const chartData = $derived.by(() => {
@@ -124,12 +122,8 @@ const currentSpent = $derived(
 const remaining = $derived(allocation - currentSpent);
 const daysElapsed = $derived(chartData.filter((d) => !d.isFuture).length);
 const daysRemaining = $derived(periodDays - daysElapsed);
-const projectedTotal = $derived(
-  daysElapsed > 0 ? (currentSpent / daysElapsed) * periodDays : 0
-);
-const utilizationRate = $derived(
-  allocation > 0 ? (currentSpent / allocation) * 100 : 0
-);
+const projectedTotal = $derived(daysElapsed > 0 ? (currentSpent / daysElapsed) * periodDays : 0);
+const utilizationRate = $derived(allocation > 0 ? (currentSpent / allocation) * 100 : 0);
 
 // Get status info
 function getStatusColor(rate: number): string {
@@ -192,61 +186,61 @@ const displayDays = $derived.by(() => {
     {:else if !startDate || !endDate}
       <div class="text-muted-foreground py-12 text-center">
         <p>No period selected for this budget.</p>
-        <p class="text-sm mt-1">Select a period to view daily spending breakdown.</p>
+        <p class="mt-1 text-sm">Select a period to view daily spending breakdown.</p>
       </div>
     {:else if !chartData.length}
       <div class="text-muted-foreground py-12 text-center">
         <p>No spending data available for this period.</p>
-        <p class="text-sm mt-1">Transactions will appear here once recorded.</p>
+        <p class="mt-1 text-sm">Transactions will appear here once recorded.</p>
       </div>
     {:else}
       <!-- Summary Stats -->
-      <div class="grid gap-4 md:grid-cols-4 mb-6">
+      <div class="mb-6 grid gap-4 md:grid-cols-4">
         <div class="rounded-lg border p-4">
-          <div class="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+          <div class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
             <Target class="h-4 w-4" />
             Allocated
           </div>
-          <div class="text-2xl font-bold mt-1">
+          <div class="mt-1 text-2xl font-bold">
             {currencyFormatter.format(allocation)}
           </div>
         </div>
 
         <div class="rounded-lg border p-4">
-          <div class="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+          <div class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
             <TrendingDown class="h-4 w-4" />
             Spent
           </div>
-          <div class="text-2xl font-bold mt-1 {getStatusColor(utilizationRate)}">
+          <div class="mt-1 text-2xl font-bold {getStatusColor(utilizationRate)}">
             {currencyFormatter.format(currentSpent)}
           </div>
-          <div class="text-xs text-muted-foreground mt-1">
+          <div class="text-muted-foreground mt-1 text-xs">
             {formatPercentRaw(utilizationRate, 1)} of budget
           </div>
         </div>
 
         <div class="rounded-lg border p-4">
-          <div class="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+          <div class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
             <TrendingUp class="h-4 w-4" />
             Remaining
           </div>
-          <div class="text-2xl font-bold mt-1 {remaining < 0 ? 'text-red-500' : 'text-green-500'}">
+          <div class="mt-1 text-2xl font-bold {remaining < 0 ? 'text-red-500' : 'text-green-500'}">
             {currencyFormatter.format(remaining)}
           </div>
-          <div class="text-xs text-muted-foreground mt-1">
+          <div class="text-muted-foreground mt-1 text-xs">
             {currencyFormatter.format(idealDailyBurn)}/day ideal pace
           </div>
         </div>
 
         <div class="rounded-lg border p-4">
-          <div class="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+          <div class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
             <Calendar class="h-4 w-4" />
             Days
           </div>
-          <div class="text-2xl font-bold mt-1">
+          <div class="mt-1 text-2xl font-bold">
             {daysRemaining}
           </div>
-          <div class="text-xs text-muted-foreground mt-1">
+          <div class="text-muted-foreground mt-1 text-xs">
             {daysElapsed} elapsed of {periodDays}
           </div>
         </div>
@@ -254,7 +248,7 @@ const displayDays = $derived.by(() => {
 
       <!-- Overall Progress -->
       <div class="mb-6">
-        <div class="flex items-center justify-between text-sm mb-2">
+        <div class="mb-2 flex items-center justify-between text-sm">
           <span class="text-muted-foreground">Budget Progress</span>
           <span class="font-medium {getStatusColor(utilizationRate)}">
             {formatPercentRaw(utilizationRate, 1)}
@@ -262,18 +256,18 @@ const displayDays = $derived.by(() => {
         </div>
         <Progress
           value={Math.min(utilizationRate, 100)}
-          class="h-3 {getProgressClass(utilizationRate)}"
-        />
+          class="h-3 {getProgressClass(utilizationRate)}" />
       </div>
 
       <!-- Daily Spending List -->
-      <div class="space-y-2 max-h-75 overflow-y-auto pr-2">
+      <div class="max-h-75 space-y-2 overflow-y-auto pr-2">
         {#each displayDays as day}
           {@const dayPercent = allocation > 0 ? (day.dailySpending / idealDailyBurn) * 100 : 0}
           <div
-            class="rounded-lg border p-3 {day.isToday ? 'ring-2 ring-primary' : ''} {day.isFuture ? 'opacity-50' : ''}"
-          >
-            <div class="flex items-center justify-between mb-1">
+            class="rounded-lg border p-3 {day.isToday ? 'ring-primary ring-2' : ''} {day.isFuture
+              ? 'opacity-50'
+              : ''}">
+            <div class="mb-1 flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium">{day.label}</span>
                 {#if day.isToday}
@@ -283,14 +277,14 @@ const displayDays = $derived.by(() => {
               <div class="text-right">
                 <span class="font-medium">{currencyFormatter.format(day.dailySpending)}</span>
                 {#if day.dailySpending > 0}
-                  <span class="text-muted-foreground text-xs ml-1">
+                  <span class="text-muted-foreground ml-1 text-xs">
                     ({dayPercent > 100 ? '+' : ''}{formatPercentRaw(dayPercent - 100, 0)} vs ideal)
                   </span>
                 {/if}
               </div>
             </div>
             {#if !day.isFuture}
-              <div class="flex items-center gap-2 text-xs text-muted-foreground">
+              <div class="text-muted-foreground flex items-center gap-2 text-xs">
                 <span>Cumulative: {currencyFormatter.format(day.cumulativeSpending)}</span>
                 <span>•</span>
                 <span class={day.actualRemaining < 0 ? 'text-red-500' : ''}>
@@ -304,15 +298,19 @@ const displayDays = $derived.by(() => {
 
       <!-- Projection -->
       {#if daysElapsed > 0 && daysRemaining > 0}
-        <div class="mt-6 rounded-lg border p-4 bg-muted/50">
-          <div class="text-sm font-medium mb-2">Projected End of Period</div>
+        <div class="bg-muted/50 mt-6 rounded-lg border p-4">
+          <div class="mb-2 text-sm font-medium">Projected End of Period</div>
           <div class="flex items-center justify-between">
             <span class="text-muted-foreground text-sm">At current pace:</span>
-            <span class="font-bold text-lg {projectedTotal > allocation ? 'text-red-500' : 'text-green-500'}">
+            <span
+              class="text-lg font-bold {projectedTotal > allocation
+                ? 'text-red-500'
+                : 'text-green-500'}">
               {currencyFormatter.format(projectedTotal)}
             </span>
           </div>
-          <div class="mt-2 text-sm {projectedTotal > allocation ? 'text-red-500' : 'text-green-500'}">
+          <div
+            class="mt-2 text-sm {projectedTotal > allocation ? 'text-red-500' : 'text-green-500'}">
             {#if projectedTotal > allocation}
               {currencyFormatter.format(projectedTotal - allocation)} over budget
             {:else}

@@ -1,5 +1,5 @@
-import {describe, it, expect} from "vitest";
-import {currencyFormatter} from "$lib/utils/formatters";
+import { describe, it, expect } from "vitest";
+import { currencyFormatter } from "$lib/utils/formatters";
 
 describe("CurrentAccountState Balance Safety", () => {
   describe("Balance Derived Value Safety", () => {
@@ -95,7 +95,7 @@ describe("CurrentAccountState Balance Safety", () => {
 
     it("should handle transaction deletion balance recalculation safely", () => {
       // Simulate the deleteTransactions logic
-      const simulateDeleteTransactions = (transactions: Array<{amount: any}>) => {
+      const simulateDeleteTransactions = (transactions: Array<{ amount: any }>) => {
         const safeTransactions = transactions.filter((t) => t !== null && t !== undefined);
 
         const balance = safeTransactions
@@ -114,9 +114,9 @@ describe("CurrentAccountState Balance Safety", () => {
 
       // Test normal case
       const result1 = simulateDeleteTransactions([
-        {amount: 100.0},
-        {amount: -25.5},
-        {amount: 50.0},
+        { amount: 100.0 },
+        { amount: -25.5 },
+        { amount: 50.0 },
       ]);
       expect(result1.balance).toBe(124.5);
       expect(result1.transactionCount).toBe(3);
@@ -124,11 +124,11 @@ describe("CurrentAccountState Balance Safety", () => {
 
       // Test with problematic amounts
       const result2 = simulateDeleteTransactions([
-        {amount: 100.0},
-        {amount: NaN},
-        {amount: null},
-        {amount: undefined},
-        {amount: "invalid"},
+        { amount: 100.0 },
+        { amount: NaN },
+        { amount: null },
+        { amount: undefined },
+        { amount: "invalid" },
       ]);
       expect(result2.balance).toBe(100.0);
       expect(result2.transactionCount).toBe(5);
@@ -167,10 +167,10 @@ describe("CurrentAccountState Balance Safety", () => {
       };
 
       const testTransactions = [
-        {id: 1, amount: 100.0, balance: 100.0},
-        {id: 2, amount: null, balance: undefined},
-        {id: 3, amount: NaN, balance: NaN},
-        {id: 4, amount: "invalid", balance: Infinity},
+        { id: 1, amount: 100.0, balance: 100.0 },
+        { id: 2, amount: null, balance: undefined },
+        { id: 3, amount: NaN, balance: NaN },
+        { id: 4, amount: "invalid", balance: Infinity },
       ];
 
       const formatted = simulateTransactionFormatting(testTransactions);
@@ -202,7 +202,7 @@ describe("CurrentAccountState Balance Safety", () => {
       // Simulate a complete state update cycle
       class MockCurrentAccountState {
         private _balance: number = 0;
-        private _transactions: Array<{id: number; amount: number; balance: number}> = [];
+        private _transactions: Array<{ id: number; amount: number; balance: number }> = [];
 
         get balance() {
           const safeBalance = isNaN(this._balance) ? 0 : this._balance;

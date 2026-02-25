@@ -179,7 +179,7 @@ async function handleSubmit(e: Event) {
       <!-- Amount and Status -->
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-2">
-          <label for="amount" class="text-sm font-medium flex items-center gap-1">
+          <label for="amount" class="flex items-center gap-1 text-sm font-medium">
             <DollarSign class="h-4 w-4" />
             Amount
           </label>
@@ -209,8 +209,7 @@ async function handleSubmit(e: Event) {
           onValueChange={(id) => {
             payeeId = id ?? null;
           }}
-          placeholder="Select a payee..."
-        />
+          placeholder="Select a payee..." />
         <p class="text-muted-foreground text-xs">
           Link to a payee for automatic transaction tracking
         </p>
@@ -219,7 +218,7 @@ async function handleSubmit(e: Event) {
       <!-- Dates -->
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-2">
-          <label for="startDate" class="text-sm font-medium flex items-center gap-1">
+          <label for="startDate" class="flex items-center gap-1 text-sm font-medium">
             <Calendar class="h-4 w-4" />
             Start Date
           </label>
@@ -247,17 +246,14 @@ async function handleSubmit(e: Event) {
           checked={autoRenewal}
           onCheckedChange={(checked) => {
             autoRenewal = checked === true;
-          }}
-        />
-        <label for="autoRenewal" class="text-sm font-medium leading-none">
+          }} />
+        <label for="autoRenewal" class="text-sm leading-none font-medium">
           Auto-renewal enabled
         </label>
       </div>
 
       <Dialog.Footer>
-        <Button type="button" variant="outline" onclick={() => (open = false)}>
-          Cancel
-        </Button>
+        <Button type="button" variant="outline" onclick={() => (open = false)}>Cancel</Button>
         <Button type="submit" disabled={isSubmitting || !name || amount <= 0}>
           {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Add Subscription'}
         </Button>

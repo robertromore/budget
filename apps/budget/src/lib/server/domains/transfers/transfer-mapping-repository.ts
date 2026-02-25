@@ -136,7 +136,10 @@ export class TransferMappingRepository {
   /**
    * Find a mapping by exact raw payee string match
    */
-  async findByRawString(rawPayeeString: string, workspaceId: number): Promise<TransferMapping | null> {
+  async findByRawString(
+    rawPayeeString: string,
+    workspaceId: number
+  ): Promise<TransferMapping | null> {
     const [result] = await db
       .select()
       .from(transferMappings)
@@ -155,7 +158,10 @@ export class TransferMappingRepository {
   /**
    * Find mappings by normalized string (may return multiple)
    */
-  async findByNormalizedString(normalized: string, workspaceId: number): Promise<TransferMapping[]> {
+  async findByNormalizedString(
+    normalized: string,
+    workspaceId: number
+  ): Promise<TransferMapping[]> {
     return await db
       .select()
       .from(transferMappings)
@@ -171,7 +177,10 @@ export class TransferMappingRepository {
   /**
    * Find all mappings for a specific target account
    */
-  async findByTargetAccountId(targetAccountId: number, workspaceId: number): Promise<TransferMapping[]> {
+  async findByTargetAccountId(
+    targetAccountId: number,
+    workspaceId: number
+  ): Promise<TransferMapping[]> {
     return await db
       .select()
       .from(transferMappings)
@@ -188,7 +197,10 @@ export class TransferMappingRepository {
   /**
    * Find all mappings from a specific source account (where imports happened)
    */
-  async findBySourceAccountId(sourceAccountId: number, workspaceId: number): Promise<TransferMappingWithAccount[]> {
+  async findBySourceAccountId(
+    sourceAccountId: number,
+    workspaceId: number
+  ): Promise<TransferMappingWithAccount[]> {
     const results = await db
       .select({
         mapping: transferMappings,
@@ -379,7 +391,10 @@ export class TransferMappingRepository {
    * Find best match for a raw payee string.
    * Tries: exact match -> normalized match -> cleaned match (strips amounts/IDs).
    */
-  async findBestMatch(rawPayeeString: string, workspaceId: number): Promise<TransferMappingMatch | null> {
+  async findBestMatch(
+    rawPayeeString: string,
+    workspaceId: number
+  ): Promise<TransferMappingMatch | null> {
     console.log("[TransferMappingRepo] findBestMatch called with:", {
       rawPayeeString,
       workspaceId,
@@ -387,11 +402,16 @@ export class TransferMappingRepository {
 
     // First try exact match
     const exactMatch = await this.findByRawString(rawPayeeString, workspaceId);
-    console.log("[TransferMappingRepo] Exact match result:", exactMatch ? {
-      id: exactMatch.id,
-      rawPayeeString: exactMatch.rawPayeeString,
-      targetAccountId: exactMatch.targetAccountId,
-    } : "none");
+    console.log(
+      "[TransferMappingRepo] Exact match result:",
+      exactMatch
+        ? {
+            id: exactMatch.id,
+            rawPayeeString: exactMatch.rawPayeeString,
+            targetAccountId: exactMatch.targetAccountId,
+          }
+        : "none"
+    );
 
     if (exactMatch) {
       return {
@@ -439,7 +459,7 @@ export class TransferMappingRepository {
 
       // Log sample of cleaned mappings for debugging
       if (allMappings.length > 0 && cleanedMatches.length === 0) {
-        const samples = allMappings.slice(0, 5).map(m => ({
+        const samples = allMappings.slice(0, 5).map((m) => ({
           raw: m.rawPayeeString,
           cleaned: this.cleanString(m.rawPayeeString),
         }));
@@ -488,7 +508,9 @@ export class TransferMappingRepository {
     const [totalResult] = await db
       .select({ total: count() })
       .from(transferMappings)
-      .where(and(eq(transferMappings.workspaceId, workspaceId), isNull(transferMappings.deletedAt)));
+      .where(
+        and(eq(transferMappings.workspaceId, workspaceId), isNull(transferMappings.deletedAt))
+      );
 
     const totalMappings = totalResult?.total || 0;
 
@@ -496,7 +518,9 @@ export class TransferMappingRepository {
     const [uniqueAccountsResult] = await db
       .select({ uniqueAccounts: sql<number>`COUNT(DISTINCT ${transferMappings.targetAccountId})` })
       .from(transferMappings)
-      .where(and(eq(transferMappings.workspaceId, workspaceId), isNull(transferMappings.deletedAt)));
+      .where(
+        and(eq(transferMappings.workspaceId, workspaceId), isNull(transferMappings.deletedAt))
+      );
 
     const uniqueTargetAccounts = uniqueAccountsResult?.uniqueAccounts || 0;
 
@@ -504,7 +528,9 @@ export class TransferMappingRepository {
     const [totalAppliedResult] = await db
       .select({ totalApplied: sql<number>`SUM(${transferMappings.matchCount})` })
       .from(transferMappings)
-      .where(and(eq(transferMappings.workspaceId, workspaceId), isNull(transferMappings.deletedAt)));
+      .where(
+        and(eq(transferMappings.workspaceId, workspaceId), isNull(transferMappings.deletedAt))
+      );
 
     const totalTimesApplied = totalAppliedResult?.totalApplied || 0;
 

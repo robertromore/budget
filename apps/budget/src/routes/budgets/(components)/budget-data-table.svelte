@@ -2,7 +2,7 @@
 import {
   AdvancedDataTable,
   GenericDisplayInput,
-  GenericFilterInput
+  GenericFilterInput,
 } from '$lib/components/data-table';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import type { FilterInputOption } from '$lib/types';
@@ -42,7 +42,7 @@ function getAvailableFilters(tableInstance: TTable<BudgetWithRelations>) {
     filtering: true,
     pagination: true,
     rowSelection: true,
-    columnVisibility: true
+    columnVisibility: true,
   }}
   showPagination={true}
   pageSizeOptions={[10, 25, 50, 100]}
@@ -72,10 +72,6 @@ function getAvailableFilters(tableInstance: TTable<BudgetWithRelations>) {
     </div>
   {/snippet}
   {#snippet footer(tableInstance)}
-    <BudgetBulkActions
-      table={tableInstance}
-      allBudgets={budgets}
-      {onBulkDelete}
-      {onBulkArchive} />
+    <BudgetBulkActions table={tableInstance} allBudgets={budgets} {onBulkDelete} {onBulkArchive} />
   {/snippet}
 </AdvancedDataTable>

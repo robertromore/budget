@@ -1,16 +1,15 @@
-import {test, expect} from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
-
 
 /**
  * Integration tests for input component width fixes from PR #44
  * Tests that input components in transaction dialog have proper widths
  */
 describeE2E("Input Component Widths", () => {
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/accounts");
     await expect(page).toHaveTitle(/Budget/);
 
@@ -20,10 +19,10 @@ describeE2E("Input Component Widths", () => {
 
     // Open add transaction dialog
     await page.click('button:has-text("Add")');
-    await page.waitForSelector('[role="dialog"], .dialog', {state: "visible", timeout: 5000});
+    await page.waitForSelector('[role="dialog"], .dialog', { state: "visible", timeout: 5000 });
   });
 
-  test("should have proper width for numeric input components", async ({page}) => {
+  test("should have proper width for numeric input components", async ({ page }) => {
     // Look for amount input field (numeric-input component)
     const amountInput = page.locator('input[type="text"]:near(label:has-text("Amount"))').first();
 
@@ -39,7 +38,7 @@ describeE2E("Input Component Widths", () => {
     }
   });
 
-  test("should have proper width for entity input components", async ({page}) => {
+  test("should have proper width for entity input components", async ({ page }) => {
     // Look for category/payee input fields (entity-input components)
     const entityInputs = page.locator(
       'button:near(label:has-text("Category")), button:near(label:has-text("Payee"))'
@@ -60,7 +59,7 @@ describeE2E("Input Component Widths", () => {
     }
   });
 
-  test("should have consistent widths across different input types", async ({page}) => {
+  test("should have consistent widths across different input types", async ({ page }) => {
     // Get all input-related elements in the dialog
     const inputElements = page.locator('input, button:has([role="combobox"]), [role="combobox"]');
 
@@ -88,7 +87,7 @@ describeE2E("Input Component Widths", () => {
     });
   });
 
-  test("should not have layout overflow in transaction dialog", async ({page}) => {
+  test("should not have layout overflow in transaction dialog", async ({ page }) => {
     // Check that the dialog content fits within the viewport
     const dialog = page.locator('[role="dialog"], .dialog').first();
 
@@ -108,7 +107,7 @@ describeE2E("Input Component Widths", () => {
     }
   });
 
-  test("should maintain proper spacing between form fields", async ({page}) => {
+  test("should maintain proper spacing between form fields", async ({ page }) => {
     // Check that form fields have appropriate spacing
     const formFields = page.locator('.dialog label, .dialog [role="group"]');
     const fieldCount = await formFields.count();
@@ -132,7 +131,7 @@ describeE2E("Input Component Widths", () => {
     }
   });
 
-  test("should handle long content without breaking layout", async ({page}) => {
+  test("should handle long content without breaking layout", async ({ page }) => {
     // Try to input long text/values to test layout stability
     const textInputs = page.locator('input[type="text"], textarea');
     const inputCount = await textInputs.count();

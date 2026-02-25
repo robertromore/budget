@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest";
+import { describe, test, expect } from "vitest";
 
 // Test the core recurring date logic without Svelte runes
 // These tests focus on the mathematical and business logic algorithms

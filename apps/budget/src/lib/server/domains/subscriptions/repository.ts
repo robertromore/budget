@@ -22,7 +22,11 @@ export class SubscriptionRepository {
     return result!;
   }
 
-  async update(id: number, workspaceId: number, data: Partial<InsertSubscription>): Promise<Subscription | null> {
+  async update(
+    id: number,
+    workspaceId: number,
+    data: Partial<InsertSubscription>
+  ): Promise<Subscription | null> {
     const [result] = await db
       .update(subscriptions)
       .set({ ...data, updatedAt: sql`CURRENT_TIMESTAMP` })
@@ -75,7 +79,10 @@ export class SubscriptionRepository {
     filters?: SubscriptionFilters,
     sort?: SubscriptionSortOptions
   ): Promise<SubscriptionWithRelations[]> {
-    const conditions = [eq(subscriptions.workspaceId, workspaceId), isNull(subscriptions.deletedAt)];
+    const conditions = [
+      eq(subscriptions.workspaceId, workspaceId),
+      isNull(subscriptions.deletedAt),
+    ];
 
     // Apply filters
     if (filters?.status) {
@@ -87,7 +94,9 @@ export class SubscriptionRepository {
       conditions.push(inArray(subscriptions.type, types));
     }
     if (filters?.billingCycle) {
-      const cycles = Array.isArray(filters.billingCycle) ? filters.billingCycle : [filters.billingCycle];
+      const cycles = Array.isArray(filters.billingCycle)
+        ? filters.billingCycle
+        : [filters.billingCycle];
       conditions.push(inArray(subscriptions.billingCycle, cycles));
     }
     if (filters?.accountId !== undefined) {
@@ -147,7 +156,10 @@ export class SubscriptionRepository {
     return result ?? null;
   }
 
-  async getByAccountId(accountId: number, workspaceId: number): Promise<SubscriptionWithRelations[]> {
+  async getByAccountId(
+    accountId: number,
+    workspaceId: number
+  ): Promise<SubscriptionWithRelations[]> {
     return await db.query.subscriptions.findMany({
       where: and(
         eq(subscriptions.accountId, accountId),
@@ -168,7 +180,10 @@ export class SubscriptionRepository {
     });
   }
 
-  async getUpcomingRenewals(workspaceId: number, days: number): Promise<SubscriptionWithRelations[]> {
+  async getUpcomingRenewals(
+    workspaceId: number,
+    days: number
+  ): Promise<SubscriptionWithRelations[]> {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + days);
@@ -197,7 +212,10 @@ export class SubscriptionRepository {
     });
   }
 
-  async getTrialsEndingSoon(workspaceId: number, days: number): Promise<SubscriptionWithRelations[]> {
+  async getTrialsEndingSoon(
+    workspaceId: number,
+    days: number
+  ): Promise<SubscriptionWithRelations[]> {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + days);
@@ -230,7 +248,10 @@ export class SubscriptionRepository {
     return result!;
   }
 
-  async getPriceHistory(subscriptionId: number, limit?: number): Promise<SubscriptionPriceHistory[]> {
+  async getPriceHistory(
+    subscriptionId: number,
+    limit?: number
+  ): Promise<SubscriptionPriceHistory[]> {
     return await db.query.subscriptionPriceHistory.findMany({
       where: eq(subscriptionPriceHistory.subscriptionId, subscriptionId),
       orderBy: [desc(subscriptionPriceHistory.effectiveDate)],
@@ -289,7 +310,9 @@ export class SubscriptionRepository {
     const [result] = await db
       .update(subscriptionAlerts)
       .set({ isDismissed: true })
-      .where(and(eq(subscriptionAlerts.id, alertId), eq(subscriptionAlerts.workspaceId, workspaceId)))
+      .where(
+        and(eq(subscriptionAlerts.id, alertId), eq(subscriptionAlerts.workspaceId, workspaceId))
+      )
       .returning();
     return !!result;
   }
@@ -298,13 +321,17 @@ export class SubscriptionRepository {
     const [result] = await db
       .update(subscriptionAlerts)
       .set({ isActioned: true })
-      .where(and(eq(subscriptionAlerts.id, alertId), eq(subscriptionAlerts.workspaceId, workspaceId)))
+      .where(
+        and(eq(subscriptionAlerts.id, alertId), eq(subscriptionAlerts.workspaceId, workspaceId))
+      )
       .returning();
     return !!result;
   }
 
   async deleteAlertsForSubscription(subscriptionId: number): Promise<void> {
-    await db.delete(subscriptionAlerts).where(eq(subscriptionAlerts.subscriptionId, subscriptionId));
+    await db
+      .delete(subscriptionAlerts)
+      .where(eq(subscriptionAlerts.subscriptionId, subscriptionId));
   }
 
   async getExistingAlert(

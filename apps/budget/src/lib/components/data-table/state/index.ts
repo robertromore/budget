@@ -5,7 +5,11 @@ export type {
   ServerPaginationState,
   SimpleColumnDef,
   TableDensity,
-  TableUISettings
+  TableUISettings,
 } from "./types";
 
-export { createTableState, type TableState, type TableStateOptions } from "./create-table-state.svelte";
+export {
+  createTableState,
+  type TableState,
+  type TableStateOptions,
+} from "./create-table-state.svelte";

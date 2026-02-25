@@ -31,16 +31,46 @@ const isLoading = $derived(subscriptionsQuery.isLoading);
 
 // Subscription type styling
 const subscriptionTypeConfig: Record<string, { color: string; label: string }> = {
-  entertainment: { color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300', label: 'Entertainment' },
-  utilities: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', label: 'Utilities' },
-  software: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: 'Software' },
-  membership: { color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300', label: 'Membership' },
-  communication: { color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300', label: 'Communication' },
-  finance: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', label: 'Finance' },
-  shopping: { color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300', label: 'Shopping' },
-  health: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Health' },
-  education: { color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300', label: 'Education' },
-  other: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300', label: 'Other' },
+  entertainment: {
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    label: 'Entertainment',
+  },
+  utilities: {
+    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    label: 'Utilities',
+  },
+  software: {
+    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    label: 'Software',
+  },
+  membership: {
+    color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    label: 'Membership',
+  },
+  communication: {
+    color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+    label: 'Communication',
+  },
+  finance: {
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    label: 'Finance',
+  },
+  shopping: {
+    color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+    label: 'Shopping',
+  },
+  health: {
+    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    label: 'Health',
+  },
+  education: {
+    color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+    label: 'Education',
+  },
+  other: {
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    label: 'Other',
+  },
 };
 
 const billingCycleLabels: Record<string, string> = {
@@ -91,8 +121,8 @@ function viewPayeeDetails(slug: string) {
       <Empty.EmptyHeader>
         <Empty.EmptyTitle>No Subscriptions Found</Empty.EmptyTitle>
         <Empty.EmptyDescription>
-          No recurring subscription payments detected in this account. As you add more
-          transactions, we'll automatically identify subscription patterns.
+          No recurring subscription payments detected in this account. As you add more transactions,
+          we'll automatically identify subscription patterns.
         </Empty.EmptyDescription>
       </Empty.EmptyHeader>
     </Empty.Empty>
@@ -142,20 +172,23 @@ function viewPayeeDetails(slug: string) {
       <Card.Header>
         <Card.Title>Subscriptions in this Account</Card.Title>
         <Card.Description>
-          {subscriptionsData.subscriptions.length} recurring payment{subscriptionsData.subscriptions.length !== 1 ? 's' : ''} detected
+          {subscriptionsData.subscriptions.length} recurring payment{subscriptionsData.subscriptions
+            .length !== 1
+            ? 's'
+            : ''} detected
         </Card.Description>
       </Card.Header>
       <Card.Content>
         <div class="space-y-3">
           {#each subscriptionsData.subscriptions as subscription (subscription.payeeId)}
-            {@const typeConfig = subscriptionTypeConfig[subscription.subscriptionType] ?? subscriptionTypeConfig.other}
+            {@const typeConfig =
+              subscriptionTypeConfig[subscription.subscriptionType] ?? subscriptionTypeConfig.other}
             {@const billingLabel = billingCycleLabels[subscription.billingCycle] ?? 'Monthly'}
 
             <button
               type="button"
               class="hover:bg-muted/50 flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors"
-              onclick={() => viewPayeeDetails(subscription.payeeSlug)}
-            >
+              onclick={() => viewPayeeDetails(subscription.payeeSlug)}>
               <div class="flex items-center gap-4">
                 <div class="bg-muted flex h-10 w-10 items-center justify-center rounded-lg">
                   <RefreshCw class="text-muted-foreground h-5 w-5" />

@@ -1,49 +1,47 @@
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { cn, formatPercent } from "$lib/utils";
-  import ChevronRight from "@lucide/svelte/icons/chevron-right";
-  import GitMerge from "@lucide/svelte/icons/git-merge";
-  import Search from "@lucide/svelte/icons/search";
-  import Users from "@lucide/svelte/icons/users";
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { cn, formatPercent } from '$lib/utils';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import GitMerge from '@lucide/svelte/icons/git-merge';
+import Search from '@lucide/svelte/icons/search';
+import Users from '@lucide/svelte/icons/users';
 
-  // Matches the backend response from similarityService.getCanonicalGroups
-  interface CanonicalGroup {
-    canonicalName: string;
-    variants: string[];
-    payeeIds: number[];
-  }
+// Matches the backend response from similarityService.getCanonicalGroups
+interface CanonicalGroup {
+  canonicalName: string;
+  variants: string[];
+  payeeIds: number[];
+}
 
-  interface Props {
-    groups?: CanonicalGroup[];
-    totalPayees?: number;
-    duplicateCount?: number;
-    consolidationPotential?: number;
-    onViewAll?: () => void;
-    onMergeGroup?: (canonicalName: string) => void;
-    class?: string;
-  }
+interface Props {
+  groups?: CanonicalGroup[];
+  totalPayees?: number;
+  duplicateCount?: number;
+  consolidationPotential?: number;
+  onViewAll?: () => void;
+  onMergeGroup?: (canonicalName: string) => void;
+  class?: string;
+}
 
-  let {
-    groups = [],
-    totalPayees = 0,
-    duplicateCount = 0,
-    consolidationPotential = 0,
-    onViewAll,
-    onMergeGroup,
-    class: className,
-  }: Props = $props();
+let {
+  groups = [],
+  totalPayees = 0,
+  duplicateCount = 0,
+  consolidationPotential = 0,
+  onViewAll,
+  onMergeGroup,
+  class: className,
+}: Props = $props();
 
-  // Get groups with multiple variants (actual duplicates)
-  const duplicateGroups = $derived(
-    groups.filter((g) => g.variants.length > 1).slice(0, 3)
-  );
+// Get groups with multiple variants (actual duplicates)
+const duplicateGroups = $derived(groups.filter((g) => g.variants.length > 1).slice(0, 3));
 
-  const hasDuplicates = $derived(duplicateGroups.length > 0);
+const hasDuplicates = $derived(duplicateGroups.length > 0);
 </script>
 
-<Card.Root class={cn("", className)}>
+<Card.Root class={cn('', className)}>
   <Card.Header class="pb-2">
     <div class="flex items-center justify-between">
       <Card.Title class="flex items-center gap-2 text-sm font-medium">
@@ -56,9 +54,7 @@
         </Badge>
       {/if}
     </div>
-    <Card.Description>
-      Similar payees that could be consolidated
-    </Card.Description>
+    <Card.Description>Similar payees that could be consolidated</Card.Description>
   </Card.Header>
 
   <Card.Content class="space-y-4">
@@ -112,8 +108,7 @@
                 variant="ghost"
                 size="sm"
                 class="mt-2 h-7 w-full text-xs"
-                onclick={() => onMergeGroup(group.canonicalName)}
-              >
+                onclick={() => onMergeGroup(group.canonicalName)}>
                 <GitMerge class="mr-1 h-3 w-3" />
                 Merge All
               </Button>
@@ -126,9 +121,7 @@
       <div class="py-4 text-center">
         <Search class="text-muted-foreground mx-auto h-8 w-8" />
         <p class="mt-2 text-sm font-medium">No duplicates detected</p>
-        <p class="text-muted-foreground text-xs">
-          Your payees are well organized
-        </p>
+        <p class="text-muted-foreground text-xs">Your payees are well organized</p>
       </div>
     {/if}
 

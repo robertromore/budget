@@ -2,10 +2,7 @@
 import { Label } from '$lib/components/ui/label';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { onboardingWizardStore } from '$lib/stores/onboarding-wizard.svelte';
-import {
-  ACCOUNT_TYPE_LABELS,
-  type AccountToTrack,
-} from '$lib/types/onboarding';
+import { ACCOUNT_TYPE_LABELS, type AccountToTrack } from '$lib/types/onboarding';
 import Landmark from '@lucide/svelte/icons/landmark';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import CreditCard from '@lucide/svelte/icons/credit-card';
@@ -25,7 +22,11 @@ const accountTypes: { type: AccountToTrack; icon: typeof Landmark; description: 
   { type: 'hsa', icon: HeartPulse, description: 'Health Savings or Flexible Spending Account' },
   { type: 'loan', icon: FileText, description: 'Student loans, auto loans, personal loans' },
   { type: 'mortgage', icon: Home, description: 'Home mortgage tracking' },
-  { type: 'utility', icon: Zap, description: 'Track utility bills and usage (electric, gas, water)' },
+  {
+    type: 'utility',
+    icon: Zap,
+    description: 'Track utility bills and usage (electric, gas, water)',
+  },
 ];
 </script>
 
@@ -41,7 +42,9 @@ const accountTypes: { type: AccountToTrack; icon: typeof Landmark; description: 
     {#each accountTypes as { type, icon: Icon, description }}
       {@const isSelected = formData.accountsToTrack?.includes(type) ?? false}
       <div
-        class="border-border hover:border-primary flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors {isSelected ? 'border-primary bg-primary/5' : ''}"
+        class="border-border hover:border-primary flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors {isSelected
+          ? 'border-primary bg-primary/5'
+          : ''}"
         role="button"
         tabindex="0"
         onclick={() => onboardingWizardStore.toggleAccountType(type)}
@@ -49,7 +52,7 @@ const accountTypes: { type: AccountToTrack; icon: typeof Landmark; description: 
         <Checkbox checked={isSelected} class="mt-1" />
         <div class="flex-1">
           <div class="flex items-center gap-2">
-            <Icon class="h-4 w-4 text-muted-foreground" />
+            <Icon class="text-muted-foreground h-4 w-4" />
             <Label class="cursor-pointer font-medium">
               {ACCOUNT_TYPE_LABELS[type]}
             </Label>
@@ -66,7 +69,9 @@ const accountTypes: { type: AccountToTrack; icon: typeof Landmark; description: 
     <p class="text-destructive text-sm">Please select at least one account type.</p>
   {:else}
     <p class="text-muted-foreground text-sm">
-      {formData.accountsToTrack?.length} account type{formData.accountsToTrack?.length === 1 ? '' : 's'} selected
+      {formData.accountsToTrack?.length} account type{formData.accountsToTrack?.length === 1
+        ? ''
+        : 's'} selected
     </p>
   {/if}
 </div>

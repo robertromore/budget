@@ -17,6 +17,7 @@ The date column shows when each transaction occurred and allows inline editing.
 ## Inline Editing
 
 Click any date cell to edit:
+
 1. A date picker popup appears
 2. Select a new date or type directly
 3. Click outside or press [[Enter]] to save
@@ -38,6 +39,7 @@ Click any date cell to edit:
 ## Filtering
 
 Filter transactions by date:
+
 - **In** - Matches specific date or range
 - **Before** - All transactions before a date
 - **After** - All transactions after a date
@@ -46,5 +48,6 @@ Filter transactions by date:
 ## Tips
 
 - Changing a date affects which budget period the transaction counts toward
-- Scheduled transactions cannot have their dates edited here (edit the schedule instead)
+- Scheduled transactions cannot have their dates edited here (edit the schedule
+  instead)
 - Future dates are shown for upcoming scheduled transactions

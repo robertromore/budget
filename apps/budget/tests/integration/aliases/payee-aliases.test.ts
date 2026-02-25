@@ -5,11 +5,11 @@
  * Maps raw imported strings to canonical payee IDs.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -99,7 +99,12 @@ describe("Payee Aliases", () => {
     });
 
     it("should support all trigger types", async () => {
-      const triggers = ["import_confirmation", "transaction_edit", "manual_creation", "bulk_import"] as const;
+      const triggers = [
+        "import_confirmation",
+        "transaction_edit",
+        "manual_creation",
+        "bulk_import",
+      ] as const;
 
       for (const trigger of triggers) {
         const [alias] = await ctx.db
@@ -149,8 +154,20 @@ describe("Payee Aliases", () => {
   describe("alias lookups", () => {
     beforeEach(async () => {
       await ctx.db.insert(schema.payeeAliases).values([
-        {workspaceId: ctx.workspaceId, rawString: "WALMART #1234", normalizedString: "walmart 1234", payeeId: ctx.payeeId, trigger: "import_confirmation"},
-        {workspaceId: ctx.workspaceId, rawString: "WALMART SUPERCENTER", normalizedString: "walmart supercenter", payeeId: ctx.payeeId, trigger: "manual_creation"},
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "WALMART #1234",
+          normalizedString: "walmart 1234",
+          payeeId: ctx.payeeId,
+          trigger: "import_confirmation",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "WALMART SUPERCENTER",
+          normalizedString: "walmart supercenter",
+          payeeId: ctx.payeeId,
+          trigger: "manual_creation",
+        },
       ]);
     });
 
@@ -191,10 +208,7 @@ describe("Payee Aliases", () => {
         .select()
         .from(schema.payeeAliases)
         .where(
-          and(
-            eq(schema.payeeAliases.payeeId, ctx.payeeId),
-            isNull(schema.payeeAliases.deletedAt)
-          )
+          and(eq(schema.payeeAliases.payeeId, ctx.payeeId), isNull(schema.payeeAliases.deletedAt))
         );
 
       expect(aliases).toHaveLength(2);
@@ -216,7 +230,7 @@ describe("Payee Aliases", () => {
 
       await ctx.db
         .update(schema.payeeAliases)
-        .set({matchCount: 5, lastMatchedAt: new Date().toISOString()})
+        .set({ matchCount: 5, lastMatchedAt: new Date().toISOString() })
         .where(eq(schema.payeeAliases.id, alias.id));
 
       const [updated] = await ctx.db
@@ -242,7 +256,7 @@ describe("Payee Aliases", () => {
 
       await ctx.db
         .update(schema.payeeAliases)
-        .set({confidence: 0.95})
+        .set({ confidence: 0.95 })
         .where(eq(schema.payeeAliases.id, alias.id));
 
       const [updated] = await ctx.db
@@ -268,19 +282,14 @@ describe("Payee Aliases", () => {
 
       await ctx.db
         .update(schema.payeeAliases)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(eq(schema.payeeAliases.id, alias.id));
 
       // Should not find in active query
       const activeAliases = await ctx.db
         .select()
         .from(schema.payeeAliases)
-        .where(
-          and(
-            eq(schema.payeeAliases.id, alias.id),
-            isNull(schema.payeeAliases.deletedAt)
-          )
-        );
+        .where(and(eq(schema.payeeAliases.id, alias.id), isNull(schema.payeeAliases.deletedAt)));
 
       expect(activeAliases).toHaveLength(0);
 
@@ -327,9 +336,24 @@ describe("Payee Aliases", () => {
       const aliases = await ctx.db
         .insert(schema.payeeAliases)
         .values([
-          {workspaceId: ctx.workspaceId, rawString: "BULK 1", payeeId: ctx.payeeId, trigger: "bulk_import"},
-          {workspaceId: ctx.workspaceId, rawString: "BULK 2", payeeId: ctx.payeeId, trigger: "bulk_import"},
-          {workspaceId: ctx.workspaceId, rawString: "BULK 3", payeeId: ctx.payeeId, trigger: "bulk_import"},
+          {
+            workspaceId: ctx.workspaceId,
+            rawString: "BULK 1",
+            payeeId: ctx.payeeId,
+            trigger: "bulk_import",
+          },
+          {
+            workspaceId: ctx.workspaceId,
+            rawString: "BULK 2",
+            payeeId: ctx.payeeId,
+            trigger: "bulk_import",
+          },
+          {
+            workspaceId: ctx.workspaceId,
+            rawString: "BULK 3",
+            payeeId: ctx.payeeId,
+            trigger: "bulk_import",
+          },
         ])
         .returning();
 
@@ -359,8 +383,18 @@ describe("Payee Aliases", () => {
 
       // Create same raw string in both workspaces
       await ctx.db.insert(schema.payeeAliases).values([
-        {workspaceId: ctx.workspaceId, rawString: "SAME STRING", payeeId: ctx.payeeId, trigger: "manual_creation"},
-        {workspaceId: workspace2.id, rawString: "SAME STRING", payeeId: payee2.id, trigger: "manual_creation"},
+        {
+          workspaceId: ctx.workspaceId,
+          rawString: "SAME STRING",
+          payeeId: ctx.payeeId,
+          trigger: "manual_creation",
+        },
+        {
+          workspaceId: workspace2.id,
+          rawString: "SAME STRING",
+          payeeId: payee2.id,
+          trigger: "manual_creation",
+        },
       ]);
 
       const ws1Aliases = await ctx.db

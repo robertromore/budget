@@ -11,16 +11,19 @@ Choose which service to use for web searches.
 ## Available Providers
 
 ### DuckDuckGo
+
 - **Free**: No API key required
 - **Privacy-focused**: Doesn't track searches
 - Uses HTML scraping, may be slower
 
 ### Brave Search API
+
 - **2,000 free queries/month**
 - Requires API key from brave.com/search/api
 - Fast and reliable API
 
 ### Ollama Web Search
+
 - Cloud-based search service
 - Requires Ollama API key
 - Good for users already using Ollama
@@ -28,6 +31,7 @@ Choose which service to use for web searches.
 ## Getting API Keys
 
 ### Brave Search
+
 1. Visit brave.com/search/api
 2. Create a free account
 3. Generate an API key

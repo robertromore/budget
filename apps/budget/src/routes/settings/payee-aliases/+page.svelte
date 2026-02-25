@@ -34,15 +34,17 @@ interface PageData {
 let { data }: { data: PageData } = $props();
 
 const aliases = $derived(data.aliases ?? []);
-const stats = $derived(data.stats ?? {
-  totalAliases: 0,
-  uniquePayees: 0,
-  aliasesPerPayee: 0,
-  totalMatches: 0,
-  mostUsedAliases: [],
-  recentlyCreated: 0,
-  byTrigger: {} as Record<AliasTrigger, number>,
-});
+const stats = $derived(
+  data.stats ?? {
+    totalAliases: 0,
+    uniquePayees: 0,
+    aliasesPerPayee: 0,
+    totalMatches: 0,
+    mostUsedAliases: [],
+    recentlyCreated: 0,
+    byTrigger: {} as Record<AliasTrigger, number>,
+  }
+);
 const payees = $derived(data.payees ?? []);
 
 // Create payee lookup map
@@ -57,14 +59,14 @@ const filteredAliases = $derived.by(() => {
   let result = aliases;
 
   // Filter by search query
-	if (searchQuery.trim()) {
-		const query = searchQuery.toLowerCase().trim();
-		result = result.filter(
-			(alias) =>
-				alias.rawString.toLowerCase().includes(query) ||
-				(alias.payee.name ?? '').toLowerCase().includes(query)
-		);
-	}
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    result = result.filter(
+      (alias) =>
+        alias.rawString.toLowerCase().includes(query) ||
+        (alias.payee.name ?? '').toLowerCase().includes(query)
+    );
+  }
 
   // Filter by trigger
   if (triggerFilter !== 'all') {
@@ -252,9 +254,7 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-xl font-semibold">Payee Aliases</h2>
-      <p class="text-muted-foreground text-sm">
-        Manage mappings from imported strings to payees
-      </p>
+      <p class="text-muted-foreground text-sm">Manage mappings from imported strings to payees</p>
     </div>
     {#if aliases.length > 0}
       <Button onclick={openCreateDialog}>
@@ -284,7 +284,7 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="bg-blue-500/10 rounded-md p-2">
+            <div class="rounded-md bg-blue-500/10 p-2">
               <Users class="h-4 w-4 text-blue-500" />
             </div>
             <div>
@@ -298,7 +298,7 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="bg-green-500/10 rounded-md p-2">
+            <div class="rounded-md bg-green-500/10 p-2">
               <Zap class="h-4 w-4 text-green-500" />
             </div>
             <div>
@@ -312,7 +312,7 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="bg-orange-500/10 rounded-md p-2">
+            <div class="rounded-md bg-orange-500/10 p-2">
               <Hash class="h-4 w-4 text-orange-500" />
             </div>
             <div>
@@ -347,13 +347,9 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
   {:else}
     <!-- Filters -->
     <div class="flex items-center gap-4">
-      <div class="relative flex-1 max-w-sm">
-        <Search class="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-        <Input
-          bind:value={searchQuery}
-          placeholder="Search aliases or payees..."
-          class="pl-9"
-        />
+      <div class="relative max-w-sm flex-1">
+        <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Input bind:value={searchQuery} placeholder="Search aliases or payees..." class="pl-9" />
       </div>
 
       <Select.Root
@@ -464,7 +460,8 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
     <AlertDialog.Header>
       <AlertDialog.Title>Create Payee Alias</AlertDialog.Title>
       <AlertDialog.Description>
-        Map a raw import string to a payee. Future imports with this string will automatically match.
+        Map a raw import string to a payee. Future imports with this string will automatically
+        match.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <div class="space-y-4 py-4">

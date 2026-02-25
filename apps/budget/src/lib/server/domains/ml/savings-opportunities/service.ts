@@ -375,10 +375,7 @@ export function createSavingsOpportunityService(
   /**
    * Check if payee name matches a known service category
    */
-  function matchesServiceCategory(
-    payeeName: string,
-    serviceSet: Set<string>
-  ): boolean {
+  function matchesServiceCategory(payeeName: string, serviceSet: Set<string>): boolean {
     const normalized = normalizePayeeName(payeeName);
     for (const service of serviceSet) {
       if (normalized.includes(normalizePayeeName(service))) {
@@ -534,10 +531,7 @@ export function createSavingsOpportunityService(
       };
     },
 
-    async detectUnusedSubscriptions(
-      workspaceId,
-      options = {}
-    ): Promise<SavingsOpportunity[]> {
+    async detectUnusedSubscriptions(workspaceId, options = {}): Promise<SavingsOpportunity[]> {
       const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
@@ -602,10 +596,7 @@ export function createSavingsOpportunityService(
       return opportunities;
     },
 
-    async detectPriceIncreases(
-      workspaceId,
-      options = {}
-    ): Promise<SavingsOpportunity[]> {
+    async detectPriceIncreases(workspaceId, options = {}): Promise<SavingsOpportunity[]> {
       const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
@@ -684,10 +675,7 @@ export function createSavingsOpportunityService(
       return opportunities;
     },
 
-    async detectDuplicates(
-      workspaceId,
-      options = {}
-    ): Promise<SavingsOpportunity[]> {
+    async detectDuplicates(workspaceId, options = {}): Promise<SavingsOpportunity[]> {
       const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
@@ -719,10 +707,7 @@ export function createSavingsOpportunityService(
       }
 
       // Flag duplicates within each category
-      const checkDuplicates = (
-        services: RecurringPattern[],
-        categoryName: string
-      ) => {
+      const checkDuplicates = (services: RecurringPattern[], categoryName: string) => {
         if (services.length <= 1) return;
 
         // Sort by monthly value descending
@@ -770,10 +755,7 @@ export function createSavingsOpportunityService(
       return opportunities;
     },
 
-    async detectSpendingIncreases(
-      workspaceId,
-      options = {}
-    ): Promise<SavingsOpportunity[]> {
+    async detectSpendingIncreases(workspaceId, options = {}): Promise<SavingsOpportunity[]> {
       const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 
@@ -852,7 +834,11 @@ export function createSavingsOpportunityService(
             categoryName: row.categoryName,
             hasMultipleCategories: false,
             recent: { total: 0, count: 0, months: activeConfig.recentMonths },
-            earlier: { total: 0, count: 0, months: activeConfig.lookbackMonths - activeConfig.recentMonths },
+            earlier: {
+              total: 0,
+              count: 0,
+              months: activeConfig.lookbackMonths - activeConfig.recentMonths,
+            },
           });
         }
 
@@ -925,10 +911,7 @@ export function createSavingsOpportunityService(
       return opportunities.slice(0, 10);
     },
 
-    async detectNegotiationCandidates(
-      workspaceId,
-      options = {}
-    ): Promise<SavingsOpportunity[]> {
+    async detectNegotiationCandidates(workspaceId, options = {}): Promise<SavingsOpportunity[]> {
       const activeConfig = resolveConfig(options);
       const opportunities: SavingsOpportunity[] = [];
 

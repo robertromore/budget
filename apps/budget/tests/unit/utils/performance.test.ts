@@ -1,4 +1,4 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import {
   perfMonitor,
   measureRender,
@@ -59,7 +59,7 @@ describe("Performance Monitoring Tests", () => {
 
     test("should record metrics with tags", () => {
       const metricName = "tagged-metric";
-      const tags = {component: "test", type: "render"};
+      const tags = { component: "test", type: "render" };
 
       perfMonitor.recordMetric(metricName, 100, tags);
 
@@ -118,7 +118,7 @@ describe("Performance Monitoring Tests", () => {
   describe("Query Performance Tracking", () => {
     test("should track successful queries", async () => {
       const queryName = "test-query";
-      const expectedResult = {id: 1, name: "Test"};
+      const expectedResult = { id: 1, name: "Test" };
 
       const mockQuery = async () => {
         // Simulate async work

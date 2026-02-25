@@ -11,6 +11,7 @@ Choose which machine learning features to enable.
 ## Forecasting
 
 Predicts future cash flow based on historical spending patterns.
+
 - Uses time-series analysis
 - Considers recurring transactions
 - Provides confidence intervals
@@ -18,6 +19,7 @@ Predicts future cash flow based on historical spending patterns.
 ## Anomaly Detection
 
 Identifies transactions that don't match your normal patterns.
+
 - Flags unexpected amounts
 - Detects irregular timing
 - Helps catch fraud or errors
@@ -25,6 +27,7 @@ Identifies transactions that don't match your normal patterns.
 ## Similarity Matching
 
 Groups similar payees and merchants together.
+
 - Handles name variations (e.g., "AMAZON" vs "Amazon.com")
 - Suggests potential duplicates
 - Improves categorization accuracy
@@ -32,6 +35,7 @@ Groups similar payees and merchants together.
 ## User Behavior
 
 Learns from your actions to provide better recommendations.
+
 - Tracks category assignments
 - Learns spending habits
 - Improves suggestions over time

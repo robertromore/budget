@@ -9,7 +9,7 @@ import type {
   SortingState,
   Updater,
   VisibilityState,
-} from '@tanstack/table-core';
+} from "@tanstack/table-core";
 
 export interface TableStateOptions {
   initialSorting?: SortingState;
@@ -60,12 +60,12 @@ export function createTableState(options: TableStateOptions = {}) {
   let columnPinning = $state<ColumnPinningState>(options.initialColumnPinning ?? {});
   let expanded = $state<ExpandedState>(options.initialExpanded ?? {});
   let grouping = $state<GroupingState>(options.initialGrouping ?? []);
-  let globalFilter = $state<string>(options.initialGlobalFilter ?? '');
+  let globalFilter = $state<string>(options.initialGlobalFilter ?? "");
   let columnOrder = $state<ColumnOrderState>(options.initialColumnOrder ?? []);
 
   // Helper to apply TanStack Table's Updater pattern
   function applyUpdater<T>(current: T, updater: Updater<T>): T {
-    return typeof updater === 'function' ? (updater as (old: T) => T)(current) : updater;
+    return typeof updater === "function" ? (updater as (old: T) => T)(current) : updater;
   }
 
   return {
@@ -157,7 +157,7 @@ export function createTableState(options: TableStateOptions = {}) {
       columnPinning = options.initialColumnPinning ?? {};
       expanded = options.initialExpanded ?? {};
       grouping = options.initialGrouping ?? [];
-      globalFilter = options.initialGlobalFilter ?? '';
+      globalFilter = options.initialGlobalFilter ?? "";
       columnOrder = options.initialColumnOrder ?? [];
     },
   };

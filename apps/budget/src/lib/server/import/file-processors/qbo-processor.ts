@@ -12,12 +12,7 @@ import type {
 } from "$lib/types/import";
 import { XMLParser } from "fast-xml-parser";
 import { FileValidationError, ParseError } from "../errors";
-import {
-  extractQBOTransactions,
-  parseQBODate,
-  sanitizeText,
-  validateFileType
-} from "../utils";
+import { extractQBOTransactions, parseQBODate, sanitizeText, validateFileType } from "../utils";
 
 export class QBOProcessor implements FileProcessor {
   private readonly maxFileSize = 20 * 1024 * 1024; // 20MB (QBO files can be large)

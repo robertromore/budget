@@ -1,120 +1,120 @@
 <script lang="ts">
-  import {
-    AnomalyAlertCard,
-    BudgetRiskCard,
-    ForecastSummaryCard,
-    IncomeExpenseCard,
-    MLHealthOverview,
-    NLSearchCard,
-    RecurringPatternCard,
-    SavingsOpportunityCard,
-    SimilarPayeeCard,
-  } from "$lib/components/ml";
-  import { PatternList, CategoryPatternsSection } from "$lib/components/patterns";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { ML } from "$lib/query/ml";
-  import { deleteAllPatterns, detectPatterns, listPatterns } from "$lib/query/patterns";
-  import { SchedulesState } from "$lib/states/entities";
-  import { trpc } from "$lib/trpc/client";
-  import { formatPercent } from "$lib/utils";
-  import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
-  import Brain from "@lucide/svelte/icons/brain";
-  import ChevronRight from "@lucide/svelte/icons/chevron-right";
-  import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
-  import Repeat from "@lucide/svelte/icons/repeat";
-  import RotateCw from "@lucide/svelte/icons/rotate-cw";
-  import Settings from "@lucide/svelte/icons/settings";
-  import Sparkles from "@lucide/svelte/icons/sparkles";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
-  import Users from "@lucide/svelte/icons/users";
+import {
+  AnomalyAlertCard,
+  BudgetRiskCard,
+  ForecastSummaryCard,
+  IncomeExpenseCard,
+  MLHealthOverview,
+  NLSearchCard,
+  RecurringPatternCard,
+  SavingsOpportunityCard,
+  SimilarPayeeCard,
+} from '$lib/components/ml';
+import { PatternList, CategoryPatternsSection } from '$lib/components/patterns';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import { ML } from '$lib/query/ml';
+import { deleteAllPatterns, detectPatterns, listPatterns } from '$lib/query/patterns';
+import { SchedulesState } from '$lib/states/entities';
+import { trpc } from '$lib/trpc/client';
+import { formatPercent } from '$lib/utils';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import Brain from '@lucide/svelte/icons/brain';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
+import Repeat from '@lucide/svelte/icons/repeat';
+import RotateCw from '@lucide/svelte/icons/rotate-cw';
+import Settings from '@lucide/svelte/icons/settings';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Users from '@lucide/svelte/icons/users';
 
-  // Queries - use .options() for reactive interface
-  const healthQuery = ML.getHealthStatus().options();
-  const anomalyAlertsQuery = ML.getAnomalyAlerts({ limit: 5, minRiskLevel: "medium" }).options();
-  const forecastQuery = ML.getCashFlowForecast({ horizon: 30, granularity: "daily" }).options();
-  const userProfileQuery = ML.getUserProfile().options();
+// Queries - use .options() for reactive interface
+const healthQuery = ML.getHealthStatus().options();
+const anomalyAlertsQuery = ML.getAnomalyAlerts({ limit: 5, minRiskLevel: 'medium' }).options();
+const forecastQuery = ML.getCashFlowForecast({ horizon: 30, granularity: 'daily' }).options();
+const userProfileQuery = ML.getUserProfile().options();
 
-  // New feature queries
-  const budgetHealthQuery = ML.getBudgetHealthSummary().options();
-  const incomeExpenseQuery = ML.getIncomeExpenseSummary().options();
-  const savingsQuery = ML.getSavingsSummary().options();
+// New feature queries
+const budgetHealthQuery = ML.getBudgetHealthSummary().options();
+const incomeExpenseQuery = ML.getIncomeExpenseSummary().options();
+const savingsQuery = ML.getSavingsSummary().options();
 
-  // Pattern detection queries
-  const recurringSummaryQuery = ML.getRecurringSummary().options();
-  const canonicalGroupsQuery = ML.getCanonicalGroups().options();
+// Pattern detection queries
+const recurringSummaryQuery = ML.getRecurringSummary().options();
+const canonicalGroupsQuery = ML.getCanonicalGroups().options();
 
-  // Natural Language Search
-  const nlExamplesQuery = ML.nlExamples().options();
-  let nlSearchQuery = $state("");
-  let nlSearchResults = $state<{
-    transactions: Array<{
-      id: number;
-      date: string;
-      amount: number;
-      notes: string | null;
-      payeeName: string | null;
-      categoryName: string | null;
-      accountName: string | null;
-    }>;
-    query: {
-      interpretation: string;
-      confidence: number;
-    };
-    totalCount: number;
-    executionTimeMs: number;
-  } | null>(null);
-  let nlSearchLoading = $state(false);
+// Natural Language Search
+const nlExamplesQuery = ML.nlExamples().options();
+let nlSearchQuery = $state('');
+let nlSearchResults = $state<{
+  transactions: Array<{
+    id: number;
+    date: string;
+    amount: number;
+    notes: string | null;
+    payeeName: string | null;
+    categoryName: string | null;
+    accountName: string | null;
+  }>;
+  query: {
+    interpretation: string;
+    confidence: number;
+  };
+  totalCount: number;
+  executionTimeMs: number;
+} | null>(null);
+let nlSearchLoading = $state(false);
 
-  async function handleNLSearch(query: string) {
-    nlSearchQuery = query;
-    nlSearchLoading = true;
-    try {
-      const result = await ML.nlSearch(query).execute();
-      nlSearchResults = result;
-    } catch (error) {
-      console.error("NL search failed:", error);
-      nlSearchResults = null;
-    } finally {
-      nlSearchLoading = false;
-    }
+async function handleNLSearch(query: string) {
+  nlSearchQuery = query;
+  nlSearchLoading = true;
+  try {
+    const result = await ML.nlSearch(query).execute();
+    nlSearchResults = result;
+  } catch (error) {
+    console.error('NL search failed:', error);
+    nlSearchResults = null;
+  } finally {
+    nlSearchLoading = false;
   }
+}
 
-  // Mutations - use .options() for reactive interface
-  const retrainMutation = ML.retrainModels().options();
+// Mutations - use .options() for reactive interface
+const retrainMutation = ML.retrainModels().options();
 
-  function handleRetrain() {
-    retrainMutation.mutate(undefined);
-  }
+function handleRetrain() {
+  retrainMutation.mutate(undefined);
+}
 
-  // Schedule Pattern Detection
-  const detectMutation = detectPatterns.options();
-  const deleteAllMutation = deleteAllPatterns.options();
-  const schedulePatternsQuery = listPatterns().options();
-  const schedulePatterns = $derived(schedulePatternsQuery.data || []);
-  const schedulesState = SchedulesState.get();
+// Schedule Pattern Detection
+const detectMutation = detectPatterns.options();
+const deleteAllMutation = deleteAllPatterns.options();
+const schedulePatternsQuery = listPatterns().options();
+const schedulePatterns = $derived(schedulePatternsQuery.data || []);
+const schedulesState = SchedulesState.get();
 
-  async function runPatternDetection() {
-    await detectMutation.mutateAsync({});
-    await schedulePatternsQuery.refetch();
-  }
+async function runPatternDetection() {
+  await detectMutation.mutateAsync({});
+  await schedulePatternsQuery.refetch();
+}
 
-  async function clearAndRegeneratePatterns() {
-    await deleteAllMutation.mutateAsync({});
-    await detectMutation.mutateAsync({});
-    await schedulePatternsQuery.refetch();
-  }
+async function clearAndRegeneratePatterns() {
+  await deleteAllMutation.mutateAsync({});
+  await detectMutation.mutateAsync({});
+  await schedulePatternsQuery.refetch();
+}
 
-  async function handlePatternConvert(scheduleId: number) {
-    await schedulePatternsQuery.refetch();
-    const newSchedule = await trpc().scheduleRoutes.load.query({ id: scheduleId });
-    schedulesState.addSchedule(newSchedule as any);
-  }
+async function handlePatternConvert(scheduleId: number) {
+  await schedulePatternsQuery.refetch();
+  const newSchedule = await trpc().scheduleRoutes.load.query({ id: scheduleId });
+  schedulesState.addSchedule(newSchedule as any);
+}
 
-  async function handlePatternDismiss() {
-    await schedulePatternsQuery.refetch();
-  }
+async function handlePatternDismiss() {
+  await schedulePatternsQuery.refetch();
+}
 </script>
 
 <svelte:head>
@@ -124,7 +124,10 @@
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="intelligence-page-header" data-help-title="Intelligence Page">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+    data-help-id="intelligence-page-header"
+    data-help-title="Intelligence Page">
     <div>
       <div class="flex items-center gap-2">
         <Brain class="text-primary h-6 w-6" />
@@ -133,11 +136,7 @@
       <p class="text-muted-foreground">AI-powered insights and machine learning features</p>
     </div>
     <div class="flex items-center gap-2">
-      <Button
-        variant="outline"
-        onclick={handleRetrain}
-        disabled={retrainMutation.isPending}
-      >
+      <Button variant="outline" onclick={handleRetrain} disabled={retrainMutation.isPending}>
         <RefreshCcw class="mr-2 h-4 w-4 {retrainMutation.isPending ? 'animate-spin' : ''}" />
         Retrain Models
       </Button>
@@ -159,9 +158,8 @@
     onSearch={handleNLSearch}
     onViewTransaction={(id) => {
       // TODO: Navigate to transaction detail
-      console.log("View transaction:", id);
-    }}
-  />
+      console.log('View transaction:', id);
+    }} />
 
   <!-- Health Overview -->
   {#if healthQuery.isLoading}
@@ -169,7 +167,7 @@
   {:else if healthQuery.error}
     <Card.Root class="border-destructive">
       <Card.Content class="pt-6">
-        <div class="flex items-center gap-2 text-destructive">
+        <div class="text-destructive flex items-center gap-2">
           <AlertTriangle class="h-5 w-5" />
           <p>Failed to load ML health status</p>
         </div>
@@ -180,8 +178,7 @@
       overall={healthQuery.data.overall}
       score={healthQuery.data.score}
       services={healthQuery.data.services}
-      metrics={healthQuery.data.metrics}
-    />
+      metrics={healthQuery.data.metrics} />
   {/if}
 
   <!-- Quick Insights Grid -->
@@ -197,8 +194,7 @@
         lastMonthExpenses={incomeExpenseQuery.data.lastMonth.expenses}
         incomeTrend={incomeExpenseQuery.data.incomeTrend}
         expenseTrend={incomeExpenseQuery.data.expenseTrend}
-        savingsRate={incomeExpenseQuery.data.savingsRate}
-      />
+        savingsRate={incomeExpenseQuery.data.savingsRate} />
     {/if}
 
     <!-- Budget Health -->
@@ -211,8 +207,7 @@
         overallRisk={budgetHealthQuery.data.overallRisk}
         predictedOverspend={budgetHealthQuery.data.predictedOverspend}
         topRisks={budgetHealthQuery.data.topRisks}
-        onViewAll={() => window.location.href = '/budgets'}
-      />
+        onViewAll={() => (window.location.href = '/budgets')} />
     {/if}
 
     <!-- Savings Opportunities -->
@@ -222,8 +217,7 @@
       <SavingsOpportunityCard
         opportunityCount={savingsQuery.data.opportunityCount}
         totalMonthlyPotential={savingsQuery.data.totalMonthlyPotential}
-        topOpportunity={savingsQuery.data.topOpportunity}
-      />
+        topOpportunity={savingsQuery.data.topOpportunity} />
     {/if}
   </div>
 
@@ -255,8 +249,7 @@
           title="30-Day Cash Flow"
           predictions={forecastQuery.data.predictions}
           confidence={forecastQuery.data.confidence}
-          granularity="daily"
-        />
+          granularity="daily" />
       {/if}
     </div>
 
@@ -305,8 +298,7 @@
               dimensions={alert.dimensions}
               onViewTransaction={() => {
                 // TODO: Navigate to transaction
-              }}
-            />
+              }} />
           {/each}
         </div>
       {/if}
@@ -341,8 +333,7 @@
           summary={recurringSummaryQuery.data.summary}
           topPatterns={recurringSummaryQuery.data.topByValue}
           inactivePatterns={recurringSummaryQuery.data.inactive}
-          subscriptions={recurringSummaryQuery.data.subscriptions}
-        />
+          subscriptions={recurringSummaryQuery.data.subscriptions} />
       {/if}
     </div>
 
@@ -369,14 +360,15 @@
         </Card.Root>
       {:else if canonicalGroupsQuery.data}
         {@const groups = canonicalGroupsQuery.data.groups}
-        {@const duplicateCount = groups.filter(g => g.variants.length > 1).reduce((sum, g) => sum + g.variants.length - 1, 0)}
+        {@const duplicateCount = groups
+          .filter((g) => g.variants.length > 1)
+          .reduce((sum, g) => sum + g.variants.length - 1, 0)}
         {@const totalPayees = groups.reduce((sum, g) => sum + g.variants.length, 0)}
         <SimilarPayeeCard
-          groups={groups}
-          totalPayees={totalPayees}
-          duplicateCount={duplicateCount}
-          consolidationPotential={totalPayees > 0 ? duplicateCount / totalPayees : 0}
-        />
+          {groups}
+          {totalPayees}
+          {duplicateCount}
+          consolidationPotential={totalPayees > 0 ? duplicateCount / totalPayees : 0} />
       {/if}
     </div>
   </div>
@@ -401,8 +393,7 @@
             variant="outline"
             size="sm"
             onclick={clearAndRegeneratePatterns}
-            disabled={detectMutation.isPending || deleteAllMutation.isPending}
-          >
+            disabled={detectMutation.isPending || deleteAllMutation.isPending}>
             <RotateCw class="mr-2 h-4 w-4" />
             {detectMutation.isPending || deleteAllMutation.isPending
               ? 'Regenerating...'
@@ -419,8 +410,8 @@
       {#if schedulePatternsQuery.isLoading}
         <div class="p-8 text-center">
           <div
-            class="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"
-          ></div>
+            class="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent">
+          </div>
           <p class="text-muted-foreground text-sm">Loading patterns...</p>
         </div>
       {:else if schedulePatterns.length === 0 && !detectMutation.isPending}
@@ -441,8 +432,7 @@
           patterns={schedulePatterns}
           isLoading={schedulePatternsQuery.isLoading}
           onConvert={handlePatternConvert}
-          onDismiss={handlePatternDismiss}
-        />
+          onDismiss={handlePatternDismiss} />
       {/if}
     </Card.Content>
   </Card.Root>
@@ -455,9 +445,7 @@
     <Card.Root>
       <Card.Header>
         <Card.Title class="text-base">Learning Progress</Card.Title>
-        <Card.Description>
-          How well the system has learned your preferences
-        </Card.Description>
+        <Card.Description>How well the system has learned your preferences</Card.Description>
       </Card.Header>
       <Card.Content>
         <div class="grid gap-4 sm:grid-cols-4">

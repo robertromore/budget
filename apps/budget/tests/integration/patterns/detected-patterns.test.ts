@@ -5,12 +5,12 @@
  * pattern creation, confidence scoring, and schedule conversion.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
-import type {SuggestedScheduleConfig} from "../../../src/lib/schema/detected-patterns";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type { SuggestedScheduleConfig } from "../../../src/lib/schema/detected-patterns";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -66,10 +66,42 @@ async function setupTestContext(): Promise<TestContext> {
   const transactions = await db
     .insert(schema.transactions)
     .values([
-      {workspaceId: workspace.id, accountId: account.id, date: "2024-01-15", amount: -15.99, payeeId: payee.id, categoryId: category.id, status: "cleared"},
-      {workspaceId: workspace.id, accountId: account.id, date: "2024-02-15", amount: -15.99, payeeId: payee.id, categoryId: category.id, status: "cleared"},
-      {workspaceId: workspace.id, accountId: account.id, date: "2024-03-15", amount: -15.99, payeeId: payee.id, categoryId: category.id, status: "cleared"},
-      {workspaceId: workspace.id, accountId: account.id, date: "2024-04-15", amount: -15.99, payeeId: payee.id, categoryId: category.id, status: "cleared"},
+      {
+        workspaceId: workspace.id,
+        accountId: account.id,
+        date: "2024-01-15",
+        amount: -15.99,
+        payeeId: payee.id,
+        categoryId: category.id,
+        status: "cleared",
+      },
+      {
+        workspaceId: workspace.id,
+        accountId: account.id,
+        date: "2024-02-15",
+        amount: -15.99,
+        payeeId: payee.id,
+        categoryId: category.id,
+        status: "cleared",
+      },
+      {
+        workspaceId: workspace.id,
+        accountId: account.id,
+        date: "2024-03-15",
+        amount: -15.99,
+        payeeId: payee.id,
+        categoryId: category.id,
+        status: "cleared",
+      },
+      {
+        workspaceId: workspace.id,
+        accountId: account.id,
+        date: "2024-04-15",
+        amount: -15.99,
+        payeeId: payee.id,
+        categoryId: category.id,
+        status: "cleared",
+      },
     ])
     .returning();
 
@@ -209,7 +241,7 @@ describe("Detected Patterns", () => {
 
       await ctx.db
         .update(schema.detectedPatterns)
-        .set({status: "accepted"})
+        .set({ status: "accepted" })
         .where(eq(schema.detectedPatterns.id, pattern.id));
 
       const updated = await ctx.db.query.detectedPatterns.findFirst({
@@ -234,7 +266,7 @@ describe("Detected Patterns", () => {
 
       await ctx.db
         .update(schema.detectedPatterns)
-        .set({status: "dismissed"})
+        .set({ status: "dismissed" })
         .where(eq(schema.detectedPatterns.id, pattern.id));
 
       const updated = await ctx.db.query.detectedPatterns.findFirst({
@@ -246,9 +278,30 @@ describe("Detected Patterns", () => {
 
     it("should list pending patterns", async () => {
       await ctx.db.insert(schema.detectedPatterns).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, patternType: "monthly", confidenceScore: 0.9, sampleTransactionIds: ctx.transactionIds, status: "pending"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, patternType: "weekly", confidenceScore: 0.8, sampleTransactionIds: ctx.transactionIds.slice(0, 2), status: "accepted"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, patternType: "daily", confidenceScore: 0.7, sampleTransactionIds: ctx.transactionIds.slice(0, 1), status: "pending"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          patternType: "monthly",
+          confidenceScore: 0.9,
+          sampleTransactionIds: ctx.transactionIds,
+          status: "pending",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          patternType: "weekly",
+          confidenceScore: 0.8,
+          sampleTransactionIds: ctx.transactionIds.slice(0, 2),
+          status: "accepted",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          patternType: "daily",
+          confidenceScore: 0.7,
+          sampleTransactionIds: ctx.transactionIds.slice(0, 1),
+          status: "pending",
+        },
       ]);
 
       const pending = await ctx.db
@@ -340,7 +393,7 @@ describe("Detected Patterns", () => {
       // Update schedule to link the date
       await ctx.db
         .update(schema.schedules)
-        .set({dateId: scheduleDate.id})
+        .set({ dateId: scheduleDate.id })
         .where(eq(schema.schedules.id, schedule.id));
 
       // Update pattern to converted status

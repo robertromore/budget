@@ -5,11 +5,7 @@
  * Supports nested AND/OR groups, various operators, and deep field access.
  */
 
-import type {
-  Condition,
-  ConditionGroup,
-  ConditionOperator,
-} from "$lib/types/automation";
+import type { Condition, ConditionGroup, ConditionOperator } from "$lib/types/automation";
 import { isConditionGroup } from "$lib/types/automation";
 
 /**
@@ -54,7 +50,13 @@ export function evaluateCondition(
   context?: EvaluationContext
 ): boolean {
   const fieldValue = getFieldValue(entity, condition.field);
-  let result = evaluateOperator(condition.operator, fieldValue, condition.value, condition.value2, context);
+  let result = evaluateOperator(
+    condition.operator,
+    fieldValue,
+    condition.value,
+    condition.value2,
+    context
+  );
 
   // Apply negation if specified
   if (condition.negate) {
@@ -261,11 +263,7 @@ function isIn(fieldValue: unknown, list: unknown): boolean {
   return list.includes(fieldValue);
 }
 
-function inGroup(
-  categoryId: unknown,
-  groupId: unknown,
-  context?: EvaluationContext
-): boolean {
+function inGroup(categoryId: unknown, groupId: unknown, context?: EvaluationContext): boolean {
   // This requires access to category hierarchy data
   // The context should provide a function to check category membership
   if (!context?.checkCategoryInGroup) {

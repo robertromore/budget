@@ -56,7 +56,11 @@ const budgetColumns = $derived(
     showPagination={true}
     pageSizeOptions={[10, 25, 50, 100]}>
     {#snippet footer(tableInstance)}
-      <BudgetBulkActions table={tableInstance} allBudgets={budgets} {onBulkDelete} {onBulkArchive} />
+      <BudgetBulkActions
+        table={tableInstance}
+        allBudgets={budgets}
+        {onBulkDelete}
+        {onBulkArchive} />
     {/snippet}
     {#snippet empty()}
       <AccountBudgetsEmptyState {accountId} {accountSlug} />

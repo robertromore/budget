@@ -132,9 +132,7 @@ export function createMerchantCanonicalizer(
 
   function hasSameStamp(a: PayeeCacheStamp, b: PayeeCacheStamp): boolean {
     return (
-      a.count === b.count &&
-      a.maxUpdatedAt === b.maxUpdatedAt &&
-      a.maxDeletedAt === b.maxDeletedAt
+      a.count === b.count && a.maxUpdatedAt === b.maxUpdatedAt && a.maxDeletedAt === b.maxDeletedAt
     );
   }
 
@@ -235,7 +233,11 @@ export function createMerchantCanonicalizer(
         }
 
         // Compute similarity
-        const similarity = computeCompositeSimilarity(cleanedName, payee.normalizedName, vectorizer);
+        const similarity = computeCompositeSimilarity(
+          cleanedName,
+          payee.normalizedName,
+          vectorizer
+        );
 
         if (similarity.composite >= cfg.similarityThreshold) {
           let matchType: PayeeSimilarityMatch["matchType"] = "fuzzy";

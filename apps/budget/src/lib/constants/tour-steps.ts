@@ -110,12 +110,7 @@ type ImportWizardStep = "upload" | "processing" | "review" | "complete";
  * any UI actions. This ensures idempotency even when called multiple times in quick succession.
  */
 async function advanceImportWizardTo(targetStep: ImportWizardStep) {
-  const stepOrder: ImportWizardStep[] = [
-    "upload",
-    "processing",
-    "review",
-    "complete",
-  ];
+  const stepOrder: ImportWizardStep[] = ["upload", "processing", "review", "complete"];
   const targetIndex = stepOrder.indexOf(targetStep);
   const currentStep = demoMode.importStep;
   const currentIndex = stepOrder.indexOf(currentStep as ImportWizardStep);
@@ -357,7 +352,8 @@ export const IMPORT_TOUR_STEPS: TourStep[] = [
     id: "import-preview",
     targetSelector: "[data-tour-id='import-preview']",
     title: "Review & Import",
-    description: "Preview your transactions, clean up payees, and assign categories before importing.",
+    description:
+      "Preview your transactions, clean up payees, and assign categories before importing.",
     placement: "bottom",
   },
 ];
@@ -412,7 +408,8 @@ export const SCHEDULE_TOUR_STEP_IDS = {
   PATTERNS_BUTTON: "schedules-patterns-button",
 } as const;
 
-export type ScheduleTourStepId = (typeof SCHEDULE_TOUR_STEP_IDS)[keyof typeof SCHEDULE_TOUR_STEP_IDS];
+export type ScheduleTourStepId =
+  (typeof SCHEDULE_TOUR_STEP_IDS)[keyof typeof SCHEDULE_TOUR_STEP_IDS];
 
 /**
  * Payees Page Tour Step IDs
@@ -440,7 +437,8 @@ export const CATEGORY_TOUR_STEP_IDS = {
   ANALYTICS_BUTTON: "categories-analytics-button",
 } as const;
 
-export type CategoryTourStepId = (typeof CATEGORY_TOUR_STEP_IDS)[keyof typeof CATEGORY_TOUR_STEP_IDS];
+export type CategoryTourStepId =
+  (typeof CATEGORY_TOUR_STEP_IDS)[keyof typeof CATEGORY_TOUR_STEP_IDS];
 
 // =============================================================================
 // Deep Dive Sub-Tours

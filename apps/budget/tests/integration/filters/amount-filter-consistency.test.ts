@@ -1,4 +1,4 @@
-import {describe, it, expect} from "vitest";
+import { describe, it, expect } from "vitest";
 
 /**
  * Tests to ensure amount filter works consistently across transactions and expenses
@@ -17,7 +17,7 @@ describe("Amount Filter Consistency", () => {
     it("should support all filter operators", () => {
       const operators = ["equals", "greaterThan", "lessThan", "between", "notEquals"];
 
-      operators.forEach(operator => {
+      operators.forEach((operator) => {
         expect(operator).toBeTruthy();
       });
 
@@ -28,12 +28,12 @@ describe("Amount Filter Consistency", () => {
       // Regression test for the bug fix
       const correctFilterValue = {
         operator: "greaterThan",
-        value: 100
+        value: 100,
       };
 
       const incorrectFilterValue = {
         type: "greaterThan", // Wrong property name
-        value: 100
+        value: 100,
       };
 
       expect(correctFilterValue.operator).toBe("greaterThan");
@@ -50,7 +50,7 @@ describe("Amount Filter Consistency", () => {
         "Decimal validation",
         "Sign toggle",
         "Clear button",
-        "Submit on enter"
+        "Submit on enter",
       ];
 
       expect(features.length).toBe(6);
@@ -66,9 +66,9 @@ describe("Amount Filter Consistency", () => {
 
     it("should format display values as currency", () => {
       const testValue = 1234.56;
-      const formatter = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
+      const formatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
       });
 
       const formatted = formatter.format(testValue);
@@ -94,28 +94,28 @@ describe("Amount Filter Consistency", () => {
 
     it("should filter transactions by amount", () => {
       const transactions = [
-        {id: 1, amount: 50},
-        {id: 2, amount: 100},
-        {id: 3, amount: 150},
+        { id: 1, amount: 50 },
+        { id: 2, amount: 100 },
+        { id: 3, amount: 150 },
       ];
 
-      const filtered = transactions.filter(t => applyFilter(t.amount, "greaterThan", 75));
+      const filtered = transactions.filter((t) => applyFilter(t.amount, "greaterThan", 75));
 
       expect(filtered).toHaveLength(2);
-      expect(filtered.map(t => t.id)).toEqual([2, 3]);
+      expect(filtered.map((t) => t.id)).toEqual([2, 3]);
     });
 
     it("should filter expenses by amount", () => {
       const expenses = [
-        {id: 1, amount: 25},
-        {id: 2, amount: 75},
-        {id: 3, amount: 125},
+        { id: 1, amount: 25 },
+        { id: 2, amount: 75 },
+        { id: 3, amount: 125 },
       ];
 
-      const filtered = expenses.filter(e => applyFilter(e.amount, "lessThan", 100));
+      const filtered = expenses.filter((e) => applyFilter(e.amount, "lessThan", 100));
 
       expect(filtered).toHaveLength(2);
-      expect(filtered.map(e => e.id)).toEqual([1, 2]);
+      expect(filtered.map((e) => e.id)).toEqual([1, 2]);
     });
 
     it("should use identical filtering logic for both tables", () => {
@@ -142,7 +142,7 @@ describe("Amount Filter Consistency", () => {
       const min = 50;
       const max = 150;
 
-      const filtered = testAmounts.filter(amount => applyBetweenFilter(amount, min, max));
+      const filtered = testAmounts.filter((amount) => applyBetweenFilter(amount, min, max));
 
       expect(filtered).toEqual([50, 100, 150]);
     });
@@ -187,7 +187,7 @@ describe("Amount Filter Consistency", () => {
 
     it("should handle decimal precision", () => {
       const amount1 = 99.99;
-      const amount2 = 100.00;
+      const amount2 = 100.0;
       const amount3 = 100.01;
 
       expect(amount1 < 100).toBe(true);
@@ -196,7 +196,7 @@ describe("Amount Filter Consistency", () => {
     });
 
     it("should handle large amounts", () => {
-      const largeAmount = 1000000.50;
+      const largeAmount = 1000000.5;
       const smallAmount = 100.25;
 
       expect(largeAmount > smallAmount).toBe(true);

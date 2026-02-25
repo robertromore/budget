@@ -5,18 +5,21 @@ import { Button } from '$lib/components/ui/button';
 import { Switch } from '$lib/components/ui/switch';
 import * as Select from '$lib/components/ui/select';
 import { onboardingWizardStore } from '$lib/stores/onboarding-wizard.svelte';
-import {
-  DEBT_TYPE_LABELS,
-  type DebtType,
-  type DebtItem,
-} from '$lib/types/onboarding';
+import { DEBT_TYPE_LABELS, type DebtType, type DebtItem } from '$lib/types/onboarding';
 import Plus from '@lucide/svelte/icons/plus';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 
 const formData = $derived(onboardingWizardStore.typedFormData);
 
-const debtTypes: DebtType[] = ['credit-card', 'student-loan', 'car-loan', 'mortgage', 'personal-loan', 'medical-debt'];
+const debtTypes: DebtType[] = [
+  'credit-card',
+  'student-loan',
+  'car-loan',
+  'mortgage',
+  'personal-loan',
+  'medical-debt',
+];
 
 let newDebtType = $state<DebtType>('credit-card');
 let newDebtAmount = $state<number | undefined>();
@@ -57,8 +60,7 @@ function formatCurrency(amount: number): string {
     </div>
     <Switch
       checked={formData.hasDebt ?? false}
-      onCheckedChange={(checked) => onboardingWizardStore.setHasDebt(checked)}
-    />
+      onCheckedChange={(checked) => onboardingWizardStore.setHasDebt(checked)} />
   </div>
 
   {#if formData.hasDebt}
@@ -69,7 +71,7 @@ function formatCurrency(amount: number): string {
         {#each formData.debtOverview ?? [] as debt, index}
           <div class="bg-muted/50 flex items-center justify-between rounded-lg p-3">
             <div class="flex items-center gap-3">
-              <CreditCard class="h-4 w-4 text-muted-foreground" />
+              <CreditCard class="text-muted-foreground h-4 w-4" />
               <div>
                 <p class="font-medium">{DEBT_TYPE_LABELS[debt.type]}</p>
                 <p class="text-muted-foreground text-sm">
@@ -115,12 +117,7 @@ function formatCurrency(amount: number): string {
         <!-- Amount -->
         <div class="space-y-2">
           <Label for="debt-amount" class="text-xs">Amount ($)</Label>
-          <Input
-            id="debt-amount"
-            type="number"
-            placeholder="10000"
-            bind:value={newDebtAmount}
-          />
+          <Input id="debt-amount" type="number" placeholder="10000" bind:value={newDebtAmount} />
         </div>
 
         <!-- Interest Rate -->
@@ -131,16 +128,11 @@ function formatCurrency(amount: number): string {
             type="number"
             step="0.1"
             placeholder="18.9"
-            bind:value={newDebtInterest}
-          />
+            bind:value={newDebtInterest} />
         </div>
       </div>
 
-      <Button
-        variant="outline"
-        onclick={addDebtItem}
-        disabled={!newDebtAmount}
-        class="w-full">
+      <Button variant="outline" onclick={addDebtItem} disabled={!newDebtAmount} class="w-full">
         <Plus class="mr-2 h-4 w-4" />
         Add Debt
       </Button>

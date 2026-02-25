@@ -10,8 +10,10 @@
 
 export { smartCategoryRoutes } from "./routes";
 export {
-  createSmartCategoryService, type CategoryTransactionContext, type SmartCategoryService,
-  type SmartCategorySuggestion, type SuggestionFactor,
-  type SuggestionReasonCode
+  createSmartCategoryService,
+  type CategoryTransactionContext,
+  type SmartCategoryService,
+  type SmartCategorySuggestion,
+  type SuggestionFactor,
+  type SuggestionReasonCode,
 } from "./service";
-

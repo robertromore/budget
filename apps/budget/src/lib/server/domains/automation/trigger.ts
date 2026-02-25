@@ -65,16 +65,8 @@ interface TriggerResult {
  * ```
  */
 export async function triggerAutomation(options: TriggerOptions): Promise<TriggerResult> {
-  const {
-    db,
-    workspaceId,
-    entityType,
-    event,
-    entityId,
-    entity,
-    previousEntity,
-    services,
-  } = options;
+  const { db, workspaceId, entityType, event, entityId, entity, previousEntity, services } =
+    options;
 
   const result: TriggerResult = {
     rulesEvaluated: 0,
@@ -158,10 +150,10 @@ export async function triggerAutomation(options: TriggerOptions): Promise<Trigge
             actionContext
           );
 
-          result.actionsExecuted += actionResults.filter(r => r.success).length;
+          result.actionsExecuted += actionResults.filter((r) => r.success).length;
         } else {
           // No services - mark actions as skipped
-          actionResults = actions.map(a => ({
+          actionResults = actions.map((a) => ({
             actionType: a.type,
             success: false,
             error: "Services not provided for action execution",
@@ -169,7 +161,7 @@ export async function triggerAutomation(options: TriggerOptions): Promise<Trigge
         }
 
         // Determine overall success
-        const allSuccessful = actionResults.every(r => r.success);
+        const allSuccessful = actionResults.every((r) => r.success);
         const status = allSuccessful ? "success" : "failed";
 
         // Log execution
@@ -183,9 +175,7 @@ export async function triggerAutomation(options: TriggerOptions): Promise<Trigge
           actionsExecuted: actionResults,
           executionTimeMs: Date.now() - ruleStartTime,
           entitySnapshot: entity,
-          errorMessage: allSuccessful
-            ? undefined
-            : actionResults.find(r => !r.success)?.error,
+          errorMessage: allSuccessful ? undefined : actionResults.find((r) => !r.success)?.error,
         } as NewAutomationRuleLog);
 
         // Update rule stats

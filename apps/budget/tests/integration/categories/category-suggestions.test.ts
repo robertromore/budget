@@ -5,11 +5,11 @@
  * confidence scoring, and auto-fill behavior.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -204,7 +204,10 @@ describe("Category Suggestions", () => {
         })
         .from(schema.transactions)
         .where(
-          and(eq(schema.transactions.payeeId, ctx.walmartId), eq(schema.transactions.workspaceId, ctx.workspaceId))
+          and(
+            eq(schema.transactions.payeeId, ctx.walmartId),
+            eq(schema.transactions.workspaceId, ctx.workspaceId)
+          )
         );
 
       // All 3 transactions have groceries
@@ -224,10 +227,38 @@ describe("Category Suggestions", () => {
 
       // Create transactions with mixed categories
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.walmartId, categoryId: ctx.groceriesId, amount: -50.0, date: "2024-01-01"},
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.walmartId, categoryId: ctx.groceriesId, amount: -50.0, date: "2024-01-02"},
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.walmartId, categoryId: ctx.groceriesId, amount: -50.0, date: "2024-01-03"},
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.walmartId, categoryId: ctx.entertainmentId, amount: -50.0, date: "2024-01-04"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.walmartId,
+          categoryId: ctx.groceriesId,
+          amount: -50.0,
+          date: "2024-01-01",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.walmartId,
+          categoryId: ctx.groceriesId,
+          amount: -50.0,
+          date: "2024-01-02",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.walmartId,
+          categoryId: ctx.groceriesId,
+          amount: -50.0,
+          date: "2024-01-03",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.walmartId,
+          categoryId: ctx.entertainmentId,
+          amount: -50.0,
+          date: "2024-01-04",
+        },
       ]);
 
       // Count by category
@@ -272,9 +303,30 @@ describe("Category Suggestions", () => {
 
       // Create transactions with same amount (Netflix subscription)
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.netflixId, categoryId: ctx.subscriptionsId, amount: -15.99, date: "2024-01-15"},
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.netflixId, categoryId: ctx.subscriptionsId, amount: -15.99, date: "2024-02-15"},
-        {workspaceId: ctx.workspaceId, accountId: account.id, payeeId: ctx.netflixId, categoryId: ctx.subscriptionsId, amount: -15.99, date: "2024-03-15"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.netflixId,
+          categoryId: ctx.subscriptionsId,
+          amount: -15.99,
+          date: "2024-01-15",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.netflixId,
+          categoryId: ctx.subscriptionsId,
+          amount: -15.99,
+          date: "2024-02-15",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: account.id,
+          payeeId: ctx.netflixId,
+          categoryId: ctx.subscriptionsId,
+          amount: -15.99,
+          date: "2024-03-15",
+        },
       ]);
 
       // Check for matching pattern
@@ -299,9 +351,9 @@ describe("Category Suggestions", () => {
 
     it("should detect income vs expense patterns", () => {
       const transactions = [
-        {amount: 3000.0, categoryId: 1}, // Income
-        {amount: 3000.0, categoryId: 1}, // Income
-        {amount: -50.0, categoryId: 2}, // Expense
+        { amount: 3000.0, categoryId: 1 }, // Income
+        { amount: 3000.0, categoryId: 1 }, // Income
+        { amount: -50.0, categoryId: 2 }, // Expense
       ];
 
       // Positive amounts likely income
@@ -327,7 +379,7 @@ describe("Category Suggestions", () => {
 
     it("should boost confidence for recent matches", () => {
       const calculateTimeWeightedConfidence = (
-        transactions: Array<{date: string; isMatch: boolean}>
+        transactions: Array<{ date: string; isMatch: boolean }>
       ) => {
         const now = new Date("2024-01-31");
         let weightedMatches = 0;
@@ -348,9 +400,9 @@ describe("Category Suggestions", () => {
       };
 
       const transactions = [
-        {date: "2024-01-30", isMatch: true}, // Very recent
-        {date: "2024-01-15", isMatch: true}, // Recent
-        {date: "2023-06-01", isMatch: false}, // Old
+        { date: "2024-01-30", isMatch: true }, // Very recent
+        { date: "2024-01-15", isMatch: true }, // Recent
+        { date: "2023-06-01", isMatch: false }, // Old
       ];
 
       const confidence = calculateTimeWeightedConfidence(transactions);
@@ -364,9 +416,9 @@ describe("Category Suggestions", () => {
       const autoFillThreshold = 0.7;
 
       const suggestions = [
-        {categoryId: 1, confidence: 0.95}, // Should auto-fill
-        {categoryId: 2, confidence: 0.7}, // Should auto-fill (at threshold)
-        {categoryId: 3, confidence: 0.69}, // Should NOT auto-fill
+        { categoryId: 1, confidence: 0.95 }, // Should auto-fill
+        { categoryId: 2, confidence: 0.7 }, // Should auto-fill (at threshold)
+        { categoryId: 3, confidence: 0.69 }, // Should NOT auto-fill
       ];
 
       const autoFilled = suggestions.filter((s) => s.confidence >= autoFillThreshold);
@@ -378,9 +430,9 @@ describe("Category Suggestions", () => {
       const autoFillThreshold = 0.7;
 
       const suggestions = [
-        {categoryId: 1, confidence: 0.25}, // Below min, excluded
-        {categoryId: 2, confidence: 0.35}, // Above min, but no auto-fill
-        {categoryId: 3, confidence: 0.75}, // Auto-fill
+        { categoryId: 1, confidence: 0.25 }, // Below min, excluded
+        { categoryId: 2, confidence: 0.35 }, // Above min, but no auto-fill
+        { categoryId: 3, confidence: 0.75 }, // Auto-fill
       ];
 
       const validSuggestions = suggestions.filter((s) => s.confidence >= minConfidence);
@@ -394,9 +446,9 @@ describe("Category Suggestions", () => {
   describe("suggestion ranking", () => {
     it("should rank suggestions by confidence", () => {
       const suggestions: CategorySuggestion[] = [
-        {categoryId: 1, categoryName: "A", confidence: 0.5, reason: "ml_prediction"},
-        {categoryId: 2, categoryName: "B", confidence: 0.9, reason: "payee_match"},
-        {categoryId: 3, categoryName: "C", confidence: 0.7, reason: "historical"},
+        { categoryId: 1, categoryName: "A", confidence: 0.5, reason: "ml_prediction" },
+        { categoryId: 2, categoryName: "B", confidence: 0.9, reason: "payee_match" },
+        { categoryId: 3, categoryName: "C", confidence: 0.7, reason: "historical" },
       ];
 
       const ranked = [...suggestions].sort((a, b) => b.confidence - a.confidence);
@@ -410,11 +462,11 @@ describe("Category Suggestions", () => {
       const maxSuggestions = 3;
 
       const allSuggestions: CategorySuggestion[] = [
-        {categoryId: 1, categoryName: "A", confidence: 0.9, reason: "payee_match"},
-        {categoryId: 2, categoryName: "B", confidence: 0.8, reason: "historical"},
-        {categoryId: 3, categoryName: "C", confidence: 0.7, reason: "ml_prediction"},
-        {categoryId: 4, categoryName: "D", confidence: 0.6, reason: "amount_pattern"},
-        {categoryId: 5, categoryName: "E", confidence: 0.5, reason: "ml_prediction"},
+        { categoryId: 1, categoryName: "A", confidence: 0.9, reason: "payee_match" },
+        { categoryId: 2, categoryName: "B", confidence: 0.8, reason: "historical" },
+        { categoryId: 3, categoryName: "C", confidence: 0.7, reason: "ml_prediction" },
+        { categoryId: 4, categoryName: "D", confidence: 0.6, reason: "amount_pattern" },
+        { categoryId: 5, categoryName: "E", confidence: 0.5, reason: "ml_prediction" },
       ];
 
       const topSuggestions = allSuggestions
@@ -449,9 +501,27 @@ describe("Category Suggestions", () => {
 
     it("should handle multiple aliases for same category", async () => {
       await ctx.db.insert(schema.categoryAliases).values([
-        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "GROCERY", normalizedString: "grocery", trigger: "bulk_import"},
-        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "FOOD", normalizedString: "food", trigger: "bulk_import"},
-        {workspaceId: ctx.workspaceId, categoryId: ctx.groceriesId, rawString: "SUPERMARKET", normalizedString: "supermarket", trigger: "bulk_import"},
+        {
+          workspaceId: ctx.workspaceId,
+          categoryId: ctx.groceriesId,
+          rawString: "GROCERY",
+          normalizedString: "grocery",
+          trigger: "bulk_import",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          categoryId: ctx.groceriesId,
+          rawString: "FOOD",
+          normalizedString: "food",
+          trigger: "bulk_import",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          categoryId: ctx.groceriesId,
+          rawString: "SUPERMARKET",
+          normalizedString: "supermarket",
+          trigger: "bulk_import",
+        },
       ]);
 
       const aliases = await ctx.db
@@ -466,10 +536,10 @@ describe("Category Suggestions", () => {
   describe("suggestion stats", () => {
     it("should track suggestion statistics", () => {
       const results = [
-        {rowIndex: 0, hasAutoFill: true, hasSuggestions: true},
-        {rowIndex: 1, hasAutoFill: true, hasSuggestions: true},
-        {rowIndex: 2, hasAutoFill: false, hasSuggestions: true},
-        {rowIndex: 3, hasAutoFill: false, hasSuggestions: false},
+        { rowIndex: 0, hasAutoFill: true, hasSuggestions: true },
+        { rowIndex: 1, hasAutoFill: true, hasSuggestions: true },
+        { rowIndex: 2, hasAutoFill: false, hasSuggestions: true },
+        { rowIndex: 3, hasAutoFill: false, hasSuggestions: false },
       ];
 
       const stats = {

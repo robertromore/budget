@@ -150,7 +150,15 @@ const AMOUNT_CATEGORY_HINTS: Array<{
     pattern: "withdrawal",
     minAmount: 500,
     categoryTypes: ["expense"],
-    categoryKeywords: ["rent", "mortgage", "insurance", "utilities", "car", "medical", "healthcare"],
+    categoryKeywords: [
+      "rent",
+      "mortgage",
+      "insurance",
+      "utilities",
+      "car",
+      "medical",
+      "healthcare",
+    ],
     confidence: 0.4,
     reason: "Large expense typically indicates major bills",
   },
@@ -166,7 +174,14 @@ const DAY_PATTERNS: Array<{
   // Weekend spending patterns
   {
     days: [0, 6], // Saturday, Sunday
-    categoryKeywords: ["dining", "restaurant", "entertainment", "recreation", "shopping", "groceries"],
+    categoryKeywords: [
+      "dining",
+      "restaurant",
+      "entertainment",
+      "recreation",
+      "shopping",
+      "groceries",
+    ],
     confidence: 0.2,
     reason: "Weekend spending pattern",
   },
@@ -188,61 +203,220 @@ const PAYEE_CATEGORY_MAPPINGS: Array<{
 }> = [
   // Grocery stores
   {
-    payeePatterns: [/fareway/i, /hyvee/i, /hy-vee/i, /walmart/i, /target/i, /aldi/i, /costco/i, /kroger/i, /safeway/i, /publix/i, /trader\s*joe/i, /whole\s*foods/i, /grocery/i, /market/i],
+    payeePatterns: [
+      /fareway/i,
+      /hyvee/i,
+      /hy-vee/i,
+      /walmart/i,
+      /target/i,
+      /aldi/i,
+      /costco/i,
+      /kroger/i,
+      /safeway/i,
+      /publix/i,
+      /trader\s*joe/i,
+      /whole\s*foods/i,
+      /grocery/i,
+      /market/i,
+    ],
     categoryKeywords: ["groceries", "grocery", "food"],
     confidence: 0.6,
   },
   // Gas stations
   {
-    payeePatterns: [/kwik/i, /kum.*go/i, /casey/i, /shell/i, /exxon/i, /mobil/i, /chevron/i, /bp\b/i, /gas/i, /fuel/i, /petro/i, /citgo/i, /marathon/i, /phillips/i, /sinclair/i],
+    payeePatterns: [
+      /kwik/i,
+      /kum.*go/i,
+      /casey/i,
+      /shell/i,
+      /exxon/i,
+      /mobil/i,
+      /chevron/i,
+      /bp\b/i,
+      /gas/i,
+      /fuel/i,
+      /petro/i,
+      /citgo/i,
+      /marathon/i,
+      /phillips/i,
+      /sinclair/i,
+    ],
     categoryKeywords: ["gas", "fuel", "transportation"],
     confidence: 0.7,
   },
   // Utilities
   {
-    payeePatterns: [/midamerican/i, /alliant/i, /interstate\s*power/i, /electric/i, /water/i, /sewer/i, /utility/i, /utilities/i, /power/i, /energy/i, /mediacom/i, /comcast/i, /xfinity/i, /spectrum/i, /att\b/i, /at&t/i, /verizon/i, /t-mobile/i, /sprint/i, /internet/i, /cable/i],
+    payeePatterns: [
+      /midamerican/i,
+      /alliant/i,
+      /interstate\s*power/i,
+      /electric/i,
+      /water/i,
+      /sewer/i,
+      /utility/i,
+      /utilities/i,
+      /power/i,
+      /energy/i,
+      /mediacom/i,
+      /comcast/i,
+      /xfinity/i,
+      /spectrum/i,
+      /att\b/i,
+      /at&t/i,
+      /verizon/i,
+      /t-mobile/i,
+      /sprint/i,
+      /internet/i,
+      /cable/i,
+    ],
     categoryKeywords: ["utilities", "electric", "water", "internet", "phone", "cable"],
     confidence: 0.65,
   },
   // Restaurants / Fast food
   {
-    payeePatterns: [/mcdonald/i, /burger\s*king/i, /wendy/i, /taco\s*bell/i, /chick-fil-a/i, /chipotle/i, /panera/i, /starbucks/i, /dunkin/i, /subway/i, /pizza/i, /doordash/i, /grubhub/i, /uber\s*eats/i, /restaurant/i, /cafe/i, /coffee/i, /diner/i, /grill/i, /kitchen/i],
+    payeePatterns: [
+      /mcdonald/i,
+      /burger\s*king/i,
+      /wendy/i,
+      /taco\s*bell/i,
+      /chick-fil-a/i,
+      /chipotle/i,
+      /panera/i,
+      /starbucks/i,
+      /dunkin/i,
+      /subway/i,
+      /pizza/i,
+      /doordash/i,
+      /grubhub/i,
+      /uber\s*eats/i,
+      /restaurant/i,
+      /cafe/i,
+      /coffee/i,
+      /diner/i,
+      /grill/i,
+      /kitchen/i,
+    ],
     categoryKeywords: ["restaurant", "dining", "food", "fast food", "coffee"],
     confidence: 0.6,
   },
   // Subscriptions / Streaming
   {
-    payeePatterns: [/netflix/i, /spotify/i, /hulu/i, /disney/i, /amazon\s*prime/i, /apple\s*music/i, /youtube/i, /hbo/i, /paramount/i, /peacock/i, /subscription/i, /monthly/i, /recurring/i],
+    payeePatterns: [
+      /netflix/i,
+      /spotify/i,
+      /hulu/i,
+      /disney/i,
+      /amazon\s*prime/i,
+      /apple\s*music/i,
+      /youtube/i,
+      /hbo/i,
+      /paramount/i,
+      /peacock/i,
+      /subscription/i,
+      /monthly/i,
+      /recurring/i,
+    ],
     categoryKeywords: ["subscription", "streaming", "entertainment"],
     confidence: 0.7,
   },
   // Insurance
   {
-    payeePatterns: [/geico/i, /state\s*farm/i, /allstate/i, /progressive/i, /liberty\s*mutual/i, /farmers/i, /nationwide/i, /insurance/i, /usaa/i, /aetna/i, /cigna/i, /united\s*health/i, /anthem/i, /blue\s*cross/i, /humana/i],
+    payeePatterns: [
+      /geico/i,
+      /state\s*farm/i,
+      /allstate/i,
+      /progressive/i,
+      /liberty\s*mutual/i,
+      /farmers/i,
+      /nationwide/i,
+      /insurance/i,
+      /usaa/i,
+      /aetna/i,
+      /cigna/i,
+      /united\s*health/i,
+      /anthem/i,
+      /blue\s*cross/i,
+      /humana/i,
+    ],
     categoryKeywords: ["insurance", "car insurance", "health insurance"],
     confidence: 0.7,
   },
   // Credit card payments
   {
-    payeePatterns: [/chase\s*credit/i, /capital\s*one/i, /amex/i, /american\s*express/i, /discover/i, /citi\s*card/i, /bank\s*of\s*america/i, /applecard/i, /apple\s*card/i, /credit\s*card/i, /card\s*payment/i],
+    payeePatterns: [
+      /chase\s*credit/i,
+      /capital\s*one/i,
+      /amex/i,
+      /american\s*express/i,
+      /discover/i,
+      /citi\s*card/i,
+      /bank\s*of\s*america/i,
+      /applecard/i,
+      /apple\s*card/i,
+      /credit\s*card/i,
+      /card\s*payment/i,
+    ],
     categoryKeywords: ["transfer", "credit card", "payment"],
     confidence: 0.5,
   },
   // Investment / Brokerage
   {
-    payeePatterns: [/schwab/i, /fidelity/i, /vanguard/i, /etrade/i, /e-trade/i, /robinhood/i, /td\s*ameritrade/i, /merrill/i, /brokerage/i, /investment/i, /401k/i, /ira/i, /retirement/i],
+    payeePatterns: [
+      /schwab/i,
+      /fidelity/i,
+      /vanguard/i,
+      /etrade/i,
+      /e-trade/i,
+      /robinhood/i,
+      /td\s*ameritrade/i,
+      /merrill/i,
+      /brokerage/i,
+      /investment/i,
+      /401k/i,
+      /ira/i,
+      /retirement/i,
+    ],
     categoryKeywords: ["investment", "savings", "transfer"],
     confidence: 0.6,
   },
   // Healthcare
   {
-    payeePatterns: [/cvs/i, /walgreens/i, /pharmacy/i, /clinic/i, /hospital/i, /medical/i, /doctor/i, /dental/i, /dentist/i, /optom/i, /vision/i, /health/i, /urgent\s*care/i],
+    payeePatterns: [
+      /cvs/i,
+      /walgreens/i,
+      /pharmacy/i,
+      /clinic/i,
+      /hospital/i,
+      /medical/i,
+      /doctor/i,
+      /dental/i,
+      /dentist/i,
+      /optom/i,
+      /vision/i,
+      /health/i,
+      /urgent\s*care/i,
+    ],
     categoryKeywords: ["healthcare", "medical", "prescriptions", "dental"],
     confidence: 0.6,
   },
   // Shopping
   {
-    payeePatterns: [/amazon(?!\s*prime)/i, /ebay/i, /etsy/i, /best\s*buy/i, /home\s*depot/i, /lowes/i, /ikea/i, /wayfair/i, /nordstrom/i, /macy/i, /kohls/i, /marshalls/i, /tjmaxx/i, /ross/i],
+    payeePatterns: [
+      /amazon(?!\s*prime)/i,
+      /ebay/i,
+      /etsy/i,
+      /best\s*buy/i,
+      /home\s*depot/i,
+      /lowes/i,
+      /ikea/i,
+      /wayfair/i,
+      /nordstrom/i,
+      /macy/i,
+      /kohls/i,
+      /marshalls/i,
+      /tjmaxx/i,
+      /ross/i,
+    ],
     categoryKeywords: ["shopping", "home", "electronics", "clothing"],
     confidence: 0.5,
   },
@@ -307,9 +481,11 @@ export interface SmartCategoryService {
   /**
    * Analyze a transaction to determine likely category type (income/expense)
    */
-  analyzeTransactionType(
-    context: CategoryTransactionContext
-  ): { type: "income" | "expense" | "transfer"; confidence: number; reason: string };
+  analyzeTransactionType(context: CategoryTransactionContext): {
+    type: "income" | "expense" | "transfer";
+    confidence: number;
+    reason: string;
+  };
 
   /**
    * Detect if transaction is likely a subscription
@@ -363,14 +539,22 @@ export function createSmartCategoryService(
   /**
    * Get amount-based suggestions
    */
-  function getAmountBasedSuggestions(
-    context: CategoryTransactionContext
-  ): { categoryKeywords: string[]; categoryTypes: Array<"income" | "expense" | "transfer" | "savings">; confidence: number; reason: string }[] {
+  function getAmountBasedSuggestions(context: CategoryTransactionContext): {
+    categoryKeywords: string[];
+    categoryTypes: Array<"income" | "expense" | "transfer" | "savings">;
+    confidence: number;
+    reason: string;
+  }[] {
     const amount = Math.abs(context.amount);
     const isDeposit = context.amount > 0;
     const pattern = isDeposit ? "deposit" : "withdrawal";
 
-    const results: { categoryKeywords: string[]; categoryTypes: Array<"income" | "expense" | "transfer" | "savings">; confidence: number; reason: string }[] = [];
+    const results: {
+      categoryKeywords: string[];
+      categoryTypes: Array<"income" | "expense" | "transfer" | "savings">;
+      confidence: number;
+      reason: string;
+    }[] = [];
 
     for (const hint of AMOUNT_CATEGORY_HINTS) {
       if (hint.pattern !== pattern) continue;
@@ -391,14 +575,22 @@ export function createSmartCategoryService(
   /**
    * Get time-based suggestions
    */
-  function getTimeBasedSuggestions(
-    context: CategoryTransactionContext
-  ): { categoryKeywords: string[]; categoryTypes?: Array<"income" | "expense" | "transfer" | "savings">; confidence: number; reason: string }[] {
+  function getTimeBasedSuggestions(context: CategoryTransactionContext): {
+    categoryKeywords: string[];
+    categoryTypes?: Array<"income" | "expense" | "transfer" | "savings">;
+    confidence: number;
+    reason: string;
+  }[] {
     const date = new Date(context.date);
     const dayOfWeek = date.getDay();
     const dayOfMonth = date.getDate();
 
-    const results: { categoryKeywords: string[]; categoryTypes?: Array<"income" | "expense" | "transfer" | "savings">; confidence: number; reason: string }[] = [];
+    const results: {
+      categoryKeywords: string[];
+      categoryTypes?: Array<"income" | "expense" | "transfer" | "savings">;
+      confidence: number;
+      reason: string;
+    }[] = [];
 
     // Check day of week patterns
     for (const pattern of DAY_PATTERNS) {
@@ -446,10 +638,7 @@ export function createSmartCategoryService(
   /**
    * Score a category against keywords
    */
-  function scoreCategory(
-    categoryName: string,
-    keywords: string[]
-  ): number {
+  function scoreCategory(categoryName: string, keywords: string[]): number {
     const normalizedName = categoryName.toLowerCase();
     let score = 0;
 
@@ -496,11 +685,10 @@ export function createSmartCategoryService(
         // Determine amount type for context
         const amountType: AmountType = context.amount > 0 ? "income" : "expense";
 
-        const aliasMatch = await categoryAliasService.matchWithAlias(
-          rawString,
-          workspaceId,
-          { payeeId: context.payeeId, amountType }
-        );
+        const aliasMatch = await categoryAliasService.matchWithAlias(rawString, workspaceId, {
+          payeeId: context.payeeId,
+          amountType,
+        });
 
         if (aliasMatch.found && aliasMatch.categoryId) {
           // console.log('[SmartCategoryService] Category alias match found:', aliasMatch);
@@ -513,24 +701,34 @@ export function createSmartCategoryService(
             // });
           } else {
             // Look up the category details
-            const matchedCategory = workspaceCategories.find(c => c.id === aliasMatch.categoryId);
+            const matchedCategory = workspaceCategories.find((c) => c.id === aliasMatch.categoryId);
             if (matchedCategory && matchedCategory.name) {
               const aliasConfidence = aliasMatch.confidence;
-              const matchType = aliasMatch.matchedOn === "exact" ? "exact" :
-                               aliasMatch.matchedOn === "normalized" ? "normalized" : "payee-context";
+              const matchType =
+                aliasMatch.matchedOn === "exact"
+                  ? "exact"
+                  : aliasMatch.matchedOn === "normalized"
+                    ? "normalized"
+                    : "payee-context";
 
               aliasResults.push({
                 categoryId: matchedCategory.id,
                 categoryName: matchedCategory.name,
-                categoryType: matchedCategory.categoryType as "income" | "expense" | "transfer" | "savings",
+                categoryType: matchedCategory.categoryType as
+                  | "income"
+                  | "expense"
+                  | "transfer"
+                  | "savings",
                 confidence: aliasConfidence,
                 reason: `Previously used for "${rawString.substring(0, 30)}${rawString.length > 30 ? "..." : ""}"`,
                 reasonCode: "alias_match",
-                factors: [{
-                  type: "alias",
-                  description: `User-confirmed ${matchType} match (${Math.round(aliasConfidence * 100)}% confidence)`,
-                  weight: aliasConfidence,
-                }],
+                factors: [
+                  {
+                    type: "alias",
+                    description: `User-confirmed ${matchType} match (${Math.round(aliasConfidence * 100)}% confidence)`,
+                    weight: aliasConfidence,
+                  },
+                ],
               });
 
               // If alias confidence is very high (>0.9), just return alias match
@@ -545,13 +743,16 @@ export function createSmartCategoryService(
       }
 
       // Build a map of category scores
-      const categoryScores = new Map<number, {
-        category: typeof workspaceCategories[0];
-        score: number;
-        factors: SuggestionFactor[];
-        primaryReason: string;
-        primaryReasonCode: SuggestionReasonCode;
-      }>();
+      const categoryScores = new Map<
+        number,
+        {
+          category: (typeof workspaceCategories)[0];
+          score: number;
+          factors: SuggestionFactor[];
+          primaryReason: string;
+          primaryReasonCode: SuggestionReasonCode;
+        }
+      >();
 
       // Initialize all categories
       for (const cat of workspaceCategories) {
@@ -591,7 +792,7 @@ export function createSmartCategoryService(
       // 1b. Payee name pattern matching (for common merchants)
       // This helps when there's no history but payee name is recognizable
       for (const mapping of PAYEE_CATEGORY_MAPPINGS) {
-        const matchesPayee = mapping.payeePatterns.some(pattern => pattern.test(payeeName));
+        const matchesPayee = mapping.payeePatterns.some((pattern) => pattern.test(payeeName));
         if (matchesPayee) {
           // console.log('[SmartCategoryService] Payee pattern match:', payeeName, '→', mapping.categoryKeywords);
           for (const [catId, entry] of categoryScores) {
@@ -623,7 +824,9 @@ export function createSmartCategoryService(
       for (const hint of amountHints) {
         for (const [catId, entry] of categoryScores) {
           // Check if category type matches
-          const typeMatch = hint.categoryTypes.includes(entry.category.categoryType as "income" | "expense" | "transfer" | "savings");
+          const typeMatch = hint.categoryTypes.includes(
+            entry.category.categoryType as "income" | "expense" | "transfer" | "savings"
+          );
           if (!typeMatch) continue;
 
           // Score based on keyword match
@@ -654,7 +857,9 @@ export function createSmartCategoryService(
         for (const [catId, entry] of categoryScores) {
           // Check if category type matches (if specified)
           if (hint.categoryTypes) {
-            const typeMatch = hint.categoryTypes.includes(entry.category.categoryType as "income" | "expense" | "transfer" | "savings");
+            const typeMatch = hint.categoryTypes.includes(
+              entry.category.categoryType as "income" | "expense" | "transfer" | "savings"
+            );
             if (!typeMatch) continue;
           }
 
@@ -783,13 +988,17 @@ export function createSmartCategoryService(
         }
 
         // Skip if this category is already in alias results (avoid duplicates)
-        const alreadyInAliasResults = aliasResults.some(a => a.categoryId === entry.category.id);
+        const alreadyInAliasResults = aliasResults.some((a) => a.categoryId === entry.category.id);
         if (alreadyInAliasResults) continue;
 
         results.push({
           categoryId: entry.category.id,
           categoryName: entry.category.name,
-          categoryType: entry.category.categoryType as "income" | "expense" | "transfer" | "savings",
+          categoryType: entry.category.categoryType as
+            | "income"
+            | "expense"
+            | "transfer"
+            | "savings",
           confidence: Math.min(entry.score, 0.95),
           reason: entry.primaryReason || "Pattern match",
           reasonCode: entry.primaryReasonCode,
@@ -805,9 +1014,11 @@ export function createSmartCategoryService(
       return mergedResults.slice(0, limit);
     },
 
-    analyzeTransactionType(
-      context: CategoryTransactionContext
-    ): { type: "income" | "expense" | "transfer"; confidence: number; reason: string } {
+    analyzeTransactionType(context: CategoryTransactionContext): {
+      type: "income" | "expense" | "transfer";
+      confidence: number;
+      reason: string;
+    } {
       const amount = context.amount;
 
       if (amount > 0) {
@@ -934,7 +1145,6 @@ export function createSmartCategoryService(
       // This could be expanded to store learning data
       // For now, we rely on the existing user behavior tracking
       // The data is implicitly captured through transaction categorization
-
       // Future: Store in a learning table for smarter suggestions
       // await modelStore.saveModel(workspaceId, {
       //   modelType: "category_learning",

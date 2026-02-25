@@ -37,9 +37,7 @@ async function handleUnlink() {
     <AlertDialog.Header>
       <AlertDialog.Title>Unlink Transfer</AlertDialog.Title>
       <AlertDialog.Description class="space-y-2">
-        <p>
-          This will convert the linked transfer into two separate, independent transactions.
-        </p>
+        <p>This will convert the linked transfer into two separate, independent transactions.</p>
         <p class="text-muted-foreground text-sm">
           Both transactions will remain in their respective accounts, but they will no longer be
           linked as a transfer pair.

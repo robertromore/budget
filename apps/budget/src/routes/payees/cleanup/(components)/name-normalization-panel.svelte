@@ -1,140 +1,139 @@
 <script lang="ts">
-  import * as Card from "$lib/components/ui/card";
-  import { Button } from "$lib/components/ui/button";
-  import { Switch } from "$lib/components/ui/switch";
-  import { Label } from "$lib/components/ui/label";
-  import { listPayees, updatePayee } from "$lib/query/payees";
-  import { previewNormalization } from "$lib/query/similarity";
-  import { toast } from "$lib/utils/toast-interceptor";
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import { listPayees, updatePayee } from '$lib/query/payees';
+import { previewNormalization } from '$lib/query/similarity';
+import { toast } from '$lib/utils/toast-interceptor';
 
-  import NormalizationPreviewTable, {
-    type NormalizationPreview,
-  } from "./normalization-preview-table.svelte";
+import NormalizationPreviewTable, {
+  type NormalizationPreview,
+} from './normalization-preview-table.svelte';
 
-  import Check from "@lucide/svelte/icons/check";
-  import Eye from "@lucide/svelte/icons/eye";
-  import Loader2 from "@lucide/svelte/icons/loader-2";
-  import Sparkles from "@lucide/svelte/icons/sparkles";
-  import Wand2 from "@lucide/svelte/icons/wand-2";
+import Check from '@lucide/svelte/icons/check';
+import Eye from '@lucide/svelte/icons/eye';
+import Loader2 from '@lucide/svelte/icons/loader-2';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Wand2 from '@lucide/svelte/icons/wand-2';
 
-  // State
-  let previews = $state<NormalizationPreview[]>([]);
-  let showOnlyChanges = $state(true);
-  let isPreviewLoading = $state(false);
-  let isApplying = $state(false);
-  let hasPreviewed = $state(false);
+// State
+let previews = $state<NormalizationPreview[]>([]);
+let showOnlyChanges = $state(true);
+let isPreviewLoading = $state(false);
+let isApplying = $state(false);
+let hasPreviewed = $state(false);
 
-  // Queries
-  const payeesQuery = listPayees().options();
-  const updateMutation = updatePayee().options();
+// Queries
+const payeesQuery = listPayees().options();
+const updateMutation = updatePayee().options();
 
-  const payees = $derived(payeesQuery.data ?? []);
-  const changesCount = $derived(previews.filter((p) => p.wouldChange).length);
-  const selectedCount = $derived(previews.filter((p) => p.selected).length);
+const payees = $derived(payeesQuery.data ?? []);
+const changesCount = $derived(previews.filter((p) => p.wouldChange).length);
+const selectedCount = $derived(previews.filter((p) => p.selected).length);
 
-  async function handlePreview() {
-    if (payees.length === 0) {
-      toast.error("No payees to normalize");
-      return;
+async function handlePreview() {
+  if (payees.length === 0) {
+    toast.error('No payees to normalize');
+    return;
+  }
+
+  isPreviewLoading = true;
+
+  try {
+    // Filter to payees with names and extract name strings
+    const payeesWithNames = payees.filter((p): p is typeof p & { name: string } => !!p.name);
+    const descriptions = payeesWithNames.map((p) => p.name);
+    const result = await previewNormalization(descriptions).execute();
+
+    if (!result) {
+      throw new Error('No result from normalization preview');
     }
 
-    isPreviewLoading = true;
+    // Map results back to payee IDs
+    previews = payeesWithNames.map((payee, index) => ({
+      payeeId: payee.id,
+      original: payee.name,
+      normalized: result.results[index]?.normalized ?? payee.name,
+      wouldChange: result.results[index]?.wouldChange ?? false,
+      selected: result.results[index]?.wouldChange ?? false, // Auto-select changes
+    }));
 
-    try {
-      // Filter to payees with names and extract name strings
-      const payeesWithNames = payees.filter((p): p is typeof p & { name: string } => !!p.name);
-      const descriptions = payeesWithNames.map((p) => p.name);
-      const result = await previewNormalization(descriptions).execute();
+    hasPreviewed = true;
 
-      if (!result) {
-        throw new Error("No result from normalization preview");
-      }
-
-      // Map results back to payee IDs
-      previews = payeesWithNames.map((payee, index) => ({
-        payeeId: payee.id,
-        original: payee.name,
-        normalized: result.results[index]?.normalized ?? payee.name,
-        wouldChange: result.results[index]?.wouldChange ?? false,
-        selected: result.results[index]?.wouldChange ?? false, // Auto-select changes
-      }));
-
-      hasPreviewed = true;
-
-      if (result.changesNeeded === 0) {
-        toast.success("All names are clean", {
-          description: "No normalization needed!",
-        });
-      } else {
-        toast.info(`Found ${result.changesNeeded} name${result.changesNeeded === 1 ? "" : "s"} to normalize`, {
+    if (result.changesNeeded === 0) {
+      toast.success('All names are clean', {
+        description: 'No normalization needed!',
+      });
+    } else {
+      toast.info(
+        `Found ${result.changesNeeded} name${result.changesNeeded === 1 ? '' : 's'} to normalize`,
+        {
           description: `${result.alreadyNormalized} already clean`,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to preview normalization:", error);
-      toast.error("Failed to preview normalization", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        }
+      );
+    }
+  } catch (error) {
+    console.error('Failed to preview normalization:', error);
+    toast.error('Failed to preview normalization', {
+      description: error instanceof Error ? error.message : 'An error occurred',
+    });
+  } finally {
+    isPreviewLoading = false;
+  }
+}
+
+function toggleSelect(payeeId: number, selected: boolean) {
+  previews = previews.map((p) => (p.payeeId === payeeId ? { ...p, selected } : p));
+}
+
+function selectAll(selected: boolean) {
+  previews = previews.map((p) => (p.wouldChange ? { ...p, selected } : p));
+}
+
+async function handleApply() {
+  const toApply = previews.filter((p) => p.selected && p.wouldChange);
+
+  if (toApply.length === 0) {
+    toast.error('No changes selected');
+    return;
+  }
+
+  isApplying = true;
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const preview of toApply) {
+    try {
+      await updateMutation.mutateAsync({
+        id: preview.payeeId,
+        name: preview.normalized,
       });
-    } finally {
-      isPreviewLoading = false;
+      successCount++;
+
+      // Update local state
+      previews = previews.map((p) =>
+        p.payeeId === preview.payeeId
+          ? { ...p, original: preview.normalized, wouldChange: false, selected: false }
+          : p
+      );
+    } catch {
+      failCount++;
     }
   }
 
-  function toggleSelect(payeeId: number, selected: boolean) {
-    previews = previews.map((p) =>
-      p.payeeId === payeeId ? { ...p, selected } : p
-    );
+  if (successCount > 0) {
+    toast.success(`Updated ${successCount} payee name${successCount === 1 ? '' : 's'}`, {
+      description: failCount > 0 ? `${failCount} failed` : undefined,
+    });
   }
 
-  function selectAll(selected: boolean) {
-    previews = previews.map((p) =>
-      p.wouldChange ? { ...p, selected } : p
-    );
+  if (failCount > 0 && successCount === 0) {
+    toast.error('Failed to update payee names');
   }
 
-  async function handleApply() {
-    const toApply = previews.filter((p) => p.selected && p.wouldChange);
-
-    if (toApply.length === 0) {
-      toast.error("No changes selected");
-      return;
-    }
-
-    isApplying = true;
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const preview of toApply) {
-      try {
-        await updateMutation.mutateAsync({
-          id: preview.payeeId,
-          name: preview.normalized,
-        });
-        successCount++;
-
-        // Update local state
-        previews = previews.map((p) =>
-          p.payeeId === preview.payeeId
-            ? { ...p, original: preview.normalized, wouldChange: false, selected: false }
-            : p
-        );
-      } catch {
-        failCount++;
-      }
-    }
-
-    if (successCount > 0) {
-      toast.success(`Updated ${successCount} payee name${successCount === 1 ? "" : "s"}`, {
-        description: failCount > 0 ? `${failCount} failed` : undefined,
-      });
-    }
-
-    if (failCount > 0 && successCount === 0) {
-      toast.error("Failed to update payee names");
-    }
-
-    isApplying = false;
-  }
+  isApplying = false;
+}
 </script>
 
 <div class="space-y-6">
@@ -146,7 +145,8 @@
         <Card.Title>Name Normalization</Card.Title>
       </div>
       <Card.Description>
-        Clean up messy merchant names by removing payment processor prefixes, store numbers, and other noise
+        Clean up messy merchant names by removing payment processor prefixes, store numbers, and
+        other noise
       </Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
@@ -181,16 +181,14 @@
         <div>
           <h3 class="text-lg font-semibold">Normalization Preview</h3>
           <p class="text-muted-foreground text-sm">
-            {changesCount} change{changesCount === 1 ? "" : "s"} needed,
+            {changesCount} change{changesCount === 1 ? '' : 's'} needed,
             {selectedCount} selected
           </p>
         </div>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
             <Switch id="show-only-changes" bind:checked={showOnlyChanges} />
-            <Label for="show-only-changes" class="text-sm font-normal">
-              Show only changes
-            </Label>
+            <Label for="show-only-changes" class="text-sm font-normal">Show only changes</Label>
           </div>
           <Button onclick={handleApply} disabled={isApplying || selectedCount === 0}>
             {#if isApplying}
@@ -220,8 +218,7 @@
           {previews}
           {showOnlyChanges}
           onToggleSelect={toggleSelect}
-          onSelectAll={selectAll}
-        />
+          onSelectAll={selectAll} />
       {/if}
     </div>
   {/if}

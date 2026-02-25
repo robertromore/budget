@@ -2,9 +2,9 @@ import type { ExpenseReceipt, ReceiptType } from "$lib/schema/expense-receipts";
 import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$lib/schema/expense-receipts";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { existsSync } from "fs";
-import { mkdir, unlink, writeFile } from "fs/promises";
-import { join } from "path";
+import { existsSync } from "node:fs";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ReceiptRepository } from "./receipt-repository";
 import { MedicalExpenseRepository } from "./repository";
 

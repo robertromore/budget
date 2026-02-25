@@ -4,7 +4,10 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
 import { getRelatedTransactions } from '$lib/query/transactions';
-import type { BudgetRecommendationWithRelations, RecommendationMetadata } from '$lib/schema/recommendations';
+import type {
+  BudgetRecommendationWithRelations,
+  RecommendationMetadata,
+} from '$lib/schema/recommendations';
 import { cn, formatCurrency, formatPercent } from '$lib/utils';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -96,8 +99,7 @@ function getTypeLabel(type: string): string {
         type="button"
         onclick={onBack}
         class="hover:bg-accent -ml-1 rounded p-1.5 transition-colors"
-        aria-label="Go back"
-      >
+        aria-label="Go back">
         <ArrowLeft class="h-5 w-5" />
       </button>
       <div>
@@ -184,8 +186,7 @@ function getTypeLabel(type: string): string {
                 metadata.trend === 'decreasing' && 'bg-green-500/10 text-green-600',
                 metadata.trend === 'increasing' && 'bg-red-500/10 text-red-600',
                 metadata.trend === 'stable' && 'bg-muted text-muted-foreground'
-              )}
-            >
+              )}>
               {#if TrendIcon}
                 <TrendIcon class="h-4 w-4" />
               {:else}
@@ -264,7 +265,9 @@ function getTypeLabel(type: string): string {
 
       {#if transactionsQuery.isLoading}
         <div class="flex items-center justify-center py-8">
-          <div class="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"></div>
+          <div
+            class="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent">
+          </div>
           <span class="text-muted-foreground ml-2 text-sm">Loading transactions...</span>
         </div>
       {:else if transactions.length > 0}
@@ -288,8 +291,7 @@ function getTypeLabel(type: string): string {
                   'ml-3 font-medium tabular-nums',
                   transaction.amount < 0 && 'text-red-600',
                   transaction.amount > 0 && 'text-green-600'
-                )}
-              >
+                )}>
                 {formatCurrency(transaction.amount)}
               </span>
             </div>
@@ -299,8 +301,7 @@ function getTypeLabel(type: string): string {
             <button
               type="button"
               class="text-primary hover:text-primary/80 w-full py-2 text-center text-sm font-medium"
-              onclick={() => (showAllTransactions = !showAllTransactions)}
-            >
+              onclick={() => (showAllTransactions = !showAllTransactions)}>
               {#if showAllTransactions}
                 Show less
               {:else}

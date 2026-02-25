@@ -4,11 +4,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { accounts } from "./accounts";
 import { payees } from "./payees";
-import {
-  billingCycles,
-  subscriptionStatuses,
-  subscriptionTypes,
-} from "./subscriptions";
+import { billingCycles, subscriptionStatuses, subscriptionTypes } from "./subscriptions";
 import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
 
@@ -140,19 +136,16 @@ export const subscriptionPriceHistory = sqliteTable(
   ]
 );
 
-export const subscriptionPriceHistoryRelations = relations(
-  subscriptionPriceHistory,
-  ({ one }) => ({
-    subscription: one(subscriptions, {
-      fields: [subscriptionPriceHistory.subscriptionId],
-      references: [subscriptions.id],
-    }),
-    transaction: one(transactions, {
-      fields: [subscriptionPriceHistory.detectedFromTransactionId],
-      references: [transactions.id],
-    }),
-  })
-);
+export const subscriptionPriceHistoryRelations = relations(subscriptionPriceHistory, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [subscriptionPriceHistory.subscriptionId],
+    references: [subscriptions.id],
+  }),
+  transaction: one(transactions, {
+    fields: [subscriptionPriceHistory.detectedFromTransactionId],
+    references: [transactions.id],
+  }),
+}));
 
 // ==================== SUBSCRIPTION ALERTS TABLE ====================
 

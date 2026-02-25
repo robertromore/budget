@@ -10,5 +10,11 @@
 
 export { budgetPredictionRoutes } from "./routes";
 export {
-  createBudgetPredictionService, type BudgetOverspendPrediction, type BudgetPredictionConfig, type BudgetPredictionService, type OverspendRisk, type PredictionFactor, type WorkspaceBudgetSummary
+  createBudgetPredictionService,
+  type BudgetOverspendPrediction,
+  type BudgetPredictionConfig,
+  type BudgetPredictionService,
+  type OverspendRisk,
+  type PredictionFactor,
+  type WorkspaceBudgetSummary,
 } from "./service";

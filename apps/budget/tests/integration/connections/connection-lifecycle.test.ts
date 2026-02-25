@@ -5,11 +5,11 @@
  * status updates, disconnection, and cleanup.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -242,14 +242,26 @@ describe("Connection Lifecycle", () => {
 
       // Create some transactions before error
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-10", amount: -50.00, importedFrom: "simplefin"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-15", amount: -75.00, importedFrom: "simplefin"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-10",
+          amount: -50.0,
+          importedFrom: "simplefin",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-15",
+          amount: -75.0,
+          importedFrom: "simplefin",
+        },
       ]);
 
       // Recover from error
       await ctx.db
         .update(schema.accountConnections)
-        .set({syncStatus: "active"})
+        .set({ syncStatus: "active" })
         .where(eq(schema.accountConnections.id, connection.id));
 
       // Transactions should still exist
@@ -307,14 +319,24 @@ describe("Connection Lifecycle", () => {
 
       // Create transactions
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-10", amount: -50.00},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-15", amount: -75.00},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-10",
+          amount: -50.0,
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-15",
+          amount: -75.0,
+        },
       ]);
 
       // Disconnect
       await ctx.db
         .update(schema.accountConnections)
-        .set({syncStatus: "disconnected"})
+        .set({ syncStatus: "disconnected" })
         .where(eq(schema.accountConnections.id, connection.id));
 
       // Transactions remain
@@ -394,18 +416,23 @@ describe("Connection Lifecycle", () => {
     });
 
     it("should allow deleting connection before account", async () => {
-      const [connection] = await ctx.db.insert(schema.accountConnections).values({
-        workspaceId: ctx.workspaceId,
-        accountId: ctx.accountId,
-        provider: "simplefin",
-        externalAccountId: "sf_12345",
-        institutionName: "Test Bank",
-        encryptedCredentials: "encrypted_creds_here",
-        syncStatus: "active",
-      }).returning();
+      const [connection] = await ctx.db
+        .insert(schema.accountConnections)
+        .values({
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          provider: "simplefin",
+          externalAccountId: "sf_12345",
+          institutionName: "Test Bank",
+          encryptedCredentials: "encrypted_creds_here",
+          syncStatus: "active",
+        })
+        .returning();
 
       // Delete connection first
-      await ctx.db.delete(schema.accountConnections).where(eq(schema.accountConnections.id, connection.id));
+      await ctx.db
+        .delete(schema.accountConnections)
+        .where(eq(schema.accountConnections.id, connection.id));
 
       // Then delete account
       await ctx.db.delete(schema.accounts).where(eq(schema.accounts.id, ctx.accountId));
@@ -439,7 +466,15 @@ describe("Connection Lifecycle", () => {
         .returning();
 
       await ctx.db.insert(schema.accountConnections).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, provider: "simplefin", externalAccountId: "sf_checking", institutionName: "Test Bank", encryptedCredentials: "creds1", syncStatus: "active"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          provider: "simplefin",
+          externalAccountId: "sf_checking",
+          institutionName: "Test Bank",
+          encryptedCredentials: "creds1",
+          syncStatus: "active",
+        },
       ]);
 
       // Create separate connection for account2

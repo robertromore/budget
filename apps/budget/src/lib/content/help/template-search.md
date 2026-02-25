@@ -6,7 +6,8 @@ parent: budget-template-picker
 
 # Template Search
 
-Type to filter the available templates by name or description. The search updates instantly as you type.
+Type to filter the available templates by name or description. The search
+updates instantly as you type.
 
 ## Tips
 

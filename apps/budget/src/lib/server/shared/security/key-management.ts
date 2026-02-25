@@ -18,7 +18,7 @@ import {
   publicEncrypt,
   randomBytes,
   scryptSync,
-} from "crypto";
+} from "node:crypto";
 import { eq, and } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import type * as schema from "$lib/schema";
@@ -95,9 +95,7 @@ function deriveKeyFromPassphrase(
   passphrase: string,
   params?: KeyDerivationParams
 ): { key: Buffer; params: KeyDerivationParams } {
-  const salt = params?.salt
-    ? Buffer.from(params.salt, "hex")
-    : randomBytes(SALT_LENGTH);
+  const salt = params?.salt ? Buffer.from(params.salt, "hex") : randomBytes(SALT_LENGTH);
 
   const derivationParams: KeyDerivationParams = {
     salt: salt.toString("hex"),
@@ -183,11 +181,7 @@ function createVerificationHash(userKey: Buffer, dek: Buffer): string {
 /**
  * Verify user's key against stored verification hash
  */
-export function verifyKey(
-  userKey: Buffer,
-  dek: Buffer,
-  storedHash: string
-): boolean {
+export function verifyKey(userKey: Buffer, dek: Buffer, storedHash: string): boolean {
   const computedHash = createVerificationHash(userKey, dek);
   // Constant-time comparison to prevent timing attacks
   return computedHash === storedHash;
@@ -396,12 +390,7 @@ export async function getEncryptionKey(
       keyVersion: encryptionKeys.keyVersion,
     })
     .from(encryptionKeys)
-    .where(
-      and(
-        eq(encryptionKeys.targetType, targetType),
-        eq(encryptionKeys.targetId, targetId)
-      )
-    )
+    .where(and(eq(encryptionKeys.targetType, targetType), eq(encryptionKeys.targetId, targetId)))
     .get();
 
   if (!key) return null;

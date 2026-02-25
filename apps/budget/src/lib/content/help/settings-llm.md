@@ -7,17 +7,20 @@ navigateTo: /settings/intelligence/llm
 
 # LLM Provider Settings
 
-Configure external AI language model providers to enhance the app's intelligence capabilities.
+Configure external AI language model providers to enhance the app's intelligence
+capabilities.
 
 ## Master Toggle
 
-Enable or disable all LLM features. When disabled, only local ML features are used.
+Enable or disable all LLM features. When disabled, only local ML features are
+used.
 
 ## Available Providers
 
 ### OpenAI
 
 Access GPT-4 and GPT-3.5 models.
+
 - Industry-leading language understanding
 - Requires OpenAI API key
 - Usage is billed by OpenAI
@@ -25,6 +28,7 @@ Access GPT-4 and GPT-3.5 models.
 ### Claude (Anthropic)
 
 Access Claude models from Anthropic.
+
 - Strong reasoning capabilities
 - Requires Anthropic API key
 - Known for safety and accuracy
@@ -32,6 +36,7 @@ Access Claude models from Anthropic.
 ### Gemini (Google)
 
 Access Google's Gemini models.
+
 - Good multilingual support
 - Requires Google AI API key
 - Competitive pricing
@@ -39,6 +44,7 @@ Access Google's Gemini models.
 ### Ollama (Local)
 
 Run open-source models locally.
+
 - No API key required
 - Runs on your computer
 - Configure custom endpoint URL
@@ -61,6 +67,7 @@ Configure how LLMs assist with each feature:
 ### Transaction Parsing
 
 Parse and categorize imported transactions.
+
 - **Disabled** - No LLM assistance
 - **Enhance** - LLM improves ML results
 - **Override** - LLM takes priority
@@ -68,24 +75,28 @@ Parse and categorize imported transactions.
 ### Category Suggestion
 
 Suggest categories for new transactions.
+
 - Works with your existing category structure
 - Learns from your past assignments
 
 ### Anomaly Detection
 
 Explain why transactions are flagged as unusual.
+
 - Provides natural language explanations
 - Helps understand spending patterns
 
 ### Forecasting
 
 Generate narrative insights about predictions.
+
 - Explains trends in plain language
 - Provides context for forecasts
 
 ### Payee Matching
 
 Match and canonicalize merchant names.
+
 - Handles complex name variations
 - Suggests intelligent groupings
 

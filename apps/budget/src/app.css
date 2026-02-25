@@ -215,7 +215,7 @@ html {
   border: 1px solid transparent !important;
   /* Position to overlap content border */
   position: relative;
-  margin-bottom: -.5rem;
+  margin-bottom: -0.5rem;
   top: 1px;
 }
 
@@ -231,7 +231,7 @@ html {
 }
 
 .tabs-connected-content {
-  @apply border rounded-b-lg rounded-tr-lg p-4;
+  @apply rounded-tr-lg rounded-b-lg border p-4;
   border-color: var(--border);
   background-color: var(--background);
   position: relative;

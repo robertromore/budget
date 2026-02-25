@@ -38,9 +38,7 @@ const chartData = $derived.by(() => {
 });
 
 // Calculate total for percentage
-const totalAmount = $derived(
-  chartData.reduce((sum, cat) => sum + cat.amount, 0)
-);
+const totalAmount = $derived(chartData.reduce((sum, cat) => sum + cat.amount, 0));
 </script>
 
 <Card.Root>
@@ -58,23 +56,23 @@ const totalAmount = $derived(
     {:else if !chartData.length}
       <div class="text-muted-foreground py-12 text-center">
         <p>No category spending data available for this budget.</p>
-        <p class="text-sm mt-1">Transactions need to be linked to this budget.</p>
+        <p class="mt-1 text-sm">Transactions need to be linked to this budget.</p>
       </div>
     {:else}
       <!-- Category List -->
-      <div class="space-y-3 max-h-100 overflow-y-auto pr-2">
+      <div class="max-h-100 space-y-3 overflow-y-auto pr-2">
         {#each chartData as category}
           {@const percentage = totalAmount > 0 ? (category.amount / totalAmount) * 100 : 0}
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
                 <div
-                  class="h-3 w-3 rounded-full shrink-0"
-                  style="background-color: {category.color}"
-                ></div>
-                <span class="font-medium truncate">{category.name}</span>
+                  class="h-3 w-3 shrink-0 rounded-full"
+                  style="background-color: {category.color}">
+                </div>
+                <span class="truncate font-medium">{category.name}</span>
               </div>
-              <div class="flex items-center gap-4 shrink-0">
+              <div class="flex shrink-0 items-center gap-4">
                 <span class="text-muted-foreground text-xs">
                   {category.count} txn{category.count !== 1 ? 's' : ''}
                 </span>
@@ -87,9 +85,8 @@ const totalAmount = $derived(
               <Progress
                 value={percentage}
                 class="h-2 flex-1"
-                style="--progress-background: {category.color}"
-              />
-              <span class="text-muted-foreground text-xs w-12 text-right">
+                style="--progress-background: {category.color}" />
+              <span class="text-muted-foreground w-12 text-right text-xs">
                 {formatPercentRaw(percentage, 1)}
               </span>
             </div>
@@ -98,7 +95,7 @@ const totalAmount = $derived(
       </div>
 
       <!-- Summary -->
-      <div class="border-t pt-4 mt-4">
+      <div class="mt-4 border-t pt-4">
         <div class="flex items-center justify-between text-sm">
           <span class="text-muted-foreground">Total ({chartData.length} categories)</span>
           <span class="font-bold">{currencyFormatter.format(totalAmount)}</span>
@@ -109,7 +106,7 @@ const totalAmount = $derived(
 </Card.Root>
 
 <style>
-  :global([data-slot="progress-indicator"]) {
-    background-color: var(--progress-background, currentColor);
-  }
+:global([data-slot='progress-indicator']) {
+  background-color: var(--progress-background, currentColor);
+}
 </style>

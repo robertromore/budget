@@ -11,19 +11,25 @@ Controls how aggressive the anomaly detection algorithm is.
 ## Sensitivity Levels
 
 ### Low
+
 Only flags major anomalies that are clearly unusual.
+
 - Fewer alerts
 - Higher confidence in flagged items
 - May miss subtle anomalies
 
 ### Medium (Recommended)
+
 Balanced detection for most use cases.
+
 - Reasonable number of alerts
 - Good balance of precision and recall
 - Catches most unusual transactions
 
 ### High
+
 Flags even minor variations from normal patterns.
+
 - More alerts
 - May include false positives
 - Best for catching subtle issues

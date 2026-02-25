@@ -22,8 +22,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let { hsaAccountId, accountId, existingExpense, onSuccess, onCancel }: Props =
-  $props();
+let { hsaAccountId, accountId, existingExpense, onSuccess, onCancel }: Props = $props();
 
 // Form state - Medical Expense fields
 let expenseType = $state('doctor_visit');

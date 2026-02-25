@@ -35,9 +35,7 @@ export function objectSize(obj: Record<string, unknown>): number {
  * Type-safe Object.keys that preserves key types.
  * @example objectKeys({ a: 1, b: 2 }) => ['a', 'b'] as ('a' | 'b')[]
  */
-export function objectKeys<T extends Record<string, unknown>>(
-  obj: T
-): (keyof T)[] {
+export function objectKeys<T extends Record<string, unknown>>(obj: T): (keyof T)[] {
   return Object.keys(obj) as (keyof T)[];
 }
 
@@ -45,9 +43,7 @@ export function objectKeys<T extends Record<string, unknown>>(
  * Type-safe Object.values.
  * @example objectValues({ a: 1, b: 2 }) => [1, 2]
  */
-export function objectValues<T extends Record<string, unknown>>(
-  obj: T
-): T[keyof T][] {
+export function objectValues<T extends Record<string, unknown>>(obj: T): T[keyof T][] {
   return Object.values(obj) as T[keyof T][];
 }
 
@@ -55,9 +51,7 @@ export function objectValues<T extends Record<string, unknown>>(
  * Type-safe Object.entries.
  * @example objectEntries({ a: 1, b: 2 }) => [['a', 1], ['b', 2]]
  */
-export function objectEntries<T extends Record<string, unknown>>(
-  obj: T
-): [keyof T, T[keyof T]][] {
+export function objectEntries<T extends Record<string, unknown>>(obj: T): [keyof T, T[keyof T]][] {
   return Object.entries(obj) as [keyof T, T[keyof T]][];
 }
 
@@ -97,9 +91,7 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
  * Create an object from key-value pairs.
  * @example fromEntries([['a', 1], ['b', 2]]) => { a: 1, b: 2 }
  */
-export function fromEntries<K extends string, V>(
-  entries: [K, V][]
-): Record<K, V> {
+export function fromEntries<K extends string, V>(entries: [K, V][]): Record<K, V> {
   return Object.fromEntries(entries) as Record<K, V>;
 }
 
@@ -148,9 +140,7 @@ export function deepClone<T>(obj: T): T {
  * Shallow merge multiple objects (later values override earlier).
  * @example merge({ a: 1 }, { b: 2 }, { a: 3 }) => { a: 3, b: 2 }
  */
-export function merge<T extends Record<string, unknown>>(
-  ...objects: Partial<T>[]
-): T {
+export function merge<T extends Record<string, unknown>>(...objects: Partial<T>[]): T {
   return Object.assign({}, ...objects) as T;
 }
 

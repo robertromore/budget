@@ -5,11 +5,11 @@
  * Supports full claim lifecycle from submission to payment.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, isNull} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, isNull } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -352,24 +352,52 @@ describe("HSA Claims", () => {
       const transactions = await ctx.db
         .insert(schema.transactions)
         .values([
-          {accountId: checkingAccount.id, date: "2024-02-01", amount: -50.0, notes: "Pharmacy"},
-          {accountId: checkingAccount.id, date: "2024-03-01", amount: -200.0, notes: "Eye Doctor"},
+          { accountId: checkingAccount.id, date: "2024-02-01", amount: -50.0, notes: "Pharmacy" },
+          {
+            accountId: checkingAccount.id,
+            date: "2024-03-01",
+            amount: -200.0,
+            notes: "Eye Doctor",
+          },
         ])
         .returning();
 
       const expenses = await ctx.db
         .insert(schema.medicalExpenses)
         .values([
-          {transactionId: transactions[0].id, hsaAccountId: hsaAccount.id, expenseType: "prescription", amount: 50.0, outOfPocket: 50.0, serviceDate: "2024-02-01", taxYear: 2024, provider: "Pharmacy"},
-          {transactionId: transactions[1].id, hsaAccountId: hsaAccount.id, expenseType: "eye_exam", amount: 200.0, outOfPocket: 200.0, serviceDate: "2024-03-01", taxYear: 2024, provider: "Eye Doctor"},
+          {
+            transactionId: transactions[0].id,
+            hsaAccountId: hsaAccount.id,
+            expenseType: "prescription",
+            amount: 50.0,
+            outOfPocket: 50.0,
+            serviceDate: "2024-02-01",
+            taxYear: 2024,
+            provider: "Pharmacy",
+          },
+          {
+            transactionId: transactions[1].id,
+            hsaAccountId: hsaAccount.id,
+            expenseType: "eye_exam",
+            amount: 200.0,
+            outOfPocket: 200.0,
+            serviceDate: "2024-03-01",
+            taxYear: 2024,
+            provider: "Eye Doctor",
+          },
         ])
         .returning();
 
       // Create claims with different statuses
       await ctx.db.insert(schema.hsaClaims).values([
-        {medicalExpenseId: ctx.medicalExpenseId, claimedAmount: 350.0, status: "paid", paidAmount: 350.0},
-        {medicalExpenseId: expenses[0].id, claimedAmount: 50.0, status: "submitted"},
-        {medicalExpenseId: expenses[1].id, claimedAmount: 200.0, status: "not_submitted"},
+        {
+          medicalExpenseId: ctx.medicalExpenseId,
+          claimedAmount: 350.0,
+          status: "paid",
+          paidAmount: 350.0,
+        },
+        { medicalExpenseId: expenses[0].id, claimedAmount: 50.0, status: "submitted" },
+        { medicalExpenseId: expenses[1].id, claimedAmount: 200.0, status: "not_submitted" },
       ]);
     });
 
@@ -418,18 +446,13 @@ describe("HSA Claims", () => {
 
       await ctx.db
         .update(schema.hsaClaims)
-        .set({deletedAt: new Date().toISOString()})
+        .set({ deletedAt: new Date().toISOString() })
         .where(eq(schema.hsaClaims.id, claim.id));
 
       const activeClaims = await ctx.db
         .select()
         .from(schema.hsaClaims)
-        .where(
-          and(
-            eq(schema.hsaClaims.id, claim.id),
-            isNull(schema.hsaClaims.deletedAt)
-          )
-        );
+        .where(and(eq(schema.hsaClaims.id, claim.id), isNull(schema.hsaClaims.deletedAt)));
 
       expect(activeClaims).toHaveLength(0);
     });
@@ -451,7 +474,10 @@ describe("HSA Claims", () => {
           expenseType: schema.medicalExpenses.expenseType,
         })
         .from(schema.hsaClaims)
-        .innerJoin(schema.medicalExpenses, eq(schema.hsaClaims.medicalExpenseId, schema.medicalExpenses.id))
+        .innerJoin(
+          schema.medicalExpenses,
+          eq(schema.hsaClaims.medicalExpenseId, schema.medicalExpenses.id)
+        )
         .where(eq(schema.hsaClaims.medicalExpenseId, ctx.medicalExpenseId));
 
       expect(results).toHaveLength(1);

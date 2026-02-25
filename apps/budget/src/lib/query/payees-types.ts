@@ -12,7 +12,11 @@ export type {
 } from "$lib/server/domains/payees/services";
 
 export type {
-  PayeeIntelligence, PayeeSearchFilters, PayeeStats, PayeeSuggestions, UpdatePayeeData
+  PayeeIntelligence,
+  PayeeSearchFilters,
+  PayeeStats,
+  PayeeSuggestions,
+  UpdatePayeeData,
 } from "$lib/server/domains/payees/repository";
 
 export interface UnifiedMLRecommendations {

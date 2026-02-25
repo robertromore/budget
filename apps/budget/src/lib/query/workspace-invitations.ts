@@ -41,7 +41,8 @@ type InvitationByTokenResult = {
 
 export const getInvitationByToken = defineQuery<{ token: string }, InvitationByTokenResult>({
   queryKey: (params: { token: string }) => workspaceInvitationKeys.byToken(params.token),
-  queryFn: (params: { token: string }) => trpc().workspaceInvitationsRoutes.getByToken.query(params),
+  queryFn: (params: { token: string }) =>
+    trpc().workspaceInvitationsRoutes.getByToken.query(params),
 });
 
 /**
@@ -75,10 +76,7 @@ export const createInvitation = defineMutation<
 /**
  * Revoke an invitation
  */
-export const revokeInvitation = defineMutation<
-  { invitationId: number },
-  WorkspaceInvitation
->({
+export const revokeInvitation = defineMutation<{ invitationId: number }, WorkspaceInvitation>({
   mutationFn: (input) => trpc().workspaceInvitationsRoutes.revoke.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(workspaceInvitationKeys.all());
@@ -90,10 +88,7 @@ export const revokeInvitation = defineMutation<
 /**
  * Resend an invitation
  */
-export const resendInvitation = defineMutation<
-  { invitationId: number },
-  WorkspaceInvitation
->({
+export const resendInvitation = defineMutation<{ invitationId: number }, WorkspaceInvitation>({
   mutationFn: (input) => trpc().workspaceInvitationsRoutes.resend.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(workspaceInvitationKeys.all());

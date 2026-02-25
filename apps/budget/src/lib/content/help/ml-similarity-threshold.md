@@ -19,16 +19,19 @@ Minimum similarity score required for payee matching.
 ## How It Works
 
 When comparing payee names:
+
 - Higher threshold = fewer but more accurate matches
 - Lower threshold = more matches but potential false positives
 
 ## Examples at 60% Threshold
 
 These would match:
+
 - "AMAZON" ↔ "Amazon.com"
 - "STARBUCKS #123" ↔ "STARBUCKS COFFEE"
 
 These might not match:
+
 - "TARGET" ↔ "WALMART"
 
 ## Tips

@@ -2,7 +2,7 @@
 import {
   AdvancedDataTable,
   GenericDisplayInput,
-  GenericFilterInput
+  GenericFilterInput,
 } from '$lib/components/data-table';
 import type { Schedule } from '$lib/schema/schedules';
 import type { FilterInputOption } from '$lib/types';
@@ -38,7 +38,7 @@ function getAvailableFilters(tableInstance: TTable<Schedule>) {
     filtering: true,
     pagination: true,
     rowSelection: true,
-    columnVisibility: true
+    columnVisibility: true,
   }}
   showPagination={true}
   pageSizeOptions={[10, 25, 50, 100]}
@@ -68,9 +68,6 @@ function getAvailableFilters(tableInstance: TTable<Schedule>) {
     </div>
   {/snippet}
   {#snippet footer(tableInstance)}
-    <ScheduleBulkActions
-      table={tableInstance}
-      allSchedules={schedules}
-      {onBulkDelete} />
+    <ScheduleBulkActions table={tableInstance} allSchedules={schedules} {onBulkDelete} />
   {/snippet}
 </AdvancedDataTable>

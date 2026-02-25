@@ -1,4 +1,4 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import {
   queryCache,
   dataCache,
@@ -22,7 +22,7 @@ describe("Cache System Tests", () => {
   describe("Basic Cache Operations", () => {
     test("should store and retrieve values", () => {
       const key = "test-key";
-      const value = {id: 1, name: "Test Data"};
+      const value = { id: 1, name: "Test Data" };
 
       queryCache.set(key, value, 60000); // 1 minute TTL
       const retrieved = queryCache.get(key);
@@ -131,7 +131,7 @@ describe("Cache System Tests", () => {
       const accountId = 123;
 
       // Set up various account-related cache entries
-      queryCache.set(cacheKeys.accountSummary(accountId), {balance: 1000}, 60000);
+      queryCache.set(cacheKeys.accountSummary(accountId), { balance: 1000 }, 60000);
       queryCache.set(cacheKeys.accountTransactions(accountId, 0, 50), [], 60000);
       queryCache.set(cacheKeys.recentTransactions(accountId, 10), [], 60000);
       queryCache.set(cacheKeys.allAccounts(), [], 60000);
@@ -222,7 +222,7 @@ describe("Cache System Tests", () => {
   describe("Performance Considerations", () => {
     test("should handle large values efficiently", () => {
       const largeObject = {
-        data: Array.from({length: 1000}, (_, i) => ({
+        data: Array.from({ length: 1000 }, (_, i) => ({
           id: i,
           name: `Item ${i}`,
           description: `Description for item ${i}`,

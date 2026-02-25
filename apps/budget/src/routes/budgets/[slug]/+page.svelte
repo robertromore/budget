@@ -188,7 +188,9 @@ const mostRecentPeriod = $derived(periods[periods.length - 1]);
 let selectedPeriodIdString = $state<string>('');
 
 // Derive the numeric ID from the string (no effect needed, avoids circular dependency)
-const selectedPeriodId = $derived(selectedPeriodIdString ? Number(selectedPeriodIdString) : undefined);
+const selectedPeriodId = $derived(
+  selectedPeriodIdString ? Number(selectedPeriodIdString) : undefined
+);
 
 // Auto-select current period when it's available
 $effect(() => {
@@ -755,7 +757,10 @@ async function toggleBudgetStatus() {
     {/if}
 
     <!-- Tabs Navigation -->
-    <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v ?? 'overview')} class="w-full">
+    <Tabs.Root
+      value={activeTab}
+      onValueChange={(v) => (activeTab = v ?? 'overview')}
+      class="w-full">
       {#if showTabsOnPage}
         <Tabs.List class="mb-6 w-full justify-start">
           <Tabs.Trigger value="overview" class="gap-2">
@@ -1057,8 +1062,7 @@ async function toggleBudgetStatus() {
                           </Badge>
                         </div>
                         <div class="text-muted-foreground flex items-center gap-4 text-sm">
-                          <span
-                            >Allocated: {formatCurrency(envelope.allocatedAmount)}</span>
+                          <span>Allocated: {formatCurrency(envelope.allocatedAmount)}</span>
                           <span>•</span>
                           <span>Spent: {formatCurrency(envelope.spentAmount)}</span>
                           <span>•</span>
@@ -1257,8 +1261,7 @@ async function toggleBudgetStatus() {
             currentPeriodId={currentPeriod?.id}
             previousPeriodId={previousPeriod?.id}
             periodStartDate={selectedPeriod?.startDate}
-            periodEndDate={selectedPeriod?.endDate}
-          />
+            periodEndDate={selectedPeriod?.endDate} />
         {/if}
       </Tabs.Content>
 

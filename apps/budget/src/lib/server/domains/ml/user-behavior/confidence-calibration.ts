@@ -202,8 +202,8 @@ export function fitIsotonicRegression(data: CalibrationData[]): IsotonicCalibrat
   while (i < values.length - 1) {
     if (values[i] > values[i + 1]) {
       // Pool these two points
-      const pooledValue = (values[i] * weights[i] + values[i + 1] * weights[i + 1]) /
-        (weights[i] + weights[i + 1]);
+      const pooledValue =
+        (values[i] * weights[i] + values[i + 1] * weights[i + 1]) / (weights[i] + weights[i + 1]);
       values[i] = pooledValue;
       weights[i] = weights[i] + weights[i + 1];
       values.splice(i + 1, 1);
@@ -223,7 +223,10 @@ export function fitIsotonicRegression(data: CalibrationData[]): IsotonicCalibrat
 
   let currentIdx = 0;
   for (let j = 0; j < sorted.length; j++) {
-    if (uniqueThresholds.length === 0 || thresholds[j] !== uniqueThresholds[uniqueThresholds.length - 1]) {
+    if (
+      uniqueThresholds.length === 0 ||
+      thresholds[j] !== uniqueThresholds[uniqueThresholds.length - 1]
+    ) {
       uniqueThresholds.push(thresholds[j]);
       uniqueValues.push(values[Math.min(currentIdx, values.length - 1)]);
     }
@@ -296,10 +299,7 @@ export interface ConfidenceCalibrator {
   /**
    * Get personalized confidence threshold
    */
-  getPersonalizedThreshold(
-    targetAcceptanceRate: number,
-    entityType?: string
-  ): number;
+  getPersonalizedThreshold(targetAcceptanceRate: number, entityType?: string): number;
 
   /**
    * Export calibration state
@@ -347,9 +347,7 @@ export function createConfidenceCalibrator(
 
     calibrate(confidence: number, entityType?: string): number {
       // Filter data by entity type if provided
-      const relevantData = entityType
-        ? data.filter((d) => d.entityType === entityType)
-        : data;
+      const relevantData = entityType ? data.filter((d) => d.entityType === entityType) : data;
 
       if (relevantData.length < cfg.minSamplesPerBucket * cfg.numBuckets) {
         // Not enough data, use minimal calibration
@@ -381,26 +379,34 @@ export function createConfidenceCalibrator(
       }
 
       if (ece > 0.15) {
-        recommendations.push("Calibration error is high - predictions may not reflect true probabilities");
+        recommendations.push(
+          "Calibration error is high - predictions may not reflect true probabilities"
+        );
       }
 
       // Check for systematic bias
       const lowConfBuckets = buckets.filter((b) => b.midpoint < 0.3 && b.count > 10);
       const highConfBuckets = buckets.filter((b) => b.midpoint > 0.7 && b.count > 10);
 
-      const avgLowActual = lowConfBuckets.length > 0
-        ? lowConfBuckets.reduce((sum, b) => sum + b.actualRate, 0) / lowConfBuckets.length
-        : 0;
-      const avgHighActual = highConfBuckets.length > 0
-        ? highConfBuckets.reduce((sum, b) => sum + b.actualRate, 0) / highConfBuckets.length
-        : 1;
+      const avgLowActual =
+        lowConfBuckets.length > 0
+          ? lowConfBuckets.reduce((sum, b) => sum + b.actualRate, 0) / lowConfBuckets.length
+          : 0;
+      const avgHighActual =
+        highConfBuckets.length > 0
+          ? highConfBuckets.reduce((sum, b) => sum + b.actualRate, 0) / highConfBuckets.length
+          : 1;
 
       if (avgLowActual > 0.4) {
-        recommendations.push("Low confidence predictions are being accepted more often than expected");
+        recommendations.push(
+          "Low confidence predictions are being accepted more often than expected"
+        );
       }
 
       if (avgHighActual < 0.6) {
-        recommendations.push("High confidence predictions are being rejected more often than expected");
+        recommendations.push(
+          "High confidence predictions are being rejected more often than expected"
+        );
       }
 
       return {
@@ -422,13 +428,8 @@ export function createConfidenceCalibrator(
       lastTrainedAt = nowISOString();
     },
 
-    getPersonalizedThreshold(
-      targetAcceptanceRate: number,
-      entityType?: string
-    ): number {
-      const relevantData = entityType
-        ? data.filter((d) => d.entityType === entityType)
-        : data;
+    getPersonalizedThreshold(targetAcceptanceRate: number, entityType?: string): number {
+      const relevantData = entityType ? data.filter((d) => d.entityType === entityType) : data;
 
       if (relevantData.length < 20) {
         // Default threshold

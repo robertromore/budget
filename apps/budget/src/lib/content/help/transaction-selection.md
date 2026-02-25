@@ -11,15 +11,18 @@ Select one or more transactions to perform bulk operations.
 ## Selection Methods
 
 ### Single Selection
+
 - Click the checkbox on any row
 - Click toggles selection on/off
 
 ### Select All on Page
+
 - Click the header checkbox
 - Selects all visible transactions on current page
 - Click again to deselect all
 
 ### Range Selection
+
 - Click first row checkbox
 - Hold [[Shift]] and click last row
 - All rows between are selected
@@ -40,6 +43,7 @@ Select one or more transactions to perform bulk operations.
 ## Bulk Actions Available
 
 When rows are selected:
+
 - **Categorize** - Assign category to all
 - **Delete** - Remove selected transactions
 - **Export** - Export selected to file

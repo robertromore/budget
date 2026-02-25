@@ -196,10 +196,7 @@ export const create = defineMutation<CreateSubscriptionInput, Subscription>({
 /**
  * Update a subscription
  */
-export const update = defineMutation<
-  UpdateSubscriptionInput,
-  Subscription
->({
+export const update = defineMutation<UpdateSubscriptionInput, Subscription>({
   mutationFn: (data) => trpc().subscriptionRoutes.update.mutate(data),
   onSuccess: (subscription, variables) => {
     queryClient.setQueryData(subscriptionKeys.detail(variables.id), subscription);

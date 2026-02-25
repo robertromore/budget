@@ -505,7 +505,11 @@ export function createIncomeExpenseService(): IncomeExpenseService {
 
       // Get current month data
       const currentPeriod = getPeriodDates("month", 0);
-      const currentTotals = await getPeriodTotals(workspaceId, currentPeriod.start, currentPeriod.end);
+      const currentTotals = await getPeriodTotals(
+        workspaceId,
+        currentPeriod.start,
+        currentPeriod.end
+      );
 
       // Calculate days remaining in month
       const today = new Date();
@@ -515,8 +519,10 @@ export function createIncomeExpenseService(): IncomeExpenseService {
       const daysElapsed = today.getDate();
 
       // Project current month
-      const projectedIncome = daysElapsed > 0 ? (currentTotals.income / daysElapsed) * totalDays : 0;
-      const projectedExpenses = daysElapsed > 0 ? (currentTotals.expenses / daysElapsed) * totalDays : 0;
+      const projectedIncome =
+        daysElapsed > 0 ? (currentTotals.income / daysElapsed) * totalDays : 0;
+      const projectedExpenses =
+        daysElapsed > 0 ? (currentTotals.expenses / daysElapsed) * totalDays : 0;
 
       // Calculate trends
       const incomeValues = history.map((h) => h.income);
@@ -589,8 +595,16 @@ export function createIncomeExpenseService(): IncomeExpenseService {
       // Period comparisons
       const currentMonthPeriod = getPeriodDates("month", 0);
       const lastMonthPeriod = getPeriodDates("month", 1);
-      const currentMonthTotals = await getPeriodTotals(workspaceId, currentMonthPeriod.start, currentMonthPeriod.end);
-      const lastMonthTotals = await getPeriodTotals(workspaceId, lastMonthPeriod.start, lastMonthPeriod.end);
+      const currentMonthTotals = await getPeriodTotals(
+        workspaceId,
+        currentMonthPeriod.start,
+        currentMonthPeriod.end
+      );
+      const lastMonthTotals = await getPeriodTotals(
+        workspaceId,
+        lastMonthPeriod.start,
+        lastMonthPeriod.end
+      );
 
       const monthOverMonth: PeriodComparison = {
         currentPeriod: {
@@ -602,7 +616,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
           netSavings: currentMonthTotals.income - currentMonthTotals.expenses,
           savingsRate:
             currentMonthTotals.income > 0
-              ? ((currentMonthTotals.income - currentMonthTotals.expenses) / currentMonthTotals.income) * 100
+              ? ((currentMonthTotals.income - currentMonthTotals.expenses) /
+                  currentMonthTotals.income) *
+                100
               : 0,
         },
         previousPeriod: {
@@ -622,7 +638,8 @@ export function createIncomeExpenseService(): IncomeExpenseService {
             amount: currentMonthTotals.income - lastMonthTotals.income,
             percent:
               lastMonthTotals.income > 0
-                ? ((currentMonthTotals.income - lastMonthTotals.income) / lastMonthTotals.income) * 100
+                ? ((currentMonthTotals.income - lastMonthTotals.income) / lastMonthTotals.income) *
+                  100
                 : 0,
             direction:
               currentMonthTotals.income > lastMonthTotals.income * 1.05
@@ -635,7 +652,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
             amount: currentMonthTotals.expenses - lastMonthTotals.expenses,
             percent:
               lastMonthTotals.expenses > 0
-                ? ((currentMonthTotals.expenses - lastMonthTotals.expenses) / lastMonthTotals.expenses) * 100
+                ? ((currentMonthTotals.expenses - lastMonthTotals.expenses) /
+                    lastMonthTotals.expenses) *
+                  100
                 : 0,
             direction:
               currentMonthTotals.expenses > lastMonthTotals.expenses * 1.05
@@ -689,7 +708,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
             netSavings: currentQuarterTotals.income - currentQuarterTotals.expenses,
             savingsRate:
               currentQuarterTotals.income > 0
-                ? ((currentQuarterTotals.income - currentQuarterTotals.expenses) / currentQuarterTotals.income) * 100
+                ? ((currentQuarterTotals.income - currentQuarterTotals.expenses) /
+                    currentQuarterTotals.income) *
+                  100
                 : 0,
           },
           previousPeriod: {
@@ -701,7 +722,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
             netSavings: lastQuarterTotals.income - lastQuarterTotals.expenses,
             savingsRate:
               lastQuarterTotals.income > 0
-                ? ((lastQuarterTotals.income - lastQuarterTotals.expenses) / lastQuarterTotals.income) * 100
+                ? ((lastQuarterTotals.income - lastQuarterTotals.expenses) /
+                    lastQuarterTotals.income) *
+                  100
                 : 0,
           },
           changes: {
@@ -709,7 +732,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
               amount: currentQuarterTotals.income - lastQuarterTotals.income,
               percent:
                 lastQuarterTotals.income > 0
-                  ? ((currentQuarterTotals.income - lastQuarterTotals.income) / lastQuarterTotals.income) * 100
+                  ? ((currentQuarterTotals.income - lastQuarterTotals.income) /
+                      lastQuarterTotals.income) *
+                    100
                   : 0,
               direction:
                 currentQuarterTotals.income > lastQuarterTotals.income * 1.05
@@ -722,7 +747,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
               amount: currentQuarterTotals.expenses - lastQuarterTotals.expenses,
               percent:
                 lastQuarterTotals.expenses > 0
-                  ? ((currentQuarterTotals.expenses - lastQuarterTotals.expenses) / lastQuarterTotals.expenses) * 100
+                  ? ((currentQuarterTotals.expenses - lastQuarterTotals.expenses) /
+                      lastQuarterTotals.expenses) *
+                    100
                   : 0,
               direction:
                 currentQuarterTotals.expenses > lastQuarterTotals.expenses * 1.05
@@ -756,8 +783,16 @@ export function createIncomeExpenseService(): IncomeExpenseService {
       if (history.length >= 13) {
         const currentYearPeriod = getPeriodDates("year", 0);
         const lastYearPeriod = getPeriodDates("year", 1);
-        const currentYearTotals = await getPeriodTotals(workspaceId, currentYearPeriod.start, currentYearPeriod.end);
-        const lastYearTotals = await getPeriodTotals(workspaceId, lastYearPeriod.start, lastYearPeriod.end);
+        const currentYearTotals = await getPeriodTotals(
+          workspaceId,
+          currentYearPeriod.start,
+          currentYearPeriod.end
+        );
+        const lastYearTotals = await getPeriodTotals(
+          workspaceId,
+          lastYearPeriod.start,
+          lastYearPeriod.end
+        );
 
         yearOverYear = {
           currentPeriod: {
@@ -769,7 +804,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
             netSavings: currentYearTotals.income - currentYearTotals.expenses,
             savingsRate:
               currentYearTotals.income > 0
-                ? ((currentYearTotals.income - currentYearTotals.expenses) / currentYearTotals.income) * 100
+                ? ((currentYearTotals.income - currentYearTotals.expenses) /
+                    currentYearTotals.income) *
+                  100
                 : 0,
           },
           previousPeriod: {
@@ -789,7 +826,8 @@ export function createIncomeExpenseService(): IncomeExpenseService {
               amount: currentYearTotals.income - lastYearTotals.income,
               percent:
                 lastYearTotals.income > 0
-                  ? ((currentYearTotals.income - lastYearTotals.income) / lastYearTotals.income) * 100
+                  ? ((currentYearTotals.income - lastYearTotals.income) / lastYearTotals.income) *
+                    100
                   : 0,
               direction:
                 currentYearTotals.income > lastYearTotals.income * 1.05
@@ -802,7 +840,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
               amount: currentYearTotals.expenses - lastYearTotals.expenses,
               percent:
                 lastYearTotals.expenses > 0
-                  ? ((currentYearTotals.expenses - lastYearTotals.expenses) / lastYearTotals.expenses) * 100
+                  ? ((currentYearTotals.expenses - lastYearTotals.expenses) /
+                      lastYearTotals.expenses) *
+                    100
                   : 0,
               direction:
                 currentYearTotals.expenses > lastYearTotals.expenses * 1.05
@@ -891,8 +931,16 @@ export function createIncomeExpenseService(): IncomeExpenseService {
       const currentPeriod = getPeriodDates(periodType, 0);
       const previousPeriod = getPeriodDates(periodType, 1);
 
-      const currentTotals = await getPeriodTotals(workspaceId, currentPeriod.start, currentPeriod.end);
-      const previousTotals = await getPeriodTotals(workspaceId, previousPeriod.start, previousPeriod.end);
+      const currentTotals = await getPeriodTotals(
+        workspaceId,
+        currentPeriod.start,
+        currentPeriod.end
+      );
+      const previousTotals = await getPeriodTotals(
+        workspaceId,
+        previousPeriod.start,
+        previousPeriod.end
+      );
 
       const currentNet = currentTotals.income - currentTotals.expenses;
       const previousNet = previousTotals.income - previousTotals.expenses;
@@ -934,7 +982,8 @@ export function createIncomeExpenseService(): IncomeExpenseService {
             amount: currentTotals.expenses - previousTotals.expenses,
             percent:
               previousTotals.expenses > 0
-                ? ((currentTotals.expenses - previousTotals.expenses) / previousTotals.expenses) * 100
+                ? ((currentTotals.expenses - previousTotals.expenses) / previousTotals.expenses) *
+                  100
                 : 0,
             direction:
               currentTotals.expenses > previousTotals.expenses * 1.05
@@ -945,8 +994,14 @@ export function createIncomeExpenseService(): IncomeExpenseService {
           },
           netSavings: {
             amount: currentNet - previousNet,
-            percent: previousNet !== 0 ? ((currentNet - previousNet) / Math.abs(previousNet)) * 100 : 0,
-            direction: currentNet > previousNet ? "increasing" : currentNet < previousNet ? "decreasing" : "stable",
+            percent:
+              previousNet !== 0 ? ((currentNet - previousNet) / Math.abs(previousNet)) * 100 : 0,
+            direction:
+              currentNet > previousNet
+                ? "increasing"
+                : currentNet < previousNet
+                  ? "decreasing"
+                  : "stable",
           },
           savingsRate: {
             amount: 0,
@@ -971,8 +1026,16 @@ export function createIncomeExpenseService(): IncomeExpenseService {
       const thisMonthPeriod = getPeriodDates("month", 0);
       const lastMonthPeriod = getPeriodDates("month", 1);
 
-      const thisMonthTotals = await getPeriodTotals(workspaceId, thisMonthPeriod.start, thisMonthPeriod.end);
-      const lastMonthTotals = await getPeriodTotals(workspaceId, lastMonthPeriod.start, lastMonthPeriod.end);
+      const thisMonthTotals = await getPeriodTotals(
+        workspaceId,
+        thisMonthPeriod.start,
+        thisMonthPeriod.end
+      );
+      const lastMonthTotals = await getPeriodTotals(
+        workspaceId,
+        lastMonthPeriod.start,
+        lastMonthPeriod.end
+      );
 
       const monthlyData = await getMonthlyData(workspaceId, 6);
       const incomeValues = monthlyData.map((d) => d.income);
@@ -982,7 +1045,8 @@ export function createIncomeExpenseService(): IncomeExpenseService {
       const expenseTrend = calculateTrend(expenseValues);
 
       const thisMonthNet = thisMonthTotals.income - thisMonthTotals.expenses;
-      const savingsRate = thisMonthTotals.income > 0 ? (thisMonthNet / thisMonthTotals.income) * 100 : 0;
+      const savingsRate =
+        thisMonthTotals.income > 0 ? (thisMonthNet / thisMonthTotals.income) * 100 : 0;
 
       return {
         thisMonth: {

@@ -4,11 +4,11 @@
  * Tests the per-workspace sequential ID generation system.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -74,7 +74,14 @@ describe("Sequence Service", () => {
     });
 
     it("should support all entity types", async () => {
-      const entityTypes = ["account", "transaction", "budget", "category", "schedule", "payee"] as const;
+      const entityTypes = [
+        "account",
+        "transaction",
+        "budget",
+        "category",
+        "schedule",
+        "payee",
+      ] as const;
 
       for (const entityType of entityTypes) {
         const [counter] = await ctx.db
@@ -180,7 +187,7 @@ describe("Sequence Service", () => {
         // Increment for next iteration
         await ctx.db
           .update(schema.workspaceCounters)
-          .set({nextSeq: counter.nextSeq + 1})
+          .set({ nextSeq: counter.nextSeq + 1 })
           .where(eq(schema.workspaceCounters.id, counter.id));
       }
 
@@ -214,7 +221,7 @@ describe("Sequence Service", () => {
       // Increment by batch size
       await ctx.db
         .update(schema.workspaceCounters)
-        .set({nextSeq: startSeq + batchSize})
+        .set({ nextSeq: startSeq + batchSize })
         .where(eq(schema.workspaceCounters.id, counter.id));
 
       // Verify counter jumped by batch size
@@ -250,7 +257,7 @@ describe("Sequence Service", () => {
 
       await ctx.db
         .update(schema.workspaceCounters)
-        .set({nextSeq: batch1End + 1})
+        .set({ nextSeq: batch1End + 1 })
         .where(eq(schema.workspaceCounters.id, counter.id));
 
       // Allocate second batch of 3
@@ -269,7 +276,7 @@ describe("Sequence Service", () => {
 
       await ctx.db
         .update(schema.workspaceCounters)
-        .set({nextSeq: batch2End + 1})
+        .set({ nextSeq: batch2End + 1 })
         .where(eq(schema.workspaceCounters.id, counter.id));
 
       // Verify no overlap
@@ -401,7 +408,7 @@ describe("Sequence Service", () => {
       // Increment workspace 1
       await ctx.db
         .update(schema.workspaceCounters)
-        .set({nextSeq: 10})
+        .set({ nextSeq: 10 })
         .where(
           and(
             eq(schema.workspaceCounters.workspaceId, ctx.workspaceId),
@@ -478,7 +485,7 @@ describe("Sequence Service", () => {
       // Increment budget counter many times
       await ctx.db
         .update(schema.workspaceCounters)
-        .set({nextSeq: 50})
+        .set({ nextSeq: 50 })
         .where(
           and(
             eq(schema.workspaceCounters.workspaceId, ctx.workspaceId),
@@ -504,10 +511,10 @@ describe("Sequence Service", () => {
   describe("get all counters", () => {
     it("should get all counters for workspace", async () => {
       await ctx.db.insert(schema.workspaceCounters).values([
-        {workspaceId: ctx.workspaceId, entityType: "account", nextSeq: 5},
-        {workspaceId: ctx.workspaceId, entityType: "transaction", nextSeq: 100},
-        {workspaceId: ctx.workspaceId, entityType: "category", nextSeq: 10},
-        {workspaceId: ctx.workspaceId2, entityType: "account", nextSeq: 1}, // Different workspace
+        { workspaceId: ctx.workspaceId, entityType: "account", nextSeq: 5 },
+        { workspaceId: ctx.workspaceId, entityType: "transaction", nextSeq: 100 },
+        { workspaceId: ctx.workspaceId, entityType: "category", nextSeq: 10 },
+        { workspaceId: ctx.workspaceId2, entityType: "account", nextSeq: 1 }, // Different workspace
       ]);
 
       const counters = await ctx.db
@@ -538,7 +545,10 @@ describe("Sequence Service", () => {
           },
         })
         .from(schema.workspaceCounters)
-        .innerJoin(schema.workspaces, eq(schema.workspaceCounters.workspaceId, schema.workspaces.id))
+        .innerJoin(
+          schema.workspaces,
+          eq(schema.workspaceCounters.workspaceId, schema.workspaces.id)
+        )
         .where(eq(schema.workspaceCounters.workspaceId, ctx.workspaceId));
 
       expect(results).toHaveLength(1);

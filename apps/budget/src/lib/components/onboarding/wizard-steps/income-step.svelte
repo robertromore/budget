@@ -14,9 +14,29 @@ import {
 
 const formData = $derived(onboardingWizardStore.typedFormData);
 
-const incomeSources: IncomeSource[] = ['salary', 'freelance', 'multiple', 'investment', 'retirement', 'other'];
-const incomeFrequencies: IncomeFrequency[] = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'irregular'];
-const employmentStatuses: EmploymentStatus[] = ['employed', 'self-employed', 'retired', 'student', 'unemployed', 'other'];
+const incomeSources: IncomeSource[] = [
+  'salary',
+  'freelance',
+  'multiple',
+  'investment',
+  'retirement',
+  'other',
+];
+const incomeFrequencies: IncomeFrequency[] = [
+  'weekly',
+  'biweekly',
+  'semimonthly',
+  'monthly',
+  'irregular',
+];
+const employmentStatuses: EmploymentStatus[] = [
+  'employed',
+  'self-employed',
+  'retired',
+  'student',
+  'unemployed',
+  'other',
+];
 
 // Dynamic label for income amount based on frequency
 const incomeAmountLabel = $derived.by(() => {
@@ -77,7 +97,8 @@ const incomeAmountLabel = $derived.by(() => {
   <!-- Primary Income Amount (Optional) -->
   <div class="space-y-3">
     <Label for="income-amount" class="text-base font-medium">
-      How much is your {incomeAmountLabel}? <span class="text-muted-foreground text-sm">(optional)</span>
+      How much is your {incomeAmountLabel}?
+      <span class="text-muted-foreground text-sm">(optional)</span>
     </Label>
     <p class="text-muted-foreground text-sm">
       Enter your take-home pay (after taxes). This helps us suggest appropriate budget amounts.
@@ -93,8 +114,7 @@ const incomeAmountLabel = $derived.by(() => {
           const val = e.currentTarget.value;
           onboardingWizardStore.setPrimaryIncomeAmount(val ? parseFloat(val) : undefined);
         }}
-        class="max-w-xs"
-      />
+        class="max-w-xs" />
     </div>
   </div>
 

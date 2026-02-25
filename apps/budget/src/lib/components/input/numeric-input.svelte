@@ -240,7 +240,8 @@ function handleInputMouseMove(e: MouseEvent) {
 
     // Calculate value change based on direction, velocity, and modifiers
     const direction = deltaX > 0 ? 1 : deltaX < 0 ? -1 : 0;
-    const valueChange = direction * Math.abs(deltaX) * BASE_SENSITIVITY * velocityMultiplier * keyMultiplier;
+    const valueChange =
+      direction * Math.abs(deltaX) * BASE_SENSITIVITY * velocityMultiplier * keyMultiplier;
 
     currentValue += valueChange;
     new_amount = currentValue.toFixed(2);
@@ -319,7 +320,7 @@ function handleInputMouseUp() {
           <!-- Scrub mode indicator tabs -->
           {#if isScrubbing}
             <div
-              class="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center rounded-md border bg-background shadow-lg overflow-hidden">
+              class="bg-background absolute -top-9 left-1/2 flex -translate-x-1/2 items-center overflow-hidden rounded-md border shadow-lg">
               {#each scrubModes as mode (mode.key)}
                 <div
                   class={cn(
@@ -331,10 +332,8 @@ function handleInputMouseUp() {
                   {#if mode.hotkey}
                     <kbd
                       class={cn(
-                        'font-mono text-[10px] px-1 rounded',
-                        scrubMode === mode.key
-                          ? 'bg-primary-foreground/20'
-                          : 'bg-muted'
+                        'rounded px-1 font-mono text-[10px]',
+                        scrubMode === mode.key ? 'bg-primary-foreground/20' : 'bg-muted'
                       )}>{mode.hotkey}</kbd>
                   {/if}
                   <span class="font-medium">{mode.label}</span>

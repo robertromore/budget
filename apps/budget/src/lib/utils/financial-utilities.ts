@@ -84,10 +84,7 @@ export function getAmountSign(amount: number): string {
  * Calculate the sum of amounts from an array of objects.
  * @example sumAmounts([{amount: 10}, {amount: -5}], 'amount') => 5
  */
-export function sumAmounts<T extends Record<string, unknown>>(
-  items: T[],
-  key: keyof T
-): number {
+export function sumAmounts<T extends Record<string, unknown>>(items: T[], key: keyof T): number {
   return items.reduce((sum, item) => {
     const value = item[key];
     return sum + (typeof value === "number" ? value : 0);
@@ -108,9 +105,7 @@ export function totalIncome(amounts: number[]): number {
  * @example totalExpenses([100, -50, 200, -30]) => 80
  */
 export function totalExpenses(amounts: number[]): number {
-  return Math.abs(
-    amounts.filter(isExpense).reduce((sum, amount) => sum + amount, 0)
-  );
+  return Math.abs(amounts.filter(isExpense).reduce((sum, amount) => sum + amount, 0));
 }
 
 /**
@@ -126,11 +121,7 @@ export function netAmount(amounts: number[]): number {
  * @example isAmountInRange(50, 0, 100) => true
  * @example isAmountInRange(150, 0, 100) => false
  */
-export function isAmountInRange(
-  amount: number,
-  min: number,
-  max: number
-): boolean {
+export function isAmountInRange(amount: number, min: number, max: number): boolean {
   return amount >= min && amount <= max;
 }
 
@@ -178,7 +169,5 @@ export function splitAmount(amount: number, parts: number): number[] {
   const baseAmount = Math.floor((amount * 100) / parts) / 100;
   const remainder = Math.round((amount - baseAmount * parts) * 100);
 
-  return Array.from({ length: parts }, (_, i) =>
-    i < remainder ? baseAmount + 0.01 : baseAmount
-  );
+  return Array.from({ length: parts }, (_, i) => (i < remainder ? baseAmount + 0.01 : baseAmount));
 }

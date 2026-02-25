@@ -1,7 +1,7 @@
 import { verifications, sessions, type Session } from "$lib/schema/auth";
 import { db } from "$lib/server/shared/database";
 import { eq, lt, and, ne, desc } from "drizzle-orm";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 
 /**
  * Verification token types
@@ -117,9 +117,7 @@ export class AuthRepository {
    * Delete all verifications for an identifier
    */
   async deleteVerificationsByIdentifier(identifier: string): Promise<void> {
-    await db
-      .delete(verifications)
-      .where(eq(verifications.identifier, identifier.toLowerCase()));
+    await db.delete(verifications).where(eq(verifications.identifier, identifier.toLowerCase()));
   }
 
   /**
@@ -157,11 +155,7 @@ export class AuthRepository {
    * Find a session by ID
    */
   async findSessionById(sessionId: string): Promise<Session | null> {
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.id, sessionId))
-      .limit(1);
+    const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
 
     return session || null;
   }
@@ -170,11 +164,7 @@ export class AuthRepository {
    * Find a session by token
    */
   async findSessionByToken(token: string): Promise<Session | null> {
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.token, token))
-      .limit(1);
+    const [session] = await db.select().from(sessions).where(eq(sessions.token, token)).limit(1);
 
     return session || null;
   }
@@ -189,18 +179,10 @@ export class AuthRepository {
   /**
    * Delete all sessions for a user except the current one
    */
-  async deleteOtherUserSessions(
-    userId: string,
-    currentSessionId: string
-  ): Promise<number> {
+  async deleteOtherUserSessions(userId: string, currentSessionId: string): Promise<number> {
     const result = await db
       .delete(sessions)
-      .where(
-        and(
-          eq(sessions.userId, userId),
-          ne(sessions.id, currentSessionId)
-        )
-      )
+      .where(and(eq(sessions.userId, userId), ne(sessions.id, currentSessionId)))
       .returning();
 
     return result.length;

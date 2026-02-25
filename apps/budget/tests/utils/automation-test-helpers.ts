@@ -126,7 +126,7 @@ export function createTestTransaction(
 ): Record<string, unknown> {
   return {
     id: 1,
-    amount: -50.00,
+    amount: -50.0,
     date: "2024-01-15",
     status: "pending",
     notes: "",
@@ -158,7 +158,7 @@ export function createTestAccount(
     id: 1,
     name: "Checking Account",
     accountType: "checking",
-    balance: 1500.00,
+    balance: 1500.0,
     isClosed: false,
     ...overrides,
   };
@@ -183,7 +183,7 @@ export function createTestPayee(
     transactionCount: 25,
     defaultCategoryId: 5,
     isSubscription: false,
-    avgAmount: 75.50,
+    avgAmount: 75.5,
     ...overrides,
   };
 }
@@ -205,7 +205,7 @@ export function createTestCategory(
     id: 1,
     name: "Shopping",
     groupId: 1,
-    monthlyTotal: 250.00,
+    monthlyTotal: 250.0,
     isHidden: false,
     isTaxDeductible: false,
     ...overrides,
@@ -227,7 +227,7 @@ export function createTestSchedule(
 ): Record<string, unknown> {
   return {
     id: 1,
-    amount: -100.00,
+    amount: -100.0,
     frequency: "monthly",
     nextOccurrence: "2024-02-01",
     autoAdd: true,
@@ -252,10 +252,10 @@ export function createTestBudget(
   return {
     id: 1,
     type: "category-envelope",
-    spent: 150.00,
-    remaining: 50.00,
+    spent: 150.0,
+    remaining: 50.0,
     percentUsed: 75,
-    targetAmount: 200.00,
+    targetAmount: 200.0,
     ...overrides,
   };
 }
@@ -271,10 +271,12 @@ export function createTestEvaluationContext(
   categoryGroups?: Map<number, number[]>,
   overrides?: Partial<EvaluationContext>
 ): EvaluationContext {
-  const groups = categoryGroups || new Map([
-    [1, [1, 2, 3]], // Group 1 contains categories 1, 2, 3
-    [2, [4, 5, 6]], // Group 2 contains categories 4, 5, 6
-  ]);
+  const groups =
+    categoryGroups ||
+    new Map([
+      [1, [1, 2, 3]], // Group 1 contains categories 1, 2, 3
+      [2, [4, 5, 6]], // Group 2 contains categories 4, 5, 6
+    ]);
 
   return {
     checkCategoryInGroup: (categoryId: number, groupId: number) => {
@@ -353,10 +355,7 @@ export function assertConditionEvaluates(
 /**
  * Assert action result matches expected outcome
  */
-export function assertActionResult(
-  result: ActionResult,
-  expected: Partial<ActionResult>
-): void {
+export function assertActionResult(result: ActionResult, expected: Partial<ActionResult>): void {
   if (expected.success !== undefined && result.success !== expected.success) {
     throw new Error(
       `Action result success mismatch: expected ${expected.success}, got ${result.success}`
@@ -376,11 +375,7 @@ export function assertActionResult(
 /**
  * Create a date string in ISO format
  */
-export function createDateString(
-  year: number,
-  month: number,
-  day: number
-): string {
+export function createDateString(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 

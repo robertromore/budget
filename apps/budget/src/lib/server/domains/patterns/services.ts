@@ -8,7 +8,7 @@ import type {
   DetectionCriteria,
   IntervalData,
   TransactionForDetection,
-  TransactionGroup
+  TransactionGroup,
 } from "./types";
 import { DEFAULT_DETECTION_CRITERIA } from "./types";
 

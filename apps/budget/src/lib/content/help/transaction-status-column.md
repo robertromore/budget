@@ -10,12 +10,12 @@ The status column shows the current state of each transaction.
 
 ## Status Types
 
-| Status | Icon | Description |
-|--------|------|-------------|
-| **Pending** | Clock | Transaction awaiting clearance |
-| **Cleared** | Check | Transaction has processed |
+| Status         | Icon         | Description                     |
+| -------------- | ------------ | ------------------------------- |
+| **Pending**    | Clock        | Transaction awaiting clearance  |
+| **Cleared**    | Check        | Transaction has processed       |
 | **Reconciled** | Double-check | Verified against bank statement |
-| **Scheduled** | Calendar | Future scheduled transaction |
+| **Scheduled**  | Calendar     | Future scheduled transaction    |
 
 ## Display
 
@@ -26,6 +26,7 @@ The status column shows the current state of each transaction.
 ## Inline Editing
 
 Click the status icon to change:
+
 - Cycles: Pending > Cleared > Reconciled > Pending
 - Scheduled transactions open the schedule editor
 - Changes save automatically
@@ -33,6 +34,7 @@ Click the status icon to change:
 ## Scheduled Transactions
 
 When status is "Scheduled":
+
 - Row displays with calendar styling
 - Click status to edit the schedule
 - Cannot edit transaction data directly
@@ -41,6 +43,7 @@ When status is "Scheduled":
 ## Filtering
 
 Filter by status:
+
 - **Is** - Show only selected statuses
 - **Is not** - Exclude selected statuses
 - Combine with other filters

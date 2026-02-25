@@ -4,11 +4,11 @@
  * Tests fuzzy matching, confidence scoring, and payee name cleaning.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -56,7 +56,11 @@ function levenshteinSimilarity(a: string, b: string): number {
   for (let i = 1; i <= aLower.length; i++) {
     for (let j = 1; j <= bLower.length; j++) {
       const cost = aLower[i - 1] === bLower[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
     }
   }
 
@@ -72,7 +76,17 @@ function cleanPayeeName(raw: string): string {
   let cleaned = raw;
 
   // Remove common prefixes
-  const prefixes = ["DEBIT", "CREDIT", "POS", "ATM", "CHECK", "SQ \\*", "TST\\*", "ACH", "PAYPAL \\*"];
+  const prefixes = [
+    "DEBIT",
+    "CREDIT",
+    "POS",
+    "ATM",
+    "CHECK",
+    "SQ \\*",
+    "TST\\*",
+    "ACH",
+    "PAYPAL \\*",
+  ];
   for (const prefix of prefixes) {
     cleaned = cleaned.replace(new RegExp(`^${prefix}\\s*`, "i"), "");
   }
@@ -204,12 +218,15 @@ describe("Payee Matching", () => {
   describe("findBestMatch", () => {
     it("should find exact match", async () => {
       await ctx.db.insert(schema.payees).values([
-        {workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart"},
-        {workspaceId: ctx.workspaceId, name: "Target", slug: "target"},
-        {workspaceId: ctx.workspaceId, name: "Amazon", slug: "amazon"},
+        { workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart" },
+        { workspaceId: ctx.workspaceId, name: "Target", slug: "target" },
+        { workspaceId: ctx.workspaceId, name: "Amazon", slug: "amazon" },
       ]);
 
-      const payees = await ctx.db.select().from(schema.payees).where(eq(schema.payees.workspaceId, ctx.workspaceId));
+      const payees = await ctx.db
+        .select()
+        .from(schema.payees)
+        .where(eq(schema.payees.workspaceId, ctx.workspaceId));
 
       const incoming = "Walmart";
       let bestMatch = null;
@@ -229,11 +246,14 @@ describe("Payee Matching", () => {
 
     it("should find fuzzy match", async () => {
       await ctx.db.insert(schema.payees).values([
-        {workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart"},
-        {workspaceId: ctx.workspaceId, name: "Target", slug: "target"},
+        { workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart" },
+        { workspaceId: ctx.workspaceId, name: "Target", slug: "target" },
       ]);
 
-      const payees = await ctx.db.select().from(schema.payees).where(eq(schema.payees.workspaceId, ctx.workspaceId));
+      const payees = await ctx.db
+        .select()
+        .from(schema.payees)
+        .where(eq(schema.payees.workspaceId, ctx.workspaceId));
 
       const incoming = "WALMART #1234 DALLAS TX";
       const cleaned = cleanPayeeName(incoming);
@@ -253,11 +273,14 @@ describe("Payee Matching", () => {
     });
 
     it("should return no match for low score", async () => {
-      await ctx.db.insert(schema.payees).values([
-        {workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart"},
-      ]);
+      await ctx.db
+        .insert(schema.payees)
+        .values([{ workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart" }]);
 
-      const payees = await ctx.db.select().from(schema.payees).where(eq(schema.payees.workspaceId, ctx.workspaceId));
+      const payees = await ctx.db
+        .select()
+        .from(schema.payees)
+        .where(eq(schema.payees.workspaceId, ctx.workspaceId));
 
       const incoming = "COMPLETELY DIFFERENT PAYEE";
       let bestScore = 0;
@@ -308,13 +331,16 @@ describe("Payee Matching", () => {
   describe("potential matches", () => {
     it("should return top matches above threshold", async () => {
       await ctx.db.insert(schema.payees).values([
-        {workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart"},
-        {workspaceId: ctx.workspaceId, name: "Walgreens", slug: "walgreens"},
-        {workspaceId: ctx.workspaceId, name: "Target", slug: "target"},
-        {workspaceId: ctx.workspaceId, name: "Whole Foods", slug: "whole-foods"},
+        { workspaceId: ctx.workspaceId, name: "Walmart", slug: "walmart" },
+        { workspaceId: ctx.workspaceId, name: "Walgreens", slug: "walgreens" },
+        { workspaceId: ctx.workspaceId, name: "Target", slug: "target" },
+        { workspaceId: ctx.workspaceId, name: "Whole Foods", slug: "whole-foods" },
       ]);
 
-      const payees = await ctx.db.select().from(schema.payees).where(eq(schema.payees.workspaceId, ctx.workspaceId));
+      const payees = await ctx.db
+        .select()
+        .from(schema.payees)
+        .where(eq(schema.payees.workspaceId, ctx.workspaceId));
 
       const incoming = "Wal";
       const minScore = 0.3;

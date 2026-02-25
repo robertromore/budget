@@ -9,11 +9,7 @@ import { transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { mean, standardDeviation } from "simple-statistics";
-import type {
-  AggregationFeatures,
-  SequenceFeatures,
-  TransactionFeatures,
-} from "./types";
+import type { AggregationFeatures, SequenceFeatures, TransactionFeatures } from "./types";
 import { getWorkspaceAccountIds } from "./utils";
 
 export class FeatureEngineeringService {

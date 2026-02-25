@@ -1,11 +1,7 @@
 import type { WorkspaceMember, WorkspaceRole } from "$lib/schema/workspace-members";
 import { workspaces } from "$lib/schema/workspaces";
 import { db } from "$lib/server/shared/database";
-import {
-  ConflictError,
-  ForbiddenError,
-  ValidationError,
-} from "$lib/server/shared/types/errors";
+import { ConflictError, ForbiddenError, ValidationError } from "$lib/server/shared/types/errors";
 import { eq } from "drizzle-orm";
 import {
   WorkspaceMemberRepository,
@@ -44,10 +40,7 @@ export class WorkspaceMemberService {
   /**
    * Get user's membership in a workspace
    */
-  async getMembership(
-    workspaceId: number,
-    userId: string
-  ): Promise<WorkspaceMember | null> {
+  async getMembership(workspaceId: number, userId: string): Promise<WorkspaceMember | null> {
     return await this.repository.findMembership(workspaceId, userId);
   }
 
@@ -74,10 +67,7 @@ export class WorkspaceMemberService {
     }
 
     // Check if user is already a member
-    const existingMembership = await this.repository.findMembership(
-      workspaceId,
-      userId
-    );
+    const existingMembership = await this.repository.findMembership(workspaceId, userId);
     if (existingMembership) {
       throw new ConflictError("User is already a member of this workspace");
     }
@@ -86,9 +76,7 @@ export class WorkspaceMemberService {
     if (role === "owner") {
       const currentOwner = await this.repository.getOwner(workspaceId);
       if (currentOwner) {
-        throw new ConflictError(
-          "Workspace already has an owner. Use transfer ownership instead."
-        );
+        throw new ConflictError("Workspace already has an owner. Use transfer ownership instead.");
       }
     }
 
@@ -122,23 +110,16 @@ export class WorkspaceMemberService {
     );
 
     // Get target's membership
-    const targetMembership = await this.repository.findMembershipOrThrow(
-      workspaceId,
-      targetUserId
-    );
+    const targetMembership = await this.repository.findMembershipOrThrow(workspaceId, targetUserId);
 
     // Cannot change owner role (use transfer ownership)
     if (targetMembership.role === "owner") {
-      throw new ForbiddenError(
-        "Cannot change owner role. Use transfer ownership instead."
-      );
+      throw new ForbiddenError("Cannot change owner role. Use transfer ownership instead.");
     }
 
     // Cannot promote to owner (use transfer ownership)
     if (newRole === "owner") {
-      throw new ForbiddenError(
-        "Cannot promote to owner. Use transfer ownership instead."
-      );
+      throw new ForbiddenError("Cannot promote to owner. Use transfer ownership instead.");
     }
 
     // Check permission: requester must have higher role than both current and new role
@@ -147,9 +128,7 @@ export class WorkspaceMemberService {
     const newLevel = ROLE_HIERARCHY[newRole];
 
     if (requesterLevel <= currentLevel || requesterLevel <= newLevel) {
-      throw new ForbiddenError(
-        "Insufficient permissions to change this member's role"
-      );
+      throw new ForbiddenError("Insufficient permissions to change this member's role");
     }
 
     return await this.repository.updateRole(workspaceId, targetUserId, newRole);
@@ -170,10 +149,7 @@ export class WorkspaceMemberService {
     );
 
     // Get target's membership
-    const targetMembership = await this.repository.findMembershipOrThrow(
-      workspaceId,
-      targetUserId
-    );
+    const targetMembership = await this.repository.findMembershipOrThrow(workspaceId, targetUserId);
 
     // Cannot remove owner
     if (targetMembership.role === "owner") {
@@ -195,16 +171,11 @@ export class WorkspaceMemberService {
    * Leave a workspace (self-removal)
    */
   async leaveWorkspace(workspaceId: number, userId: string): Promise<void> {
-    const membership = await this.repository.findMembershipOrThrow(
-      workspaceId,
-      userId
-    );
+    const membership = await this.repository.findMembershipOrThrow(workspaceId, userId);
 
     // Owner cannot leave without transferring ownership
     if (membership.role === "owner") {
-      throw new ForbiddenError(
-        "Owner cannot leave workspace. Transfer ownership first."
-      );
+      throw new ForbiddenError("Owner cannot leave workspace. Transfer ownership first.");
     }
 
     await this.repository.delete(workspaceId, userId);
@@ -229,10 +200,7 @@ export class WorkspaceMemberService {
     }
 
     // Verify new owner is a member
-    const newOwnerMembership = await this.repository.findMembershipOrThrow(
-      workspaceId,
-      newOwnerId
-    );
+    const newOwnerMembership = await this.repository.findMembershipOrThrow(workspaceId, newOwnerId);
 
     if (newOwnerMembership.role === "owner") {
       throw new ValidationError("User is already the owner");
@@ -243,10 +211,7 @@ export class WorkspaceMemberService {
     await this.repository.updateRole(workspaceId, newOwnerId, "owner");
 
     // Update workspace ownerId
-    await db
-      .update(workspaces)
-      .set({ ownerId: newOwnerId })
-      .where(eq(workspaces.id, workspaceId));
+    await db.update(workspaces).set({ ownerId: newOwnerId }).where(eq(workspaces.id, workspaceId));
   }
 
   /**
@@ -283,11 +248,7 @@ export class WorkspaceMemberService {
   /**
    * Check if user has at least the specified role
    */
-  async hasRole(
-    workspaceId: number,
-    userId: string,
-    minimumRole: WorkspaceRole
-  ): Promise<boolean> {
+  async hasRole(workspaceId: number, userId: string, minimumRole: WorkspaceRole): Promise<boolean> {
     const membership = await this.repository.findMembership(workspaceId, userId);
     if (!membership) return false;
 

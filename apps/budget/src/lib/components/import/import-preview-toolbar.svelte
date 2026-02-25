@@ -1,18 +1,18 @@
 <script lang="ts">
-import { Badge } from "$lib/components/ui/badge";
-import { Button } from "$lib/components/ui/button";
-import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-import { ResponsiveSheet } from "$lib/components/ui/responsive-sheet";
-import type { CleanupState, ImportRow } from "$lib/types/import";
-import { spotlightTour } from "$lib/states/ui/spotlight-tour.svelte";
-import Check from "@lucide/svelte/icons/check";
-import ChevronDown from "@lucide/svelte/icons/chevron-down";
-import Filter from "@lucide/svelte/icons/filter";
-import Settings2 from "@lucide/svelte/icons/settings-2";
-import Sparkles from "@lucide/svelte/icons/sparkles";
-import Users from "@lucide/svelte/icons/users";
-import type { Table } from "@tanstack/table-core";
-import PayeeCleanupContent from "./cleanup/payee-cleanup-content.svelte";
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
+import type { CleanupState, ImportRow } from '$lib/types/import';
+import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
+import Check from '@lucide/svelte/icons/check';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import Filter from '@lucide/svelte/icons/filter';
+import Settings2 from '@lucide/svelte/icons/settings-2';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Users from '@lucide/svelte/icons/users';
+import type { Table } from '@tanstack/table-core';
+import PayeeCleanupContent from './cleanup/payee-cleanup-content.svelte';
 
 // Hide the Sheet overlay when the tour is active to avoid double overlays
 const isTourActive = $derived(spotlightTour.isActive);
@@ -50,10 +50,10 @@ let {
 
 // Stats
 const validCount = $derived(
-  data.filter((r) => r.validationStatus === "valid" || r.validationStatus === "pending").length
+  data.filter((r) => r.validationStatus === 'valid' || r.validationStatus === 'pending').length
 );
-const warningCount = $derived(data.filter((r) => r.validationStatus === "warning").length);
-const invalidCount = $derived(data.filter((r) => r.validationStatus === "invalid").length);
+const warningCount = $derived(data.filter((r) => r.validationStatus === 'warning').length);
+const invalidCount = $derived(data.filter((r) => r.validationStatus === 'invalid').length);
 
 // Cleanup stats
 const cleanupStats = $derived.by(() => {
@@ -61,7 +61,7 @@ const cleanupStats = $derived.by(() => {
   const groups = cleanupState.payeeGroups;
   return {
     totalGroups: groups.length,
-    pending: groups.filter((g) => g.userDecision === "pending").length,
+    pending: groups.filter((g) => g.userDecision === 'pending').length,
     existingMatches: groups.filter((g) => g.existingMatch).length,
   };
 });
@@ -74,7 +74,10 @@ const categorySuggestionStats = $derived.by(() => {
     (s) => s.suggestions.length > 0 && s.suggestions[0].confidence >= 0.7
   );
   const lowConfidence = suggestions.filter(
-    (s) => s.suggestions.length > 0 && s.suggestions[0].confidence < 0.7 && s.suggestions[0].confidence >= 0.4
+    (s) =>
+      s.suggestions.length > 0 &&
+      s.suggestions[0].confidence < 0.7 &&
+      s.suggestions[0].confidence >= 0.4
   );
   return {
     total: suggestions.length,
@@ -94,7 +97,7 @@ function toggleOption(key: keyof ImportOptions) {
 // Handle cleanup group decision
 function handleGroupDecision(
   groupId: string,
-  decision: "accept" | "reject" | "custom" | "pending",
+  decision: 'accept' | 'reject' | 'custom' | 'pending',
   customName?: string
 ) {
   if (!cleanupState) return;
@@ -121,8 +124,8 @@ function acceptHighConfidence() {
   if (!cleanupState) return;
 
   const updatedGroups = cleanupState.payeeGroups.map((group) => {
-    if (group.confidence >= 0.85 && group.userDecision === "pending") {
-      return { ...group, userDecision: "accept" as const };
+    if (group.confidence >= 0.85 && group.userDecision === 'pending') {
+      return { ...group, userDecision: 'accept' as const };
     }
     return group;
   });
@@ -139,7 +142,7 @@ function resetAllDecisions() {
 
   const updatedGroups = cleanupState.payeeGroups.map((group) => ({
     ...group,
-    userDecision: "pending" as const,
+    userDecision: 'pending' as const,
     customName: undefined,
   }));
 
@@ -168,9 +171,8 @@ function resetAllDecisions() {
           <DropdownMenu.Label>Import Settings</DropdownMenu.Label>
           <DropdownMenu.Separator />
           <DropdownMenu.Item
-            onSelect={() => toggleOption("createMissingPayees")}
-            closeOnSelect={false}
-          >
+            onSelect={() => toggleOption('createMissingPayees')}
+            closeOnSelect={false}>
             {#if importOptions.createMissingPayees}
               <Check class="mr-2 h-4 w-4" />
             {:else}
@@ -179,9 +181,8 @@ function resetAllDecisions() {
             Auto-create payees
           </DropdownMenu.Item>
           <DropdownMenu.Item
-            onSelect={() => toggleOption("createMissingCategories")}
-            closeOnSelect={false}
-          >
+            onSelect={() => toggleOption('createMissingCategories')}
+            closeOnSelect={false}>
             {#if importOptions.createMissingCategories}
               <Check class="mr-2 h-4 w-4" />
             {:else}
@@ -191,9 +192,8 @@ function resetAllDecisions() {
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
           <DropdownMenu.Item
-            onSelect={() => toggleOption("allowPartialImport")}
-            closeOnSelect={false}
-          >
+            onSelect={() => toggleOption('allowPartialImport')}
+            closeOnSelect={false}>
             {#if importOptions.allowPartialImport}
               <Check class="mr-2 h-4 w-4" />
             {:else}
@@ -202,9 +202,8 @@ function resetAllDecisions() {
             Allow partial import
           </DropdownMenu.Item>
           <DropdownMenu.Item
-            onSelect={() => toggleOption("reverseAmountSigns")}
-            closeOnSelect={false}
-          >
+            onSelect={() => toggleOption('reverseAmountSigns')}
+            closeOnSelect={false}>
             {#if importOptions.reverseAmountSigns}
               <Check class="mr-2 h-4 w-4" />
             {:else}
@@ -217,7 +216,13 @@ function resetAllDecisions() {
     </DropdownMenu.Root>
 
     <!-- Payee Cleanup Button with Sheet -->
-    <ResponsiveSheet bind:open={cleanupSheetOpen} defaultWidth={520} minWidth={400} maxWidth={700} hideOverlay={isTourActive} dataTourId="import-cleanup-sheet">
+    <ResponsiveSheet
+      bind:open={cleanupSheetOpen}
+      defaultWidth={520}
+      minWidth={400}
+      maxWidth={700}
+      hideOverlay={isTourActive}
+      dataTourId="import-cleanup-sheet">
       {#snippet trigger()}
         <Button variant="outline" size="sm" class="gap-2">
           <Users class="h-4 w-4" />
@@ -252,18 +257,13 @@ function resetAllDecisions() {
           {cleanupState}
           onGroupDecision={handleGroupDecision}
           onAcceptHighConfidence={acceptHighConfidence}
-          onResetAll={resetAllDecisions}
-        />
+          onResetAll={resetAllDecisions} />
       {/snippet}
 
       {#snippet footer()}
         <div class="flex items-center justify-between">
-          <Button variant="outline" size="sm" onclick={resetAllDecisions}>
-            Reset All
-          </Button>
-          <Button size="sm" onclick={() => (cleanupSheetOpen = false)}>
-            Done
-          </Button>
+          <Button variant="outline" size="sm" onclick={resetAllDecisions}>Reset All</Button>
+          <Button size="sm" onclick={() => (cleanupSheetOpen = false)}>Done</Button>
         </div>
       {/snippet}
     </ResponsiveSheet>

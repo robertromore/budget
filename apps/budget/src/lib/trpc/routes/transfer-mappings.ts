@@ -74,10 +74,7 @@ export const transferMappingRoutes = t.router({
    */
   forAccount: publicProcedure.input(accountIdSchema).query(
     withErrorHandler(async ({ input, ctx }) => {
-      return await mappingService.getMappingsForAccount(
-        input.targetAccountId,
-        ctx.workspaceId
-      );
+      return await mappingService.getMappingsForAccount(input.targetAccountId, ctx.workspaceId);
     })
   ),
 
@@ -87,10 +84,7 @@ export const transferMappingRoutes = t.router({
    */
   fromAccount: publicProcedure.input(sourceAccountIdSchema).query(
     withErrorHandler(async ({ input, ctx }) => {
-      return await mappingService.getMappingsFromAccount(
-        input.sourceAccountId,
-        ctx.workspaceId
-      );
+      return await mappingService.getMappingsFromAccount(input.sourceAccountId, ctx.workspaceId);
     })
   ),
 
@@ -99,10 +93,7 @@ export const transferMappingRoutes = t.router({
    */
   findTransfer: publicProcedure.input(findTransferSchema).query(
     withErrorHandler(async ({ input, ctx }) => {
-      return await mappingService.findTransferMapping(
-        input.rawPayeeString,
-        ctx.workspaceId
-      );
+      return await mappingService.findTransferMapping(input.rawPayeeString, ctx.workspaceId);
     })
   ),
 

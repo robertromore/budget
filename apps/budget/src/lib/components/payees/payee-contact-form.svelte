@@ -20,7 +20,13 @@ interface Props {
   isGlobalApplying?: boolean;
 }
 
-let { formData, entityForm, payeeName, enhancementSummary = [], isGlobalApplying = false }: Props = $props();
+let {
+  formData,
+  entityForm,
+  payeeName,
+  enhancementSummary = [],
+  isGlobalApplying = false,
+}: Props = $props();
 
 // Per-field intelligence mode state
 let fieldModes = $state<Record<string, IntelligenceMode>>({
@@ -123,9 +129,8 @@ async function handleContactFieldAction(field: string) {
                   title: 'Find Phone',
                   modes: ['llm'],
                   order: 10,
-                  onTrigger: async () => handleContactFieldAction('phone')
-                }}
-              >
+                  onTrigger: async () => handleContactFieldAction('phone'),
+                }}>
                 <Input {...props} bind:value={$formData.phone} placeholder="+1 (555) 123-4567" />
               </div>
               <IntelligenceModeToggle
@@ -134,12 +139,11 @@ async function handleContactFieldAction(field: string) {
                 onAction={() => handleContactFieldAction('phone')}
                 isPending={isGlobalApplying || enhancingField === 'phone'}
                 disabled={!payeeName?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('phone')}
                 enhancedAt={getEnhancementInfo('phone')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('phone')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('phone')?.lastConfidence} />
             </div>
             <Form.FieldErrors />
           {/snippet}
@@ -159,15 +163,13 @@ async function handleContactFieldAction(field: string) {
                   title: 'Find Email',
                   modes: ['llm'],
                   order: 11,
-                  onTrigger: async () => handleContactFieldAction('email')
-                }}
-              >
+                  onTrigger: async () => handleContactFieldAction('email'),
+                }}>
                 <Input
                   {...props}
                   bind:value={$formData.email}
                   type="email"
-                  placeholder="contact@example.com"
-                />
+                  placeholder="contact@example.com" />
               </div>
               <IntelligenceModeToggle
                 mode={fieldModes.email}
@@ -175,12 +177,11 @@ async function handleContactFieldAction(field: string) {
                 onAction={() => handleContactFieldAction('email')}
                 isPending={isGlobalApplying || enhancingField === 'email'}
                 disabled={!payeeName?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('email')}
                 enhancedAt={getEnhancementInfo('email')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('email')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('email')?.lastConfidence} />
             </div>
             <Form.FieldErrors />
           {/snippet}
@@ -200,14 +201,12 @@ async function handleContactFieldAction(field: string) {
                   title: 'Find Website',
                   modes: ['llm'],
                   order: 12,
-                  onTrigger: async () => handleWebsiteAction()
-                }}
-              >
+                  onTrigger: async () => handleWebsiteAction(),
+                }}>
                 <Input
                   {...props}
                   bind:value={$formData.website}
-                  placeholder="https://example.com"
-                />
+                  placeholder="https://example.com" />
               </div>
               <IntelligenceModeToggle
                 mode={fieldModes.website}
@@ -215,12 +214,11 @@ async function handleContactFieldAction(field: string) {
                 onAction={() => handleWebsiteAction()}
                 isPending={isGlobalApplying || enhancingField === 'website'}
                 disabled={!payeeName?.trim()}
-                disabledModes={disabledModes}
+                {disabledModes}
                 variant="icon"
                 isEnhanced={isFieldEnhanced('website')}
                 enhancedAt={getEnhancementInfo('website')?.lastEnhancedAt}
-                enhancedConfidence={getEnhancementInfo('website')?.lastConfidence}
-              />
+                enhancedConfidence={getEnhancementInfo('website')?.lastConfidence} />
             </div>
             <Form.FieldErrors />
           {/snippet}
@@ -255,14 +253,12 @@ async function handleContactFieldAction(field: string) {
                 title: 'Find Address',
                 modes: ['llm'],
                 order: 13,
-                onTrigger: async () => handleContactFieldAction('address')
-              }}
-            >
+                onTrigger: async () => handleContactFieldAction('address'),
+              }}>
               <Textarea
                 {...props}
                 bind:value={$formData.address}
-                placeholder="Street address, city, state, postal code"
-              />
+                placeholder="Street address, city, state, postal code" />
             </div>
             <IntelligenceModeToggle
               mode={fieldModes.address}
@@ -270,12 +266,11 @@ async function handleContactFieldAction(field: string) {
               onAction={() => handleContactFieldAction('address')}
               isPending={isGlobalApplying || enhancingField === 'address'}
               disabled={!payeeName?.trim()}
-              disabledModes={disabledModes}
+              {disabledModes}
               variant="icon"
               isEnhanced={isFieldEnhanced('address')}
               enhancedAt={getEnhancementInfo('address')?.lastEnhancedAt}
-              enhancedConfidence={getEnhancementInfo('address')?.lastConfidence}
-            />
+              enhancedConfidence={getEnhancementInfo('address')?.lastConfidence} />
           </div>
           <Form.FieldErrors />
         {/snippet}

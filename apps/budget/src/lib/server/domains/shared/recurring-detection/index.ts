@@ -41,11 +41,7 @@ export {
   isAmountOutlier,
 } from "./analyzers/amount";
 
-export {
-  analyzePattern,
-  calculatePatternScore,
-  suggestDisplayName,
-} from "./analyzers/pattern";
+export { analyzePattern, calculatePatternScore, suggestDisplayName } from "./analyzers/pattern";
 
 // Pattern database
 export {

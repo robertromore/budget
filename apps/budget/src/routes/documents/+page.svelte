@@ -39,7 +39,9 @@ const allYears = $derived(
 );
 
 // Query documents for selected tax year - use $derived to react to year changes
-const documentsQuery = $derived(rpc.accountDocuments.getDocumentsByTaxYear(selectedTaxYear).options());
+const documentsQuery = $derived(
+  rpc.accountDocuments.getDocumentsByTaxYear(selectedTaxYear).options()
+);
 const documents = $derived(documentsQuery.data ?? []);
 const isLoading = $derived(documentsQuery.isLoading);
 
@@ -49,9 +51,7 @@ const counts = $derived(countsQuery.data ?? { total: 0, byType: {} });
 
 // Filter documents by account if selected
 const filteredDocuments = $derived(
-  filterAccountId
-    ? documents.filter((doc) => doc.accountId === filterAccountId)
-    : documents
+  filterAccountId ? documents.filter((doc) => doc.accountId === filterAccountId) : documents
 );
 
 // Group counts by category (tax forms, statements, other)
@@ -186,8 +186,7 @@ const accountsWithDocs = $derived(
         <DocumentUploadWidget
           accounts={data.accounts}
           defaultTaxYear={selectedTaxYear}
-          onUploadComplete={handleUploadComplete}
-        />
+          onUploadComplete={handleUploadComplete} />
       </Card.Content>
     </Card.Root>
   {/if}
@@ -234,28 +233,25 @@ const accountsWithDocs = $derived(
         accounts={data.accounts}
         loading={isLoading}
         groupBy="none"
-        showEmpty={false}
-      />
+        showEmpty={false} />
     </Tabs.Content>
 
     <Tabs.Content value="by-account" class="mt-4">
       <DocumentList
-        documents={documents}
+        {documents}
         accounts={data.accounts}
         loading={isLoading}
         groupBy="account"
-        showEmpty={false}
-      />
+        showEmpty={false} />
     </Tabs.Content>
 
     <Tabs.Content value="by-type" class="mt-4">
       <DocumentList
-        documents={documents}
+        {documents}
         accounts={data.accounts}
         loading={isLoading}
         groupBy="type"
-        showEmpty={false}
-      />
+        showEmpty={false} />
     </Tabs.Content>
   </Tabs.Root>
 
@@ -266,7 +262,8 @@ const accountsWithDocs = $derived(
         <FileText class="text-muted-foreground mb-4 h-16 w-16 opacity-50" />
         <h3 class="mb-2 text-lg font-medium">No documents for {selectedTaxYear}</h3>
         <p class="text-muted-foreground mb-4 text-center text-sm">
-          Upload your tax forms, bank statements, and other financial documents to keep them organized.
+          Upload your tax forms, bank statements, and other financial documents to keep them
+          organized.
         </p>
         <Button onclick={() => (showUpload = true)}>
           <Upload class="mr-2 h-4 w-4" />

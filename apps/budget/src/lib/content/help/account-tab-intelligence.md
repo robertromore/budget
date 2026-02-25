@@ -11,21 +11,25 @@ Machine learning-powered analysis of your account activity.
 ## Insights Available
 
 ### Spending Patterns
+
 - Recurring transaction detection
 - Unusual activity alerts
 - Spending trend analysis
 
 ### Anomaly Detection
+
 - Suspicious transactions flagged
 - Duplicate charge warnings
 - Amount variance alerts
 
 ### Smart Suggestions
+
 - Category recommendations
 - Budget optimization tips
 - Savings opportunities
 
 ### Forecasting
+
 - Predicted future balance
 - Expected recurring charges
 - Cash flow projections
@@ -33,6 +37,7 @@ Machine learning-powered analysis of your account activity.
 ## How It Works
 
 The intelligence system analyzes:
+
 - Transaction history patterns
 - Payee behavior
 - Seasonal variations
@@ -41,6 +46,7 @@ The intelligence system analyzes:
 ## Confidence Levels
 
 Each insight shows confidence:
+
 - **High** - Strong historical pattern
 - **Medium** - Likely but verify
 - **Low** - Speculative suggestion

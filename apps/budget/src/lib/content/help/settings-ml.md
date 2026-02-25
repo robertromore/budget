@@ -7,17 +7,20 @@ navigateTo: /settings/intelligence
 
 # Machine Learning Settings
 
-Configure the built-in machine learning features that provide intelligent insights about your finances.
+Configure the built-in machine learning features that provide intelligent
+insights about your finances.
 
 ## Master Toggle
 
-Enable or disable all ML features at once. When disabled, no ML processing occurs and the app runs in manual mode only.
+Enable or disable all ML features at once. When disabled, no ML processing
+occurs and the app runs in manual mode only.
 
 ## ML Features
 
 ### Forecasting
 
 Predicts future cash flow based on your historical spending patterns.
+
 - Uses time-series analysis
 - Considers recurring transactions
 - Provides confidence intervals
@@ -25,6 +28,7 @@ Predicts future cash flow based on your historical spending patterns.
 ### Anomaly Detection
 
 Identifies unusual transactions that don't match your normal spending patterns.
+
 - Flags unexpected amounts
 - Detects irregular timing
 - Helps catch fraud or errors
@@ -32,6 +36,7 @@ Identifies unusual transactions that don't match your normal spending patterns.
 ### Similarity Matching
 
 Intelligently matches and groups similar payees and merchants.
+
 - Handles variations in merchant names
 - Suggests duplicates
 - Improves categorization accuracy
@@ -39,6 +44,7 @@ Intelligently matches and groups similar payees and merchants.
 ### User Behavior
 
 Learns from your actions to provide personalized recommendations.
+
 - Tracks category assignments
 - Learns spending habits
 - Improves suggestions over time
@@ -48,6 +54,7 @@ Learns from your actions to provide personalized recommendations.
 ### Anomaly Detection Sensitivity
 
 Controls how strict anomaly detection is:
+
 - **Low** - Only flag major anomalies
 - **Medium** - Balanced detection
 - **High** - Flag minor variations
@@ -58,7 +65,8 @@ Set how far ahead to predict (7-365 days). Longer horizons have less certainty.
 
 ### Similarity Threshold
 
-Set how similar items must be to be grouped (0-100%). Higher values require closer matches.
+Set how similar items must be to be grouped (0-100%). Higher values require
+closer matches.
 
 ## Contact Enrichment (Web Search)
 

@@ -1,15 +1,14 @@
-import {test, expect} from "@playwright/test";
-import {setupTestDb, seedTestData} from "../../integration/setup/test-db-node";
+import { test, expect } from "@playwright/test";
+import { setupTestDb, seedTestData } from "../../integration/setup/test-db-node";
 
 const describeE2E = process.argv.some((arg) => arg.includes("playwright"))
   ? test.describe.bind(test)
   : (((_title: string, _fn: () => void) => {}) as typeof test.describe);
 
-
 describeE2E("Individual Account Views and Displays", () => {
   let testDb: Awaited<ReturnType<typeof setupTestDb>>;
 
-  test.beforeEach(async ({page}) => {
+  test.beforeEach(async ({ page }) => {
     // Setup test database
     testDb = await setupTestDb();
     await seedTestData(testDb);
@@ -25,7 +24,7 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Account Header Display", () => {
-    test("should display account title with proper typography", async ({page}) => {
+    test("should display account title with proper typography", async ({ page }) => {
       // Check main account title
       const accountTitle = page.locator("h1, [data-testid='account-title']");
       await expect(accountTitle).toBeVisible();
@@ -46,7 +45,7 @@ describeE2E("Individual Account Views and Displays", () => {
       expect(parseInt(titleStyles.fontWeight)).toBeGreaterThanOrEqual(600);
     });
 
-    test("should display account balance with proper formatting", async ({page}) => {
+    test("should display account balance with proper formatting", async ({ page }) => {
       const balanceDisplay =
         page.locator("[data-testid='account-balance']") ||
         page.locator(".balance") ||
@@ -80,7 +79,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display balance as valid currency amount", async ({page}) => {
+    test("should display balance as valid currency amount", async ({ page }) => {
       // Find the balance display in the header
       const balanceSection = page.locator("text=/Balance:/");
       await expect(balanceSection).toBeVisible();
@@ -110,7 +109,7 @@ describeE2E("Individual Account Views and Displays", () => {
       expect(Math.abs(amount)).toBeLessThan(1000000); // Less than $1M
     });
 
-    test("should display account metadata in organized layout", async ({page}) => {
+    test("should display account metadata in organized layout", async ({ page }) => {
       // Check for account creation/opened date
       const createdDate =
         page.locator("[data-testid='account-created']") ||
@@ -142,7 +141,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display account actions/buttons accessibly", async ({page}) => {
+    test("should display account actions/buttons accessibly", async ({ page }) => {
       // Check for primary action buttons
       const actionButtons = [
         "[data-testid='add-transaction']",
@@ -180,7 +179,7 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Transaction List Display", () => {
-    test("should display transactions table with proper column headers", async ({page}) => {
+    test("should display transactions table with proper column headers", async ({ page }) => {
       const transactionsTable =
         page.locator("[data-testid='transactions-table']") ||
         page.locator("table") ||
@@ -213,7 +212,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display transaction rows with consistent formatting", async ({page}) => {
+    test("should display transaction rows with consistent formatting", async ({ page }) => {
       const transactionRows =
         page.locator("[data-testid='transaction-row']") ||
         page.locator("tbody tr") ||
@@ -248,7 +247,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display transaction amounts with proper color coding", async ({page}) => {
+    test("should display transaction amounts with proper color coding", async ({ page }) => {
       const transactionAmounts =
         page.locator("[data-testid='transaction-amount']") ||
         page.locator(".amount, .transaction-amount");
@@ -280,7 +279,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display transaction dates in readable format", async ({page}) => {
+    test("should display transaction dates in readable format", async ({ page }) => {
       const transactionDates =
         page.locator("[data-testid='transaction-date']") ||
         page.locator("td:first-child") ||
@@ -306,7 +305,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display empty state when no transactions exist", async ({page}) => {
+    test("should display empty state when no transactions exist", async ({ page }) => {
       // Create a fresh account with no transactions
       testDb = await setupTestDb(); // Fresh DB without seeding
       await page.reload();
@@ -341,7 +340,7 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Filtering and Search Display", () => {
-    test("should display filter controls with clear labels", async ({page}) => {
+    test("should display filter controls with clear labels", async ({ page }) => {
       // Date filters
       const startDateFilter =
         page.locator("[data-testid='start-date-filter']") ||
@@ -389,7 +388,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display search input with proper styling", async ({page}) => {
+    test("should display search input with proper styling", async ({ page }) => {
       const searchInput =
         page.locator("[data-testid='transaction-search']") ||
         page.locator("input[placeholder*='Search']") ||
@@ -419,7 +418,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display active filters with clear indication", async ({page}) => {
+    test("should display active filters with clear indication", async ({ page }) => {
       // Apply a date filter
       const startDateFilter =
         page.locator("[data-testid='start-date-filter']") ||
@@ -455,7 +454,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display search results count when filtering", async ({page}) => {
+    test("should display search results count when filtering", async ({ page }) => {
       const searchInput =
         page.locator("[data-testid='transaction-search']") ||
         page.locator("input[placeholder*='Search']") ||
@@ -482,7 +481,7 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Statistics and Charts Display", () => {
-    test("should display account summary statistics with clear metrics", async ({page}) => {
+    test("should display account summary statistics with clear metrics", async ({ page }) => {
       const statsSection =
         page.locator("[data-testid='account-statistics']") ||
         page.locator(".statistics-panel") ||
@@ -493,10 +492,10 @@ describeE2E("Individual Account Views and Displays", () => {
 
         // Check for key financial metrics
         const metrics = [
-          {pattern: /Total Income|Income:/, testId: "total-income"},
-          {pattern: /Total Expenses|Expenses:/, testId: "total-expenses"},
-          {pattern: /Net Change|Net Flow:/, testId: "net-change"},
-          {pattern: /Transaction Count|Number of Transactions:/, testId: "transaction-count"},
+          { pattern: /Total Income|Income:/, testId: "total-income" },
+          { pattern: /Total Expenses|Expenses:/, testId: "total-expenses" },
+          { pattern: /Net Change|Net Flow:/, testId: "net-change" },
+          { pattern: /Transaction Count|Number of Transactions:/, testId: "transaction-count" },
         ];
 
         for (const metric of metrics) {
@@ -515,7 +514,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display category breakdown with visual indicators", async ({page}) => {
+    test("should display category breakdown with visual indicators", async ({ page }) => {
       const categoryBreakdown =
         page.locator("[data-testid='category-breakdown']") ||
         page.getByText(/Spending by Category|Category Analysis/);
@@ -548,7 +547,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display monthly trends with time-based data", async ({page}) => {
+    test("should display monthly trends with time-based data", async ({ page }) => {
       const monthlyStats =
         page.locator("[data-testid='monthly-statistics']") ||
         page.getByText(/Monthly Average|This Month|Trends/);
@@ -577,7 +576,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should display charts with proper dimensions and visibility", async ({page}) => {
+    test("should display charts with proper dimensions and visibility", async ({ page }) => {
       const chartContainer =
         page.locator("[data-testid='account-chart']") ||
         page.locator("canvas") ||
@@ -614,8 +613,8 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Responsive Design Display", () => {
-    test("should adapt header layout for mobile viewport", async ({page}) => {
-      await page.setViewportSize({width: 375, height: 667});
+    test("should adapt header layout for mobile viewport", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
       await page.reload();
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
@@ -639,8 +638,8 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should adapt transaction table for mobile viewport", async ({page}) => {
-      await page.setViewportSize({width: 375, height: 667});
+    test("should adapt transaction table for mobile viewport", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
       await page.reload();
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
@@ -672,8 +671,8 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should adapt filters for tablet viewport", async ({page}) => {
-      await page.setViewportSize({width: 768, height: 1024});
+    test("should adapt filters for tablet viewport", async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
       await page.reload();
       await page.goto("/accounts");
       await page.click("[data-testid='account-item']");
@@ -710,12 +709,12 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should maintain readability across different screen sizes", async ({page}) => {
+    test("should maintain readability across different screen sizes", async ({ page }) => {
       const viewports = [
-        {width: 320, height: 568, name: "Small Mobile"},
-        {width: 768, height: 1024, name: "Tablet"},
-        {width: 1024, height: 768, name: "Landscape Tablet"},
-        {width: 1280, height: 720, name: "Desktop"},
+        { width: 320, height: 568, name: "Small Mobile" },
+        { width: 768, height: 1024, name: "Tablet" },
+        { width: 1024, height: 768, name: "Landscape Tablet" },
+        { width: 1280, height: 720, name: "Desktop" },
       ];
 
       for (const viewport of viewports) {
@@ -737,7 +736,7 @@ describeE2E("Individual Account Views and Displays", () => {
           // Text should not be too small to read
           const balanceStyles = await balance.evaluate((el) => {
             const styles = window.getComputedStyle(el);
-            return {fontSize: parseFloat(styles.fontSize)};
+            return { fontSize: parseFloat(styles.fontSize) };
           });
 
           expect(balanceStyles.fontSize).toBeGreaterThan(12); // Minimum readable size
@@ -758,7 +757,7 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Loading and Error States Display", () => {
-    test("should display loading indicators during data fetch", async ({page}) => {
+    test("should display loading indicators during data fetch", async ({ page }) => {
       // Simulate slow network to see loading states
       await page.route("**/api/trpc/**", (route) => {
         setTimeout(() => route.continue(), 500);
@@ -786,7 +785,7 @@ describeE2E("Individual Account Views and Displays", () => {
       await page.unroute("**/api/trpc/**");
     });
 
-    test("should display error states with clear messaging", async ({page}) => {
+    test("should display error states with clear messaging", async ({ page }) => {
       // Simulate network error
       await page.route("**/api/trpc/**", (route) => {
         route.abort("failed");
@@ -835,7 +834,7 @@ describeE2E("Individual Account Views and Displays", () => {
       await page.unroute("**/api/trpc/**");
     });
 
-    test("should display skeleton loading for content areas", async ({page}) => {
+    test("should display skeleton loading for content areas", async ({ page }) => {
       // Navigate to a potentially slow-loading page
       await page.route("**/api/trpc/**", (route) => {
         setTimeout(() => route.continue(), 300);
@@ -876,7 +875,7 @@ describeE2E("Individual Account Views and Displays", () => {
   });
 
   describeE2E("Accessibility Display Features", () => {
-    test("should have proper focus indicators for interactive elements", async ({page}) => {
+    test("should have proper focus indicators for interactive elements", async ({ page }) => {
       // Test keyboard navigation and focus indicators
       await page.keyboard.press("Tab");
 
@@ -915,7 +914,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should have proper color contrast for text elements", async ({page}) => {
+    test("should have proper color contrast for text elements", async ({ page }) => {
       // Check text contrast for key elements
       const textElements = [
         "h1, [data-testid='account-title']",
@@ -946,7 +945,7 @@ describeE2E("Individual Account Views and Displays", () => {
       }
     });
 
-    test("should have proper ARIA labels and roles for screen readers", async ({page}) => {
+    test("should have proper ARIA labels and roles for screen readers", async ({ page }) => {
       // Check main content areas for proper ARIA
       const accountTitle = page.locator("h1, [data-testid='account-title']");
       if (await accountTitle.isVisible()) {

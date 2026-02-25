@@ -215,8 +215,7 @@ const tableColumns = $derived(columns(handleApply, handleDismiss, handleReset));
     class={cn(
       'absolute inset-0 overflow-auto transition-transform duration-200 ease-out',
       showDetailPanel && '-translate-x-full'
-    )}
-  >
+    )}>
     <div class="space-y-4 p-1">
       <!-- Header -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -325,8 +324,7 @@ const tableColumns = $derived(columns(handleApply, handleDismiss, handleReset));
           recommendations={recommendations()}
           onBulkApply={handleBulkApply}
           onBulkDismiss={handleBulkDismiss}
-          onRowClick={handleRowClick}
-        />
+          onRowClick={handleRowClick} />
       {/if}
     </div>
   </div>
@@ -336,15 +334,13 @@ const tableColumns = $derived(columns(handleApply, handleDismiss, handleReset));
     class={cn(
       'absolute inset-0 overflow-auto transition-transform duration-200 ease-out',
       !showDetailPanel && 'translate-x-full'
-    )}
-  >
+    )}>
     {#if detailRecommendation}
       <RecommendationDetailPanel
         recommendation={detailRecommendation}
         onBack={handleDetailBack}
         onApply={handleDetailApply}
-        onDismiss={handleDetailDismiss}
-      />
+        onDismiss={handleDetailDismiss} />
     {/if}
   </div>
 </div>

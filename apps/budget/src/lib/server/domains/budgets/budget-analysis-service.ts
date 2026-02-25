@@ -727,7 +727,10 @@ export class BudgetAnalysisService {
     // Calculate months from date range
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const months = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+    const months = Math.max(
+      1,
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
+    );
 
     // Use unified detection service
     const detectionService = getRecurringDetectionService();
@@ -742,18 +745,19 @@ export class BudgetAnalysisService {
 
     // Query for raw transaction data to populate amounts/dates arrays
     const allTransactionIds = patterns.flatMap((p) => p.transactionIds);
-    const transactionData = allTransactionIds.length > 0
-      ? await db
-          .select({
-            id: transactions.id,
-            amount: transactions.amount,
-            date: transactions.date,
-            payeeId: transactions.payeeId,
-            accountId: transactions.accountId,
-          })
-          .from(transactions)
-          .where(inArray(transactions.id, allTransactionIds))
-      : [];
+    const transactionData =
+      allTransactionIds.length > 0
+        ? await db
+            .select({
+              id: transactions.id,
+              amount: transactions.amount,
+              date: transactions.date,
+              payeeId: transactions.payeeId,
+              accountId: transactions.accountId,
+            })
+            .from(transactions)
+            .where(inArray(transactions.id, allTransactionIds))
+        : [];
 
     // Group transaction data by payee+account for quick lookup
     const txnByPattern = new Map<string, { amounts: number[]; dates: string[] }>();
@@ -776,7 +780,11 @@ export class BudgetAnalysisService {
       let frequency: "weekly" | "monthly" | "quarterly";
       if (pattern.frequency === "weekly" || pattern.frequency === "biweekly") {
         frequency = "weekly";
-      } else if (pattern.frequency === "quarterly" || pattern.frequency === "semi_annual" || pattern.frequency === "annual") {
+      } else if (
+        pattern.frequency === "quarterly" ||
+        pattern.frequency === "semi_annual" ||
+        pattern.frequency === "annual"
+      ) {
         frequency = "quarterly";
       } else {
         frequency = "monthly";

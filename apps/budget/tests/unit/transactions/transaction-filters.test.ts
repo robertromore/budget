@@ -1,19 +1,18 @@
-import {describe, it, expect} from "vitest";
-import {parseDate} from "@internationalized/date";
+import { describe, it, expect } from "vitest";
+import { parseDate } from "@internationalized/date";
 
 /**
  * Tests for transaction filter functions
  * Testing all filter functions from filters.svelte.ts
  */
 describe("Transaction Filters - Unit Tests", () => {
-
   describe("entityIsFilter", () => {
     // Mock filter function
     const entityIsFilter = (params: {
       entityId: string | number | null;
       selectedValues: Set<string | number>;
     }) => {
-      const {entityId, selectedValues} = params;
+      const { entityId, selectedValues } = params;
       if (selectedValues.size === 0) return true;
       const entityIdStr = entityId === null ? "null" : entityId.toString();
       return selectedValues.has(entityIdStr);
@@ -21,33 +20,35 @@ describe("Transaction Filters - Unit Tests", () => {
 
     it("should return true when no filters are selected", () => {
       const selectedValues = new Set<string | number>();
-      expect(entityIsFilter({entityId: 1, selectedValues})).toBe(true);
-      expect(entityIsFilter({entityId: null, selectedValues})).toBe(true);
+      expect(entityIsFilter({ entityId: 1, selectedValues })).toBe(true);
+      expect(entityIsFilter({ entityId: null, selectedValues })).toBe(true);
     });
 
     it("should return true when entityId matches selected value", () => {
       const selectedValues = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsFilter({entityId: 1, selectedValues})).toBe(true);
-      expect(entityIsFilter({entityId: 2, selectedValues})).toBe(true);
+      expect(entityIsFilter({ entityId: 1, selectedValues })).toBe(true);
+      expect(entityIsFilter({ entityId: 2, selectedValues })).toBe(true);
     });
 
     it("should return false when entityId does not match selected values", () => {
       const selectedValues = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsFilter({entityId: 4, selectedValues})).toBe(false);
+      expect(entityIsFilter({ entityId: 4, selectedValues })).toBe(false);
     });
 
     it("should handle null entityId correctly", () => {
       const selectedValuesWithNull = new Set<string | number>(["null", 1, 2]);
-      expect(entityIsFilter({entityId: null, selectedValues: selectedValuesWithNull})).toBe(true);
+      expect(entityIsFilter({ entityId: null, selectedValues: selectedValuesWithNull })).toBe(true);
 
       const selectedValuesWithoutNull = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsFilter({entityId: null, selectedValues: selectedValuesWithoutNull})).toBe(false);
+      expect(entityIsFilter({ entityId: null, selectedValues: selectedValuesWithoutNull })).toBe(
+        false
+      );
     });
 
     it("should handle string and number matching", () => {
       const selectedValues = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsFilter({entityId: 1, selectedValues})).toBe(true);
-      expect(entityIsFilter({entityId: "1", selectedValues})).toBe(true);
+      expect(entityIsFilter({ entityId: 1, selectedValues })).toBe(true);
+      expect(entityIsFilter({ entityId: "1", selectedValues })).toBe(true);
     });
   });
 
@@ -57,7 +58,7 @@ describe("Transaction Filters - Unit Tests", () => {
       entityId: string | number | null;
       selectedValues: Set<string | number>;
     }) => {
-      const {entityId, selectedValues} = params;
+      const { entityId, selectedValues } = params;
       if (selectedValues.size === 0) return true;
       const entityIdStr = entityId === null ? "null" : entityId.toString();
       return !selectedValues.has(entityIdStr);
@@ -65,27 +66,31 @@ describe("Transaction Filters - Unit Tests", () => {
 
     it("should return true when no filters are selected", () => {
       const selectedValues = new Set<string | number>();
-      expect(entityIsNotFilter({entityId: 1, selectedValues})).toBe(true);
-      expect(entityIsNotFilter({entityId: null, selectedValues})).toBe(true);
+      expect(entityIsNotFilter({ entityId: 1, selectedValues })).toBe(true);
+      expect(entityIsNotFilter({ entityId: null, selectedValues })).toBe(true);
     });
 
     it("should return false when entityId matches selected value", () => {
       const selectedValues = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsNotFilter({entityId: 1, selectedValues})).toBe(false);
-      expect(entityIsNotFilter({entityId: 2, selectedValues})).toBe(false);
+      expect(entityIsNotFilter({ entityId: 1, selectedValues })).toBe(false);
+      expect(entityIsNotFilter({ entityId: 2, selectedValues })).toBe(false);
     });
 
     it("should return true when entityId does not match selected values", () => {
       const selectedValues = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsNotFilter({entityId: 4, selectedValues})).toBe(true);
+      expect(entityIsNotFilter({ entityId: 4, selectedValues })).toBe(true);
     });
 
     it("should handle null entityId correctly", () => {
       const selectedValuesWithNull = new Set<string | number>(["null", 1, 2]);
-      expect(entityIsNotFilter({entityId: null, selectedValues: selectedValuesWithNull})).toBe(false);
+      expect(entityIsNotFilter({ entityId: null, selectedValues: selectedValuesWithNull })).toBe(
+        false
+      );
 
       const selectedValuesWithoutNull = new Set<string | number>(["1", "2", "3"]);
-      expect(entityIsNotFilter({entityId: null, selectedValues: selectedValuesWithoutNull})).toBe(true);
+      expect(entityIsNotFilter({ entityId: null, selectedValues: selectedValuesWithoutNull })).toBe(
+        true
+      );
     });
   });
 
@@ -246,7 +251,7 @@ describe("Transaction Filters - Unit Tests", () => {
     const amountFilter = (amount: number, filterValue: any) => {
       if (!filterValue) return true;
 
-      const {operator, value, min, max} = filterValue;
+      const { operator, value, min, max } = filterValue;
 
       switch (operator) {
         case "equals":
@@ -266,8 +271,8 @@ describe("Transaction Filters - Unit Tests", () => {
 
     it("should use 'operator' property not 'type' property", () => {
       // Regression test for the bug where filter checked 'type' instead of 'operator'
-      const filterWithOperator = {operator: "greaterThan", value: 100};
-      const filterWithType = {type: "greaterThan", value: 100} as any;
+      const filterWithOperator = { operator: "greaterThan", value: 100 };
+      const filterWithType = { type: "greaterThan", value: 100 } as any;
 
       expect(amountFilter(150, filterWithOperator)).toBe(true);
       expect(amountFilter(50, filterWithOperator)).toBe(false);
@@ -282,14 +287,14 @@ describe("Transaction Filters - Unit Tests", () => {
     });
 
     it("should filter with 'equals' operator", () => {
-      const filter = {operator: "equals", value: 100};
+      const filter = { operator: "equals", value: 100 };
       expect(amountFilter(100, filter)).toBe(true);
       expect(amountFilter(99.99, filter)).toBe(false);
       expect(amountFilter(100.01, filter)).toBe(false);
     });
 
     it("should filter with 'greaterThan' operator", () => {
-      const filter = {operator: "greaterThan", value: 50};
+      const filter = { operator: "greaterThan", value: 50 };
       expect(amountFilter(51, filter)).toBe(true);
       expect(amountFilter(100, filter)).toBe(true);
       expect(amountFilter(50, filter)).toBe(false);
@@ -297,7 +302,7 @@ describe("Transaction Filters - Unit Tests", () => {
     });
 
     it("should filter with 'lessThan' operator", () => {
-      const filter = {operator: "lessThan", value: 50};
+      const filter = { operator: "lessThan", value: 50 };
       expect(amountFilter(49, filter)).toBe(true);
       expect(amountFilter(0, filter)).toBe(true);
       expect(amountFilter(50, filter)).toBe(false);
@@ -305,7 +310,7 @@ describe("Transaction Filters - Unit Tests", () => {
     });
 
     it("should filter with 'between' operator", () => {
-      const filter = {operator: "between", min: 10, max: 100};
+      const filter = { operator: "between", min: 10, max: 100 };
       expect(amountFilter(10, filter)).toBe(true);
       expect(amountFilter(50, filter)).toBe(true);
       expect(amountFilter(100, filter)).toBe(true);
@@ -314,7 +319,7 @@ describe("Transaction Filters - Unit Tests", () => {
     });
 
     it("should filter with 'notEquals' operator", () => {
-      const filter = {operator: "notEquals", value: 0};
+      const filter = { operator: "notEquals", value: 0 };
       expect(amountFilter(0.01, filter)).toBe(true);
       expect(amountFilter(-0.01, filter)).toBe(true);
       expect(amountFilter(100, filter)).toBe(true);
@@ -322,28 +327,28 @@ describe("Transaction Filters - Unit Tests", () => {
     });
 
     it("should handle negative amounts", () => {
-      const filter = {operator: "lessThan", value: 0};
+      const filter = { operator: "lessThan", value: 0 };
       expect(amountFilter(-50, filter)).toBe(true);
       expect(amountFilter(0, filter)).toBe(false);
       expect(amountFilter(50, filter)).toBe(false);
     });
 
     it("should handle decimal amounts", () => {
-      const filter = {operator: "equals", value: 99.99};
+      const filter = { operator: "equals", value: 99.99 };
       expect(amountFilter(99.99, filter)).toBe(true);
       expect(amountFilter(99.98, filter)).toBe(false);
-      expect(amountFilter(100.00, filter)).toBe(false);
+      expect(amountFilter(100.0, filter)).toBe(false);
     });
 
     it("should handle large amounts", () => {
-      const filter = {operator: "greaterThan", value: 1000000};
+      const filter = { operator: "greaterThan", value: 1000000 };
       expect(amountFilter(1000001, filter)).toBe(true);
       expect(amountFilter(1000000, filter)).toBe(false);
       expect(amountFilter(999999, filter)).toBe(false);
     });
 
     it("should handle boundary cases in between operator", () => {
-      const filter = {operator: "between", min: 0, max: 100};
+      const filter = { operator: "between", min: 0, max: 100 };
       expect(amountFilter(0, filter)).toBe(true); // min boundary
       expect(amountFilter(100, filter)).toBe(true); // max boundary
       expect(amountFilter(-0.01, filter)).toBe(false);
@@ -414,7 +419,7 @@ describe("Transaction Filters - Unit Tests", () => {
     it("should handle zero values correctly", () => {
       const amountFilter = (amount: number, filterValue: any) => {
         if (!filterValue) return true;
-        const {operator, value} = filterValue;
+        const { operator, value } = filterValue;
 
         switch (operator) {
           case "equals":
@@ -427,9 +432,9 @@ describe("Transaction Filters - Unit Tests", () => {
       };
 
       // Zero should be treated as a valid value
-      expect(amountFilter(0, {operator: "equals", value: 0})).toBe(true);
-      expect(amountFilter(1, {operator: "greaterThan", value: 0})).toBe(true);
-      expect(amountFilter(0, {operator: "greaterThan", value: 0})).toBe(false);
+      expect(amountFilter(0, { operator: "equals", value: 0 })).toBe(true);
+      expect(amountFilter(1, { operator: "greaterThan", value: 0 })).toBe(true);
+      expect(amountFilter(0, { operator: "greaterThan", value: 0 })).toBe(false);
     });
 
     it("should handle null entity IDs", () => {

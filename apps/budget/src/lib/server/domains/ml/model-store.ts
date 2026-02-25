@@ -19,7 +19,6 @@ import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import type { AnomalyAlert, MLModel } from "./types";
 
 export class MLModelStore {
-
   // ==========================================================================
   // Model Management
   // ==========================================================================
@@ -50,7 +49,9 @@ export class MLModelStore {
           eq(mlModels.workspaceId, workspaceId),
           eq(mlModels.modelType, model.modelType),
           eq(mlModels.modelName, model.modelName),
-          model.entityType ? eq(mlModels.entityType, model.entityType) : isNull(mlModels.entityType),
+          model.entityType
+            ? eq(mlModels.entityType, model.entityType)
+            : isNull(mlModels.entityType),
           model.entityId ? eq(mlModels.entityId, model.entityId) : isNull(mlModels.entityId)
         )
       )
@@ -326,7 +327,9 @@ export class MLModelStore {
         weight: mlTrainingData.weight,
       })
       .from(mlTrainingData)
-      .where(and(eq(mlTrainingData.workspaceId, workspaceId), eq(mlTrainingData.modelType, modelType)))
+      .where(
+        and(eq(mlTrainingData.workspaceId, workspaceId), eq(mlTrainingData.modelType, modelType))
+      )
       .orderBy(desc(mlTrainingData.createdAt))
       .limit(limit);
 
@@ -375,7 +378,10 @@ export class MLModelStore {
     workspaceId: number,
     options?: { riskLevel?: "low" | "medium" | "high" | "critical"; limit?: number }
   ): Promise<AnomalyAlert[]> {
-    const conditions = [eq(anomalyAlerts.workspaceId, workspaceId), eq(anomalyAlerts.status, "new")];
+    const conditions = [
+      eq(anomalyAlerts.workspaceId, workspaceId),
+      eq(anomalyAlerts.status, "new"),
+    ];
 
     if (options?.riskLevel) {
       conditions.push(eq(anomalyAlerts.riskLevel, options.riskLevel));
@@ -400,8 +406,10 @@ export class MLModelStore {
         transactionId: row.transactionId,
         overallScore: row.overallScore,
         riskLevel: row.riskLevel,
-        dimensions: (row.scoreDetails as Record<string, unknown>).dimensions as AnomalyAlert["score"]["dimensions"],
-        detectors: (row.scoreDetails as Record<string, unknown>).detectors as AnomalyAlert["score"]["detectors"],
+        dimensions: (row.scoreDetails as Record<string, unknown>)
+          .dimensions as AnomalyAlert["score"]["dimensions"],
+        detectors: (row.scoreDetails as Record<string, unknown>)
+          .detectors as AnomalyAlert["score"]["detectors"],
         explanation: row.explanation,
         recommendedActions: row.recommendedActions,
       },

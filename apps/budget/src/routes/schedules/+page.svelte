@@ -44,8 +44,12 @@ function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
     createdAt: now,
     updatedAt: now,
     // Relations
-    payee: demoSchedule.payee ? { id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any : null,
-    category: demoSchedule.category ? { id: demoSchedule.category.id, name: demoSchedule.category.name } as any : null,
+    payee: demoSchedule.payee
+      ? ({ id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any)
+      : null,
+    category: demoSchedule.category
+      ? ({ id: demoSchedule.category.id, name: demoSchedule.category.name } as any)
+      : null,
     scheduleDate: {
       id: demoSchedule.id,
       frequency: demoSchedule.frequency,
@@ -60,9 +64,7 @@ const schedulesState = SchedulesState.get();
 
 // Use demo data when in demo mode, otherwise use real schedules
 const allSchedules = $derived<Schedule[]>(
-  isDemoView
-    ? demoMode.demoSchedules.map(demoScheduleToSchedule)
-    : schedulesState.all
+  isDemoView ? demoMode.demoSchedules.map(demoScheduleToSchedule) : schedulesState.all
 );
 const hasNoSchedules = $derived(allSchedules.length === 0);
 
@@ -141,7 +143,11 @@ function cancelDelete() {
 
 <div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="schedules-page-header" data-help-title="Schedules Page" data-tour-id="schedules-page">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+    data-help-id="schedules-page-header"
+    data-help-title="Schedules Page"
+    data-tour-id="schedules-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Schedules</h1>
       <p class="text-muted-foreground">{allSchedules.length} schedules total</p>
@@ -185,16 +191,19 @@ function cancelDelete() {
     </Empty.Empty>
   {:else}
     <!-- Schedule Data Table -->
-    <div data-help-id="schedules-table" data-help-title="Schedules Table" data-tour-id="schedules-list">
-    <ScheduleSearchResults
-      schedules={allSchedules}
-      isLoading={false}
-      searchQuery=""
-      viewMode="list"
-      onView={viewSchedule}
-      onEdit={editSchedule}
-      onDelete={deleteSchedule}
-      onBulkDelete={bulkDeleteSchedules} />
+    <div
+      data-help-id="schedules-table"
+      data-help-title="Schedules Table"
+      data-tour-id="schedules-list">
+      <ScheduleSearchResults
+        schedules={allSchedules}
+        isLoading={false}
+        searchQuery=""
+        viewMode="list"
+        onView={viewSchedule}
+        onEdit={editSchedule}
+        onDelete={deleteSchedule}
+        onBulkDelete={bulkDeleteSchedules} />
     </div>
   {/if}
 </div>

@@ -6,7 +6,10 @@ import {
 } from "$lib/schema/workspaces";
 import { db } from "$lib/server/db";
 import { getConnectionService } from "$lib/server/domains/connections";
-import { encryptCredentials, decryptCredentials } from "$lib/server/domains/connections/credential-encryption";
+import {
+  encryptCredentials,
+  decryptCredentials,
+} from "$lib/server/domains/connections/credential-encryption";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { eq } from "drizzle-orm";
@@ -183,14 +186,10 @@ export const connectionRoutes = t.router({
    */
   sync: rateLimitedProcedure.input(syncOptionsSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
-      return await connectionService.syncConnection(
-        input.connectionId,
-        ctx.workspaceId,
-        {
-          since: input.since ? new Date(input.since) : undefined,
-          force: input.force,
-        }
-      );
+      return await connectionService.syncConnection(input.connectionId, ctx.workspaceId, {
+        since: input.since ? new Date(input.since) : undefined,
+        force: input.force,
+      });
     })
   ),
 
@@ -279,7 +278,8 @@ export const connectionRoutes = t.router({
           ? JSON.parse(workspace.preferences)
           : {};
 
-        const connectionPrefs = currentPrefs.connectionProviders ?? DEFAULT_CONNECTION_PROVIDER_PREFERENCES;
+        const connectionPrefs =
+          currentPrefs.connectionProviders ?? DEFAULT_CONNECTION_PROVIDER_PREFERENCES;
 
         // Update Teller settings
         const updatedPrefs: WorkspacePreferences = {
@@ -326,7 +326,8 @@ export const connectionRoutes = t.router({
           ? JSON.parse(workspace.preferences)
           : {};
 
-        const connectionPrefs = currentPrefs.connectionProviders ?? DEFAULT_CONNECTION_PROVIDER_PREFERENCES;
+        const connectionPrefs =
+          currentPrefs.connectionProviders ?? DEFAULT_CONNECTION_PROVIDER_PREFERENCES;
 
         // Handle access URL encryption
         let encryptedAccessUrl = connectionPrefs.simplefin.encryptedAccessUrl;
@@ -414,7 +415,8 @@ export const connectionRoutes = t.router({
           ? JSON.parse(workspace.preferences)
           : {};
 
-        const connectionPrefs = currentPrefs.connectionProviders ?? DEFAULT_CONNECTION_PROVIDER_PREFERENCES;
+        const connectionPrefs =
+          currentPrefs.connectionProviders ?? DEFAULT_CONNECTION_PROVIDER_PREFERENCES;
 
         // Update auto-sync settings
         const updatedPrefs: WorkspacePreferences = {

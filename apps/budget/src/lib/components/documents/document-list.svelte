@@ -50,13 +50,7 @@ interface Props {
   showEmpty?: boolean;
 }
 
-let {
-  documents,
-  accounts,
-  groupBy = 'none',
-  loading = false,
-  showEmpty = true,
-}: Props = $props();
+let { documents, accounts, groupBy = 'none', loading = false, showEmpty = true }: Props = $props();
 
 // State for AI explanation sheet
 let explainSheetOpen = $state(false);
@@ -115,7 +109,12 @@ function handleReExtract(method: DocumentExtractionMethod) {
   );
 }
 
-const allReExtractMethods: Array<{ value: DocumentExtractionMethod; label: string; icon: typeof FileText; mimeFilter?: 'pdf' | 'image' }> = [
+const allReExtractMethods: Array<{
+  value: DocumentExtractionMethod;
+  label: string;
+  icon: typeof FileText;
+  mimeFilter?: 'pdf' | 'image';
+}> = [
   { value: 'auto', label: 'Auto', icon: Wand2 },
   { value: 'pdf-parse', label: 'PDF Parse', icon: FileText, mimeFilter: 'pdf' },
   { value: 'tesseract', label: 'Tesseract OCR', icon: ScanText, mimeFilter: 'image' },
@@ -171,9 +170,7 @@ function getExtractionStatusBadge(status: ExtractionStatus | null | undefined): 
 // Check if document can be extracted
 function canExtract(doc: AccountDocument): boolean {
   return (
-    doc.extractionStatus === 'pending' ||
-    doc.extractionStatus === 'failed' ||
-    !doc.extractionStatus
+    doc.extractionStatus === 'pending' || doc.extractionStatus === 'failed' || !doc.extractionStatus
   );
 }
 
@@ -305,17 +302,23 @@ function formatDate(dateStr: string | null | undefined): string {
                     {documentTypeEnum[(doc.documentType || 'other') as DocumentType]}
                   </Badge>
                   {#if doc.extractionStatus}
-                    {@const statusBadge = getExtractionStatusBadge(doc.extractionStatus as ExtractionStatus)}
+                    {@const statusBadge = getExtractionStatusBadge(
+                      doc.extractionStatus as ExtractionStatus
+                    )}
                     {#if statusBadge}
                       {@const StatusIcon = statusBadge.icon}
                       <Badge variant={statusBadge.variant} class="gap-1">
-                        <StatusIcon class="h-3 w-3 {doc.extractionStatus === 'processing' ? 'animate-spin' : ''}" />
+                        <StatusIcon
+                          class="h-3 w-3 {doc.extractionStatus === 'processing'
+                            ? 'animate-spin'
+                            : ''}" />
                         {statusBadge.label}
                       </Badge>
                     {/if}
                   {/if}
                 </div>
-                <div class="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <div
+                  class="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                   {#if groupBy !== 'account'}
                     <span>{getAccountName(doc.accountId)}</span>
                     <span>·</span>
@@ -327,7 +330,7 @@ function formatDate(dateStr: string | null | undefined): string {
                   {/if}
                   {#if doc.description}
                     <span>·</span>
-                    <span class="truncate max-w-[200px]">{doc.description}</span>
+                    <span class="max-w-[200px] truncate">{doc.description}</span>
                   {/if}
                 </div>
               </div>
@@ -409,8 +412,7 @@ function formatDate(dateStr: string | null | undefined): string {
   onOpenChange={(open) => {
     explainSheetOpen = open;
     if (!open) documentToExplain = null;
-  }}
-/>
+  }} />
 
 <!-- Extracted Text Viewer Sheet -->
 <ResponsiveSheet
@@ -425,8 +427,7 @@ function formatDate(dateStr: string | null | undefined): string {
   side="right"
   defaultWidth={560}
   minWidth={400}
-  maxWidth={800}
->
+  maxWidth={800}>
   {#snippet header()}
     <div class="flex flex-col gap-1">
       <h2 class="flex items-center gap-2 text-lg font-semibold">
@@ -461,12 +462,10 @@ function formatDate(dateStr: string | null | undefined): string {
       {/if}
       {#if documentToView?.extractedText}
         <ScrollArea class="h-[calc(100vh-200px)] rounded-md border p-4">
-          <pre class="whitespace-pre-wrap font-mono text-sm">{documentToView.extractedText}</pre>
+          <pre class="font-mono text-sm whitespace-pre-wrap">{documentToView.extractedText}</pre>
         </ScrollArea>
       {:else if !reExtractError}
-        <div class="text-muted-foreground py-8 text-center">
-          No extracted text available
-        </div>
+        <div class="text-muted-foreground py-8 text-center">No extracted text available</div>
       {/if}
     {/if}
   {/snippet}
@@ -496,9 +495,7 @@ function formatDate(dateStr: string | null | undefined): string {
           {/each}
         </DropdownMenu.Content>
       </DropdownMenu.Root>
-      <Button variant="outline" size="sm" onclick={() => textViewerOpen = false}>
-        Close
-      </Button>
+      <Button variant="outline" size="sm" onclick={() => (textViewerOpen = false)}>Close</Button>
     </div>
   {/snippet}
 </ResponsiveSheet>

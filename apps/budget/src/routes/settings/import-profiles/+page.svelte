@@ -168,7 +168,9 @@ const fieldLabels: Record<keyof ColumnMapping, string> = {
 };
 
 // Get mapped fields from a profile's mapping
-function getMappedFields(mapping: ColumnMapping | null | undefined): Array<{ field: string; csvColumn: string }> {
+function getMappedFields(
+  mapping: ColumnMapping | null | undefined
+): Array<{ field: string; csvColumn: string }> {
   if (!mapping) return [];
 
   const result: Array<{ field: string; csvColumn: string }> = [];
@@ -191,9 +193,7 @@ function getMappedFields(mapping: ColumnMapping | null | undefined): Array<{ fie
 <div class="space-y-6" data-help-id="settings-import-profiles" data-help-title="Import Profiles">
   <div>
     <h2 class="text-xl font-semibold">Import Profiles</h2>
-    <p class="text-muted-foreground text-sm">
-      Manage your saved column mappings for CSV imports
-    </p>
+    <p class="text-muted-foreground text-sm">Manage your saved column mappings for CSV imports</p>
   </div>
 
   {#if profiles.length === 0}
@@ -243,7 +243,7 @@ function getMappedFields(mapping: ColumnMapping | null | undefined): Array<{ fie
                   </div>
                 </Table.Cell>
                 <Table.Cell>
-                  <span class="text-muted-foreground text-xs font-mono">
+                  <span class="text-muted-foreground font-mono text-xs">
                     {formatColumnSignature(profile.columnSignature)}
                   </span>
                 </Table.Cell>
@@ -411,9 +411,7 @@ function getMappedFields(mapping: ColumnMapping | null | undefined): Array<{ fie
     </div>
     <AlertDialog.Footer>
       <AlertDialog.Cancel onclick={closeEditDialog}>Cancel</AlertDialog.Cancel>
-      <Button
-        onclick={saveProfile}
-        disabled={editDialog.isSaving || !editDialog.name.trim()}>
+      <Button onclick={saveProfile} disabled={editDialog.isSaving || !editDialog.name.trim()}>
         {#if editDialog.isSaving}
           Saving...
         {:else}
@@ -430,7 +428,8 @@ function getMappedFields(mapping: ColumnMapping | null | undefined): Array<{ fie
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Import Profile?</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete "{deleteDialog.profile?.name}"? This action cannot be undone.
+        Are you sure you want to delete "{deleteDialog.profile?.name}"? This action cannot be
+        undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

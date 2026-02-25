@@ -5,14 +5,14 @@ import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import List from '@lucide/svelte/icons/list';
 
 type Props<TData, TValue> = {
-	column: Column<TData, TValue>;
+  column: Column<TData, TValue>;
 };
 
 let { column }: Props<TData, TValue> = $props();
 
 const TransactionTypes = {
-	TRANSFER: 'transfer',
-	REGULAR: 'regular'
+  TRANSFER: 'transfer',
+  REGULAR: 'regular',
 } as const;
 
 type TransactionType = (typeof TransactionTypes)[keyof typeof TransactionTypes];
@@ -20,13 +20,13 @@ type TransactionType = (typeof TransactionTypes)[keyof typeof TransactionTypes];
 const allTypes = Object.values(TransactionTypes);
 
 const typeConfig = {
-	entities: allTypes,
-	getId: (type: TransactionType) => type,
-	getLabel: (type: TransactionType) =>
-		type === TransactionTypes.TRANSFER ? 'Transfer' : 'Regular',
-	icon: ArrowRightLeft,
-	title: 'Type',
-	allIcon: List
+  entities: allTypes,
+  getId: (type: TransactionType) => type,
+  getLabel: (type: TransactionType) =>
+    type === TransactionTypes.TRANSFER ? 'Transfer' : 'Regular',
+  icon: ArrowRightLeft,
+  title: 'Type',
+  allIcon: List,
 };
 </script>
 

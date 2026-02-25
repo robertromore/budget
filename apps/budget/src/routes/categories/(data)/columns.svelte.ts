@@ -59,11 +59,11 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
   const valueStr = typeof value === "boolean" ? String(value) : value;
 
   // Handle { operator, values } format from GenericFacetedFilter
-  if (typeof filterValue === 'object' && 'values' in filterValue) {
+  if (typeof filterValue === "object" && "values" in filterValue) {
     const { operator, values } = filterValue as { operator: string; values: string[] };
     if (!values || values.length === 0) return true;
     const isIncluded = values.includes(valueStr);
-    return operator === 'arrNotIncludesSome' ? !isIncluded : isIncluded;
+    return operator === "arrNotIncludesSome" ? !isIncluded : isIncluded;
   }
 
   // Handle array format

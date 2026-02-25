@@ -11,13 +11,15 @@ Advanced options for data management. Use with caution.
 
 ## Danger Zone
 
-This section contains irreversible actions that can permanently delete your data.
+This section contains irreversible actions that can permanently delete your
+data.
 
 ### Delete All Data
 
 Permanently removes all data from your workspace:
 
 **What Gets Deleted:**
+
 - All accounts and their transactions
 - All budgets and allocations
 - All categories (custom and default)
@@ -28,6 +30,7 @@ Permanently removes all data from your workspace:
 - All import profiles
 
 **What's Preserved:**
+
 - Your user account
 - Your workspace settings
 - Your appearance preferences

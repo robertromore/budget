@@ -25,7 +25,14 @@ interface Props {
   onRowClick?: (recommendation: BudgetRecommendationWithRelations) => void;
 }
 
-let { columns, recommendations, table = $bindable(), onBulkApply, onBulkDismiss, onRowClick }: Props = $props();
+let {
+  columns,
+  recommendations,
+  table = $bindable(),
+  onBulkApply,
+  onBulkDismiss,
+  onRowClick,
+}: Props = $props();
 
 // Table state
 let sorting = $state<any[]>([{ id: 'confidence', desc: true }]); // Sort by confidence by default (highest first)
@@ -111,14 +118,14 @@ table = createSvelteTable({
           {#each table.getRowModel().rows as row}
             <Table.Row
               data-state={row.getIsSelected() && 'selected'}
-              class={cn(onRowClick && 'cursor-pointer hover:bg-muted/50')}
-              onclick={() => onRowClick?.(row.original)}
-            >
+              class={cn(onRowClick && 'hover:bg-muted/50 cursor-pointer')}
+              onclick={() => onRowClick?.(row.original)}>
               {#each row.getVisibleCells() as cell}
                 <!-- Stop propagation for interactive cells to prevent row click -->
                 <Table.Cell
-                  onclick={cell.column.id === 'select-col' ? (e) => e.stopPropagation() : undefined}
-                >
+                  onclick={cell.column.id === 'select-col'
+                    ? (e) => e.stopPropagation()
+                    : undefined}>
                   {#if cell.column.columnDef.cell}
                     <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
                   {/if}

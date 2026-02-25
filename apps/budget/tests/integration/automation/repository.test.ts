@@ -20,16 +20,12 @@ function createTestConditions(): ConditionGroup {
   return {
     id: "group-1",
     operator: "AND",
-    conditions: [
-      { id: "cond-1", field: "amount", operator: "greaterThan", value: 100 },
-    ],
+    conditions: [{ id: "cond-1", field: "amount", operator: "greaterThan", value: 100 }],
   };
 }
 
 function createTestActions(): ActionConfig[] {
-  return [
-    { id: "action-1", type: "setCategory", params: { categoryId: 1 } },
-  ];
+  return [{ id: "action-1", type: "setCategory", params: { categoryId: 1 } }];
 }
 
 describe("Automation Repository Integration Tests", () => {
@@ -371,7 +367,10 @@ describe("Automation Repository Integration Tests", () => {
 
         const rules = await repo.findByEntityType("transaction");
         expect(rules).toHaveLength(2);
-        expect(rules.map((r) => r.name).sort()).toEqual(["Transaction Created", "Transaction Updated"]);
+        expect(rules.map((r) => r.name).sort()).toEqual([
+          "Transaction Created",
+          "Transaction Updated",
+        ]);
       });
     });
 

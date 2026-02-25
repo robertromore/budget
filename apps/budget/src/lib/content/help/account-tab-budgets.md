@@ -11,6 +11,7 @@ Manage budget allocations that draw from this account.
 ## Budget Overview
 
 See all budgets associated with this account:
+
 - **Budget Name** - The spending category
 - **Allocated** - Monthly limit
 - **Spent** - Current spending
@@ -26,13 +27,17 @@ See all budgets associated with this account:
 ## Actions
 
 ### Create Budget
+
 Link a new budget to this account for tracking.
 
 ### Edit Allocations
+
 Adjust monthly limits as needed.
 
 ### View Details
+
 Click a budget to see:
+
 - Transaction breakdown
 - Spending history
 - Category analysis
@@ -40,6 +45,7 @@ Click a budget to see:
 ## Recommendations
 
 The system suggests budgets based on:
+
 - Spending patterns in this account
 - Common budget categories
 - Historical transaction data
@@ -47,6 +53,7 @@ The system suggests budgets based on:
 ## Account Types
 
 Budget functionality varies:
+
 - **Checking/Savings** - Full budget support
 - **Credit Cards** - Expense tracking focus
 - **HSA** - Medical category budgets

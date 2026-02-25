@@ -383,9 +383,7 @@ export interface PersistentLSHIndex extends LSHIndex {
  * Create an LSH index with database persistence
  * Uses the ML model store for persistence
  */
-export function createPersistentLSHIndex(
-  config: Partial<LSHIndexConfig> = {}
-): PersistentLSHIndex {
+export function createPersistentLSHIndex(config: Partial<LSHIndexConfig> = {}): PersistentLSHIndex {
   const baseIndex = createLSHIndex(config);
 
   return {

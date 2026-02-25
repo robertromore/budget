@@ -6,7 +6,8 @@ related: [accounts-list, payees-list]
 
 # Import Transactions
 
-Import financial data from various file formats to quickly add transactions to your accounts.
+Import financial data from various file formats to quickly add transactions to
+your accounts.
 
 ## Supported Formats
 
@@ -32,7 +33,8 @@ Import financial data from various file formats to quickly add transactions to y
 - **Auto-create payees** - Create new payees from imported data
 - **Auto-create categories** - Create new categories from imported data
 - **Reverse amount signs** - Flip positive/negative (for some CSV formats)
-- **Filter processors** - Remove payment processor prefixes (PayPal, Venmo, etc.)
+- **Filter processors** - Remove payment processor prefixes (PayPal, Venmo,
+  etc.)
 
 ## Tips
 

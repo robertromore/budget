@@ -11,10 +11,14 @@ Control how table column and display settings are presented.
 ## Options
 
 ### Popup dropdown
-A compact popover that appears near the settings button with collapsible sections.
+
+A compact popover that appears near the settings button with collapsible
+sections.
 
 ### Responsive sheet
-A slide-out panel that provides more space. Appears as a side panel on desktop and a drawer from the bottom on mobile.
+
+A slide-out panel that provides more space. Appears as a side panel on desktop
+and a drawer from the bottom on mobile.
 
 ## When to Use Each
 

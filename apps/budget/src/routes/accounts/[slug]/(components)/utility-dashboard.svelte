@@ -86,10 +86,12 @@ const trendDirection = $derived.by(() => {
         <div class="text-muted-foreground flex items-center text-xs">
           {#if trendDirection === 'up'}
             <TrendingUp class="text-destructive mr-1 h-3 w-3" />
-            <span class="text-destructive">{formatPercentRaw(usageChangePercent ?? 0, 1)} vs last period</span>
+            <span class="text-destructive"
+              >{formatPercentRaw(usageChangePercent ?? 0, 1)} vs last period</span>
           {:else if trendDirection === 'down'}
             <TrendingDown class="mr-1 h-3 w-3 text-green-500" />
-            <span class="text-green-500">{formatPercentRaw(Math.abs(usageChangePercent ?? 0), 1)} vs last period</span>
+            <span class="text-green-500"
+              >{formatPercentRaw(Math.abs(usageChangePercent ?? 0), 1)} vs last period</span>
           {:else}
             <span>No previous data</span>
           {/if}
@@ -108,7 +110,10 @@ const trendDirection = $derived.by(() => {
           {formatCurrency(latestRecord?.ratePerUnit ?? 0)}
         </div>
         <p class="text-muted-foreground text-xs">
-          per {latestRecord?.usageUnit ? USAGE_UNIT_LABELS[latestRecord.usageUnit as keyof typeof USAGE_UNIT_LABELS]?.shortLabel : 'unit'}
+          per {latestRecord?.usageUnit
+            ? USAGE_UNIT_LABELS[latestRecord.usageUnit as keyof typeof USAGE_UNIT_LABELS]
+                ?.shortLabel
+            : 'unit'}
         </p>
       </Card.Content>
     </Card.Root>
@@ -123,9 +128,7 @@ const trendDirection = $derived.by(() => {
         <div class="text-2xl font-bold">
           {analytics?.yearToDate?.averageMonthlyUsage?.toFixed(2) ?? 'N/A'}
         </div>
-        <p class="text-muted-foreground text-xs">
-          per month (YTD avg)
-        </p>
+        <p class="text-muted-foreground text-xs">per month (YTD avg)</p>
       </Card.Content>
     </Card.Root>
 
@@ -140,7 +143,11 @@ const trendDirection = $derived.by(() => {
           {formatCurrency(analytics?.yearToDate?.totalCost ?? 0)}
         </div>
         <p class="text-muted-foreground text-xs">
-          {analytics?.yearToDate?.totalUsage?.toLocaleString() ?? 0} {latestRecord?.usageUnit ? USAGE_UNIT_LABELS[latestRecord.usageUnit as keyof typeof USAGE_UNIT_LABELS]?.shortLabel : 'units'} used
+          {analytics?.yearToDate?.totalUsage?.toLocaleString() ?? 0}
+          {latestRecord?.usageUnit
+            ? USAGE_UNIT_LABELS[latestRecord.usageUnit as keyof typeof USAGE_UNIT_LABELS]
+                ?.shortLabel
+            : 'units'} used
         </p>
       </Card.Content>
     </Card.Root>
@@ -202,7 +209,9 @@ const trendDirection = $derived.by(() => {
             <div class="flex items-center justify-between border-b pb-3 last:border-b-0 last:pb-0">
               <div class="flex-1">
                 <p class="font-medium">
-                  {new Date(record.periodStart).toLocaleDateString()} - {new Date(record.periodEnd).toLocaleDateString()}
+                  {new Date(record.periodStart).toLocaleDateString()} - {new Date(
+                    record.periodEnd
+                  ).toLocaleDateString()}
                 </p>
                 <p class="text-muted-foreground text-sm">
                   {formatUsage(record.usageAmount, record.usageUnit)}
@@ -212,7 +221,10 @@ const trendDirection = $derived.by(() => {
                 <p class="font-semibold">{formatCurrency(record.totalAmount ?? 0)}</p>
                 {#if record.ratePerUnit}
                   <p class="text-muted-foreground text-xs">
-                    {formatCurrency(record.ratePerUnit)}/{record.usageUnit ? USAGE_UNIT_LABELS[record.usageUnit as keyof typeof USAGE_UNIT_LABELS]?.shortLabel : 'unit'}
+                    {formatCurrency(record.ratePerUnit)}/{record.usageUnit
+                      ? USAGE_UNIT_LABELS[record.usageUnit as keyof typeof USAGE_UNIT_LABELS]
+                          ?.shortLabel
+                      : 'unit'}
                   </p>
                 {/if}
               </div>

@@ -1,8 +1,8 @@
-import {describe, test, expect, beforeEach, afterEach} from "vitest";
-import {createCaller} from "../../../src/lib/trpc/router";
-import {eq} from "drizzle-orm";
-import {categories, users, workspaces, workspaceMembers} from "$lib/schema";
-import {setupTestDb, clearTestDb} from "../setup/test-db";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { createCaller } from "../../../src/lib/trpc/router";
+import { eq } from "drizzle-orm";
+import { categories, users, workspaces, workspaceMembers } from "$lib/schema";
+import { setupTestDb, clearTestDb } from "../setup/test-db";
 
 describe("Categories tRPC Integration Tests", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
@@ -87,8 +87,8 @@ describe("Categories tRPC Integration Tests", () => {
     test("should return all non-deleted categories", async () => {
       // Create test categories
       await db.insert(categories).values([
-        buildCategory({name: "Food", notes: "Groceries and dining"}),
-        buildCategory({name: "Transport", notes: null}),
+        buildCategory({ name: "Food", notes: "Groceries and dining" }),
+        buildCategory({ name: "Transport", notes: null }),
         buildCategory({
           name: "Deleted Category",
           notes: "Should not appear",
@@ -105,7 +105,9 @@ describe("Categories tRPC Integration Tests", () => {
     });
 
     test("should include all required category fields", async () => {
-      await db.insert(categories).values(buildCategory({name: "Test Category", notes: "Test notes"}));
+      await db
+        .insert(categories)
+        .values(buildCategory({ name: "Test Category", notes: "Test notes" }));
 
       const result = await caller.categoriesRoutes.all();
 
@@ -126,10 +128,10 @@ describe("Categories tRPC Integration Tests", () => {
     test("should load specific category by ID", async () => {
       const [inserted] = await db
         .insert(categories)
-        .values(buildCategory({name: "Entertainment", notes: "Movies and games"}))
+        .values(buildCategory({ name: "Entertainment", notes: "Movies and games" }))
         .returning();
 
-      const result = await caller.categoriesRoutes.load({id: inserted.id});
+      const result = await caller.categoriesRoutes.load({ id: inserted.id });
 
       expect(result.id).toBe(inserted.id);
       expect(result.name).toBe("Entertainment");
@@ -137,7 +139,7 @@ describe("Categories tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent category", async () => {
-      await expect(caller.categoriesRoutes.load({id: 999})).rejects.toThrow(
+      await expect(caller.categoriesRoutes.load({ id: 999 })).rejects.toThrow(
         "Category with ID 999 not found"
       );
     });
@@ -145,10 +147,10 @@ describe("Categories tRPC Integration Tests", () => {
     test("should load deleted category by ID", async () => {
       const [inserted] = await db
         .insert(categories)
-        .values(buildCategory({name: "Deleted Category", deletedAt: "2023-01-01T00:00:00Z"}))
+        .values(buildCategory({ name: "Deleted Category", deletedAt: "2023-01-01T00:00:00Z" }))
         .returning();
 
-      const result = await caller.categoriesRoutes.load({id: inserted.id});
+      const result = await caller.categoriesRoutes.load({ id: inserted.id });
       expect(result.id).toBe(inserted.id);
       expect(result.deletedAt).toBeTruthy();
     });
@@ -156,10 +158,10 @@ describe("Categories tRPC Integration Tests", () => {
     test("should handle string ID input (coercion)", async () => {
       const [inserted] = await db
         .insert(categories)
-        .values(buildCategory({name: "Coercion Test"}))
+        .values(buildCategory({ name: "Coercion Test" }))
         .returning();
 
-      const result = await caller.categoriesRoutes.load({id: inserted.id.toString() as any});
+      const result = await caller.categoriesRoutes.load({ id: inserted.id.toString() as any });
       expect(result.id).toBe(inserted.id);
     });
   });
@@ -187,14 +189,14 @@ describe("Categories tRPC Integration Tests", () => {
       });
 
       test("should create category with only name (notes optional)", async () => {
-        const result = await caller.categoriesRoutes.save({name: "Minimal Category"});
+        const result = await caller.categoriesRoutes.save({ name: "Minimal Category" });
 
         expect(result.name).toBe("Minimal Category");
         expect(result.notes).toBeNull();
       });
 
       test("should trim whitespace from name", async () => {
-        const result = await caller.categoriesRoutes.save({name: "  Trimmed Name  "});
+        const result = await caller.categoriesRoutes.save({ name: "  Trimmed Name  " });
         expect(result.name).toBe("Trimmed Name");
       });
 
@@ -211,7 +213,7 @@ describe("Categories tRPC Integration Tests", () => {
       test("should update existing category", async () => {
         const [existing] = await db
           .insert(categories)
-          .values(buildCategory({name: "Original Name", notes: "Original notes"}))
+          .values(buildCategory({ name: "Original Name", notes: "Original notes" }))
           .returning();
 
         const result = await caller.categoriesRoutes.save({
@@ -233,7 +235,7 @@ describe("Categories tRPC Integration Tests", () => {
       test("should clear notes when set to null", async () => {
         const [existing] = await db
           .insert(categories)
-          .values(buildCategory({name: "Category with Notes", notes: "Original notes"}))
+          .values(buildCategory({ name: "Category with Notes", notes: "Original notes" }))
           .returning();
 
         const result = await caller.categoriesRoutes.save({
@@ -248,38 +250,38 @@ describe("Categories tRPC Integration Tests", () => {
 
     describe("Validation errors", () => {
       test("should reject empty name", async () => {
-        await expect(caller.categoriesRoutes.save({name: ""})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name: "" })).rejects.toThrow(
           "Category name is required"
         );
-        await expect(caller.categoriesRoutes.save({name: "   "})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name: "   " })).rejects.toThrow(
           "Category name is required"
         );
       });
 
       test("should reject name longer than 50 characters", async () => {
         const longName = "a".repeat(51);
-        await expect(caller.categoriesRoutes.save({name: longName})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name: longName })).rejects.toThrow(
           "Category name must be less than 50 characters"
         );
       });
 
       test("should reject name with HTML/XSS characters", async () => {
         await expect(
-          caller.categoriesRoutes.save({name: "<script>alert('xss')</script>"})
+          caller.categoriesRoutes.save({ name: "<script>alert('xss')</script>" })
         ).rejects.toThrow("Category name contains invalid characters");
-        await expect(caller.categoriesRoutes.save({name: "Category <tag>"})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name: "Category <tag>" })).rejects.toThrow(
           "Category name contains invalid characters"
         );
-        await expect(caller.categoriesRoutes.save({name: "Category {bracket}"})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name: "Category {bracket}" })).rejects.toThrow(
           "Category name contains invalid characters"
         );
-        await expect(caller.categoriesRoutes.save({name: "Category [square]"})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name: "Category [square]" })).rejects.toThrow(
           "Category name contains invalid characters"
         );
-        await expect(caller.categoriesRoutes.save({name: "Category \\backslash"})).rejects.toThrow(
-          "Category name contains invalid characters"
-        );
-        await expect(caller.categoriesRoutes.save({name: "Category |pipe"})).rejects.toThrow(
+        await expect(
+          caller.categoriesRoutes.save({ name: "Category \\backslash" })
+        ).rejects.toThrow("Category name contains invalid characters");
+        await expect(caller.categoriesRoutes.save({ name: "Category |pipe" })).rejects.toThrow(
           "Category name contains invalid characters"
         );
       });
@@ -326,10 +328,10 @@ describe("Categories tRPC Integration Tests", () => {
     test("should soft delete category by setting deletedAt", async () => {
       const [category] = await db
         .insert(categories)
-        .values(buildCategory({name: "To Be Deleted"}))
+        .values(buildCategory({ name: "To Be Deleted" }))
         .returning();
 
-      const result = await caller.categoriesRoutes.remove({id: category.id});
+      const result = await caller.categoriesRoutes.remove({ id: category.id });
 
       expect(result.id).toBe(category.id);
       expect(result.deletedAt).toBeTruthy();
@@ -341,7 +343,7 @@ describe("Categories tRPC Integration Tests", () => {
     });
 
     test("should throw NOT_FOUND for non-existent category", async () => {
-      await expect(caller.categoriesRoutes.remove({id: 999})).rejects.toThrow(
+      await expect(caller.categoriesRoutes.remove({ id: 999 })).rejects.toThrow(
         "Category with ID 999 not found"
       );
     });
@@ -357,15 +359,15 @@ describe("Categories tRPC Integration Tests", () => {
       const categories1 = await db
         .insert(categories)
         .values([
-          buildCategory({name: "Category 1"}),
-          buildCategory({name: "Category 2"}),
-          buildCategory({name: "Category 3"}),
+          buildCategory({ name: "Category 1" }),
+          buildCategory({ name: "Category 2" }),
+          buildCategory({ name: "Category 3" }),
         ])
         .returning();
 
       const idsToDelete = [categories1[0].id, categories1[2].id]; // Delete first and third
 
-      const result = await caller.categoriesRoutes.delete({entities: idsToDelete});
+      const result = await caller.categoriesRoutes.delete({ entities: idsToDelete });
 
       expect(result.deletedCount).toBe(2);
       expect(result.errors).toEqual([]);
@@ -377,13 +379,13 @@ describe("Categories tRPC Integration Tests", () => {
     });
 
     test("should handle empty array", async () => {
-      await expect(caller.categoriesRoutes.delete({entities: []})).rejects.toThrow(
+      await expect(caller.categoriesRoutes.delete({ entities: [] })).rejects.toThrow(
         "No category IDs provided"
       );
     });
 
     test("should handle non-existent IDs gracefully", async () => {
-      const result = await caller.categoriesRoutes.delete({entities: [999, 1000]});
+      const result = await caller.categoriesRoutes.delete({ entities: [999, 1000] });
       expect(result.deletedCount).toBe(0);
       expect(result.errors).toHaveLength(2);
     });
@@ -391,7 +393,7 @@ describe("Categories tRPC Integration Tests", () => {
     test("should handle mix of valid and invalid IDs", async () => {
       const [validCategory] = await db
         .insert(categories)
-        .values(buildCategory({name: "Valid Category"}))
+        .values(buildCategory({ name: "Valid Category" }))
         .returning();
 
       const result = await caller.categoriesRoutes.delete({
@@ -407,27 +409,27 @@ describe("Categories tRPC Integration Tests", () => {
     test("should apply rate limiting to save operation", async () => {
       // This test verifies rate limiting is applied but doesn't test the actual limits
       // as that would require multiple rapid requests which could be flaky
-      const result = await caller.categoriesRoutes.save({name: "Rate Limited Test"});
+      const result = await caller.categoriesRoutes.save({ name: "Rate Limited Test" });
       expect(result.name).toBe("Rate Limited Test");
     });
 
     test("should apply rate limiting to remove operation", async () => {
       const [category] = await db
         .insert(categories)
-        .values(buildCategory({name: "Rate Limited Delete"}))
+        .values(buildCategory({ name: "Rate Limited Delete" }))
         .returning();
 
-      const result = await caller.categoriesRoutes.remove({id: category.id});
+      const result = await caller.categoriesRoutes.remove({ id: category.id });
       expect(result.deletedAt).toBeTruthy();
     });
 
     test("should apply rate limiting to bulk delete operation", async () => {
       const [category] = await db
         .insert(categories)
-        .values(buildCategory({name: "Rate Limited Bulk Delete"}))
+        .values(buildCategory({ name: "Rate Limited Bulk Delete" }))
         .returning();
 
-      const result = await caller.categoriesRoutes.delete({entities: [category.id]});
+      const result = await caller.categoriesRoutes.delete({ entities: [category.id] });
       expect(result.deletedCount).toBe(1);
       expect(result.errors).toEqual([]);
     });
@@ -437,11 +439,13 @@ describe("Categories tRPC Integration Tests", () => {
     test("should maintain referential integrity with parent categories", async () => {
       const [parent] = await db
         .insert(categories)
-        .values(buildCategory({name: "Parent Category"}))
+        .values(buildCategory({ name: "Parent Category" }))
         .returning();
 
       // Insert child category manually to test the relationship
-      await db.insert(categories).values(buildCategory({name: "Child Category", parentId: parent.id}));
+      await db
+        .insert(categories)
+        .values(buildCategory({ name: "Child Category", parentId: parent.id }));
 
       const allCategories = await caller.categoriesRoutes.all();
       const child = allCategories.find((c) => c.name === "Child Category");
@@ -451,8 +455,8 @@ describe("Categories tRPC Integration Tests", () => {
 
     test("should handle concurrent operations", async () => {
       // Create multiple categories simultaneously
-      const promises = Array.from({length: 5}, (_, i) =>
-        caller.categoriesRoutes.save({name: `Concurrent Category ${i}`})
+      const promises = Array.from({ length: 5 }, (_, i) =>
+        caller.categoriesRoutes.save({ name: `Concurrent Category ${i}` })
       );
 
       const results = await Promise.all(promises);
@@ -479,7 +483,7 @@ describe("Categories tRPC Integration Tests", () => {
       ];
 
       for (const name of validNames) {
-        const result = await caller.categoriesRoutes.save({name});
+        const result = await caller.categoriesRoutes.save({ name });
         expect(result.name).toBe(name);
       }
 
@@ -497,7 +501,7 @@ describe("Categories tRPC Integration Tests", () => {
       ];
 
       for (const name of unicodeNames) {
-        await expect(caller.categoriesRoutes.save({name})).rejects.toThrow(
+        await expect(caller.categoriesRoutes.save({ name })).rejects.toThrow(
           "Name contains invalid characters"
         );
       }

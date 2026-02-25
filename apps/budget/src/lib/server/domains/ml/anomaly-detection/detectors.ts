@@ -74,9 +74,10 @@ export class ZScoreDetector {
 
     let reason = `Amount is ${absZScore.toFixed(2)} standard deviations from mean`;
     if (triggered) {
-      reason = zScore > 0
-        ? `Unusually high amount: ${absZScore.toFixed(1)}σ above average`
-        : `Unusually low amount: ${Math.abs(absZScore).toFixed(1)}σ below average`;
+      reason =
+        zScore > 0
+          ? `Unusually high amount: ${absZScore.toFixed(1)}σ above average`
+          : `Unusually low amount: ${Math.abs(absZScore).toFixed(1)}σ below average`;
     }
 
     return {
@@ -125,9 +126,10 @@ export class IQRDetector {
 
     let reason = "Amount within expected range";
     if (triggered) {
-      reason = absAmount > upperBound
-        ? `Amount exceeds upper fence by ${iqrDistance.toFixed(1)} IQR`
-        : `Amount below lower fence by ${iqrDistance.toFixed(1)} IQR`;
+      reason =
+        absAmount > upperBound
+          ? `Amount exceeds upper fence by ${iqrDistance.toFixed(1)} IQR`
+          : `Amount below lower fence by ${iqrDistance.toFixed(1)} IQR`;
     }
 
     return {
@@ -336,7 +338,11 @@ export class PercentileDetector {
       reason: triggered
         ? `Amount in ${percentileStr} percentile (extreme)`
         : `Amount in ${percentileStr} percentile (normal range)`,
-      details: { percentile, lowerThreshold: this.lowerThreshold, upperThreshold: this.upperThreshold },
+      details: {
+        percentile,
+        lowerThreshold: this.lowerThreshold,
+        upperThreshold: this.upperThreshold,
+      },
     };
   }
 }
@@ -384,9 +390,10 @@ export class RoundNumberDetector {
     return {
       score: roundnessScore,
       triggered,
-      reason: roundnessScore > 0
-        ? `Suspiciously round amount (${roundnessLevel})`
-        : "Amount not suspiciously round",
+      reason:
+        roundnessScore > 0
+          ? `Suspiciously round amount (${roundnessLevel})`
+          : "Amount not suspiciously round",
       details: { roundnessLevel, originalAmount: amount },
     };
   }
@@ -403,7 +410,11 @@ export class FrequencyAnomalyDetector {
   detect(
     _amount: number,
     _stats: HistoricalStats,
-    context?: { recentTransactionCount: number; expectedCount: number; daysSinceLastTransaction: number }
+    context?: {
+      recentTransactionCount: number;
+      expectedCount: number;
+      daysSinceLastTransaction: number;
+    }
   ): DetectorResult {
     if (!context) {
       return {
@@ -470,16 +481,18 @@ export class TimeOfDayDetector {
     }
 
     const { hour } = context;
-    const isUnusualHour =
-      hour >= this.unusualHoursStart || hour < this.unusualHoursEnd;
+    const isUnusualHour = hour >= this.unusualHoursStart || hour < this.unusualHoursEnd;
 
     // Score based on distance from "normal" hours
     let score = 0;
     if (isUnusualHour) {
       if (hour >= this.unusualHoursStart) {
-        score = (hour - this.unusualHoursStart + 1) / (24 - this.unusualHoursStart + this.unusualHoursEnd);
+        score =
+          (hour - this.unusualHoursStart + 1) /
+          (24 - this.unusualHoursStart + this.unusualHoursEnd);
       } else {
-        score = (this.unusualHoursEnd - hour + (24 - this.unusualHoursStart)) /
+        score =
+          (this.unusualHoursEnd - hour + (24 - this.unusualHoursStart)) /
           (24 - this.unusualHoursStart + this.unusualHoursEnd);
       }
       score = Math.min(score, 0.6); // Cap at 0.6 - time alone isn't super suspicious
@@ -491,7 +504,11 @@ export class TimeOfDayDetector {
       reason: isUnusualHour
         ? `Transaction at unusual hour (${hour}:00)`
         : `Transaction at normal hour (${hour}:00)`,
-      details: { hour, unusualHoursStart: this.unusualHoursStart, unusualHoursEnd: this.unusualHoursEnd },
+      details: {
+        hour,
+        unusualHoursStart: this.unusualHoursStart,
+        unusualHoursEnd: this.unusualHoursEnd,
+      },
     };
   }
 }
@@ -504,7 +521,11 @@ export class RepeatedAmountDetector {
   readonly name = "repeated_amount";
   readonly weight = 0.1;
 
-  detect(amount: number, stats: HistoricalStats, context?: { recentAmounts: number[] }): DetectorResult {
+  detect(
+    amount: number,
+    stats: HistoricalStats,
+    context?: { recentAmounts: number[] }
+  ): DetectorResult {
     if (!context?.recentAmounts || context.recentAmounts.length < 3) {
       return {
         score: 0,

@@ -34,10 +34,8 @@ export const mlKeys = createQueryKeys("ml", {
   // Anomaly Detection
   anomalyAlerts: (params: { limit?: number; minRiskLevel?: string }) =>
     ["ml", "anomaly", "alerts", params] as const,
-  transactionScore: (transactionId: number) =>
-    ["ml", "anomaly", "score", transactionId] as const,
-  batchScores: (transactionIds: number[]) =>
-    ["ml", "anomaly", "batch", transactionIds] as const,
+  transactionScore: (transactionId: number) => ["ml", "anomaly", "score", transactionId] as const,
+  batchScores: (transactionIds: number[]) => ["ml", "anomaly", "batch", transactionIds] as const,
   scanRecent: (days: number, minRiskLevel: string) =>
     ["ml", "anomaly", "scan", days, minRiskLevel] as const,
   payeeAnomalyProfile: (payeeId: number) => ["ml", "anomaly", "payee", payeeId] as const,

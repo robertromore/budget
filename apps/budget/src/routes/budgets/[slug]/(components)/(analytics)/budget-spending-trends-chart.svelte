@@ -47,7 +47,8 @@ const summary = $derived.by(() => {
 
   const totalAllocated = chartData.reduce((sum, p) => sum + p.allocated, 0);
   const totalActual = chartData.reduce((sum, p) => sum + p.actual, 0);
-  const avgUtilization = chartData.reduce((sum, p) => sum + p.utilizationRate, 0) / chartData.length;
+  const avgUtilization =
+    chartData.reduce((sum, p) => sum + p.utilizationRate, 0) / chartData.length;
 
   // Calculate trend (comparing last 3 periods if available)
   let trend: 'up' | 'down' | 'stable' = 'stable';
@@ -102,36 +103,36 @@ function getProgressClass(rate: number): string {
     {:else if !chartData.length}
       <div class="text-muted-foreground py-12 text-center">
         <p>No spending history available for this budget.</p>
-        <p class="text-sm mt-1">Add periods to start tracking spending trends.</p>
+        <p class="mt-1 text-sm">Add periods to start tracking spending trends.</p>
       </div>
     {:else}
       <!-- Summary Cards -->
       {#if summary}
-        <div class="grid gap-4 md:grid-cols-3 mb-6">
+        <div class="mb-6 grid gap-4 md:grid-cols-3">
           <div class="rounded-lg border p-4">
             <div class="text-muted-foreground text-sm font-medium">Total Allocated</div>
-            <div class="text-2xl font-bold mt-1">
+            <div class="mt-1 text-2xl font-bold">
               {currencyFormatter.format(summary.totalAllocated)}
             </div>
-            <div class="text-muted-foreground text-xs mt-1">
+            <div class="text-muted-foreground mt-1 text-xs">
               Across {chartData.length} periods
             </div>
           </div>
 
           <div class="rounded-lg border p-4">
             <div class="text-muted-foreground text-sm font-medium">Total Spent</div>
-            <div class="text-2xl font-bold mt-1">
+            <div class="mt-1 text-2xl font-bold">
               {currencyFormatter.format(summary.totalActual)}
             </div>
-            <div class="flex items-center gap-1 mt-1">
+            <div class="mt-1 flex items-center gap-1">
               {#if summary.trend === 'up'}
                 <TrendingUp class="h-4 w-4 text-red-500" />
-                <span class="text-red-500 text-xs">Trending up</span>
+                <span class="text-xs text-red-500">Trending up</span>
               {:else if summary.trend === 'down'}
                 <TrendingDown class="h-4 w-4 text-green-500" />
-                <span class="text-green-500 text-xs">Trending down</span>
+                <span class="text-xs text-green-500">Trending down</span>
               {:else}
-                <Minus class="h-4 w-4 text-muted-foreground" />
+                <Minus class="text-muted-foreground h-4 w-4" />
                 <span class="text-muted-foreground text-xs">Stable</span>
               {/if}
             </div>
@@ -139,31 +140,33 @@ function getProgressClass(rate: number): string {
 
           <div class="rounded-lg border p-4">
             <div class="text-muted-foreground text-sm font-medium">Avg. Utilization</div>
-            <div class="text-2xl font-bold mt-1 {getUtilizationColor(summary.avgUtilization)}">
+            <div class="mt-1 text-2xl font-bold {getUtilizationColor(summary.avgUtilization)}">
               {formatPercentRaw(summary.avgUtilization, 1)}
             </div>
             <Progress
               value={Math.min(summary.avgUtilization, 100)}
-              class="mt-2 h-2 {getProgressClass(summary.avgUtilization)}"
-            />
+              class="mt-2 h-2 {getProgressClass(summary.avgUtilization)}" />
           </div>
         </div>
       {/if}
 
       <!-- Period List -->
-      <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+      <div class="max-h-[400px] space-y-3 overflow-y-auto pr-2">
         {#each chartData as period}
           <div class="rounded-lg border p-4">
-            <div class="flex items-center justify-between mb-2">
+            <div class="mb-2 flex items-center justify-between">
               <span class="font-medium">{period.label}</span>
               <Badge
                 variant="outline"
-                class={period.utilizationRate > 100 ? 'border-red-500 text-red-500' : period.utilizationRate > 80 ? 'border-yellow-500 text-yellow-500' : 'border-green-500 text-green-500'}
-              >
+                class={period.utilizationRate > 100
+                  ? 'border-red-500 text-red-500'
+                  : period.utilizationRate > 80
+                    ? 'border-yellow-500 text-yellow-500'
+                    : 'border-green-500 text-green-500'}>
                 {formatPercentRaw(period.utilizationRate, 0)}
               </Badge>
             </div>
-            <div class="grid grid-cols-2 gap-4 text-sm mb-2">
+            <div class="mb-2 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="text-muted-foreground">Allocated: </span>
                 <span class="font-medium">{currencyFormatter.format(period.allocated)}</span>
@@ -177,8 +180,7 @@ function getProgressClass(rate: number): string {
             </div>
             <Progress
               value={Math.min(period.utilizationRate, 100)}
-              class="h-2 {getProgressClass(period.utilizationRate)}"
-            />
+              class="h-2 {getProgressClass(period.utilizationRate)}" />
           </div>
         {/each}
       </div>

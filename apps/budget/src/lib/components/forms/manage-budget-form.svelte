@@ -173,14 +173,18 @@ const availableCategories = $derived(categories);
 
 const selectedAccounts = $derived.by(
   () =>
-    compact(selectedAccountIds
-      .map((id: number) => availableAccounts.find((account) => account.id === id))) as Account[]
+    compact(
+      selectedAccountIds.map((id: number) => availableAccounts.find((account) => account.id === id))
+    ) as Account[]
 );
 
 const selectedCategories = $derived.by(
   () =>
-    compact(selectedCategoryIds
-      .map((id: number) => availableCategories.find((category) => category.id === id))) as Category[]
+    compact(
+      selectedCategoryIds.map((id: number) =>
+        availableCategories.find((category) => category.id === id)
+      )
+    ) as Category[]
 );
 
 // Categories state for entity management
@@ -302,9 +306,7 @@ const accountAccessors = createTransformAccessors(
 // Schedule selection for scheduled-expense budgets
 // Include schedules that are either unlinked OR linked to the current budget being edited
 const availableSchedules = $derived(
-  schedules.filter(
-    (s) => s.status === 'active' && (!s.budgetId || s.budgetId === _budgetId)
-  )
+  schedules.filter((s) => s.status === 'active' && (!s.budgetId || s.budgetId === _budgetId))
 );
 
 const selectedSchedule = $derived.by(() => {
@@ -335,7 +337,12 @@ const isHelpHighlighted = (helpId: string) =>
     <Card.Content class="@container space-y-6">
       <!-- Budget Type & Name (side-by-side on larger containers) -->
       <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
-        <Form.Field {form} name="type" data-help-id="budget-type-field" data-help-title="Budget Type" class={cn(isHelpHighlighted('budget-type-field') && 'help-topic-highlight')}>
+        <Form.Field
+          {form}
+          name="type"
+          data-help-id="budget-type-field"
+          data-help-title="Budget Type"
+          class={cn(isHelpHighlighted('budget-type-field') && 'help-topic-highlight')}>
           <Form.Control>
             {#snippet children({ props })}
               <div class="flex items-center gap-1.5">
@@ -364,7 +371,12 @@ const isHelpHighlighted = (helpId: string) =>
           </Form.Control>
         </Form.Field>
 
-        <Form.Field {form} name="name" class={cn(isHelpHighlighted('budget-name-field') && 'help-topic-highlight')} data-help-id="budget-name-field" data-help-title="Budget Name">
+        <Form.Field
+          {form}
+          name="name"
+          class={cn(isHelpHighlighted('budget-name-field') && 'help-topic-highlight')}
+          data-help-id="budget-name-field"
+          data-help-title="Budget Name">
           <Form.Control>
             {#snippet children({ props })}
               <div class="flex items-center gap-1.5">
@@ -394,7 +406,12 @@ const isHelpHighlighted = (helpId: string) =>
           </Form.Control>
         </Form.Field>
 
-        <Form.Field {form} name="enforcementLevel" data-help-id="budget-enforcement-field" data-help-title="Enforcement Level" class={cn(isHelpHighlighted('budget-enforcement-field') && 'help-topic-highlight')}>
+        <Form.Field
+          {form}
+          name="enforcementLevel"
+          data-help-id="budget-enforcement-field"
+          data-help-title="Enforcement Level"
+          class={cn(isHelpHighlighted('budget-enforcement-field') && 'help-topic-highlight')}>
           <Form.Control>
             {#snippet children({ props })}
               <div class="flex items-center gap-1.5">
@@ -444,7 +461,12 @@ const isHelpHighlighted = (helpId: string) =>
         </Form.Field>
 
         {#if currentBudgetConfig.requiresAmount}
-          <Form.Field {form} name="allocatedAmount" data-help-id="budget-amount-field" data-help-title="Budget Amount" class={cn(isHelpHighlighted('budget-amount-field') && 'help-topic-highlight')}>
+          <Form.Field
+            {form}
+            name="allocatedAmount"
+            data-help-id="budget-amount-field"
+            data-help-title="Budget Amount"
+            class={cn(isHelpHighlighted('budget-amount-field') && 'help-topic-highlight')}>
             <Form.Control>
               {#snippet children({ props })}
                 <div class="flex items-center gap-1.5">
@@ -462,7 +484,13 @@ const isHelpHighlighted = (helpId: string) =>
       </div>
 
       <!-- Period Configuration -->
-      <div class={cn('border-border space-y-4 border-t pt-4', isHelpHighlighted('budget-period-field') && 'help-topic-highlight')} data-help-id="budget-period-field" data-help-title="Budget Period">
+      <div
+        class={cn(
+          'border-border space-y-4 border-t pt-4',
+          isHelpHighlighted('budget-period-field') && 'help-topic-highlight'
+        )}
+        data-help-id="budget-period-field"
+        data-help-title="Budget Period">
         <div class="flex items-center gap-1.5">
           <h3 class="text-sm font-medium">Period Configuration</h3>
           <FieldHelpButton helpId="budget-period-field" />
@@ -516,8 +544,7 @@ const isHelpHighlighted = (helpId: string) =>
                 bind:startDay={$formStore.startDay}
                 bind:duration={$formStore.intervalCount}
                 min={1}
-                max={366}
-              />
+                max={366} />
             </div>
           {:else if $formStore.periodType === 'yearly'}
             <!-- Yearly period: use month-based scrubber -->
@@ -529,11 +556,8 @@ const isHelpHighlighted = (helpId: string) =>
                     id={props.id}
                     bind:value={$formStore.startDay}
                     min={1}
-                    max={366}
-                  />
-                  <Form.Description>
-                    Day of the year when budget period starts
-                  </Form.Description>
+                    max={366} />
+                  <Form.Description>Day of the year when budget period starts</Form.Description>
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -548,11 +572,8 @@ const isHelpHighlighted = (helpId: string) =>
                     id={props.id}
                     bind:value={$formStore.startDay}
                     min={1}
-                    max={92}
-                  />
-                  <Form.Description>
-                    Day of the quarter when budget period starts
-                  </Form.Description>
+                    max={92} />
+                  <Form.Description>Day of the quarter when budget period starts</Form.Description>
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -568,8 +589,9 @@ const isHelpHighlighted = (helpId: string) =>
                     bind:value={$formStore.startDay}
                     min={1}
                     max={$formStore.periodType === 'monthly' ? 31 : 7}
-                    formatDisplay={$formStore.periodType === 'monthly' ? formatOrdinal : formatWeekday}
-                  />
+                    formatDisplay={$formStore.periodType === 'monthly'
+                      ? formatOrdinal
+                      : formatWeekday} />
                   <Form.Description>
                     {$formStore.periodType === 'monthly'
                       ? 'Day of the month when budget period starts'
@@ -585,7 +607,13 @@ const isHelpHighlighted = (helpId: string) =>
 
       <!-- Account Selection -->
       {#if currentBudgetConfig.requiresAccounts}
-        <div class={cn('border-border space-y-2 border-t pt-4', isHelpHighlighted('budget-account-field') && 'help-topic-highlight')} data-help-id="budget-account-field" data-help-title="Account Selection">
+        <div
+          class={cn(
+            'border-border space-y-2 border-t pt-4',
+            isHelpHighlighted('budget-account-field') && 'help-topic-highlight'
+          )}
+          data-help-id="budget-account-field"
+          data-help-title="Account Selection">
           <div class="flex items-center gap-1.5">
             <Label>Accounts</Label>
             <FieldHelpButton helpId="budget-account-field" />
@@ -626,13 +654,17 @@ const isHelpHighlighted = (helpId: string) =>
 
       <!-- Account Associations for Goal-Based Budgets -->
       {#if selectedBudgetType === 'goal-based'}
-        <div class="border-border space-y-2 border-t pt-4" data-help-id="budget-goal-accounts-field" data-help-title="Goal Account Associations">
+        <div
+          class="border-border space-y-2 border-t pt-4"
+          data-help-id="budget-goal-accounts-field"
+          data-help-title="Goal Account Associations">
           <div class="flex items-center gap-1.5">
             <Label>Account Associations (Optional)</Label>
             <FieldHelpButton helpId="budget-goal-accounts-field" />
           </div>
           <p class="text-muted-foreground mb-2 text-sm">
-            Optionally link accounts to this goal. Choose "Savings" for the destination account or "Source" for contribution accounts.
+            Optionally link accounts to this goal. Choose "Savings" for the destination account or
+            "Source" for contribution accounts.
           </p>
           <Select.Root type="single" bind:value={accountAccessors.get, accountAccessors.set}>
             <Select.Trigger class="w-full">Add account association</Select.Trigger>
@@ -656,8 +688,8 @@ const isHelpHighlighted = (helpId: string) =>
                     <Select.Root
                       type="single"
                       value={getAccountAssociationType(account.id)}
-                      onValueChange={(val) => setAccountAssociationType(account.id, val as BudgetAssociationType)}
-                    >
+                      onValueChange={(val) =>
+                        setAccountAssociationType(account.id, val as BudgetAssociationType)}>
                       <Select.Trigger class="h-8 w-25">
                         {associationTypeLabels[getAccountAssociationType(account.id)]}
                       </Select.Trigger>
@@ -735,7 +767,13 @@ const isHelpHighlighted = (helpId: string) =>
 
       <!-- Category Selection -->
       {#if currentBudgetConfig.requiresCategories}
-        <div class={cn('border-border space-y-2 border-t pt-4', isHelpHighlighted('budget-category-field') && 'help-topic-highlight')} data-help-id="budget-category-field" data-help-title="Category Selection">
+        <div
+          class={cn(
+            'border-border space-y-2 border-t pt-4',
+            isHelpHighlighted('budget-category-field') && 'help-topic-highlight'
+          )}
+          data-help-id="budget-category-field"
+          data-help-title="Category Selection">
           <div class="flex items-center gap-1.5">
             <Label>Categories</Label>
             <FieldHelpButton helpId="budget-category-field" />

@@ -31,7 +31,9 @@ const documents = $derived(documentsQuery.data ?? []);
 const isLoading = $derived(documentsQuery.isLoading);
 
 // Query available tax years for this account
-const yearsQuery = $derived(rpc.accountDocuments.getAvailableTaxYearsForAccount(accountId).options());
+const yearsQuery = $derived(
+  rpc.accountDocuments.getAvailableTaxYearsForAccount(accountId).options()
+);
 const availableYears = $derived(yearsQuery.data ?? []);
 
 // Merge available years with recent years for selector
@@ -109,8 +111,7 @@ const accountInfo = $derived([{ id: accountId, name: accountName }]);
           defaultAccountId={accountId}
           defaultTaxYear={selectedTaxYear}
           onUploadComplete={handleUploadComplete}
-          compact
-        />
+          compact />
       </Card.Content>
     </Card.Root>
   {/if}
@@ -121,8 +122,7 @@ const accountInfo = $derived([{ id: accountId, name: accountName }]);
     accounts={accountInfo}
     loading={isLoading}
     groupBy="type"
-    showEmpty={false}
-  />
+    showEmpty={false} />
 
   <!-- Empty State when no documents and not uploading -->
   {#if !showUpload && !isLoading && documents.length === 0}

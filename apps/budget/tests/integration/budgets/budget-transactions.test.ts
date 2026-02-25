@@ -5,11 +5,11 @@
  * and split transactions across budgets.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and, sum} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and, sum } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -376,7 +376,7 @@ describe("Budget Transactions & Allocations", () => {
 
       // Sum allocations for budget
       const result = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, ctx.budgetId));
 
@@ -403,7 +403,7 @@ describe("Budget Transactions & Allocations", () => {
 
       // Calculate total spent and update period instance
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, ctx.budgetId));
 
@@ -411,7 +411,7 @@ describe("Budget Transactions & Allocations", () => {
 
       await ctx.db
         .update(schema.budgetPeriodInstances)
-        .set({actualAmount: totalSpent})
+        .set({ actualAmount: totalSpent })
         .where(eq(schema.budgetPeriodInstances.id, ctx.periodInstanceId));
 
       const updatedInstance = await ctx.db.query.budgetPeriodInstances.findFirst({
@@ -462,7 +462,7 @@ describe("Budget Transactions & Allocations", () => {
 
       // Calculate total spent
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, ctx.budgetId));
 
@@ -499,7 +499,7 @@ describe("Budget Transactions & Allocations", () => {
       });
 
       const spentResult = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, ctx.budgetId));
 
@@ -580,7 +580,9 @@ describe("Budget Transactions & Allocations", () => {
       });
 
       // Delete allocation first (or use cascade)
-      await ctx.db.delete(schema.budgetTransactions).where(eq(schema.budgetTransactions.transactionId, transaction.id));
+      await ctx.db
+        .delete(schema.budgetTransactions)
+        .where(eq(schema.budgetTransactions.transactionId, transaction.id));
 
       // Then delete transaction
       await ctx.db.delete(schema.transactions).where(eq(schema.transactions.id, transaction.id));
@@ -615,18 +617,20 @@ describe("Budget Transactions & Allocations", () => {
 
       // Initial total
       let result = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, ctx.budgetId));
 
       expect(Number(result[0].total)).toBe(100.0);
 
       // Remove allocation
-      await ctx.db.delete(schema.budgetTransactions).where(eq(schema.budgetTransactions.id, allocation.id));
+      await ctx.db
+        .delete(schema.budgetTransactions)
+        .where(eq(schema.budgetTransactions.id, allocation.id));
 
       // Updated total
       result = await ctx.db
-        .select({total: sum(schema.budgetTransactions.allocatedAmount)})
+        .select({ total: sum(schema.budgetTransactions.allocatedAmount) })
         .from(schema.budgetTransactions)
         .where(eq(schema.budgetTransactions.budgetId, ctx.budgetId));
 

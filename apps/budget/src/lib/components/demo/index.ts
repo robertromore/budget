@@ -1,1 +1,1 @@
-export { default as DemoModeBanner } from './demo-mode-banner.svelte';
+export { default as DemoModeBanner } from "./demo-mode-banner.svelte";

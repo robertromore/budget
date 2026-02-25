@@ -7,7 +7,14 @@
  */
 
 // Import row states
-export type ImportRowStatus = "pending" | "valid" | "invalid" | "warning" | "duplicate" | "skipped" | "transfer_match";
+export type ImportRowStatus =
+  | "pending"
+  | "valid"
+  | "invalid"
+  | "warning"
+  | "duplicate"
+  | "skipped"
+  | "transfer_match";
 export type ImportPhase =
   | "validation"
   | "entity_matching"
@@ -208,15 +215,15 @@ export interface ImportResult {
   };
   /** Mapping of created payees: original import string → new payee (for alias tracking) */
   createdPayeeMappings?: Array<{
-    originalName: string;    // Raw import string (e.g., "WALMART #1234 DALLAS TX")
-    normalizedName: string;  // Cleaned name stored as payee.name (e.g., "Walmart")
-    payeeId: number;         // ID of the newly created payee
+    originalName: string; // Raw import string (e.g., "WALMART #1234 DALLAS TX")
+    normalizedName: string; // Cleaned name stored as payee.name (e.g., "Walmart")
+    payeeId: number; // ID of the newly created payee
   }>;
   /** Mapping of category assignments: raw import string → category (for category alias tracking) */
   createdCategoryMappings?: Array<{
-    rawString: string;       // The raw payee/description string from import
-    categoryId: number;      // The category that was assigned
-    payeeId?: number;        // The payee ID if known (for payee-context matching)
+    rawString: string; // The raw payee/description string from import
+    categoryId: number; // The category that was assigned
+    payeeId?: number; // The payee ID if known (for payee-context matching)
     wasAiSuggested?: boolean; // Whether this was an AI/ML suggestion (vs explicit user selection)
   }>;
   /** Transfer pairs created during import */
@@ -234,14 +241,17 @@ export interface ImportResult {
     sourceAccountName: string;
   }>;
   /** Per-file breakdown for multi-file imports */
-  byFile?: Record<string, {
-    fileName: string;
-    imported: number;
-    duplicates: number;
-    errors: number;
-    reconciled: number;
-    transfers: number;
-  }>;
+  byFile?: Record<
+    string,
+    {
+      fileName: string;
+      imported: number;
+      duplicates: number;
+      errors: number;
+      reconciled: number;
+      transfers: number;
+    }
+  >;
 }
 
 // Progress tracking
@@ -263,8 +273,8 @@ export interface ImportProgress {
  */
 export interface AliasCandidate {
   rawString: string;
-  payeeId?: number | null;  // For existing payees
-  payeeName?: string;       // For new payees (resolved to ID after import)
+  payeeId?: number | null; // For existing payees
+  payeeName?: string; // For new payees (resolved to ID after import)
 }
 
 // File processor interface

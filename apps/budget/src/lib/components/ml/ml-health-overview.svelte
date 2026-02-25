@@ -1,80 +1,76 @@
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
-  import * as Card from "$lib/components/ui/card";
-  import { Progress } from "$lib/components/ui/progress";
-  import { cn, formatPercent } from "$lib/utils";
-  import Activity from "@lucide/svelte/icons/activity";
-  import Brain from "@lucide/svelte/icons/brain";
-  import Gauge from "@lucide/svelte/icons/gauge";
-  import TrendingUp from "@lucide/svelte/icons/trending-up";
-  import Zap from "@lucide/svelte/icons/zap";
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import { Progress } from '$lib/components/ui/progress';
+import { cn, formatPercent } from '$lib/utils';
+import Activity from '@lucide/svelte/icons/activity';
+import Brain from '@lucide/svelte/icons/brain';
+import Gauge from '@lucide/svelte/icons/gauge';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Zap from '@lucide/svelte/icons/zap';
 
-  interface ServiceStatus {
-    name: string;
-    status: "healthy" | "degraded" | "error" | "offline" | "no_data" | (string & {});
-    lastCheck: string;
-    responseTime: number;
+interface ServiceStatus {
+  name: string;
+  status: 'healthy' | 'degraded' | 'error' | 'offline' | 'no_data' | (string & {});
+  lastCheck: string;
+  responseTime: number;
+  errorRate: number;
+}
+
+interface Props {
+  overall: 'healthy' | 'degraded' | 'critical' | (string & {});
+  score: number;
+  services: ServiceStatus[];
+  metrics: {
+    totalPredictions: number;
+    averageAccuracy: number;
+    averageResponseTime: number;
     errorRate: number;
-  }
+  };
+  class?: string;
+}
 
-  interface Props {
-    overall: "healthy" | "degraded" | "critical" | (string & {});
-    score: number;
-    services: ServiceStatus[];
-    metrics: {
-      totalPredictions: number;
-      averageAccuracy: number;
-      averageResponseTime: number;
-      errorRate: number;
-    };
-    class?: string;
-  }
+let { overall, score, services, metrics, class: className }: Props = $props();
 
-  let { overall, score, services, metrics, class: className }: Props = $props();
+const overallConfig = {
+  healthy: {
+    label: 'All Systems Operational',
+    color: 'text-green-500',
+    badgeVariant: 'default' as const,
+  },
+  degraded: {
+    label: 'Some Systems Degraded',
+    color: 'text-yellow-500',
+    badgeVariant: 'secondary' as const,
+  },
+  critical: {
+    label: 'Critical Issues Detected',
+    color: 'text-red-500',
+    badgeVariant: 'destructive' as const,
+  },
+  // Fallback for unknown status
+  unknown: {
+    label: 'Status Unknown',
+    color: 'text-muted-foreground',
+    badgeVariant: 'outline' as const,
+  },
+} as const;
 
-  const overallConfig = {
-    healthy: {
-      label: "All Systems Operational",
-      color: "text-green-500",
-      badgeVariant: "default" as const,
-    },
-    degraded: {
-      label: "Some Systems Degraded",
-      color: "text-yellow-500",
-      badgeVariant: "secondary" as const,
-    },
-    critical: {
-      label: "Critical Issues Detected",
-      color: "text-red-500",
-      badgeVariant: "destructive" as const,
-    },
-    // Fallback for unknown status
-    unknown: {
-      label: "Status Unknown",
-      color: "text-muted-foreground",
-      badgeVariant: "outline" as const,
-    },
-  } as const;
+type OverallKey = keyof typeof overallConfig;
+const config = $derived(overallConfig[overall as OverallKey] ?? overallConfig.unknown);
+const healthyServices = $derived(services.filter((s) => s.status === 'healthy').length);
+const totalServices = $derived(services.length);
 
-  type OverallKey = keyof typeof overallConfig;
-  const config = $derived(
-    overallConfig[overall as OverallKey] ?? overallConfig.unknown
-  );
-  const healthyServices = $derived(
-    services.filter((s) => s.status === "healthy").length
-  );
-  const totalServices = $derived(services.length);
-
-  // Helper to format service names: "anomalyDetection" → "Anomaly Detection"
-  function formatServiceName(name: string): string {
-    return name
-      .replace(/([A-Z])/g, " $1") // Add space before capitals
-      .replace(/^./, (c) => c.toUpperCase()) // Capitalize first letter
-      .trim();
-  }
+// Helper to format service names: "anomalyDetection" → "Anomaly Detection"
+function formatServiceName(name: string): string {
+  return name
+    .replace(/([A-Z])/g, ' $1') // Add space before capitals
+    .replace(/^./, (c) => c.toUpperCase()) // Capitalize first letter
+    .trim();
+}
 </script>
 
-<Card.Root class={cn("", className)}>
+<Card.Root class={cn('', className)}>
   <Card.Header>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -135,7 +131,7 @@
 
     <!-- Service Status Grid -->
     <div class="space-y-2">
-      <h4 class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+      <h4 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         Service Status
       </h4>
       <div class="grid grid-cols-2 gap-2">
@@ -148,7 +144,12 @@
             no_data: "bg-muted-foreground",
           }}
           <div class="bg-muted/50 flex items-center gap-2 rounded-md px-3 py-2">
-            <div class={cn("h-2 w-2 rounded-full", statusColors[service.status] ?? "bg-muted-foreground")}></div>
+            <div
+              class={cn(
+                'h-2 w-2 rounded-full',
+                statusColors[service.status] ?? 'bg-muted-foreground'
+              )}>
+            </div>
             <span class="text-sm">{formatServiceName(service.name)}</span>
           </div>
         {/each}

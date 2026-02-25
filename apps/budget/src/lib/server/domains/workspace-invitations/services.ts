@@ -3,19 +3,12 @@ import type { WorkspaceRole } from "$lib/schema/workspace-members";
 import { users } from "$lib/schema/users";
 import { workspaces } from "$lib/schema/workspaces";
 import { db } from "$lib/server/shared/database";
-import {
-  ConflictError,
-  ForbiddenError,
-  ValidationError,
-} from "$lib/server/shared/types/errors";
+import { ConflictError, ForbiddenError, ValidationError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { normalize } from "$lib/utils/string-utilities";
 import { eq } from "drizzle-orm";
-import { randomBytes } from "crypto";
-import {
-  WorkspaceInvitationRepository,
-  type InvitationWithDetails,
-} from "./repository";
+import { randomBytes } from "node:crypto";
+import { WorkspaceInvitationRepository, type InvitationWithDetails } from "./repository";
 import { WorkspaceMemberRepository } from "../workspace-members/repository";
 import { logger } from "$lib/server/shared/logging";
 import { sendEmail } from "$lib/server/email";
@@ -72,10 +65,7 @@ export class WorkspaceInvitationService {
     }
 
     // Check if inviter has permission (must be owner or admin)
-    const inviterMembership = await this.memberRepository.findMembership(
-      workspaceId,
-      invitedBy
-    );
+    const inviterMembership = await this.memberRepository.findMembership(workspaceId, invitedBy);
     if (!inviterMembership || !["owner", "admin"].includes(inviterMembership.role)) {
       throw new ForbiddenError("Only owners and admins can invite members");
     }
@@ -98,15 +88,12 @@ export class WorkspaceInvitationService {
     }
 
     // Check if pending invitation already exists
-    const pendingExists =
-      await this.invitationRepository.existsPendingForEmailAndWorkspace(
-        normalizedEmail,
-        workspaceId
-      );
+    const pendingExists = await this.invitationRepository.existsPendingForEmailAndWorkspace(
+      normalizedEmail,
+      workspaceId
+    );
     if (pendingExists) {
-      throw new ConflictError(
-        "A pending invitation already exists for this email"
-      );
+      throw new ConflictError("A pending invitation already exists for this email");
     }
 
     // Create invitation
@@ -150,21 +137,18 @@ export class WorkspaceInvitationService {
     }
 
     // Get accepting user's email
-    const [acceptingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const [acceptingUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!acceptingUser) {
       throw new ValidationError("User not found");
     }
 
     // Verify email matches (case insensitive)
-    if (!acceptingUser.email || acceptingUser.email.toLowerCase() !== invitation.email.toLowerCase()) {
-      throw new ForbiddenError(
-        "This invitation was sent to a different email address"
-      );
+    if (
+      !acceptingUser.email ||
+      acceptingUser.email.toLowerCase() !== invitation.email.toLowerCase()
+    ) {
+      throw new ForbiddenError("This invitation was sent to a different email address");
     }
 
     // Check if already a member
@@ -174,11 +158,7 @@ export class WorkspaceInvitationService {
     );
     if (existingMembership) {
       // Update invitation status and return existing membership
-      await this.invitationRepository.updateStatus(
-        invitation.id,
-        "accepted",
-        userId
-      );
+      await this.invitationRepository.updateStatus(invitation.id, "accepted", userId);
       throw new ConflictError("You are already a member of this workspace");
     }
 
@@ -212,10 +192,7 @@ export class WorkspaceInvitationService {
       throw new ValidationError(`Invitation has already been ${invitation.status}`);
     }
 
-    return await this.invitationRepository.updateStatus(
-      invitation.id,
-      "declined"
-    );
+    return await this.invitationRepository.updateStatus(invitation.id, "declined");
   }
 
   /**
@@ -231,17 +208,11 @@ export class WorkspaceInvitationService {
       workspaceId,
       requesterId
     );
-    if (
-      !requesterMembership ||
-      !["owner", "admin"].includes(requesterMembership.role)
-    ) {
+    if (!requesterMembership || !["owner", "admin"].includes(requesterMembership.role)) {
       throw new ForbiddenError("Only owners and admins can revoke invitations");
     }
 
-    return await this.invitationRepository.updateStatus(
-      invitationId,
-      "revoked"
-    );
+    return await this.invitationRepository.updateStatus(invitationId, "revoked");
   }
 
   /**
@@ -254,18 +225,14 @@ export class WorkspaceInvitationService {
   /**
    * Get pending invitations for a workspace
    */
-  async getWorkspaceInvitations(
-    workspaceId: number
-  ): Promise<InvitationWithDetails[]> {
+  async getWorkspaceInvitations(workspaceId: number): Promise<InvitationWithDetails[]> {
     return await this.invitationRepository.findPendingByWorkspace(workspaceId);
   }
 
   /**
    * Get pending invitations for a user's email
    */
-  async getUserPendingInvitations(
-    userEmail: string
-  ): Promise<InvitationWithDetails[]> {
+  async getUserPendingInvitations(userEmail: string): Promise<InvitationWithDetails[]> {
     return await this.invitationRepository.findPendingByEmail(userEmail);
   }
 
@@ -282,17 +249,12 @@ export class WorkspaceInvitationService {
       workspaceId,
       requesterId
     );
-    if (
-      !requesterMembership ||
-      !["owner", "admin"].includes(requesterMembership.role)
-    ) {
+    if (!requesterMembership || !["owner", "admin"].includes(requesterMembership.role)) {
       throw new ForbiddenError("Only owners and admins can resend invitations");
     }
 
     // Get current invitation to get details
-    const pending = await this.invitationRepository.findPendingByWorkspace(
-      workspaceId
-    );
+    const pending = await this.invitationRepository.findPendingByWorkspace(workspaceId);
     const invitation = pending.find((inv) => inv.id === invitationId);
 
     if (!invitation) {

@@ -103,12 +103,8 @@ export class MetricAlertService {
 
     // Current month boundaries
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString()
-      .split("T")[0];
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-      .toISOString()
-      .split("T")[0];
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split("T")[0];
 
     for (const alert of activeAlerts) {
       const currentValue = await this.getCurrentMetricValue(

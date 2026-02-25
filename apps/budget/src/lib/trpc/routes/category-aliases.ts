@@ -140,10 +140,15 @@ export const categoryAliasRoutes = t.router({
    */
   create: rateLimitedProcedure.input(createAliasSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
-      return await aliasService.createManualAlias(input.rawString, input.categoryId, ctx.workspaceId, {
-        payeeId: input.payeeId,
-        amountType: input.amountType,
-      });
+      return await aliasService.createManualAlias(
+        input.rawString,
+        input.categoryId,
+        ctx.workspaceId,
+        {
+          payeeId: input.payeeId,
+          amountType: input.amountType,
+        }
+      );
     })
   ),
 

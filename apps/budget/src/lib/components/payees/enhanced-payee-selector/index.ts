@@ -6,5 +6,12 @@ export { default as PayeeListView } from "./payee-list-view.svelte";
 export { default as PayeeQuickEditForm } from "./payee-quick-edit-form.svelte";
 
 export type {
-  DisplayMode, EditMode, EnhancedPayeeSelectorProps, GroupStrategy, LayoutMode, PayeeGroup, QuickEditPayeeData, TransactionContext
+  DisplayMode,
+  EditMode,
+  EnhancedPayeeSelectorProps,
+  GroupStrategy,
+  LayoutMode,
+  PayeeGroup,
+  QuickEditPayeeData,
+  TransactionContext,
 } from "./types";

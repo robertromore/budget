@@ -5,11 +5,11 @@
  * fetching, deduplication, and status updates.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -78,7 +78,7 @@ interface ExternalTransaction {
  * Check if transaction is duplicate
  */
 function isDuplicate(
-  existing: Array<{fitid: string | null; date: string; amount: number}>,
+  existing: Array<{ fitid: string | null; date: string; amount: number }>,
   incoming: ExternalTransaction
 ): boolean {
   // Check by FITID first
@@ -89,8 +89,7 @@ function isDuplicate(
   // Check by date + amount (within $0.01)
   const tolerance = 0.01;
   return existing.some(
-    (e) =>
-      e.date === incoming.date && Math.abs(e.amount - incoming.amount) <= tolerance
+    (e) => e.date === incoming.date && Math.abs(e.amount - incoming.amount) <= tolerance
   );
 }
 
@@ -154,8 +153,20 @@ describe("Connection Sync Flow", () => {
   describe("transaction import", () => {
     it("should import new transactions from provider", async () => {
       const externalTransactions: ExternalTransaction[] = [
-        {id: "fitid_001", date: "2024-01-15", amount: -50.00, description: "WALMART", pending: false},
-        {id: "fitid_002", date: "2024-01-16", amount: -25.00, description: "STARBUCKS", pending: false},
+        {
+          id: "fitid_001",
+          date: "2024-01-15",
+          amount: -50.0,
+          description: "WALMART",
+          pending: false,
+        },
+        {
+          id: "fitid_002",
+          date: "2024-01-16",
+          amount: -25.0,
+          description: "STARBUCKS",
+          pending: false,
+        },
       ];
 
       // Simulate import
@@ -189,12 +200,16 @@ describe("Connection Sync Flow", () => {
         accountId: ctx.accountId,
         fitid: "fitid_existing",
         date: "2024-01-10",
-        amount: -100.00,
+        amount: -100.0,
         status: "cleared",
       });
 
       const existing = await ctx.db
-        .select({fitid: schema.transactions.fitid, date: schema.transactions.date, amount: schema.transactions.amount})
+        .select({
+          fitid: schema.transactions.fitid,
+          date: schema.transactions.date,
+          amount: schema.transactions.amount,
+        })
         .from(schema.transactions)
         .where(eq(schema.transactions.accountId, ctx.accountId));
 
@@ -202,7 +217,7 @@ describe("Connection Sync Flow", () => {
       const incoming: ExternalTransaction = {
         id: "fitid_existing",
         date: "2024-01-10",
-        amount: -100.00,
+        amount: -100.0,
         description: "SAME TRANSACTION",
         pending: false,
       };
@@ -215,19 +230,23 @@ describe("Connection Sync Flow", () => {
         workspaceId: ctx.workspaceId,
         accountId: ctx.accountId,
         date: "2024-01-15",
-        amount: -50.00,
+        amount: -50.0,
         status: "cleared",
       });
 
       const existing = await ctx.db
-        .select({fitid: schema.transactions.fitid, date: schema.transactions.date, amount: schema.transactions.amount})
+        .select({
+          fitid: schema.transactions.fitid,
+          date: schema.transactions.date,
+          amount: schema.transactions.amount,
+        })
         .from(schema.transactions)
         .where(eq(schema.transactions.accountId, ctx.accountId));
 
       const incoming: ExternalTransaction = {
         id: "fitid_new",
         date: "2024-01-15",
-        amount: -50.00, // Same date and amount
+        amount: -50.0, // Same date and amount
         description: "POSSIBLE DUPE",
         pending: false,
       };
@@ -240,19 +259,23 @@ describe("Connection Sync Flow", () => {
         workspaceId: ctx.workspaceId,
         accountId: ctx.accountId,
         date: "2024-01-15",
-        amount: -50.00,
+        amount: -50.0,
         status: "cleared",
       });
 
       const existing = await ctx.db
-        .select({fitid: schema.transactions.fitid, date: schema.transactions.date, amount: schema.transactions.amount})
+        .select({
+          fitid: schema.transactions.fitid,
+          date: schema.transactions.date,
+          amount: schema.transactions.amount,
+        })
         .from(schema.transactions)
         .where(eq(schema.transactions.accountId, ctx.accountId));
 
       const incoming: ExternalTransaction = {
         id: "fitid_new",
         date: "2024-01-15",
-        amount: -75.00, // Different amount
+        amount: -75.0, // Different amount
         description: "DIFFERENT",
         pending: false,
       };
@@ -270,7 +293,7 @@ describe("Connection Sync Flow", () => {
           accountId: ctx.accountId,
           fitid: "pending_001",
           date: "2024-01-15",
-          amount: -50.00,
+          amount: -50.0,
           status: "pending",
           importedFrom: "simplefin",
         })
@@ -288,7 +311,7 @@ describe("Connection Sync Flow", () => {
           accountId: ctx.accountId,
           fitid: "pending_001",
           date: "2024-01-15",
-          amount: -50.00,
+          amount: -50.0,
           status: "pending",
         })
         .returning();
@@ -296,7 +319,7 @@ describe("Connection Sync Flow", () => {
       // Simulate clearing
       await ctx.db
         .update(schema.transactions)
-        .set({status: "cleared"})
+        .set({ status: "cleared" })
         .where(eq(schema.transactions.id, pending.id));
 
       const cleared = await ctx.db.query.transactions.findFirst({
@@ -314,7 +337,7 @@ describe("Connection Sync Flow", () => {
           accountId: ctx.accountId,
           fitid: "pending_canceled",
           date: "2024-01-15",
-          amount: -50.00,
+          amount: -50.0,
           status: "pending",
         })
         .returning();
@@ -334,9 +357,27 @@ describe("Connection Sync Flow", () => {
     it("should update account balance after sync", async () => {
       // Import transactions
       await ctx.db.insert(schema.transactions).values([
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-01", amount: 1000.00, status: "cleared"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-15", amount: -50.00, status: "cleared"},
-        {workspaceId: ctx.workspaceId, accountId: ctx.accountId, date: "2024-01-16", amount: -25.00, status: "cleared"},
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-01",
+          amount: 1000.0,
+          status: "cleared",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-15",
+          amount: -50.0,
+          status: "cleared",
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          accountId: ctx.accountId,
+          date: "2024-01-16",
+          amount: -25.0,
+          status: "cleared",
+        },
       ]);
 
       // Calculate balance
@@ -351,7 +392,7 @@ describe("Connection Sync Flow", () => {
         );
 
       const balance = transactions.reduce((sum, t) => sum + t.amount, 0);
-      expect(balance).toBe(925.00); // 1000 - 50 - 25
+      expect(balance).toBe(925.0); // 1000 - 50 - 25
     });
   });
 
@@ -359,11 +400,11 @@ describe("Connection Sync Flow", () => {
     it("should fetch only new transactions since date", () => {
       const cursor = "2024-01-15";
       const allTransactions = [
-        {date: "2024-01-10", amount: -100},
-        {date: "2024-01-12", amount: -50},
-        {date: "2024-01-15", amount: -75}, // At cursor
-        {date: "2024-01-18", amount: -25}, // After cursor
-        {date: "2024-01-20", amount: -60}, // After cursor
+        { date: "2024-01-10", amount: -100 },
+        { date: "2024-01-12", amount: -50 },
+        { date: "2024-01-15", amount: -75 }, // At cursor
+        { date: "2024-01-18", amount: -25 }, // After cursor
+        { date: "2024-01-20", amount: -60 }, // After cursor
       ];
 
       const newTransactions = allTransactions.filter((t) => t.date > cursor);
@@ -408,7 +449,7 @@ describe("Connection Sync Flow", () => {
         workspaceId: ctx.workspaceId,
         accountId: ctx.accountId,
         date: "2024-01-15",
-        amount: -50.00,
+        amount: -50.0,
         importedFrom: "simplefin",
       });
 
@@ -427,7 +468,7 @@ describe("Connection Sync Flow", () => {
         workspaceId: ctx.workspaceId,
         accountId: account2.id,
         date: "2024-01-15",
-        amount: 100.00,
+        amount: 100.0,
         importedFrom: "simplefin",
       });
 
@@ -443,17 +484,23 @@ describe("Connection Sync Flow", () => {
 
       expect(account1Txns).toHaveLength(1);
       expect(account2Txns).toHaveLength(1);
-      expect(account1Txns[0].amount).toBe(-50.00);
-      expect(account2Txns[0].amount).toBe(100.00);
+      expect(account1Txns[0].amount).toBe(-50.0);
+      expect(account2Txns[0].amount).toBe(100.0);
     });
   });
 
   describe("sync statistics", () => {
     it("should track import statistics", async () => {
       const externalTransactions = [
-        {id: "new_001", date: "2024-01-15", amount: -50.00, description: "NEW 1", pending: false},
-        {id: "new_002", date: "2024-01-16", amount: -25.00, description: "NEW 2", pending: false},
-        {id: "existing_001", date: "2024-01-10", amount: -100.00, description: "DUPE", pending: false},
+        { id: "new_001", date: "2024-01-15", amount: -50.0, description: "NEW 1", pending: false },
+        { id: "new_002", date: "2024-01-16", amount: -25.0, description: "NEW 2", pending: false },
+        {
+          id: "existing_001",
+          date: "2024-01-10",
+          amount: -100.0,
+          description: "DUPE",
+          pending: false,
+        },
       ];
 
       // Create existing transaction
@@ -462,11 +509,15 @@ describe("Connection Sync Flow", () => {
         accountId: ctx.accountId,
         fitid: "existing_001",
         date: "2024-01-10",
-        amount: -100.00,
+        amount: -100.0,
       });
 
       const existing = await ctx.db
-        .select({fitid: schema.transactions.fitid, date: schema.transactions.date, amount: schema.transactions.amount})
+        .select({
+          fitid: schema.transactions.fitid,
+          date: schema.transactions.date,
+          amount: schema.transactions.amount,
+        })
         .from(schema.transactions)
         .where(eq(schema.transactions.accountId, ctx.accountId));
 

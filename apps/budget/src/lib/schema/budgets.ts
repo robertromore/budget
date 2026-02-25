@@ -26,14 +26,20 @@ export const budgetStatuses = ["active", "inactive", "archived"] as const;
 export const budgetEnforcementLevels = ["none", "warning", "strict"] as const;
 export const periodTemplateTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
 export const budgetAssociationTypes = [
-  "spending",    // Primary spending limit (account-monthly)
-  "savings",     // Savings goal destination account
-  "source",      // Source account for contributions
-  "primary",     // Primary linked account for scheduled expenses
+  "spending", // Primary spending limit (account-monthly)
+  "savings", // Savings goal destination account
+  "source", // Source account for contributions
+  "primary", // Primary linked account for scheduled expenses
 ] as const;
 
 export const budgetHealthStatuses = ["excellent", "good", "warning", "danger"] as const;
-export const budgetProgressStatuses = ["on_track", "approaching", "over", "paused", "setup_needed"] as const;
+export const budgetProgressStatuses = [
+  "on_track",
+  "approaching",
+  "over",
+  "paused",
+  "setup_needed",
+] as const;
 
 export type BudgetType = (typeof budgetTypes)[number];
 export type BudgetScope = (typeof budgetScopes)[number];

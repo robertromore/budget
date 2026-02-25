@@ -5,11 +5,11 @@
  * membership, recommendations, and settings.
  */
 
-import {describe, it, expect, beforeEach} from "vitest";
-import {setupTestDb} from "../setup/test-db";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setupTestDb } from "../setup/test-db";
 import * as schema from "../../../src/lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {BunSQLiteDatabase} from "drizzle-orm/bun-sqlite";
+import { eq, and } from "drizzle-orm";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 
@@ -34,12 +34,12 @@ async function setupTestContext(): Promise<TestContext> {
   const categories = await db
     .insert(schema.categories)
     .values([
-      {workspaceId: workspace.id, name: "Groceries", slug: "groceries"},
-      {workspaceId: workspace.id, name: "Restaurants", slug: "restaurants"},
-      {workspaceId: workspace.id, name: "Coffee Shops", slug: "coffee-shops"},
-      {workspaceId: workspace.id, name: "Electricity", slug: "electricity"},
-      {workspaceId: workspace.id, name: "Gas", slug: "gas"},
-      {workspaceId: workspace.id, name: "Water", slug: "water"},
+      { workspaceId: workspace.id, name: "Groceries", slug: "groceries" },
+      { workspaceId: workspace.id, name: "Restaurants", slug: "restaurants" },
+      { workspaceId: workspace.id, name: "Coffee Shops", slug: "coffee-shops" },
+      { workspaceId: workspace.id, name: "Electricity", slug: "electricity" },
+      { workspaceId: workspace.id, name: "Gas", slug: "gas" },
+      { workspaceId: workspace.id, name: "Water", slug: "water" },
     ])
     .returning();
 
@@ -177,9 +177,9 @@ describe("Category Groups", () => {
         .returning();
 
       await ctx.db.insert(schema.categoryGroupMemberships).values([
-        {categoryGroupId: group.id, categoryId: ctx.categoryIds[0], sortOrder: 0}, // Groceries
-        {categoryGroupId: group.id, categoryId: ctx.categoryIds[1], sortOrder: 1}, // Restaurants
-        {categoryGroupId: group.id, categoryId: ctx.categoryIds[2], sortOrder: 2}, // Coffee Shops
+        { categoryGroupId: group.id, categoryId: ctx.categoryIds[0], sortOrder: 0 }, // Groceries
+        { categoryGroupId: group.id, categoryId: ctx.categoryIds[1], sortOrder: 1 }, // Restaurants
+        { categoryGroupId: group.id, categoryId: ctx.categoryIds[2], sortOrder: 2 }, // Coffee Shops
       ]);
 
       const memberships = await ctx.db
@@ -286,7 +286,7 @@ describe("Category Groups", () => {
 
       await ctx.db
         .update(schema.categoryGroupMemberships)
-        .set({sortOrder: 5})
+        .set({ sortOrder: 5 })
         .where(eq(schema.categoryGroupMemberships.id, membership.id));
 
       const updated = await ctx.db.query.categoryGroupMemberships.findFirst({
@@ -366,7 +366,7 @@ describe("Category Groups", () => {
       // Approve recommendation
       await ctx.db
         .update(schema.categoryGroupRecommendations)
-        .set({status: "approved"})
+        .set({ status: "approved" })
         .where(eq(schema.categoryGroupRecommendations.id, recommendation.id));
 
       // Create membership
@@ -396,7 +396,7 @@ describe("Category Groups", () => {
 
       await ctx.db
         .update(schema.categoryGroupRecommendations)
-        .set({status: "dismissed"})
+        .set({ status: "dismissed" })
         .where(eq(schema.categoryGroupRecommendations.id, recommendation.id));
 
       const updated = await ctx.db.query.categoryGroupRecommendations.findFirst({
@@ -419,7 +419,7 @@ describe("Category Groups", () => {
 
       await ctx.db
         .update(schema.categoryGroupRecommendations)
-        .set({status: "rejected"})
+        .set({ status: "rejected" })
         .where(eq(schema.categoryGroupRecommendations.id, recommendation.id));
 
       const updated = await ctx.db.query.categoryGroupRecommendations.findFirst({
@@ -535,24 +535,24 @@ describe("Category Groups", () => {
       const groups = await ctx.db
         .insert(schema.categoryGroups)
         .values([
-          {workspaceId: ctx.workspaceId, name: "Group A", slug: "group-a", sortOrder: 0},
-          {workspaceId: ctx.workspaceId, name: "Group B", slug: "group-b", sortOrder: 1},
-          {workspaceId: ctx.workspaceId, name: "Group C", slug: "group-c", sortOrder: 2},
+          { workspaceId: ctx.workspaceId, name: "Group A", slug: "group-a", sortOrder: 0 },
+          { workspaceId: ctx.workspaceId, name: "Group B", slug: "group-b", sortOrder: 1 },
+          { workspaceId: ctx.workspaceId, name: "Group C", slug: "group-c", sortOrder: 2 },
         ])
         .returning();
 
       // Reorder: C -> A -> B
       await ctx.db
         .update(schema.categoryGroups)
-        .set({sortOrder: 0})
+        .set({ sortOrder: 0 })
         .where(eq(schema.categoryGroups.id, groups[2].id));
       await ctx.db
         .update(schema.categoryGroups)
-        .set({sortOrder: 1})
+        .set({ sortOrder: 1 })
         .where(eq(schema.categoryGroups.id, groups[0].id));
       await ctx.db
         .update(schema.categoryGroups)
-        .set({sortOrder: 2})
+        .set({ sortOrder: 2 })
         .where(eq(schema.categoryGroups.id, groups[1].id));
 
       const reordered = await ctx.db

@@ -6,7 +6,8 @@ related: [transaction-table, transaction-payee-field, payees-table]
 
 # Payee Column
 
-The payee column identifies the merchant, vendor, or person for each transaction.
+The payee column identifies the merchant, vendor, or person for each
+transaction.
 
 ## Display
 
@@ -17,6 +18,7 @@ The payee column identifies the merchant, vendor, or person for each transaction
 ## Inline Editing
 
 Click any payee cell to edit:
+
 1. A searchable dropdown appears
 2. Type to filter existing payees
 3. Select from suggestions or create new
@@ -25,6 +27,7 @@ Click any payee cell to edit:
 ## Smart Features
 
 When AI intelligence is enabled:
+
 - **Auto-complete** - Suggests matches as you type
 - **Fuzzy matching** - Finds payees even with typos
 - **Similar payees** - Groups variations (e.g., "AMZN" and "Amazon")
@@ -32,6 +35,7 @@ When AI intelligence is enabled:
 ## Filtering
 
 Filter by payee:
+
 - **Is** - Show only selected payees
 - **Is not** - Exclude selected payees
 - Multi-select supported

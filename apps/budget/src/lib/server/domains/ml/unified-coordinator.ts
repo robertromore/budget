@@ -117,10 +117,7 @@ export class UnifiedMLCoordinator {
     this.featureService = new FeatureEngineeringService();
 
     // Initialize ML services
-    this.timeSeriesService = new TimeSeriesForecastingService(
-      this.modelStore,
-      this.featureService
-    );
+    this.timeSeriesService = new TimeSeriesForecastingService(this.modelStore, this.featureService);
     this.anomalyService = new AnomalyDetectionService(this.modelStore, {
       sensitivityLevel: this.config.anomalySensitivity,
     });
@@ -156,8 +153,10 @@ export class UnifiedMLCoordinator {
     const startTime = Date.now();
 
     // Get base recommendations from PayeeMLCoordinator
-    const baseRecommendations =
-      await this.payeeMLCoordinator.generateUnifiedRecommendations(payeeId, context);
+    const baseRecommendations = await this.payeeMLCoordinator.generateUnifiedRecommendations(
+      payeeId,
+      context
+    );
 
     const enhanced: EnhancedRecommendations = { ...baseRecommendations };
 
@@ -221,7 +220,10 @@ export class UnifiedMLCoordinator {
             payeeName: m.payeeName,
             normalizedName: normalize(m.payeeName),
             similarityScore: m.similarityScore,
-            matchType: m.matchType === "lsh" ? "semantic" as const : m.matchType as "exact" | "fuzzy" | "semantic" | "canonical",
+            matchType:
+              m.matchType === "lsh"
+                ? ("semantic" as const)
+                : (m.matchType as "exact" | "fuzzy" | "semantic" | "canonical"),
           })),
           canonicalGroup: canonical ?? undefined,
         };
@@ -298,24 +300,24 @@ export class UnifiedMLCoordinator {
       this.similarityService.suggestCategoryByPayee(workspaceId, transaction.description),
     ]);
 
-    const anomalyScore =
-      results[0].status === "fulfilled" ? results[0].value : null;
-    const suggestedPayee =
-      results[1].status === "fulfilled" ? results[1].value : null;
-    const rawCategory =
-      results[2].status === "fulfilled" ? results[2].value : null;
+    const anomalyScore = results[0].status === "fulfilled" ? results[0].value : null;
+    const suggestedPayee = results[1].status === "fulfilled" ? results[1].value : null;
+    const rawCategory = results[2].status === "fulfilled" ? results[2].value : null;
 
     // Transform category to expected format
     const suggestedCategory = rawCategory
-      ? { id: rawCategory.categoryId, name: rawCategory.categoryName, confidence: rawCategory.confidence }
+      ? {
+          id: rawCategory.categoryId,
+          name: rawCategory.categoryName,
+          confidence: rawCategory.confidence,
+        }
       : null;
 
     return {
       anomalyScore,
       suggestedPayee,
       suggestedCategory,
-      isHighRisk:
-        anomalyScore?.riskLevel === "high" || anomalyScore?.riskLevel === "critical",
+      isHighRisk: anomalyScore?.riskLevel === "high" || anomalyScore?.riskLevel === "critical",
     };
   }
 
@@ -344,11 +346,7 @@ export class UnifiedMLCoordinator {
   /**
    * Get category spending forecast
    */
-  async getCategoryForecast(
-    workspaceId: number,
-    categoryId: number,
-    horizon: number = 3
-  ) {
+  async getCategoryForecast(workspaceId: number, categoryId: number, horizon: number = 3) {
     return this.timeSeriesService.predictCategorySpending(workspaceId, categoryId, {
       horizon,
     });
@@ -560,7 +558,11 @@ export class UnifiedMLCoordinator {
   }
 
   private recordServiceHealth(service: string, responseTime: number, success: boolean): void {
-    const current = this.serviceHealth.get(service) ?? { lastCheck: "", responseTime: 0, errors: 0 };
+    const current = this.serviceHealth.get(service) ?? {
+      lastCheck: "",
+      responseTime: 0,
+      errors: 0,
+    };
 
     this.serviceHealth.set(service, {
       lastCheck: nowISOString(),

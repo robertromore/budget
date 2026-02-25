@@ -210,9 +210,7 @@ const handleDelete = async (id: number) => {
         <AlertDialog.Root bind:open={alertDialogOpen}>
           <AlertDialog.Trigger>
             {#snippet child({ props })}
-              <Button {...props} variant="destructive" type="button">
-                Delete Category
-              </Button>
+              <Button {...props} variant="destructive" type="button">Delete Category</Button>
             {/snippet}
           </AlertDialog.Trigger>
           <AlertDialog.Content>

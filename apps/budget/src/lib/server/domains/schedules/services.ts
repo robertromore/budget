@@ -390,11 +390,7 @@ export class ScheduleService {
         }
 
         // Get upcoming dates for this schedule within our calculated window
-        let upcomingDates = await this.calculateUpcomingDates(
-          schedule,
-          daysAhead,
-          maxOccurrences
-        );
+        let upcomingDates = await this.calculateUpcomingDates(schedule, daysAhead, maxOccurrences);
 
         // Apply skip logic: filter out single-skipped dates and apply push_forward offset
         const skippedDatesSet = await this.skipRepository.getSingleSkippedDatesSet(schedule.id);
@@ -408,7 +404,11 @@ export class ScheduleService {
           upcomingDates = upcomingDates.map((dateStr) => {
             const date = parseLocalDate(dateStr);
             for (let i = 0; i < pushForwardOffset; i++) {
-              this.addInterval(date, schedule.scheduleDate!.frequency!, schedule.scheduleDate!.interval || 1);
+              this.addInterval(
+                date,
+                schedule.scheduleDate!.frequency!,
+                schedule.scheduleDate!.interval || 1
+              );
             }
             return formatLocalDate(date);
           });

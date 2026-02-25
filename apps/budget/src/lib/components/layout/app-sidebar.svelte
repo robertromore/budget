@@ -217,7 +217,10 @@ const _deleteAccountId = $derived(deleteAccountId);
       <!-- <div class="mt-2 px-2 w-full">
         <AccountSortDropdown variant="outline" />
       </div> -->
-      <Sidebar.GroupAction title="Add Account" onclick={() => goto('/accounts/new')} data-tour-id="add-account-button">
+      <Sidebar.GroupAction
+        title="Add Account"
+        onclick={() => goto('/accounts/new')}
+        data-tour-id="add-account-button">
         <Plus /> <span class="sr-only">Add Account</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -267,7 +270,10 @@ const _deleteAccountId = $derived(deleteAccountId);
                               {account.name}
                             </span>
                             {#if account.slug === 'demo-checking'}
-                              <Badge variant="outline" class="border-amber-500/50 bg-amber-50 px-1.5 py-0 text-xs text-amber-700 dark:bg-amber-950/20 dark:text-amber-400">Demo</Badge>
+                              <Badge
+                                variant="outline"
+                                class="border-amber-500/50 bg-amber-50 px-1.5 py-0 text-xs text-amber-700 dark:bg-amber-950/20 dark:text-amber-400"
+                                >Demo</Badge>
                             {/if}
                             {#if account.closed}
                               <Badge variant="secondary" class="px-1.5 py-0 text-xs">Closed</Badge>
@@ -315,9 +321,11 @@ const _deleteAccountId = $derived(deleteAccountId);
                                 <span class="text-[10px] opacity-70">available</span>
                               </div>
                               <div class="text-muted-foreground text-[10px]">
-                                {currencyFormatter.format(account.balance && account.balance < 0 ? Math.abs(account.balance) : 0)} / {currencyFormatter.format(
-                                  account.debtLimit
-                                )}
+                                {currencyFormatter.format(
+                                  account.balance && account.balance < 0
+                                    ? Math.abs(account.balance)
+                                    : 0
+                                )} / {currencyFormatter.format(account.debtLimit)}
                               </div>
                             </div>
                           {:else}

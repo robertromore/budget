@@ -11,10 +11,14 @@ Control the visual style of header action buttons.
 ## Options
 
 ### Icon with text
-Show both the icon and text label on header buttons. Best for clarity and discoverability.
+
+Show both the icon and text label on header buttons. Best for clarity and
+discoverability.
 
 ### Icon only
-Show only icons on header buttons. Hover to see the label. Best for a compact header.
+
+Show only icons on header buttons. Hover to see the label. Best for a compact
+header.
 
 ## Tips
 

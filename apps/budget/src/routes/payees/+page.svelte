@@ -31,11 +31,7 @@ const payeesState = $derived(PayeesState.get());
 const allPayees = $derived(payeesState.payees.values());
 
 // Use demo data when in demo mode (no conversion needed - already Payee type)
-const allPayeesArray = $derived<Payee[]>(
-  isDemoView
-    ? demoMode.demoPayees
-    : Array.from(allPayees)
-);
+const allPayeesArray = $derived<Payee[]>(isDemoView ? demoMode.demoPayees : Array.from(allPayees));
 const hasNoPayees = $derived(allPayeesArray.length === 0);
 
 // Fetch payees with transaction stats for display
@@ -131,7 +127,11 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 
 <div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="payees-page-header" data-help-title="Payees Page" data-tour-id="payees-page">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+    data-help-id="payees-page-header"
+    data-help-title="Payees Page"
+    data-tour-id="payees-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Payees</h1>
       <p class="text-muted-foreground">{allPayeesArray.length} payees total</p>
@@ -184,16 +184,16 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
   {:else}
     <!-- Payee Data Table -->
     <div data-help-id="payees-table" data-help-title="Payees Table" data-tour-id="payees-list">
-    <PayeeSearchResults
-      payees={payeesWithStatsData}
-      isLoading={false}
-      searchQuery=""
-      viewMode="list"
-      onView={viewPayee}
-      onEdit={editPayee}
-      onDelete={deletePayee}
-      onBulkDelete={bulkDeletePayees}
-      onViewAnalytics={viewAnalytics} />
+      <PayeeSearchResults
+        payees={payeesWithStatsData}
+        isLoading={false}
+        searchQuery=""
+        viewMode="list"
+        onView={viewPayee}
+        onEdit={editPayee}
+        onDelete={deletePayee}
+        onBulkDelete={bulkDeletePayees}
+        onViewAnalytics={viewAnalytics} />
     </div>
   {/if}
 </div>

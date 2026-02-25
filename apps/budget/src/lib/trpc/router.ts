@@ -124,10 +124,7 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return !!value && typeof (value as PromiseLike<unknown>).then === "function";
 }
 
-function invokeWithTestDb<T>(
-  testDb: Parameters<typeof runWithDbForTesting>[0],
-  fn: () => T
-): T {
+function invokeWithTestDb<T>(testDb: Parameters<typeof runWithDbForTesting>[0], fn: () => T): T {
   try {
     const result = runWithDbForTesting(testDb, fn);
     if (isPromiseLike(result)) return result as T;
@@ -138,8 +135,7 @@ function invokeWithTestDb<T>(
 }
 
 function wrapCallerWithTestDb<T>(value: T, context: Context): T {
-  const isWrappable =
-    value !== null && (typeof value === "object" || typeof value === "function");
+  const isWrappable = value !== null && (typeof value === "object" || typeof value === "function");
   if (!context.isTest || !context.db || !isWrappable) {
     return value;
   }

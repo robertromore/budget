@@ -24,7 +24,11 @@ const CATEGORY_ALIAS_MIN_CONFIDENCE = 0.9;
 export const POST: RequestHandler = async ({ request }) => {
   try {
     const userId = await requireImportUserId(request);
-    const { rows, workspaceId: rawWorkspaceId, accountId: rawAccountId } = (await request.json()) as {
+    const {
+      rows,
+      workspaceId: rawWorkspaceId,
+      accountId: rawAccountId,
+    } = (await request.json()) as {
       rows: ImportRow[];
       workspaceId?: number | string;
       accountId?: number | string;
@@ -105,7 +109,9 @@ export const POST: RequestHandler = async ({ request }) => {
           name: categories.name,
         })
         .from(categories)
-        .where(and(eq(categories.workspaceId, authorizedWorkspaceId), isNull(categories.deletedAt)));
+        .where(
+          and(eq(categories.workspaceId, authorizedWorkspaceId), isNull(categories.deletedAt))
+        );
 
       for (const c of workspaceCategories) {
         if (c.name) {
@@ -121,7 +127,10 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     // Track payee-to-category mappings to ensure consistency within this import
-    const payeeCategoryMap = new Map<string, { categoryName: string; categoryId?: number; confidence?: number }>();
+    const payeeCategoryMap = new Map<
+      string,
+      { categoryName: string; categoryId?: number; confidence?: number }
+    >();
 
     // Track alias matches to apply consistently (raw string -> payee info)
     const aliasMatchCache = new Map<
@@ -152,8 +161,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
         if (originalPayee && typeof originalPayee === "string") {
           // First, check if we have an alias for this exact string
-          let aliasMatch: { payeeId: number; payeeName: string; defaultCategoryId: number | null } | null =
-            null;
+          let aliasMatch: {
+            payeeId: number;
+            payeeName: string;
+            defaultCategoryId: number | null;
+          } | null = null;
 
           if (aliasService && authorizedWorkspaceId) {
             // Check cache first
@@ -221,7 +233,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
         // Check for saved transfer mapping before inferring category
         // Transfers don't have categories, so we skip category inference if a mapping is found
-        const rawPayeeForTransfer = (updates["originalPayee"] || data["originalPayee"] || originalPayee) as string | undefined;
+        const rawPayeeForTransfer = (updates["originalPayee"] ||
+          data["originalPayee"] ||
+          originalPayee) as string | undefined;
         let isTransfer = false;
 
         if (transferMappingService && authorizedWorkspaceId && rawPayeeForTransfer) {
@@ -280,7 +294,10 @@ export const POST: RequestHandler = async ({ request }) => {
           (updates["payee"] || data["payee"] || data["notes"] || data["description"])
         ) {
           const normalizedPayee = (updates["payee"] || data["payee"]) as string;
-          const rawPayeeString = (updates["originalPayee"] || data["originalPayee"] || originalPayee || normalizedPayee) as string;
+          const rawPayeeString = (updates["originalPayee"] ||
+            data["originalPayee"] ||
+            originalPayee ||
+            normalizedPayee) as string;
 
           // Check if we've already assigned a category to this payee in this import
           if (normalizedPayee && payeeCategoryMap.has(normalizedPayee)) {
@@ -356,7 +373,9 @@ export const POST: RequestHandler = async ({ request }) => {
             if (!foundCategoryFromAlias) {
               // console.log(`[CategoryInfer] Keyword matching for row, rawPayeeString="${rawPayeeString}", normalizedPayee="${normalizedPayee}"`);
 
-              const description = (updates["notes"] || data["notes"] || data["description"]) as string;
+              const description = (updates["notes"] ||
+                data["notes"] ||
+                data["description"]) as string;
 
               // Build category array for the matcher
               const categoriesForMatcher = Array.from(categoryMap.entries()).map(([id, name]) => ({
@@ -397,9 +416,11 @@ export const POST: RequestHandler = async ({ request }) => {
                     const suggestedLower = suggestedCategoryName.toLowerCase();
                     for (const [name, id] of categoryNameToId) {
                       // Check if names overlap (e.g., "auto" matches "auto & transport")
-                      const words1 = suggestedLower.split(/[&\s]+/).filter(w => w.length > 2);
-                      const words2 = name.split(/[&\s]+/).filter(w => w.length > 2);
-                      const hasOverlap = words1.some(w1 => words2.some(w2 => w1.includes(w2) || w2.includes(w1)));
+                      const words1 = suggestedLower.split(/[&\s]+/).filter((w) => w.length > 2);
+                      const words2 = name.split(/[&\s]+/).filter((w) => w.length > 2);
+                      const hasOverlap = words1.some((w1) =>
+                        words2.some((w2) => w1.includes(w2) || w2.includes(w1))
+                      );
                       if (hasOverlap) {
                         suggestedCategoryId = id;
                         // Update name to actual category name
@@ -442,7 +463,7 @@ export const POST: RequestHandler = async ({ request }) => {
                   if (normalizedPayee) {
                     payeeCategoryMap.set(normalizedPayee, {
                       categoryName: suggestedCategoryName,
-                      categoryId: suggestedCategoryId
+                      categoryId: suggestedCategoryId,
                     });
                   }
                 }

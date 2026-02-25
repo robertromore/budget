@@ -53,9 +53,7 @@ export const accountConnections = sqliteTable(
 
     // Sync status
     lastSyncAt: text("last_sync_at"), // ISO timestamp of last successful sync
-    syncStatus: text("sync_status", { enum: connectionSyncStatuses })
-      .notNull()
-      .default("active"),
+    syncStatus: text("sync_status", { enum: connectionSyncStatuses }).notNull().default("active"),
     syncError: text("sync_error"), // Last error message if sync failed
 
     // Timestamps

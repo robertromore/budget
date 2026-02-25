@@ -174,10 +174,14 @@ const AMOUNT_PATTERNS = [
   { regex: /below\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i, type: "max" as const },
   { regex: /up\s+to\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i, type: "max" as const },
   {
-    regex: /between\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:and|-)\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i,
+    regex:
+      /between\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:and|-)\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i,
     type: "range" as const,
   },
-  { regex: /\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:to|-)\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i, type: "range" as const },
+  {
+    regex: /\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:to|-)\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i,
+    type: "range" as const,
+  },
   { regex: /around\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i, type: "around" as const },
   { regex: /about\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i, type: "around" as const },
   { regex: /exactly\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i, type: "exact" as const },
@@ -347,7 +351,9 @@ export class NaturalLanguageSearchService {
   /**
    * Extract date range from natural language
    */
-  private extractDateRange(query: string): { from: string; to: string; description: string } | null {
+  private extractDateRange(
+    query: string
+  ): { from: string; to: string; description: string } | null {
     // Check for relative date patterns first
     for (const [pattern, fn] of Object.entries(DATE_PATTERNS)) {
       if (query.includes(pattern)) {
@@ -478,7 +484,10 @@ export class NaturalLanguageSearchService {
 
     // Look for "at/from/to [Name]" patterns for payees
     for (const prep of PAYEE_PREPOSITIONS) {
-      const pattern = new RegExp(`${prep}\\s+([a-z][a-z\\s'&-]+?)(?:\\s+(?:in|on|for|last|this|over|under|between|$))`, "gi");
+      const pattern = new RegExp(
+        `${prep}\\s+([a-z][a-z\\s'&-]+?)(?:\\s+(?:in|on|for|last|this|over|under|between|$))`,
+        "gi"
+      );
       let match;
       while ((match = pattern.exec(query)) !== null) {
         const name = match[1].trim();
@@ -490,7 +499,10 @@ export class NaturalLanguageSearchService {
 
     // Look for "for/on [category]" patterns for categories
     for (const prep of CATEGORY_PREPOSITIONS) {
-      const pattern = new RegExp(`${prep}\\s+([a-z][a-z\\s'&-]+?)(?:\\s+(?:at|from|to|in|last|this|over|under|between|$))`, "gi");
+      const pattern = new RegExp(
+        `${prep}\\s+([a-z][a-z\\s'&-]+?)(?:\\s+(?:at|from|to|in|last|this|over|under|between|$))`,
+        "gi"
+      );
       let match;
       while ((match = pattern.exec(query)) !== null) {
         const name = match[1].trim();
@@ -636,10 +648,16 @@ export class NaturalLanguageSearchService {
     );
 
     // Remove sort keywords
-    cleaned = cleaned.replace(/\b(largest|biggest|highest|most|smallest|lowest|cheapest|recent|latest|newest|oldest|earliest|first|last|top)\b/gi, "");
+    cleaned = cleaned.replace(
+      /\b(largest|biggest|highest|most|smallest|lowest|cheapest|recent|latest|newest|oldest|earliest|first|last|top)\b/gi,
+      ""
+    );
 
     // Remove size descriptors
-    cleaned = cleaned.replace(/\b(small|tiny|little|large|big|huge|major|significant|expensive)\b/gi, "");
+    cleaned = cleaned.replace(
+      /\b(small|tiny|little|large|big|huge|major|significant|expensive)\b/gi,
+      ""
+    );
 
     // Clean up and extract remaining meaningful words
     const words = cleaned
@@ -653,7 +671,11 @@ export class NaturalLanguageSearchService {
   /**
    * Execute the search query
    */
-  async search(query: string, workspaceId: number, options?: { limit?: number }): Promise<NLSearchResult> {
+  async search(
+    query: string,
+    workspaceId: number,
+    options?: { limit?: number }
+  ): Promise<NLSearchResult> {
     const startTime = Date.now();
     const parsed = this.parseQuery(query);
     const limit = options?.limit ?? parsed.limit ?? 50;
@@ -725,8 +747,8 @@ export class NaturalLanguageSearchService {
             eq(payees.workspaceId, workspaceId),
             isNull(payees.deletedAt),
             or(
-              ...parsed.payeeNames.map((name) =>
-                sql`lower(${payees.name}) LIKE ${`%${name.toLowerCase()}%`}`
+              ...parsed.payeeNames.map(
+                (name) => sql`lower(${payees.name}) LIKE ${`%${name.toLowerCase()}%`}`
               )
             )
           )
@@ -748,8 +770,8 @@ export class NaturalLanguageSearchService {
             eq(categories.workspaceId, workspaceId),
             isNull(categories.deletedAt),
             or(
-              ...parsed.categoryNames.map((name) =>
-                sql`lower(${categories.name}) LIKE ${`%${name.toLowerCase()}%`}`
+              ...parsed.categoryNames.map(
+                (name) => sql`lower(${categories.name}) LIKE ${`%${name.toLowerCase()}%`}`
               )
             )
           )
@@ -762,8 +784,8 @@ export class NaturalLanguageSearchService {
 
     // Search terms in notes
     if (parsed.searchTerms && parsed.searchTerms.length > 0) {
-      const noteConditions = parsed.searchTerms.map((term) =>
-        sql`lower(${transactions.notes}) LIKE ${`%${term.toLowerCase()}%`}`
+      const noteConditions = parsed.searchTerms.map(
+        (term) => sql`lower(${transactions.notes}) LIKE ${`%${term.toLowerCase()}%`}`
       );
       const orCondition = or(...noteConditions);
       if (orCondition) conditions.push(orCondition);
@@ -785,7 +807,10 @@ export class NaturalLanguageSearchService {
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .leftJoin(payees, and(eq(transactions.payeeId, payees.id), isNull(payees.deletedAt)))
-      .leftJoin(categories, and(eq(transactions.categoryId, categories.id), isNull(categories.deletedAt)))
+      .leftJoin(
+        categories,
+        and(eq(transactions.categoryId, categories.id), isNull(categories.deletedAt))
+      )
       .where(whereClause)
       .orderBy(
         parsed.sortOrder === "asc"
@@ -821,7 +846,8 @@ export class NaturalLanguageSearchService {
     partialQuery: string,
     workspaceId: number
   ): Promise<{ suggestions: string[]; type: "payee" | "category" | "date" | "amount" }[]> {
-    const suggestions: { suggestions: string[]; type: "payee" | "category" | "date" | "amount" }[] = [];
+    const suggestions: { suggestions: string[]; type: "payee" | "category" | "date" | "amount" }[] =
+      [];
     const query = normalize(partialQuery);
 
     // If query ends with "at " or "from ", suggest payees

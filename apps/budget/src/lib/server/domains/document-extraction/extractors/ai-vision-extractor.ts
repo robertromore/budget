@@ -1,7 +1,7 @@
 import type { LLMPreferences, LLMProvider } from "$lib/schema/workspaces";
 import { createProvider, getActiveProvider } from "$lib/server/ai/providers";
 import { generateText } from "ai";
-import { readFile } from "fs/promises";
+import { readFile } from "node:fs/promises";
 
 export interface AiVisionExtractionResult {
   text: string;
@@ -101,7 +101,11 @@ export function supportsVision(provider: LLMProvider, model: string): boolean {
       );
     case "anthropic":
       // Claude 3+ models support vision
-      return model.includes("claude-3") || model.includes("claude-haiku-4") || model.includes("claude-sonnet-4");
+      return (
+        model.includes("claude-3") ||
+        model.includes("claude-haiku-4") ||
+        model.includes("claude-sonnet-4")
+      );
     case "google":
       // Gemini models support vision
       return model.includes("gemini");
