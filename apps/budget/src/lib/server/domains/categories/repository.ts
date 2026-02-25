@@ -786,8 +786,7 @@ export class CategoryRepository extends BaseRepository<
       .where(and(eq(transactions.categoryId, id), isNull(transactions.deletedAt)));
 
     const monthCount = monthlyData?.monthCount || 1;
-    const monthlyAverage =
-      monthCount > 0 ? (monthlyData?.totalAmount || 0) / monthCount : 0;
+    const monthlyAverage = monthCount > 0 ? (monthlyData?.totalAmount || 0) / monthCount : 0;
 
     return {
       ...basicStats,
@@ -883,9 +882,7 @@ export class CategoryRepository extends BaseRepository<
     await db
       .update(transactions)
       .set({ categoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
-      .where(
-        and(eq(transactions.categoryId, sourceCategoryId), isNull(transactions.deletedAt))
-      );
+      .where(and(eq(transactions.categoryId, sourceCategoryId), isNull(transactions.deletedAt)));
   }
 
   /**
@@ -992,7 +989,6 @@ export class CategoryRepository extends BaseRepository<
         .set({ categoryId: targetCategoryId })
         .where(inArray(budgetCategories.id, toReassign));
     }
-
   }
 
   /**

@@ -72,9 +72,7 @@ const DEFAULT_FRAUD_PATTERNS: FraudPattern[] = [
     name: "Just Under Reporting Limit",
     description: "Amounts just under $10,000 may be structuring",
     severity: "high",
-    rules: [
-      { field: "amount", operator: "between", value: [9500, 9999], weight: 1.0 },
-    ],
+    rules: [{ field: "amount", operator: "between", value: [9500, 9999], weight: 1.0 }],
   },
   {
     patternId: "rapid_succession",
@@ -91,9 +89,7 @@ const DEFAULT_FRAUD_PATTERNS: FraudPattern[] = [
     name: "Unusual Time Transaction",
     description: "Transactions at unusual hours",
     severity: "low",
-    rules: [
-      { field: "hour", operator: "between", value: [23, 5], weight: 0.5 },
-    ],
+    rules: [{ field: "hour", operator: "between", value: [23, 5], weight: 0.5 }],
   },
   {
     patternId: "new_payee_large",
@@ -179,7 +175,11 @@ export class AnomalyDetectionService {
     const explanation = this.generateExplanation(transaction, dimensions, triggeredDetectors);
 
     // Generate recommended actions
-    const recommendedActions = this.generateRecommendations(riskLevel, dimensions, triggeredDetectors);
+    const recommendedActions = this.generateRecommendations(
+      riskLevel,
+      dimensions,
+      triggeredDetectors
+    );
 
     return {
       transactionId: transaction.id,
@@ -200,10 +200,7 @@ export class AnomalyDetectionService {
   /**
    * Score multiple transactions in batch
    */
-  async scoreTransactions(
-    workspaceId: number,
-    transactionIds: number[]
-  ): Promise<AnomalyScore[]> {
+  async scoreTransactions(workspaceId: number, transactionIds: number[]): Promise<AnomalyScore[]> {
     // Get account IDs for workspace
     const accountIds = await getWorkspaceAccountIds(workspaceId);
     if (accountIds.length === 0) {
@@ -298,9 +295,7 @@ export class AnomalyDetectionService {
     const riskLevelOrder = { low: 0, medium: 1, high: 2, critical: 3 };
     const minRiskOrder = riskLevelOrder[minRiskLevel];
 
-    return allScores.filter(
-      (score) => riskLevelOrder[score.riskLevel] >= minRiskOrder
-    );
+    return allScores.filter((score) => riskLevelOrder[score.riskLevel] >= minRiskOrder);
   }
 
   /**
@@ -561,7 +556,8 @@ export class AnomalyDetectionService {
     const results: Array<{ name: string; weight: number; result: DetectorResult }> = [];
 
     // Use the most specific stats available (payee > category > account > global)
-    const primaryStats = context.payeeStats ?? context.categoryStats ?? context.accountStats ?? context.globalStats;
+    const primaryStats =
+      context.payeeStats ?? context.categoryStats ?? context.accountStats ?? context.globalStats;
 
     // Statistical detectors
     if (this.config.enabledDetectors.includes("z_score")) {
@@ -629,7 +625,9 @@ export class AnomalyDetectionService {
       results.push({
         name: this.timeOfDayDetector.name,
         weight: this.timeOfDayDetector.weight,
-        result: this.timeOfDayDetector.detect(transaction.amount, primaryStats, { hour: context.hour }),
+        result: this.timeOfDayDetector.detect(transaction.amount, primaryStats, {
+          hour: context.hour,
+        }),
       });
     }
 
@@ -660,21 +658,25 @@ export class AnomalyDetectionService {
       ["z_score", "iqr", "modified_z_score", "percentile"].includes(r.name)
     );
     const amountScore = this.aggregateDetectorScores(amountDetectors);
-    const amountReason = amountDetectors.find((r) => r.result.triggered)?.result.reason ?? "Amount within normal range";
+    const amountReason =
+      amountDetectors.find((r) => r.result.triggered)?.result.reason ??
+      "Amount within normal range";
 
     // Timing dimension
     const timingDetectors = detectorResults.filter((r) =>
       ["time_of_day", "frequency_anomaly"].includes(r.name)
     );
     const timingScore = this.aggregateDetectorScores(timingDetectors);
-    const timingReason = timingDetectors.find((r) => r.result.triggered)?.result.reason ?? "Normal timing pattern";
+    const timingReason =
+      timingDetectors.find((r) => r.result.triggered)?.result.reason ?? "Normal timing pattern";
 
     // Frequency dimension
     const frequencyDetectors = detectorResults.filter((r) =>
       ["frequency_anomaly", "repeated_amount"].includes(r.name)
     );
     const frequencyScore = this.aggregateDetectorScores(frequencyDetectors);
-    const frequencyReason = frequencyDetectors.find((r) => r.result.triggered)?.result.reason ?? "Normal frequency";
+    const frequencyReason =
+      frequencyDetectors.find((r) => r.result.triggered)?.result.reason ?? "Normal frequency";
 
     // Category dimension - based on category stats comparison
     let categoryScore = 0;
@@ -682,11 +684,14 @@ export class AnomalyDetectionService {
     if (context.categoryStats) {
       const absAmount = Math.abs(transaction.amount);
       if (context.categoryStats.stdDev > 0) {
-        const zScore = Math.abs((absAmount - context.categoryStats.mean) / context.categoryStats.stdDev);
+        const zScore = Math.abs(
+          (absAmount - context.categoryStats.mean) / context.categoryStats.stdDev
+        );
         categoryScore = Math.min(1, zScore / 5);
-        categoryReason = zScore > 2
-          ? `Unusual for this category (${zScore.toFixed(1)}σ from mean)`
-          : "Typical for this category";
+        categoryReason =
+          zScore > 2
+            ? `Unusual for this category (${zScore.toFixed(1)}σ from mean)`
+            : "Typical for this category";
       }
     }
 
@@ -698,9 +703,10 @@ export class AnomalyDetectionService {
       if (context.payeeStats.stdDev > 0) {
         const zScore = Math.abs((absAmount - context.payeeStats.mean) / context.payeeStats.stdDev);
         payeeScore = Math.min(1, zScore / 5);
-        payeeReason = zScore > 2
-          ? `Unusual for this payee (${zScore.toFixed(1)}σ from mean)`
-          : "Typical for this payee";
+        payeeReason =
+          zScore > 2
+            ? `Unusual for this payee (${zScore.toFixed(1)}σ from mean)`
+            : "Typical for this payee";
       } else if (context.payeeStats.count === 1) {
         payeeScore = 0.3;
         payeeReason = "First transaction from this payee";
@@ -731,9 +737,7 @@ export class AnomalyDetectionService {
   private calculateEnsembleScore(
     detectorResults: Array<{ name: string; weight: number; result: DetectorResult }>
   ): { overallScore: number; triggeredDetectors: string[] } {
-    const triggeredDetectors = detectorResults
-      .filter((r) => r.result.triggered)
-      .map((r) => r.name);
+    const triggeredDetectors = detectorResults.filter((r) => r.result.triggered).map((r) => r.name);
 
     // Weighted average
     const totalWeight = detectorResults.reduce((sum, d) => sum + d.weight, 0);
@@ -746,8 +750,11 @@ export class AnomalyDetectionService {
 
     // Apply sensitivity adjustment
     const sensitivityMultiplier =
-      this.config.sensitivityLevel === "low" ? 0.7 :
-        this.config.sensitivityLevel === "high" ? 1.3 : 1.0;
+      this.config.sensitivityLevel === "low"
+        ? 0.7
+        : this.config.sensitivityLevel === "high"
+          ? 1.3
+          : 1.0;
 
     score = Math.min(1, score * sensitivityMultiplier);
 

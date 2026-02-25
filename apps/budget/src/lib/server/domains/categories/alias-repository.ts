@@ -654,22 +654,13 @@ export class CategoryAliasRepository {
    * Update the confidence of an alias.
    * Used for dismissal tracking to reduce confidence on negative feedback.
    */
-  async updateConfidence(
-    id: number,
-    newConfidence: number,
-    workspaceId: number
-  ): Promise<void> {
+  async updateConfidence(id: number, newConfidence: number, workspaceId: number): Promise<void> {
     await db
       .update(categoryAliases)
       .set({
         confidence: Math.max(0.1, Math.min(1.0, newConfidence)),
         updatedAt: getCurrentTimestamp(),
       })
-      .where(
-        and(
-          eq(categoryAliases.id, id),
-          eq(categoryAliases.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(categoryAliases.id, id), eq(categoryAliases.workspaceId, workspaceId)));
   }
 }
