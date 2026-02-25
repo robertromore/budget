@@ -11,7 +11,7 @@
 
 import { transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, gte, inArray, sql } from "drizzle-orm";
+import { and, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, mean, standardDeviation } from "simple-statistics";
 import type { ForecastPrediction } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
@@ -223,7 +223,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
         and(
           inArray(transactions.accountId, accountIds),
           gte(transactions.date, cutoffDate),
-          sql`${transactions.amount} > 0`
+          sql`${transactions.amount} > 0`,
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)
@@ -240,7 +242,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
         and(
           inArray(transactions.accountId, accountIds),
           gte(transactions.date, cutoffDate),
-          sql`${transactions.amount} < 0`
+          sql`${transactions.amount} < 0`,
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)
@@ -399,7 +403,9 @@ export function createIncomeExpenseService(): IncomeExpenseService {
         and(
           inArray(transactions.accountId, accountIds),
           gte(transactions.date, startDate),
-          sql`${transactions.date} <= ${endDate}`
+          sql`${transactions.date} <= ${endDate}`,
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 

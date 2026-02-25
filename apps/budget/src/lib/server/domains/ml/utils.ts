@@ -6,7 +6,7 @@
 
 import { accounts } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 /**
  * Get account IDs for a workspace (used for filtering transactions)
@@ -15,6 +15,6 @@ export async function getWorkspaceAccountIds(workspaceId: number): Promise<numbe
   const result = await db
     .select({ id: accounts.id })
     .from(accounts)
-    .where(eq(accounts.workspaceId, workspaceId));
+    .where(and(eq(accounts.workspaceId, workspaceId), isNull(accounts.deletedAt)));
   return result.map((r) => r.id);
 }

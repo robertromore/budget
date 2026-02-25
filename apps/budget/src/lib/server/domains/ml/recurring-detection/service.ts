@@ -145,7 +145,17 @@ export class RecurringTransactionDetectionService {
     }
 
     // Get payee info
-    const payeeInfo = await db.select().from(payees).where(eq(payees.id, payeeId)).limit(1);
+    const payeeInfo = await db
+      .select()
+      .from(payees)
+      .where(
+        and(
+          eq(payees.id, payeeId),
+          eq(payees.workspaceId, workspaceId),
+          isNull(payees.deletedAt)
+        )
+      )
+      .limit(1);
 
     if (payeeInfo.length === 0 || !payeeInfo[0].name) {
       return [];
@@ -359,7 +369,10 @@ export class RecurringTransactionDetectionService {
         accountId: transactions.accountId,
       })
       .from(transactions)
-      .leftJoin(payees, eq(transactions.payeeId, payees.id))
+      .leftJoin(
+        payees,
+        and(eq(transactions.payeeId, payees.id), isNull(payees.deletedAt))
+      )
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
       .where(
         and(

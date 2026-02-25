@@ -182,4 +182,13 @@ describe("Savings opportunities regressions", () => {
     });
     expect(shortLookback.byType.spending_increase).toBe(0);
   });
+
+  test("getAll rejects lookback periods that do not leave an earlier comparison window", async () => {
+    await expect(
+      caller.savingsOpportunityRoutes.getAll({
+        lookbackMonths: 3,
+        minAmount: 5,
+      })
+    ).rejects.toThrow();
+  });
 });

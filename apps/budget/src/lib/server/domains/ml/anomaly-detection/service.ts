@@ -7,7 +7,7 @@
 
 import { transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import type { AnomalyDetectionConfig, AnomalyScore, FraudPattern } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
@@ -217,7 +217,9 @@ export class AnomalyDetectionService {
       .where(
         and(
           inArray(transactions.id, transactionIds),
-          inArray(transactions.accountId, accountIds)
+          inArray(transactions.accountId, accountIds),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 
@@ -269,7 +271,9 @@ export class AnomalyDetectionService {
       .where(
         and(
           inArray(transactions.accountId, accountIds),
-          gte(transactions.date, cutoffDate.toISOString().split("T")[0])
+          gte(transactions.date, cutoffDate.toISOString().split("T")[0]),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .orderBy(desc(transactions.date))
@@ -332,7 +336,9 @@ export class AnomalyDetectionService {
       .where(
         and(
           inArray(transactions.accountId, accountIds),
-          eq(transactions.payeeId, payeeId)
+          eq(transactions.payeeId, payeeId),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .orderBy(desc(transactions.date))
@@ -452,7 +458,9 @@ export class AnomalyDetectionService {
       .where(
         and(
           inArray(transactions.accountId, accountIds),
-          gte(transactions.date, recentDate.toISOString().split("T")[0])
+          gte(transactions.date, recentDate.toISOString().split("T")[0]),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .orderBy(desc(transactions.date))
@@ -470,7 +478,9 @@ export class AnomalyDetectionService {
           and(
             inArray(transactions.accountId, accountIds),
             eq(transactions.payeeId, transaction.payeeId),
-            sql`${transactions.date} < ${transaction.date}`
+            sql`${transactions.date} < ${transaction.date}`,
+            isNull(transactions.deletedAt),
+            ne(transactions.status, "scheduled")
           )
         )
         .orderBy(desc(transactions.date))
@@ -517,6 +527,8 @@ export class AnomalyDetectionService {
     const conditions = [
       inArray(transactions.accountId, accountIds),
       gte(transactions.date, cutoffDate.toISOString().split("T")[0]),
+      isNull(transactions.deletedAt),
+      ne(transactions.status, "scheduled"),
     ];
 
     if (filters.payeeId) {

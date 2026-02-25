@@ -20,7 +20,7 @@ import {
 import { db } from "$lib/server/db";
 import { formatPercent } from "$lib/server/utils/formatters";
 import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
-import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 
 // =============================================================================
@@ -219,7 +219,8 @@ export function createBudgetPredictionService(
     const budgetCats = await db
       .select({ categoryId: budgetCategories.categoryId })
       .from(budgetCategories)
-      .where(eq(budgetCategories.budgetId, budgetId));
+      .innerJoin(categories, eq(budgetCategories.categoryId, categories.id))
+      .where(and(eq(budgetCategories.budgetId, budgetId), isNull(categories.deletedAt)));
 
     if (budgetCats.length === 0) {
       return 0;
@@ -237,11 +238,13 @@ export function createBudgetPredictionService(
       .where(
         and(
           eq(accounts.workspaceId, workspaceId),
+          isNull(accounts.deletedAt),
           inArray(transactions.categoryId, categoryIds),
           gte(transactions.date, startDate),
           lte(transactions.date, endDate),
           sql`${transactions.amount} < 0`, // Only expenses
-          isNull(transactions.deletedAt)
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 
@@ -302,7 +305,8 @@ export function createBudgetPredictionService(
     const budgetCats = await db
       .select({ categoryId: budgetCategories.categoryId })
       .from(budgetCategories)
-      .where(eq(budgetCategories.budgetId, budgetId));
+      .innerJoin(categories, eq(budgetCategories.categoryId, categories.id))
+      .where(and(eq(budgetCategories.budgetId, budgetId), isNull(categories.deletedAt)));
 
     if (budgetCats.length === 0) {
       return 0;
@@ -326,11 +330,13 @@ export function createBudgetPredictionService(
       .where(
         and(
           eq(accounts.workspaceId, workspaceId),
+          isNull(accounts.deletedAt),
           inArray(transactions.categoryId, categoryIds),
           gte(transactions.date, lastMonthStart.toISOString().split("T")[0]),
           lte(transactions.date, lastMonthEnd.toISOString().split("T")[0]),
           sql`${transactions.amount} < 0`,
-          isNull(transactions.deletedAt)
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 
@@ -656,7 +662,7 @@ export function createBudgetPredictionService(
         })
         .from(budgetCategories)
         .innerJoin(categories, eq(budgetCategories.categoryId, categories.id))
-        .where(eq(budgetCategories.budgetId, budgetId));
+        .where(and(eq(budgetCategories.budgetId, budgetId), isNull(categories.deletedAt)));
 
       if (budgetCats.length === 0) {
         return [];
@@ -692,11 +698,13 @@ export function createBudgetPredictionService(
           .where(
             and(
               eq(accounts.workspaceId, workspaceId),
+              isNull(accounts.deletedAt),
               eq(transactions.categoryId, cat.categoryId),
               gte(transactions.date, period.startDate),
               lte(transactions.date, today.toISOString().split("T")[0]),
               sql`${transactions.amount} < 0`,
-              isNull(transactions.deletedAt)
+              isNull(transactions.deletedAt),
+              ne(transactions.status, "scheduled")
             )
           );
 

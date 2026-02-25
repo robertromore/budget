@@ -7,7 +7,7 @@
 
 import { transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { mean, standardDeviation } from "simple-statistics";
 import type {
   AggregationFeatures,
@@ -156,7 +156,9 @@ export class FeatureEngineeringService {
           inArray(transactions.accountId, accountIds),
           entityFilter,
           gte(transactions.date, day7Ago.toISOString().split("T")[0]),
-          lte(transactions.date, asOfDate)
+          lte(transactions.date, asOfDate),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 
@@ -172,7 +174,9 @@ export class FeatureEngineeringService {
           inArray(transactions.accountId, accountIds),
           entityFilter,
           gte(transactions.date, day30Ago.toISOString().split("T")[0]),
-          lte(transactions.date, asOfDate)
+          lte(transactions.date, asOfDate),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 
@@ -188,7 +192,9 @@ export class FeatureEngineeringService {
           inArray(transactions.accountId, accountIds),
           entityFilter,
           gte(transactions.date, day90Ago.toISOString().split("T")[0]),
-          lte(transactions.date, asOfDate)
+          lte(transactions.date, asOfDate),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       );
 
@@ -276,7 +282,9 @@ export class FeatureEngineeringService {
       .where(
         and(
           inArray(transactions.accountId, accountIds),
-          eq(transactions.categoryId, categoryId)
+          eq(transactions.categoryId, categoryId),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .limit(1000);
@@ -313,7 +321,9 @@ export class FeatureEngineeringService {
       .where(
         and(
           inArray(transactions.accountId, accountIds),
-          eq(transactions.payeeId, payeeId)
+          eq(transactions.payeeId, payeeId),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .orderBy(desc(transactions.date))
@@ -360,7 +370,9 @@ export class FeatureEngineeringService {
         and(
           inArray(transactions.accountId, accountIds),
           entityFilter,
-          gte(transactions.date, cutoffDate.toISOString().split("T")[0])
+          gte(transactions.date, cutoffDate.toISOString().split("T")[0]),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)

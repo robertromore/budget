@@ -14,7 +14,7 @@
 import { accounts, categories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { normalize } from "$lib/utils/string-utilities";
-import { and, desc, eq, gte, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
 
 // =============================================================================
 // Types
@@ -711,6 +711,8 @@ export class NaturalLanguageSearchService {
     // Exclude deleted and filter by workspace (through accounts)
     conditions.push(isNull(transactions.deletedAt));
     conditions.push(eq(accounts.workspaceId, workspaceId));
+    conditions.push(isNull(accounts.deletedAt));
+    conditions.push(ne(transactions.status, "scheduled"));
 
     // Get payee IDs if names specified
     let payeeIds: number[] = [];
@@ -721,6 +723,7 @@ export class NaturalLanguageSearchService {
         .where(
           and(
             eq(payees.workspaceId, workspaceId),
+            isNull(payees.deletedAt),
             or(
               ...parsed.payeeNames.map((name) =>
                 sql`lower(${payees.name}) LIKE ${`%${name.toLowerCase()}%`}`
@@ -743,6 +746,7 @@ export class NaturalLanguageSearchService {
         .where(
           and(
             eq(categories.workspaceId, workspaceId),
+            isNull(categories.deletedAt),
             or(
               ...parsed.categoryNames.map((name) =>
                 sql`lower(${categories.name}) LIKE ${`%${name.toLowerCase()}%`}`
@@ -780,8 +784,8 @@ export class NaturalLanguageSearchService {
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .leftJoin(payees, eq(transactions.payeeId, payees.id))
-      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .leftJoin(payees, and(eq(transactions.payeeId, payees.id), isNull(payees.deletedAt)))
+      .leftJoin(categories, and(eq(transactions.categoryId, categories.id), isNull(categories.deletedAt)))
       .where(whereClause)
       .orderBy(
         parsed.sortOrder === "asc"
@@ -825,7 +829,7 @@ export class NaturalLanguageSearchService {
       const recentPayees = await db
         .select({ name: payees.name })
         .from(payees)
-        .where(eq(payees.workspaceId, workspaceId))
+        .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
         .limit(5);
       suggestions.push({
         suggestions: recentPayees.map((p) => p.name).filter((n): n is string => n !== null),
@@ -838,7 +842,7 @@ export class NaturalLanguageSearchService {
       const cats = await db
         .select({ name: categories.name })
         .from(categories)
-        .where(eq(categories.workspaceId, workspaceId))
+        .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)))
         .limit(5);
       suggestions.push({
         suggestions: cats.map((c) => c.name).filter((n): n is string => n !== null),

@@ -7,7 +7,7 @@
 
 import { payees } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { MerchantCanonical, PayeeSimilarityMatch } from "../types";
 import {
   computeCompositeSimilarity,
@@ -172,7 +172,7 @@ export function createMerchantCanonicalizer(
         name: payees.name,
       })
       .from(payees)
-      .where(eq(payees.workspaceId, workspaceId));
+      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
 
     const mapped = result
       .filter((p) => p.name !== null)

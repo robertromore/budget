@@ -7,7 +7,7 @@
 
 import { transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, linearRegressionLine, mean, standardDeviation } from "simple-statistics";
 import type { FeatureEngineeringService } from "../feature-engineering";
 import type { MLModelStore } from "../model-store";
@@ -702,7 +702,9 @@ export class TimeSeriesForecastingService {
       .where(
         and(
           inArray(transactions.accountId, accountIds),
-          gte(transactions.date, cutoff.toISOString().split("T")[0])
+          gte(transactions.date, cutoff.toISOString().split("T")[0]),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('${sql.raw(dateFormat)}', ${transactions.date})`)
@@ -794,7 +796,9 @@ export class TimeSeriesForecastingService {
         and(
           inArray(transactions.accountId, accountIds),
           eq(transactions.categoryId, categoryId),
-          gte(transactions.date, cutoff.toISOString().split("T")[0])
+          gte(transactions.date, cutoff.toISOString().split("T")[0]),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)
@@ -832,7 +836,9 @@ export class TimeSeriesForecastingService {
         and(
           inArray(transactions.accountId, accountIds),
           eq(transactions.payeeId, payeeId),
-          gte(transactions.date, cutoff.toISOString().split("T")[0])
+          gte(transactions.date, cutoff.toISOString().split("T")[0]),
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)
@@ -891,7 +897,9 @@ export class TimeSeriesForecastingService {
         and(
           inArray(transactions.accountId, accountIds),
           gte(transactions.date, cutoffDate),
-          sql`${transactions.amount} > 0`
+          sql`${transactions.amount} > 0`,
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('${sql.raw(dateFormat)}', ${transactions.date})`)
@@ -908,7 +916,9 @@ export class TimeSeriesForecastingService {
         and(
           inArray(transactions.accountId, accountIds),
           gte(transactions.date, cutoffDate),
-          sql`${transactions.amount} < 0`
+          sql`${transactions.amount} < 0`,
+          isNull(transactions.deletedAt),
+          ne(transactions.status, "scheduled")
         )
       )
       .groupBy(sql`strftime('${sql.raw(dateFormat)}', ${transactions.date})`)

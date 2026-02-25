@@ -7,7 +7,7 @@
 
 import { categories, payees } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import type {
   MerchantCanonical,
@@ -186,7 +186,7 @@ export function createSimilarityService(
     const workspacePayees = await db
       .select({ name: payees.name })
       .from(payees)
-      .where(eq(payees.workspaceId, workspaceId));
+      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
 
     const documents = workspacePayees
       .filter((p) => p.name !== null)
@@ -260,7 +260,7 @@ export function createSimilarityService(
           categoryId: payees.defaultCategoryId,
         })
         .from(payees)
-        .where(inArray(payees.id, payeeIds));
+        .where(and(inArray(payees.id, payeeIds), isNull(payees.deletedAt)));
 
       const payeeMap = new Map(payeeData.map((p) => [p.id, { ...p, transactionCount: 0 }]));
 
@@ -274,7 +274,13 @@ export function createSimilarityService(
           ? await db
               .select({ id: categories.id, name: categories.name })
               .from(categories)
-              .where(inArray(categories.id, categoryIds))
+              .where(
+                and(
+                  inArray(categories.id, categoryIds),
+                  eq(categories.workspaceId, workspaceId),
+                  isNull(categories.deletedAt)
+                )
+              )
           : [];
 
       const categoryMap = new Map(categoryData.map((c) => [c.id, c.name]));
@@ -342,7 +348,7 @@ export function createSimilarityService(
           parentId: categories.parentId,
         })
         .from(categories)
-        .where(eq(categories.workspaceId, workspaceId));
+        .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)));
 
       // Build vectorizer for categories (filter out null names)
       const validCategories = workspaceCategories.filter((c) => c.name !== null);
@@ -373,7 +379,11 @@ export function createSimilarityService(
             .select({ name: payees.name })
             .from(payees)
             .where(
-              and(eq(payees.workspaceId, workspaceId), eq(payees.defaultCategoryId, category.id))
+              and(
+                eq(payees.workspaceId, workspaceId),
+                eq(payees.defaultCategoryId, category.id),
+                isNull(payees.deletedAt)
+              )
             )
             .orderBy(desc(payees.id)) // Order by id instead of non-existent transactionCount
             .limit(3);
@@ -470,7 +480,7 @@ export function createSimilarityService(
           defaultCategoryId: payees.defaultCategoryId,
         })
         .from(payees)
-        .where(eq(payees.workspaceId, workspaceId));
+        .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
 
       // Filter to valid payees (with non-null names)
       const validPayees = workspacePayees.filter((p) => p.name !== null);
@@ -485,7 +495,13 @@ export function createSimilarityService(
           ? await db
               .select({ id: categories.id, name: categories.name })
               .from(categories)
-              .where(inArray(categories.id, categoryIds))
+              .where(
+                and(
+                  inArray(categories.id, categoryIds),
+                  eq(categories.workspaceId, workspaceId),
+                  isNull(categories.deletedAt)
+                )
+              )
           : [];
 
       const categoryMap = new Map(categoryData.map((c) => [c.id, c.name]));
@@ -518,12 +534,12 @@ export function createSimilarityService(
       const [payeeCount] = await db
         .select({ count: sql<number>`count(*)` })
         .from(payees)
-        .where(eq(payees.workspaceId, workspaceId));
+        .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
 
       const [categoryCount] = await db
         .select({ count: sql<number>`count(*)` })
         .from(categories)
-        .where(eq(categories.workspaceId, workspaceId));
+        .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)));
 
       const canonicalizer = getCanonicalizer(workspaceId);
       const groups = await canonicalizer.buildCanonicalGroups(workspaceId);

@@ -38,7 +38,7 @@ export const savingsOpportunityRoutes = t.router({
   getAll: rateLimitedProcedure
     .input(
       z.object({
-        lookbackMonths: z.number().min(3).max(24).default(12),
+        lookbackMonths: z.number().min(4).max(24).default(12),
         minAmount: z.number().min(0).default(5),
       }).optional()
     )

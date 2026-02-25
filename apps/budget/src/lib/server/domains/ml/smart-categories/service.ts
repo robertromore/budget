@@ -13,7 +13,7 @@ import { accounts, categories, payees, transactions } from "$lib/schema";
 import type { AmountType } from "$lib/schema/category-aliases";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { db } from "$lib/server/db";
-import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import { createSimilarityService, type SimilarityService } from "../similarity/service";
 import { extractMerchantName, normalizeMerchantName } from "../similarity/text-similarity";
@@ -694,8 +694,11 @@ export function createSmartCategoryService(
         .where(
           and(
             eq(accounts.workspaceId, workspaceId),
+            isNull(accounts.deletedAt),
             gte(sql`abs(${transactions.amount})`, amount - amountRange),
             lte(sql`abs(${transactions.amount})`, amount + amountRange),
+            isNull(transactions.deletedAt),
+            ne(transactions.status, "scheduled"),
             sql`${transactions.categoryId} IS NOT NULL`
           )
         )
@@ -862,6 +865,7 @@ export function createSmartCategoryService(
         .where(
           and(
             eq(payees.workspaceId, workspaceId),
+            isNull(payees.deletedAt),
             sql`lower(${payees.name}) LIKE ${`%${normalizedPayee.toLowerCase()}%`}`
           )
         )
@@ -886,9 +890,12 @@ export function createSmartCategoryService(
         .where(
           and(
             eq(accounts.workspaceId, workspaceId),
+            isNull(accounts.deletedAt),
             inArray(transactions.payeeId, payeeIds),
             gte(sql`abs(${transactions.amount})`, amount - amountRange),
             lte(sql`abs(${transactions.amount})`, amount + amountRange),
+            isNull(transactions.deletedAt),
+            ne(transactions.status, "scheduled"),
             gte(transactions.date, sql`date('now', '-90 days')`)
           )
         );

@@ -355,7 +355,14 @@ export function createSavingsOpportunityService(
   function resolveConfig(
     overrides: Partial<SavingsOpportunityConfig> = {}
   ): SavingsOpportunityConfig {
-    return { ...cfg, ...overrides };
+    const merged = { ...cfg, ...overrides };
+
+    // Keep comparison windows valid for spending-increase analysis.
+    if (merged.lookbackMonths <= merged.recentMonths) {
+      merged.lookbackMonths = merged.recentMonths + 1;
+    }
+
+    return merged;
   }
 
   /**
@@ -772,6 +779,7 @@ export function createSavingsOpportunityService(
 
       const accountIds = await getWorkspaceAccountIds(workspaceId);
       if (accountIds.length === 0) return [];
+      if (activeConfig.lookbackMonths <= activeConfig.recentMonths) return [];
 
       // Get spending by payee for recent vs earlier period
       const now = new Date();
@@ -803,6 +811,7 @@ export function createSavingsOpportunityService(
             gte(transactions.date, earlierStart.toISOString().split("T")[0]),
             isNull(transactions.deletedAt),
             ne(transactions.status, "scheduled"),
+            isNull(payees.deletedAt),
             sql`${transactions.amount} < 0`,
             sql`${transactions.payeeId} IS NOT NULL`
           )
