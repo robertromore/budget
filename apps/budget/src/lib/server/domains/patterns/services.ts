@@ -28,7 +28,7 @@ export class PatternDetectionService {
     workspaceId: number,
     criteria?: Partial<DetectionCriteria>
   ): Promise<DetectedPatternData[]> {
-    const fullCriteria: DetectionCriteria = { ...DEFAULT_DETECTION_CRITERIA, ...criteria };
+    const fullCriteria: DetectionCriteria = { ...DEFAULT_DETECTION_CRITERIA, ...Object.fromEntries(Object.entries(criteria ?? {}).filter(([, v]) => v !== undefined)) };
 
     // Calculate lookback date
     const lookbackDate = new Date();
@@ -56,7 +56,7 @@ export class PatternDetectionService {
     workspaceId: number,
     criteria?: Partial<DetectionCriteria>
   ): Promise<DetectedPatternData[]> {
-    const fullCriteria: DetectionCriteria = { ...DEFAULT_DETECTION_CRITERIA, ...criteria };
+    const fullCriteria: DetectionCriteria = { ...DEFAULT_DETECTION_CRITERIA, ...Object.fromEntries(Object.entries(criteria ?? {}).filter(([, v]) => v !== undefined)) };
 
     // Get all account IDs (in single-user mode, gets all accounts)
     const accountIds = await this.repository.findUserAccountIds(workspaceId);

@@ -37,7 +37,7 @@ export class TransactionValidator {
   private options: Required<ValidationOptions>;
 
   constructor(options: ValidationOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.options = { ...DEFAULT_OPTIONS, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== undefined)) };
   }
 
   /**

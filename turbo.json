@@ -6,7 +6,7 @@
       "persistent": true
     },
     "build": {
-      "dependsOn": ["^build", "check"],
+      "dependsOn": ["^build"],
       "outputs": [".svelte-kit/**", "build/**"]
     },
     "check": {
@@ -33,26 +33,29 @@
     },
     "test:playwright": {
       "dependsOn": ["build"],
-      "outputs": ["playwright-report/**", "test-results/**"]
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "cache": false
     },
     "db:generate": {
       "outputs": ["drizzle/migrations/**"]
     },
     "db:migrate": {
       "dependsOn": ["db:generate"],
-      "outputs": []
+      "outputs": [],
+      "cache": false
     },
     "db:seed": {
       "dependsOn": ["db:migrate"],
-      "outputs": []
+      "outputs": [],
+      "cache": false
     },
     "db:reseed": {
       "dependsOn": ["db:migrate"],
-      "outputs": []
+      "outputs": [],
+      "cache": false
     },
     "db:restart": {
-      "dependsOn": [],
-      "outputs": []
+      "cache": false
     },
     "clean": {
       "cache": false

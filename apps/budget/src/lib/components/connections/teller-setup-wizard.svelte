@@ -45,7 +45,7 @@ let isCreating = $derived(createConnectionMutation.isPending);
 // Reset state when opening/closing
 $effect(() => {
   if (!open) {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       currentStep = 'intro';
       enrollmentId = null;
       accessToken = null;
@@ -53,6 +53,7 @@ $effect(() => {
       selectedExternalAccount = null;
       connectError = null;
     }, 300);
+    return () => clearTimeout(timer);
   }
 });
 

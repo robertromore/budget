@@ -14,7 +14,12 @@ import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { nowISOString } from "$lib/utils/dates";
-import { and, asc, desc, eq, sum } from "drizzle-orm";
+
+/** Round to 2 decimal places to avoid floating-point drift in money arithmetic */
+function roundCents(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+import { and, asc, desc, eq, gte, sql, sum } from "drizzle-orm";
 import {
   DeficitRecoveryService,
   type DeficitAnalysis,
@@ -205,37 +210,59 @@ export class EnvelopeService {
     });
 
     return await db.transaction(async (tx) => {
-      const fromEnvelope = await this.findEnvelopeById(input.fromEnvelopeId, tx);
-      const toEnvelope = await this.findEnvelopeById(input.toEnvelopeId, tx);
+      // Atomic debit: UPDATE with WHERE guard ensures sufficient funds
+      const debitResult = await tx
+        .update(envelopeAllocations)
+        .set({
+          availableAmount: sql`${envelopeAllocations.availableAmount} - ${amount}`,
+          lastCalculated: nowISOString(),
+        })
+        .where(
+          and(
+            eq(envelopeAllocations.id, input.fromEnvelopeId),
+            gte(envelopeAllocations.availableAmount, amount)
+          )
+        )
+        .returning();
 
-      if (fromEnvelope.availableAmount < amount) {
+      if (debitResult.length === 0) {
+        // Either envelope doesn't exist or insufficient funds
+        const fromEnvelope = await this.findEnvelopeById(input.fromEnvelopeId, tx);
         throw new ValidationError(
           `Insufficient funds in source envelope. Available: ${fromEnvelope.availableAmount}`,
           "transfer"
         );
       }
 
+      // Recalculate status for debited envelope
+      const debitedEnvelope = debitResult[0]!;
       await tx
         .update(envelopeAllocations)
         .set({
-          availableAmount: fromEnvelope.availableAmount - amount,
-          status: this.calculateStatus(
-            fromEnvelope.availableAmount - amount,
-            fromEnvelope.deficitAmount
-          ),
-          lastCalculated: nowISOString(),
+          status: this.calculateStatus(debitedEnvelope.availableAmount, debitedEnvelope.deficitAmount),
         })
         .where(eq(envelopeAllocations.id, input.fromEnvelopeId));
 
+      // Atomic credit
+      const creditResult = await tx
+        .update(envelopeAllocations)
+        .set({
+          availableAmount: sql`${envelopeAllocations.availableAmount} + ${amount}`,
+          lastCalculated: nowISOString(),
+        })
+        .where(eq(envelopeAllocations.id, input.toEnvelopeId))
+        .returning();
+
+      if (creditResult.length === 0) {
+        throw new NotFoundError("Envelope allocation", input.toEnvelopeId);
+      }
+
+      // Recalculate status for credited envelope
+      const creditedEnvelope = creditResult[0]!;
       await tx
         .update(envelopeAllocations)
         .set({
-          availableAmount: toEnvelope.availableAmount + amount,
-          status: this.calculateStatus(
-            toEnvelope.availableAmount + amount,
-            toEnvelope.deficitAmount
-          ),
-          lastCalculated: nowISOString(),
+          status: this.calculateStatus(creditedEnvelope.availableAmount, creditedEnvelope.deficitAmount),
         })
         .where(eq(envelopeAllocations.id, input.toEnvelopeId));
 
@@ -495,10 +522,10 @@ export class EnvelopeService {
         )
       );
 
-    const spentAmount = Math.abs(Number(spentAmountResult[0]?.total ?? 0));
-    const totalAvailable = allocatedAmount + rolloverAmount;
-    const availableAmount = Math.max(0, totalAvailable - spentAmount);
-    const deficitAmount = Math.max(0, spentAmount - totalAvailable);
+    const spentAmount = roundCents(Math.abs(Number(spentAmountResult[0]?.total ?? 0)));
+    const totalAvailable = roundCents(allocatedAmount + rolloverAmount);
+    const availableAmount = roundCents(Math.max(0, totalAvailable - spentAmount));
+    const deficitAmount = roundCents(Math.max(0, spentAmount - totalAvailable));
     const status = this.calculateStatus(availableAmount, deficitAmount);
 
     return {

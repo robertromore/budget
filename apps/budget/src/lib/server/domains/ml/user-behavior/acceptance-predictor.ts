@@ -243,7 +243,7 @@ export interface AcceptancePredictor {
 export function createAcceptancePredictor(
   weights: Partial<PredictorWeights> = {}
 ): AcceptancePredictor {
-  const w = { ...DEFAULT_WEIGHTS, ...weights };
+  const w = { ...DEFAULT_WEIGHTS, ...Object.fromEntries(Object.entries(weights ?? {}).filter(([, v]) => v !== undefined)) };
 
   return {
     predict(features: RecommendationFeatures, context: PredictionContext): AcceptancePrediction {

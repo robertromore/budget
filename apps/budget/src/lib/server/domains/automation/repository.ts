@@ -14,7 +14,7 @@ import {
 } from "$lib/schema/automation-rules";
 import type { db } from "$lib/server/db";
 import type { EntityType } from "$lib/types/automation";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 // Database connection type derived from the actual db export
 type DatabaseConnection = Omit<typeof db, "batch">;
@@ -281,7 +281,7 @@ export class AutomationRepository {
     const idsToDelete = logsToDelete.map((l) => l.id);
     await this.db
       .delete(automationRuleLogs)
-      .where(sql`${automationRuleLogs.id} IN (${idsToDelete.join(",")})`);
+      .where(inArray(automationRuleLogs.id, idsToDelete));
 
     return logsToDelete.length;
   }

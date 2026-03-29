@@ -739,12 +739,18 @@ export class ImportOrchestrator {
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
 
-          // Check if category with this slug already exists (could be from soft-deleted or previous import)
+          // Check if category with this slug already exists (including soft-deleted)
           const existingBySlug = existingCategories.find((c) => c.slug === slug);
           if (existingBySlug) {
-            console.log(
-              `Category with slug "${slug}" already exists (ID: ${existingBySlug.id}), using existing`
-            );
+            // Restore if soft-deleted
+            if (existingBySlug.deletedAt) {
+              await db
+                .update(categoryTable)
+                .set({ deletedAt: null, name: normalized["category"] })
+                .where(eq(categoryTable.id, existingBySlug.id));
+              existingBySlug.deletedAt = null;
+              if (entitiesCreated) entitiesCreated.categories++;
+            }
             categoryId = existingBySlug.id;
           } else {
             try {
@@ -1291,7 +1297,7 @@ export class ImportOrchestrator {
     return db
       .select()
       .from(categoryTable)
-      .where(and(isNull(categoryTable.deletedAt), eq(categoryTable.workspaceId, workspaceId)));
+      .where(eq(categoryTable.workspaceId, workspaceId));
   }
 
   /**

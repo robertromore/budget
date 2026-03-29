@@ -10,7 +10,7 @@ import {
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 // Types for the service
 export interface RecordEnhancementInput {
@@ -264,7 +264,7 @@ export class PayeeEnhancementTrackingService {
     const now = getCurrentTimestamp();
 
     // Get current preferences
-    const [payee] = await db.select().from(payees).where(eq(payees.id, payeeId)).limit(1);
+    const [payee] = await db.select().from(payees).where(and(eq(payees.id, payeeId), isNull(payees.deletedAt))).limit(1);
 
     if (!payee) {
       logger.warn("Payee not found for preference update", { payeeId });
@@ -299,7 +299,7 @@ export class PayeeEnhancementTrackingService {
     const [payee] = await db
       .select({ aiPreferences: payees.aiPreferences })
       .from(payees)
-      .where(eq(payees.id, payeeId))
+      .where(and(eq(payees.id, payeeId), isNull(payees.deletedAt)))
       .limit(1);
 
     return payee?.aiPreferences ?? null;

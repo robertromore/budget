@@ -405,9 +405,25 @@ export class BudgetRepository {
    * Create a period instance if one does not already exist for the provided range.
    */
   async createPeriodInstance(data: NewBudgetPeriodInstance): Promise<BudgetPeriodInstance> {
-    const [instance] = await db.insert(budgetPeriodInstances).values(data).returning();
+    const [instance] = await db
+      .insert(budgetPeriodInstances)
+      .values(data)
+      .onConflictDoNothing({
+        target: [
+          budgetPeriodInstances.templateId,
+          budgetPeriodInstances.startDate,
+          budgetPeriodInstances.endDate,
+        ],
+      })
+      .returning();
+
+    // If conflict occurred, fetch the existing instance
     if (!instance) {
-      throw new DatabaseError("Failed to create period instance", "createPeriodInstance");
+      const existing = await this.findInstanceByRange(data.templateId, data.startDate, data.endDate);
+      if (!existing) {
+        throw new DatabaseError("Failed to create period instance", "createPeriodInstance");
+      }
+      return existing;
     }
     return instance;
   }

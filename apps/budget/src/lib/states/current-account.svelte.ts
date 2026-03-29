@@ -59,7 +59,9 @@ export class CurrentAccountState {
     this.account.balance += transaction.amount;
     // Set the running balance for the new transaction
     transaction.balance = this.account.balance;
-    this.transactions?.push(transaction);
+    if (this.account.transactions) {
+      this.account.transactions = [...this.account.transactions, transaction];
+    }
   }
 
   getTransaction(id: number) {

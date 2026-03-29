@@ -5530,8 +5530,9 @@ Respond in JSON format only:
 
     // Convert to output format
     const groups = Array.from(groupMap.values()).map((g) => {
-      const primary = payees.find((p) => p.id === g.primaryPayeeId)!;
-      const duplicates = compact(g.duplicatePayeeIds.map((id) => payees.find((p) => p.id === id)!));
+      const primary = payees.find((p) => p.id === g.primaryPayeeId);
+      if (!primary) return null;
+      const duplicates = compact(g.duplicatePayeeIds.map((id) => payees.find((p) => p.id === id)));
 
       return {
         primaryPayeeId: g.primaryPayeeId,
@@ -5555,7 +5556,7 @@ Respond in JSON format only:
             ? "medium"
             : "high") as "low" | "medium" | "high",
       };
-    });
+    }).filter((g) => g != null);
 
     return {
       groups,

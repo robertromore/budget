@@ -92,7 +92,7 @@ export const requestLimits = (options: RequestLimitOptions = {}) => {
     maxObjectProperties: 100,
   };
 
-  const finalOptions = { ...defaultOptions, ...options };
+  const finalOptions = { ...defaultOptions, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== undefined)) };
 
   return t.middleware(async ({ next, input, type }) => {
     try {

@@ -134,7 +134,7 @@ export interface BehaviorTracker {
 export function createBehaviorTracker(
   config: Partial<BehaviorTrackerConfig> = {}
 ): BehaviorTracker {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   // In-memory storage (would be backed by database in production)
   const interactions: TrackedInteraction[] = [];

@@ -43,7 +43,7 @@ export class PayeeMatcher {
   private aliasService = getPayeeAliasService();
 
   constructor(options: PayeeMatcherOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.options = { ...DEFAULT_OPTIONS, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== undefined)) };
   }
 
   /**

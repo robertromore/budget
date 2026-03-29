@@ -330,7 +330,7 @@ export class AuthService {
     }
 
     // Merge with new preferences
-    const mergedPrefs = { ...existingPrefs, ...preferences };
+    const mergedPrefs = { ...existingPrefs, ...Object.fromEntries(Object.entries(preferences ?? {}).filter(([, v]) => v !== undefined)) };
 
     // Save to database
     await db
@@ -343,7 +343,7 @@ export class AuthService {
 
     logger.info("User preferences updated:", { userId });
 
-    return { ...DEFAULT_USER_PREFERENCES, ...mergedPrefs };
+    return { ...DEFAULT_USER_PREFERENCES, ...Object.fromEntries(Object.entries(mergedPrefs ?? {}).filter(([, v]) => v !== undefined)) };
   }
 
   /**

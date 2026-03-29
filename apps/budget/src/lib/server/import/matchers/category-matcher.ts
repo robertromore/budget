@@ -139,8 +139,8 @@ export class CategoryMatcher {
     options: CategoryMatcherOptions = {},
     customKeywordPatterns: Record<string, string[]> = {}
   ) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.keywordPatterns = { ...DEFAULT_KEYWORD_PATTERNS, ...customKeywordPatterns };
+    this.options = { ...DEFAULT_OPTIONS, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== undefined)) };
+    this.keywordPatterns = { ...DEFAULT_KEYWORD_PATTERNS, ...Object.fromEntries(Object.entries(customKeywordPatterns ?? {}).filter(([, v]) => v !== undefined)) };
   }
 
   /**

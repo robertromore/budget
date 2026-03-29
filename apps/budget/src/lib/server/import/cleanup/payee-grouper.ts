@@ -65,7 +65,7 @@ export class PayeeGrouper {
   private payeeMatcher: PayeeMatcher;
 
   constructor(config: Partial<PayeeGrouperConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
     this.payeeMatcher = new PayeeMatcher();
   }
 
@@ -448,13 +448,6 @@ export class PayeeGrouper {
     const aliasService = getPayeeAliasService();
     const transferService = getTransferMappingService();
 
-    console.log(
-      "[PayeeGrouper.applySavedChoices] Checking saved choices for",
-      groups.length,
-      "groups, workspaceId:",
-      workspaceId
-    );
-
     return Promise.all(
       groups.map(async (group) => {
         // Skip groups that are already auto-accepted with high confidence existing match
@@ -463,10 +456,6 @@ export class PayeeGrouper {
           group.existingMatch &&
           group.existingMatch.confidence >= 0.95
         ) {
-          console.log(
-            "[PayeeGrouper.applySavedChoices] Skipping already accepted group:",
-            group.canonicalName
-          );
           // Ensure canonical name uses the existing payee's clean name
           return {
             ...group,
@@ -476,13 +465,6 @@ export class PayeeGrouper {
 
         // Check each member's original payee string for saved choices
         for (const member of group.members) {
-          console.log(
-            "[PayeeGrouper.applySavedChoices] Checking member:",
-            member.originalPayee,
-            "for group:",
-            group.canonicalName
-          );
-
           // Check for transfer mapping first (higher priority - user explicitly marked as transfer)
           const transferMatch = await transferService.findTransferMapping(
             member.originalPayee,
@@ -496,12 +478,6 @@ export class PayeeGrouper {
               .from(accountsTable)
               .where(eq(accountsTable.id, transferMatch.targetAccountId))
               .get();
-
-            console.log("[PayeeGrouper.applySavedChoices] Found transfer mapping!", {
-              originalPayee: member.originalPayee,
-              targetAccountId: transferMatch.targetAccountId,
-              accountName: account?.name,
-            });
 
             return {
               ...group,
@@ -517,13 +493,6 @@ export class PayeeGrouper {
             // Find matching existing payee
             const matchedPayee = existingPayees.find((p) => p.id === aliasMatch.payeeId);
             if (matchedPayee) {
-              console.log("[PayeeGrouper.applySavedChoices] Found alias match!", {
-                originalPayee: member.originalPayee,
-                payeeId: aliasMatch.payeeId,
-                payeeName: matchedPayee.name,
-                confidence: aliasMatch.confidence,
-              });
-
               return {
                 ...group,
                 userDecision: "accept" as const,

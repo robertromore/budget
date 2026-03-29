@@ -108,7 +108,7 @@ export interface MerchantCanonicalizer {
 export function createMerchantCanonicalizer(
   config: Partial<CanonicalizerConfig> = {}
 ): MerchantCanonicalizer {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   type PayeeCacheStamp = {
     count: number;

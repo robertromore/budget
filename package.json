@@ -2,9 +2,9 @@
   "name": "budget-monorepo",
   "version": "0.0.1",
   "devDependencies": {
-    "@turbo/gen": "^2.8.10",
+    "@turbo/gen": "^2.8.21",
     "prettier": "^3.8.1",
-    "turbo": "^2.8.10"
+    "turbo": "^2.8.21"
   },
   "packageManager": "bun@1.2.23",
   "private": true,
@@ -29,13 +29,5 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.46",
-    "@ai-sdk/google": "^3.0.30",
-    "@ai-sdk/openai": "^3.0.31",
-    "@ai-sdk/svelte": "^4.0.97",
-    "ai": "^6.0.97",
-    "ollama": "^0.6.3"
-  }
+  ]
 }

@@ -5,7 +5,6 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
-import { toast } from '$lib/utils/toast-interceptor';
 import Loader from '@lucide/svelte/icons/loader';
 
 let email = $state('');
@@ -29,8 +28,7 @@ async function handleSubmit(e: Event) {
       return;
     }
 
-    toast.success('Welcome back!');
-    goto('/');
+    await goto('/');
   } catch (err) {
     error = 'An error occurred. Please try again.';
     console.error('Login error:', err);

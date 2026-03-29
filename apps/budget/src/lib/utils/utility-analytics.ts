@@ -492,7 +492,9 @@ function calculateTrend(values: number[]): number {
     sumXX += i * i;
   }
 
-  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  const denominator = n * sumXX - sumX * sumX;
+  if (denominator === 0) return 0;
+  const slope = (n * sumXY - sumX * sumY) / denominator;
   const avg = sumY / n;
 
   // Return trend as percentage of average

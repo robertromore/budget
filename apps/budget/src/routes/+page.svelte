@@ -14,6 +14,7 @@ import Calendar from '@lucide/svelte/icons/calendar';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Home from '@lucide/svelte/icons/home';
 import Receipt from '@lucide/svelte/icons/receipt';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 import Users from '@lucide/svelte/icons/users';
 import PayeeAnalyticsSummary from './(components)/payee-analytics-summary.svelte';
 
@@ -160,6 +161,10 @@ function handleTourPromptClose() {
           <Button variant="outline" href="/payees/analytics" class="justify-start">
             <BarChart3 class="mr-2 h-4 w-4" />
             Payee Analytics
+          </Button>
+          <Button variant="outline" href="/dashboard/mockups" class="justify-start">
+            <Sparkles class="mr-2 h-4 w-4" />
+            Dashboard Mockups
           </Button>
         </div>
       </Card.Content>

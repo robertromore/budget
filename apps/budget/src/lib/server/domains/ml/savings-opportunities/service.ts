@@ -317,7 +317,7 @@ export function createSavingsOpportunityService(
   modelStore: MLModelStore,
   config: Partial<SavingsOpportunityConfig> = {}
 ): SavingsOpportunityService {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
   const recurringService = createRecurringTransactionDetectionService(modelStore);
 
   /**
@@ -355,7 +355,7 @@ export function createSavingsOpportunityService(
   function resolveConfig(
     overrides: Partial<SavingsOpportunityConfig> = {}
   ): SavingsOpportunityConfig {
-    const merged = { ...cfg, ...overrides };
+    const merged = { ...cfg, ...Object.fromEntries(Object.entries(overrides ?? {}).filter(([, v]) => v !== undefined)) };
 
     // Keep comparison windows valid for spending-increase analysis.
     if (merged.lookbackMonths <= merged.recentMonths) {

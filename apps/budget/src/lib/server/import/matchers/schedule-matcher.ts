@@ -52,7 +52,7 @@ export class ScheduleMatcher {
   private payeeMatcher: PayeeMatcher;
 
   constructor(options: ScheduleMatcherOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.options = { ...DEFAULT_OPTIONS, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== undefined)) };
     this.payeeMatcher = new PayeeMatcher();
   }
 

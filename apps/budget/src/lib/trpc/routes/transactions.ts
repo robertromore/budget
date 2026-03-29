@@ -211,14 +211,12 @@ export const transactionRoutes = t.router({
         budgetAllocation: z.number().nullable().optional(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-      try {
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
         if (input.id) {
-          // Update existing transaction
           const { id, accountId, ...updateData } = input;
           return await transactionService.updateTransaction(id, updateData, ctx.workspaceId);
         } else {
-          // Create new transaction
           if (!input.accountId) {
             throw new TRPCError({
               code: "BAD_REQUEST",
@@ -234,16 +232,8 @@ export const transactionRoutes = t.router({
             ctx.workspaceId
           );
         }
-      } catch (error: any) {
-        if (error instanceof TRPCError) {
-          throw error;
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to save transaction",
-        });
-      }
-    }),
+      })
+    ),
 
   // Create transaction with payee auto-population
   createWithAutoPopulation: rateLimitedProcedure

@@ -324,7 +324,7 @@ export function detectCSVDelimiter(text: string): string {
   }));
 
   counts.sort((a, b) => b.count - a.count);
-  return counts[0].delimiter;
+  return counts[0]?.delimiter ?? ",";
 }
 
 /**

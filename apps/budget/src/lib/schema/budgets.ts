@@ -196,6 +196,7 @@ export const budgetPeriodInstances = sqliteTable(
   (table) => [
     index("budget_period_instance_template_idx").on(table.templateId),
     index("budget_period_instance_range_idx").on(table.startDate, table.endDate),
+    uniqueIndex("budget_period_instance_unique_idx").on(table.templateId, table.startDate, table.endDate),
   ]
 );
 

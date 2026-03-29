@@ -1,4 +1,7 @@
 import type { Account, AccountType } from "$lib/schema/accounts";
+import { accounts } from "$lib/schema/accounts";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
 import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
@@ -69,40 +72,46 @@ export class AccountService {
     // Get next sequence number for this workspace
     const seq = await this.sequenceService.getNextSeq(workspaceId, "account");
 
-    // Create account
-    const account = await this.repository.create(
-      {
-        name: sanitizedName,
-        slug: uniqueSlug,
-        seq,
-        notes: sanitizedNotes,
-        onBudget,
-        accountType: data.accountType,
-        accountIcon: data.accountIcon,
-        accountColor: data.accountColor,
-      },
-      workspaceId
-    );
+    // Create account and initial balance transaction atomically
+    const account = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(accounts)
+        .values({
+          name: sanitizedName,
+          slug: uniqueSlug,
+          seq,
+          notes: sanitizedNotes,
+          onBudget,
+          accountType: data.accountType,
+          accountIcon: data.accountIcon,
+          accountColor: data.accountColor,
+          workspaceId,
+        })
+        .returning();
 
-    // Create initial balance transaction if balance is non-zero
-    if (initialBalance !== 0) {
-      const todayDate = today(getLocalTimeZone()).toString();
+      if (!created) {
+        throw new Error("Failed to create account");
+      }
 
-      await this.transactionService.createTransaction(
-        {
-          accountId: account.id,
+      // Create initial balance transaction if balance is non-zero
+      if (initialBalance !== 0) {
+        const todayDate = today(getLocalTimeZone()).toString();
+        await tx.insert(transactions).values({
+          accountId: created.id,
+          workspaceId,
           amount: initialBalance,
           date: todayDate,
           notes: "Initial balance",
           status: "cleared",
           payeeId: null,
           categoryId: null,
-        },
-        workspaceId
-      );
-    }
+        });
+      }
 
-    // Return the account (balance will be updated by the transaction)
+      return created;
+    });
+
+    // Return the account with relations
     return this.repository.findByIdOrThrow(account.id, workspaceId);
   }
 

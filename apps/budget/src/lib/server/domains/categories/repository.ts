@@ -512,10 +512,10 @@ export class CategoryRepository extends BaseRepository<
       .where(eq(envelopeAllocations.categoryId, categoryId))
       .orderBy(desc(envelopeAllocations.updatedAt));
 
-    return results.map((r) => ({
+    return results.filter((r) => r.budgetId != null).map((r) => ({
       budgetId: r.budgetId!,
-      budgetName: r.budgetName!,
-      budgetSlug: r.budgetSlug!,
+      budgetName: r.budgetName ?? "Unknown",
+      budgetSlug: r.budgetSlug ?? "",
       envelopeId: r.envelopeId,
       allocatedAmount: r.allocatedAmount,
       spentAmount: r.spentAmount,

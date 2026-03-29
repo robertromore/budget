@@ -133,7 +133,7 @@ export function createSimilarityService(
   modelStore: MLModelStore,
   config: Partial<SimilarityServiceConfig> = {}
 ): SimilarityService {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   // Per-workspace state
   const merchantCanonicalizers = new Map<number, MerchantCanonicalizer>();

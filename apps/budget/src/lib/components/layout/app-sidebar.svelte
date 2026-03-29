@@ -61,7 +61,7 @@ async function handleSignOut() {
   // Clear encryption key cache before signing out
   clearEncryptionCache();
   await signOut();
-  goto('/login');
+  await goto('/login');
 }
 
 const accountsState = $derived(AccountsState.get());

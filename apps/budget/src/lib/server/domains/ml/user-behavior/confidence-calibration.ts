@@ -326,7 +326,7 @@ export interface ConfidenceCalibrator {
 export function createConfidenceCalibrator(
   config: Partial<CalibrationConfig> = {}
 ): ConfidenceCalibrator {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   // State
   let data: CalibrationData[] = [];

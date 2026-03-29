@@ -173,7 +173,7 @@ export function createUserBehaviorService(
   modelStore: MLModelStore,
   config: Partial<UserBehaviorServiceConfig> = {}
 ): UserBehaviorService {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   // Per-workspace state
   const trackers = new Map<number, BehaviorTracker>();

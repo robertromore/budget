@@ -110,7 +110,7 @@ export class UnifiedMLCoordinator {
     new Map();
 
   constructor(config: Partial<UnifiedMLCoordinatorConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
     // Initialize core services
     this.modelStore = createMLModelStore();

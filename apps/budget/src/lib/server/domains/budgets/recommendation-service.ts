@@ -15,7 +15,7 @@ import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
-import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import type { BudgetRecommendationDraft } from "./budget-analysis-service";
 
 export interface RecommendationFilters {
@@ -264,7 +264,7 @@ export class RecommendationService {
           .where(
             and(
               eq(budgetRecommendations.status, "pending"),
-              sql`${budgetRecommendations.id} IN (${idsToDelete.join(",")})`
+              inArray(budgetRecommendations.id, idsToDelete)
             )
           );
 

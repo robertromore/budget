@@ -79,7 +79,7 @@ export class RecurringTransactionDetectionService {
 
   constructor(modelStore: MLModelStore, config?: Partial<RecurringDetectionConfig>) {
     this.modelStore = modelStore;
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
   }
 
   /**

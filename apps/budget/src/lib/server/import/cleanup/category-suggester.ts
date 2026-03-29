@@ -77,7 +77,7 @@ export class CategorySuggester {
   private smartCategoryService: SmartCategoryService | null = null;
 
   constructor(config: Partial<CategorySuggesterConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
   }
 
   /**

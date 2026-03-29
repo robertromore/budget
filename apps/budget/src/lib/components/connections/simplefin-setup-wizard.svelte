@@ -60,7 +60,7 @@ $effect(() => {
 $effect(() => {
   if (!open) {
     // Reset after close animation
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       currentStep = 'instructions';
       accessUrl = '';
       accessUrlError = null;
@@ -69,6 +69,7 @@ $effect(() => {
       accountsError = null;
       usedSharedUrl = false;
     }, 300);
+    return () => clearTimeout(timer);
   }
 });
 

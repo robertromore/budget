@@ -524,7 +524,7 @@ export function createSmartCategoryService(
   modelStore: MLModelStore,
   config: Partial<SmartCategoryConfig> = {}
 ): SmartCategoryService {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   // Initialize similarity service for payee-based suggestions
   let similarityService: SimilarityService | null = null;

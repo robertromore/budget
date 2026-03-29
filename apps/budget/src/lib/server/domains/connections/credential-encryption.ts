@@ -104,7 +104,11 @@ export function decryptCredentials<T = object>(encryptedData: string, workspaceI
   const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
   // Parse JSON
-  return JSON.parse(decrypted.toString("utf8")) as T;
+  try {
+    return JSON.parse(decrypted.toString("utf8")) as T;
+  } catch {
+    throw new Error("Failed to parse decrypted credentials");
+  }
 }
 
 /**

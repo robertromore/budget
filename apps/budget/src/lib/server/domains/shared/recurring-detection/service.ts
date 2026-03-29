@@ -39,7 +39,10 @@ export class RecurringDetectionService {
     workspaceId: number,
     options?: DetectionOptions
   ): Promise<RecurringPattern[]> {
-    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const defined = Object.fromEntries(
+      Object.entries(options ?? {}).filter(([, v]) => v !== undefined)
+    );
+    const opts = { ...DEFAULT_OPTIONS, ...defined };
 
     // 1. Query transactions with related data
     const txns = await this.queryTransactions(workspaceId, opts);

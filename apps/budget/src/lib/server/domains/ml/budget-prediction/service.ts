@@ -173,7 +173,7 @@ export function createBudgetPredictionService(
   modelStore: MLModelStore,
   config: Partial<BudgetPredictionConfig> = {}
 ): BudgetPredictionService {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const cfg = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   /**
    * Get current period for a budget

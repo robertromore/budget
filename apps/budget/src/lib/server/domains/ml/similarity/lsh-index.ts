@@ -156,7 +156,7 @@ const DEFAULT_CONFIG: LSHIndexConfig = {
  * Create an LSH index for fast similarity search
  */
 export function createLSHIndex(config: Partial<LSHIndexConfig> = {}): LSHIndex {
-  const cfg: LSHIndexConfig = { ...DEFAULT_CONFIG, ...config };
+  const cfg: LSHIndexConfig = { ...DEFAULT_CONFIG, ...Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined)) };
 
   // Validate config
   if (cfg.numHashFunctions % cfg.numBands !== 0) {
