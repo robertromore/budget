@@ -5,6 +5,7 @@ import { aiChat } from '$lib/states/ui/ai-chat.svelte';
 import { Sparkles } from '@lucide/svelte/icons';
 import { Kbd } from '$lib/components/ui/kbd';
 import { cn } from '$lib/utils';
+import { onMount } from 'svelte';
 
 interface Props {
   class?: string;
@@ -21,6 +22,12 @@ let {
   showLabel = false,
   ...restProps
 }: Props = $props();
+
+let shortcutModifier = $state('Ctrl');
+
+onMount(() => {
+  shortcutModifier = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+});
 </script>
 
 <Tooltip.Root>
@@ -53,7 +60,7 @@ let {
   <Tooltip.Content>
     <p>
       AI Assistant
-      <Kbd class="ml-2">{navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'}⇧K</Kbd>
+      <Kbd class="ml-2">{shortcutModifier}⇧K</Kbd>
     </p>
   </Tooltip.Content>
 </Tooltip.Root>

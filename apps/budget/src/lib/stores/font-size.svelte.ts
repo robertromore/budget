@@ -25,21 +25,28 @@ const FONT_SIZE_ORDER: FontSize[] = ["small", "normal", "large"];
 function createFontSizeStore() {
   let current = $state<FontSize>("normal");
   let initialized = false;
-
-  // Initialize from localStorage on client (only on authenticated routes)
-  if (shouldPersistToLocalStorage()) {
-    const stored = localStorage.getItem(FONT_SIZE_KEY) as FontSize | null;
-    const initialSize = stored && FONT_SIZE_ORDER.includes(stored) ? stored : "normal";
-    current = initialSize;
-    applyFontSize(initialSize);
-    loadFromBackend();
-  }
+  let backendLoaded = false;
 
   function applyFontSize(size: FontSize) {
     if (browser) {
       document.documentElement.style.setProperty("--app-font-size", FONT_SIZES[size]);
       document.documentElement.setAttribute("data-font-size", size);
     }
+  }
+
+  function initialize() {
+    if (!browser || initialized) return;
+
+    initialized = true;
+
+    if (shouldPersistToLocalStorage()) {
+      const stored = localStorage.getItem(FONT_SIZE_KEY) as FontSize | null;
+      const initialSize = stored && FONT_SIZE_ORDER.includes(stored) ? stored : "normal";
+      current = initialSize;
+      void loadFromBackend();
+    }
+
+    applyFontSize(current);
   }
 
   function set(size: FontSize) {
@@ -60,8 +67,8 @@ function createFontSizeStore() {
   }
 
   async function loadFromBackend() {
-    if (!browser || initialized) return;
-    initialized = true;
+    if (!browser || backendLoaded) return;
+    backendLoaded = true;
 
     try {
       const backendPrefs = await loadPreferencesFromBackend();
@@ -99,6 +106,7 @@ function createFontSizeStore() {
     get sizes() {
       return FONT_SIZES;
     },
+    initialize,
     set,
     cycle,
     initFromBackend,

@@ -7,6 +7,7 @@ import { intelligenceInputMode } from '$lib/states/ui/intelligence-input.svelte'
 import { Kbd } from '$lib/components/ui/kbd';
 import { cn } from '$lib/utils';
 import Brain from '@lucide/svelte/icons/brain';
+import { onMount } from 'svelte';
 
 // Fetch preferences from query layer
 const preferencesQuery = IntelligenceInputSettings.getPreferences().options();
@@ -29,6 +30,12 @@ $effect(() => {
 const isActive = $derived(intelligenceInputMode.isActive);
 const isEnabled = $derived(intelligenceInputMode.isEnabled);
 const showInHeader = $derived(preferencesQuery.data?.showInHeader ?? true);
+
+let shortcutModifier = $state('Ctrl');
+
+onMount(() => {
+  shortcutModifier = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+});
 </script>
 
 {#if isEnabled && showInHeader}
@@ -58,7 +65,7 @@ const showInHeader = $derived(preferencesQuery.data?.showInHeader ?? true);
     <Tooltip.Content>
       <p>
         {isActive ? 'Exit intelligence mode' : 'Intelligence mode'}
-        <Kbd class="ml-2">{navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'}⇧I</Kbd>
+        <Kbd class="ml-2">{shortcutModifier}⇧I</Kbd>
       </p>
     </Tooltip.Content>
   </Tooltip.Root>

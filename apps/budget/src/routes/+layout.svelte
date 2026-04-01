@@ -35,9 +35,12 @@ import { SchedulesState } from '$lib/states/entities/schedules.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { autoScheduler } from '$lib/stores/auto-scheduler.svelte';
 import { chartPalette } from '$lib/stores/chart-palette.svelte';
+import { fontSize } from '$lib/stores/font-size.svelte';
+import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { setPageActionsContext } from '$lib/stores/page-actions.svelte';
 import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { setNotificationContext } from '$lib/stores/notifications.svelte';
+import { themePreferences } from '$lib/stores/theme-preferences.svelte';
 import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
 import { setQueryClientContext } from '@tanstack/svelte-query';
 import { mode, ModeWatcher } from 'mode-watcher';
@@ -49,6 +52,7 @@ import '../app.css';
 import type { LayoutData } from './$types';
 
 let { data, children }: { data: LayoutData; children: Snippet } = $props();
+let headerControlsReady = $state(false);
 
 // Check if we're on a public/auth route that shouldn't show the full app chrome
 const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password', '/invite'];
@@ -64,7 +68,7 @@ setPageActionsContext();
 setPageTabsContext();
 
 // Set up notification context for toast interception
-setNotificationContext();
+const notificationStore = setNotificationContext();
 
 // Use TanStack Query for reactive updates
 const accountsQuery = rpc.accounts.listAccounts().options();
@@ -129,6 +133,12 @@ $effect(() => {
 
 // Auto-scheduler: Automatically create scheduled transactions when app loads
 onMount(() => {
+  fontSize.initialize();
+  themePreferences.initialize();
+  headerActionsMode.initialize();
+  notificationStore.initialize();
+  headerControlsReady = true;
+
   // Small delay to ensure everything is loaded, then run auto-scheduler
   setTimeout(() => {
     autoScheduler.runWithRetries();
@@ -162,35 +172,44 @@ onMount(() => {
     <div class="bg-background">
       <div class="grid">
         <Sidebar.Provider>
-          <AppSidebar />
+          <AppSidebar user={data.user} />
           <Sidebar.Inset>
             <header
               class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b p-2">
               <div class="flex items-center gap-2 px-4">
-                <Tooltip.Root>
-                  <Tooltip.Trigger>
-                    {#snippet child({ props })}
-                      <Sidebar.Trigger
-                        {...props}
-                        class="-ml-1"
-                        data-help-id="sidebar-trigger"
-                        data-help-title="Toggle Sidebar" />
-                    {/snippet}
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Toggle sidebar</Tooltip.Content>
-                </Tooltip.Root>
-                <ThemeToggle />
-                <FontSizeToggle />
-                <ThemeButton />
-                {#if isLLMEnabled}
-                  <ChatTrigger />
+                {#if headerControlsReady}
+                  <Tooltip.Root>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <Sidebar.Trigger
+                          {...props}
+                          class="-ml-1"
+                          data-help-id="sidebar-trigger"
+                          data-help-title="Toggle Sidebar" />
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Toggle sidebar</Tooltip.Content>
+                  </Tooltip.Root>
+                {:else}
+                  <Sidebar.Trigger
+                    class="-ml-1"
+                    data-help-id="sidebar-trigger"
+                    data-help-title="Toggle Sidebar" />
                 {/if}
-                <IntelligenceInputButton />
-                <HelpButton />
-                <NotificationPopover />
-                <SettingsButton />
-                <HeaderPageActions />
-                <HeaderPageTabs />
+                {#if headerControlsReady}
+                  <ThemeToggle />
+                  <FontSizeToggle />
+                  <ThemeButton />
+                  {#if isLLMEnabled}
+                    <ChatTrigger />
+                  {/if}
+                  <IntelligenceInputButton />
+                  <HelpButton />
+                  <NotificationPopover />
+                  <SettingsButton />
+                  <HeaderPageActions />
+                  <HeaderPageTabs />
+                {/if}
               </div>
             </header>
             <div class="col-span-3 lg:col-span-4">

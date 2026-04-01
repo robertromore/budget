@@ -14,12 +14,18 @@ import CircleHelp from '@lucide/svelte/icons/circle-help';
 import GraduationCap from '@lucide/svelte/icons/graduation-cap';
 import Navigation from '@lucide/svelte/icons/navigation';
 import Settings from '@lucide/svelte/icons/settings';
+import { onMount } from 'svelte';
 
 const isHelpActive = $derived(helpMode.isActive);
 const isTourActive = $derived(spotlightTour.isActive);
 
 // Dropdown state
 let dropdownOpen = $state(false);
+let shortcutModifier = $state('Ctrl');
+
+onMount(() => {
+  shortcutModifier = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+});
 
 // Handle starting the unified tour
 async function handleStartTour() {
@@ -83,7 +89,7 @@ function handleRunWizard() {
     <Tooltip.Content>
       <p>
         Help
-        <Kbd class="ml-2">{navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'}⇧/</Kbd>
+        <Kbd class="ml-2">{shortcutModifier}⇧/</Kbd>
       </p>
     </Tooltip.Content>
   </Tooltip.Root>
@@ -92,7 +98,7 @@ function handleRunWizard() {
       <DropdownMenu.Item onclick={() => helpMode.toggle()} class="gap-2">
         <GraduationCap class="h-4 w-4" />
         <span>{isHelpActive ? 'Exit Help Mode' : 'Enter Help Mode'}</span>
-        <Kbd class="ml-auto">{navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'}⇧/</Kbd>
+        <Kbd class="ml-auto">{shortcutModifier}⇧/</Kbd>
       </DropdownMenu.Item>
     </DropdownMenu.Group>
     <DropdownMenu.Separator />

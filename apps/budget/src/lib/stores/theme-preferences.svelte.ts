@@ -24,16 +24,20 @@ class ThemePreferencesStore {
   private currentTheme = $state<string>("zinc");
   private customColor = $state<string | undefined>(undefined);
   private initialized = false;
+  private backendLoaded = false;
 
-  constructor() {
-    if (browser) {
-      // Only load from storage on authenticated routes
-      if (shouldPersistToLocalStorage()) {
-        this.loadFromStorage();
-        this.loadFromBackend();
-      }
-      this.applyTheme();
+  initialize(): void {
+    if (!browser || this.initialized) return;
+
+    this.initialized = true;
+
+    // Only load from storage on authenticated routes
+    if (shouldPersistToLocalStorage()) {
+      this.loadFromStorage();
+      void this.loadFromBackend();
     }
+
+    this.applyTheme();
   }
 
   /**
@@ -185,8 +189,8 @@ class ThemePreferencesStore {
   }
 
   private async loadFromBackend() {
-    if (!browser || this.initialized) return;
-    this.initialized = true;
+    if (!browser || this.backendLoaded) return;
+    this.backendLoaded = true;
 
     try {
       const backendPrefs = await loadPreferencesFromBackend();

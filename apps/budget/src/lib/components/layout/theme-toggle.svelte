@@ -5,8 +5,11 @@ import Monitor from '@lucide/svelte/icons/monitor';
 import Moon from '@lucide/svelte/icons/moon';
 import Sun from '@lucide/svelte/icons/sun';
 import { setMode, userPrefersMode } from 'mode-watcher';
+import { onMount } from 'svelte';
 
-const currentMode = $derived(userPrefersMode.current);
+let mounted = $state(false);
+
+const currentMode = $derived(mounted ? (userPrefersMode.current ?? 'system') : 'system');
 
 const modeLabels = {
   light: 'Light mode',
@@ -24,6 +27,10 @@ function cycleMode() {
     setMode('light');
   }
 }
+
+onMount(() => {
+  mounted = true;
+});
 </script>
 
 <Tooltip.Root>

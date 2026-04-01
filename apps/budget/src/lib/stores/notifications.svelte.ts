@@ -42,11 +42,18 @@ class NotificationStore {
   private initialized = false;
   private syncInProgress = false;
 
-  constructor() {
-    if (browser) {
-      this.loadFromStorage();
-      this.loadFromBackend();
-    }
+  initialize(): void {
+    if (!browser || this.initialized) return;
+
+    this.initialized = true;
+    this.loadFromStorage();
+    void this.loadFromBackend();
+  }
+
+  private sortAndCapNotifications(notifications: Notification[]): Notification[] {
+    return notifications
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, MAX_NOTIFICATIONS);
   }
 
   /**
@@ -57,10 +64,17 @@ class NotificationStore {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed: SerializedNotification[] = JSON.parse(stored);
-        this.notifications = parsed.map((n) => ({
+        const storedNotifications = parsed.map((n) => ({
           ...n,
           timestamp: new Date(n.timestamp),
         }));
+        const notificationsById = new Map(storedNotifications.map((notification) => [notification.id, notification]));
+
+        for (const notification of this.notifications) {
+          notificationsById.set(notification.id, notification);
+        }
+
+        this.notifications = this.sortAndCapNotifications(Array.from(notificationsById.values()));
       }
     } catch (error) {
       console.error("Failed to load notifications from storage:", error);
@@ -71,8 +85,7 @@ class NotificationStore {
    * Load notifications from backend and merge with local
    */
   private async loadFromBackend(): Promise<void> {
-    if (!browser || this.initialized) return;
-    this.initialized = true;
+    if (!browser) return;
 
     try {
       const backendNotifications = await trpc().notificationRoutes.all.query();
@@ -92,11 +105,10 @@ class NotificationStore {
           persistent: n.persistent ?? undefined,
         }));
 
-        const mergedNotifications = [...convertedBackend, ...localOnlyNotifications]
-          .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-          .slice(0, MAX_NOTIFICATIONS);
-
-        this.notifications = mergedNotifications;
+        this.notifications = this.sortAndCapNotifications([
+          ...convertedBackend,
+          ...localOnlyNotifications,
+        ]);
         this.saveToStorage();
 
         // Sync any local-only notifications to backend
@@ -318,8 +330,8 @@ class NotificationStore {
     try {
       const backendNotifications = await trpc().notificationRoutes.all.query();
       if (backendNotifications) {
-        this.notifications = backendNotifications
-          .map(
+        this.notifications = this.sortAndCapNotifications(
+          backendNotifications.map(
             (n): Notification => ({
               id: n.id,
               type: n.type,
@@ -330,7 +342,7 @@ class NotificationStore {
               persistent: n.persistent ?? undefined,
             })
           )
-          .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        );
         this.saveToStorage();
       }
     } catch (error) {
@@ -357,8 +369,10 @@ export function getNotificationStore(): NotificationStore {
  * Set the notification store in Svelte context.
  * Call this at the root layout level.
  */
-export function setNotificationContext(): void {
-  setContext(NOTIFICATIONS_KEY, getNotificationStore());
+export function setNotificationContext(): NotificationStore {
+  const store = getNotificationStore();
+  setContext(NOTIFICATIONS_KEY, store);
+  return store;
 }
 
 /**

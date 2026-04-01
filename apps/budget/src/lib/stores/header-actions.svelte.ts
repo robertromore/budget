@@ -23,28 +23,31 @@ class HeaderActionsStore {
   private display = $state<HeaderActionsDisplay>("icon-text");
   private tabs = $state<HeaderTabsMode>("off");
   private tabsDisplay = $state<HeaderTabsDisplay>("icon-text");
+  private initialized = false;
 
-  constructor() {
-    if (shouldPersistToLocalStorage()) {
-      const storedMode = localStorage.getItem(STORAGE_KEY);
-      if (storedMode && ["off", "secondary", "all"].includes(storedMode)) {
-        this.mode = storedMode as HeaderActionsMode;
-      }
+  initialize() {
+    if (this.initialized || !shouldPersistToLocalStorage()) return;
 
-      const storedDisplay = localStorage.getItem(DISPLAY_STORAGE_KEY);
-      if (storedDisplay && ["icon-only", "icon-text"].includes(storedDisplay)) {
-        this.display = storedDisplay as HeaderActionsDisplay;
-      }
+    this.initialized = true;
 
-      const storedTabs = localStorage.getItem(TABS_STORAGE_KEY);
-      if (storedTabs && ["off", "on"].includes(storedTabs)) {
-        this.tabs = storedTabs as HeaderTabsMode;
-      }
+    const storedMode = localStorage.getItem(STORAGE_KEY);
+    if (storedMode && ["off", "secondary", "all"].includes(storedMode)) {
+      this.mode = storedMode as HeaderActionsMode;
+    }
 
-      const storedTabsDisplay = localStorage.getItem(TABS_DISPLAY_STORAGE_KEY);
-      if (storedTabsDisplay && ["icon-only", "icon-text"].includes(storedTabsDisplay)) {
-        this.tabsDisplay = storedTabsDisplay as HeaderTabsDisplay;
-      }
+    const storedDisplay = localStorage.getItem(DISPLAY_STORAGE_KEY);
+    if (storedDisplay && ["icon-only", "icon-text"].includes(storedDisplay)) {
+      this.display = storedDisplay as HeaderActionsDisplay;
+    }
+
+    const storedTabs = localStorage.getItem(TABS_STORAGE_KEY);
+    if (storedTabs && ["off", "on"].includes(storedTabs)) {
+      this.tabs = storedTabs as HeaderTabsMode;
+    }
+
+    const storedTabsDisplay = localStorage.getItem(TABS_DISPLAY_STORAGE_KEY);
+    if (storedTabsDisplay && ["icon-only", "icon-text"].includes(storedTabsDisplay)) {
+      this.tabsDisplay = storedTabsDisplay as HeaderTabsDisplay;
     }
   }
 
