@@ -1105,6 +1105,39 @@ export class TransactionService {
   }
 
   /**
+   * Get workspace-wide summary across all accounts
+   */
+  async getWorkspaceSummary(workspaceId: number) {
+    const result = await db
+      .select({
+        totalPending: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' THEN ${transactions.amount} ELSE 0 END)`,
+        pendingCount: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' THEN 1 ELSE 0 END)`,
+        totalSpent30d: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 AND ${transactions.date} >= date('now', '-30 days') THEN ABS(${transactions.amount}) ELSE 0 END)`,
+        totalReceived30d: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 AND ${transactions.date} >= date('now', '-30 days') THEN ${transactions.amount} ELSE 0 END)`,
+        transactionCount30d: sql<number>`SUM(CASE WHEN ${transactions.date} >= date('now', '-30 days') THEN 1 ELSE 0 END)`,
+      })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(
+        and(
+          eq(accounts.workspaceId, workspaceId),
+          isNull(transactions.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      );
+
+    const row = result[0];
+    return {
+      totalPending: Number(row?.totalPending) || 0,
+      pendingCount: Number(row?.pendingCount) || 0,
+      totalSpent30d: Number(row?.totalSpent30d) || 0,
+      totalReceived30d: Number(row?.totalReceived30d) || 0,
+      transactionCount30d: Number(row?.transactionCount30d) || 0,
+      netCashflow30d: (Number(row?.totalReceived30d) || 0) - (Number(row?.totalSpent30d) || 0),
+    };
+  }
+
+  /**
    * Delete transaction (soft delete)
    */
   async deleteTransaction(id: number, workspaceId: number): Promise<void> {
@@ -1972,6 +2005,67 @@ export class TransactionService {
       .groupBy(transactions.categoryId, categories.name)
       .orderBy(sql`SUM(ABS(${transactions.amount})) DESC`)
       .limit(limit);
+
+    return result;
+  }
+
+  /**
+   * Get top categories across all accounts in the workspace
+   */
+  async getWorkspaceTopCategories(
+    workspaceId: number,
+    options: { limit?: number } = {}
+  ) {
+    const limit = options.limit ?? 10;
+
+    const result = await db
+      .select({
+        categoryId: transactions.categoryId,
+        categoryName: categories.name,
+        transactionCount: sql<number>`COUNT(*)`,
+        totalAmount: sql<number>`SUM(ABS(${transactions.amount}))`,
+      })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(
+        and(
+          eq(accounts.workspaceId, workspaceId),
+          isNull(transactions.deletedAt),
+          isNull(accounts.deletedAt),
+          sql`${transactions.categoryId} IS NOT NULL`,
+          sql`${transactions.amount} < 0`
+        )
+      )
+      .groupBy(transactions.categoryId, categories.name)
+      .orderBy(sql`SUM(ABS(${transactions.amount})) DESC`)
+      .limit(limit);
+
+    return result;
+  }
+
+  /**
+   * Get monthly spending aggregates across all accounts in the workspace
+   */
+  async getWorkspaceMonthlySpending(workspaceId: number) {
+    const result = await db
+      .select({
+        month: sql<string>`strftime('%Y-%m', ${transactions.date})`,
+        spending: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END)`,
+        income: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END)`,
+        transactionCount: sql<number>`COUNT(*)`,
+      })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(
+        and(
+          eq(accounts.workspaceId, workspaceId),
+          isNull(transactions.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
+      .groupBy(sql`strftime('%Y-%m', ${transactions.date})`)
+      .orderBy(sql`strftime('%Y-%m', ${transactions.date})`);
 
     return result;
   }

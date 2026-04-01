@@ -7,7 +7,11 @@ import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { isDebtAccount } from '$lib/schema/accounts';
+import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { rpc } from '$lib/query';
+import type { DashboardWithWidgets } from '$lib/schema/dashboards';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { clearEncryptionCache } from '$lib/states/ui/encryption-unlock.svelte';
 import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
@@ -36,11 +40,18 @@ import Wallet from '@lucide/svelte/icons/wallet';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Zap from '@lucide/svelte/icons/zap';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
+import type { LayoutData } from '../../../routes/$types';
+
+interface Props {
+  user?: LayoutData['user'];
+}
+
+let { user: initialUser = null }: Props = $props();
 
 // Session and user data (useSession returns a nanostores atom)
 const sessionStore = useSession();
 const session = $derived($sessionStore);
-const user = $derived(session.data?.user);
+const user = $derived(session.data?.user ?? initialUser);
 
 function getInitials(name: string | null | undefined, email: string | null | undefined): string {
   if (name) {
@@ -79,6 +90,10 @@ const onBudgetBalance = $derived(accountsState.getOnBudgetBalance());
 
 const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
+
+// Dashboard nav
+const dashboardsQuery = rpc.dashboards.listDashboards().options();
+const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWithWidgets[]);
 </script>
 
 <Sidebar.Root data-help-id="sidebar" data-help-title="Sidebar Navigation" data-tour-id="sidebar">
@@ -89,16 +104,45 @@ const _deleteAccountId = $derived(deleteAccountId);
     <Sidebar.Group data-tour-id="main-navigation">
       <Sidebar.GroupContent>
         <Sidebar.Menu>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
-              {#snippet child({ props })}
-                <a href="/" {...props} class="flex items-center gap-3">
-                  <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
-                  <span class="font-medium">Dashboard</span>
-                </a>
-              {/snippet}
-            </Sidebar.MenuButton>
-          </Sidebar.MenuItem>
+          <Collapsible.Root open class="group/dashboards">
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({ props })}
+                  <a href="/" {...props} class="flex items-center gap-3">
+                    <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
+                    <span class="font-medium">Dashboard</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              {#if enabledDashboards.length > 1}
+                <Collapsible.Trigger>
+                  {#snippet child({ props })}
+                    <Sidebar.MenuAction {...props} class="data-[state=open]:rotate-90">
+                      <ChevronRight class="h-4 w-4" />
+                      <span class="sr-only">Toggle dashboards</span>
+                    </Sidebar.MenuAction>
+                  {/snippet}
+                </Collapsible.Trigger>
+              {/if}
+              {#if enabledDashboards.length > 1}
+                <Collapsible.Content>
+                  <Sidebar.MenuSub>
+                    {#each enabledDashboards as dash (dash.id)}
+                      <Sidebar.MenuSubItem>
+                        <Sidebar.MenuSubButton>
+                          {#snippet child({ props })}
+                            <a href={dash.isDefault ? '/' : `/dashboard/${dash.slug}`} {...props}>
+                              <span>{dash.name}</span>
+                            </a>
+                          {/snippet}
+                        </Sidebar.MenuSubButton>
+                      </Sidebar.MenuSubItem>
+                    {/each}
+                  </Sidebar.MenuSub>
+                </Collapsible.Content>
+              {/if}
+            </Sidebar.MenuItem>
+          </Collapsible.Root>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}

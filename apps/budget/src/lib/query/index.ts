@@ -13,6 +13,7 @@ import * as categories from "./categories";
 import * as categoryAliases from "./category-aliases";
 import * as categoryGroups from "./category-groups";
 import * as connections from "./connections";
+import * as dashboards from "./dashboards";
 import * as documentExtraction from "./document-extraction";
 import * as importProfiles from "./import-profiles";
 import * as llmSettings from "./llm-settings";
@@ -52,6 +53,7 @@ export const rpc = {
   categoryAliases,
   categoryGroups,
   connections,
+  dashboards,
   documentExtraction,
   importProfiles,
   llmSettings,

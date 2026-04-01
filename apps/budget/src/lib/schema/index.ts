@@ -3,6 +3,7 @@ export * from "./automation-rules";
 export * from "./budget-automation-settings";
 export * from "./budgets";
 export * from "./categories";
+export * from "./dashboards";
 export * from "./category-aliases";
 export * from "./category-groups";
 export * from "./detected-patterns";
@@ -70,6 +71,7 @@ import { budgetAutomationSettings } from "./budget-automation-settings";
 import { budgets } from "./budgets";
 import { categories } from "./categories";
 import { categoryGroups } from "./category-groups";
+import { dashboards } from "./dashboards";
 import { detectedPatterns } from "./detected-patterns";
 import { expenseReceipts } from "./expense-receipts";
 import { hsaClaims } from "./hsa-claims";
@@ -102,6 +104,7 @@ export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   accounts: many(accounts),
   categories: many(categories),
   categoryGroups: many(categoryGroups),
+  dashboards: many(dashboards),
   payees: many(payees),
   budgets: many(budgets),
   schedules: many(schedules),

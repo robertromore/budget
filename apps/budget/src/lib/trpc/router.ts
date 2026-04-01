@@ -32,6 +32,7 @@ import type { Context } from "$lib/trpc/context";
 import { runWithDbForTesting } from "$lib/server/db";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
+import { dashboardRoutes } from "./routes/dashboards";
 import { forecastingRoutes } from "./routes/forecasting";
 import { metricAlertRoutes } from "./routes/metric-alerts";
 import { importCleanupRoutes } from "./routes/import-cleanup";
@@ -71,6 +72,7 @@ export const router = t.router({
   categoriesRoutes,
   categoryAliasRoutes,
   connectionRoutes,
+  dashboardRoutes,
   categoryGroupsRoutes,
   payeeAliasRoutes,
   payeeCategoriesRoutes,

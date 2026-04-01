@@ -85,6 +85,30 @@ export const transactionRoutes = t.router({
       )
     ),
 
+  // Get workspace-wide summary (all accounts)
+  workspaceSummary: publicProcedure.query(
+    withErrorHandler(async ({ ctx }) => {
+      const summaries = await transactionService.getWorkspaceSummary(ctx.workspaceId);
+      return summaries;
+    })
+  ),
+
+  // Get top categories across all accounts
+  workspaceTopCategories: publicProcedure
+    .input(z.object({ limit: z.number().positive().optional() }).optional())
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.getWorkspaceTopCategories(ctx.workspaceId, { limit: input?.limit })
+      )
+    ),
+
+  // Get monthly spending across all accounts
+  workspaceMonthlySpending: publicProcedure.query(
+    withErrorHandler(async ({ ctx }) =>
+      transactionService.getWorkspaceMonthlySpending(ctx.workspaceId)
+    )
+  ),
+
   // Get monthly spending aggregates for analytics
   monthlySpendingAggregates: publicProcedure
     .input(

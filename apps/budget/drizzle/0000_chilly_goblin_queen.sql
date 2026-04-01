@@ -1,3 +1,74 @@
+CREATE TABLE `account_connections` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`account_id` integer NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`provider` text NOT NULL,
+	`external_account_id` text NOT NULL,
+	`institution_name` text NOT NULL,
+	`encrypted_credentials` text NOT NULL,
+	`last_sync_at` text,
+	`sync_status` text DEFAULT 'active' NOT NULL,
+	`sync_error` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `account_connections_account_idx` ON `account_connections` (`account_id`);--> statement-breakpoint
+CREATE INDEX `account_connections_workspace_idx` ON `account_connections` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `account_connections_provider_idx` ON `account_connections` (`provider`);--> statement-breakpoint
+CREATE INDEX `account_connections_sync_status_idx` ON `account_connections` (`sync_status`);--> statement-breakpoint
+CREATE INDEX `account_connections_deleted_at_idx` ON `account_connections` (`deleted_at`);--> statement-breakpoint
+CREATE UNIQUE INDEX `account_connections_account_unique_idx` ON `account_connections` (`account_id`);--> statement-breakpoint
+CREATE TABLE `sync_history` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`connection_id` integer NOT NULL,
+	`started_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`completed_at` text,
+	`status` text DEFAULT 'running' NOT NULL,
+	`transactions_fetched` integer DEFAULT 0,
+	`transactions_imported` integer DEFAULT 0,
+	`duplicates_skipped` integer DEFAULT 0,
+	`error_message` text,
+	FOREIGN KEY (`connection_id`) REFERENCES `account_connections`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `sync_history_connection_idx` ON `sync_history` (`connection_id`);--> statement-breakpoint
+CREATE INDEX `sync_history_started_at_idx` ON `sync_history` (`started_at`);--> statement-breakpoint
+CREATE INDEX `sync_history_status_idx` ON `sync_history` (`status`);--> statement-breakpoint
+CREATE TABLE `account_document` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`cuid` text,
+	`account_id` integer NOT NULL,
+	`tax_year` integer NOT NULL,
+	`document_type` text DEFAULT 'other',
+	`file_name` text NOT NULL,
+	`file_size` integer NOT NULL,
+	`mime_type` text NOT NULL,
+	`storage_path` text NOT NULL,
+	`storage_url` text,
+	`title` text,
+	`description` text,
+	`extracted_text` text,
+	`extracted_data` text,
+	`extraction_status` text DEFAULT 'pending',
+	`extraction_method` text,
+	`extraction_error` text,
+	`extracted_at` text,
+	`uploaded_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `account_document_account_idx` ON `account_document` (`account_id`);--> statement-breakpoint
+CREATE INDEX `account_document_tax_year_idx` ON `account_document` (`tax_year`);--> statement-breakpoint
+CREATE INDEX `account_document_type_idx` ON `account_document` (`document_type`);--> statement-breakpoint
+CREATE INDEX `account_document_deleted_at_idx` ON `account_document` (`deleted_at`);--> statement-breakpoint
+CREATE INDEX `account_document_extraction_status_idx` ON `account_document` (`extraction_status`);--> statement-breakpoint
 CREATE TABLE `account` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`seq` integer,
@@ -258,6 +329,7 @@ CREATE TABLE `budget_period_instance` (
 --> statement-breakpoint
 CREATE INDEX `budget_period_instance_template_idx` ON `budget_period_instance` (`template_id`);--> statement-breakpoint
 CREATE INDEX `budget_period_instance_range_idx` ON `budget_period_instance` (`start_date`,`end_date`);--> statement-breakpoint
+CREATE UNIQUE INDEX `budget_period_instance_unique_idx` ON `budget_period_instance` (`template_id`,`start_date`,`end_date`);--> statement-breakpoint
 CREATE TABLE `budget_period_template` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`budget_id` integer NOT NULL,
@@ -516,11 +588,48 @@ CREATE TABLE `category_groups` (
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `category_groups_name_unique` ON `category_groups` (`name`);--> statement-breakpoint
-CREATE UNIQUE INDEX `category_groups_slug_unique` ON `category_groups` (`slug`);--> statement-breakpoint
 CREATE INDEX `category_groups_workspace_id_idx` ON `category_groups` (`workspace_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `category_groups_workspace_name_unique` ON `category_groups` (`workspace_id`,`name`);--> statement-breakpoint
+CREATE UNIQUE INDEX `category_groups_workspace_slug_unique` ON `category_groups` (`workspace_id`,`slug`);--> statement-breakpoint
 CREATE INDEX `idx_category_groups_slug` ON `category_groups` (`slug`);--> statement-breakpoint
 CREATE INDEX `idx_category_groups_sort_order` ON `category_groups` (`sort_order`);--> statement-breakpoint
+CREATE TABLE `dashboard_widget` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`dashboard_id` integer NOT NULL,
+	`widget_type` text NOT NULL,
+	`title` text,
+	`size` text DEFAULT 'medium' NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`column_span` integer DEFAULT 1 NOT NULL,
+	`settings` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`dashboard_id`) REFERENCES `dashboard`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `dashboard_widget_dashboard_id_idx` ON `dashboard_widget` (`dashboard_id`);--> statement-breakpoint
+CREATE INDEX `dashboard_widget_sort_idx` ON `dashboard_widget` (`dashboard_id`,`sort_order`);--> statement-breakpoint
+CREATE TABLE `dashboard` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`name` text NOT NULL,
+	`slug` text NOT NULL,
+	`description` text,
+	`icon` text,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`is_default` integer DEFAULT false NOT NULL,
+	`is_enabled` integer DEFAULT true NOT NULL,
+	`layout` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `dashboard_workspace_id_idx` ON `dashboard` (`workspace_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `dashboard_workspace_slug_idx` ON `dashboard` (`workspace_id`,`slug`);--> statement-breakpoint
+CREATE INDEX `dashboard_workspace_default_idx` ON `dashboard` (`workspace_id`,`is_default`);--> statement-breakpoint
+CREATE INDEX `dashboard_deleted_at_idx` ON `dashboard` (`deleted_at`);--> statement-breakpoint
 CREATE TABLE `detected_patterns` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -632,6 +741,204 @@ CREATE INDEX `import_profile_workspace_id_idx` ON `import_profile` (`workspace_i
 CREATE INDEX `import_profile_column_signature_idx` ON `import_profile` (`column_signature`);--> statement-breakpoint
 CREATE INDEX `import_profile_account_id_idx` ON `import_profile` (`account_id`);--> statement-breakpoint
 CREATE INDEX `import_profile_is_account_default_idx` ON `import_profile` (`is_account_default`);--> statement-breakpoint
+CREATE TABLE `access_log` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text,
+	`session_id` text,
+	`event_type` text NOT NULL,
+	`ip_address_hash` text,
+	`geo_location` text,
+	`device_hash` text,
+	`user_agent` text,
+	`local_hour` integer,
+	`day_of_week` integer,
+	`risk_score` real,
+	`challenge_required` integer,
+	`challenge_type` text,
+	`challenge_passed` integer,
+	`key_unlocked` integer,
+	`metadata` text,
+	`timestamp` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `access_log_user_idx` ON `access_log` (`user_id`);--> statement-breakpoint
+CREATE INDEX `access_log_session_idx` ON `access_log` (`session_id`);--> statement-breakpoint
+CREATE INDEX `access_log_event_type_idx` ON `access_log` (`event_type`);--> statement-breakpoint
+CREATE INDEX `access_log_timestamp_idx` ON `access_log` (`timestamp`);--> statement-breakpoint
+CREATE INDEX `access_log_user_timestamp_idx` ON `access_log` (`user_id`,`timestamp`);--> statement-breakpoint
+CREATE INDEX `access_log_ip_hash_idx` ON `access_log` (`ip_address_hash`);--> statement-breakpoint
+CREATE TABLE `anomaly_alerts` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`transaction_id` integer NOT NULL,
+	`overall_score` real NOT NULL,
+	`risk_level` text NOT NULL,
+	`score_details` text NOT NULL,
+	`explanation` text NOT NULL,
+	`recommended_actions` text NOT NULL,
+	`status` text DEFAULT 'new' NOT NULL,
+	`reviewed_at` text,
+	`notes` text,
+	`detected_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `budget_recommendation` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`type` text NOT NULL,
+	`priority` text DEFAULT 'medium' NOT NULL,
+	`title` text NOT NULL,
+	`description` text NOT NULL,
+	`confidence` real NOT NULL,
+	`metadata` text DEFAULT '{}' NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
+	`budget_id` integer,
+	`account_id` integer,
+	`category_id` integer,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`expires_at` text,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`applied_at` text,
+	`dismissed_at` text,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`budget_id`) REFERENCES `budget`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `recommendation_workspace_id_idx` ON `budget_recommendation` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `recommendation_type_idx` ON `budget_recommendation` (`type`);--> statement-breakpoint
+CREATE INDEX `recommendation_status_idx` ON `budget_recommendation` (`status`);--> statement-breakpoint
+CREATE INDEX `recommendation_priority_idx` ON `budget_recommendation` (`priority`);--> statement-breakpoint
+CREATE INDEX `recommendation_budget_id_idx` ON `budget_recommendation` (`budget_id`);--> statement-breakpoint
+CREATE INDEX `recommendation_category_id_idx` ON `budget_recommendation` (`category_id`);--> statement-breakpoint
+CREATE INDEX `recommendation_account_id_idx` ON `budget_recommendation` (`account_id`);--> statement-breakpoint
+CREATE INDEX `recommendation_created_at_idx` ON `budget_recommendation` (`created_at`);--> statement-breakpoint
+CREATE INDEX `recommendation_expires_at_idx` ON `budget_recommendation` (`expires_at`);--> statement-breakpoint
+CREATE TABLE `encryption_keys` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`target_type` text NOT NULL,
+	`target_id` text NOT NULL,
+	`encrypted_dek` text NOT NULL,
+	`key_verification_hash` text,
+	`public_key` text,
+	`key_type` text NOT NULL,
+	`key_version` integer DEFAULT 1 NOT NULL,
+	`key_derivation_params` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`rotated_at` text,
+	`last_used_at` text
+);
+--> statement-breakpoint
+CREATE INDEX `encryption_keys_target_type_idx` ON `encryption_keys` (`target_type`);--> statement-breakpoint
+CREATE INDEX `encryption_keys_target_id_idx` ON `encryption_keys` (`target_id`);--> statement-breakpoint
+CREATE INDEX `encryption_keys_target_composite_idx` ON `encryption_keys` (`target_type`,`target_id`);--> statement-breakpoint
+CREATE TABLE `medical_expense` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`cuid` text,
+	`transaction_id` integer NOT NULL,
+	`hsa_account_id` integer NOT NULL,
+	`expense_type` text NOT NULL,
+	`is_qualified` integer DEFAULT true NOT NULL,
+	`provider` text,
+	`patient_name` text,
+	`diagnosis` text,
+	`treatment_description` text,
+	`amount` real NOT NULL,
+	`insurance_covered` real DEFAULT 0 NOT NULL,
+	`out_of_pocket` real NOT NULL,
+	`service_date` text NOT NULL,
+	`paid_date` text,
+	`tax_year` integer NOT NULL,
+	`notes` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`transaction_id`) REFERENCES `transaction`(`id`) ON UPDATE no action ON DELETE restrict,
+	FOREIGN KEY (`hsa_account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE restrict
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `medical_expense_transaction_unique_idx` ON `medical_expense` (`transaction_id`);--> statement-breakpoint
+CREATE INDEX `medical_expense_hsa_account_idx` ON `medical_expense` (`hsa_account_id`);--> statement-breakpoint
+CREATE INDEX `medical_expense_type_idx` ON `medical_expense` (`expense_type`);--> statement-breakpoint
+CREATE INDEX `medical_expense_tax_year_idx` ON `medical_expense` (`tax_year`);--> statement-breakpoint
+CREATE INDEX `medical_expense_service_date_idx` ON `medical_expense` (`service_date`);--> statement-breakpoint
+CREATE INDEX `medical_expense_qualified_idx` ON `medical_expense` (`is_qualified`);--> statement-breakpoint
+CREATE INDEX `medical_expense_deleted_at_idx` ON `medical_expense` (`deleted_at`);--> statement-breakpoint
+CREATE TABLE `metric_alert` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`name` text NOT NULL,
+	`metric_type` text NOT NULL,
+	`condition_type` text NOT NULL,
+	`threshold` real NOT NULL,
+	`account_id` integer,
+	`category_id` integer,
+	`is_active` integer DEFAULT true NOT NULL,
+	`last_triggered_at` text,
+	`last_checked_at` text,
+	`trigger_count` integer DEFAULT 0 NOT NULL,
+	`metadata` text DEFAULT '{}',
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `metric_alert_workspace_idx` ON `metric_alert` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `metric_alert_active_idx` ON `metric_alert` (`workspace_id`,`is_active`);--> statement-breakpoint
+CREATE TABLE `ml_models` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`model_type` text NOT NULL,
+	`model_name` text NOT NULL,
+	`entity_type` text,
+	`entity_id` integer,
+	`parameters` text NOT NULL,
+	`metrics` text,
+	`version` integer DEFAULT 1 NOT NULL,
+	`is_active` integer DEFAULT true NOT NULL,
+	`trained_at` text NOT NULL,
+	`training_samples` integer,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `ml_predictions` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`model_id` integer,
+	`prediction_type` text NOT NULL,
+	`entity_type` text NOT NULL,
+	`entity_id` integer NOT NULL,
+	`prediction_data` text NOT NULL,
+	`confidence` real,
+	`actual_outcome` text,
+	`predicted_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`resolved_at` text,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`model_id`) REFERENCES `ml_models`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE TABLE `ml_training_data` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`model_type` text NOT NULL,
+	`feature_vector` text NOT NULL,
+	`label` text,
+	`weight` real DEFAULT 1 NOT NULL,
+	`source` text,
+	`entity_type` text,
+	`entity_id` integer,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `month_annotations` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -653,6 +960,20 @@ CREATE INDEX `month_annotations_workspace_month_idx` ON `month_annotations` (`wo
 CREATE INDEX `month_annotations_account_idx` ON `month_annotations` (`account_id`);--> statement-breakpoint
 CREATE INDEX `month_annotations_category_idx` ON `month_annotations` (`category_id`);--> statement-breakpoint
 CREATE INDEX `month_annotations_flagged_idx` ON `month_annotations` (`flagged_for_review`);--> statement-breakpoint
+CREATE TABLE `notifications` (
+	`id` text PRIMARY KEY NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`type` text NOT NULL,
+	`title` text NOT NULL,
+	`description` text,
+	`created_at` integer NOT NULL,
+	`read` integer DEFAULT false NOT NULL,
+	`persistent` integer DEFAULT false,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `notifications_workspace_id_idx` ON `notifications` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `notifications_workspace_created_idx` ON `notifications` (`workspace_id`,`created_at`);--> statement-breakpoint
 CREATE TABLE `payee_ai_enhancements` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -818,6 +1139,8 @@ CREATE TABLE `payee` (
 	`tags` text,
 	`preferred_payment_methods` text,
 	`merchant_category_code` text,
+	`ai_explanation` text,
+	`ai_explanation_updated_at` text,
 	`date_created` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -843,39 +1166,34 @@ CREATE INDEX `payee_payment_frequency_idx` ON `payee` (`payment_frequency`);--> 
 CREATE INDEX `payee_last_transaction_date_idx` ON `payee` (`last_transaction_date`);--> statement-breakpoint
 CREATE INDEX `payee_active_type_idx` ON `payee` (`is_active`,`payee_type`);--> statement-breakpoint
 CREATE INDEX `payee_category_budget_idx` ON `payee` (`default_category_id`,`default_budget_id`);--> statement-breakpoint
-CREATE TABLE `budget_recommendation` (
+CREATE TABLE `prediction_feedback` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
-	`type` text NOT NULL,
-	`priority` text DEFAULT 'medium' NOT NULL,
-	`title` text NOT NULL,
-	`description` text NOT NULL,
-	`confidence` real NOT NULL,
-	`metadata` text DEFAULT '{}' NOT NULL,
-	`status` text DEFAULT 'pending' NOT NULL,
-	`budget_id` integer,
-	`account_id` integer,
-	`category_id` integer,
+	`payee_id` integer NOT NULL,
+	`prediction_type` text NOT NULL,
+	`original_date` text,
+	`original_amount` real,
+	`original_confidence` real,
+	`prediction_tier` text,
+	`corrected_date` text,
+	`corrected_amount` real,
+	`rating` text,
+	`prediction_method` text,
+	`transaction_count` integer,
+	`was_accurate` integer,
+	`actual_date` text,
+	`actual_amount` real,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`expires_at` text,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`applied_at` text,
-	`dismissed_at` text,
+	`resolved_at` text,
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`budget_id`) REFERENCES `budget`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`payee_id`) REFERENCES `payee`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `recommendation_workspace_id_idx` ON `budget_recommendation` (`workspace_id`);--> statement-breakpoint
-CREATE INDEX `recommendation_type_idx` ON `budget_recommendation` (`type`);--> statement-breakpoint
-CREATE INDEX `recommendation_status_idx` ON `budget_recommendation` (`status`);--> statement-breakpoint
-CREATE INDEX `recommendation_priority_idx` ON `budget_recommendation` (`priority`);--> statement-breakpoint
-CREATE INDEX `recommendation_budget_id_idx` ON `budget_recommendation` (`budget_id`);--> statement-breakpoint
-CREATE INDEX `recommendation_category_id_idx` ON `budget_recommendation` (`category_id`);--> statement-breakpoint
-CREATE INDEX `recommendation_account_id_idx` ON `budget_recommendation` (`account_id`);--> statement-breakpoint
-CREATE INDEX `recommendation_created_at_idx` ON `budget_recommendation` (`created_at`);--> statement-breakpoint
-CREATE INDEX `recommendation_expires_at_idx` ON `budget_recommendation` (`expires_at`);--> statement-breakpoint
+CREATE INDEX `prediction_feedback_workspace_idx` ON `prediction_feedback` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `prediction_feedback_payee_idx` ON `prediction_feedback` (`payee_id`);--> statement-breakpoint
+CREATE INDEX `prediction_feedback_type_idx` ON `prediction_feedback` (`prediction_type`);--> statement-breakpoint
+CREATE INDEX `prediction_feedback_rating_idx` ON `prediction_feedback` (`rating`);--> statement-breakpoint
+CREATE INDEX `prediction_feedback_created_idx` ON `prediction_feedback` (`created_at`);--> statement-breakpoint
 CREATE TABLE `report_templates` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -915,6 +1233,23 @@ CREATE TABLE `schedule_dates` (
 );
 --> statement-breakpoint
 CREATE INDEX `relations_schedule_date_schedule_idx` ON `schedule_dates` (`schedule_id`);--> statement-breakpoint
+CREATE TABLE `schedule_price_history` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`schedule_id` integer NOT NULL,
+	`amount` real NOT NULL,
+	`previous_amount` real,
+	`effective_date` text NOT NULL,
+	`change_type` text NOT NULL,
+	`change_percentage` real,
+	`detected_from_transaction_id` integer,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`schedule_id`) REFERENCES `schedules`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`detected_from_transaction_id`) REFERENCES `transaction`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `schedule_price_history_schedule_id_idx` ON `schedule_price_history` (`schedule_id`);--> statement-breakpoint
+CREATE INDEX `schedule_price_history_effective_date_idx` ON `schedule_price_history` (`effective_date`);--> statement-breakpoint
+CREATE INDEX `schedule_price_history_transaction_idx` ON `schedule_price_history` (`detected_from_transaction_id`);--> statement-breakpoint
 CREATE TABLE `schedule_skips` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -948,6 +1283,15 @@ CREATE TABLE `schedules` (
 	`category_id` integer,
 	`account_id` integer NOT NULL,
 	`budget_id` integer,
+	`is_subscription` integer DEFAULT false,
+	`subscription_type` text,
+	`subscription_status` text,
+	`last_known_amount` real,
+	`price_change_detected_at` text,
+	`detection_confidence` real,
+	`is_user_confirmed` integer DEFAULT false,
+	`detected_at` text,
+	`alert_preferences` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
@@ -967,6 +1311,80 @@ CREATE INDEX `relations_schedule_budget_idx` ON `schedules` (`budget_id`);--> st
 CREATE INDEX `schedule_status_idx` ON `schedules` (`status`);--> statement-breakpoint
 CREATE INDEX `schedule_name_idx` ON `schedules` (`name`);--> statement-breakpoint
 CREATE INDEX `schedule_slug_idx` ON `schedules` (`slug`);--> statement-breakpoint
+CREATE INDEX `schedule_is_subscription_idx` ON `schedules` (`is_subscription`);--> statement-breakpoint
+CREATE INDEX `schedule_subscription_status_idx` ON `schedules` (`subscription_status`);--> statement-breakpoint
+CREATE TABLE `subscription_alerts` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`subscription_id` integer NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`alert_type` text NOT NULL,
+	`trigger_date` text NOT NULL,
+	`is_dismissed` integer DEFAULT false,
+	`is_actioned` integer DEFAULT false,
+	`metadata` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `subscription_alerts_subscription_id_idx` ON `subscription_alerts` (`subscription_id`);--> statement-breakpoint
+CREATE INDEX `subscription_alerts_workspace_id_idx` ON `subscription_alerts` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `subscription_alerts_type_idx` ON `subscription_alerts` (`alert_type`);--> statement-breakpoint
+CREATE INDEX `subscription_alerts_trigger_date_idx` ON `subscription_alerts` (`trigger_date`);--> statement-breakpoint
+CREATE INDEX `subscription_alerts_workspace_dismissed_idx` ON `subscription_alerts` (`workspace_id`,`is_dismissed`);--> statement-breakpoint
+CREATE TABLE `subscription_price_history` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`subscription_id` integer NOT NULL,
+	`amount` real NOT NULL,
+	`previous_amount` real,
+	`effective_date` text NOT NULL,
+	`change_type` text NOT NULL,
+	`change_percentage` real,
+	`detected_from_transaction_id` integer,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`detected_from_transaction_id`) REFERENCES `transaction`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `subscription_price_history_subscription_id_idx` ON `subscription_price_history` (`subscription_id`);--> statement-breakpoint
+CREATE INDEX `subscription_price_history_effective_date_idx` ON `subscription_price_history` (`effective_date`);--> statement-breakpoint
+CREATE INDEX `subscription_price_history_transaction_idx` ON `subscription_price_history` (`detected_from_transaction_id`);--> statement-breakpoint
+CREATE TABLE `subscriptions` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`payee_id` integer,
+	`account_id` integer,
+	`name` text NOT NULL,
+	`type` text NOT NULL,
+	`billing_cycle` text NOT NULL,
+	`amount` real NOT NULL,
+	`currency` text DEFAULT 'USD' NOT NULL,
+	`status` text DEFAULT 'active' NOT NULL,
+	`start_date` text,
+	`renewal_date` text,
+	`cancelled_at` text,
+	`trial_ends_at` text,
+	`detection_confidence` real DEFAULT 0,
+	`is_manually_added` integer DEFAULT false,
+	`is_user_confirmed` integer DEFAULT false,
+	`auto_renewal` integer DEFAULT true,
+	`metadata` text,
+	`alert_preferences` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`payee_id`) REFERENCES `payee`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `subscriptions_workspace_id_idx` ON `subscriptions` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `subscriptions_payee_id_idx` ON `subscriptions` (`payee_id`);--> statement-breakpoint
+CREATE INDEX `subscriptions_account_id_idx` ON `subscriptions` (`account_id`);--> statement-breakpoint
+CREATE INDEX `subscriptions_status_idx` ON `subscriptions` (`status`);--> statement-breakpoint
+CREATE INDEX `subscriptions_type_idx` ON `subscriptions` (`type`);--> statement-breakpoint
+CREATE INDEX `subscriptions_renewal_date_idx` ON `subscriptions` (`renewal_date`);--> statement-breakpoint
+CREATE INDEX `subscriptions_workspace_status_idx` ON `subscriptions` (`workspace_id`,`status`);--> statement-breakpoint
 CREATE TABLE `transaction` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`seq` integer,
@@ -986,6 +1404,7 @@ CREATE TABLE `transaction` (
 	`is_transfer` integer DEFAULT false,
 	`imported_from` text,
 	`imported_at` text,
+	`fitid` text,
 	`original_payee_name` text,
 	`original_category_name` text,
 	`inferred_category` text,
@@ -1022,6 +1441,7 @@ CREATE INDEX `transaction_transfer_account_idx` ON `transaction` (`transfer_acco
 CREATE INDEX `transaction_is_transfer_idx` ON `transaction` (`is_transfer`);--> statement-breakpoint
 CREATE INDEX `transaction_is_archived_idx` ON `transaction` (`is_archived`);--> statement-breakpoint
 CREATE INDEX `transaction_is_adjustment_idx` ON `transaction` (`is_adjustment`);--> statement-breakpoint
+CREATE INDEX `transaction_fitid_idx` ON `transaction` (`fitid`);--> statement-breakpoint
 CREATE TABLE `transfer_mappings` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
@@ -1050,6 +1470,39 @@ CREATE UNIQUE INDEX `transfer_mappings_workspace_raw_unique_idx` ON `transfer_ma
 CREATE INDEX `transfer_mappings_deleted_at_idx` ON `transfer_mappings` (`deleted_at`);--> statement-breakpoint
 CREATE INDEX `transfer_mappings_trigger_idx` ON `transfer_mappings` (`trigger`);--> statement-breakpoint
 CREATE INDEX `transfer_mappings_source_account_idx` ON `transfer_mappings` (`source_account_id`);--> statement-breakpoint
+CREATE TABLE `user_behavior_events` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`event_type` text NOT NULL,
+	`recommendation_id` text,
+	`entity_type` text,
+	`entity_id` integer,
+	`event_data` text,
+	`time_to_action` integer,
+	`occurred_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `user_trusted_contexts` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
+	`context_type` text NOT NULL,
+	`context_value` text NOT NULL,
+	`label` text,
+	`trust_score` real DEFAULT 0.5 NOT NULL,
+	`seen_count` integer DEFAULT 1 NOT NULL,
+	`explicitly_trusted` integer DEFAULT false,
+	`first_seen_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`last_seen_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`revoked_at` text,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `trusted_contexts_user_idx` ON `user_trusted_contexts` (`user_id`);--> statement-breakpoint
+CREATE INDEX `trusted_contexts_type_idx` ON `user_trusted_contexts` (`context_type`);--> statement-breakpoint
+CREATE INDEX `trusted_contexts_value_idx` ON `user_trusted_contexts` (`context_value`);--> statement-breakpoint
+CREATE INDEX `trusted_contexts_user_type_idx` ON `user_trusted_contexts` (`user_id`,`context_type`);--> statement-breakpoint
+CREATE INDEX `trusted_contexts_revoked_idx` ON `user_trusted_contexts` (`revoked_at`);--> statement-breakpoint
 CREATE TABLE `user` (
 	`id` text PRIMARY KEY NOT NULL,
 	`cuid` text,
@@ -1072,194 +1525,6 @@ CREATE UNIQUE INDEX `user_email_unique` ON `user` (`email`);--> statement-breakp
 CREATE INDEX `user_slug_idx` ON `user` (`slug`);--> statement-breakpoint
 CREATE INDEX `user_email_idx` ON `user` (`email`);--> statement-breakpoint
 CREATE INDEX `user_deleted_at_idx` ON `user` (`deleted_at`);--> statement-breakpoint
-CREATE TABLE `views` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`workspace_id` integer NOT NULL,
-	`entity_type` text DEFAULT 'transactions' NOT NULL,
-	`name` text NOT NULL,
-	`description` text,
-	`icon` text,
-	`filters` text,
-	`display` text,
-	`dirty` integer,
-	`is_default` integer DEFAULT false NOT NULL,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE INDEX `views_workspace_id_idx` ON `views` (`workspace_id`);--> statement-breakpoint
-CREATE INDEX `idx_views_workspace_entity` ON `views` (`workspace_id`,`entity_type`);--> statement-breakpoint
-CREATE TABLE `workspace_counter` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`workspace_id` integer NOT NULL,
-	`entity_type` text NOT NULL,
-	`next_seq` integer DEFAULT 1 NOT NULL,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `workspace_counter_unique_idx` ON `workspace_counter` (`workspace_id`,`entity_type`);--> statement-breakpoint
-CREATE INDEX `workspace_counter_workspace_idx` ON `workspace_counter` (`workspace_id`);--> statement-breakpoint
-CREATE TABLE `workspace` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`cuid` text,
-	`display_name` text NOT NULL,
-	`slug` text NOT NULL,
-	`owner_id` text,
-	`preferences` text,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`deleted_at` text,
-	FOREIGN KEY (`owner_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `workspace_slug_unique` ON `workspace` (`slug`);--> statement-breakpoint
-CREATE INDEX `workspace_slug_idx` ON `workspace` (`slug`);--> statement-breakpoint
-CREATE INDEX `workspace_deleted_at_idx` ON `workspace` (`deleted_at`);--> statement-breakpoint
-CREATE INDEX `workspace_owner_id_idx` ON `workspace` (`owner_id`);--> statement-breakpoint
-CREATE TABLE `workspace_invitation` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`cuid` text,
-	`workspace_id` integer NOT NULL,
-	`email` text NOT NULL,
-	`role` text DEFAULT 'viewer' NOT NULL,
-	`invited_by` text NOT NULL,
-	`token` text NOT NULL,
-	`status` text DEFAULT 'pending' NOT NULL,
-	`expires_at` text NOT NULL,
-	`responded_at` text,
-	`accepted_user_id` text,
-	`message` text,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`invited_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`accepted_user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `workspace_invitation_token_idx` ON `workspace_invitation` (`token`);--> statement-breakpoint
-CREATE INDEX `workspace_invitation_workspace_idx` ON `workspace_invitation` (`workspace_id`);--> statement-breakpoint
-CREATE INDEX `workspace_invitation_email_idx` ON `workspace_invitation` (`email`);--> statement-breakpoint
-CREATE INDEX `workspace_invitation_status_idx` ON `workspace_invitation` (`status`);--> statement-breakpoint
-CREATE INDEX `workspace_invitation_expires_idx` ON `workspace_invitation` (`expires_at`);--> statement-breakpoint
-CREATE TABLE `workspace_member` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`cuid` text,
-	`workspace_id` integer NOT NULL,
-	`user_id` text NOT NULL,
-	`role` text DEFAULT 'viewer' NOT NULL,
-	`invited_by` text,
-	`joined_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`is_default` integer DEFAULT false,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`invited_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `workspace_member_unique_idx` ON `workspace_member` (`workspace_id`,`user_id`);--> statement-breakpoint
-CREATE INDEX `workspace_member_workspace_idx` ON `workspace_member` (`workspace_id`);--> statement-breakpoint
-CREATE INDEX `workspace_member_user_idx` ON `workspace_member` (`user_id`);--> statement-breakpoint
-CREATE INDEX `workspace_member_role_idx` ON `workspace_member` (`role`);--> statement-breakpoint
-CREATE INDEX `workspace_member_default_idx` ON `workspace_member` (`user_id`,`is_default`);--> statement-breakpoint
-CREATE TABLE `access_log` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`user_id` text,
-	`session_id` text,
-	`event_type` text NOT NULL,
-	`ip_address_hash` text,
-	`geo_location` text,
-	`device_hash` text,
-	`user_agent` text,
-	`local_hour` integer,
-	`day_of_week` integer,
-	`risk_score` real,
-	`challenge_required` integer,
-	`challenge_type` text,
-	`challenge_passed` integer,
-	`key_unlocked` integer,
-	`metadata` text,
-	`timestamp` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
-);
---> statement-breakpoint
-CREATE INDEX `access_log_user_idx` ON `access_log` (`user_id`);--> statement-breakpoint
-CREATE INDEX `access_log_session_idx` ON `access_log` (`session_id`);--> statement-breakpoint
-CREATE INDEX `access_log_event_type_idx` ON `access_log` (`event_type`);--> statement-breakpoint
-CREATE INDEX `access_log_timestamp_idx` ON `access_log` (`timestamp`);--> statement-breakpoint
-CREATE INDEX `access_log_user_timestamp_idx` ON `access_log` (`user_id`,`timestamp`);--> statement-breakpoint
-CREATE INDEX `access_log_ip_hash_idx` ON `access_log` (`ip_address_hash`);--> statement-breakpoint
-CREATE TABLE `encryption_keys` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`target_type` text NOT NULL,
-	`target_id` text NOT NULL,
-	`encrypted_dek` text NOT NULL,
-	`key_verification_hash` text,
-	`public_key` text,
-	`key_type` text NOT NULL,
-	`key_version` integer DEFAULT 1 NOT NULL,
-	`key_derivation_params` text,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`rotated_at` text,
-	`last_used_at` text
-);
---> statement-breakpoint
-CREATE INDEX `encryption_keys_target_type_idx` ON `encryption_keys` (`target_type`);--> statement-breakpoint
-CREATE INDEX `encryption_keys_target_id_idx` ON `encryption_keys` (`target_id`);--> statement-breakpoint
-CREATE INDEX `encryption_keys_target_composite_idx` ON `encryption_keys` (`target_type`,`target_id`);--> statement-breakpoint
-CREATE TABLE `user_trusted_contexts` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`user_id` text NOT NULL,
-	`context_type` text NOT NULL,
-	`context_value` text NOT NULL,
-	`label` text,
-	`trust_score` real DEFAULT 0.5 NOT NULL,
-	`seen_count` integer DEFAULT 1 NOT NULL,
-	`explicitly_trusted` integer DEFAULT false,
-	`first_seen_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`last_seen_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`revoked_at` text,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE INDEX `trusted_contexts_user_idx` ON `user_trusted_contexts` (`user_id`);--> statement-breakpoint
-CREATE INDEX `trusted_contexts_type_idx` ON `user_trusted_contexts` (`context_type`);--> statement-breakpoint
-CREATE INDEX `trusted_contexts_value_idx` ON `user_trusted_contexts` (`context_value`);--> statement-breakpoint
-CREATE INDEX `trusted_contexts_user_type_idx` ON `user_trusted_contexts` (`user_id`,`context_type`);--> statement-breakpoint
-CREATE INDEX `trusted_contexts_revoked_idx` ON `user_trusted_contexts` (`revoked_at`);--> statement-breakpoint
-CREATE TABLE `medical_expense` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`cuid` text,
-	`transaction_id` integer NOT NULL,
-	`hsa_account_id` integer NOT NULL,
-	`expense_type` text NOT NULL,
-	`is_qualified` integer DEFAULT true NOT NULL,
-	`provider` text,
-	`patient_name` text,
-	`diagnosis` text,
-	`treatment_description` text,
-	`amount` real NOT NULL,
-	`insurance_covered` real DEFAULT 0 NOT NULL,
-	`out_of_pocket` real NOT NULL,
-	`service_date` text NOT NULL,
-	`paid_date` text,
-	`tax_year` integer NOT NULL,
-	`notes` text,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`deleted_at` text,
-	FOREIGN KEY (`transaction_id`) REFERENCES `transaction`(`id`) ON UPDATE no action ON DELETE restrict,
-	FOREIGN KEY (`hsa_account_id`) REFERENCES `account`(`id`) ON UPDATE no action ON DELETE restrict
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `medical_expense_transaction_unique_idx` ON `medical_expense` (`transaction_id`);--> statement-breakpoint
-CREATE INDEX `medical_expense_hsa_account_idx` ON `medical_expense` (`hsa_account_id`);--> statement-breakpoint
-CREATE INDEX `medical_expense_type_idx` ON `medical_expense` (`expense_type`);--> statement-breakpoint
-CREATE INDEX `medical_expense_tax_year_idx` ON `medical_expense` (`tax_year`);--> statement-breakpoint
-CREATE INDEX `medical_expense_service_date_idx` ON `medical_expense` (`service_date`);--> statement-breakpoint
-CREATE INDEX `medical_expense_qualified_idx` ON `medical_expense` (`is_qualified`);--> statement-breakpoint
-CREATE INDEX `medical_expense_deleted_at_idx` ON `medical_expense` (`deleted_at`);--> statement-breakpoint
 CREATE TABLE `utility_rate_tier` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`account_id` integer NOT NULL,
@@ -1316,79 +1581,94 @@ CREATE INDEX `utility_usage_account_idx` ON `utility_usage` (`account_id`);--> s
 CREATE INDEX `utility_usage_transaction_idx` ON `utility_usage` (`transaction_id`);--> statement-breakpoint
 CREATE INDEX `utility_usage_period_idx` ON `utility_usage` (`period_start`,`period_end`);--> statement-breakpoint
 CREATE INDEX `utility_usage_period_start_idx` ON `utility_usage` (`period_start`);--> statement-breakpoint
-CREATE TABLE `anomaly_alerts` (
+CREATE TABLE `views` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
-	`transaction_id` integer NOT NULL,
-	`overall_score` real NOT NULL,
-	`risk_level` text NOT NULL,
-	`score_details` text NOT NULL,
-	`explanation` text NOT NULL,
-	`recommended_actions` text NOT NULL,
-	`status` text DEFAULT 'new' NOT NULL,
-	`reviewed_at` text,
-	`notes` text,
-	`detected_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`entity_type` text DEFAULT 'transactions' NOT NULL,
+	`name` text NOT NULL,
+	`description` text,
+	`icon` text,
+	`filters` text,
+	`display` text,
+	`dirty` integer,
+	`is_default` integer DEFAULT false NOT NULL,
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `ml_models` (
+CREATE INDEX `views_workspace_id_idx` ON `views` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `idx_views_workspace_entity` ON `views` (`workspace_id`,`entity_type`);--> statement-breakpoint
+CREATE TABLE `workspace_counter` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
-	`model_type` text NOT NULL,
-	`model_name` text NOT NULL,
-	`entity_type` text,
-	`entity_id` integer,
-	`parameters` text NOT NULL,
-	`metrics` text,
-	`version` integer DEFAULT 1 NOT NULL,
-	`is_active` integer DEFAULT true NOT NULL,
-	`trained_at` text NOT NULL,
-	`training_samples` integer,
+	`entity_type` text NOT NULL,
+	`next_seq` integer DEFAULT 1 NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `ml_predictions` (
+CREATE UNIQUE INDEX `workspace_counter_unique_idx` ON `workspace_counter` (`workspace_id`,`entity_type`);--> statement-breakpoint
+CREATE INDEX `workspace_counter_workspace_idx` ON `workspace_counter` (`workspace_id`);--> statement-breakpoint
+CREATE TABLE `workspace_invitation` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`cuid` text,
 	`workspace_id` integer NOT NULL,
-	`model_id` integer,
-	`prediction_type` text NOT NULL,
-	`entity_type` text NOT NULL,
-	`entity_id` integer NOT NULL,
-	`prediction_data` text NOT NULL,
-	`confidence` real,
-	`actual_outcome` text,
-	`predicted_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`resolved_at` text,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`model_id`) REFERENCES `ml_models`(`id`) ON UPDATE no action ON DELETE set null
-);
---> statement-breakpoint
-CREATE TABLE `ml_training_data` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`workspace_id` integer NOT NULL,
-	`model_type` text NOT NULL,
-	`feature_vector` text NOT NULL,
-	`label` text,
-	`weight` real DEFAULT 1 NOT NULL,
-	`source` text,
-	`entity_type` text,
-	`entity_id` integer,
+	`email` text NOT NULL,
+	`role` text DEFAULT 'viewer' NOT NULL,
+	`invited_by` text NOT NULL,
+	`token` text NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
+	`expires_at` text NOT NULL,
+	`responded_at` text,
+	`accepted_user_id` text,
+	`message` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`invited_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`accepted_user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `user_behavior_events` (
+CREATE UNIQUE INDEX `workspace_invitation_token_idx` ON `workspace_invitation` (`token`);--> statement-breakpoint
+CREATE INDEX `workspace_invitation_workspace_idx` ON `workspace_invitation` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `workspace_invitation_email_idx` ON `workspace_invitation` (`email`);--> statement-breakpoint
+CREATE INDEX `workspace_invitation_status_idx` ON `workspace_invitation` (`status`);--> statement-breakpoint
+CREATE INDEX `workspace_invitation_expires_idx` ON `workspace_invitation` (`expires_at`);--> statement-breakpoint
+CREATE TABLE `workspace_member` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`cuid` text,
 	`workspace_id` integer NOT NULL,
-	`event_type` text NOT NULL,
-	`recommendation_id` text,
-	`entity_type` text,
-	`entity_id` integer,
-	`event_data` text,
-	`time_to_action` integer,
-	`occurred_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+	`user_id` text NOT NULL,
+	`role` text DEFAULT 'viewer' NOT NULL,
+	`invited_by` text,
+	`joined_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`is_default` integer DEFAULT false,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`invited_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );
+--> statement-breakpoint
+CREATE UNIQUE INDEX `workspace_member_unique_idx` ON `workspace_member` (`workspace_id`,`user_id`);--> statement-breakpoint
+CREATE INDEX `workspace_member_workspace_idx` ON `workspace_member` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `workspace_member_user_idx` ON `workspace_member` (`user_id`);--> statement-breakpoint
+CREATE INDEX `workspace_member_role_idx` ON `workspace_member` (`role`);--> statement-breakpoint
+CREATE INDEX `workspace_member_default_idx` ON `workspace_member` (`user_id`,`is_default`);--> statement-breakpoint
+CREATE TABLE `workspace` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`cuid` text,
+	`display_name` text NOT NULL,
+	`slug` text NOT NULL,
+	`owner_id` text,
+	`preferences` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`deleted_at` text,
+	FOREIGN KEY (`owner_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `workspace_slug_unique` ON `workspace` (`slug`);--> statement-breakpoint
+CREATE INDEX `workspace_slug_idx` ON `workspace` (`slug`);--> statement-breakpoint
+CREATE INDEX `workspace_deleted_at_idx` ON `workspace` (`deleted_at`);--> statement-breakpoint
+CREATE INDEX `workspace_owner_id_idx` ON `workspace` (`owner_id`);

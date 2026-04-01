@@ -756,6 +756,43 @@ export const getTopCategories = (
   });
 
 /**
+ * Get top categories across all accounts
+ */
+export const getWorkspaceTopCategories = (limit?: number) =>
+  defineQuery({
+    queryKey: ["transactions", "workspaceTopCategories", limit] as const,
+    queryFn: () =>
+      trpc().transactionRoutes.workspaceTopCategories.query(limit ? { limit } : undefined),
+    options: {
+      staleTime: 60 * 1000,
+    },
+  });
+
+/**
+ * Get monthly spending across all accounts
+ */
+export const getWorkspaceMonthlySpending = () =>
+  defineQuery({
+    queryKey: ["transactions", "workspaceMonthlySpending"] as const,
+    queryFn: () => trpc().transactionRoutes.workspaceMonthlySpending.query(),
+    options: {
+      staleTime: 60 * 1000,
+    },
+  });
+
+/**
+ * Get workspace-wide summary across all accounts (single query)
+ */
+export const getWorkspaceSummary = () =>
+  defineQuery({
+    queryKey: ["transactions", "workspaceSummary"] as const,
+    queryFn: () => trpc().transactionRoutes.workspaceSummary.query(),
+    options: {
+      staleTime: 30 * 1000,
+    },
+  });
+
+/**
  * Get recent activity summary for an account
  */
 export const getRecentActivity = (accountId: number, days?: number) =>
