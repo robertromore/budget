@@ -51,36 +51,24 @@ export const findMatchingProfile = (params: {
     },
   });
 
-// Input types for mutations
-interface CreateImportProfileInput {
-  name: string;
-  columnSignature?: string | null;
-  filenamePattern?: string | null;
-  accountId?: number | null;
-  isAccountDefault?: boolean;
-  mapping: ColumnMapping;
-}
-
-interface UpdateImportProfileInput {
-  id: number;
-  name?: string;
-  filenamePattern?: string | null;
-  accountId?: number | null;
-  isAccountDefault?: boolean;
-  mapping?: ColumnMapping;
-}
-
 /**
  * Create a new import profile
  */
 export const createImportProfile = () =>
-  defineMutation<CreateImportProfileInput, ImportProfile>({
+  defineMutation<{
+    name: string;
+    columnSignature?: string | null;
+    filenamePattern?: string | null;
+    accountId?: number | null;
+    isAccountDefault?: boolean;
+    mapping: ColumnMapping;
+  }, ImportProfile>({
     mutationFn: (input) => trpc().importProfileRoutes.create.mutate(input),
     successMessage: "Import profile created",
     errorMessage: "Failed to create import profile",
     onSuccess: () => {
-      // Invalidate list query
-      queryClient.invalidateQueries({ queryKey: importProfileKeys["list"]() });
+      // Invalidate all import profile queries including findMatch
+      queryClient.invalidateQueries({ queryKey: importProfileKeys["all"]() });
     },
   });
 
@@ -88,14 +76,20 @@ export const createImportProfile = () =>
  * Update an existing import profile
  */
 export const updateImportProfile = () =>
-  defineMutation<UpdateImportProfileInput, ImportProfile>({
+  defineMutation<{
+    id: number;
+    name?: string;
+    filenamePattern?: string | null;
+    accountId?: number | null;
+    isAccountDefault?: boolean;
+    mapping?: ColumnMapping;
+  }, ImportProfile>({
     mutationFn: (input) => trpc().importProfileRoutes.update.mutate(input),
     successMessage: "Import profile updated",
     errorMessage: "Failed to update import profile",
-    onSuccess: (data) => {
-      // Invalidate both list and detail queries
-      queryClient.invalidateQueries({ queryKey: importProfileKeys["list"]() });
-      queryClient.invalidateQueries({ queryKey: importProfileKeys["detail"](data.id) });
+    onSuccess: () => {
+      // Invalidate all import profile queries including findMatch
+      queryClient.invalidateQueries({ queryKey: importProfileKeys["all"]() });
     },
   });
 
@@ -108,8 +102,8 @@ export const deleteImportProfile = () =>
     successMessage: "Import profile deleted",
     errorMessage: "Failed to delete import profile",
     onSuccess: (_, variables) => {
-      // Invalidate list and remove detail from cache
-      queryClient.invalidateQueries({ queryKey: importProfileKeys["list"]() });
+      // Invalidate all queries and remove stale detail from cache
+      queryClient.invalidateQueries({ queryKey: importProfileKeys["all"]() });
       queryClient.removeQueries({ queryKey: importProfileKeys["detail"](variables.id) });
     },
   });
@@ -122,10 +116,9 @@ export const setAccountDefault = () =>
     mutationFn: (input) => trpc().importProfileRoutes.setAccountDefault.mutate(input),
     successMessage: "Default profile set",
     errorMessage: "Failed to set default profile",
-    onSuccess: (data) => {
-      // Invalidate list and detail queries
-      queryClient.invalidateQueries({ queryKey: importProfileKeys["list"]() });
-      queryClient.invalidateQueries({ queryKey: importProfileKeys["detail"](data.id) });
+    onSuccess: () => {
+      // Invalidate all profiles since clearing default affects other profiles too
+      queryClient.invalidateQueries({ queryKey: importProfileKeys["all"]() });
     },
   });
 

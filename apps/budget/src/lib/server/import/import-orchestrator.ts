@@ -21,7 +21,7 @@ import {
   DEFAULT_UNITS_BY_SUBTYPE,
   type UsageUnit,
 } from "$lib/schema/utility-usage";
-import { db } from "$lib/server/db";
+import { db, runInTransaction } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import type {
   ImportOptions,
@@ -252,8 +252,24 @@ export class ImportOrchestrator {
       // in the upload/remap API endpoints. Rows with transferTargetMatch already set
       // will be handled in Stage 3 below.
 
-      // Stage 3: Transaction Creation (Batched for performance)
-      const BATCH_SIZE = 25; // Process 25 transactions in parallel at a time
+      // Stage 3: Transaction Creation (Sequential, wrapped in DB transaction)
+      // All writes are wrapped in a single database transaction via AsyncLocalStorage.
+      // The module-level `db` proxy resolves to the `tx` object within this context,
+      // so all downstream service/repository calls participate automatically.
+      //
+      // Error semantics: Per-row errors are caught and aggregated (partial success).
+      // The transaction protects against infrastructure failures (connection lost,
+      // disk full) — if an unhandled exception escapes, ALL writes roll back.
+      // Individual row errors do NOT trigger rollback — this is intentional because
+      // users expect partial imports to succeed for valid rows.
+      //
+      // The `result` object is mutated inside this closure and read after it resolves.
+      // On rollback (exception), the outer catch re-throws and `result` is discarded.
+      //
+      // The onProgress callback executes within the transaction context. It should
+      // not perform database operations or throw errors.
+      await runInTransaction(async () => {
+      const PROGRESS_INTERVAL = 25;
       let processedCount = 0;
 
       // Report initial progress
@@ -267,120 +283,86 @@ export class ImportOrchestrator {
         warnings: [],
       });
 
-      // Split rows into batches
-      for (let i = 0; i < rowsToImport.length; i += BATCH_SIZE) {
-        const batch = rowsToImport.slice(i, i + BATCH_SIZE);
+      for (const row of rowsToImport) {
+        const fileId = row.sourceFileId || "__single_file__";
+        const fileStat = fileStats.get(fileId);
 
-        // Process batch in parallel
-        const batchResults = await Promise.all(
-          batch.map(async (row) => {
-            const fileId = row.sourceFileId || "__single_file__";
-            const fileStat = fileStats.get(fileId);
-
-            try {
-              // Check if this row matches an existing transfer target - reconcile instead of create
-              if (row.transferTargetMatch) {
-                const reconciled = await this.reconcileTransferTarget(row, row.transferTargetMatch);
-                if (reconciled) {
-                  return {
-                    type: "reconciled" as const,
-                    row,
-                    data: {
-                      rowIndex: row.rowIndex,
-                      existingTransactionId: row.transferTargetMatch.existingTransactionId,
-                      sourceAccountName: row.transferTargetMatch.sourceAccountName,
-                    },
-                    fileStat,
-                  };
-                }
-                return { type: "skipped" as const, row, fileStat };
-              }
-
-              // Check if this row has a schedule match
-              const scheduleMatch = scheduleMatches?.find((m) => m.rowIndex === row.rowIndex);
-              const scheduleId = scheduleMatch?.scheduleId;
-
-              // Check if this row is a transfer
-              const isTransfer = !!row.normalizedData["transferAccountId"];
-
-              const transactionResult = await this.createTransaction(
-                accountId,
-                workspaceId,
-                row,
-                existingPayees,
-                existingCategories,
-                options,
-                selectedEntities,
-                result.entitiesCreated,
-                scheduleId,
-                createdPayeeMappings,
-                createdCategoryMappings,
-                account
-              );
-
-              if (transactionResult.transaction) {
-                return {
-                  type: "created" as const,
-                  row,
-                  isTransfer,
-                  rememberMapping: row.normalizedData["rememberTransferMapping"],
-                  fileStat,
-                  utilityRecordCreated: transactionResult.utilityRecordCreated,
-                };
-              }
-              return { type: "skipped" as const, row, fileStat };
-            } catch (error) {
-              return {
-                type: "error" as const,
-                row,
-                error: error instanceof Error ? error.message : "Failed to create transaction",
-                fileStat,
-              };
+        try {
+          // Check if this row matches an existing transfer target - reconcile instead of create
+          if (row.transferTargetMatch) {
+            const reconciled = await this.reconcileTransferTarget(row, row.transferTargetMatch);
+            if (reconciled) {
+              result.reconciled = (result.reconciled || 0) + 1;
+              result.reconciledTransactions = result.reconciledTransactions || [];
+              result.reconciledTransactions.push({
+                rowIndex: row.rowIndex,
+                existingTransactionId: row.transferTargetMatch.existingTransactionId,
+                sourceAccountName: row.transferTargetMatch.sourceAccountName,
+              });
+              if (fileStat) fileStat.reconciled++;
             }
-          })
-        );
+            processedCount++;
+            continue;
+          }
 
-        // Aggregate batch results
-        for (const batchResult of batchResults) {
-          if (batchResult.type === "created") {
+          // Check if this row has a schedule match
+          const scheduleMatch = scheduleMatches?.find((m) => m.rowIndex === row.rowIndex);
+          const scheduleId = scheduleMatch?.scheduleId;
+
+          // Check if this row is a transfer
+          const isTransfer = !!row.normalizedData["transferAccountId"];
+
+          const transactionResult = await this.createTransaction(
+            accountId,
+            workspaceId,
+            row,
+            existingPayees,
+            existingCategories,
+            options,
+            selectedEntities,
+            result.entitiesCreated,
+            scheduleId,
+            createdPayeeMappings,
+            createdCategoryMappings,
+            account
+          );
+
+          if (transactionResult.transaction) {
             result.transactionsCreated++;
-            if (batchResult.fileStat) batchResult.fileStat.imported++;
-            if (batchResult.isTransfer) {
+            if (fileStat) fileStat.imported++;
+            if (isTransfer) {
               result.transfersCreated = (result.transfersCreated || 0) + 1;
-              if (batchResult.fileStat) batchResult.fileStat.transfers++;
-              if (batchResult.rememberMapping) {
+              if (fileStat) fileStat.transfers++;
+              if (row.normalizedData["rememberTransferMapping"]) {
                 result.transferMappingsSaved = (result.transferMappingsSaved || 0) + 1;
               }
             }
-            if (batchResult.utilityRecordCreated) {
+            if (transactionResult.utilityRecordCreated) {
               result.utilityRecordsCreated = (result.utilityRecordsCreated || 0) + 1;
             }
-          } else if (batchResult.type === "reconciled") {
-            result.reconciled = (result.reconciled || 0) + 1;
-            result.reconciledTransactions = result.reconciledTransactions || [];
-            result.reconciledTransactions.push(batchResult.data);
-            if (batchResult.fileStat) batchResult.fileStat.reconciled++;
-          } else if (batchResult.type === "error") {
-            result.errors.push({
-              row: batchResult.row.rowIndex,
-              field: "general",
-              message: batchResult.error,
-            });
-            if (batchResult.fileStat) batchResult.fileStat.errors++;
           }
+        } catch (error) {
+          result.errors.push({
+            row: row.rowIndex,
+            field: "general",
+            message: error instanceof Error ? error.message : "Failed to create transaction",
+          });
+          if (fileStat) fileStat.errors++;
         }
 
-        // Update progress after each batch
-        processedCount += batch.length;
-        this.onProgress?.({
-          stage: "creating",
-          currentRow: processedCount,
-          totalRows: rowsToImport.length,
-          transactionsCreated: result.transactionsCreated,
-          entitiesCreated: { ...result.entitiesCreated },
-          errors: result.errors.map((e) => ({ row: e.row, message: e.message })),
-          warnings: result.warnings.map((w) => ({ row: w.row, message: w.message })),
-        });
+        // Update progress periodically
+        processedCount++;
+        if (processedCount % PROGRESS_INTERVAL === 0 || processedCount === rowsToImport.length) {
+          this.onProgress?.({
+            stage: "creating",
+            currentRow: processedCount,
+            totalRows: rowsToImport.length,
+            transactionsCreated: result.transactionsCreated,
+            entitiesCreated: { ...result.entitiesCreated },
+            errors: result.errors.map((e) => ({ row: e.row, message: e.message })),
+            warnings: result.warnings.map((w) => ({ row: w.row, message: w.message })),
+          });
+        }
       }
 
       // Update summary
@@ -407,11 +389,6 @@ export class ImportOrchestrator {
       }
 
       // Process category dismissals (negative feedback for learning)
-      console.log(
-        `[ImportOrchestrator] categoryDismissals received:`,
-        categoryDismissals?.length || 0,
-        categoryDismissals
-      );
       if (categoryDismissals && categoryDismissals.length > 0) {
         try {
           await this.recordCategoryDismissals(categoryDismissals, workspaceId);
@@ -424,6 +401,7 @@ export class ImportOrchestrator {
           logger.error("Failed to record category dismissals", { error: dismissalError });
         }
       }
+      }); // end runInTransaction
 
       if (result.errors.length > 0) {
         result.success = false;
@@ -723,16 +701,7 @@ export class ImportOrchestrator {
             (selected) => normalize(selected) === normalize(normalizedCategoryName)
           );
 
-        console.log(`Category "${normalizedCategoryName}" - isSelected: ${isSelected}`, {
-          selectedEntities: selectedEntities?.categories,
-          matches: selectedEntities?.categories.map((s) => ({
-            selected: s,
-            match: normalize(s) === normalize(normalizedCategoryName),
-          })),
-        });
-
         if (isSelected) {
-          console.log(`Creating category: "${normalized["category"]}"`);
           // Create new category with slug
           const slug = normalized["category"]
             .toLowerCase()
@@ -767,9 +736,6 @@ export class ImportOrchestrator {
                 categoryId = newCategory.id;
                 existingCategories.push(newCategory);
                 if (entitiesCreated) entitiesCreated.categories++;
-                console.log(
-                  `Successfully created category: "${newCategory.name}" with ID ${newCategory.id}`
-                );
               }
             } catch (error) {
               logger.error("Failed to create category", {
@@ -789,7 +755,6 @@ export class ImportOrchestrator {
               if (category) {
                 if (category.deletedAt) {
                   // Restore soft-deleted category
-                  console.log(`Restoring soft-deleted category "${category.name}" (slug: ${slug})`);
                   const [restored] = await db
                     .update(categoryTable)
                     .set({ deletedAt: null, name: normalized["category"] })
@@ -799,12 +764,8 @@ export class ImportOrchestrator {
                     categoryId = restored.id;
                     existingCategories.push(restored);
                     if (entitiesCreated) entitiesCreated.categories++;
-                    console.log(
-                      `Successfully restored category: "${restored.name}" with ID ${restored.id}`
-                    );
                   }
                 } else {
-                  console.log(`Found existing active category with slug "${slug}", using it`);
                   categoryId = category.id;
                   existingCategories.push(category);
                 }
@@ -818,8 +779,6 @@ export class ImportOrchestrator {
               }
             }
           }
-        } else {
-          console.log(`Skipping category "${normalizedCategoryName}" - not in selectedEntities`);
         }
       } else if (
         !normalized["category"] &&
@@ -1190,15 +1149,6 @@ export class ImportOrchestrator {
   ): Promise<z.infer<typeof selectTransactionSchema> | null> {
     const normalized = row.normalizedData;
 
-    console.log("[TransferMapping] createTransferFromImport called:", {
-      rowIndex: row.rowIndex,
-      sourceAccountId,
-      targetAccountId,
-      rememberTransferMapping: normalized["rememberTransferMapping"],
-      originalPayee: row.originalPayee,
-      normalizedPayee: normalized["payee"],
-    });
-
     // Parse the amount - positive for transfers to target, negative for transfers from target
     const rawAmount = normalized["amount"];
     const amount = typeof rawAmount === "number" ? rawAmount : parseFloat(String(rawAmount)) || 0;
@@ -1238,16 +1188,6 @@ export class ImportOrchestrator {
         row.originalPayee || normalized["originalPayee"] || (normalized["payee"] as string);
       if (rawPayeeString && rawPayeeString.trim()) {
         try {
-          console.log("[TransferMapping] Saving transfer mapping:", {
-            rawPayeeString: rawPayeeString.trim(),
-            targetAccountId,
-            sourceAccountId,
-            sources: {
-              rowOriginalPayee: row.originalPayee,
-              normalizedOriginalPayee: normalized["originalPayee"],
-              normalizedPayee: normalized["payee"],
-            },
-          });
           await this.transferMappingService.recordMappingFromConversion(
             rawPayeeString.trim(),
             targetAccountId,

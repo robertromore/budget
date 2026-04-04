@@ -470,12 +470,14 @@ export interface SmartCategoryService {
   ): Promise<SmartCategorySuggestion[]>;
 
   /**
-   * Get multiple suggestions ranked by confidence
+   * Get multiple suggestions ranked by confidence.
+   * Pass aliasCache to skip per-call DB queries for aliases (batch optimization).
    */
   suggestCategories(
     workspaceId: number,
     context: CategoryTransactionContext,
-    limit?: number
+    limit?: number,
+    aliasCache?: import("$lib/schema/category-aliases").CategoryAlias[]
   ): Promise<SmartCategorySuggestion[]>;
 
   /**
@@ -619,9 +621,12 @@ export function createSmartCategoryService(
   }
 
   /**
-   * Load workspace categories
+   * Load workspace categories (memoized per workspace to avoid redundant queries in batch operations)
    */
-  async function loadCategories(workspaceId: number) {
+  const CATEGORY_CACHE_TTL_MS = 60_000; // 60 seconds
+  let categoryCache: { workspaceId: number; data: Awaited<ReturnType<typeof loadCategoriesFromDb>>; fetchedAt: number } | null = null;
+
+  async function loadCategoriesFromDb(workspaceId: number) {
     return db
       .select({
         id: categories.id,
@@ -633,6 +638,16 @@ export function createSmartCategoryService(
       })
       .from(categories)
       .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)));
+  }
+
+  async function loadCategories(workspaceId: number) {
+    const now = Date.now();
+    if (categoryCache?.workspaceId === workspaceId && now - categoryCache.fetchedAt < CATEGORY_CACHE_TTL_MS) {
+      return categoryCache.data;
+    }
+    const data = await loadCategoriesFromDb(workspaceId);
+    categoryCache = { workspaceId, data, fetchedAt: now };
+    return data;
   }
 
   /**
@@ -662,7 +677,8 @@ export function createSmartCategoryService(
     async suggestCategories(
       workspaceId: number,
       context: CategoryTransactionContext,
-      limit: number = 5
+      limit: number = 5,
+      aliasCache?: import("$lib/schema/category-aliases").CategoryAlias[]
     ): Promise<SmartCategorySuggestion[]> {
       const workspaceCategories = await loadCategories(workspaceId);
       // console.log('[SmartCategoryService] Loaded', workspaceCategories.length, 'categories for workspace', workspaceId);
@@ -681,14 +697,25 @@ export function createSmartCategoryService(
       const categoryAliasService = getCategoryAliasService();
       const rawString = context.rawPayeeString || context.description || context.payeeName || "";
 
+      // Track alias IDs that matched for batch incrementMatchCount later
+      const matchedAliasIds: number[] = [];
+
       if (rawString) {
         // Determine amount type for context
         const amountType: AmountType = context.amount > 0 ? "income" : "expense";
+        const aliasContext = { payeeId: context.payeeId, amountType };
 
-        const aliasMatch = await categoryAliasService.matchWithAlias(rawString, workspaceId, {
-          payeeId: context.payeeId,
-          amountType,
-        });
+        // Use in-memory matching when alias cache is available (batch mode)
+        let aliasMatch: { found: boolean; categoryId?: number; confidence: number; matchedOn?: "exact" | "normalized" | "payee_context" };
+        if (aliasCache) {
+          const cached = categoryAliasService.matchWithAliasFromCache(rawString, aliasCache, aliasContext);
+          aliasMatch = cached;
+          if (cached.found && cached.aliasId) {
+            matchedAliasIds.push(cached.aliasId);
+          }
+        } else {
+          aliasMatch = await categoryAliasService.matchWithAlias(rawString, workspaceId, aliasContext);
+        }
 
         if (aliasMatch.found && aliasMatch.categoryId) {
           // console.log('[SmartCategoryService] Category alias match found:', aliasMatch);
@@ -969,12 +996,9 @@ export function createSmartCategoryService(
       const dismissedCategoryIds = new Set<number>();
       if (rawString) {
         for (const entry of sortedEntries) {
-          const isDismissed = await categoryAliasService.isCategoryDismissed(
-            rawString,
-            entry.category.id,
-            workspaceId,
-            CATEGORY_ALIAS_MIN_CONFIDENCE
-          );
+          const isDismissed = aliasCache
+            ? categoryAliasService.isCategoryDismissedFromCache(rawString, entry.category.id, aliasCache, CATEGORY_ALIAS_MIN_CONFIDENCE)
+            : await categoryAliasService.isCategoryDismissed(rawString, entry.category.id, workspaceId, CATEGORY_ALIAS_MIN_CONFIDENCE);
           if (isDismissed) {
             dismissedCategoryIds.add(entry.category.id);
           }
@@ -1004,6 +1028,13 @@ export function createSmartCategoryService(
           reasonCode: entry.primaryReasonCode,
           factors: entry.factors.sort((a, b) => b.weight - a.weight),
         });
+      }
+
+      // Batch-increment match counts for cached alias matches
+      if (aliasCache && matchedAliasIds.length > 0) {
+        for (const aliasId of matchedAliasIds) {
+          await categoryAliasService.incrementMatchCount(aliasId);
+        }
       }
 
       // Merge alias results (highest priority) with ML results

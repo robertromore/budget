@@ -7,7 +7,8 @@
 
 import type { Payee } from "$lib/schema/payees";
 import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
-import { calculateStringSimilarity, normalizeText } from "../utils";
+import { calculateStringSimilarity } from "../utils";
+import { normalize } from "$lib/utils/string-utilities";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
@@ -103,7 +104,7 @@ export class PayeeMatcher {
       };
     }
 
-    const normalizedInput = normalizeText(payeeName);
+    const normalizedInput = normalize(payeeName);
     let bestMatch: PayeeMatch = {
       payee: null,
       confidence: "none",
@@ -130,7 +131,7 @@ export class PayeeMatcher {
    * Match a single payee against the input
    */
   private matchPayee(normalizedInput: string, payee: Payee): PayeeMatch {
-    const normalizedPayeeName = normalizeText(payee.name ?? "");
+    const normalizedPayeeName = normalize(payee.name ?? "");
 
     // Check for exact match
     if (normalizedInput === normalizedPayeeName) {
@@ -201,7 +202,7 @@ export class PayeeMatcher {
       return [];
     }
 
-    const normalizedInput = normalizeText(payeeName);
+    const normalizedInput = normalize(payeeName);
     const matches: PayeeMatch[] = [];
 
     for (const payee of existingPayees) {

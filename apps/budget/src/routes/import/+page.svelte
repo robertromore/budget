@@ -1,21 +1,12 @@
 <script lang="ts">
 import ColumnMapper from '$lib/components/import/column-mapper.svelte';
 import EntityReview from '$lib/components/import/entity-review.svelte';
-import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
-import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
 import { bulkCreateCategoryAliases } from '$lib/query/category-aliases';
 import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import { Checkbox } from '$lib/components/ui/checkbox';
 import * as Empty from '$lib/components/ui/empty';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import * as Select from '$lib/components/ui/select';
-import { Slider } from '$lib/components/ui/slider';
 import type { Account } from '$lib/schema/accounts';
 import type { ImportProfile } from '$lib/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
@@ -36,17 +27,21 @@ import {
   countProcessorTransactions,
   detectPaymentProcessor,
 } from '$lib/utils/import/payment-processor-filter';
-import { arePayeesSimilar } from '$lib/utils/payee-matching';
-import { formatCurrency } from '$lib/utils/formatters';
-import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import Circle from '@lucide/svelte/icons/circle';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
-import Save from '@lucide/svelte/icons/save';
-import Settings from '@lucide/svelte/icons/settings';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Wallet from '@lucide/svelte/icons/wallet';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { toast } from '$lib/utils/toast-interceptor';
+import ImportResultSummary from './(components)/import-result-summary.svelte';
+import SaveProfileDialog from './(components)/save-profile-dialog.svelte';
+import BulkPayeeUpdateDialog from './(components)/bulk-payee-update-dialog.svelte';
+import BulkTransferUpdateDialog from './(components)/bulk-transfer-update-dialog.svelte';
+import BulkCategoryUpdateDialog from './(components)/bulk-category-update-dialog.svelte';
+import ScheduleMatchReview from './(components)/schedule-match-review.svelte';
+import ProcessorFilterDialog from './(components)/processor-filter-dialog.svelte';
+import { createImportEntityState } from './(components)/import-entity-state.svelte';
+import UploadStep from './(components)/upload-step.svelte';
 
 let { data } = $props();
 const queryClient = useQueryClient();
@@ -74,7 +69,7 @@ type Step =
 
 let currentStep = $state<Step>('upload');
 let selectedFile = $state<File | null>(null);
-let fileData = $state<{ data: string; name: string; type: string } | null>(null);
+let fileData = $state<File | null>(null);
 let parseResults = $state<ParseResult | null>(null);
 let rawCSVData = $state<Record<string, any>[] | null>(null);
 let columnMapping = $state<ColumnMapping | null>(null);
@@ -85,20 +80,13 @@ let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
 let previewTable = $state<Table<ImportRow> | undefined>(undefined);
 let scheduleMatches = $state<ScheduleMatch[]>([]);
-let scheduleMatchThreshold = $state(0.75); // Default to 75% minimum match (array for Slider component)
+let scheduleMatchThreshold = $state(0.75); // Default to 75% minimum match
 
 // Import profile state
 let matchedProfile = $state<ImportProfile | null>(null);
 let detectedMapping = $state<ColumnMapping | null>(null);
 let csvHeaders = $state<string[]>([]);
-let saveProfileDialog = $state({
-  open: false,
-  profileName: '',
-  saveAsAccountDefault: false,
-  saveFilenamePattern: false,
-  filenamePattern: '',
-  isSaving: false,
-});
+let saveProfileDialogOpen = $state(false);
 
 // Filter schedule matches based on threshold
 const filteredScheduleMatches = $derived(
@@ -137,22 +125,8 @@ const groupedScheduleMatches = $derived.by(() => {
     .sort((a, b) => b.avgScore - a.avgScore); // Sort by average score descending
 });
 
-// Entity overrides - track user-selected payee/category/description/transfer for each row
-let entityOverrides = $state<
-  Record<
-    number,
-    {
-      payeeId?: number | null;
-      payeeName?: string | null;
-      categoryId?: number | null;
-      categoryName?: string | null;
-      description?: string | null;
-      transferAccountId?: number | null;
-      transferAccountName?: string | null;
-      rememberTransferMapping?: boolean;
-    }
-  >
->({});
+// Entity override state module (payee, category, transfer, description overrides + bulk dialogs)
+const entityState = createImportEntityState(() => parseResults?.rows ?? []);
 
 // Import options
 let importOptions = $state({
@@ -170,10 +144,6 @@ const reverseAmountSigns = $derived(importOptions.reverseAmountSigns);
 
 // Cleanup state for the preview table
 let cleanupState = $state<CleanupState | null>(null);
-
-// Alias candidates - track payee mappings from user confirmations during import
-// Key is row index, value is the alias candidate
-let aliasCandidates = $state<Map<number, AliasCandidate>>(new Map());
 
 // Initialize the mutation for bulk creating aliases
 const createAliasesMutation = bulkCreatePayeeAliases.options();
@@ -197,10 +167,10 @@ function handleCleanupStateChange(state: CleanupState) {
 
       for (const member of group.members) {
         // Apply the cleanup decision to entityOverrides
-        entityOverrides = {
-          ...entityOverrides,
+        entityState.entityOverrides = {
+          ...entityState.entityOverrides,
           [member.rowIndex]: {
-            ...entityOverrides[member.rowIndex],
+            ...entityState.entityOverrides[member.rowIndex],
             payeeId,
             payeeName,
           },
@@ -210,13 +180,13 @@ function handleCleanupStateChange(state: CleanupState) {
         // For existing payees: track payeeId
         // For new payees: track payeeName (will be resolved to ID after import)
         if (member.originalPayee && member.originalPayee !== payeeName) {
-          const newCandidates = new Map(aliasCandidates);
+          const newCandidates = new Map(entityState.aliasCandidates);
           newCandidates.set(member.rowIndex, {
             rawString: member.originalPayee,
             payeeId: payeeId ?? undefined, // null for new payees
             payeeName, // Track name for resolution after import
           });
-          aliasCandidates = newCandidates;
+          entityState.aliasCandidates = newCandidates;
         }
       }
     }
@@ -229,10 +199,10 @@ function handleCleanupStateChange(state: CleanupState) {
         (s) => s.categoryId === suggestion.selectedCategoryId
       );
       if (selectedSuggestion) {
-        entityOverrides = {
-          ...entityOverrides,
+        entityState.entityOverrides = {
+          ...entityState.entityOverrides,
           [suggestion.rowIndex]: {
-            ...entityOverrides[suggestion.rowIndex],
+            ...entityState.entityOverrides[suggestion.rowIndex],
             categoryId: suggestion.selectedCategoryId,
             categoryName: selectedSuggestion.categoryName,
           },
@@ -250,7 +220,7 @@ const previewData = $derived.by(() => {
   return {
     ...parseResults,
     rows: parseResults.rows.map((row) => {
-      const override = entityOverrides[row.rowIndex];
+      const override = entityState.entityOverrides[row.rowIndex];
       // Store the original payee value from the CSV before any overrides
       // Use 'originalPayee' if set by infer-categories (true raw value), otherwise fall back to 'payee'
       const originalPayee = (row.normalizedData['originalPayee'] ?? row.normalizedData['payee']) as
@@ -351,143 +321,6 @@ const temporaryPayees = $derived.by(() => {
   return Array.from(tempPayees);
 });
 
-// Handler for payee updates from the table
-function handlePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: string | null) {
-  entityOverrides = {
-    ...entityOverrides,
-    [rowIndex]: {
-      ...entityOverrides[rowIndex],
-      payeeId,
-      payeeName,
-      // Clear transfer when setting payee
-      transferAccountId: null,
-      transferAccountName: null,
-      rememberTransferMapping: false,
-    },
-  };
-}
-
-// Handler for alias candidates from payee selection during import
-function handlePayeeAliasCandidate(rowIndex: number, alias: AliasCandidate) {
-  // Track the alias candidate for this row
-  // Later rows with the same raw string will overwrite earlier ones (keeping most recent)
-  const newCandidates = new Map(aliasCandidates);
-  newCandidates.set(rowIndex, alias);
-  aliasCandidates = newCandidates;
-}
-
-// State for bulk payee update confirmation dialog
-let bulkPayeeUpdateDialog = $state({
-  open: false,
-  rowIndex: 0,
-  payeeId: null as number | null,
-  payeeName: null as string | null,
-  originalPayeeName: '',
-  previousPayeeId: null as number | null,
-  previousPayeeName: null as string | null,
-  matchCount: 0,
-  matches: [] as Array<{ item: any }>,
-});
-
-// Apply payee update to all similar transactions (fuzzy matched by original payee)
-function handlePayeeUpdateWithSimilar(
-  rowIndex: number,
-  payeeId: number | null,
-  payeeName: string | null
-) {
-  if (!parseResults) return;
-
-  // Capture the previous value before updating (for potential revert)
-  const previousOverride = entityOverrides[rowIndex];
-  const previousPayeeId = previousOverride?.payeeId !== undefined ? previousOverride.payeeId : null;
-  const previousPayeeName =
-    previousOverride?.payeeName !== undefined ? previousOverride.payeeName : null;
-
-  // First update the selected row
-  handlePayeeUpdate(rowIndex, payeeId, payeeName);
-
-  // Get the original payee name for the selected row
-  const selectedRow = parseResults.rows.find((r) => r.rowIndex === rowIndex);
-  if (!selectedRow) return;
-
-  const originalPayeeName = selectedRow.normalizedData['payee'];
-  if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
-
-  // Use similarity matching to catch payees with different amounts in the name
-  // Example: "Amazon - $25.99" should match "Amazon - $12.50"
-  const matchesToUpdate = parseResults.rows
-    .filter((row) => {
-      if (row.rowIndex === rowIndex) return false;
-      const rowPayee = row.normalizedData['payee'];
-      if (!rowPayee || typeof rowPayee !== 'string') return false;
-      return arePayeesSimilar(rowPayee, originalPayeeName);
-    })
-    .map((item) => ({ item }));
-
-  // If there are similar transactions, ask user if they want to update them
-  if (matchesToUpdate.length > 0) {
-    bulkPayeeUpdateDialog = {
-      open: true,
-      rowIndex,
-      payeeId,
-      payeeName,
-      originalPayeeName,
-      previousPayeeId,
-      previousPayeeName,
-      matchCount: matchesToUpdate.length,
-      matches: matchesToUpdate,
-    };
-  }
-}
-
-// Confirm and apply bulk payee update
-function confirmBulkPayeeUpdate() {
-  if (!bulkPayeeUpdateDialog.matches) return;
-
-  let updatedCount = 0;
-  bulkPayeeUpdateDialog.matches.forEach((match) => {
-    handlePayeeUpdate(
-      match.item.rowIndex,
-      bulkPayeeUpdateDialog.payeeId,
-      bulkPayeeUpdateDialog.payeeName
-    );
-    updatedCount++;
-  });
-
-  // Notify user of bulk update
-  if (updatedCount > 0) {
-    const payeeDisplay = bulkPayeeUpdateDialog.payeeName || 'None';
-    toast.success(
-      `Updated payee to "${payeeDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`
-    );
-  }
-
-  // Close dialog
-  bulkPayeeUpdateDialog.open = false;
-}
-
-// Cancel bulk payee update (keep single row update)
-function cancelBulkPayeeUpdate() {
-  bulkPayeeUpdateDialog.open = false;
-}
-
-// Revert the payee update entirely
-function revertPayeeUpdate() {
-  const { rowIndex, previousPayeeId, previousPayeeName } = bulkPayeeUpdateDialog;
-
-  // Revert the single row to its previous value
-  handlePayeeUpdate(rowIndex, previousPayeeId, previousPayeeName);
-
-  bulkPayeeUpdateDialog.open = false;
-}
-
-// State for payment processor filter dialog
-let processorFilterDialog = $state({
-  open: false,
-  selectedProcessors: new Set<string>(),
-  affectedCount: 0,
-});
-
 // Analyze payee names for payment processors
 const processorAnalysis = $derived.by(() => {
   if (!parseResults) return { total: 0, byProcessor: new Map<string, number>() };
@@ -500,50 +333,15 @@ const processorAnalysis = $derived.by(() => {
 });
 
 // Open payment processor filter dialog
+let processorFilterDialogOpen = $state(false);
+
 function openProcessorFilterDialog() {
-  // Pre-select all processors that have transactions
-  const preselected = new Set<string>();
-  for (const [processor, count] of processorAnalysis.byProcessor) {
-    if (count > 0) {
-      preselected.add(processor);
-    }
-  }
-
-  processorFilterDialog = {
-    open: true,
-    selectedProcessors: preselected,
-    affectedCount: processorAnalysis.total,
-  };
-}
-
-// Toggle processor selection
-function toggleProcessor(processorName: string) {
-  const newSelection = new Set(processorFilterDialog.selectedProcessors);
-  if (newSelection.has(processorName)) {
-    newSelection.delete(processorName);
-  } else {
-    newSelection.add(processorName);
-  }
-
-  // Calculate affected count
-  let count = 0;
-  for (const [processor, processorCount] of processorAnalysis.byProcessor) {
-    if (newSelection.has(processor)) {
-      count += processorCount;
-    }
-  }
-
-  processorFilterDialog = {
-    ...processorFilterDialog,
-    selectedProcessors: newSelection,
-    affectedCount: count,
-  };
+  processorFilterDialogOpen = true;
 }
 
 // Apply payment processor filtering to all matching transactions
-function applyProcessorFilter() {
-  if (!parseResults || processorFilterDialog.selectedProcessors.size === 0) {
-    processorFilterDialog.open = false;
+function applyProcessorFilter(selectedProcessors: Set<string>) {
+  if (!parseResults || selectedProcessors.size === 0) {
     return;
   }
 
@@ -555,10 +353,10 @@ function applyProcessorFilter() {
     if (!payeeName || typeof payeeName !== 'string') return;
 
     const detection = detectPaymentProcessor(payeeName);
-    if (detection && processorFilterDialog.selectedProcessors.has(detection.processor)) {
+    if (detection && selectedProcessors.has(detection.processor)) {
       // Filter out the payment processor
       const filteredName = detection.merchantName;
-      handlePayeeUpdate(row.rowIndex, null, filteredName);
+      entityState.handlePayeeUpdate(row.rowIndex, null, filteredName);
       updatedCount++;
     }
   });
@@ -569,13 +367,6 @@ function applyProcessorFilter() {
       `Filtered payment processors from ${updatedCount} transaction${updatedCount !== 1 ? 's' : ''}`
     );
   }
-
-  processorFilterDialog.open = false;
-}
-
-// Cancel processor filter
-function cancelProcessorFilter() {
-  processorFilterDialog.open = false;
 }
 
 // Handler for schedule match toggle
@@ -593,421 +384,6 @@ function selectAllScheduleMatches() {
 // Deselect all schedule matches
 function deselectAllScheduleMatches() {
   scheduleMatches = scheduleMatches.map((match) => ({ ...match, selected: false }));
-}
-
-// Get confidence badge color
-function getConfidenceBadgeVariant(
-  confidence: string
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (confidence) {
-    case 'exact':
-      return 'default';
-    case 'high':
-      return 'secondary';
-    default:
-      return 'outline';
-  }
-}
-
-function getScoreBorderColor(score: number): string {
-  if (score >= 0.9) return 'border-l-4 border-l-green-500';
-  if (score >= 0.8) return 'border-l-4 border-l-green-400';
-  if (score >= 0.75) return 'border-l-4 border-l-yellow-500';
-  if (score >= 0.65) return 'border-l-4 border-l-orange-500';
-  return 'border-l-4 border-l-red-500';
-}
-
-function getScoreAllBorderColor(score: number): string {
-  if (score >= 0.9) return 'border-green-500 border-l-4';
-  if (score >= 0.8) return 'border-green-400 border-l-4';
-  if (score >= 0.75) return 'border-yellow-500 border-l-4';
-  if (score >= 0.65) return 'border-orange-500 border-l-4';
-  return 'border-red-500 border-l-4';
-}
-
-// Handler for category updates from the table
-function handleCategoryUpdate(
-  rowIndex: number,
-  categoryId: number | null,
-  categoryName: string | null
-) {
-  // Create a new object to trigger reactivity
-  entityOverrides = {
-    ...entityOverrides,
-    [rowIndex]: {
-      ...entityOverrides[rowIndex],
-      categoryId,
-      categoryName,
-    },
-  };
-}
-
-// Handler for description updates from the table
-function handleDescriptionUpdate(rowIndex: number, description: string | null) {
-  // Create a new object to trigger reactivity
-  entityOverrides = {
-    ...entityOverrides,
-    [rowIndex]: {
-      ...entityOverrides[rowIndex],
-      description,
-    },
-  };
-}
-
-// Handler for transfer account updates
-function handleTransferAccountUpdate(
-  rowIndex: number,
-  accountId: number | null,
-  accountName: string | null,
-  rememberMapping: boolean = false
-) {
-  console.log('[Import] handleTransferAccountUpdate called:', {
-    rowIndex,
-    accountId,
-    accountName,
-    rememberMapping,
-  });
-  entityOverrides = {
-    ...entityOverrides,
-    [rowIndex]: {
-      ...entityOverrides[rowIndex],
-      // Clear payee and category when setting transfer
-      payeeId: null,
-      payeeName: null,
-      categoryId: null,
-      categoryName: null,
-      // Set transfer fields
-      transferAccountId: accountId,
-      transferAccountName: accountName,
-      rememberTransferMapping: rememberMapping,
-    },
-  };
-}
-
-// State for bulk transfer update confirmation dialog
-let bulkTransferUpdateDialog = $state({
-  open: false,
-  rowIndex: 0,
-  accountId: null as number | null,
-  accountName: null as string | null,
-  rememberMapping: false,
-  originalPayeeName: '',
-  matchCount: 0,
-  matches: [] as Array<{ item: any }>,
-});
-
-function handleTransferAccountUpdateWithSimilar(
-  rowIndex: number,
-  accountId: number | null,
-  accountName: string | null,
-  rememberMapping: boolean = false
-) {
-  if (!parseResults) return;
-
-  // Apply the update to the selected row first
-  handleTransferAccountUpdate(rowIndex, accountId, accountName, rememberMapping);
-
-  // If clearing the transfer, don't prompt for similar
-  if (!accountId) return;
-
-  const selectedRow = parseResults.rows.find((r) => r.rowIndex === rowIndex);
-  if (!selectedRow) return;
-
-  const originalPayeeName = selectedRow.normalizedData['payee'];
-  if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
-
-  // Find similar payees that aren't already set as transfers
-  const matchesToUpdate = parseResults.rows
-    .filter((row) => {
-      if (row.rowIndex === rowIndex) return false;
-      const rowPayee = row.normalizedData['payee'];
-      if (!rowPayee || typeof rowPayee !== 'string') return false;
-      // Check if already a transfer
-      const override = entityOverrides[row.rowIndex];
-      if (override?.transferAccountId) return false;
-      // Use similarity matching
-      return arePayeesSimilar(rowPayee, originalPayeeName);
-    })
-    .map((item) => ({ item }));
-
-  if (matchesToUpdate.length > 0) {
-    bulkTransferUpdateDialog = {
-      open: true,
-      rowIndex,
-      accountId,
-      accountName,
-      rememberMapping,
-      originalPayeeName,
-      matchCount: matchesToUpdate.length,
-      matches: matchesToUpdate,
-    };
-  }
-}
-
-function confirmBulkTransferUpdate() {
-  if (!bulkTransferUpdateDialog.matches) return;
-
-  let updatedCount = 0;
-  bulkTransferUpdateDialog.matches.forEach((match) => {
-    handleTransferAccountUpdate(
-      match.item.rowIndex,
-      bulkTransferUpdateDialog.accountId,
-      bulkTransferUpdateDialog.accountName,
-      bulkTransferUpdateDialog.rememberMapping
-    );
-    updatedCount++;
-  });
-
-  if (updatedCount > 0) {
-    const accountDisplay = bulkTransferUpdateDialog.accountName || 'None';
-    toast.success(
-      `Set transfer to "${accountDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`
-    );
-  }
-
-  bulkTransferUpdateDialog.open = false;
-}
-
-function cancelBulkTransferUpdate() {
-  bulkTransferUpdateDialog.open = false;
-}
-
-function revertTransferUpdate() {
-  const { rowIndex } = bulkTransferUpdateDialog;
-  handleTransferAccountUpdate(rowIndex, null, null, false);
-  bulkTransferUpdateDialog.open = false;
-}
-
-// State for bulk update confirmation dialog
-let bulkUpdateDialog = $state({
-  open: false,
-  rowIndex: 0,
-  categoryId: null as number | null,
-  categoryName: null as string | null,
-  previousCategoryName: null as string | null,
-  payeeName: '',
-  matchCountByPayee: 0,
-  matchCountByCategory: 0,
-  matchesByPayee: [] as Array<{ item: any }>,
-  matchesByCategory: [] as Array<{ item: any }>,
-});
-
-// Apply category update to all similar transactions (fuzzy matched by payee)
-function handleCategoryUpdateWithSimilar(
-  rowIndex: number,
-  categoryId: number | null,
-  categoryName: string | null
-) {
-  if (!parseResults) return;
-
-  // Check if we're clearing the category (setting to null/empty)
-  const isClearingCategory = !categoryName || categoryName.trim() === '';
-
-  // Get the selected row info BEFORE updating it
-  const selectedRow = parseResults.rows.find((r) => r.rowIndex === rowIndex);
-  if (!selectedRow) return;
-
-  // Use overridden payee name if available (in case user renamed the payee)
-  const payeeName = entityOverrides[rowIndex]?.payeeName ?? selectedRow.normalizedData['payee'];
-  if (!payeeName || typeof payeeName !== 'string') {
-    // No payee, just update this one transaction
-    handleCategoryUpdate(rowIndex, categoryId, categoryName);
-    return;
-  }
-
-  // Get the previous category for this row
-  const previousCategoryName =
-    entityOverrides[rowIndex]?.categoryName || selectedRow.normalizedData['category'] || null;
-
-  // Check if previous category was real (not null/empty)
-  const hasRealPreviousCategory = previousCategoryName && previousCategoryName.trim() !== '';
-
-  // If clearing category and there's no real previous category, just update without asking
-  if (isClearingCategory && !hasRealPreviousCategory) {
-    handleCategoryUpdate(rowIndex, categoryId, categoryName);
-    return;
-  }
-
-  // Find matches by payee (for "update all transactions with same payee" option)
-  // Use similarity matching to catch payees with different amounts in the name
-  // Check entityOverrides first for renamed payees
-  const matchesByPayee = parseResults.rows
-    .filter((row) => {
-      if (row.rowIndex === rowIndex) return false;
-      const rowPayee = entityOverrides[row.rowIndex]?.payeeName ?? row.normalizedData['payee'];
-      if (!rowPayee || typeof rowPayee !== 'string') return false;
-      return arePayeesSimilar(rowPayee, payeeName);
-    })
-    .map((item) => ({ item }));
-
-  // Find matches by previous category (for "rename category" option)
-  // Only allow this if the previous category was a real category (not uncategorized/null/empty)
-  let matchesByCategory: Array<{ item: any }> = [];
-
-  if (hasRealPreviousCategory) {
-    matchesByCategory = parseResults.rows
-      .map((row, idx) => ({ item: row, index: idx }))
-      .filter(({ item, index }) => {
-        if (item.rowIndex === rowIndex) return false;
-        const rowCategory =
-          entityOverrides[item.rowIndex]?.categoryName || item.normalizedData['category'];
-        return rowCategory === previousCategoryName;
-      });
-  }
-
-  // If there are potential bulk updates, show dialog (don't update yet!)
-  if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
-    bulkUpdateDialog = {
-      open: true,
-      rowIndex,
-      categoryId,
-      categoryName,
-      previousCategoryName,
-      payeeName,
-      matchCountByPayee: matchesByPayee.length,
-      matchCountByCategory: matchesByCategory.length,
-      matchesByPayee,
-      matchesByCategory,
-    };
-  } else {
-    // No matches, just update this one transaction
-    handleCategoryUpdate(rowIndex, categoryId, categoryName);
-  }
-}
-
-// Update just the selected row
-function confirmBulkUpdateJustOne() {
-  // Only update the original row
-  handleCategoryUpdate(
-    bulkUpdateDialog.rowIndex,
-    bulkUpdateDialog.categoryId,
-    bulkUpdateDialog.categoryName
-  );
-  bulkUpdateDialog.open = false;
-}
-
-// Apply bulk update by payee only
-function confirmBulkUpdateByPayee() {
-  if (!bulkUpdateDialog.matchesByPayee) return;
-
-  // Update the original row first
-  handleCategoryUpdate(
-    bulkUpdateDialog.rowIndex,
-    bulkUpdateDialog.categoryId,
-    bulkUpdateDialog.categoryName
-  );
-
-  let updatedCount = 0;
-  bulkUpdateDialog.matchesByPayee.forEach((match) => {
-    handleCategoryUpdate(
-      match.item.rowIndex,
-      bulkUpdateDialog.categoryId,
-      bulkUpdateDialog.categoryName
-    );
-    updatedCount++;
-  });
-
-  // Notify user of bulk update
-  if (updatedCount > 0) {
-    if (bulkUpdateDialog.categoryName) {
-      toast.success(
-        `Updated category to "${bulkUpdateDialog.categoryName}" for ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''} with payee "${bulkUpdateDialog.payeeName}"`
-      );
-    } else {
-      toast.success(
-        `Removed category from ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''} with payee "${bulkUpdateDialog.payeeName}"`
-      );
-    }
-  }
-
-  bulkUpdateDialog.open = false;
-}
-
-// Apply bulk update by previous category (rename category)
-function confirmBulkUpdateByCategory() {
-  if (!bulkUpdateDialog.matchesByCategory) return;
-
-  // Update the original row first
-  handleCategoryUpdate(
-    bulkUpdateDialog.rowIndex,
-    bulkUpdateDialog.categoryId,
-    bulkUpdateDialog.categoryName
-  );
-
-  let updatedCount = 0;
-  bulkUpdateDialog.matchesByCategory.forEach((match) => {
-    handleCategoryUpdate(
-      match.item.rowIndex,
-      bulkUpdateDialog.categoryId,
-      bulkUpdateDialog.categoryName
-    );
-    updatedCount++;
-  });
-
-  // Notify user of bulk update
-  if (updatedCount > 0) {
-    if (bulkUpdateDialog.categoryName) {
-      toast.success(
-        `Renamed category "${bulkUpdateDialog.previousCategoryName}" to "${bulkUpdateDialog.categoryName}" for ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`
-      );
-    } else {
-      toast.success(
-        `Removed category "${bulkUpdateDialog.previousCategoryName}" from ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`
-      );
-    }
-  }
-
-  bulkUpdateDialog.open = false;
-}
-
-// Apply bulk update to both payee matches and category matches
-function confirmBulkUpdateBoth() {
-  // Update the original row first
-  handleCategoryUpdate(
-    bulkUpdateDialog.rowIndex,
-    bulkUpdateDialog.categoryId,
-    bulkUpdateDialog.categoryName
-  );
-
-  const allMatches = [
-    ...(bulkUpdateDialog.matchesByPayee || []),
-    ...(bulkUpdateDialog.matchesByCategory || []),
-  ];
-
-  // Remove duplicates (transactions that match both criteria)
-  const uniqueMatches = allMatches.filter(
-    (match, index, self) => index === self.findIndex((m) => m.item.rowIndex === match.item.rowIndex)
-  );
-
-  let updatedCount = 0;
-  uniqueMatches.forEach((match) => {
-    handleCategoryUpdate(
-      match.item.rowIndex,
-      bulkUpdateDialog.categoryId,
-      bulkUpdateDialog.categoryName
-    );
-    updatedCount++;
-  });
-
-  // Notify user of bulk update
-  if (updatedCount > 0) {
-    if (bulkUpdateDialog.categoryName) {
-      toast.success(
-        `Updated category to "${bulkUpdateDialog.categoryName}" for ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`
-      );
-    } else {
-      toast.success(
-        `Removed category from ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`
-      );
-    }
-  }
-
-  bulkUpdateDialog.open = false;
-}
-
-// Cancel bulk update - don't apply any changes
-function cancelBulkUpdate() {
-  bulkUpdateDialog.open = false;
 }
 
 // Apply smart categorization and payee normalization using the backend matcher
@@ -1062,14 +438,8 @@ async function handleFileSelected(file: File) {
   csvHeaders = [];
 
   try {
-    // Convert file to base64 for later re-processing
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    fileData = {
-      data: base64,
-      name: file.name,
-      type: file.type,
-    };
+    // Store file for later re-processing during column remapping
+    fileData = file;
 
     // Parse file and move to preview step
     const formData = new FormData();
@@ -1173,16 +543,19 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
 
   try {
     // Re-parse the CSV with custom column mapping
+    const remapForm = new FormData();
+    remapForm.append('importFile', fileData!);
+    remapForm.append('columnMapping', JSON.stringify(mapping));
+    if (selectedAccountId) {
+      remapForm.append('accountId', selectedAccountId);
+    }
+    if (importOptions.reverseAmountSigns) {
+      remapForm.append('reverseAmountSigns', 'true');
+    }
+
     const response = await fetch('/api/import/remap', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        file: fileData,
-        columnMapping: mapping,
-        accountId: selectedAccountId,
-      }),
+      body: remapForm,
     });
 
     const result = await response.json();
@@ -1329,7 +702,7 @@ async function processImport() {
     const selectedRowsData = parseResults.rows
       .filter((row) => selectedRows.has(row.rowIndex))
       .map((row) => {
-        const override = entityOverrides[row.rowIndex];
+        const override = entityState.entityOverrides[row.rowIndex];
         return {
           ...row,
           normalizedData: {
@@ -1396,19 +769,6 @@ async function processImport() {
       },
     };
 
-    // Log transfer data being sent
-    const transferRows = selectedRowsData.filter((r) => r.normalizedData?.transferAccountId);
-    if (transferRows.length > 0) {
-      console.log(
-        '[Import] Sending transfer rows:',
-        transferRows.map((r) => ({
-          rowIndex: r.rowIndex,
-          transferAccountId: r.normalizedData?.transferAccountId,
-          rememberTransferMapping: r.normalizedData?.rememberTransferMapping,
-          payee: r.normalizedData?.payee,
-        }))
-      );
-    }
 
     const response = await fetch('/api/import/process', {
       method: 'POST',
@@ -1426,7 +786,7 @@ async function processImport() {
 
       // Record payee aliases from user confirmations during import
       // This handles both existing payees (with payeeId) and newly created payees (resolved by name)
-      if (aliasCandidates.size > 0) {
+      if (entityState.aliasCandidates.size > 0) {
         try {
           // Build lookups from created payee mappings
           // Priority: user-selected name > normalized name > original import string
@@ -1442,7 +802,7 @@ async function processImport() {
           }
 
           // Resolve aliases - for existing payees use payeeId, for new payees look up by name
-          const aliasesToCreate = Array.from(aliasCandidates.values())
+          const aliasesToCreate = Array.from(entityState.aliasCandidates.values())
             .map((alias) => {
               // If we already have a payeeId (existing payee), use it
               if (alias.payeeId) {
@@ -1580,6 +940,7 @@ async function processImport() {
 function startNewImport() {
   currentStep = 'upload';
   selectedFile = null;
+  fileData = null;
   parseResults = null;
   entityPreview = null;
   importResult = null;
@@ -1592,77 +953,13 @@ function startNewImport() {
   csvHeaders = [];
   columnMapping = null;
   previewTable = undefined;
-  entityOverrides = {};
+  entityState.reset();
   cleanupState = null;
-  aliasCandidates = new Map();
 }
 
 // Save profile dialog helpers
 function openSaveProfileDialog() {
-  // Generate a default name based on filename
-  const defaultName = selectedFile
-    ? selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
-    : 'New Import Profile';
-
-  // Generate a default filename pattern
-  const defaultPattern = selectedFile
-    ? selectedFile.name.replace(/\d{4}[-_]?\d{2}[-_]?\d{2}/g, '*').replace(/\d+/g, '*')
-    : '';
-
-  saveProfileDialog = {
-    open: true,
-    profileName: defaultName,
-    saveAsAccountDefault: false,
-    saveFilenamePattern: false,
-    filenamePattern: defaultPattern,
-    isSaving: false,
-  };
-}
-
-async function saveImportProfile() {
-  if (!columnMapping || !saveProfileDialog.profileName.trim()) return;
-
-  saveProfileDialog.isSaving = true;
-
-  try {
-    // Generate column signature from headers
-    let columnSignature: string | null = null;
-    if (csvHeaders.length > 0) {
-      const result = await trpc().importProfileRoutes.generateSignature.query({
-        headers: csvHeaders,
-      });
-      columnSignature = result.signature;
-    }
-
-    await trpc().importProfileRoutes.create.mutate({
-      name: saveProfileDialog.profileName.trim(),
-      columnSignature,
-      filenamePattern: saveProfileDialog.saveFilenamePattern
-        ? saveProfileDialog.filenamePattern.trim() || null
-        : null,
-      accountId:
-        saveProfileDialog.saveAsAccountDefault && selectedAccountId
-          ? parseInt(selectedAccountId)
-          : null,
-      isAccountDefault: saveProfileDialog.saveAsAccountDefault,
-      mapping: columnMapping,
-    });
-
-    toast.success('Import profile saved', {
-      description: `"${saveProfileDialog.profileName}" will be used for future imports with matching columns.`,
-    });
-
-    saveProfileDialog.open = false;
-  } catch (err) {
-    console.error('Failed to save import profile:', err);
-    toast.error('Failed to save import profile');
-  } finally {
-    saveProfileDialog.isSaving = false;
-  }
-}
-
-function closeSaveProfileDialog() {
-  saveProfileDialog.open = false;
+  saveProfileDialogOpen = true;
 }
 
 const steps = [
@@ -1772,77 +1069,12 @@ $effect(() => {
 
       <!-- Step Content -->
       {#if currentStep === 'upload'}
-        <div class="space-y-6">
-          <div class="flex items-start justify-between">
-            <div>
-              <h1 class="text-3xl font-bold">Import Financial Data</h1>
-              <p class="text-muted-foreground mt-2">
-                Upload your financial data from CSV, Excel (.xlsx, .xls), QIF, OFX/QFX, IIF, or QBO
-                files
-              </p>
-            </div>
-            <Button variant="outline" size="sm" href="/settings/import-profiles">
-              <Settings class="mr-2 h-4 w-4" />
-              Manage Profiles
-            </Button>
-          </div>
-
-          <!-- Account Selection -->
-          <Card.Root>
-            <Card.Header>
-              <Card.Title>Select Account</Card.Title>
-              <Card.Description>Choose the account to import transactions into</Card.Description>
-            </Card.Header>
-            <Card.Content>
-              <Select.Root type="single" bind:value={selectedAccountId}>
-                <Select.Trigger class="w-full">
-                  <span class="truncate">
-                    {#if selectedAccountId}
-                      {importableAccounts.find(
-                        (a: Account) => a.id.toString() === selectedAccountId
-                      )?.name || 'Choose an account...'}
-                    {:else}
-                      Choose an account...
-                    {/if}
-                  </span>
-                </Select.Trigger>
-                <Select.Content>
-                  {#each importableAccounts as account}
-                    <Select.Item value={account.id.toString()}>
-                      {account.name}
-                    </Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-            </Card.Content>
-          </Card.Root>
-
-          <!-- File Upload -->
-          <FileUploadDropzone
-            acceptedFormats={[
-              '.csv',
-              '.txt',
-              '.xlsx',
-              '.xls',
-              '.qif',
-              '.ofx',
-              '.qfx',
-              '.iif',
-              '.qbo',
-            ]}
-            maxFileSize={10 * 1024 * 1024}
-            onFileSelected={handleFileSelected}
-            onFileRejected={handleFileRejected}
-            showPreview={true} />
-
-          {#if isProcessing}
-            <div class="py-8 text-center">
-              <div class="border-primary inline-block h-8 w-8 animate-spin rounded-full border-b-2">
-              </div>
-              <p class="text-muted-foreground mt-4 text-sm">Processing file...</p>
-            </div>
-          {/if}
-        </div>
+        <UploadStep
+          accounts={importableAccounts}
+          bind:selectedAccountId
+          {isProcessing}
+          onFileSelected={handleFileSelected}
+          onFileRejected={handleFileRejected} />
       {:else if currentStep === 'map-columns' && parseResults && rawCSVData}
         {#if matchedProfile}
           <div
@@ -1883,11 +1115,11 @@ $effect(() => {
               onImportOptionsChange={handleImportOptionsChange}
               {cleanupState}
               onCleanupStateChange={handleCleanupStateChange}
-              onPayeeUpdate={handlePayeeUpdateWithSimilar}
-              onPayeeAliasCandidate={handlePayeeAliasCandidate}
-              onCategoryUpdate={handleCategoryUpdateWithSimilar}
-              onDescriptionUpdate={handleDescriptionUpdate}
-              onTransferAccountUpdate={handleTransferAccountUpdateWithSimilar}
+              onPayeeUpdate={entityState.handlePayeeUpdateWithSimilar}
+              onPayeeAliasCandidate={entityState.handlePayeeAliasCandidate}
+              onCategoryUpdate={entityState.handleCategoryUpdateWithSimilar}
+              onDescriptionUpdate={entityState.handleDescriptionUpdate}
+              onTransferAccountUpdate={entityState.handleTransferAccountUpdateWithSimilar}
               {temporaryCategories}
               {temporaryPayees}
               processorCount={processorAnalysis.total}
@@ -1929,157 +1161,16 @@ $effect(() => {
           </div>
         {/if}
       {:else if currentStep === 'review-schedules'}
-        <div class="space-y-6">
-          <div>
-            <div class="mb-2 flex items-center gap-3">
-              <CalendarClock class="text-primary h-8 w-8" />
-              <h2 class="text-2xl font-bold">Review Schedule Matches</h2>
-            </div>
-            <p class="text-muted-foreground mt-2">
-              We found {scheduleMatches.length} transaction{scheduleMatches.length !== 1 ? 's' : ''}
-              that match existing schedules. Select which ones you'd like to link.
-            </p>
-          </div>
-
-          <!-- Match Threshold Slider -->
-          <Card.Root>
-            <Card.Header class="pb-4">
-              <Card.Title class="text-base">Match Threshold</Card.Title>
-              <Card.Description class="text-sm">
-                Adjust to show matches above {Math.round(scheduleMatchThreshold * 100)}% confidence
-                · Showing {filteredScheduleMatches.length} of {scheduleMatches.length} matches
-              </Card.Description>
-            </Card.Header>
-            <Card.Content>
-              <div class="space-y-4">
-                <Slider
-                  type="single"
-                  bind:value={scheduleMatchThreshold}
-                  min={0.2}
-                  max={1.0}
-                  step={0.05}
-                  class="w-full" />
-                <div class="text-muted-foreground flex justify-between text-xs">
-                  <span>20%</span>
-                  <span>40%</span>
-                  <span>60%</span>
-                  <span>80%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-            </Card.Content>
-          </Card.Root>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {#each groupedScheduleMatches as group (group.scheduleId)}
-              <Card.Root class="flex flex-col {getScoreBorderColor(group.avgScore)}">
-                <Card.Header class="pb-3">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="flex min-w-0 items-start gap-2">
-                      <CalendarClock class="text-primary mt-0.5 h-5 w-5 shrink-0" />
-                      <div class="min-w-0">
-                        <Card.Title class="truncate text-base">{group.scheduleName}</Card.Title>
-                        <Card.Description class="text-xs">
-                          {group.matches.length} match{group.matches.length !== 1 ? 'es' : ''} · {Math.round(
-                            group.avgScore * 100
-                          )}% avg
-                        </Card.Description>
-                      </div>
-                    </div>
-                    <div class="flex shrink-0 flex-col gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        class="h-7 px-2 text-xs"
-                        onclick={() => {
-                          group.matches.forEach((match) => {
-                            match.selected = true;
-                          });
-                          scheduleMatches = [...scheduleMatches];
-                        }}>
-                        All
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        class="h-7 px-2 text-xs"
-                        onclick={() => {
-                          group.matches.forEach((match) => {
-                            match.selected = false;
-                          });
-                          scheduleMatches = [...scheduleMatches];
-                        }}>
-                        None
-                      </Button>
-                    </div>
-                  </div>
-                </Card.Header>
-                <Card.Content>
-                  <div class="space-y-3">
-                    {#each group.matches as match (match.rowIndex)}
-                      <div
-                        class="flex cursor-pointer items-start gap-2 rounded-lg border p-2 transition-colors {getScoreAllBorderColor(
-                          match.score
-                        )}
-                             {match.selected ? 'bg-primary/5' : 'bg-card hover:bg-accent/50'}"
-                        onclick={() => handleScheduleMatchToggle(match.rowIndex, !match.selected)}
-                        onkeydown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleScheduleMatchToggle(match.rowIndex, !match.selected);
-                          }
-                        }}
-                        role="button"
-                        tabindex="0"
-                        aria-pressed={match.selected}>
-                        <Checkbox
-                          checked={match.selected}
-                          onCheckedChange={(checked) =>
-                            handleScheduleMatchToggle(match.rowIndex, checked === true)}
-                          class="mt-1" />
-                        <div class="min-w-0 flex-1">
-                          <div class="mb-2 flex items-center justify-between gap-2">
-                            <div class="truncate text-sm font-medium">
-                              {new Date(match.transactionData.date).toLocaleDateString()}
-                            </div>
-                            <Badge.Badge
-                              variant={getConfidenceBadgeVariant(match.confidence)}
-                              class="shrink-0">
-                              {Math.round(match.score * 100)}%
-                            </Badge.Badge>
-                          </div>
-                          <div class="space-y-1">
-                            <div class="flex items-center justify-between text-sm">
-                              <span class="text-muted-foreground text-xs">Transaction</span>
-                              <span class="font-mono font-medium"
-                                >{formatCurrency(Math.abs(match.transactionData.amount))}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-sm">
-                              <span class="text-muted-foreground text-xs">Schedule</span>
-                              <span class="font-mono"
-                                >{formatCurrency(Math.abs(match.scheduleData.amount))}</span>
-                            </div>
-                          </div>
-                          {#if match.transactionData.payee}
-                            <div class="text-muted-foreground mt-2 truncate text-xs">
-                              {match.transactionData.payee}
-                            </div>
-                          {/if}
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
-                </Card.Content>
-              </Card.Root>
-            {/each}
-          </div>
-
-          <!-- Actions -->
-          <div class="flex items-center justify-between">
-            <Button variant="outline" onclick={goBackToPreview}>Back</Button>
-            <Button onclick={proceedToEntityReview}>Continue to Entity Review</Button>
-          </div>
-        </div>
+        <ScheduleMatchReview
+          {scheduleMatches}
+          {filteredScheduleMatches}
+          {groupedScheduleMatches}
+          bind:threshold={scheduleMatchThreshold}
+          onToggleMatch={(rowIndex, selected) => handleScheduleMatchToggle(rowIndex, selected)}
+          onSelectAll={selectAllScheduleMatches}
+          onDeselectAll={deselectAllScheduleMatches}
+          onBack={goBackToPreview}
+          onNext={proceedToEntityReview} />
       {:else if currentStep === 'review-entities' && entityPreview}
         <div class="space-y-6">
           <div>
@@ -2134,347 +1225,67 @@ $effect(() => {
           </div>
         {/if}
       {:else if currentStep === 'complete' && importResult}
-        <div class="space-y-6">
-          <div class="text-center">
-            <div
-              class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-              <CircleCheck class="h-8 w-8 text-green-600" />
-            </div>
-            <h2 class="text-2xl font-bold">Import Complete!</h2>
-            <p class="text-muted-foreground mt-2">
-              Your transactions have been successfully imported
-            </p>
-          </div>
-
-          <!-- Import Summary -->
-          <Card.Root>
-            <Card.Header>
-              <Card.Title>Import Summary</Card.Title>
-            </Card.Header>
-            <Card.Content class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <div class="text-2xl font-bold text-green-600">
-                    {importResult.transactionsCreated}
-                  </div>
-                  <div class="text-muted-foreground text-sm">Transactions Created</div>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold">
-                    {importResult.entitiesCreated.payees + importResult.entitiesCreated.categories}
-                  </div>
-                  <div class="text-muted-foreground text-sm">Entities Created</div>
-                </div>
-              </div>
-
-              {#if importResult.errors.length > 0}
-                <div class="border-t pt-4">
-                  <p class="text-destructive mb-2 text-sm font-medium">
-                    {importResult.errors.length} Error(s)
-                  </p>
-                  {#each importResult.errors.slice(0, 5) as error}
-                    <p class="text-muted-foreground text-xs">
-                      Row {error.row}: {error.message}
-                    </p>
-                  {/each}
-                </div>
-              {/if}
-            </Card.Content>
-          </Card.Root>
-
-          <!-- Save Import Profile Card - only show for CSV files without matched profile -->
-          {#if columnMapping && csvHeaders.length > 0 && !matchedProfile}
-            <Card.Root>
-              <Card.Header>
-                <Card.Title class="flex items-center gap-2">
-                  <Save class="h-4 w-4" />
-                  Save Column Mapping
-                </Card.Title>
-                <Card.Description>
-                  Save this column mapping as a profile for future imports with similar files
-                </Card.Description>
-              </Card.Header>
-              <Card.Content>
-                <Button variant="outline" onclick={openSaveProfileDialog}>
-                  Save as Import Profile
-                </Button>
-              </Card.Content>
-            </Card.Root>
-          {/if}
-
-          <!-- Actions -->
-          <div class="flex items-center gap-4">
-            <Button class="flex-1" onclick={startNewImport}>Import Another File</Button>
-            <Button class="flex-1" variant="outline" href="/accounts/{selectedAccount()?.slug}">
-              View Account
-            </Button>
-          </div>
-        </div>
+        <ImportResultSummary
+          {importResult}
+          onStartNewImport={startNewImport}
+          onOpenSaveProfile={openSaveProfileDialog}
+          {columnMapping}
+          {csvHeaders}
+          {matchedProfile}
+          selectedAccountSlug={selectedAccount()?.slug} />
       {/if}
     {/if}
   </div>
 </div>
 
 <!-- Save Import Profile Dialog -->
-<AlertDialog.Root bind:open={saveProfileDialog.open}>
-  <AlertDialog.Content class="max-w-md">
-    <AlertDialog.Header>
-      <AlertDialog.Title>Save Import Profile</AlertDialog.Title>
-      <AlertDialog.Description>
-        Create a profile to automatically use this column mapping for future imports.
-      </AlertDialog.Description>
-    </AlertDialog.Header>
-    <div class="space-y-4 py-4">
-      <div class="space-y-2">
-        <Label for="profile-name">Profile Name</Label>
-        <Input
-          id="profile-name"
-          bind:value={saveProfileDialog.profileName}
-          placeholder="e.g., Chase Credit Card" />
-      </div>
+<SaveProfileDialog
+  bind:open={saveProfileDialogOpen}
+  {columnMapping}
+  {csvHeaders}
+  accountId={selectedAccountId ? parseInt(selectedAccountId) : null}
+  accountName={selectedAccount()?.name}
+  {matchedProfile}
+  {selectedFile}
+  onSaved={() => {}} />
 
-      <div class="space-y-3">
-        <div class="flex items-start gap-2">
-          <Checkbox
-            id="save-filename-pattern"
-            checked={saveProfileDialog.saveFilenamePattern}
-            onCheckedChange={(checked) => (saveProfileDialog.saveFilenamePattern = !!checked)} />
-          <div class="grid gap-1.5 leading-none">
-            <Label for="save-filename-pattern" class="text-sm font-medium">
-              Match by filename pattern
-            </Label>
-            <p class="text-muted-foreground text-xs">Auto-match files with similar names</p>
-          </div>
-        </div>
-        {#if saveProfileDialog.saveFilenamePattern}
-          <Input
-            bind:value={saveProfileDialog.filenamePattern}
-            placeholder="e.g., chase_*.csv"
-            class="ml-6" />
-        {/if}
-      </div>
-
-      {#if selectedAccountId}
-        <div class="flex items-start gap-2">
-          <Checkbox
-            id="save-account-default"
-            checked={saveProfileDialog.saveAsAccountDefault}
-            onCheckedChange={(checked) => (saveProfileDialog.saveAsAccountDefault = !!checked)} />
-          <div class="grid gap-1.5 leading-none">
-            <Label for="save-account-default" class="text-sm font-medium">
-              Set as default for this account
-            </Label>
-            <p class="text-muted-foreground text-xs">
-              Use this profile when importing to {selectedAccount()?.name}
-            </p>
-          </div>
-        </div>
-      {/if}
-    </div>
-    <AlertDialog.Footer>
-      <AlertDialog.Cancel onclick={closeSaveProfileDialog}>Cancel</AlertDialog.Cancel>
-      <Button
-        onclick={saveImportProfile}
-        disabled={saveProfileDialog.isSaving || !saveProfileDialog.profileName.trim()}>
-        {#if saveProfileDialog.isSaving}
-          Saving...
-        {:else}
-          Save Profile
-        {/if}
-      </Button>
-    </AlertDialog.Footer>
-  </AlertDialog.Content>
-</AlertDialog.Root>
-
-<!-- Bulk Update Confirmation Dialog -->
-<AlertDialog.Root bind:open={bulkUpdateDialog.open}>
-  <AlertDialog.Content class="max-w-2xl">
-    <AlertDialog.Header>
-      <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-      <AlertDialog.Description class="space-y-3">
-        {#if bulkUpdateDialog.categoryName}
-          <p>
-            You're changing the category to "<strong>{bulkUpdateDialog.categoryName}</strong>". How
-            would you like to apply this change?
-          </p>
-        {:else}
-          <p>
-            You're <strong>removing the category</strong> from this transaction. How would you like to
-            apply this change?
-          </p>
-        {/if}
-
-        {#if bulkUpdateDialog.matchCountByPayee > 0 && bulkUpdateDialog.matchCountByCategory > 0}
-          <div class="space-y-2 text-sm">
-            <p>
-              • <strong>{bulkUpdateDialog.matchCountByPayee}</strong> other transaction{bulkUpdateDialog.matchCountByPayee !==
-              1
-                ? 's'
-                : ''} with the same payee "<strong>{bulkUpdateDialog.payeeName}</strong>"
-            </p>
-            <p>
-              • <strong>{bulkUpdateDialog.matchCountByCategory}</strong> other transaction{bulkUpdateDialog.matchCountByCategory !==
-              1
-                ? 's'
-                : ''} with the category "<strong>{bulkUpdateDialog.previousCategoryName}</strong>"
-            </p>
-          </div>
-        {:else if bulkUpdateDialog.matchCountByPayee > 0}
-          <p class="text-sm">
-            Found <strong>{bulkUpdateDialog.matchCountByPayee}</strong> other transaction{bulkUpdateDialog.matchCountByPayee !==
-            1
-              ? 's'
-              : ''} with the same payee "<strong>{bulkUpdateDialog.payeeName}</strong>".
-          </p>
-        {:else if bulkUpdateDialog.matchCountByCategory > 0}
-          <p class="text-sm">
-            Found <strong>{bulkUpdateDialog.matchCountByCategory}</strong> other transaction{bulkUpdateDialog.matchCountByCategory !==
-            1
-              ? 's'
-              : ''} with the category "<strong>{bulkUpdateDialog.previousCategoryName}</strong>".
-          </p>
-        {/if}
-      </AlertDialog.Description>
-    </AlertDialog.Header>
-    <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
-      {#if bulkUpdateDialog.matchCountByPayee > 0 && bulkUpdateDialog.matchCountByCategory > 0}
-        <AlertDialog.Action onclick={confirmBulkUpdateBoth} class="w-full">
-          Update All ({bulkUpdateDialog.matchCountByPayee + bulkUpdateDialog.matchCountByCategory} transactions)
-        </AlertDialog.Action>
-        <AlertDialog.Action
-          onclick={confirmBulkUpdateByPayee}
-          class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
-          Only Same Payee ({bulkUpdateDialog.matchCountByPayee + 1} transactions)
-        </AlertDialog.Action>
-        <AlertDialog.Action
-          onclick={confirmBulkUpdateByCategory}
-          class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
-          Rename Category ({bulkUpdateDialog.matchCountByCategory + 1} transactions)
-        </AlertDialog.Action>
-      {:else if bulkUpdateDialog.matchCountByPayee > 0}
-        <AlertDialog.Action onclick={confirmBulkUpdateByPayee} class="w-full">
-          Update All Same Payee ({bulkUpdateDialog.matchCountByPayee + 1} transactions)
-        </AlertDialog.Action>
-      {:else if bulkUpdateDialog.matchCountByCategory > 0}
-        <AlertDialog.Action onclick={confirmBulkUpdateByCategory} class="w-full">
-          Rename Category ({bulkUpdateDialog.matchCountByCategory + 1} transactions)
-        </AlertDialog.Action>
-      {/if}
-      <AlertDialog.Action
-        onclick={confirmBulkUpdateJustOne}
-        class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
-        Just This One
-      </AlertDialog.Action>
-      <AlertDialog.Cancel onclick={cancelBulkUpdate} class="w-full">Cancel</AlertDialog.Cancel>
-    </AlertDialog.Footer>
-  </AlertDialog.Content>
-</AlertDialog.Root>
+<!-- Bulk Category Update Confirmation Dialog -->
+<BulkCategoryUpdateDialog
+  bind:open={entityState.bulkUpdateDialog.open}
+  categoryName={entityState.bulkUpdateDialog.categoryName}
+  payeeName={entityState.bulkUpdateDialog.payeeName}
+  matchCountByPayee={entityState.bulkUpdateDialog.matchCountByPayee}
+  matchCountByCategory={entityState.bulkUpdateDialog.matchCountByCategory}
+  previousCategoryName={entityState.bulkUpdateDialog.previousCategoryName}
+  onConfirmJustOne={entityState.confirmBulkUpdateJustOne}
+  onConfirmByPayee={entityState.confirmBulkUpdateByPayee}
+  onConfirmByCategory={entityState.confirmBulkUpdateByCategory}
+  onConfirmBoth={entityState.confirmBulkUpdateBoth}
+  onCancel={entityState.cancelBulkUpdate} />
 
 <!-- Bulk Payee Update Confirmation Dialog -->
-<AlertDialog.Root bind:open={bulkPayeeUpdateDialog.open}>
-  <AlertDialog.Content>
-    <AlertDialog.Header>
-      <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-      <AlertDialog.Description>
-        Found {bulkPayeeUpdateDialog.matchCount} other transaction{bulkPayeeUpdateDialog.matchCount !==
-        1
-          ? 's'
-          : ''} with similar payee "{bulkPayeeUpdateDialog.originalPayeeName}".
-        <br /><br />
-        Would you like to update {bulkPayeeUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to payee "{bulkPayeeUpdateDialog.payeeName ||
-          'None'}" as well?
-      </AlertDialog.Description>
-    </AlertDialog.Header>
-    <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
-      <AlertDialog.Action onclick={confirmBulkPayeeUpdate} class="w-full"
-        >Yes, Update All Similar</AlertDialog.Action>
-      <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate} class="w-full"
-        >No, Just This One</AlertDialog.Cancel>
-      <Button variant="outline" onclick={revertPayeeUpdate} class="w-full">Cancel & Revert</Button>
-    </AlertDialog.Footer>
-  </AlertDialog.Content>
-</AlertDialog.Root>
+<BulkPayeeUpdateDialog
+  bind:open={entityState.bulkPayeeUpdateDialog.open}
+  matchCount={entityState.bulkPayeeUpdateDialog.matchCount}
+  payeeName={entityState.bulkPayeeUpdateDialog.payeeName}
+  originalPayeeName={entityState.bulkPayeeUpdateDialog.originalPayeeName}
+  onConfirmBulk={entityState.confirmBulkPayeeUpdate}
+  onKeepSingle={entityState.cancelBulkPayeeUpdate}
+  onRevert={entityState.revertPayeeUpdate} />
 
 <!-- Payment Processor Filter Dialog -->
-<AlertDialog.Root bind:open={processorFilterDialog.open}>
-  <AlertDialog.Content class="max-w-lg">
-    <AlertDialog.Header>
-      <AlertDialog.Title>Filter Payment Processors</AlertDialog.Title>
-      <AlertDialog.Description>
-        Select which payment processors and vendor providers to filter out from payee names. This
-        will extract the actual merchant name from transactions like "PayPal - Acme tools" → "Acme
-        tools".
-      </AlertDialog.Description>
-    </AlertDialog.Header>
-
-    <div class="space-y-3 py-4">
-      {#each PAYMENT_PROCESSORS as processor}
-        {@const count = processorAnalysis.byProcessor.get(processor.name) || 0}
-        {#if count > 0}
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex flex-1 items-start gap-3">
-              <Checkbox
-                id={`processor-${processor.name}`}
-                checked={processorFilterDialog.selectedProcessors.has(processor.name)}
-                onCheckedChange={() => toggleProcessor(processor.name)} />
-              <label for={`processor-${processor.name}`} class="flex-1 cursor-pointer">
-                <div class="text-sm font-medium">{processor.name}</div>
-                <div class="text-muted-foreground text-xs">{processor.description}</div>
-              </label>
-            </div>
-            <div class="text-muted-foreground text-sm whitespace-nowrap">
-              {count} transaction{count !== 1 ? 's' : ''}
-            </div>
-          </div>
-        {/if}
-      {/each}
-    </div>
-
-    {#if processorFilterDialog.affectedCount > 0}
-      <div class="bg-muted rounded-md p-3">
-        <p class="text-sm">
-          <strong>{processorFilterDialog.affectedCount}</strong>
-          transaction{processorFilterDialog.affectedCount !== 1 ? 's' : ''} will be updated
-        </p>
-      </div>
-    {/if}
-
-    <AlertDialog.Footer>
-      <AlertDialog.Cancel onclick={cancelProcessorFilter}>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action
-        onclick={applyProcessorFilter}
-        disabled={processorFilterDialog.selectedProcessors.size === 0}>
-        Apply Filter
-      </AlertDialog.Action>
-    </AlertDialog.Footer>
-  </AlertDialog.Content>
-</AlertDialog.Root>
+<ProcessorFilterDialog
+  bind:open={processorFilterDialogOpen}
+  {processorAnalysis}
+  onApply={applyProcessorFilter}
+  {PAYMENT_PROCESSORS} />
 
 <!-- Bulk Transfer Update Confirmation Dialog -->
-<AlertDialog.Root bind:open={bulkTransferUpdateDialog.open}>
-  <AlertDialog.Content>
-    <AlertDialog.Header>
-      <AlertDialog.Title>Convert Similar Transactions to Transfers?</AlertDialog.Title>
-      <AlertDialog.Description>
-        Found {bulkTransferUpdateDialog.matchCount} other transaction{bulkTransferUpdateDialog.matchCount !==
-        1
-          ? 's'
-          : ''} with similar payee "{bulkTransferUpdateDialog.originalPayeeName}".
-        <br /><br />
-        Would you like to also convert {bulkTransferUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to
-        transfer{bulkTransferUpdateDialog.matchCount !== 1 ? 's' : ''} to "{bulkTransferUpdateDialog.accountName}"?
-      </AlertDialog.Description>
-    </AlertDialog.Header>
-    <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
-      <AlertDialog.Action onclick={confirmBulkTransferUpdate} class="w-full">
-        Yes, Convert All Similar
-      </AlertDialog.Action>
-      <AlertDialog.Cancel onclick={cancelBulkTransferUpdate} class="w-full">
-        No, Just This One
-      </AlertDialog.Cancel>
-      <Button variant="outline" onclick={revertTransferUpdate} class="w-full">
-        Cancel & Revert
-      </Button>
-    </AlertDialog.Footer>
-  </AlertDialog.Content>
-</AlertDialog.Root>
+<BulkTransferUpdateDialog
+  bind:open={entityState.bulkTransferUpdateDialog.open}
+  matchCount={entityState.bulkTransferUpdateDialog.matchCount}
+  accountName={entityState.bulkTransferUpdateDialog.accountName}
+  originalPayeeName={entityState.bulkTransferUpdateDialog.originalPayeeName}
+  onConfirmBulk={entityState.confirmBulkTransferUpdate}
+  onKeepSingle={entityState.cancelBulkTransferUpdate}
+  onRevert={entityState.revertTransferUpdate} />

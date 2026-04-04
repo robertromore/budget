@@ -5,8 +5,9 @@ import {
 } from "$lib/schema/import-profiles";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { DatabaseError } from "$lib/server/shared/types/errors";
 import { nowISOString } from "$lib/utils/dates";
-import { and, desc, eq, like } from "drizzle-orm";
+import { and, desc, eq, like, sql } from "drizzle-orm";
 
 export interface UpdateImportProfileData {
   name?: string | undefined;
@@ -39,7 +40,7 @@ export class ImportProfileRepository extends BaseRepository<
       .returning();
 
     if (!profile) {
-      throw new Error("Failed to create import profile");
+      throw new DatabaseError("Failed to create import profile", "insert");
     }
 
     return profile;
@@ -148,7 +149,7 @@ export class ImportProfileRepository extends BaseRepository<
       .returning();
 
     if (!updated) {
-      throw new Error("Failed to update import profile");
+      throw new DatabaseError("Failed to update import profile", "update");
     }
 
     return updated;
@@ -167,13 +168,10 @@ export class ImportProfileRepository extends BaseRepository<
    * Increment use count and update last used timestamp
    */
   async recordUsage(id: number, workspaceId: number): Promise<void> {
-    const profile = await this.findById(id, workspaceId);
-    if (!profile) return;
-
     await db
       .update(importProfiles)
       .set({
-        useCount: (profile.useCount ?? 0) + 1,
+        useCount: sql`coalesce(${importProfiles.useCount}, 0) + 1`,
         lastUsedAt: nowISOString(),
         updatedAt: nowISOString(),
       })

@@ -6,7 +6,8 @@
  */
 
 import type { Category } from "$lib/schema/categories";
-import { calculateStringSimilarity, normalizeText } from "../utils";
+import { calculateStringSimilarity } from "../utils";
+import { normalize } from "$lib/utils/string-utilities";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
@@ -190,7 +191,7 @@ export class CategoryMatcher {
    * Match category by name comparison
    */
   private matchByName(categoryName: string, existingCategories: Category[]): CategoryMatch {
-    const normalizedInput = normalizeText(categoryName);
+    const normalizedInput = normalize(categoryName);
     let bestMatch: CategoryMatch = {
       category: null,
       confidence: "none",
@@ -200,7 +201,7 @@ export class CategoryMatcher {
 
     for (const category of existingCategories) {
       if (!category.name) continue;
-      const normalizedCategoryName = normalizeText(category.name);
+      const normalizedCategoryName = normalize(category.name);
 
       // Check for exact match
       if (normalizedInput === normalizedCategoryName) {
@@ -259,7 +260,7 @@ export class CategoryMatcher {
     existingCategories: Category[]
   ): CategoryMatch {
     // Combine all available text for keyword matching
-    const searchText = normalizeText(
+    const searchText = normalize(
       [
         transactionData.categoryName || "",
         this.options.usePayeeName ? transactionData.payeeName || "" : "",
@@ -287,14 +288,14 @@ export class CategoryMatcher {
     for (const [categoryPattern, keywords] of Object.entries(this.keywordPatterns)) {
       // Find the category that matches this pattern name
       const category = existingCategories.find(
-        (c) => c.name && normalizeText(c.name) === normalizeText(categoryPattern)
+        (c) => c.name && normalize(c.name) === normalize(categoryPattern)
       );
 
       if (!category) continue;
 
       // Check if any keyword matches
       for (const keyword of keywords) {
-        const normalizedKeyword = normalizeText(keyword);
+        const normalizedKeyword = normalize(keyword);
         if (searchText.includes(normalizedKeyword)) {
           // Score based on keyword length (longer keywords = more specific = higher confidence)
           const keywordScore = Math.min(0.75 + keyword.length * 0.02, 0.95);
@@ -397,7 +398,7 @@ export class CategoryMatcher {
     description?: string;
   }): string | null {
     // Combine payee and description for keyword matching
-    const searchText = normalizeText(
+    const searchText = normalize(
       [transactionData.payeeName || "", transactionData.description || ""].join(" ")
     );
 
@@ -410,7 +411,7 @@ export class CategoryMatcher {
     // Check each category pattern's keywords
     for (const [categoryPattern, keywords] of Object.entries(this.keywordPatterns)) {
       for (const keyword of keywords) {
-        const normalizedKeyword = normalizeText(keyword);
+        const normalizedKeyword = normalize(keyword);
         if (searchText.includes(normalizedKeyword)) {
           // Score based on keyword length (longer keywords = more specific = higher confidence)
           const keywordScore = Math.min(0.75 + keyword.length * 0.02, 0.95);

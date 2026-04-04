@@ -169,6 +169,14 @@ export class PayeeAliasService {
   }
 
   /**
+   * Get all aliases in a workspace (without payee details).
+   * Useful for bulk in-memory matching operations.
+   */
+  async getAllAliases(workspaceId: number): Promise<PayeeAlias[]> {
+    return await this.repository.findAll(workspaceId);
+  }
+
+  /**
    * Get a single alias by ID.
    */
   async getAlias(id: number, workspaceId: number): Promise<PayeeAlias | null> {

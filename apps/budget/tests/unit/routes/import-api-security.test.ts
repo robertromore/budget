@@ -102,14 +102,13 @@ function createUploadEvent() {
 
 function createRemapEvent() {
   const url = "http://localhost/api/import/remap";
+  const formData = new FormData();
+  formData.append("importFile", new File([""], "import.csv", { type: "text/csv" }));
+  formData.append("columnMapping", JSON.stringify({ date: "Date", amount: "Amount" }));
+  formData.append("accountId", "42");
   const request = new Request(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      file: { data: "", name: "import.csv", type: "text/csv" },
-      columnMapping: { date: "Date", amount: "Amount" },
-      accountId: "42",
-    }),
+    body: formData,
   });
   return { request, url: new URL(url) } as any;
 }

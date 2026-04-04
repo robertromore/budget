@@ -7,7 +7,7 @@
 
 import type { Payee } from "$lib/schema/payees";
 import type { Schedule } from "$lib/schema/schedules";
-import { formatPercent } from "$lib/server/utils/formatters";
+import { addInterval, daysBetween, parseLocalDate } from "$lib/utils/date-helpers";
 import { PayeeMatcher } from "./payee-matcher";
 
 export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";
@@ -36,6 +36,131 @@ export interface ScheduleMatcherOptions {
   exactThreshold?: number; // Score threshold for exact confidence
   highThreshold?: number; // Score threshold for high confidence
   mediumThreshold?: number; // Score threshold for medium confidence
+}
+
+/**
+ * Find the minimum days difference between a transaction date and the nearest
+ * schedule occurrence. Handles daily, weekly, monthly (with specific days), and yearly.
+ */
+function findNearestOccurrenceDaysDiff(
+  transactionDateStr: string,
+  startDateStr: string,
+  endDateStr: string | undefined,
+  frequency: string,
+  interval: number,
+  monthlyDays: number[],
+  onType: string
+): number {
+  const txDate = parseLocalDate(transactionDateStr);
+  const startDate = parseLocalDate(startDateStr);
+  const endDate = endDateStr ? parseLocalDate(endDateStr) : null;
+
+  // For monthly schedules with specific days (e.g., "on the 10th and 25th")
+  if (frequency === "monthly" && onType === "day" && monthlyDays.length > 0) {
+    let minDiff = Infinity;
+    for (const day of monthlyDays) {
+      // Check the transaction's month and neighboring months
+      for (let monthOffset = -1; monthOffset <= 1; monthOffset++) {
+        const candidate = new Date(txDate.getFullYear(), txDate.getMonth() + monthOffset, day);
+        if (endDate && candidate > endDate) continue;
+        if (candidate < startDate) continue;
+        const diff = Math.abs(Math.round((txDate.getTime() - candidate.getTime()) / (1000 * 60 * 60 * 24)));
+        if (diff < minDiff) minDiff = diff;
+      }
+    }
+    return minDiff === Infinity ? 999 : minDiff;
+  }
+
+  // For monthly/yearly: compute each occurrence from the original start date to avoid
+  // day-of-month drift (e.g., Jan 31 → Feb 28 → Mar 28 instead of correct Mar 31).
+  const originalDay = startDate.getDate();
+
+  if (frequency === "monthly" || frequency === "yearly") {
+    // Find the step count that lands just before or on the transaction date
+    let step = 0;
+    const safetyLimit = 1000;
+    while (step < safetyLimit) {
+      const candidate = computeOccurrence(startDate, frequency, interval, step, originalDay);
+      if (candidate > txDate) break;
+      step++;
+    }
+
+    // Check occurrences bracketing the transaction date
+    let minDiff = Infinity;
+    for (let s = Math.max(0, step - 1); s <= step + 1; s++) {
+      const candidate = computeOccurrence(startDate, frequency, interval, s, originalDay);
+      if (endDate && candidate > endDate) continue;
+      if (candidate < startDate) continue;
+      const diff = Math.abs(Math.round((txDate.getTime() - candidate.getTime()) / (1000 * 60 * 60 * 24)));
+      if (diff < minDiff) minDiff = diff;
+    }
+    return minDiff === Infinity ? 999 : minDiff;
+  }
+
+  // For daily/weekly: simple addInterval fast-forward (no drift issue)
+  const current = new Date(startDate);
+  const safetyLimit = 1000;
+  let iterations = 0;
+  while (current < txDate && iterations < safetyLimit) {
+    const prev = current.getTime();
+    addInterval(current, frequency, interval);
+    if (current >= txDate) {
+      current.setTime(prev);
+      break;
+    }
+    iterations++;
+  }
+
+  let minDiff = Infinity;
+  for (let i = 0; i < 3; i++) {
+    if (endDate && current > endDate) break;
+    if (current >= startDate) {
+      const diff = Math.abs(Math.round((txDate.getTime() - current.getTime()) / (1000 * 60 * 60 * 24)));
+      if (diff < minDiff) minDiff = diff;
+    }
+    addInterval(current, frequency, interval);
+  }
+
+  return minDiff === Infinity ? 999 : minDiff;
+}
+
+/**
+ * Compute the Nth occurrence of a schedule from its start date,
+ * preserving the original day-of-month for monthly/yearly frequencies.
+ */
+function computeOccurrence(
+  startDate: Date,
+  frequency: string,
+  interval: number,
+  step: number,
+  originalDay: number
+): Date {
+  const totalIntervals = interval * step;
+
+  if (frequency === "monthly") {
+    const targetMonth = startDate.getMonth() + totalIntervals;
+    const year = startDate.getFullYear() + Math.floor(targetMonth / 12);
+    const month = targetMonth % 12;
+    // Clamp day to the last day of the target month
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(originalDay, daysInMonth);
+    return new Date(year, month, day);
+  }
+
+  if (frequency === "yearly") {
+    const year = startDate.getFullYear() + totalIntervals;
+    const month = startDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(originalDay, daysInMonth);
+    return new Date(year, month, day);
+  }
+
+  // Fallback (shouldn't be called for daily/weekly)
+  const result = new Date(startDate);
+  for (let i = 0; i < step; i++) {
+    addInterval(result, frequency, interval);
+  }
+  return result;
 }
 
 const DEFAULT_OPTIONS: Required<ScheduleMatcherOptions> = {
@@ -172,13 +297,6 @@ export class ScheduleMatcher {
       reasons.push("Category match (exact)");
     }
 
-    // Only log matches above 60% to reduce noise
-    if (score >= 0.6) {
-      console.log(
-        `[ScheduleMatcher] Match: "${schedule.name}" | Score: ${formatPercent(score)} | Payee: "${criteria.payeeName}" | Amt: $${criteria.amount.toFixed(2)}`
-      );
-    }
-
     return { schedule, score, matchedOn, reasons };
   }
 
@@ -266,24 +384,45 @@ export class ScheduleMatcher {
 
   /**
    * Score date match - check if transaction date is close to expected schedule occurrence
-   * This is a simplified version - in a full implementation, you'd calculate the actual
-   * next occurrence date based on the schedule's recurring pattern
    */
   private scoreDateMatch(transactionDate: string, schedule: Schedule): number {
-    // For now, we'll do a simple check if recurring is enabled
-    // A full implementation would use the schedule's dateId to get recurring pattern
-    // and calculate expected occurrence dates
-    if (!schedule.recurring) {
-      // For one-time schedules, we can't predict the date
-      return 0.5; // Neutral score
+    const sd = schedule.scheduleDate;
+
+    // Without schedule date config, return neutral score
+    if (!sd) {
+      return 0.5;
     }
 
-    // This is a placeholder - in a real implementation, you would:
-    // 1. Get the schedule's recurring pattern from scheduleDate
-    // 2. Calculate the next expected occurrence date
-    // 3. Check if transaction date is within tolerance of that date
-    // For now, we'll just return a neutral score
-    return 0.5;
+    if (!schedule.recurring) {
+      // One-time schedule: check proximity to start date
+      const daysDiff = Math.abs(daysBetween(transactionDate, sd.start));
+      if (daysDiff <= this.options.dateTolerance) {
+        return 1.0 - daysDiff / this.options.dateTolerance;
+      }
+      return 0;
+    }
+
+    // Recurring schedule without frequency config — return neutral
+    if (!sd.frequency) {
+      return 0.5;
+    }
+
+    // Find the nearest expected occurrence to the transaction date
+    const nearestDaysDiff = findNearestOccurrenceDaysDiff(
+      transactionDate,
+      sd.start,
+      sd.end ?? undefined,
+      sd.frequency,
+      sd.interval ?? 1,
+      sd.on ? sd.days ?? [] : [],
+      sd.on_type ?? "day"
+    );
+
+    if (nearestDaysDiff <= this.options.dateTolerance) {
+      return 1.0 - nearestDaysDiff / this.options.dateTolerance;
+    }
+
+    return 0;
   }
 
   /**

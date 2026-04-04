@@ -7,9 +7,8 @@ import type {
 } from "$lib/schema/transfer-mappings";
 import { transferMappings, accounts } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { normalizeText } from "$lib/server/import/utils";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { normalize } from "$lib/utils/string-utilities";
+import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 
@@ -35,65 +34,11 @@ type CreateTransferMappingInput = {
  */
 export class TransferMappingRepository {
   /**
-   * Normalize a raw string for consistent matching.
-   * Converts to lowercase, trims whitespace, and removes extra spaces.
-   */
-  private normalizeString(raw: string): string {
-    return normalizeText(raw);
-  }
-
-  /**
-   * Create a cleaned version of the string for fuzzy matching.
-   * Strips amounts, transaction IDs, dates, and other variable data.
-   */
-  private cleanString(raw: string): string {
-    let text = normalize(raw);
-
-    // Remove dollar amounts: $1,234.56 or $1234.56 or $1234
-    text = text.replace(/\$[\d,]+(?:\.\d{2})?/g, "");
-
-    // Remove standalone amounts without $ (e.g., "1234.56" at end)
-    text = text.replace(/\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*$/g, "");
-
-    // Remove dates in various formats
-    text = text.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, "");
-    text = text.replace(/\d{2,4}-\d{2}-\d{2}/g, "");
-
-    // Remove transaction IDs: alphanumeric strings containing * or # (8+ chars)
-    text = text.replace(/\b[A-Z0-9]*[*#][A-Z0-9*#]+\b/gi, "");
-
-    // Remove long numeric sequences (8+ digits) anywhere
-    text = text.replace(/\b\d{8,}\b/g, "");
-
-    // Remove trailing reference numbers (4-7 digits at end of string)
-    // This catches patterns like "APPLECARD GSBANK 12345" or "VENMO PAYMENT 1234567"
-    text = text.replace(/\s+\d{4,7}\s*$/g, "");
-
-    // Remove card number patterns (****1234)
-    text = text.replace(/\*{4}\d{4}/g, "");
-
-    // Remove trailing "I" that might be an identifier
-    text = text.replace(/\s+i\s*$/i, "");
-
-    // Normalize whitespace
-    text = text.replace(/\s+/g, " ").trim();
-
-    return text;
-  }
-
-  /**
    * Create a new transfer mapping
    */
   async create(data: CreateTransferMappingInput, workspaceId: number): Promise<TransferMapping> {
-    const normalizedString = this.normalizeString(data.rawPayeeString);
+    const normalizedString = normalize(data.rawPayeeString);
     const now = getCurrentTimestamp();
-
-    console.log("[TransferMappingRepo] Creating mapping:", {
-      rawPayeeString: data.rawPayeeString,
-      normalizedString,
-      targetAccountId: data.targetAccountId,
-      workspaceId,
-    });
 
     const [mapping] = await db
       .insert(transferMappings)
@@ -110,7 +55,6 @@ export class TransferMappingRepository {
       throw new Error("Failed to create transfer mapping");
     }
 
-    console.log("[TransferMappingRepo] Created mapping with ID:", mapping.id);
     return mapping;
   }
 
@@ -286,7 +230,7 @@ export class TransferMappingRepository {
 
     // If rawPayeeString changed, update normalized too
     if (data.rawPayeeString) {
-      updateData.normalizedString = this.normalizeString(data.rawPayeeString);
+      updateData.normalizedString = normalize(data.rawPayeeString);
     }
 
     const [updated] = await db
@@ -353,7 +297,7 @@ export class TransferMappingRepository {
         await db.insert(transferMappings).values({
           workspaceId,
           rawPayeeString: mappingData.rawPayeeString,
-          normalizedString: this.normalizeString(mappingData.rawPayeeString),
+          normalizedString: normalize(mappingData.rawPayeeString),
           targetAccountId: mappingData.targetAccountId,
           trigger: mappingData.trigger || "import_confirmation",
           sourceAccountId: mappingData.sourceAccountId,
@@ -395,23 +339,8 @@ export class TransferMappingRepository {
     rawPayeeString: string,
     workspaceId: number
   ): Promise<TransferMappingMatch | null> {
-    console.log("[TransferMappingRepo] findBestMatch called with:", {
-      rawPayeeString,
-      workspaceId,
-    });
-
     // First try exact match
     const exactMatch = await this.findByRawString(rawPayeeString, workspaceId);
-    console.log(
-      "[TransferMappingRepo] Exact match result:",
-      exactMatch
-        ? {
-            id: exactMatch.id,
-            rawPayeeString: exactMatch.rawPayeeString,
-            targetAccountId: exactMatch.targetAccountId,
-          }
-        : "none"
-    );
 
     if (exactMatch) {
       return {
@@ -423,10 +352,8 @@ export class TransferMappingRepository {
     }
 
     // Then try normalized match
-    const normalized = this.normalizeString(rawPayeeString);
-    console.log("[TransferMappingRepo] Trying normalized match:", normalized);
+    const normalized = normalize(rawPayeeString);
     const normalizedMatches = await this.findByNormalizedString(normalized, workspaceId);
-    console.log("[TransferMappingRepo] Normalized matches:", normalizedMatches.length);
 
     if (normalizedMatches.length > 0) {
       // Return the most used mapping for this normalized string
@@ -440,39 +367,21 @@ export class TransferMappingRepository {
     }
 
     // Finally try cleaned match (strips amounts, IDs, etc.)
-    const cleanedInput = this.cleanString(rawPayeeString);
-    console.log("[TransferMappingRepo] Trying cleaned match:", {
-      original: rawPayeeString,
-      cleaned: cleanedInput,
-    });
+    const cleanedInput = cleanStringForFuzzyMatching(rawPayeeString);
 
     if (cleanedInput.length >= 3) {
       // Only try if we have a meaningful string left
       const allMappings = await this.findAll(workspaceId);
-      console.log("[TransferMappingRepo] Total mappings to check:", allMappings.length);
 
       // Find mappings whose cleaned version matches
       const cleanedMatches = allMappings.filter((mapping) => {
-        const cleanedMapping = this.cleanString(mapping.rawPayeeString);
+        const cleanedMapping = cleanStringForFuzzyMatching(mapping.rawPayeeString);
         return cleanedMapping === cleanedInput;
       });
-
-      // Log sample of cleaned mappings for debugging
-      if (allMappings.length > 0 && cleanedMatches.length === 0) {
-        const samples = allMappings.slice(0, 5).map((m) => ({
-          raw: m.rawPayeeString,
-          cleaned: this.cleanString(m.rawPayeeString),
-        }));
-        console.log("[TransferMappingRepo] Sample cleaned mappings (no match):", samples);
-      }
 
       if (cleanedMatches.length > 0) {
         // Return the most used mapping with matching cleaned string
         const bestMatch = cleanedMatches.sort((a, b) => b.matchCount - a.matchCount)[0];
-        console.log("[TransferMappingRepo] Cleaned match found:", {
-          mappingId: bestMatch.id,
-          targetAccountId: bestMatch.targetAccountId,
-        });
         return {
           targetAccountId: bestMatch.targetAccountId,
           confidence: bestMatch.confidence * 0.8, // Lower confidence for cleaned match
@@ -482,7 +391,6 @@ export class TransferMappingRepository {
       }
     }
 
-    console.log("[TransferMappingRepo] No match found");
     return null;
   }
 

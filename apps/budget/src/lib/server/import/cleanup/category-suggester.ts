@@ -10,6 +10,7 @@ import {
   createSmartCategoryService,
   type SmartCategoryService,
 } from "$lib/server/domains/ml/smart-categories/service";
+import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { createMLModelStore } from "$lib/server/domains/ml/model-store";
 
 /**
@@ -103,11 +104,9 @@ export class CategorySuggester {
     let autoFilled = 0;
     let withSuggestions = 0;
 
-    // Debug: Log first few inputs
-    // if (inputs.length > 0) {
-    //   console.log('[CategorySuggester] Processing', inputs.length, 'rows for workspace', workspaceId);
-    //   console.log('[CategorySuggester] Sample input:', inputs[0]);
-    // }
+    // Prefetch all category aliases for in-memory matching (eliminates N+1 queries)
+    const aliasService = getCategoryAliasService();
+    const aliasCache = await aliasService.getAllAliases(workspaceId);
 
     for (const input of inputs) {
       const context = {
@@ -122,13 +121,9 @@ export class CategorySuggester {
       const smartSuggestions = await service.suggestCategories(
         workspaceId,
         context,
-        this.config.maxSuggestions
+        this.config.maxSuggestions,
+        aliasCache
       );
-
-      // Debug: Log first suggestion result
-      // if (input.rowIndex === inputs[0].rowIndex) {
-      //   console.log('[CategorySuggester] First row smart suggestions:', smartSuggestions.length, smartSuggestions);
-      // }
 
       const options: CategorySuggestionOption[] = smartSuggestions
         .filter((s) => s.confidence >= this.config.minConfidence)

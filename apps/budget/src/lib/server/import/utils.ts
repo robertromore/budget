@@ -99,9 +99,7 @@ export function parseDate(dateString: string): string {
 
   // Try various date formats
   const formats = [
-    // MM/DD/YYYY
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
-    // DD/MM/YYYY
+    // MM/DD/YYYY or DD/MM/YYYY (disambiguation handled by heuristic below)
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
     // MM-DD-YYYY
     /^(\d{1,2})-(\d{1,2})-(\d{4})$/,
@@ -215,9 +213,9 @@ export function stripAmountsFromPayeeName(name: string): string {
       .replace(/\b\d{1,3}(,\d{3})*\.\d{2}\b/g, "")
       // Remove amounts in parentheses
       .replace(/\(\s*[\d,]+\.?\d*\s*\)/g, "")
-      // Remove trailing/leading amounts
-      .replace(/^\s*[\d,]+\.?\d*\s*/g, "")
-      .replace(/\s*[\d,]+\.?\d*\s*$/g, "")
+      // Remove trailing/leading amounts (but not numbers followed by word chars like "7-Eleven")
+      .replace(/^\s*[\d,]+\.?\d*\s+(?![a-zA-Z\-])/g, "")
+      .replace(/\s+[\d,]+\.?\d*\s*$/g, "")
       // Clean up extra whitespace
       .replace(/\s+/g, " ")
       .trim()

@@ -32,7 +32,7 @@ const statusFilterOptions: FacetedFilterOption[] = [
 ];
 
 // Custom filter function for status array filter
-const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => {
+export const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => {
   if (!filterValue) return true;
 
   // Handle format with operator

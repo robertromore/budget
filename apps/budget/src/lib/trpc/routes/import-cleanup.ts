@@ -12,26 +12,26 @@ import { z } from "zod/v4";
 
 // Input schemas
 const payeeGroupInputSchema = z.object({
-  rowIndex: z.number().int(),
-  payeeName: z.string(),
-  originalPayee: z.string().optional(), // Raw CSV payee string for alias tracking
+  rowIndex: z.number().int().min(0),
+  payeeName: z.string().max(500),
+  originalPayee: z.string().max(500).optional(),
 });
 
 const analyzePayeesSchema = z.object({
-  rows: z.array(payeeGroupInputSchema),
+  rows: z.array(payeeGroupInputSchema).max(5000),
 });
 
 const categorySuggestInputSchema = z.object({
-  rowIndex: z.number().int(),
-  payeeName: z.string(),
-  rawPayeeString: z.string().optional(),
+  rowIndex: z.number().int().min(0),
+  payeeName: z.string().max(500),
+  rawPayeeString: z.string().max(500).optional(),
   amount: z.number(),
-  date: z.string(),
-  memo: z.string().optional(),
+  date: z.string().max(30),
+  memo: z.string().max(1000).optional(),
 });
 
 const suggestCategoriesSchema = z.object({
-  rows: z.array(categorySuggestInputSchema),
+  rows: z.array(categorySuggestInputSchema).max(5000),
 });
 
 const payeeGrouperConfigSchema = z
@@ -95,14 +95,14 @@ export const importCleanupRoutes = t.router({
       z.object({
         rows: z.array(
           z.object({
-            rowIndex: z.number().int(),
-            payeeName: z.string(),
-            originalPayee: z.string().optional(), // Raw CSV payee string for alias tracking
-            amount: z.number().optional(), // Some rows may not have amounts
-            date: z.string().optional(), // Some rows may not have dates
-            memo: z.string().optional(),
+            rowIndex: z.number().int().min(0),
+            payeeName: z.string().max(500),
+            originalPayee: z.string().max(500).optional(),
+            amount: z.number().optional(),
+            date: z.string().max(30).optional(),
+            memo: z.string().max(1000).optional(),
           })
-        ),
+        ).max(5000),
         payeeGrouperConfig: payeeGrouperConfigSchema,
         categorySuggesterConfig: categorySuggesterConfigSchema,
       })

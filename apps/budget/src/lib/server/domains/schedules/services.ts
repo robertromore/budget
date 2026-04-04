@@ -1,32 +1,13 @@
 import type { Category, Payee, ScheduleSkip } from "$lib/schema";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { addInterval, formatLocalDate, parseLocalDate } from "$lib/utils/date-helpers";
 import { nowISOString } from "$lib/utils/dates";
 import { CategoryService } from "../categories/services";
 import { PayeeService } from "../payees/services";
 import { TransactionService, type CreateTransactionData } from "../transactions/services";
 import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
 import { ScheduleSkipRepository } from "./skip-repository";
-
-/**
- * Parse a YYYY-MM-DD string into a Date using local timezone components,
- * avoiding the UTC interpretation that `new Date("YYYY-MM-DD")` uses.
- */
-function parseLocalDate(dateStr: string): Date {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-/**
- * Format a Date as YYYY-MM-DD using local timezone components,
- * avoiding the UTC shift that `toISOString()` introduces.
- */
-function formatLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
 
 export interface AutoAddResult {
   scheduleId: number;
@@ -208,7 +189,7 @@ export class ScheduleService {
     // Fast-forward to today if start date is in the past
     while (currentDate < today) {
       if (!frequency) break;
-      this.addInterval(currentDate, frequency, interval);
+      addInterval(currentDate, frequency, interval);
     }
 
     // Only include today's date if it matches the schedule
@@ -249,7 +230,7 @@ export class ScheduleService {
     // Find the first future date
     while (nextDate <= today) {
       if (!frequency) break;
-      this.addInterval(nextDate, frequency, interval);
+      addInterval(nextDate, frequency, interval);
     }
 
     // Check if it's within the end date
@@ -258,28 +239,6 @@ export class ScheduleService {
     }
 
     return formatLocalDate(nextDate);
-  }
-
-  /**
-   * Add interval to a date based on frequency
-   */
-  private addInterval(date: Date, frequency: string, interval: number): void {
-    switch (frequency) {
-      case "daily":
-        date.setDate(date.getDate() + interval);
-        break;
-      case "weekly":
-        date.setDate(date.getDate() + 7 * interval);
-        break;
-      case "monthly":
-        date.setMonth(date.getMonth() + interval);
-        break;
-      case "yearly":
-        date.setFullYear(date.getFullYear() + interval);
-        break;
-      default:
-        throw new ValidationError(`Unsupported frequency: ${frequency}`);
-    }
   }
 
   /**
@@ -404,7 +363,7 @@ export class ScheduleService {
           upcomingDates = upcomingDates.map((dateStr) => {
             const date = parseLocalDate(dateStr);
             for (let i = 0; i < pushForwardOffset; i++) {
-              this.addInterval(
+              addInterval(
                 date,
                 schedule.scheduleDate!.frequency!,
                 schedule.scheduleDate!.interval || 1
@@ -639,7 +598,7 @@ export class ScheduleService {
       currentDate = new Date(startDate);
       while (currentDate < today) {
         if (!frequency) break;
-        this.addInterval(currentDate, frequency, interval);
+        addInterval(currentDate, frequency, interval);
       }
     }
 
@@ -663,7 +622,7 @@ export class ScheduleService {
 
       // Move to next occurrence
       if (!frequency) break;
-      this.addInterval(currentDate, frequency, interval);
+      addInterval(currentDate, frequency, interval);
     }
 
     return upcomingDates;

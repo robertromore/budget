@@ -32,6 +32,36 @@ export function normalizeAggressive(str: string): string {
 }
 
 /**
+ * Clean a string for fuzzy matching by stripping variable data.
+ * Removes dollar amounts, dates, transaction IDs, card numbers, long numeric
+ * sequences, and trailing reference numbers. Used for tier-3 matching in
+ * transfer mappings, payee aliases, and import enrichment.
+ */
+export function cleanStringForFuzzyMatching(raw: string): string {
+  let text = normalize(raw);
+
+  // Remove dollar amounts: $1,234.56 or $1234.56 or $1234
+  text = text.replace(/\$[\d,]+(?:\.\d{2})?/g, "");
+  // Remove standalone amounts without $ at end
+  text = text.replace(/\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*$/g, "");
+  // Remove dates in various formats
+  text = text.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, "");
+  text = text.replace(/\d{2,4}-\d{2}-\d{2}/g, "");
+  // Remove transaction IDs containing * or # (alphanumeric strings)
+  text = text.replace(/\b[A-Z0-9]*[*#][A-Z0-9*#]+\b/gi, "");
+  // Remove long numeric sequences (8+ digits)
+  text = text.replace(/\b\d{8,}\b/g, "");
+  // Remove trailing reference numbers (4-7 digits at end)
+  text = text.replace(/\s+\d{4,7}\s*$/g, "");
+  // Remove card number patterns (****1234)
+  text = text.replace(/\*{4}\d{4}/g, "");
+  // Remove trailing "I" identifier
+  text = text.replace(/\s+i\s*$/i, "");
+
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
  * Convert string to Title Case
  * @example toTitleCase("hello world") => "Hello World"
  */

@@ -7,9 +7,8 @@ import type {
 } from "$lib/schema/payee-aliases";
 import { payeeAliases, payees } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { normalizeText } from "$lib/server/import/utils";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { normalize } from "$lib/utils/string-utilities";
+import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
@@ -35,52 +34,10 @@ type CreatePayeeAliasInput = {
  */
 export class PayeeAliasRepository {
   /**
-   * Normalize a raw string for consistent matching.
-   * Converts to lowercase, trims whitespace, and removes extra spaces.
-   */
-  private normalizeString(raw: string): string {
-    return normalizeText(raw);
-  }
-
-  /**
-   * Create a cleaned version of the string for fuzzy matching.
-   * Strips amounts, transaction IDs, dates, and other variable data.
-   */
-  private cleanString(raw: string): string {
-    let text = normalize(raw);
-
-    // Remove dollar amounts: $1,234.56 or $1234.56 or $1234
-    text = text.replace(/\$[\d,]+(?:\.\d{2})?/g, "");
-
-    // Remove standalone amounts without $ (e.g., "1234.56" at end)
-    text = text.replace(/\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*$/g, "");
-
-    // Remove dates in various formats
-    text = text.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, "");
-    text = text.replace(/\d{2,4}-\d{2}-\d{2}/g, "");
-
-    // Remove transaction IDs: alphanumeric strings containing * or # (8+ chars)
-    // or purely numeric sequences of 8+ digits
-    text = text.replace(/\b[A-Z0-9]*[*#][A-Z0-9*#]+\b/gi, "");
-    text = text.replace(/\b\d{8,}\b/g, "");
-
-    // Remove card number patterns (****1234)
-    text = text.replace(/\*{4}\d{4}/g, "");
-
-    // Remove trailing "I" that might be an identifier
-    text = text.replace(/\s+i\s*$/i, "");
-
-    // Normalize whitespace
-    text = text.replace(/\s+/g, " ").trim();
-
-    return text;
-  }
-
-  /**
    * Create a new alias
    */
   async create(data: CreatePayeeAliasInput, workspaceId: number): Promise<PayeeAlias> {
-    const normalizedString = this.normalizeString(data.rawString);
+    const normalizedString = normalize(data.rawString);
     const now = getCurrentTimestamp();
 
     const [alias] = await db
@@ -227,7 +184,7 @@ export class PayeeAliasRepository {
 
     // If rawString changed, update normalized too
     if (data.rawString) {
-      updateData.normalizedString = this.normalizeString(data.rawString);
+      updateData.normalizedString = normalize(data.rawString);
     }
 
     const [updated] = await db
@@ -294,7 +251,7 @@ export class PayeeAliasRepository {
         await db.insert(payeeAliases).values({
           workspaceId,
           rawString: aliasData.rawString,
-          normalizedString: this.normalizeString(aliasData.rawString),
+          normalizedString: normalize(aliasData.rawString),
           payeeId: aliasData.payeeId,
           trigger: aliasData.trigger || "import_confirmation",
           sourceAccountId: aliasData.sourceAccountId,
@@ -345,7 +302,7 @@ export class PayeeAliasRepository {
     }
 
     // Then try normalized match
-    const normalized = this.normalizeString(rawString);
+    const normalized = normalize(rawString);
     const normalizedMatches = await this.findByNormalizedString(normalized, workspaceId);
 
     if (normalizedMatches.length > 0) {
@@ -360,7 +317,7 @@ export class PayeeAliasRepository {
     }
 
     // Finally try cleaned match (strips amounts, IDs, etc.)
-    const cleanedInput = this.cleanString(rawString);
+    const cleanedInput = cleanStringForFuzzyMatching(rawString);
 
     if (cleanedInput.length >= 3) {
       // Only try if we have a meaningful string left
@@ -368,7 +325,7 @@ export class PayeeAliasRepository {
 
       // Find aliases whose cleaned version matches
       const cleanedMatches = allAliases.filter((alias) => {
-        const cleanedAlias = this.cleanString(alias.rawString);
+        const cleanedAlias = cleanStringForFuzzyMatching(alias.rawString);
         return cleanedAlias === cleanedInput;
       });
 

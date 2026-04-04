@@ -433,27 +433,6 @@ export class TransactionValidator {
     return 0;
   }
 
-  private getTransactionPayee(
-    transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
-  ): string {
-    if ("payee" in transaction) {
-      return (transaction.payee as string) || "";
-    }
-    return "";
-  }
-
-  private getTransactionDescription(
-    transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
-  ): string {
-    if ("description" in transaction) {
-      return (transaction.description as string) || "";
-    }
-    if ("notes" in transaction) {
-      return (transaction.notes as string) || "";
-    }
-    return "";
-  }
-
   /**
    * Get summary of validation results
    */

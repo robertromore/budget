@@ -274,12 +274,6 @@ function handleClear() {
 
 // Transfer handlers
 function handleSelectAccount(accountId: number, accountName: string) {
-  console.log('[PayeeCell] handleSelectAccount:', {
-    rowIndex,
-    accountId,
-    accountName,
-    rememberMapping,
-  });
   onTransferUpdate?.(rowIndex, accountId, accountName, rememberMapping);
   accountSearchValue = '';
   open = false;

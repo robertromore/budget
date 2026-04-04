@@ -1,13 +1,59 @@
 import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
 import type { CategoryDismissal, ImportProgress } from "$lib/server/import/import-orchestrator";
+import type { ImportRow } from "$lib/types/import";
 import { json } from "@sveltejs/kit";
+import { z } from "zod/v4";
 import {
   isImportApiError,
-  parseRequiredPositiveInt,
   requireImportAccountAccess,
   requireImportUserId,
 } from "../auth";
 import type { RequestHandler } from "./$types";
+
+// Validates structural shape of import rows. Uses passthrough() because rows
+// contain complex nested types (DuplicateMatch, TransferTargetMatch) that are
+// created by the upload/remap endpoints and passed back unchanged.
+const importRowSchema = z.object({
+  rowIndex: z.number().int().min(0),
+  rawData: z.record(z.string(), z.unknown()),
+  normalizedData: z.record(z.string(), z.unknown()),
+  validationStatus: z.enum(["pending", "valid", "invalid", "warning", "duplicate", "skipped", "transfer_match"]),
+}).passthrough();
+
+const processImportSchema = z.object({
+  accountId: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]),
+  data: z.array(importRowSchema).optional(),
+  rows: z.array(importRowSchema).optional(),
+  selectedEntities: z.object({
+    payees: z.array(z.string()),
+    categories: z.array(z.string()),
+  }).optional(),
+  options: z.object({
+    allowPartialImport: z.boolean().optional(),
+    createMissingEntities: z.boolean().optional(),
+    createMissingPayees: z.boolean().optional(),
+    createMissingCategories: z.boolean().optional(),
+    skipDuplicates: z.boolean().optional(),
+    duplicateThreshold: z.number().optional(),
+    reverseAmountSigns: z.boolean().optional(),
+    fileName: z.string().max(500).optional(),
+  }).optional(),
+  scheduleMatches: z.array(z.object({
+    rowIndex: z.number().int().min(0),
+    scheduleId: z.number().int().positive(),
+    selected: z.boolean().optional(),
+  }).passthrough()).optional(),
+  categoryDismissals: z.array(z.object({
+    rowIndex: z.number().int().min(0),
+    payeeId: z.number().nullable(),
+    payeeName: z.string().max(500),
+    rawPayeeString: z.string().max(500),
+    dismissedCategoryId: z.number().int().positive(),
+    dismissedCategoryName: z.string().max(500),
+    amount: z.number().optional(),
+    date: z.string().max(30).optional(),
+  })).optional(),
+});
 
 export const POST: RequestHandler = async ({ request, url }) => {
   // Check if client wants streaming response
@@ -16,29 +62,18 @@ export const POST: RequestHandler = async ({ request, url }) => {
   try {
     const userId = await requireImportUserId(request);
     const body = await request.json();
-    const {
-      accountId: rawAccountId,
-      data,
-      rows,
-      selectedEntities,
-      options,
-      scheduleMatches,
-      categoryDismissals,
-    } = body;
-    const accountId = parseRequiredPositiveInt(rawAccountId, "account ID");
+
+    const parsed = processImportSchema.safeParse(body);
+    if (!parsed.success) {
+      return json({ error: "Invalid request body", details: parsed.error.issues }, { status: 400 });
+    }
+
+    const { data: validatedData, rows, selectedEntities, options, scheduleMatches, categoryDismissals } = parsed.data;
+    const accountId = typeof parsed.data.accountId === "string" ? parseInt(parsed.data.accountId, 10) : parsed.data.accountId;
     await requireImportAccountAccess(userId, accountId);
 
     // Support both 'data' (legacy) and 'rows' (multi-file) field names
-    const importRows = rows || data;
-
-    console.log("=== IMPORT PROCESS ENDPOINT ===");
-    console.log("AccountId:", accountId);
-    console.log("Data rows count:", importRows?.length);
-    console.log("Selected entities:", selectedEntities);
-    console.log("Options:", options);
-    console.log("Schedule matches:", scheduleMatches?.length || 0);
-    console.log("Category dismissals:", categoryDismissals?.length || 0);
-    console.log("Streaming:", wantsStream);
+    const importRows = (rows || validatedData) as ImportRow[] | undefined;
 
     if (!accountId || !importRows) {
       return json({ error: "Missing required fields" }, { status: 400 });
@@ -46,13 +81,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
     // Filter schedule matches to only include selected ones
     const selectedScheduleMatches = scheduleMatches
-      ?.filter((match: any) => match.selected)
-      .map((match: any) => ({
+      ?.filter((match) => match.selected)
+      .map((match) => ({
         rowIndex: match.rowIndex,
         scheduleId: match.scheduleId,
       }));
-
-    console.log("Selected schedule matches:", selectedScheduleMatches?.length || 0);
 
     // Create orchestrator
     const orchestrator = new ImportOrchestrator();
@@ -80,11 +113,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
               categoryDismissals as CategoryDismissal[] | undefined,
               onProgress
             );
-
-            console.log("=== IMPORT RESULT (STREAMED) ===");
-            console.log("Transactions created:", result.transactionsCreated);
-            console.log("Entities created:", result.entitiesCreated);
-            console.log("Errors:", result.errors);
 
             // Send final result
             const finalData = JSON.stringify({ type: "complete", result });
@@ -120,14 +148,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
       selectedScheduleMatches,
       categoryDismissals as CategoryDismissal[] | undefined
     );
-
-    console.log("=== IMPORT RESULT ===");
-    console.log("Transactions created:", result.transactionsCreated);
-    console.log("Entities created:", result.entitiesCreated);
-    console.log("Errors:", result.errors);
-    if (result.byFile) {
-      console.log("Per-file breakdown:", result.byFile);
-    }
 
     return json({ result });
   } catch (error) {

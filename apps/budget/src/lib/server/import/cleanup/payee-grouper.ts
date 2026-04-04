@@ -6,15 +6,16 @@
  */
 
 import type { Payee } from "$lib/schema/payees";
+import type { PayeeAlias } from "$lib/schema/payee-aliases";
+import type { TransferMappingWithAccount } from "$lib/schema/transfer-mappings";
 import type { PayeeGroup, PayeeGroupMember, ExistingPayeeMatch } from "$lib/types/import";
-import { accounts as accountsTable } from "$lib/schema/accounts";
-import { db } from "$lib/server/db";
 import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { getTransferMappingService } from "$lib/server/domains/transfers";
+import { distance as fastLevenshtein } from "fastest-levenshtein";
 import { PayeeMatcher } from "../matchers/payee-matcher";
-import { calculateStringSimilarity, normalizePayeeName } from "../utils";
+import { normalizePayeeName } from "../utils";
+import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
 import { createId } from "@paralleldrive/cuid2";
-import { eq } from "drizzle-orm";
 
 /**
  * Configuration for payee grouping thresholds
@@ -175,40 +176,72 @@ export class PayeeGrouper {
       }
     };
 
-    // Compare all pairs and union similar ones
+    // Cache for similarity scores (reused during confidence computation)
+    const similarityCache = new Map<string, number>();
+    const cacheKey = (i: number, j: number) => i < j ? `${i}:${j}` : `${j}:${i}`;
+
+    // The maximum Levenshtein distance that could still yield a score >= threshold.
+    // Since levenshteinSim contributes at most 0.6 weight, and word overlap at most 0.3,
+    // and substring bonus at most 0.1, we need levenshteinSim to be at least
+    // (threshold - 0.3 - 0.1) / 0.6 in the best case. But for a quick pre-filter,
+    // we use a length-ratio check: if lengths differ too much, Levenshtein similarity
+    // can't reach the threshold.
+    const threshold = this.config.groupingThreshold;
+
+    // Compare all pairs and union similar ones (with early-exit optimizations)
     for (let i = 0; i < n; i++) {
+      const nameI = inputs[i].normalizedPayee;
+      const lenI = nameI.length;
+      if (!nameI) continue;
+
       for (let j = i + 1; j < n; j++) {
-        const similarity = this.calculatePayeeSimilarity(
-          inputs[i].normalizedPayee,
-          inputs[j].normalizedPayee
-        );
-        if (similarity >= this.config.groupingThreshold) {
+        // Skip pairs already in the same group
+        if (find(i) === find(j)) continue;
+
+        const nameJ = inputs[j].normalizedPayee;
+        const lenJ = nameJ.length;
+        if (!nameJ) continue;
+
+        // Length ratio pre-filter: if lengths differ too much, Levenshtein similarity
+        // will be too low. max edit distance for threshold T with weight 0.6 is
+        // maxLen * (1 - (T - 0.4) / 0.6) — but a simpler check: if the shorter
+        // string is less than 50% of the longer, skip (similarity can't reach 0.8)
+        const maxLen = Math.max(lenI, lenJ);
+        const minLen = Math.min(lenI, lenJ);
+        if (minLen < maxLen * 0.5) continue;
+
+        const similarity = this.calculatePayeeSimilarity(nameI, nameJ);
+        similarityCache.set(cacheKey(i, j), similarity);
+
+        if (similarity >= threshold) {
           union(i, j);
         }
       }
     }
 
-    // Build groups from Union-Find result
-    const groupMap = new Map<number, PayeeGroupMember[]>();
+    // Build groups from Union-Find result, tracking input indices for cache lookups
+    const groupMap = new Map<number, { members: PayeeGroupMember[]; indices: number[] }>();
 
     for (let i = 0; i < n; i++) {
       const root = find(i);
       if (!groupMap.has(root)) {
-        groupMap.set(root, []);
+        groupMap.set(root, { members: [], indices: [] });
       }
-      groupMap.get(root)!.push({
+      const group = groupMap.get(root)!;
+      group.members.push({
         rowIndex: inputs[i].rowIndex,
         originalPayee: inputs[i].originalPayee,
         normalizedPayee: inputs[i].normalizedPayee,
       });
+      group.indices.push(i);
     }
 
     // Convert to PayeeGroup array
     const groups: PayeeGroup[] = [];
 
-    for (const [, members] of groupMap) {
+    for (const [, { members, indices }] of groupMap) {
       const canonicalName = this.selectCanonicalName(members);
-      const confidence = this.calculateGroupConfidence(members);
+      const confidence = this.calculateGroupConfidence(members, indices, similarityCache, cacheKey);
 
       groups.push({
         groupId: createId(),
@@ -232,8 +265,10 @@ export class PayeeGrouper {
     if (!name1 || !name2) return 0;
     if (name1 === name2) return 1;
 
-    // Use Levenshtein-based similarity
-    const levenshteinSim = calculateStringSimilarity(name1, name2);
+    // Levenshtein similarity using optimized WASM-backed implementation
+    const maxLen = Math.max(name1.length, name2.length);
+    const editDist = fastLevenshtein(name1, name2);
+    const levenshteinSim = (maxLen - editDist) / maxLen;
 
     // Check for substring match
     let substringBonus = 0;
@@ -248,9 +283,7 @@ export class PayeeGrouper {
     const wordOverlap = intersection.length / Math.max(words1.size, words2.size);
 
     // Weighted combination
-    const finalScore = Math.min(1, levenshteinSim * 0.6 + wordOverlap * 0.3 + substringBonus);
-
-    return finalScore;
+    return Math.min(1, levenshteinSim * 0.6 + wordOverlap * 0.3 + substringBonus);
   }
 
   /**
@@ -359,19 +392,31 @@ export class PayeeGrouper {
   /**
    * Calculate confidence score for a group
    */
-  private calculateGroupConfidence(members: PayeeGroupMember[]): number {
+  private calculateGroupConfidence(
+    members: PayeeGroupMember[],
+    indices?: number[],
+    cache?: Map<string, number>,
+    cacheKeyFn?: (i: number, j: number) => string
+  ): number {
     if (members.length === 1) return 1;
 
-    // Calculate average pairwise similarity within the group
     let totalSimilarity = 0;
     let pairs = 0;
 
     for (let i = 0; i < members.length; i++) {
       for (let j = i + 1; j < members.length; j++) {
-        totalSimilarity += this.calculatePayeeSimilarity(
-          members[i].normalizedPayee,
-          members[j].normalizedPayee
-        );
+        // Use cached score when available (avoids recomputing Levenshtein)
+        let similarity: number | undefined;
+        if (cache && cacheKeyFn && indices) {
+          similarity = cache.get(cacheKeyFn(indices[i], indices[j]));
+        }
+        if (similarity === undefined) {
+          similarity = this.calculatePayeeSimilarity(
+            members[i].normalizedPayee,
+            members[j].normalizedPayee
+          );
+        }
+        totalSimilarity += similarity;
         pairs++;
       }
     }
@@ -437,8 +482,85 @@ export class PayeeGrouper {
   }
 
   /**
+   * Find a transfer mapping match for a raw payee string using in-memory data.
+   * Replicates the 3-tier matching logic: exact -> normalized -> cleaned.
+   */
+  private findTransferMappingInMemory(
+    rawPayeeString: string,
+    allMappings: TransferMappingWithAccount[]
+  ): TransferMappingWithAccount | null {
+    // Tier 1: Exact raw string match
+    const exactMatch = allMappings.find((m) => m.rawPayeeString === rawPayeeString);
+    if (exactMatch) return exactMatch;
+
+    // Tier 2: Normalized string match
+    const normalizedInput = normalize(rawPayeeString);
+    const normalizedMatch = allMappings.find((m) => m.normalizedString === normalizedInput);
+    if (normalizedMatch) return normalizedMatch;
+
+    // Tier 3: Cleaned string match (strips amounts, IDs, etc.)
+    const cleanedInput = cleanStringForFuzzyMatching(rawPayeeString);
+    if (cleanedInput.length >= 3) {
+      const cleanedMatches = allMappings.filter((m) => {
+        const cleanedMapping = cleanStringForFuzzyMatching(m.rawPayeeString);
+        return cleanedMapping === cleanedInput;
+      });
+
+      if (cleanedMatches.length > 0) {
+        // Return the most used mapping
+        return cleanedMatches.sort((a, b) => b.matchCount - a.matchCount)[0];
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Find a payee alias match for a raw string using in-memory data.
+   * Replicates the 3-tier matching logic: exact -> normalized -> cleaned.
+   * Returns the alias match info (payeeId, confidence) or null.
+   */
+  private findAliasInMemory(
+    rawString: string,
+    allAliases: PayeeAlias[]
+  ): { payeeId: number; confidence: number } | null {
+    // Tier 1: Exact raw string match
+    const exactMatch = allAliases.find((a) => a.rawString === rawString);
+    if (exactMatch) {
+      return { payeeId: exactMatch.payeeId, confidence: exactMatch.confidence };
+    }
+
+    // Tier 2: Normalized string match
+    const normalizedInput = normalize(rawString);
+    const normalizedMatches = allAliases.filter((a) => a.normalizedString === normalizedInput);
+    if (normalizedMatches.length > 0) {
+      // Return the most used alias for this normalized string (already sorted by matchCount desc)
+      const bestMatch = normalizedMatches[0];
+      return { payeeId: bestMatch.payeeId, confidence: bestMatch.confidence * 0.9 };
+    }
+
+    // Tier 3: Cleaned string match
+    const cleanedInput = cleanStringForFuzzyMatching(rawString);
+    if (cleanedInput.length >= 3) {
+      const cleanedMatches = allAliases.filter((a) => {
+        const cleanedAlias = cleanStringForFuzzyMatching(a.rawString);
+        return cleanedAlias === cleanedInput;
+      });
+
+      if (cleanedMatches.length > 0) {
+        // Return the most used alias with matching cleaned string
+        const bestMatch = cleanedMatches.sort((a, b) => b.matchCount - a.matchCount)[0];
+        return { payeeId: bestMatch.payeeId, confidence: bestMatch.confidence * 0.8 };
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Apply saved choices from previous imports.
    * Checks payee aliases and transfer mappings to pre-populate user decisions.
+   * Prefetches all data in bulk to avoid N+1 query patterns.
    */
   private async applySavedChoices(
     groups: PayeeGroup[],
@@ -448,67 +570,64 @@ export class PayeeGrouper {
     const aliasService = getPayeeAliasService();
     const transferService = getTransferMappingService();
 
-    return Promise.all(
-      groups.map(async (group) => {
-        // Skip groups that are already auto-accepted with high confidence existing match
-        if (
-          group.userDecision === "accept" &&
-          group.existingMatch &&
-          group.existingMatch.confidence >= 0.95
-        ) {
-          // Ensure canonical name uses the existing payee's clean name
+    // Prefetch all transfer mappings and aliases in parallel (2 queries total)
+    const [allTransferMappings, allAliases] = await Promise.all([
+      transferService.getAllMappingsWithAccounts(workspaceId),
+      aliasService.getAllAliases(workspaceId),
+    ]);
+
+    return groups.map((group) => {
+      // Skip groups that are already auto-accepted with high confidence existing match
+      if (
+        group.userDecision === "accept" &&
+        group.existingMatch &&
+        group.existingMatch.confidence >= 0.95
+      ) {
+        // Ensure canonical name uses the existing payee's clean name
+        return {
+          ...group,
+          canonicalName: group.existingMatch.name,
+        };
+      }
+
+      // Check each member's original payee string for saved choices
+      for (const member of group.members) {
+        // Check for transfer mapping first (higher priority - user explicitly marked as transfer)
+        const transferMatch = this.findTransferMappingInMemory(
+          member.originalPayee,
+          allTransferMappings
+        );
+
+        if (transferMatch) {
           return {
             ...group,
-            canonicalName: group.existingMatch.name,
+            userDecision: "accept" as const,
+            transferAccountId: transferMatch.targetAccountId,
+            transferAccountName: transferMatch.targetAccount.name ?? "Unknown Account",
           };
         }
 
-        // Check each member's original payee string for saved choices
-        for (const member of group.members) {
-          // Check for transfer mapping first (higher priority - user explicitly marked as transfer)
-          const transferMatch = await transferService.findTransferMapping(
-            member.originalPayee,
-            workspaceId
-          );
-
-          if (transferMatch) {
-            // Look up the account name
-            const account = await db
-              .select({ name: accountsTable.name })
-              .from(accountsTable)
-              .where(eq(accountsTable.id, transferMatch.targetAccountId))
-              .get();
-
+        // Check for payee alias (user confirmed a payee mapping)
+        const aliasMatch = this.findAliasInMemory(member.originalPayee, allAliases);
+        if (aliasMatch && aliasMatch.confidence >= 0.8) {
+          // Find matching existing payee
+          const matchedPayee = existingPayees.find((p) => p.id === aliasMatch.payeeId);
+          if (matchedPayee) {
             return {
               ...group,
               userDecision: "accept" as const,
-              transferAccountId: transferMatch.targetAccountId,
-              transferAccountName: account?.name ?? "Unknown Account",
+              existingMatch: {
+                id: matchedPayee.id,
+                name: matchedPayee.name ?? group.canonicalName,
+                confidence: aliasMatch.confidence,
+              },
+              canonicalName: matchedPayee.name ?? group.canonicalName,
             };
           }
-
-          // Check for payee alias (user confirmed a payee mapping)
-          const aliasMatch = await aliasService.findPayeeByAlias(member.originalPayee, workspaceId);
-          if (aliasMatch && aliasMatch.confidence >= 0.8) {
-            // Find matching existing payee
-            const matchedPayee = existingPayees.find((p) => p.id === aliasMatch.payeeId);
-            if (matchedPayee) {
-              return {
-                ...group,
-                userDecision: "accept" as const,
-                existingMatch: {
-                  id: matchedPayee.id,
-                  name: matchedPayee.name ?? group.canonicalName,
-                  confidence: aliasMatch.confidence,
-                },
-                canonicalName: matchedPayee.name ?? group.canonicalName,
-              };
-            }
-          }
         }
-        return group;
-      })
-    );
+      }
+      return group;
+    });
   }
 }
 

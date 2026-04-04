@@ -11,7 +11,8 @@ import { transactions as transactionTable } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import type { ImportRow, TransferTargetMatch } from "$lib/types/import";
 import { compact } from "$lib/utils";
-import { and, eq, isNull } from "drizzle-orm";
+import { daysBetweenDates, parseLocalDate } from "$lib/utils/date-helpers";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 /**
  * Get existing transfer target transactions in an account.
@@ -43,7 +44,7 @@ export async function getAccountNames(accountIds: number[]): Promise<Map<number,
   const accountRecords = await db
     .select({ id: accountTable.id, name: accountTable.name })
     .from(accountTable)
-    .where(isNull(accountTable.deletedAt));
+    .where(and(inArray(accountTable.id, accountIds), isNull(accountTable.deletedAt)));
 
   for (const acc of accountRecords) {
     accountNames.set(acc.id, acc.name);
@@ -70,7 +71,7 @@ export function findTransferTargetMatchForRow(
 
   if (!rowDateStr || rowAmount === undefined || rowAmount === null) return null;
 
-  const rowDate = new Date(rowDateStr);
+  const rowDate = parseLocalDate(rowDateStr);
   if (isNaN(rowDate.getTime())) return null;
 
   // Find matching transfer targets
@@ -78,13 +79,11 @@ export function findTransferTargetMatchForRow(
     // Skip if already reconciled (has importedAt set)
     if (target.importedAt) continue;
 
-    const targetDate = new Date(target.date);
+    const targetDate = parseLocalDate(target.date);
     if (isNaN(targetDate.getTime())) continue;
 
     // Calculate date difference in days
-    const daysDiff = Math.abs(
-      Math.floor((rowDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24))
-    );
+    const daysDiff = daysBetweenDates(rowDate, targetDate);
 
     // Check if within +/-3 days
     if (daysDiff > 3) continue;

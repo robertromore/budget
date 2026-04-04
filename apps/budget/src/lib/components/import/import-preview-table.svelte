@@ -4,6 +4,7 @@ import { createTableState } from '$lib/components/data-table/state';
 import type { CleanupState, ImportRow } from '$lib/types/import';
 import type { RowSelectionState, Table } from '@tanstack/table-core';
 import {
+  arrIncludesFilter,
   createImportPreviewColumns,
   type AliasCandidate,
   type ImportPreviewColumnActions,
@@ -127,32 +128,8 @@ const columnActions: ImportPreviewColumnActions = $derived({
 // Create columns with actions
 const columns = $derived(createImportPreviewColumns(columnActions));
 
-// Custom filter function for array includes
 const filterFns = {
-  arrIncludesSome: (row: any, columnId: string, filterValue: unknown) => {
-    if (!filterValue) return true;
-
-    if (typeof filterValue === 'object' && 'operator' in filterValue && 'values' in filterValue) {
-      const { operator, values } = filterValue as { operator: string; values: string[] };
-      if (!values || values.length === 0) return true;
-
-      const rowValue = row.getValue(columnId);
-      const isIncluded = values.includes(rowValue);
-
-      if (operator === 'arrNotIncludesSome') {
-        return !isIncluded;
-      }
-      return isIncluded;
-    }
-
-    if (Array.isArray(filterValue)) {
-      if (filterValue.length === 0) return true;
-      const value = row.getValue(columnId);
-      return filterValue.includes(value);
-    }
-
-    return true;
-  },
+  arrIncludesSome: arrIncludesFilter,
 };
 </script>
 

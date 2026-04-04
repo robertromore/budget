@@ -520,6 +520,84 @@ export class CategoryAliasService {
     // console.log(`[CategoryAlias] Category is NOT dismissed`);
     return false;
   }
+  /**
+   * Increment the match count for a specific alias.
+   */
+  async incrementMatchCount(aliasId: number): Promise<void> {
+    await this.repository.incrementMatchCount(aliasId);
+  }
+
+  /**
+   * Load all aliases for a workspace (for in-memory batch matching).
+   */
+  async getAllAliases(workspaceId: number): Promise<CategoryAlias[]> {
+    return await this.repository.findAll(workspaceId);
+  }
+
+  /**
+   * In-memory alias match against a prefetched alias array.
+   * Replicates the 3-tier logic of findBestMatch without DB queries.
+   */
+  matchWithAliasFromCache(
+    rawString: string,
+    allAliases: CategoryAlias[],
+    context?: { payeeId?: number; amountType?: AmountType }
+  ): { found: boolean; categoryId?: number; confidence: number; matchedOn?: "exact" | "normalized" | "payee_context"; aliasId?: number } {
+    // Tier 1: Exact raw string match
+    const exactMatch = allAliases.find((a) => a.rawString === rawString);
+    if (exactMatch) {
+      if (context?.amountType && exactMatch.amountType !== "any" && exactMatch.amountType !== context.amountType) {
+        // Amount type mismatch — fall through
+      } else {
+        return { found: true, categoryId: exactMatch.categoryId, confidence: exactMatch.confidence, matchedOn: "exact", aliasId: exactMatch.id };
+      }
+    }
+
+    // Tier 2: Normalized string match
+    const normalized = normalize(rawString);
+    const normalizedMatches = allAliases.filter((a) => a.normalizedString === normalized);
+    if (normalizedMatches.length > 0) {
+      let filtered = normalizedMatches;
+      if (context?.amountType) {
+        const typeFiltered = normalizedMatches.filter((m) => m.amountType === "any" || m.amountType === context.amountType);
+        if (typeFiltered.length > 0) filtered = typeFiltered;
+      }
+      const best = filtered[0];
+      return { found: true, categoryId: best.categoryId, confidence: best.confidence * 0.9, matchedOn: "normalized", aliasId: best.id };
+    }
+
+    // Tier 3: Payee context match
+    if (context?.payeeId) {
+      const payeeMatches = allAliases.filter((a) => a.payeeId === context.payeeId);
+      if (payeeMatches.length > 0) {
+        let filtered = payeeMatches;
+        if (context?.amountType) {
+          const typeFiltered = payeeMatches.filter((m) => m.amountType === "any" || m.amountType === context.amountType);
+          if (typeFiltered.length > 0) filtered = typeFiltered;
+        }
+        const best = filtered[0];
+        return { found: true, categoryId: best.categoryId, confidence: best.confidence * 0.75, matchedOn: "payee_context", aliasId: best.id };
+      }
+    }
+
+    return { found: false, confidence: 0 };
+  }
+
+  /**
+   * In-memory dismissal check against a prefetched alias array.
+   */
+  isCategoryDismissedFromCache(
+    rawString: string,
+    categoryId: number,
+    allAliases: CategoryAlias[],
+    minConfidenceThreshold: number = 0.9
+  ): boolean {
+    const normalized = normalize(rawString);
+    const alias = allAliases.find(
+      (a) => (a.rawString === rawString || a.normalizedString === normalized) && a.categoryId === categoryId
+    );
+    return alias !== undefined && alias.confidence < minConfidenceThreshold;
+  }
 }
 
 // Singleton instance for easy access

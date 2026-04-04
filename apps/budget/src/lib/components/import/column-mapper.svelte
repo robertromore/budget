@@ -41,8 +41,6 @@ const targetFields = $derived(
     const hasDebitCol = rawColumns.some((col) => col.toLowerCase().includes('debit'));
     const hasCreditCol = rawColumns.some((col) => col.toLowerCase().includes('credit'));
 
-    console.log('Column detection:', { rawColumns, hasDebitCol, hasCreditCol });
-
     if (hasDebitCol && hasCreditCol) {
       // If both debit and credit columns exist, offer combined option
       fields.push({ value: 'debit/credit', label: 'Debit/Credit (Amount)' });
@@ -57,8 +55,6 @@ const targetFields = $derived(
       { value: 'category', label: 'Category' },
       { value: 'status', label: 'Status' }
     );
-
-    console.log('Generated fields:', fields);
 
     return fields;
   })()
@@ -105,7 +101,6 @@ $effect(() => {
       }
     });
     columnMapping = invertedMapping;
-    console.log('Inverted profile mapping:', invertedMapping);
   } else {
     // Check if we have both debit and credit columns
     const hasDebitCol = rawColumns.some((col) => col.toLowerCase().includes('debit'));
@@ -126,7 +121,6 @@ $effect(() => {
       } else if (useDebitCredit && (colLower.includes('debit') || colLower.includes('credit'))) {
         // Special case: debit/credit allows two columns (one for each)
         columnMapping[col] = 'debit/credit';
-        console.log(`Auto-mapped "${col}" to debit/credit`);
       } else if (colLower.includes('amount') && !assignedFields.has('amount')) {
         columnMapping[col] = 'amount';
         assignedFields.add('amount');
@@ -157,7 +151,6 @@ $effect(() => {
       }
     });
 
-    console.log('Final column mapping:', columnMapping);
   }
 
   // Initialize select values based on column mapping
@@ -318,7 +311,6 @@ function handleNext() {
     }
   });
 
-  console.log('Final mapping being sent:', mapping);
   onNext(mapping);
 }
 </script>
