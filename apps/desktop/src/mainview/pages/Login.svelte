@@ -7,10 +7,11 @@
   let isSubmitting = $state(false);
   let config = $state<any>(null);
 
-  interface Props {
-    onLogin: () => void;
+  let props = $props<{ onLogin: () => void }>();
+
+  function triggerLogin() {
+    props.triggerLogin();
   }
-  let { onLogin }: Props = $props();
 
   // Load config to check auth mode
   $effect(() => {
@@ -38,7 +39,7 @@
       });
       if (res.ok) {
         status = "Success! Loading app...";
-        onLogin();
+        triggerLogin();
       } else {
         const text = await res.text();
         status = `Login failed (${res.status}): ${text.slice(0, 100)}`;
@@ -60,7 +61,7 @@
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
-        onLogin();
+        triggerLogin();
       } else {
         status = "Invalid email or password.";
         isSubmitting = false;

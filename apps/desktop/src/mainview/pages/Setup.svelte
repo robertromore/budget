@@ -8,10 +8,11 @@
   let status = $state("");
   let isSubmitting = $state(false);
 
-  interface Props {
-    onComplete: () => void;
+  let props = $props<{ onComplete: () => void }>();
+
+  function triggerComplete() {
+    props.onComplete();
   }
-  let { onComplete }: Props = $props();
 
   // Load defaults from server config
   $effect(() => {
@@ -41,7 +42,7 @@
       const result = await res.json();
       if (result.success) {
         status = "Setup complete!";
-        setTimeout(onComplete, 500);
+        setTimeout(triggerComplete, 500);
       } else {
         status = `Error: ${result.error}`;
         isSubmitting = false;
