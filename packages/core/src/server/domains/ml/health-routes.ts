@@ -5,7 +5,7 @@
  * model management, and unified ML operations.
  */
 
-import { rateLimitedProcedure, t } from "$core/trpc";
+import { rateLimitedProcedure, t } from "$core/trpc/t";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getUnifiedMLCoordinator } from "./unified-coordinator";

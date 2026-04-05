@@ -7,6 +7,11 @@ export default {
 		version: "0.0.1",
 	},
 	build: {
+		bun: {
+			entrypoint: "src/bun/index.ts",
+			packages: "external",
+			splitting: true,
+		},
 		copy: {
 			"dist/index.html": "views/mainview/index.html",
 			"dist/assets": "views/mainview/assets",

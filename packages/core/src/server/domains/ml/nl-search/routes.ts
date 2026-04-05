@@ -4,7 +4,7 @@
  * Provides API endpoints for natural language transaction searching.
  */
 
-import { rateLimitedProcedure, t } from "$core/trpc";
+import { rateLimitedProcedure, t } from "$core/trpc/t";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createNaturalLanguageSearchService } from "./service";
