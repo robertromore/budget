@@ -97,6 +97,7 @@
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/openai": "^3.0.48",
     "@ai-sdk/svelte": "^4.0.141",
+    "@budget/core": "workspace:*",
     "@budget/ui": "workspace:*",
     "@decs/typeschema": "^0.12.2",
     "@dnd-kit-svelte/core": "^0.0.11",

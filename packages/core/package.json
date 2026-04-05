@@ -1,0 +1,32 @@
+{
+  "name": "@budget/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Shared server-side code: schema, domains, tRPC, utils",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./schema/*": "./src/schema/*",
+    "./server/*": "./src/server/*",
+    "./trpc": "./src/trpc/index.ts",
+    "./trpc/*": "./src/trpc/*",
+    "./utils/*": "./src/utils/*",
+    "./types/*": "./src/types/*",
+    "./query": "./src/query/index.ts",
+    "./query/*": "./src/query/*"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "echo '@budget/core - no build needed'",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@budget/config": "workspace:*",
+    "typescript": "^5.8.3"
+  }
+}
