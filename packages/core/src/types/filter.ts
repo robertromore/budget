@@ -13,3 +13,5 @@ export type ViewFilter = {
 export type ViewDisplayState = {
   [key: string]: any;
 };
+
+export type TableEntityType = "transactions" | "top_categories";
