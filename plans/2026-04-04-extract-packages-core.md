@@ -1070,3 +1070,40 @@ After each phase:
 - SvelteKit alias pattern: `apps/budget/svelte.config.js` (`$ui` alias)
 - tRPC fetch adapter: `@trpc/server/adapters/fetch` (works with any
   `Request`/`Response`)
+
+---
+
+## Completion Status
+
+All phases completed on 2026-04-05.
+
+| Phase | Status | Commits | Files Moved |
+| ----- | ------ | ------- | ----------- |
+| 0 | Done | 1 | 136 modified (in-place decoupling) |
+| 1 | Done | 1 | 7 new (scaffold) |
+| 2 | Done | 1 | 705 (schema + types) |
+| 3 | Done | 1 | 138 (utils) |
+| 4a-d | Done | 1 | 188 (config, db, shared, auth) |
+| 4e | Done | 1 | 353 (domains + service factory) |
+| 4f-g | Done | 1 | 65 (import, AI, email) |
+| 5 | Done | 2 | 126 (tRPC layer) |
+| 6 | Done | 2 | 95 (query layer) |
+| 7 | Done | 1 | Documentation cleanup |
+
+### What lives in `packages/core/`
+
+- Schema (50 files), types (8 files), utils (15 files), constants (2 files)
+- Server: config, db, auth, shared, 31 domain directories, import, AI, email
+- tRPC: router, 40+ routes, middleware, context, client-factory
+- Query: _client, _factory, _toast, 40+ domain query modules
+
+### What stays in `apps/budget/`
+
+- `src/lib/server/env-sveltekit.ts` (SvelteKit env bridge)
+- `src/lib/trpc/client.ts` (httpBatchLink + adapter wiring)
+- `src/lib/trpc/adapters/sveltekit.ts` (RequestEvent adapter)
+- `src/lib/query/index.ts` (rpc namespace barrel)
+- `src/lib/query/*.ts` (re-export shims)
+- `src/lib/utils/*.ts` (re-export shims for moved utils)
+- `src/lib/types/*.ts` (re-export shims for moved types)
+- All frontend code: routes, components, stores, states

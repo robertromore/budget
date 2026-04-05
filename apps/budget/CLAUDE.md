@@ -28,16 +28,22 @@ This is a SvelteKit budget management application with:
 
 ## Import Preferences
 
-**ALWAYS use the `$lib` alias when importing from the `src/lib` folder.**
+**Use `$core/` for shared server code and `$lib/` for app-specific code.**
 
 ### Import Mappings
 
-- **Avoid**: `import { Component } from '../../../lib/components/ui/button'`
-- **Use**: `import { Component } from '$lib/components/ui/button'`
-- **Avoid**: `import { db } from '../../lib/server/db'`
-- **Use**: `import { db } from '$lib/server/db'`
-- **Avoid**: `import type { Account } from '../lib/schema/accounts'`
-- **Use**: `import type { Account } from '$lib/schema/accounts'`
+- **Schema**: `import type { Account } from '$core/schema/accounts'`
+- **Server domains**: `import { AccountService } from '$core/server/domains/accounts'`
+- **tRPC**: `import { publicProcedure, t } from '$core/trpc/t'`
+- **Query layer**: `import { rpc } from '$lib/query'` (barrel) or
+  `import { listAccounts } from '$core/query/accounts'` (direct)
+- **Utils**: `import { normalize } from '$core/utils/string-utilities'`
+- **Components**: `import { Component } from '$lib/components/ui/button'`
+- **Stores/states**: `import { AccountsState } from '$lib/states/entities/accounts.svelte'`
+
+The `$lib/query/*.ts` files are re-export shims that delegate to `$core/query/*`.
+The `$lib/trpc/client.ts` and `$lib/trpc/adapters/sveltekit.ts` are
+app-specific and stay in the app.
 
 ## Comment and Documentation Standards
 
