@@ -87,7 +87,7 @@ export const budgetKeys = createQueryKeys("budgets", {
  * Set by the app at startup to wire in framework-specific state management.
  */
 interface BudgetStateCallbacks {
-  upsertBudget?: (budget: Budget) => void;
+  upsertBudget?: (budget: BudgetWithRelations) => void;
   removeBudget?: (id: number) => void;
   recordPeriodInstance?: (instance: any) => void;
 }
