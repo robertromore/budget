@@ -1,6 +1,6 @@
 import { transactions } from "$core/schema";
 import type { DetectedPattern, SuggestedScheduleConfig } from "$core/schema/detected-patterns";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, eq, gte } from "drizzle-orm";
 import { PatternRepository } from "./repository";
 import type {
@@ -544,7 +544,7 @@ export class PatternDetectionService {
    * Generate a descriptive schedule name from pattern
    */
   private async generateScheduleName(pattern: DetectedPattern): Promise<string> {
-    const { db } = await import("$lib/server/db");
+    const { db } = await import("$core/server/db");
     const { payees } = await import("$core/schema");
     const { eq } = await import("drizzle-orm");
 
@@ -577,7 +577,7 @@ export class PatternDetectionService {
     pattern: DetectedPattern,
     scheduleId: number
   ): Promise<number> {
-    const { db } = await import("$lib/server/db");
+    const { db } = await import("$core/server/db");
     const { transactions } = await import("$core/schema");
     const { inArray, eq } = await import("drizzle-orm");
 
@@ -615,7 +615,7 @@ export class PatternDetectionService {
     const config = pattern.suggestedScheduleConfig;
 
     // Import db and schedule tables
-    const { db } = await import("$lib/server/db");
+    const { db } = await import("$core/server/db");
     const { schedules, scheduleDates } = await import("$core/schema");
     const { generateUniqueSlugForDB } = await import("$core/utils/slug-utils");
     const slugify = (await import("@sindresorhus/slugify")).default;
@@ -708,7 +708,7 @@ export class PatternDetectionService {
 
     // If pattern is converted and has a schedule, delete the schedule
     if (pattern.status === "converted" && pattern.scheduleId) {
-      const { db } = await import("$lib/server/db");
+      const { db } = await import("$core/server/db");
       const { schedules } = await import("$core/schema");
       const { eq } = await import("drizzle-orm");
 

@@ -3,10 +3,10 @@ import { budgetTransactions } from "$core/schema/budgets";
 import { categories } from "$core/schema/categories";
 import { payees } from "$core/schema/payees";
 import type { NewTransaction, Transaction } from "$core/schema/transactions";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
+import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { isNotEmptyObject } from "$core/utils/object-utilities";
 import { invalidateAccountCache } from "$core/utils/cache";
 import { roundToCents } from "$core/utils/math-utilities";
@@ -1654,7 +1654,7 @@ export class TransactionService {
   private async verifyAccountExists(accountId: number): Promise<boolean> {
     // This would typically call the account repository
     // For now, we'll use a simple check
-    const { db } = await import("$lib/server/db");
+    const { db } = await import("$core/server/db");
     const { accounts } = await import("$core/schema");
     const { eq, isNull, and } = await import("drizzle-orm");
 

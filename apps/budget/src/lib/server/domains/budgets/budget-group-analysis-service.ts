@@ -11,8 +11,8 @@
 
 import { budgetGroups, budgets } from "$core/schema/budgets";
 import type { RecommendationMetadata, RecommendationPriority } from "$core/schema/recommendations";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
 import { compact } from "$core/utils/array-utilities";
 import { standardDeviation } from "$core/utils/chart-statistics";
 import { eq } from "drizzle-orm";

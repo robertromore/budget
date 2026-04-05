@@ -1,5 +1,5 @@
 import { verifications, sessions, type Session } from "$core/schema/auth";
-import { db } from "$lib/server/shared/database";
+import { db } from "$core/server/shared/database";
 import { eq, lt, and, ne, desc } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 

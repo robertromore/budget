@@ -18,10 +18,10 @@ import type {
 } from "./types";
 import { SimpleFINProvider } from "./providers/simplefin";
 import { TellerProvider } from "./providers/teller";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
 import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
-import { logger } from "$lib/server/shared/logging";
+import { logger } from "$core/server/shared/logging";
 
 /**
  * Connection Service

@@ -8,8 +8,8 @@ import {
   type WebSearchProvider,
   workspaces,
 } from "$core/schema/workspaces";
-import { db } from "$lib/server/db";
-import { encryptApiKey } from "$lib/server/shared/security/encryption";
+import { db } from "$core/server/db";
+import { encryptApiKey } from "$core/server/shared/security/encryption";
 import { publicProcedure, secureOperationProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";

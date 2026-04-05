@@ -11,7 +11,7 @@ import type {
   LLMProvider,
   LLMProviderConfig,
 } from "$core/schema/workspaces";
-import { decryptApiKey } from "$lib/server/shared/security";
+import { decryptApiKey } from "$core/server/shared/security";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";

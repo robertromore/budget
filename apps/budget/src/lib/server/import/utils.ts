@@ -7,7 +7,7 @@
 
 import { formatFileSize } from "$core/utils/formatters-core";
 import { normalize } from "$core/utils/string-utilities";
-import { logger } from "$lib/server/shared/logging";
+import { logger } from "$core/server/shared/logging";
 import { ValidationError } from "./errors";
 
 // Re-export formatFileSize for backward compatibility

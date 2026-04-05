@@ -6,7 +6,7 @@
  */
 
 import { categories, payees } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import type { MerchantCanonical, PayeeSimilarityMatch } from "../types";

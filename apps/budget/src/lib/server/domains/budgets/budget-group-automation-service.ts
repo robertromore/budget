@@ -17,9 +17,9 @@ import {
 } from "$core/schema/budget-automation-settings";
 import { budgetGroupMemberships, budgetGroups } from "$core/schema/budgets";
 import { type BudgetRecommendation } from "$core/schema/recommendations";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
+import { DatabaseError, NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, eq } from "drizzle-orm";
 import { BudgetService } from "./services";

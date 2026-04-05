@@ -17,7 +17,7 @@ import {
   categories,
   transactions,
 } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { formatPercent } from "$lib/server/utils/formatters";
 import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
 import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";

@@ -1,13 +1,13 @@
 import { users, type UserPreferences } from "$core/schema/users";
 import { sessions, authAccounts, type Session } from "$core/schema/auth";
-import { db } from "$lib/server/shared/database";
-import { AUTH_CONFIG } from "$lib/server/config/auth";
-import { ValidationError, NotFoundError, UnauthorizedError } from "$lib/server/shared/types/errors";
-import { getEnv } from "$lib/server/env";
+import { db } from "$core/server/shared/database";
+import { AUTH_CONFIG } from "$core/server/config/auth";
+import { ValidationError, NotFoundError, UnauthorizedError } from "$core/server/shared/types/errors";
+import { getEnv } from "$core/server/env";
 import { eq, and } from "drizzle-orm";
-import { logger } from "$lib/server/shared/logging";
+import { logger } from "$core/server/shared/logging";
 import { authRepository } from "./repository";
-import { hashPassword, verifyPassword } from "$lib/server/auth/password";
+import { hashPassword, verifyPassword } from "$core/server/auth/password";
 import { sendEmail } from "$lib/server/email";
 import { emailVerificationEmail } from "$lib/server/email/templates";
 

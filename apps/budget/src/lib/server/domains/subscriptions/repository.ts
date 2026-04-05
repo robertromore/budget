@@ -10,7 +10,7 @@ import {
   type SubscriptionPriceHistory,
   type SubscriptionWithRelations,
 } from "$core/schema/subscriptions-table";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, asc, desc, eq, gte, inArray, isNull, like, lte, or, sql } from "drizzle-orm";
 import type { SubscriptionFilters, SubscriptionSortOptions } from "./types";
 

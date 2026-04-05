@@ -4,9 +4,9 @@ import {
   categoryGroupMemberships,
   categoryGroupRecommendations,
 } from "$core/schema/category-groups";
-import { db } from "$lib/server/db";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { db } from "$core/server/db";
+import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   CategoryGroupMembershipRepository,

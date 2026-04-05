@@ -1,6 +1,6 @@
 import { formInsertScheduleSchema } from "$core/schema";
 import { superformInsertAccountSchema } from "$core/schema/superforms";
-import { auth } from "$lib/server/auth";
+import { auth } from "$core/server/auth";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

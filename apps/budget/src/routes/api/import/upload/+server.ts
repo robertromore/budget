@@ -1,5 +1,5 @@
 import { transactions as transactionTable } from "$core/schema/transactions";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
 import { ExcelProcessor } from "$lib/server/import/file-processors/excel-processor";
 import { IIFProcessor } from "$lib/server/import/file-processors/iif-processor";

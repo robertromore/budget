@@ -1,4 +1,4 @@
-import { ValidationError } from "$lib/server/shared/types";
+import { ValidationError } from "$core/server/shared/types";
 import type { Context } from "$lib/trpc/context";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";

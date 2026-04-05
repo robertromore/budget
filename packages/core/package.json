@@ -25,8 +25,13 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.4.0",
     "@internationalized/date": "^3.12.0",
+    "@libsql/client": "^0.15.15",
     "@paralleldrive/cuid2": "^3.3.0",
+    "@sindresorhus/slugify": "^3.0.0",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.5.6",
     "simple-statistics": "^7.8.9",
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",

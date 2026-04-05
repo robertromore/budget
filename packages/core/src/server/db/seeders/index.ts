@@ -6,7 +6,7 @@
  * 2. workspace-dependent tables (accounts, categories, etc.)
  * 3. relationship/junction tables (budgetAccounts, etc.)
  *
- * Run with: bun run ./src/lib/server/db/seeders
+ * Run with: bun run ./src/server/db/seeders
  */
 
 import * as schema from "$core/schema";
@@ -28,7 +28,7 @@ const SEEDING_ORDER = [
 ];
 
 const glob = new Glob("*.json");
-const seeders_path = "./src/lib/server/db/seeders/";
+const seeders_path = new URL(".", import.meta.url).pathname;
 
 // Collect all available seed files
 const available_files = new Set<string>();

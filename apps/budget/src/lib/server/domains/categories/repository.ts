@@ -10,9 +10,9 @@ import type {
   TaxCategory,
 } from "$core/schema/categories";
 import { categoryGroupMemberships, categoryGroups } from "$core/schema/category-groups";
-import { db } from "$lib/server/db";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
+import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import type { CategoryTreeNode } from "$core/types/categories";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, count, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";

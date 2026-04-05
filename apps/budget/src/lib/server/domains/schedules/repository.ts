@@ -1,7 +1,7 @@
 import { schedules, transactions } from "$core/schema";
 import type { Schedule } from "$core/schema/schedules";
 import type { NewTransaction } from "$core/schema/transactions";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, eq } from "drizzle-orm";
 
 export interface ScheduleWithDetails extends Schedule {

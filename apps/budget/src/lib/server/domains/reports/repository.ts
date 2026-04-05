@@ -4,8 +4,8 @@ import {
   type NewReportTemplate,
   type ReportTemplateType,
 } from "$core/schema/report-templates";
-import { db } from "$lib/server/db";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$core/server/db";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { and, desc, eq } from "drizzle-orm";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 

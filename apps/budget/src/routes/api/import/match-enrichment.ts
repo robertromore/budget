@@ -12,7 +12,7 @@ import { scheduleDates as scheduleDateTable } from "$core/schema/schedule-dates"
 import type { Schedule } from "$core/schema/schedules";
 import { schedules as scheduleTable } from "$core/schema/schedules";
 import type { TransferMappingWithAccount } from "$core/schema/transfer-mappings";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";

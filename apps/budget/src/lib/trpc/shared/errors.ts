@@ -4,7 +4,7 @@ import {
   DomainError,
   NotFoundError,
   ValidationError,
-} from "$lib/server/shared/types/errors";
+} from "$core/server/shared/types/errors";
 import { TRPCError } from "@trpc/server";
 
 /**

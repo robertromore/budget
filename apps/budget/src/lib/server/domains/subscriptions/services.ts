@@ -1,6 +1,6 @@
 import { payees } from "$core/schema/payees";
 import type { BillingCycle } from "$core/schema/subscriptions";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { eq, isNull } from "drizzle-orm";
 import { SubscriptionAlertService } from "./alerts";
 import { SubscriptionDetectionService } from "./detection";

@@ -1,6 +1,6 @@
 import { categories as categoryTable } from "$core/schema/categories";
 import { payees as payeeTable } from "$core/schema/payees";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import type {

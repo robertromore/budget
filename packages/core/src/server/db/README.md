@@ -61,7 +61,7 @@ relationships.
 #### Basic Factory Usage
 
 ```typescript
-import { workspaceFactory, accountFactory } from '$lib/server/db/factories';
+import { workspaceFactory, accountFactory } from '$core/server/db/factories';
 
 // Create a workspace
 const [workspace] = await workspaceFactory(1);
@@ -75,7 +75,7 @@ const accounts = await accountFactory(3, workspace.id);
 #### Custom Transaction Count
 
 ```typescript
-import { accountFactory, transactionFactory } from '$lib/server/db/factories';
+import { accountFactory, transactionFactory } from '$core/server/db/factories';
 
 const [account] = await accountFactory(1, workspaceId);
 
@@ -252,7 +252,7 @@ snapshot/restore capabilities.
 ### Setup
 
 ```typescript
-import { TestDatabase } from '$lib/server/db/test-utils';
+import { TestDatabase } from '$core/server/db/test-utils';
 
 describe('My Test Suite', () => {
   const testDb = new TestDatabase();

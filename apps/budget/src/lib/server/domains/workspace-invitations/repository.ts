@@ -2,8 +2,8 @@ import type { WorkspaceInvitation, InvitationStatus } from "$core/schema/workspa
 import { workspaceInvitations } from "$core/schema/workspace-invitations";
 import { workspaces } from "$core/schema/workspaces";
 import { users } from "$core/schema/users";
-import { db } from "$lib/server/shared/database";
-import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/shared/database";
+import { DatabaseError, NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, eq, lt } from "drizzle-orm";
 

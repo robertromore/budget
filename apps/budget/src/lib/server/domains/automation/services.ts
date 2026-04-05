@@ -5,7 +5,7 @@
  */
 
 import type { AutomationRule, AutomationRuleLog } from "$core/schema/automation-rules";
-import type { db } from "$lib/server/db";
+import type { db } from "$core/server/db";
 import type {
   ActionConfig,
   ConditionGroup,

@@ -3,9 +3,9 @@ import { accounts } from "$core/schema/accounts";
 import { categories } from "$core/schema/categories";
 import { payees } from "$core/schema/payees";
 import { transactions } from "$core/schema/transactions";
-import { db } from "$lib/server/shared/database";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/shared/database";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
+import { NotFoundError } from "$core/server/shared/types/errors";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type {
   AccountTransactionDbResult,

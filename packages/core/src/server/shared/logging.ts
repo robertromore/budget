@@ -4,7 +4,7 @@
  */
 
 import { nowISOString } from "$core/utils/dates-core";
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "$core/server/env";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 

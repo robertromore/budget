@@ -6,7 +6,7 @@ import type {
 } from "$core/schema/account-connections";
 import type { ImportRow } from "$core/types/import";
 import type { ConnectionProviderInterface, Teller } from "../types";
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "$core/server/env";
 
 /**
  * Teller Provider

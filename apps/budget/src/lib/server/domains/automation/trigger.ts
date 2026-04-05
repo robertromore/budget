@@ -7,14 +7,14 @@
  * 2. Processing rules directly (without requiring pre-initialized engine)
  */
 
-import type { db as dbType } from "$lib/server/db";
+import type { db as dbType } from "$core/server/db";
 import type { EntityType, RuleEvent, ActionConfig, ConditionGroup } from "$core/types/automation";
 import { automationEvents } from "./event-emitter";
 import { AutomationRepository } from "./repository";
 import { evaluateConditionGroup, type EvaluationContext } from "./condition-evaluator";
 import { executeActions, type ActionExecutionContext } from "./action-executor";
 import type { NewAutomationRuleLog } from "$core/schema/automation-rules";
-import { logger } from "$lib/server/shared/logging";
+import { logger } from "$core/server/shared/logging";
 
 type DatabaseConnection = Omit<typeof dbType, "batch">;
 

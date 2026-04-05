@@ -1,5 +1,5 @@
-import type { Permission, UserRole } from "$lib/server/config/auth";
-import { ForbiddenError, UnauthorizedError } from "$lib/server/shared/types";
+import type { Permission, UserRole } from "$core/server/config/auth";
+import { ForbiddenError, UnauthorizedError } from "$core/server/shared/types";
 import type { Context } from "$lib/trpc/context";
 import { initTRPC } from "@trpc/server";
 

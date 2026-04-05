@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "$core/server/env";
 
 /**
  * OpenAI provider instance for Vercel AI SDK.

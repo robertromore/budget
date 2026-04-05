@@ -1,8 +1,8 @@
 import type { WorkspaceRole } from "$core/schema/workspace-members";
 import { workspaceMembers } from "$core/schema/workspace-members";
-import type { Permission } from "$lib/server/config/permissions";
-import { roleHasPermission } from "$lib/server/config/permissions";
-import { ForbiddenError, UnauthorizedError } from "$lib/server/shared/types";
+import type { Permission } from "$core/server/config/permissions";
+import { roleHasPermission } from "$core/server/config/permissions";
+import { ForbiddenError, UnauthorizedError } from "$core/server/shared/types";
 import type { Context } from "$lib/trpc/context";
 import { t } from "$lib/trpc/t";
 import { and, eq } from "drizzle-orm";

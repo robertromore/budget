@@ -1,6 +1,6 @@
 import { scheduleSkips } from "$core/schema";
 import type { NewScheduleSkip, ScheduleSkip } from "$core/schema/schedule-skips";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, eq } from "drizzle-orm";
 
 export class ScheduleSkipRepository {

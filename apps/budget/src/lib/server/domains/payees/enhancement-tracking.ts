@@ -7,8 +7,8 @@ import {
   type PayeeAiEnhancement,
   type PayeeAiPreferences,
 } from "$core/schema";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 

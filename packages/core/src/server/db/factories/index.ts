@@ -9,7 +9,7 @@
  * - Category groups with members
  * - Saved views
  *
- * Run with: bun run ./src/lib/server/db/factories
+ * Run with: bun run ./src/server/db/factories
  */
 
 import { workspaceFactory } from "./workspaces";
@@ -23,7 +23,7 @@ console.log("🏭 Starting comprehensive factory data generation...\n");
 
 // Create workspace first
 console.log("📦 Creating workspace...");
-const [workspace] = await workspaceFactory(1);
+const workspace = (await workspaceFactory(1))[0]!;
 console.log(`✓ Workspace created: "${workspace.displayName}" (ID: ${workspace.id})\n`);
 
 // Create accounts with transactions
@@ -42,7 +42,7 @@ console.log(`✓ Created envelope budget with monthly periods\n`);
 
 // Create schedules
 console.log("📅 Creating schedules...");
-const schedules = await scheduleFactory(workspace.id, accounts[0].id, 3, {
+const schedules = await scheduleFactory(workspace.id, accounts[0]!.id, 3, {
   frequency: "monthly",
   recurring: true,
 });

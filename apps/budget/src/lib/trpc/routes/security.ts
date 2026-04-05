@@ -7,7 +7,7 @@
 import { z } from "zod/v4";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, t, secureOperationProcedure } from "$lib/trpc";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { nowISOString } from "$core/utils/dates-core";
 import {
   generateEncryptionKey,
@@ -16,20 +16,20 @@ import {
   rotateEncryptionKey,
   unlockDek,
   maskUserKey,
-} from "$lib/server/shared/security/key-management";
+} from "$core/server/shared/security/key-management";
 import {
   calculateRiskScore,
   getTrustedDevices,
   trustDevice,
   revokeDeviceTrust,
   type LoginContext,
-} from "$lib/server/shared/security/risk-assessment";
+} from "$core/server/shared/security/risk-assessment";
 import {
   getEncryptionLevelOptions,
   getEncryptionLevelName,
   validateLevelChange,
   resolveEncryptionContext,
-} from "$lib/server/shared/security/encryption-levels";
+} from "$core/server/shared/security/encryption-levels";
 import type { EncryptionLevel } from "$core/types/encryption";
 import { DEFAULT_USER_ENCRYPTION_PREFERENCES } from "$core/schema/users";
 import { DEFAULT_ENCRYPTION_PREFERENCES, workspaces } from "$core/schema/workspaces";

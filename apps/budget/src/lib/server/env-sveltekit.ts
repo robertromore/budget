@@ -5,6 +5,6 @@
  * SvelteKit's `$env/dynamic/private` into the env abstraction layer.
  */
 import { env } from "$env/dynamic/private";
-import { setEnvProvider } from "./env";
+import { setEnvProvider } from "$core/server/env";
 
 setEnvProvider({ get: (key) => env[key] });

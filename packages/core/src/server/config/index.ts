@@ -4,4 +4,4 @@ export * from "./database";
 export * from "./validation";
 
 // Environment configuration (re-export from existing)
-export { env } from "$lib/env";
+export { env } from "../env-config";

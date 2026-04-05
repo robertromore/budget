@@ -11,7 +11,7 @@ import {
   type CorrectionTrigger,
   type LearningMetrics,
 } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { currentDate, toISOString } from "$core/utils/dates-core";
 import { and, count, desc, eq, gte, inArray, isNull, lte, max, sql } from "drizzle-orm";
 

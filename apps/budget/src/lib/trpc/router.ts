@@ -29,7 +29,7 @@ import { workspaceInvitationsRoutes } from "$lib/trpc/routes/workspace-invitatio
 import { workspaceMembersRoutes } from "$lib/trpc/routes/workspace-members";
 import { t } from "$lib/trpc/t";
 import type { Context } from "$lib/trpc/context";
-import { runWithDbForTesting } from "$lib/server/db";
+import { runWithDbForTesting } from "$core/server/db";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
 import { dashboardRoutes } from "./routes/dashboards";

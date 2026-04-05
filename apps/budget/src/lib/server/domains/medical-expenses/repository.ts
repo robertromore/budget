@@ -5,8 +5,8 @@ import {
   type MedicalExpense,
   type MedicalExpenseType,
 } from "$core/schema/medical-expenses";
-import { db } from "$lib/server/shared/database";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$core/server/shared/database";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 
 // Types for medical expense operations

@@ -1,7 +1,7 @@
 import { accounts } from "$core/schema/accounts";
 import { workspaceMembers } from "$core/schema/workspace-members";
-import { auth } from "$lib/server/auth";
-import { db } from "$lib/server/db";
+import { auth } from "$core/server/auth";
+import { db } from "$core/server/db";
 import { and, eq, isNull } from "drizzle-orm";
 
 export class ImportApiError extends Error {

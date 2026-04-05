@@ -14,9 +14,9 @@ import {
   type NewCategoryGroupRecommendation,
   type NewCategoryGroupSettings,
 } from "$core/schema/category-groups";
-import { db } from "$lib/server/db";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
+import { NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 

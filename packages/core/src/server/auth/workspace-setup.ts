@@ -1,4 +1,4 @@
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { workspaces } from "$core/schema/workspaces";
 import { workspaceMembers } from "$core/schema/workspace-members";
 
@@ -25,11 +25,11 @@ export async function createDefaultWorkspaceForUser(userId: string): Promise<num
 
   // Add user as owner member
   await db.insert(workspaceMembers).values({
-    workspaceId: workspace.id,
+    workspaceId: workspace!.id,
     userId: userId,
     role: "owner",
     isDefault: true,
   });
 
-  return workspace.id;
+  return workspace!.id;
 }

@@ -1,6 +1,6 @@
 import type { PaymentFrequency, IntelligenceProfile, WorkspacePreferences } from "$core/schema";
 import { categories, transactions } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { formatDayOrdinal } from "$core/utils/date-formatters";
 import { parseISOString, dateDifference } from "$core/utils/dates-core";
 import {

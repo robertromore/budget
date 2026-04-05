@@ -3,7 +3,7 @@ import { db } from "../..";
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
- * @deprecated Prefer `runInTransaction` from `$lib/server/db` which uses
+ * @deprecated Prefer `runInTransaction` from `$core/server/db` which uses
  * AsyncLocalStorage to transparently scope the `db` proxy to the transaction.
  *
  * Wraps factory operations in a database transaction for atomic execution

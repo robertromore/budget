@@ -1,6 +1,6 @@
 import { Resend } from "resend";
-import { getEnv } from "$lib/server/env";
-import { logger } from "$lib/server/shared/logging";
+import { getEnv } from "$core/server/env";
+import { logger } from "$core/server/shared/logging";
 
 /**
  * Email send options

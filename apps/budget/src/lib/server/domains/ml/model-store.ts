@@ -12,8 +12,8 @@ import {
   mlTrainingData,
   userBehaviorEvents,
 } from "$core/schema";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
 import { nowISOString } from "$core/utils/dates-core";
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import type { AnomalyAlert, MLModel } from "./types";

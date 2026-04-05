@@ -2,18 +2,18 @@ import type { WorkspaceInvitation } from "$core/schema/workspace-invitations";
 import type { WorkspaceRole } from "$core/schema/workspace-members";
 import { users } from "$core/schema/users";
 import { workspaces } from "$core/schema/workspaces";
-import { db } from "$lib/server/shared/database";
-import { ConflictError, ForbiddenError, ValidationError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/shared/database";
+import { ConflictError, ForbiddenError, ValidationError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { normalize } from "$core/utils/string-utilities";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { WorkspaceInvitationRepository, type InvitationWithDetails } from "./repository";
 import { WorkspaceMemberRepository } from "../workspace-members/repository";
-import { logger } from "$lib/server/shared/logging";
+import { logger } from "$core/server/shared/logging";
 import { sendEmail } from "$lib/server/email";
 import { workspaceInvitationEmail } from "$lib/server/email/templates";
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "$core/server/env";
 
 // Invitation expiry in days
 const INVITATION_EXPIRY_DAYS = 7;

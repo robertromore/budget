@@ -1,7 +1,7 @@
 import type { PayeeCategory } from "$core/schema/payee-categories";
 import { payeeCategories } from "$core/schema/payee-categories";
 import { payees } from "$core/schema/payees";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { nowISOString } from "$core/utils/dates-core";
 import { and, count, eq, isNull } from "drizzle-orm";
 

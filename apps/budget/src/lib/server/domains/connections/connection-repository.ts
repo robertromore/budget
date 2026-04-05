@@ -9,8 +9,8 @@ import type {
   SyncHistoryStatus,
 } from "$core/schema/account-connections";
 import { accountConnections, syncHistory, accounts } from "$core/schema";
-import { db } from "$lib/server/db";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import type { ConnectionStats } from "./types";

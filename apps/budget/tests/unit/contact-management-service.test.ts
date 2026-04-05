@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ContactManagementService } from "../../src/lib/server/domains/payees/contact-management";
-import { ValidationError } from "../../src/lib/server/shared/types/errors";
+import { ValidationError } from "../../../../packages/core/src/server/shared/types/errors";
 
 // Mock logger
-vi.mock("../../src/lib/server/shared/logging", () => ({
+vi.mock("../../../../packages/core/src/server/shared/logging", () => ({
   logger: {
     error: vi.fn(),
     debug: vi.fn(),

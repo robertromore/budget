@@ -1,7 +1,7 @@
 import type { WorkspaceMember, WorkspaceRole } from "$core/schema/workspace-members";
 import { workspaces } from "$core/schema/workspaces";
-import { db } from "$lib/server/shared/database";
-import { ConflictError, ForbiddenError, ValidationError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/shared/database";
+import { ConflictError, ForbiddenError, ValidationError } from "$core/server/shared/types/errors";
 import { eq } from "drizzle-orm";
 import {
   WorkspaceMemberRepository,

@@ -2,8 +2,8 @@ import type { WorkspaceMember, WorkspaceRole } from "$core/schema/workspace-memb
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { workspaces } from "$core/schema/workspaces";
 import { users } from "$core/schema/users";
-import { db } from "$lib/server/shared/database";
-import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/shared/database";
+import { DatabaseError, NotFoundError } from "$core/server/shared/types/errors";
 import { and, eq, isNull, desc } from "drizzle-orm";
 
 export interface CreateMemberInput {

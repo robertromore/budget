@@ -12,7 +12,7 @@ import {
   type NewAutomationRule,
   type NewAutomationRuleLog,
 } from "$core/schema/automation-rules";
-import type { db } from "$lib/server/db";
+import type { db } from "$core/server/db";
 import type { EntityType } from "$core/types/automation";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 

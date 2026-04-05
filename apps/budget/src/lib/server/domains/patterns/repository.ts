@@ -1,6 +1,6 @@
 import { accounts, detectedPatterns } from "$core/schema";
 import type { DetectedPattern, NewDetectedPattern } from "$core/schema/detected-patterns";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 
 export class PatternRepository {

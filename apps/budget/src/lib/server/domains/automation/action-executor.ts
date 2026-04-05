@@ -5,7 +5,7 @@
  * that performs the actual operation and returns the result.
  */
 
-import type { db } from "$lib/server/db";
+import type { db } from "$core/server/db";
 import {
   actionDefinitions,
   type ActionConfig,

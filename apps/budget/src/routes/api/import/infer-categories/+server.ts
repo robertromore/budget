@@ -3,7 +3,7 @@ import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import { PayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { getTransferMappingService } from "$lib/server/domains/transfers";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { payees, categories, accounts } from "$core/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import type { ImportRow } from "$core/types/import";

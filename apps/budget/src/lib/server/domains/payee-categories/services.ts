@@ -1,6 +1,6 @@
 import type { PayeeCategory } from "$core/schema/payee-categories";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { defaultPayeeCategories } from "./default-payee-categories";
 import {
   PayeeCategoryRepository,

@@ -11,9 +11,9 @@ import {
   type RecommendationStatus,
   type RecommendationType,
 } from "$core/schema/recommendations";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
+import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import type { BudgetRecommendationDraft } from "./budget-analysis-service";

@@ -6,7 +6,7 @@
  */
 
 import { tool, jsonSchema } from "ai";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { accounts } from "$core/schema/accounts";
 import { transactions } from "$core/schema/transactions";
 import { categories } from "$core/schema/categories";

@@ -12,7 +12,7 @@
 import { accounts, categories, payees, transactions } from "$core/schema";
 import type { AmountType } from "$core/schema/category-aliases";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import { createSimilarityService, type SimilarityService } from "../similarity/service";

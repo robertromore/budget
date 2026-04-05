@@ -4,7 +4,7 @@ import type { Payee } from "$core/schema/payees";
 import { payees } from "$core/schema/payees";
 import type { BillingCycle, SubscriptionType } from "$core/schema/subscriptions";
 import { transactions } from "$core/schema/transactions";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import {
   getRecurringDetectionService,
   type RecurringPattern,

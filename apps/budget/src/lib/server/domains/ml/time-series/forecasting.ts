@@ -6,7 +6,7 @@
  */
 
 import { transactions } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, linearRegressionLine, mean, standardDeviation } from "simple-statistics";
 import type { FeatureEngineeringService } from "../feature-engineering";

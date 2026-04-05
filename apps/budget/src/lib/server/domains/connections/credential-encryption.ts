@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "$core/server/env";
 
 /**
  * Credential Encryption Utility

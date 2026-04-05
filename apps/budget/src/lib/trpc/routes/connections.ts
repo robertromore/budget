@@ -4,7 +4,7 @@ import {
   type ConnectionProviderPreferences,
   type WorkspacePreferences,
 } from "$core/schema/workspaces";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { getConnectionService } from "$lib/server/domains/connections";
 import {
   encryptCredentials,

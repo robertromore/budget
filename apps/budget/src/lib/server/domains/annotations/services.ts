@@ -1,5 +1,5 @@
 import type { MonthAnnotation } from "$core/schema/month-annotations";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { AnnotationRepository, type UpdateAnnotationData } from "./repository";
 
 export interface CreateAnnotationData {

@@ -6,8 +6,8 @@ import type {
   PayeeAliasWithPayee,
 } from "$core/schema/payee-aliases";
 import { payeeAliases, payees } from "$core/schema";
-import { db } from "$lib/server/db";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { NotFoundError } from "$core/server/shared/types/errors";
 import { cleanStringForFuzzyMatching, normalize } from "$core/utils/string-utilities";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";

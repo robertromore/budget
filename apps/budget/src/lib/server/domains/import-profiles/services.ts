@@ -1,7 +1,7 @@
 import type { ColumnMapping, ImportProfile, NewImportProfile } from "$core/schema/import-profiles";
 import { generateColumnSignature } from "$core/schema/import-profiles";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { minimatch } from "minimatch";
 import { ImportProfileRepository, type UpdateImportProfileData } from "./repository";
 

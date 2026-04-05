@@ -16,7 +16,7 @@ import type {
   WorkspacePreferences,
 } from "$core/schema";
 import { budgets, categories, predictionFeedback, transactions, workspaces } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { compact } from "$core/utils/array-utilities";
 import { isEmptyObject, isNotEmptyObject } from "$core/utils/object-utilities";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
@@ -24,9 +24,9 @@ import {
   extractMerchantName,
   merchantSimilarity,
 } from "$lib/server/domains/ml/similarity/text-similarity";
-import { logger } from "$lib/server/shared/logging";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { logger } from "$core/server/shared/logging";
+import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { currentDate, nowISOString, toISOString } from "$core/utils/dates-core";
 import { normalize, toTitleCase } from "$core/utils/string-utilities";
 import { BudgetAllocationService } from "./budget-allocation";
@@ -5034,7 +5034,7 @@ export class PayeeService {
   }> {
     const { createIntelligenceCoordinator } = await import("$lib/server/ai");
     const { workspaces } = await import("$core/schema/workspaces");
-    const { db } = await import("$lib/server/db");
+    const { db } = await import("$core/server/db");
     const { eq } = await import("drizzle-orm");
     const { generateText } = await import("ai");
 
@@ -5313,7 +5313,7 @@ Respond in JSON format only:
   }> {
     const { createIntelligenceCoordinator } = await import("$lib/server/ai");
     const { workspaces } = await import("$core/schema/workspaces");
-    const { db } = await import("$lib/server/db");
+    const { db } = await import("$core/server/db");
     const { eq } = await import("drizzle-orm");
     const { generateText } = await import("ai");
 

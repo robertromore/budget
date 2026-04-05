@@ -9,8 +9,8 @@
 import { budgetAccounts, budgetCategories, budgets, budgetTransactions } from "$core/schema/budgets";
 import { payees } from "$core/schema/payees";
 import { transactions } from "$core/schema/transactions";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
+import { db } from "$core/server/db";
+import { logger } from "$core/server/shared/logging";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface BudgetSuggestion {

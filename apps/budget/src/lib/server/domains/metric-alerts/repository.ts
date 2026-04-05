@@ -1,6 +1,6 @@
 import { metricAlerts, type MetricAlert, type NewMetricAlert } from "$core/schema/metric-alerts";
-import { db } from "$lib/server/db";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$core/server/db";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, eq, isNull } from "drizzle-orm";
 

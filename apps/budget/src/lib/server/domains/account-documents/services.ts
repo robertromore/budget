@@ -1,7 +1,7 @@
 import type { AccountDocument, DocumentType } from "$core/schema/account-documents";
 import { ALLOWED_DOCUMENT_MIMES, MAX_DOCUMENT_SIZE } from "$core/schema/account-documents";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { existsSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";

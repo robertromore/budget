@@ -6,8 +6,8 @@ import type {
   SpendingPriority,
   TaxCategory,
 } from "$core/schema/categories";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
+import { InputSanitizer } from "$core/server/shared/validation";
 import { isEmptyObject } from "$core/utils/object-utilities";
 import { defaultCategories } from "./default-categories";
 import {

@@ -1,4 +1,4 @@
-import { VALIDATION_CONFIG } from "$lib/server/config/validation";
+import { VALIDATION_CONFIG } from "$core/server/config/validation";
 import { z } from "zod";
 
 /**

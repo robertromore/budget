@@ -1,4 +1,4 @@
-import { DomainError } from "$lib/server/shared/types";
+import { DomainError } from "$core/server/shared/types";
 import type { Context } from "$lib/trpc/context";
 import { initTRPC, TRPCError } from "@trpc/server";
 

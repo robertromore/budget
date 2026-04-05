@@ -265,7 +265,7 @@ export const payeeCategoriesRoutes = t.router({
     .mutation(
       withErrorHandler(async ({ input, ctx }) => {
         // Import payee repository to update payees
-        const { db } = await import("$lib/server/db");
+        const { db } = await import("$core/server/db");
         const { payees } = await import("$core/schema");
         const { and, eq, inArray, isNull } = await import("drizzle-orm");
 

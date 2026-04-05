@@ -5,8 +5,8 @@ import {
   type ExtractionStatus,
   type ExtractionMethod,
 } from "$core/schema/account-documents";
-import { db } from "$lib/server/shared/database";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$core/server/shared/database";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 // Types for document operations

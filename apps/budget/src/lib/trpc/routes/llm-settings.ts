@@ -14,13 +14,13 @@ import {
   type LLMProviderConfig,
   workspaces,
 } from "$core/schema/workspaces";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import {
   decryptApiKey,
   encryptApiKey,
   maskApiKey,
   validateApiKeyFormat,
-} from "$lib/server/shared/security";
+} from "$core/server/shared/security";
 import { publicProcedure, secureOperationProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";

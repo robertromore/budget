@@ -10,7 +10,7 @@
  */
 
 import type { AutomationRule, NewAutomationRuleLog } from "$core/schema/automation-rules";
-import type { db } from "$lib/server/db";
+import type { db } from "$core/server/db";
 import type { ActionConfig, ConditionGroup, EntityType, RuleEvent } from "$core/types/automation";
 import { executeActions, type ActionExecutionContext } from "./action-executor";
 import { evaluateConditionGroup, type EvaluationContext } from "./condition-evaluator";

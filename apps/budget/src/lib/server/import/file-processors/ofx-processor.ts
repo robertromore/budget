@@ -5,7 +5,7 @@
  * for bank statement downloads.
  */
 
-import { logger } from "$lib/server/shared/logging";
+import { logger } from "$core/server/shared/logging";
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$core/types/import";
 import { XMLParser } from "fast-xml-parser";
 import { FileValidationError, ParseError } from "../errors";

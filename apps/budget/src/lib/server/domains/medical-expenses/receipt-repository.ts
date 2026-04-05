@@ -3,8 +3,8 @@ import {
   type ExpenseReceipt,
   type ReceiptType,
 } from "$core/schema/expense-receipts";
-import { db } from "$lib/server/shared/database";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$core/server/shared/database";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { and, desc, eq, isNull } from "drizzle-orm";
 
 // Types for receipt operations

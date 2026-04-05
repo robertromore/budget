@@ -2,7 +2,7 @@ import * as schema from "$core/schema/index";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "../env";
 
 type DbInstance = ReturnType<typeof drizzle<typeof schema>>;
 type DbTransaction = Parameters<Parameters<DbInstance["transaction"]>[0]>[0];

@@ -1,4 +1,4 @@
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { accounts, payees, categories, transactions, schedules } from "$core/schema";
 import { and, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { analyzeAmounts, getRepresentativeAmount } from "./analyzers/amount";

@@ -3,9 +3,9 @@ import {
   type ImportProfile,
   type NewImportProfile,
 } from "$core/schema/import-profiles";
-import { db } from "$lib/server/db";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { DatabaseError } from "$lib/server/shared/types/errors";
+import { db } from "$core/server/db";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
+import { DatabaseError } from "$core/server/shared/types/errors";
 import { nowISOString } from "$core/utils/dates-core";
 import { and, desc, eq, like, sql } from "drizzle-orm";
 

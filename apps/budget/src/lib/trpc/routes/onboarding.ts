@@ -15,7 +15,7 @@ import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import type { db } from "$lib/server/db";
+import type { db } from "$core/server/db";
 
 // Zod schema for OnboardingFormData
 const onboardingFormDataSchema = z.object({

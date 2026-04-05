@@ -1,5 +1,5 @@
-import { SANITIZATION_PATTERNS, VALIDATION_CONFIG } from "$lib/server/config/validation";
-import { ValidationError } from "$lib/server/shared/types";
+import { SANITIZATION_PATTERNS, VALIDATION_CONFIG } from "$core/server/config/validation";
+import { ValidationError } from "$core/server/shared/types";
 import validator from "validator";
 
 /**

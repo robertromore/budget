@@ -1,6 +1,6 @@
 import { db } from "..";
 import { views, type View } from "$core/schema/views";
-import type { ViewFilter, ViewDisplayState } from "$lib/types";
+import type { ViewFilter, ViewDisplayState } from "../../../types/filter";
 import { faker } from "@faker-js/faker";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 
@@ -173,7 +173,7 @@ function generateDisplayState(): ViewDisplayState {
 
   // Only add grouping if enabled (avoid undefined assignment)
   if (faker.datatype.boolean({ probability: 0.3 })) {
-    state.grouping = ["date"];
+    state["grouping"] = ["date"];
   }
 
   return state;

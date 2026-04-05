@@ -11,7 +11,7 @@ import { fetchFinancialContext } from "$lib/server/ai/financial-context";
 import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$lib/server/ai/prompts/chat-assistant";
 import { getActiveProvider, type ProviderInstance } from "$lib/server/ai/providers";
 import { createAITools } from "$lib/server/ai/tools";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";

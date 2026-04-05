@@ -1,4 +1,4 @@
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import {
   workspaceCounters,
   type SequencedEntityType,

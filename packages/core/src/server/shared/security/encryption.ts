@@ -5,7 +5,7 @@
  * Uses AES-256-GCM with authenticated encryption to prevent tampering.
  */
 
-import { getEnv } from "$lib/server/env";
+import { getEnv } from "$core/server/env";
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";

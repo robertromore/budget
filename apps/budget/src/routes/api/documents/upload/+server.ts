@@ -10,8 +10,8 @@ import {
   DEFAULT_LLM_PREFERENCES,
   workspaces,
 } from "$core/schema/workspaces";
-import { auth } from "$lib/server/auth";
-import { db } from "$lib/server/db";
+import { auth } from "$core/server/auth";
+import { db } from "$core/server/db";
 import { DocumentExtractionService } from "$lib/server/domains/document-extraction";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { formatFileSize } from "$lib/utils/formatters";

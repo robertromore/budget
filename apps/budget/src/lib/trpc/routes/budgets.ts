@@ -10,10 +10,10 @@ import {
 import { scheduleDates } from "$core/schema/schedule-dates";
 import { schedules } from "$core/schema/schedules";
 import { transactions } from "$core/schema/transactions";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { NotFoundError } from "$core/server/shared/types/errors";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { generateUniqueSlugForDB } from "$core/utils/slug-utils";
@@ -1895,7 +1895,7 @@ export const budgetRoutes = t.router({
       try {
         // For now, directly query the database
         // In Phase 6 we can add this to the service layer
-        const { db } = await import("$lib/server/db");
+        const { db } = await import("$core/server/db");
         const { budgetAutomationActivity } = await import("$core/schema/budget-automation-settings");
         const { desc, eq, and } = await import("drizzle-orm");
 

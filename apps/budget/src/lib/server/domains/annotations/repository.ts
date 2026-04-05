@@ -3,8 +3,8 @@ import {
   type MonthAnnotation,
   type NewMonthAnnotation,
 } from "$core/schema/month-annotations";
-import { db } from "$lib/server/db";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$core/server/db";
+import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 

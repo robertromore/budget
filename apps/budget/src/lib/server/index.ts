@@ -1,4 +1,4 @@
 // Main server exports
-export * from "./config";
+export * from "$core/server/config";
 export * from "./domains";
-export * from "./shared";
+export * from "$core/server/shared";

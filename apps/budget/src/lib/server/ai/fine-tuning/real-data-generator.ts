@@ -11,7 +11,7 @@
  *   bun run src/lib/server/ai/fine-tuning/export-real-data.ts --workspace 1
  */
 
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { accounts, budgets, budgetCategories, categories, payees, transactions } from "$core/schema";
 import { formatPercent } from "$lib/server/utils/formatters";
 import { nowISOString } from "$core/utils/dates-core";

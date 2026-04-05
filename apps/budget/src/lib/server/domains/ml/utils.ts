@@ -5,7 +5,7 @@
  */
 
 import { accounts } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, eq, isNull } from "drizzle-orm";
 
 /**

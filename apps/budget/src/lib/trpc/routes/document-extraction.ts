@@ -12,7 +12,7 @@ import {
   workspaces,
 } from "$core/schema/workspaces";
 import { extractionMethodKeys, extractionStatusKeys } from "$core/schema/account-documents";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { DocumentExtractionService } from "$lib/server/domains/document-extraction";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";

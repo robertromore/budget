@@ -1644,7 +1644,7 @@ export const payeeRoutes = t.router({
       withErrorHandler(async ({ input, ctx }) => {
         const { createIntelligenceCoordinator } = await import("$lib/server/ai");
         const { workspaces } = await import("$core/schema/workspaces");
-        const { db } = await import("$lib/server/db");
+        const { db } = await import("$core/server/db");
         const { eq } = await import("drizzle-orm");
         const { generateText } = await import("ai");
 
@@ -1737,7 +1737,7 @@ Cleaned name:`;
         const { createIntelligenceCoordinator } = await import("$lib/server/ai");
         const { workspaces } = await import("$core/schema/workspaces");
         const { categories } = await import("$core/schema/categories");
-        const { db } = await import("$lib/server/db");
+        const { db } = await import("$core/server/db");
         const { eq } = await import("drizzle-orm");
         const { generateText } = await import("ai");
 
@@ -1944,7 +1944,7 @@ Return ONLY valid JSON, no explanation:`;
     withErrorHandler(async ({ input, ctx }) => {
       const { createIntelligenceCoordinator } = await import("$lib/server/ai");
       const { workspaces } = await import("$core/schema/workspaces");
-      const { db } = await import("$lib/server/db");
+      const { db } = await import("$core/server/db");
       const { eq } = await import("drizzle-orm");
       const { generateText } = await import("ai");
 
@@ -2073,10 +2073,10 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
         await import("$lib/server/domains/web-search");
       const { createIntelligenceCoordinator } = await import("$lib/server/ai");
       const { workspaces } = await import("$core/schema/workspaces");
-      const { db } = await import("$lib/server/db");
+      const { db } = await import("$core/server/db");
       const { eq } = await import("drizzle-orm");
       const { generateText } = await import("ai");
-      const { decryptApiKey } = await import("$lib/server/shared/security/encryption");
+      const { decryptApiKey } = await import("$core/server/shared/security/encryption");
 
       // Get workspace preferences
       const workspace = await db.query.workspaces.findFirst({

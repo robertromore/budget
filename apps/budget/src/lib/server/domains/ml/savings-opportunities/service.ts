@@ -9,7 +9,7 @@
  */
 
 import { categories, payees, transactions } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { mean } from "simple-statistics";
 import type { MLModelStore } from "../model-store";

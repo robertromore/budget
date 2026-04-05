@@ -10,7 +10,7 @@
  */
 
 import { transactions } from "$core/schema";
-import { db } from "$lib/server/db";
+import { db } from "$core/server/db";
 import { and, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, mean, standardDeviation } from "simple-statistics";
 import type { ForecastPrediction } from "../types";
