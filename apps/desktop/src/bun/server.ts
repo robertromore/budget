@@ -2,7 +2,8 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { router } from "@budget/core/trpc";
 import { createContext, type RequestAdapter, type CookieOptions } from "@budget/core/trpc";
 import { setEnvProvider } from "@budget/core/server/env";
-import type { DesktopConfig } from "./config";
+import { type DesktopConfig, saveConfig } from "./config";
+import { runMigrations } from "./migrate";
 
 function parseCookies(header: string): Record<string, string> {
 	const cookies: Record<string, string> = {};
@@ -55,6 +56,58 @@ export function startServer(config: DesktopConfig): number {
 			// Handle preflight
 			if (req.method === "OPTIONS") {
 				return new Response(null, { status: 204, headers: corsHeaders });
+			}
+
+			// Handle desktop setup API
+			if (url.pathname === "/api/setup" && req.method === "POST") {
+				try {
+					const body = await req.json() as {
+						databasePath: string;
+						authMode: "local" | "password";
+						email?: string;
+						password?: string;
+					};
+
+					// Update config
+					config.databasePath = body.databasePath;
+					config.authMode = body.authMode;
+					config.setupComplete = true;
+					saveConfig(config);
+
+					// Re-run migrations with new path
+					await runMigrations(config.databasePath);
+
+					// Create initial user if password mode
+					if (body.authMode === "password" && body.email && body.password) {
+						const { auth } = await import("@budget/core/server/auth");
+						await auth.api.signUpEmail({
+							body: { email: body.email, password: body.password, name: "Admin" },
+						});
+					} else if (body.authMode === "local") {
+						// Create a default local user
+						const { auth } = await import("@budget/core/server/auth");
+						try {
+							await auth.api.signUpEmail({
+								body: { email: "local@budget.app", password: "local-desktop-user", name: "Local User" },
+							});
+						} catch {
+							// User may already exist
+						}
+					}
+
+					return Response.json({ success: true }, { headers: corsHeaders });
+				} catch (error) {
+					console.error("Setup error:", error);
+					return Response.json(
+						{ success: false, error: String(error) },
+						{ status: 500, headers: corsHeaders },
+					);
+				}
+			}
+
+			// Handle desktop config API
+			if (url.pathname === "/api/config" && req.method === "GET") {
+				return Response.json(config, { headers: corsHeaders });
 			}
 
 			// Handle Better Auth routes
