@@ -10,7 +10,7 @@ import { accounts as accountTable } from "$lib/schema/accounts";
 import { transactions as transactionTable } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import type { ImportRow, TransferTargetMatch } from "$lib/types/import";
-import { compact } from "$lib/utils";
+import { compact } from "$lib/utils/array-utilities";
 import { daysBetweenDates, parseLocalDate } from "$lib/utils/date-helpers";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 

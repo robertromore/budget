@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
-import { env } from "$env/dynamic/private";
+import { getEnv } from "$lib/server/env";
 
 /**
  * Credential Encryption Utility
@@ -21,7 +21,7 @@ const AUTH_TAG_LENGTH = 16; // 128 bits
  * Get the base secret key from environment
  */
 function getBaseSecret(): string {
-  const secret = env.ENCRYPTION_SECRET || env.AUTH_SECRET;
+  const secret = getEnv("ENCRYPTION_SECRET") || getEnv("AUTH_SECRET");
   if (!secret) {
     throw new Error(
       "ENCRYPTION_SECRET or AUTH_SECRET must be set in environment for credential encryption"

@@ -18,7 +18,7 @@ import type {
   TimeSeriesForecast,
 } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 
 export interface ForecastOptions {
   horizon: number;

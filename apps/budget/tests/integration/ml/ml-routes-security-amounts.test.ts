@@ -97,7 +97,7 @@ describe("ML routes security and amount integrity", () => {
       userId: testUserId,
       sessionId: "ml-security-session-a",
       workspaceId: workspaceAId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
 
@@ -106,7 +106,7 @@ describe("ML routes security and amount integrity", () => {
       userId: testUserId,
       sessionId: "ml-security-session-b",
       workspaceId: workspaceBId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
   });

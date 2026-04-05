@@ -6,7 +6,7 @@ import {
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 
 export interface UpdateAnnotationData {
   note?: string | null | undefined;

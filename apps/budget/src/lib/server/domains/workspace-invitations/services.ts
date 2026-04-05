@@ -4,7 +4,7 @@ import { users } from "$lib/schema/users";
 import { workspaces } from "$lib/schema/workspaces";
 import { db } from "$lib/server/shared/database";
 import { ConflictError, ForbiddenError, ValidationError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { normalize } from "$lib/utils/string-utilities";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
@@ -13,7 +13,7 @@ import { WorkspaceMemberRepository } from "../workspace-members/repository";
 import { logger } from "$lib/server/shared/logging";
 import { sendEmail } from "$lib/server/email";
 import { workspaceInvitationEmail } from "$lib/server/email/templates";
-import { env } from "$env/dynamic/private";
+import { getEnv } from "$lib/server/env";
 
 // Invitation expiry in days
 const INVITATION_EXPIRY_DAYS = 7;
@@ -296,7 +296,7 @@ export class WorkspaceInvitationService {
     token: string,
     inviterUserId: string
   ): Promise<void> {
-    const baseUrl = env.BETTER_AUTH_URL || "http://localhost:5173";
+    const baseUrl = getEnv("BETTER_AUTH_URL") || "http://localhost:5173";
     const inviteUrl = `${baseUrl}/invite/${token}`;
 
     // Get workspace and inviter details for the email

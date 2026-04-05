@@ -3,6 +3,7 @@ import { sessions, authAccounts, type Session } from "$lib/schema/auth";
 import { db } from "$lib/server/shared/database";
 import { AUTH_CONFIG } from "$lib/server/config/auth";
 import { ValidationError, NotFoundError, UnauthorizedError } from "$lib/server/shared/types/errors";
+import { getEnv } from "$lib/server/env";
 import { eq, and } from "drizzle-orm";
 import { logger } from "$lib/server/shared/logging";
 import { authRepository } from "./repository";
@@ -168,7 +169,7 @@ export class AuthService {
     );
 
     const baseUrl =
-      process.env.PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:5173";
+      getEnv("PUBLIC_APP_URL") || getEnv("BETTER_AUTH_URL") || "http://localhost:5173";
     const resetUrl = `${baseUrl}/reset-password?token=${verification.token}`;
 
     logger.info("Password reset initiated:", {
@@ -458,7 +459,7 @@ export class AuthService {
     );
 
     const baseUrl =
-      process.env.PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:5173";
+      getEnv("PUBLIC_APP_URL") || getEnv("BETTER_AUTH_URL") || "http://localhost:5173";
     const verifyUrl = `${baseUrl}/verify-email?token=${verification.token}`;
 
     // Send verification email

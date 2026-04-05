@@ -108,13 +108,13 @@ function detectSuspiciousPatterns(input: any, operation: string): string[] {
  * Extract client information from context
  */
 function extractClientInfo(ctx: Context) {
-  const request = (ctx as any).event?.request;
-  const forwardedFor = request?.headers?.get?.("x-forwarded-for");
+  const headers = ctx.request?.headers;
+  const forwardedFor = headers?.get?.("x-forwarded-for");
   const ipFromHeader = forwardedFor?.split(",")[0]?.trim();
 
   return {
-    userAgent: request?.headers?.get?.("user-agent") || (ctx as any).userAgent || "unknown",
-    ip: ipFromHeader || (ctx as any).ip || "unknown",
+    userAgent: headers?.get?.("user-agent") || "unknown",
+    ip: ipFromHeader || "unknown",
     userId: ctx.userId || "anonymous",
   };
 }

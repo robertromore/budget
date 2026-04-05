@@ -2,6 +2,7 @@ import * as schema from "$lib/schema/index";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { getEnv } from "$lib/server/env";
 
 type DbInstance = ReturnType<typeof drizzle<typeof schema>>;
 type DbTransaction = Parameters<Parameters<DbInstance["transaction"]>[0]>[0];
@@ -12,7 +13,7 @@ const txStorage = new AsyncLocalStorage<DbTransaction>();
 let testDbOverride: DbInstance | null = null;
 
 function createDb() {
-  const DATABASE_URL = process.env.DATABASE_URL || Bun.env?.DATABASE_URL || "";
+  const DATABASE_URL = getEnv("DATABASE_URL") || "";
   if (!DATABASE_URL) throw new Error("DATABASE_URL is not set");
 
   const client = createClient({ url: DATABASE_URL });

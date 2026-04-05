@@ -1,4 +1,5 @@
 import { createContext } from "$lib/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { router } from "$lib/trpc/router";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { RequestHandler } from "./$types";
@@ -8,7 +9,7 @@ const handler: RequestHandler = (event) => {
     endpoint: "/api/trpc",
     req: event.request,
     router,
-    createContext: () => createContext(event),
+    createContext: () => createContext(fromSvelteKit(event)),
     onError: ({ type, path, error }) => {
       console.error(`Encountered error while trying to process ${type} @ ${path}:`, error);
     },

@@ -7,6 +7,7 @@ import {
   type SuperformDeleteTransactionData,
 } from "$lib/schema/superforms/transactions";
 import { createContext } from "$lib/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";
 import { currentDate } from "$lib/utils/dates";
 import { validateAndSanitizeNotes } from "$lib/utils/input-sanitization";
@@ -56,7 +57,7 @@ export const actions: Actions = {
         });
       }
 
-      const caller = createCaller(await createContext(event));
+      const caller = createCaller(await createContext(fromSvelteKit(event)));
       const entity = await caller.transactionRoutes.create({
         accountId: data.accountId,
         amount: data.amount,
@@ -95,7 +96,7 @@ export const actions: Actions = {
       // Cast form data to proper type (zod4 adapter returns unknown)
       const data = form.data as SuperformUpdateTransactionData;
 
-      const caller = createCaller(await createContext(event));
+      const caller = createCaller(await createContext(fromSvelteKit(event)));
 
       // Manual security validation for notes field
       if (data.notes !== undefined) {
@@ -159,7 +160,7 @@ export const actions: Actions = {
     const data = form.data as SuperformDeleteTransactionData;
 
     try {
-      const caller = createCaller(await createContext(event));
+      const caller = createCaller(await createContext(fromSvelteKit(event)));
       await caller.transactionRoutes.delete({
         id: data.id,
       });

@@ -4,8 +4,32 @@ import { users } from "$lib/schema/users";
 import { db } from "$lib/server/db";
 import { auth } from "$lib/server/auth";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
-import type { RequestEvent } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
+
+/**
+ * Cookie options for the RequestAdapter
+ */
+export interface CookieOptions {
+  path?: string;
+  maxAge?: number;
+  sameSite?: "strict" | "lax" | "none";
+  httpOnly?: boolean;
+  secure?: boolean;
+  domain?: string;
+  expires?: Date;
+}
+
+/**
+ * Platform-agnostic request adapter.
+ *
+ * Abstracts cookie/header access so the tRPC context layer works with
+ * SvelteKit, Bun.serve, or any other HTTP runtime.
+ */
+export interface RequestAdapter {
+  headers: Headers;
+  getCookie(name: string): string | undefined;
+  setCookie(name: string, value: string, options: CookieOptions): void;
+}
 
 /**
  * Session info from Better Auth
@@ -29,11 +53,9 @@ async function verifyUserExists(userId: string): Promise<boolean> {
  * Get the current user ID and session ID from the Better Auth session
  * Validates that the user still exists in the database
  */
-async function getSessionInfo(event: RequestEvent): Promise<SessionInfo> {
+async function getSessionInfo(headers: Headers): Promise<SessionInfo> {
   try {
-    const session = await auth.api.getSession({
-      headers: event.request.headers,
-    });
+    const session = await auth.api.getSession({ headers });
 
     if (session?.user?.id && session?.session?.id) {
       // Verify the user actually exists in the database
@@ -60,15 +82,16 @@ async function getSessionInfo(event: RequestEvent): Promise<SessionInfo> {
  * Get the current workspace ID from the request
  * Uses session-based membership and never provisions workspace access for unauthenticated users.
  */
-async function getCurrentWorkspaceId(event: RequestEvent, userId: string | null): Promise<number> {
+async function getCurrentWorkspaceId(
+  workspaceIdCookie: string | undefined,
+  userId: string | null
+): Promise<number> {
   // Unauthenticated requests should never get workspace access.
   if (!userId) {
     return 0;
   }
 
   // First, check cookie for workspace selection
-  const workspaceIdCookie = event.cookies.get("workspaceId");
-
   if (workspaceIdCookie) {
     const workspaceId = parseInt(workspaceIdCookie);
     if (!isNaN(workspaceId)) {
@@ -198,16 +221,16 @@ async function getOrCreateDefaultWorkspace(userId: string): Promise<number> {
 /**
  * Create tRPC context with user and workspace isolation
  */
-export async function createContext(event: RequestEvent) {
-  const { userId, sessionId } = await getSessionInfo(event);
-  const workspaceId = await getCurrentWorkspaceId(event, userId);
+export async function createContext(request: RequestAdapter) {
+  const { userId, sessionId } = await getSessionInfo(request.headers);
+  const workspaceId = await getCurrentWorkspaceId(request.getCookie("workspaceId"), userId);
 
   return {
     db,
     userId,
     sessionId,
     workspaceId,
-    event,
+    request,
   };
 }
 

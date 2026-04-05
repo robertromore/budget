@@ -12,7 +12,7 @@ import {
   type PeriodTemplateType,
 } from "$lib/schema/budgets";
 import { faker } from "@faker-js/faker";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { sequence } from "./utils/sequence";
 
 export interface BudgetFactoryOptions {

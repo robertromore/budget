@@ -7,7 +7,7 @@
  */
 
 import type { ChatContext } from "$lib/states/ui/ai-chat.svelte";
-import { isNotEmptyObject } from "$lib/utils";
+import { isNotEmptyObject } from "$lib/utils/object-utilities";
 import { formatContextForPrompt, type FinancialContext } from "../financial-context";
 
 /**

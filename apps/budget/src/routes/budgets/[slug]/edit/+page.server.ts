@@ -3,6 +3,7 @@ import {
   type SuperformInsertBudgetData,
 } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";
 import { fail, redirect } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
@@ -17,7 +18,7 @@ export const load: PageServerLoad = async (event) => {
     throw redirect(303, "/budgets");
   }
 
-  const context = await createContext(event);
+  const context = await createContext(fromSvelteKit(event));
   const caller = createCaller(context);
 
   try {
@@ -95,7 +96,7 @@ export const actions: Actions = {
     const data = form.data as SuperformInsertBudgetData;
 
     try {
-      const context = await createContext(event);
+      const context = await createContext(fromSvelteKit(event));
       const caller = createCaller(context);
 
       // Get the budget to retrieve its ID and preserve existing metadata

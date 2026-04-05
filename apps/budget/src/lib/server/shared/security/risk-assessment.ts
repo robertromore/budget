@@ -17,7 +17,7 @@ import {
   type NewTrustedContext,
 } from "$lib/schema/security";
 import type { RiskScore, RiskFactor, RiskFactorSettings } from "$lib/types/encryption";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 import { createHash } from "node:crypto";
 
 /**

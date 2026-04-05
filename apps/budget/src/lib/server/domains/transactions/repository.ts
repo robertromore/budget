@@ -3,7 +3,7 @@ import { isDebtAccount } from "$lib/schema/accounts";
 import type { NewTransaction, Transaction } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, asc, between, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
 import type { TransactionDbResult } from "./types";
 

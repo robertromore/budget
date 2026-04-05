@@ -17,7 +17,7 @@ import {
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 
 // ================================================================================

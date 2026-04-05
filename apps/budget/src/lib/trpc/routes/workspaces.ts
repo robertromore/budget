@@ -1,7 +1,7 @@
 import { workspaceMembers } from "$lib/schema/workspace-members";
 import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
 import { publicProcedure, t } from "$lib/trpc";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 import { TRPCError } from "@trpc/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -136,7 +136,7 @@ export const workspaceRoutes = t.router({
       }
 
       // Set cookie (expires in 1 year)
-      ctx.event.cookies.set("workspaceId", input.workspaceId.toString(), {
+      ctx.request.setCookie("workspaceId", input.workspaceId.toString(), {
         path: "/",
         maxAge: 60 * 60 * 24 * 365,
         sameSite: "strict",

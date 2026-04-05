@@ -41,7 +41,7 @@ describe("LLM settings routes", () => {
       userId: testUserId,
       sessionId: "llm-settings-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
   });

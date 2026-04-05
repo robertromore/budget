@@ -5,6 +5,7 @@ import {
   type SuperformInsertBudgetData,
 } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";
 import type { Actions, ServerLoadEvent } from "@sveltejs/kit";
 import { fail, redirect } from "@sveltejs/kit";
@@ -13,7 +14,7 @@ import { superValidate } from "sveltekit-superforms/client";
 
 export const load = async (event: ServerLoadEvent) => {
   const { url } = event;
-  const context = await createContext(event);
+  const context = await createContext(fromSvelteKit(event));
   const caller = createCaller(context);
 
   // Check for template parameter and prefill form data
@@ -126,7 +127,7 @@ export const actions: Actions = {
         newSchedule: data.newSchedule,
       };
 
-      const caller = createCaller(await createContext(event));
+      const caller = createCaller(await createContext(fromSvelteKit(event)));
       await caller.budgetRoutes.create(budgetData);
 
       // Redirect to the budgets list on success

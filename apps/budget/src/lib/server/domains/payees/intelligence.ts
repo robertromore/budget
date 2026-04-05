@@ -2,7 +2,7 @@ import type { PaymentFrequency, IntelligenceProfile, WorkspacePreferences } from
 import { categories, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { formatDayOrdinal } from "$lib/utils/date-formatters";
-import { parseISOString, dateDifference } from "$lib/utils/dates";
+import { parseISOString, dateDifference } from "$lib/utils/dates-core";
 import {
   and,
   asc,

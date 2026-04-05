@@ -12,7 +12,7 @@ import {
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { db } from "$lib/server/db";

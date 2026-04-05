@@ -13,7 +13,7 @@ import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import slugify from "@sindresorhus/slugify";
 import { TRPCError } from "@trpc/server";

@@ -1,7 +1,7 @@
 import { categories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { and, eq, isNull } from "drizzle-orm";
-import { formatPercentRaw } from "$lib/utils/formatters";
+import { formatPercentRaw } from "$lib/utils/formatters-core";
 import { CategoryLearningService } from "./category-learning";
 import { PayeeIntelligenceService } from "./intelligence";
 

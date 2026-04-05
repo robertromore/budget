@@ -7,7 +7,7 @@ import type {
   SortOptions,
 } from "$lib/server/shared/types";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, asc, count, desc, eq, like, or } from "drizzle-orm";
 
 /**

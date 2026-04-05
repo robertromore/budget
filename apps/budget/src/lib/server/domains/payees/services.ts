@@ -17,7 +17,8 @@ import type {
 } from "$lib/schema";
 import { budgets, categories, predictionFeedback, transactions, workspaces } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { compact, isEmptyObject, isNotEmptyObject } from "$lib/utils";
+import { compact } from "$lib/utils/array-utilities";
+import { isEmptyObject, isNotEmptyObject } from "$lib/utils/object-utilities";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   extractMerchantName,
@@ -26,7 +27,7 @@ import {
 import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { currentDate, nowISOString, toISOString } from "$lib/utils/dates";
+import { currentDate, nowISOString, toISOString } from "$lib/utils/dates-core";
 import { normalize, toTitleCase } from "$lib/utils/string-utilities";
 import { BudgetAllocationService } from "./budget-allocation";
 import { CategoryLearningService } from "./category-learning";

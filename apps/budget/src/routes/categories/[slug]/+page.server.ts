@@ -1,4 +1,5 @@
 import { createContext } from "$lib/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";
 import type { PageServerLoad } from "./$types";
 import { error } from "@sveltejs/kit";
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async (event) => {
     throw error(404, "Invalid category slug");
   }
 
-  const caller = createCaller(await createContext(event));
+  const caller = createCaller(await createContext(fromSvelteKit(event)));
   const category = await caller.categoriesRoutes.getBySlugWithBudgets({ slug });
 
   if (!category) {

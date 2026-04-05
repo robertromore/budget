@@ -15,7 +15,7 @@ import { and, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, mean, standardDeviation } from "simple-statistics";
 import type { ForecastPrediction } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 
 // =============================================================================
 // Types

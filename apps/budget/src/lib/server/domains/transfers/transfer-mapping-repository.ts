@@ -9,7 +9,7 @@ import { transferMappings, accounts } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 
 /**

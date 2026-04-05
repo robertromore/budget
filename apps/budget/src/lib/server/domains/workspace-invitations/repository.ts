@@ -4,7 +4,7 @@ import { workspaces } from "$lib/schema/workspaces";
 import { users } from "$lib/schema/users";
 import { db } from "$lib/server/shared/database";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, eq, lt } from "drizzle-orm";
 
 export interface CreateInvitationInput {

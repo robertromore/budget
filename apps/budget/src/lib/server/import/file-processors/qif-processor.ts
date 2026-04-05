@@ -6,7 +6,7 @@
  */
 
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
-import { isNotEmptyObject } from "$lib/utils";
+import { isNotEmptyObject } from "$lib/utils/object-utilities";
 import { FileValidationError, ParseError } from "../errors";
 import { parseDate, sanitizeText, validateFileType } from "../utils";
 

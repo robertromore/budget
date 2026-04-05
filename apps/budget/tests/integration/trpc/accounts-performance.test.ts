@@ -51,7 +51,7 @@ describe("Accounts Performance Testing Concepts", () => {
       userId,
       sessionId: "test-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     };
     caller = createCaller(ctx as any);

@@ -2,7 +2,7 @@ import type { PayeeCategory } from "$lib/schema/payee-categories";
 import { payeeCategories } from "$lib/schema/payee-categories";
 import { payees } from "$lib/schema/payees";
 import { db } from "$lib/server/db";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 import { and, count, eq, isNull } from "drizzle-orm";
 
 // ================================================================================

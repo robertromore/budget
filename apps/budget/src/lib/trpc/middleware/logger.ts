@@ -1,5 +1,5 @@
 import { t } from "$lib/trpc/t";
-import { dev } from "$app/environment";
+const dev = process.env.NODE_ENV === "development";
 
 /**
  * Development-only tRPC request logger.

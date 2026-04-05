@@ -1,9 +1,10 @@
 import { createContext } from "$lib/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
-  const caller = createCaller(await createContext(event));
+  const caller = createCaller(await createContext(fromSvelteKit(event)));
 
   // Load accounts and available tax years
   const [accounts, availableTaxYears] = await Promise.all([

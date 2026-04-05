@@ -18,7 +18,7 @@ import type {
   PayeeSimilarityMatch,
 } from "./types";
 import { createUserBehaviorService, type UserBehaviorService } from "./user-behavior";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 import { normalize } from "$lib/utils/string-utilities";
 
 // =============================================================================

@@ -37,7 +37,7 @@ import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { CategoryMatcher } from "./matchers/category-matcher";
 import { PayeeMatcher } from "./matchers/payee-matcher";
 import { TransactionValidator } from "./validators/transaction-validator";
-import { isNotEmptyObject } from "$lib/utils";
+import { isNotEmptyObject } from "$lib/utils/object-utilities";
 import { normalize } from "$lib/utils/string-utilities";
 
 export interface ImportProgress {

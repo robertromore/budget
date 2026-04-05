@@ -224,7 +224,7 @@ export async function createTestContext() {
     userId: testUserId,
     sessionId: "test-session",
     workspaceId: workspace.id,
-    event: {} as Context["event"],
+    request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as Context["request"],
     // Add a test flag to bypass rate limiting
     isTest: true,
   } as Context;

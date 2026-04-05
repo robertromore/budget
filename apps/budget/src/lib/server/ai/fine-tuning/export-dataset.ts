@@ -7,7 +7,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { exportToAlpaca, exportToJSONL, generateTrainingDataset } from "./generator";
 
 const OUTPUT_DIR = path.join(process.cwd(), "training-data");

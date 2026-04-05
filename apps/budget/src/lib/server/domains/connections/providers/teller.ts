@@ -6,7 +6,7 @@ import type {
 } from "$lib/schema/account-connections";
 import type { ImportRow } from "$lib/types/import";
 import type { ConnectionProviderInterface, Teller } from "../types";
-import { env } from "$env/dynamic/private";
+import { getEnv } from "$lib/server/env";
 
 /**
  * Teller Provider
@@ -234,7 +234,7 @@ export class TellerProvider implements ConnectionProviderInterface {
  */
 export function getTellerConfig() {
   return {
-    applicationId: env.TELLER_APPLICATION_ID || "",
-    environment: (env.TELLER_ENVIRONMENT as "sandbox" | "development" | "production") || "sandbox",
+    applicationId: getEnv("TELLER_APPLICATION_ID") || "",
+    environment: (getEnv("TELLER_ENVIRONMENT") as "sandbox" | "development" | "production") || "sandbox",
   };
 }

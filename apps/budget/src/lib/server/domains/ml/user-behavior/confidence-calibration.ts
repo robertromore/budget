@@ -5,7 +5,7 @@
  * Uses isotonic regression and Platt scaling for calibration.
  */
 
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 
 // =============================================================================
 // Types

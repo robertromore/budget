@@ -6,7 +6,7 @@ import {
 } from "$lib/schema/budgets";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { currentDate as defaultCurrentDate, parseISOString, toISOString } from "$lib/utils/dates";
+import { currentDate as defaultCurrentDate, parseISOString, toISOString } from "$lib/utils/dates-core";
 import { CalendarDate, type DateValue } from "@internationalized/date";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { BudgetPeriodCalculator, type PeriodBoundary } from "./services";

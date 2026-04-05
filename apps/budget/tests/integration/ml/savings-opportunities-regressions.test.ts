@@ -156,7 +156,7 @@ describe("Savings opportunities regressions", () => {
       userId: testUserId,
       sessionId: "savings-regression-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
   });

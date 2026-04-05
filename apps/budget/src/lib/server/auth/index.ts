@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "$lib/server/db";
 import { AUTH_CONFIG } from "$lib/server/config/auth";
-import { env } from "$env/dynamic/private";
+import { getEnv } from "$lib/server/env";
 import * as schema from "$lib/schema";
 import { createDefaultWorkspaceForUser } from "./workspace-setup";
 
@@ -47,8 +47,8 @@ export const auth = betterAuth({
     max: AUTH_CONFIG.RATE_LIMITING.LOGIN_ATTEMPTS.MAX_ATTEMPTS,
   },
 
-  secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.BETTER_AUTH_URL || "http://localhost:5173",
+  secret: getEnv("BETTER_AUTH_SECRET"),
+  baseURL: getEnv("BETTER_AUTH_URL") || "http://localhost:5173",
 
   user: {
     additionalFields: {

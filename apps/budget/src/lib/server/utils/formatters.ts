@@ -16,7 +16,7 @@ export {
   formatFileSize,
   formatNumberFixed,
   formatDisplayValue,
-} from "$lib/utils/formatters";
+} from "$lib/utils/formatters-core";
 
 // =============================================================================
 // Currency Formatting (Server-specific with decimals option)

@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { env } from "$env/dynamic/private";
+import { getEnv } from "$lib/server/env";
 import { logger } from "$lib/server/shared/logging";
 
 /**
@@ -27,7 +27,7 @@ export interface SendEmailResult {
  * Returns null if RESEND_API_KEY is not configured
  */
 function getResendClient(): Resend | null {
-  const apiKey = env.RESEND_API_KEY;
+  const apiKey = getEnv("RESEND_API_KEY");
   if (!apiKey) {
     return null;
   }
@@ -40,7 +40,7 @@ function getResendClient(): Resend | null {
  */
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   const resend = getResendClient();
-  const from = env.EMAIL_FROM || "noreply@example.com";
+  const from = getEnv("EMAIL_FROM") || "noreply@example.com";
 
   // Development mode: log to console instead of sending
   if (!resend) {
@@ -110,5 +110,5 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
  * Check if email service is configured for production
  */
 export function isEmailConfigured(): boolean {
-  return !!env.RESEND_API_KEY;
+  return !!getEnv("RESEND_API_KEY");
 }

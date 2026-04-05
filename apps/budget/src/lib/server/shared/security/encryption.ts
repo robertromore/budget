@@ -5,7 +5,7 @@
  * Uses AES-256-GCM with authenticated encryption to prevent tampering.
  */
 
-import { env } from "$env/dynamic/private";
+import { getEnv } from "$lib/server/env";
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";
@@ -17,7 +17,7 @@ const IV_LENGTH = 16;
  * In production, LLM_ENCRYPTION_KEY MUST be set.
  */
 function getEncryptionKey(): Buffer {
-  const envKey = env.LLM_ENCRYPTION_KEY;
+  const envKey = getEnv("LLM_ENCRYPTION_KEY");
 
   if (!envKey) {
     console.warn("LLM_ENCRYPTION_KEY not set. Using fallback key. NOT SECURE FOR PRODUCTION.");
@@ -26,7 +26,7 @@ function getEncryptionKey(): Buffer {
   }
 
   // Derive key from environment variable using scrypt
-  const salt = env.LLM_ENCRYPTION_SALT || "budget-app-salt";
+  const salt = getEnv("LLM_ENCRYPTION_SALT") || "budget-app-salt";
   return scryptSync(envKey, salt, KEY_LENGTH);
 }
 

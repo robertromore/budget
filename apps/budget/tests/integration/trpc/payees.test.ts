@@ -58,7 +58,7 @@ describe("Payees tRPC Integration Tests", () => {
       userId: testUserId,
       sessionId: "test-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     };
     caller = createCaller(ctx);

@@ -1,5 +1,5 @@
 import { payeeTypes, paymentFrequencies } from "$lib/schema";
-import { isNotEmptyObject } from "$lib/utils";
+import { isNotEmptyObject } from "$lib/utils/object-utilities";
 import { z } from "zod";
 
 /**

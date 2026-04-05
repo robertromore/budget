@@ -1,4 +1,4 @@
-import { isNotEmptyObject } from "$lib/utils";
+import { isNotEmptyObject } from "$lib/utils/object-utilities";
 import { z } from "zod";
 
 /**

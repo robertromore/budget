@@ -2,7 +2,7 @@ import { payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { formatPercent } from "$lib/server/utils/formatters";
-import { currentDate, toISOString } from "$lib/utils/dates";
+import { currentDate, toISOString } from "$lib/utils/dates-core";
 import { and, count, eq, gte, isNull, lte } from "drizzle-orm";
 import { BudgetAllocationService } from "./budget-allocation";
 import { CategoryLearningService } from "./category-learning";

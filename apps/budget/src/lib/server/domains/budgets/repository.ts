@@ -27,7 +27,7 @@ import {
 } from "$lib/schema/budgets";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 type TransactionClient = Parameters<Parameters<typeof db.transaction>[0]>[0];

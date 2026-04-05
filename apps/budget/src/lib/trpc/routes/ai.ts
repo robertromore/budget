@@ -15,7 +15,7 @@ import { db } from "$lib/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
 import { parseSlashCommand, formatCommandResult, SLASH_COMMANDS } from "$lib/server/ai/commands";
 import { TRPCError } from "@trpc/server";
 import { generateText, stepCountIs } from "ai";

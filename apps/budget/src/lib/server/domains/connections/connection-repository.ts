@@ -11,7 +11,7 @@ import type {
 import { accountConnections, syncHistory, accounts } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import type { ConnectionStats } from "./types";
 

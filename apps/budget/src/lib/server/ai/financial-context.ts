@@ -13,7 +13,7 @@ import { scheduleDates } from "$lib/schema/schedule-dates";
 import { schedules } from "$lib/schema/schedules";
 import { db } from "$lib/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
-import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
+import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates-core";
 import { roundToCents } from "$lib/utils/math-utilities";
 import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 

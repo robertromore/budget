@@ -20,7 +20,7 @@ import { type BudgetRecommendation } from "$lib/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, eq } from "drizzle-orm";
 import { BudgetService } from "./services";
 

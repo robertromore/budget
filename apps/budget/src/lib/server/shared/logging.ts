@@ -3,7 +3,8 @@
  * Provides structured logging with different severity levels
  */
 
-import { nowISOString } from "$lib/utils/dates";
+import { nowISOString } from "$lib/utils/dates-core";
+import { getEnv } from "$lib/server/env";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -45,7 +46,7 @@ class Logger {
   }
 
   debug(message: string, context?: LogContext): void {
-    if (process.env.NODE_ENV === "development") {
+    if (getEnv("NODE_ENV") === "development") {
       console.debug(this.formatMessage("debug", message, context));
     }
   }

@@ -64,7 +64,7 @@ describe("Payee Intelligence Routes Caller Integration Tests", () => {
       userId: testUserId,
       sessionId: "intelligence-routes-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
 

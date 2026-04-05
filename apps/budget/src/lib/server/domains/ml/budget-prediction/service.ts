@@ -19,7 +19,7 @@ import {
 } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { formatPercent } from "$lib/server/utils/formatters";
-import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates";
+import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates-core";
 import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 

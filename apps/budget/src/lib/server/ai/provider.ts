@@ -1,4 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { getEnv } from "$lib/server/env";
 
 /**
  * OpenAI provider instance for Vercel AI SDK.
@@ -15,7 +16,7 @@ import { createOpenAI } from "@ai-sdk/openai";
  * ```
  */
 export const openai = createOpenAI({
-  apiKey: process.env["OPENAI_API_KEY"],
+  apiKey: getEnv("OPENAI_API_KEY"),
 });
 
 /**
@@ -34,5 +35,5 @@ export const reasoningModel = openai("gpt-4-turbo");
  * Check if AI features are enabled (API key is configured).
  */
 export function isAIEnabled(): boolean {
-  return !!process.env["OPENAI_API_KEY"];
+  return !!getEnv("OPENAI_API_KEY");
 }

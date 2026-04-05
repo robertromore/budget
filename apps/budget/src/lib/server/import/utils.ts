@@ -5,7 +5,7 @@
  * and normalization during the import process.
  */
 
-import { formatFileSize } from "$lib/utils/formatters";
+import { formatFileSize } from "$lib/utils/formatters-core";
 import { normalize } from "$lib/utils/string-utilities";
 import { logger } from "$lib/server/shared/logging";
 import { ValidationError } from "./errors";

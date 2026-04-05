@@ -95,7 +95,7 @@ describe("Payee Routes Caller Integration Tests", () => {
       userId: testUserId,
       sessionId: "payee-routes-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
 
@@ -201,7 +201,7 @@ describe("Payee Routes Caller Integration Tests", () => {
       userId: null,
       sessionId: null,
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
     } as any);
 
     await expect(unauthorizedCaller.payeeRoutes.search({ query: "Coffee" })).rejects.toThrow(

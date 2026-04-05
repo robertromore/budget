@@ -2,7 +2,7 @@ import type { Payee, PayeeCategory } from "$lib/schema";
 import { categories, payeeCategories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
-import { formatPercentRaw } from "$lib/utils/formatters";
+import { formatPercentRaw } from "$lib/utils/formatters-core";
 import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 // ================================================================================

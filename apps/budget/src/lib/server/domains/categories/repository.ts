@@ -14,7 +14,7 @@ import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import type { CategoryTreeNode } from "$lib/types/categories";
-import { getCurrentTimestamp } from "$lib/utils/dates";
+import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, count, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 
 export interface UpdateCategoryData {
