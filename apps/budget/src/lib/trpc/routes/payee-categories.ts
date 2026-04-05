@@ -3,8 +3,8 @@ import {
   removePayeeCategoriesSchema,
   removePayeeCategorySchema,
 } from "$core/schema/payee-categories";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";

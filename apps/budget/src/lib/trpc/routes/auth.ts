@@ -1,4 +1,4 @@
-import { AuthService } from "$lib/server/domains/auth";
+import { AuthService } from "$core/server/domains/auth";
 import { sendEmail } from "$lib/server/email";
 import { passwordResetEmail } from "$lib/server/email/templates";
 import {

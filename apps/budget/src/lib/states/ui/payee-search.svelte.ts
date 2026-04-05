@@ -1,5 +1,5 @@
 import type { Payee } from "$core/schema";
-import type { PayeeSearchFilters } from "$lib/server/domains/payees/repository";
+import type { PayeeSearchFilters } from "$core/server/domains/payees/repository";
 import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 

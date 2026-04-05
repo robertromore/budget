@@ -1,4 +1,4 @@
-import type { PasswordValidationResult } from "$lib/server/domains/auth";
+import type { PasswordValidationResult } from "$core/server/domains/auth";
 import type { UserPreferences } from "$core/schema/users";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";

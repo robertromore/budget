@@ -8,7 +8,7 @@ import {
   reorderWidgetsSchema,
   type DashboardWithWidgets,
 } from "$core/schema/dashboards";
-import { getTemplate, DASHBOARD_TEMPLATES } from "$lib/server/domains/dashboards";
+import { getTemplate, DASHBOARD_TEMPLATES } from "$core/server/domains/dashboards";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { slugify } from "$core/utils/string-utilities";
 import { TRPCError } from "@trpc/server";

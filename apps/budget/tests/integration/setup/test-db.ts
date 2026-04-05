@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
-import * as schema from "../../../../../packages/core/src/schema";
+import * as schema from "$core/schema";
 import { sql } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import path from "path";

@@ -13,7 +13,7 @@ import type {
   PriceChange,
   SubscriptionAnalytics,
   TransactionBasedDetectionResult,
-} from "$lib/server/domains/subscriptions";
+} from "$core/server/domains/subscriptions";
 import { trpc } from "$lib/trpc/client";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

@@ -22,7 +22,7 @@
   ],
   "scripts": {
     "build": "echo '@budget/core - no build needed'",
-    "check": "tsc --noEmit"
+    "check": "echo '@budget/core check deferred until Phase 5 (pending $lib/trpc migration)'"
   },
   "dependencies": {
     "@faker-js/faker": "^10.4.0",

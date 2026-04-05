@@ -26,9 +26,9 @@ import {
   searchPayeesSchema,
   updateCalculatedFieldsSchema,
   updatePayeeSchema,
-} from "$lib/server/domains/payees";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+} from "$core/server/domains/payees";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";
@@ -2070,7 +2070,7 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
   enrichContact: rateLimitedProcedure.input(z.object({ name: z.string().min(1) })).mutation(
     withErrorHandler(async ({ input, ctx }) => {
       const { createSearchAdapter, WebSearchService } =
-        await import("$lib/server/domains/web-search");
+        await import("$core/server/domains/web-search");
       const { createIntelligenceCoordinator } = await import("$lib/server/ai");
       const { workspaces } = await import("$core/schema/workspaces");
       const { db } = await import("$core/server/db");
@@ -2108,7 +2108,7 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
       try {
         // Create search adapter based on user preference
         const searchProvider = webSearchPrefs.provider || "duckduckgo";
-        let adapterConfig: import("$lib/server/domains/web-search").SearchAdapterConfig = {};
+        let adapterConfig: import("$core/server/domains/web-search").SearchAdapterConfig = {};
 
         if (searchProvider === "brave" && webSearchPrefs.encryptedBraveApiKey) {
           adapterConfig.braveApiKey = decryptApiKey(webSearchPrefs.encryptedBraveApiKey);

@@ -1,5 +1,5 @@
 import type { DetectedPattern } from "$core/schema/detected-patterns";
-import type { DetectedPatternData, DetectionCriteria } from "$lib/server/domains/patterns/types";
+import type { DetectedPatternData, DetectionCriteria } from "$core/server/domains/patterns/types";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

@@ -761,7 +761,7 @@ export const aiRoutes = t.router({
         }
 
         // Fetch the document
-        const { serviceFactory } = await import("$lib/server/shared/container/service-factory");
+        const { serviceFactory } = await import("$core/server/shared/container/service-factory");
         const documentService = serviceFactory.getAccountDocumentService();
         const document = await documentService.getDocument(input.documentId);
 

@@ -1,7 +1,7 @@
 import { payees, transactions } from "$core/schema";
 import { db } from "$core/server/db";
 import { logger } from "$core/server/shared/logging";
-import { formatPercent } from "$lib/server/utils/formatters";
+import { formatPercent } from "$core/utils/formatters-core";
 import { currentDate, toISOString } from "$core/utils/dates-core";
 import { and, count, eq, gte, isNull, lte } from "drizzle-orm";
 import { BudgetAllocationService } from "./budget-allocation";

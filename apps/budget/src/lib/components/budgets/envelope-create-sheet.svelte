@@ -9,7 +9,7 @@ import * as Sheet from '$lib/components/ui/sheet';
 import type { BudgetPeriodInstance } from '$core/schema/budgets';
 import { rolloverModeOptions, type RolloverMode } from '$core/schema/budgets/envelope-allocations';
 import type { Category } from '$core/schema/categories';
-import type { EnvelopeAllocationRequest } from '$lib/server/domains/budgets/envelope-service';
+import type { EnvelopeAllocationRequest } from '$core/server/domains/budgets/envelope-service';
 
 interface Props {
   open?: boolean;

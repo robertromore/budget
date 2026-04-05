@@ -23,7 +23,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   extractMerchantName,
   merchantSimilarity,
-} from "$lib/server/domains/ml/similarity/text-similarity";
+} from "$core/server/domains/ml/similarity/text-similarity";
 import { logger } from "$core/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { InputSanitizer } from "$core/server/shared/validation";

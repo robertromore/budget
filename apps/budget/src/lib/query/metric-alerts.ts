@@ -1,5 +1,5 @@
 import type { MetricAlert } from "$core/schema/metric-alerts";
-import type { EvaluationResult } from "$lib/server/domains/metric-alerts/services";
+import type { EvaluationResult } from "$core/server/domains/metric-alerts/services";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

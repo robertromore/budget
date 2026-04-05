@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import Archive from '@lucide/svelte/icons/archive';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';

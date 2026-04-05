@@ -1,7 +1,7 @@
 <script lang="ts">
 import Label from '$lib/components/ui/label/label.svelte';
 import * as Select from '$lib/components/ui/select';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { BudgetState } from '$lib/states/budgets.svelte';
 import { cn, compact } from '$lib/utils';
 

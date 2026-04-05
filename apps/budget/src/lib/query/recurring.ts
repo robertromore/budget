@@ -1,5 +1,5 @@
 import { trpc } from "$lib/trpc/client";
-import type { PatternType } from "$lib/server/domains/shared/recurring-detection/types";
+import type { PatternType } from "$core/server/domains/shared/recurring-detection/types";
 import { createQueryKeys, defineQuery } from "./_factory";
 
 /**

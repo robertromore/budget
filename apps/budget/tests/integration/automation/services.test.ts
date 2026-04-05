@@ -23,9 +23,9 @@ import {
   cleanupOldLogs,
   type CreateRuleInput,
   type AutomationContext,
-} from "../../../src/lib/server/domains/automation/services";
-import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
-import { workspaces } from "../../../../../packages/core/src/schema/workspaces";
+} from "$core/server/domains/automation/services";
+import { AutomationRepository } from "$core/server/domains/automation/repository";
+import { workspaces } from "$core/schema/workspaces";
 import type { TriggerConfig, ConditionGroup, ActionConfig } from "$core/types/automation";
 
 // Test helpers

@@ -694,7 +694,7 @@ export class TransactionService {
 
         if (rawPayeeString) {
           const { getCategoryAliasService } =
-            await import("$lib/server/domains/categories/alias-service");
+            await import("$core/server/domains/categories/alias-service");
           const categoryAliasService = getCategoryAliasService();
 
           await categoryAliasService.recordAliasFromTransactionEdit(
@@ -905,7 +905,7 @@ export class TransactionService {
     if (newCategoryId && matchBy === "payee" && transactionsToUpdate.length > 0) {
       try {
         const { getCategoryAliasService } =
-          await import("$lib/server/domains/categories/alias-service");
+          await import("$core/server/domains/categories/alias-service");
         const categoryAliasService = getCategoryAliasService();
 
         // Use the payee name as the raw string for the alias
@@ -1543,8 +1543,8 @@ export class TransactionService {
       );
     } else {
       // Fallback for backward compatibility
-      const { BudgetIntelligenceService } = await import("$lib/server/domains/budgets/services");
-      const { BudgetRepository } = await import("$lib/server/domains/budgets/repository");
+      const { BudgetIntelligenceService } = await import("$core/server/domains/budgets/services");
+      const { BudgetRepository } = await import("$core/server/domains/budgets/repository");
       const intelligenceService = new BudgetIntelligenceService(new BudgetRepository());
       budgetPattern = await intelligenceService.getMostUsedBudget(
         payeeId,

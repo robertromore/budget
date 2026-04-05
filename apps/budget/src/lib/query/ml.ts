@@ -5,7 +5,7 @@
  * forecasting, anomaly detection, similarity matching, and user behavior.
  */
 
-import type { AnomalyScore, UserBehaviorProfile } from "$lib/server/domains/ml/types";
+import type { AnomalyScore, UserBehaviorProfile } from "$core/server/domains/ml/types";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

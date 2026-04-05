@@ -12,7 +12,7 @@ import {
   listPeriodInstances,
   processEnvelopeRollover,
 } from '$lib/query/budgets';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn } from '$lib/utils';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { CalendarDate } from '@internationalized/date';

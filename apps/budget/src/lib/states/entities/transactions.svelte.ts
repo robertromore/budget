@@ -5,7 +5,7 @@ import type {
   PaginationParams,
   TransactionFilters,
   UpdateTransactionData,
-} from "$lib/server/domains/transactions";
+} from "$core/server/domains/transactions";
 import { getContext, setContext } from "svelte";
 
 const KEY = Symbol("transactions");

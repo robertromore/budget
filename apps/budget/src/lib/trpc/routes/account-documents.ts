@@ -1,5 +1,5 @@
 import { documentTypeKeys } from "$core/schema/account-documents";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

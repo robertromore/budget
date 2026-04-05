@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { columns as createColumns } from '../(data)/columns.svelte';
 import BudgetDataTable from './budget-data-table.svelte';
 

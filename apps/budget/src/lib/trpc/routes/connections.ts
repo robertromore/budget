@@ -5,11 +5,11 @@ import {
   type WorkspacePreferences,
 } from "$core/schema/workspaces";
 import { db } from "$core/server/db";
-import { getConnectionService } from "$lib/server/domains/connections";
+import { getConnectionService } from "$core/server/domains/connections";
 import {
   encryptCredentials,
   decryptCredentials,
-} from "$lib/server/domains/connections/credential-encryption";
+} from "$core/server/domains/connections/credential-encryption";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { eq } from "drizzle-orm";

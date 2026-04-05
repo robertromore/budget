@@ -9,9 +9,9 @@ import type { CategorySuggestion, CategorySuggestionOption } from "$core/types/i
 import {
   createSmartCategoryService,
   type SmartCategoryService,
-} from "$lib/server/domains/ml/smart-categories/service";
-import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
-import { createMLModelStore } from "$lib/server/domains/ml/model-store";
+} from "$core/server/domains/ml/smart-categories/service";
+import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
+import { createMLModelStore } from "$core/server/domains/ml/model-store";
 
 /**
  * Configuration for category suggestions

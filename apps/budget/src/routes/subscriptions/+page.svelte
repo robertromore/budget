@@ -14,7 +14,7 @@ import type { SubscriptionWithRelations } from '$core/schema/subscriptions-table
 import type {
   DetectionResult,
   TransactionBasedDetectionResult,
-} from '$lib/server/domains/subscriptions';
+} from '$core/server/domains/subscriptions';
 import { currencyFormatter } from '$lib/utils/formatters';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';

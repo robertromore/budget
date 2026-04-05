@@ -6,7 +6,7 @@
  */
 
 import type { Payee } from "$core/schema/payees";
-import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
+import { getPayeeAliasService } from "$core/server/domains/payees/alias-service";
 import { calculateStringSimilarity } from "../utils";
 import { normalize } from "$core/utils/string-utilities";
 

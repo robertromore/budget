@@ -12,7 +12,7 @@ import { importProfiles } from "$core/schema/import-profiles";
 import { scheduleDates } from "$core/schema/schedule-dates";
 import { scheduleSkips } from "$core/schema/schedule-skips";
 import { schedules } from "$core/schema/schedules";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { compact } from "$core/utils/array-utilities";
 import { isEmptyObject } from "$core/utils/object-utilities";

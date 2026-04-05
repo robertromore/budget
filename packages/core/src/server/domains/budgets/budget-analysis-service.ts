@@ -23,7 +23,7 @@ import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
 import {
   getRecurringDetectionService,
   type RecurringPattern,
-} from "$lib/server/domains/shared/recurring-detection";
+} from "$core/server/domains/shared/recurring-detection";
 
 export interface AnalysisParams {
   accountIds?: number[];

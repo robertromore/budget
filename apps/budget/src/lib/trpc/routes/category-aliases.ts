@@ -1,5 +1,5 @@
 import { amountTypes } from "$core/schema/category-aliases";
-import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
+import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";

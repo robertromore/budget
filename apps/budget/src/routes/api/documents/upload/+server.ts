@@ -12,8 +12,8 @@ import {
 } from "$core/schema/workspaces";
 import { auth } from "$core/server/auth";
 import { db } from "$core/server/db";
-import { DocumentExtractionService } from "$lib/server/domains/document-extraction";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { DocumentExtractionService } from "$core/server/domains/document-extraction";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { formatFileSize } from "$lib/utils/formatters";
 import { error, json } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";

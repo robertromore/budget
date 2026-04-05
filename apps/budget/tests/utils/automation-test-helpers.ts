@@ -14,7 +14,7 @@ import type {
   RuleEvent,
   ActionResult,
 } from "$core/types/automation";
-import type { EvaluationContext } from "$lib/server/domains/automation/condition-evaluator";
+import type { EvaluationContext } from "$core/server/domains/automation/condition-evaluator";
 
 // =============================================================================
 // Condition Builders

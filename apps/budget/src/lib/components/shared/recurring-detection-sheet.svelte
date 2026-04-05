@@ -18,7 +18,7 @@ import TrendingUp from '@lucide/svelte/icons/trending-up';
 import XCircle from '@lucide/svelte/icons/x-circle';
 import { trpc } from '$lib/trpc/client';
 import { scheduleKeys } from '$lib/query';
-import type { RecurringPattern } from '$lib/server/domains/shared/recurring-detection';
+import type { RecurringPattern } from '$core/server/domains/shared/recurring-detection';
 import { formatCurrency } from '$lib/utils/formatters';
 
 // Props

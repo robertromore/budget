@@ -1,6 +1,6 @@
 import { renderComponent } from "$lib/components/ui/data-table";
 import type { BudgetEnforcementLevel, BudgetProgressStatus } from "$core/schema/budgets";
-import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import type { BudgetWithRelations } from "$core/server/domains/budgets";
 import type { ColumnDef } from "@tanstack/table-core";
 import { formatCurrency } from "$lib/utils/formatters";
 import { calculateActualSpent } from "$lib/utils/budget-calculations";

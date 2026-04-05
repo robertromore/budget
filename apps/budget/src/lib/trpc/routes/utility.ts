@@ -1,5 +1,5 @@
 import { usageUnitEnum } from "$core/schema/utility-usage";
-import { utilityUsageService } from "$lib/server/domains/utility";
+import { utilityUsageService } from "$core/server/domains/utility";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import {

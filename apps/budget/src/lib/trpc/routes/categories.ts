@@ -7,9 +7,9 @@ import {
   categoryIdSchema,
   mergeCategoriesSchema,
   searchCategoriesSchema,
-} from "$lib/server/domains/categories";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+} from "$core/server/domains/categories";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";

@@ -9,8 +9,8 @@ import {
   transactions,
 } from "$core/schema";
 import { superformInsertScheduleSchema } from "$core/schema/superforms/schedules";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";

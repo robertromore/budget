@@ -1,5 +1,5 @@
 import type { NewPayeeCategory, PayeeCategory } from "$core/schema/payee-categories";
-import type { PayeeCategoryWithCounts } from "$lib/server/domains/payee-categories/repository";
+import type { PayeeCategoryWithCounts } from "$core/server/domains/payee-categories/repository";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

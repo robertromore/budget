@@ -1,8 +1,8 @@
 import {
   WorkspaceInvitationRepository,
   WorkspaceInvitationService,
-} from "$lib/server/domains/workspace-invitations";
-import { WorkspaceMemberRepository } from "$lib/server/domains/workspace-members";
+} from "$core/server/domains/workspace-invitations";
+import { WorkspaceMemberRepository } from "$core/server/domains/workspace-members";
 import { openProcedure, publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";

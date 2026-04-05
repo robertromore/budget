@@ -11,9 +11,9 @@ import type {
   RecommendationStatus,
   RecommendationType,
 } from "$core/schema/recommendations";
-import type { BudgetWithRelations } from "$lib/server/domains/budgets";
-import type { BudgetRecommendationDraft } from "$lib/server/domains/budgets/budget-analysis-service";
-import type { PeriodAnalytics, PeriodComparison } from "$lib/server/domains/budgets/period-manager";
+import type { BudgetWithRelations } from "$core/server/domains/budgets";
+import type { BudgetRecommendationDraft } from "$core/server/domains/budgets/budget-analysis-service";
+import type { PeriodAnalytics, PeriodComparison } from "$core/server/domains/budgets/period-manager";
 import type {
   AllocationValidationResult,
   ContributionPlan,
@@ -22,7 +22,7 @@ import type {
   GoalProgress,
   GroupedAccountBudgets,
   UpdateBudgetRequest,
-} from "$lib/server/domains/budgets/services";
+} from "$core/server/domains/budgets/services";
 import { BudgetState } from "$lib/states/budgets.svelte";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient, queryPresets } from "./_client";

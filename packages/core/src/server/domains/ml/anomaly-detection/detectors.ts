@@ -6,7 +6,7 @@
  */
 
 import { mean, quantile, standardDeviation } from "simple-statistics";
-import { formatPercentRaw } from "$lib/server/utils/formatters";
+import { formatPercentRaw } from "$core/utils/formatters-core";
 
 // =============================================================================
 // Types

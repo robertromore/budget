@@ -20,7 +20,7 @@ import {
   getRulesByEntityType,
   testRule,
   updateRule,
-} from "$lib/server/domains/automation/services";
+} from "$core/server/domains/automation/services";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import type { EntityType } from "$core/types/automation";
 import {

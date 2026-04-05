@@ -5,7 +5,7 @@
  * Provides centralized service instantiation with proper dependency injection.
  *
  * Usage:
- *   import { serviceFactory } from '$lib/server/shared/container/service-factory';
+ *   import { serviceFactory } from '$core/server/shared/container/service-factory';
  *   const transactionService = serviceFactory.getTransactionService();
  *
  * Testing:
@@ -13,43 +13,43 @@
  *   factory.override('TransactionService', mockService);
  */
 
-import { AccountDocumentRepository } from "$lib/server/domains/account-documents/repository";
-import { AccountDocumentService } from "$lib/server/domains/account-documents/services";
-import { MetricAlertRepository } from "$lib/server/domains/metric-alerts/repository";
-import { MetricAlertService } from "$lib/server/domains/metric-alerts/services";
-import { AccountRepository } from "$lib/server/domains/accounts/repository";
-import { AnnotationRepository } from "$lib/server/domains/annotations/repository";
-import { ReportTemplateRepository } from "$lib/server/domains/reports/repository";
-import { BudgetRepository } from "$lib/server/domains/budgets/repository";
-import { CategoryRepository } from "$lib/server/domains/categories/repository";
-import { SequenceRepository } from "$lib/server/domains/sequences/repository";
+import { AccountDocumentRepository } from "$core/server/domains/account-documents/repository";
+import { AccountDocumentService } from "$core/server/domains/account-documents/services";
+import { MetricAlertRepository } from "$core/server/domains/metric-alerts/repository";
+import { MetricAlertService } from "$core/server/domains/metric-alerts/services";
+import { AccountRepository } from "$core/server/domains/accounts/repository";
+import { AnnotationRepository } from "$core/server/domains/annotations/repository";
+import { ReportTemplateRepository } from "$core/server/domains/reports/repository";
+import { BudgetRepository } from "$core/server/domains/budgets/repository";
+import { CategoryRepository } from "$core/server/domains/categories/repository";
+import { SequenceRepository } from "$core/server/domains/sequences/repository";
 import {
   CategoryGroupMembershipRepository,
   CategoryGroupRecommendationRepository,
   CategoryGroupRepository,
   CategoryGroupSettingsRepository,
-} from "$lib/server/domains/category-groups/repository";
-import { ImportProfileRepository } from "$lib/server/domains/import-profiles/repository";
-import { MedicalExpenseRepository } from "$lib/server/domains/medical-expenses/repository";
-import { PatternRepository } from "$lib/server/domains/patterns/repository";
-import { PayeeCategoryRepository } from "$lib/server/domains/payee-categories/repository";
-import { PayeeRepository } from "$lib/server/domains/payees/repository";
-import { ScheduleRepository } from "$lib/server/domains/schedules/repository";
-import { ScheduleSkipRepository } from "$lib/server/domains/schedules/skip-repository";
-import { TransactionRepository } from "$lib/server/domains/transactions/repository";
+} from "$core/server/domains/category-groups/repository";
+import { ImportProfileRepository } from "$core/server/domains/import-profiles/repository";
+import { MedicalExpenseRepository } from "$core/server/domains/medical-expenses/repository";
+import { PatternRepository } from "$core/server/domains/patterns/repository";
+import { PayeeCategoryRepository } from "$core/server/domains/payee-categories/repository";
+import { PayeeRepository } from "$core/server/domains/payees/repository";
+import { ScheduleRepository } from "$core/server/domains/schedules/repository";
+import { ScheduleSkipRepository } from "$core/server/domains/schedules/skip-repository";
+import { TransactionRepository } from "$core/server/domains/transactions/repository";
 
-import { AccountService } from "$lib/server/domains/accounts/services";
-import { AnnotationService } from "$lib/server/domains/annotations/services";
-import { ReportTemplateService } from "$lib/server/domains/reports/services";
-import { BudgetAnalysisService } from "$lib/server/domains/budgets/budget-analysis-service";
-import { BudgetGroupAutomationService } from "$lib/server/domains/budgets/budget-group-automation-service";
-import { BudgetCalculationService } from "$lib/server/domains/budgets/calculation-service";
-import { DeficitRecoveryService } from "$lib/server/domains/budgets/deficit-recovery";
-import { EnvelopeService } from "$lib/server/domains/budgets/envelope-service";
-import { BudgetIntelligenceService as BudgetDetectionService } from "$lib/server/domains/budgets/intelligence-service";
-import { PeriodManager } from "$lib/server/domains/budgets/period-manager";
-import { RecommendationService } from "$lib/server/domains/budgets/recommendation-service";
-import { RolloverCalculator } from "$lib/server/domains/budgets/rollover-calculator";
+import { AccountService } from "$core/server/domains/accounts/services";
+import { AnnotationService } from "$core/server/domains/annotations/services";
+import { ReportTemplateService } from "$core/server/domains/reports/services";
+import { BudgetAnalysisService } from "$core/server/domains/budgets/budget-analysis-service";
+import { BudgetGroupAutomationService } from "$core/server/domains/budgets/budget-group-automation-service";
+import { BudgetCalculationService } from "$core/server/domains/budgets/calculation-service";
+import { DeficitRecoveryService } from "$core/server/domains/budgets/deficit-recovery";
+import { EnvelopeService } from "$core/server/domains/budgets/envelope-service";
+import { BudgetIntelligenceService as BudgetDetectionService } from "$core/server/domains/budgets/intelligence-service";
+import { PeriodManager } from "$core/server/domains/budgets/period-manager";
+import { RecommendationService } from "$core/server/domains/budgets/recommendation-service";
+import { RolloverCalculator } from "$core/server/domains/budgets/rollover-calculator";
 import {
   BudgetForecastService,
   BudgetIntelligenceService,
@@ -57,31 +57,31 @@ import {
   BudgetService,
   BudgetTransactionService,
   GoalTrackingService,
-} from "$lib/server/domains/budgets/services";
-import { BudgetTemplateService } from "$lib/server/domains/budgets/template-service";
-import { CategoryService } from "$lib/server/domains/categories/services";
-import { CategoryGroupRecommendationService } from "$lib/server/domains/category-groups/recommendation-service";
-import { CategoryGroupService } from "$lib/server/domains/category-groups/services";
-import { CategoryGroupSettingsService } from "$lib/server/domains/category-groups/settings-service";
-import { ImportProfileService } from "$lib/server/domains/import-profiles/services";
-import { ClaimRepository } from "$lib/server/domains/medical-expenses/claim-repository";
-import { ClaimService } from "$lib/server/domains/medical-expenses/claim-service";
-import { ReceiptRepository } from "$lib/server/domains/medical-expenses/receipt-repository";
-import { ReceiptService } from "$lib/server/domains/medical-expenses/receipt-service";
-import { MedicalExpenseService } from "$lib/server/domains/medical-expenses/services";
-import { PatternDetectionService } from "$lib/server/domains/patterns/services";
-import { PayeeCategoryRecommendationService } from "$lib/server/domains/payee-categories/recommendation-service";
-import { PayeeCategoryService } from "$lib/server/domains/payee-categories/services";
-import { BudgetAllocationService } from "$lib/server/domains/payees/budget-allocation";
-import { CategoryLearningService } from "$lib/server/domains/payees/category-learning";
-import { ContactManagementService } from "$lib/server/domains/payees/contact-management";
-import { PayeeIntelligenceService } from "$lib/server/domains/payees/intelligence";
-import { PayeeMLCoordinator } from "$lib/server/domains/payees/ml-coordinator";
-import { PayeeService } from "$lib/server/domains/payees/services";
-import { SubscriptionManagementService } from "$lib/server/domains/payees/subscription-management";
-import { ScheduleService } from "$lib/server/domains/schedules/services";
-import { SequenceService } from "$lib/server/domains/sequences/services";
-import { TransactionService } from "$lib/server/domains/transactions/services";
+} from "$core/server/domains/budgets/services";
+import { BudgetTemplateService } from "$core/server/domains/budgets/template-service";
+import { CategoryService } from "$core/server/domains/categories/services";
+import { CategoryGroupRecommendationService } from "$core/server/domains/category-groups/recommendation-service";
+import { CategoryGroupService } from "$core/server/domains/category-groups/services";
+import { CategoryGroupSettingsService } from "$core/server/domains/category-groups/settings-service";
+import { ImportProfileService } from "$core/server/domains/import-profiles/services";
+import { ClaimRepository } from "$core/server/domains/medical-expenses/claim-repository";
+import { ClaimService } from "$core/server/domains/medical-expenses/claim-service";
+import { ReceiptRepository } from "$core/server/domains/medical-expenses/receipt-repository";
+import { ReceiptService } from "$core/server/domains/medical-expenses/receipt-service";
+import { MedicalExpenseService } from "$core/server/domains/medical-expenses/services";
+import { PatternDetectionService } from "$core/server/domains/patterns/services";
+import { PayeeCategoryRecommendationService } from "$core/server/domains/payee-categories/recommendation-service";
+import { PayeeCategoryService } from "$core/server/domains/payee-categories/services";
+import { BudgetAllocationService } from "$core/server/domains/payees/budget-allocation";
+import { CategoryLearningService } from "$core/server/domains/payees/category-learning";
+import { ContactManagementService } from "$core/server/domains/payees/contact-management";
+import { PayeeIntelligenceService } from "$core/server/domains/payees/intelligence";
+import { PayeeMLCoordinator } from "$core/server/domains/payees/ml-coordinator";
+import { PayeeService } from "$core/server/domains/payees/services";
+import { SubscriptionManagementService } from "$core/server/domains/payees/subscription-management";
+import { ScheduleService } from "$core/server/domains/schedules/services";
+import { SequenceService } from "$core/server/domains/sequences/services";
+import { TransactionService } from "$core/server/domains/transactions/services";
 
 export class ServiceFactory {
   private instances = new Map<string, unknown>();

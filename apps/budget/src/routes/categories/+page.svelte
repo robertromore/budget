@@ -31,7 +31,7 @@ import {
   getCategoryHierarchyTree,
   bulkDeleteCategories as bulkDeleteCategoriesMutation,
 } from '$lib/query/categories';
-import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
+import type { CategoryWithGroup } from '$core/server/domains/categories/repository';
 import { rpc } from '$lib/query';
 
 // Demo mode detection

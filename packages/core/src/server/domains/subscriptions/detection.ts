@@ -8,7 +8,7 @@ import { db } from "$core/server/db";
 import {
   getRecurringDetectionService,
   type RecurringPattern,
-} from "$lib/server/domains/shared/recurring-detection";
+} from "$core/server/domains/shared/recurring-detection";
 import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import type {
   DetectionMethod,

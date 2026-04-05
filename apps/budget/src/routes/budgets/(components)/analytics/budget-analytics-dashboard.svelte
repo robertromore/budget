@@ -5,7 +5,7 @@ import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import Progress from '$lib/components/ui/progress/progress.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
 import { getSpendingTrends, listBudgets } from '$lib/query/budgets';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn } from '$lib/utils';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';

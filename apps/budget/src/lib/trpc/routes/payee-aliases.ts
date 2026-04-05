@@ -1,4 +1,4 @@
-import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
+import { getPayeeAliasService } from "$core/server/domains/payees/alias-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";

@@ -8,8 +8,8 @@
 import type { WorkspacePreferences } from "$core/schema/workspaces";
 import type { OnboardingFormData, OnboardingStatus } from "$core/types/onboarding";
 import { DEFAULT_ONBOARDING_STATUS } from "$core/types/onboarding";
-import type { AccountService } from "$lib/server/domains/accounts/services";
-import type { CategoryService } from "$lib/server/domains/categories/services";
+import type { AccountService } from "$core/server/domains/accounts/services";
+import type { CategoryService } from "$core/server/domains/categories/services";
 import { nowISOString } from "$core/utils/dates-core";
 import {
   SmartDefaultsGenerator,

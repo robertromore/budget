@@ -8,8 +8,8 @@ import { workspaces, type WorkspacePreferences } from "$core/schema/workspaces";
 import {
   OnboardingService,
   type OnboardingWorkspaceRepository,
-} from "$lib/server/domains/onboarding/services";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
+} from "$core/server/domains/onboarding/services";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";

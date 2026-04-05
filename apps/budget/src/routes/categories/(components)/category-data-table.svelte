@@ -6,7 +6,7 @@ import {
 } from '$lib/components/data-table';
 import EntityBulkActions from '$lib/components/shared/data-table/entity-bulk-actions.svelte';
 import type { Category } from '$core/schema';
-import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
+import type { CategoryWithGroup } from '$core/server/domains/categories/repository';
 import type { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { FilterInputOption } from '$lib/types';
 import type { ColumnDef, ColumnFiltersState, Table as TTable } from '@tanstack/table-core';

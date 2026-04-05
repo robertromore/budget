@@ -5,7 +5,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import type { BudgetProgressStatus } from '$core/schema/budgets';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn, currencyFormatter } from '$lib/utils';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
 import { highlightMatches } from '$lib/utils/search';

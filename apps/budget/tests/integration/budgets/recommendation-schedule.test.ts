@@ -9,11 +9,11 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb } from "../setup/test-db";
-import * as schema from "../../../../../packages/core/src/schema";
+import * as schema from "$core/schema";
 import { eq, and } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import type { BudgetMetadata } from "../../../../../packages/core/src/schema/budgets";
-import type { RecommendationMetadata } from "../../../../../packages/core/src/schema/recommendations";
+import type { BudgetMetadata } from "$core/schema/budgets";
+import type { RecommendationMetadata } from "$core/schema/recommendations";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 type ScheduledExpenseFrequency = NonNullable<

@@ -1,5 +1,5 @@
-import { PatternDetectionService, PatternRepository } from "$lib/server/domains/patterns";
-import type { DetectionCriteria } from "$lib/server/domains/patterns/types";
+import { PatternDetectionService, PatternRepository } from "$core/server/domains/patterns";
+import type { DetectionCriteria } from "$core/server/domains/patterns/types";
 import { rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

@@ -1,7 +1,7 @@
 import {
   getRecurringDetectionService,
   type DetectionOptions,
-} from "$lib/server/domains/shared/recurring-detection";
+} from "$core/server/domains/shared/recurring-detection";
 import { publicProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";

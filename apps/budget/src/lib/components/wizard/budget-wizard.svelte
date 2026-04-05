@@ -15,7 +15,7 @@ import {
   type PeriodTemplateType,
 } from '$core/schema/budgets';
 import type { Category } from '$core/schema/categories';
-import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
+import type { CreateBudgetRequest } from '$core/server/domains/budgets/services';
 import {
   budgetWizardStore,
   type WizardStep as WizardStepType,

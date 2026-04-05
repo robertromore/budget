@@ -7,7 +7,7 @@
  */
 
 import type { AcceptancePrediction, UserBehaviorProfile } from "../types";
-import { formatPercent } from "$lib/server/utils/formatters";
+import { formatPercent } from "$core/utils/formatters-core";
 
 // =============================================================================
 // Types

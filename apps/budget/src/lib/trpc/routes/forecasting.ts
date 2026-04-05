@@ -9,7 +9,7 @@ import {
   createFeatureEngineeringService,
   createMLModelStore,
   createTimeSeriesForecastingService,
-} from "$lib/server/domains/ml";
+} from "$core/server/domains/ml";
 import { rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

@@ -9,7 +9,7 @@ export type {
   PayeeAnalytics,
   PayeeWithRelations,
   PayeeWithStats,
-} from "$lib/server/domains/payees/services";
+} from "$core/server/domains/payees/services";
 
 export type {
   PayeeIntelligence,
@@ -17,7 +17,7 @@ export type {
   PayeeStats,
   PayeeSuggestions,
   UpdatePayeeData,
-} from "$lib/server/domains/payees/repository";
+} from "$core/server/domains/payees/repository";
 
 export interface UnifiedMLRecommendations {
   payeeId: number;

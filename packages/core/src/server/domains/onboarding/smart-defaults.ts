@@ -7,8 +7,8 @@
 
 import type { AccountType, NewAccount } from "$core/schema/accounts";
 import type { NewCategory } from "$core/schema";
-import { defaultCategories } from "$lib/server/domains/categories/default-categories";
-import { BUDGET_TEMPLATES, type BudgetTemplate } from "$lib/constants/budget-templates";
+import { defaultCategories } from "$core/server/domains/categories/default-categories";
+import { BUDGET_TEMPLATES, type BudgetTemplate } from "$core/constants/budget-templates";
 import type {
   AccountToTrack,
   DebtType,

@@ -19,7 +19,7 @@ import {
   updateBudget,
 } from '$lib/query/budgets';
 import type { BudgetGroup, BudgetMetadata } from '$core/schema/budgets';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { demoMode, type DemoBudget } from '$lib/states/ui/demo-mode.svelte';
 import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';

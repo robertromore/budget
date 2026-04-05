@@ -5,7 +5,7 @@ import type {
   CategoryGroupSettings,
 } from "$core/schema/category-groups";
 import { formInsertCategoryGroupSchema } from "$core/schema/category-groups";
-import type { CategoryGroupWithCounts } from "$lib/server/domains/category-groups/repository";
+import type { CategoryGroupWithCounts } from "$core/server/domains/category-groups/repository";
 import { trpc } from "$lib/trpc/client";
 import type { z } from "zod";
 import { cachePatterns } from "./_client";

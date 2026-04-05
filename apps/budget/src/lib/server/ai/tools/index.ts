@@ -26,7 +26,7 @@ import {
   createTimeSeriesForecastingService,
   createAnomalyDetectionService,
   createFeatureEngineeringService,
-} from "$lib/server/domains/ml";
+} from "$core/server/domains/ml";
 
 /**
  * Create tool definitions for a specific workspace

@@ -8,7 +8,7 @@ import type {
   CategoryWithChildren,
   CategoryWithGroup,
   CategoryWithStats,
-} from "$lib/server/domains/categories/repository";
+} from "$core/server/domains/categories/repository";
 import { trpc } from "$lib/trpc/client";
 import type { CategoryTreeNode } from "$core/types/categories";
 import { z } from "zod";

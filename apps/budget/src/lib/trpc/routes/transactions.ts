@@ -7,9 +7,9 @@ import {
   transactionFiltersSchema,
   transactionSuggestionRequestSchema,
   updateTransactionSchema,
-} from "$lib/server/domains/transactions";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+} from "$core/server/domains/transactions";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
@@ -136,7 +136,7 @@ export const transactionRoutes = t.router({
           createTimeSeriesForecastingService,
           createMLModelStore,
           createFeatureEngineeringService,
-        } = await import("$lib/server/domains/ml");
+        } = await import("$core/server/domains/ml");
 
         const modelStore = createMLModelStore();
         const featureService = createFeatureEngineeringService();
@@ -397,7 +397,7 @@ export const transactionRoutes = t.router({
 
         // If user wants to remember this mapping for future imports
         if (input.rememberMapping && input.rawPayeeString) {
-          const { getTransferMappingService } = await import("$lib/server/domains/transfers");
+          const { getTransferMappingService } = await import("$core/server/domains/transfers");
           const transferMappingService = getTransferMappingService();
 
           await transferMappingService.recordMappingFromConversion(

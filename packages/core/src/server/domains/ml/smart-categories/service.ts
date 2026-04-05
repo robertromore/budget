@@ -11,7 +11,7 @@
 
 import { accounts, categories, payees, transactions } from "$core/schema";
 import type { AmountType } from "$core/schema/category-aliases";
-import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
+import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
 import { db } from "$core/server/db";
 import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";

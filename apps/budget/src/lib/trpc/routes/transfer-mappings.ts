@@ -1,4 +1,4 @@
-import { getTransferMappingService } from "$lib/server/domains/transfers";
+import { getTransferMappingService } from "$core/server/domains/transfers";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
 import { z } from "zod";

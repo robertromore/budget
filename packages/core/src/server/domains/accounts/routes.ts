@@ -4,8 +4,8 @@ import {
   publicProcedure,
   rateLimitedProcedure,
 } from "$lib/server/shared/trpc/procedures";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { t } from "$lib/trpc/t";
 import { z } from "zod";
 

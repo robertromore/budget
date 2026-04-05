@@ -4,7 +4,7 @@ import type {
   ExternalAccount,
   SyncHistoryRecord,
 } from "$core/schema/account-connections";
-import type { ConnectionStats, SyncResult } from "$lib/server/domains/connections";
+import type { ConnectionStats, SyncResult } from "$core/server/domains/connections";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

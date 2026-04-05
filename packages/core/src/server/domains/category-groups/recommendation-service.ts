@@ -5,7 +5,7 @@ import type {
   NewCategoryGroupRecommendation,
 } from "$core/schema/category-groups";
 import { db } from "$core/server/db";
-import { CategoryRepository } from "$lib/server/domains/categories/repository";
+import { CategoryRepository } from "$core/server/domains/categories/repository";
 import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { and, eq, isNull } from "drizzle-orm";
 import {

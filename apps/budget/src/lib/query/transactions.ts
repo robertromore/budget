@@ -4,7 +4,7 @@ import type {
   PaginationParams,
   TransactionFilters,
   UpdateTransactionData,
-} from "$lib/server/domains/transactions";
+} from "$core/server/domains/transactions";
 import { trpc } from "$lib/trpc/client";
 import { nowISOString } from "$lib/utils/dates";
 import { cachePatterns } from "./_client";

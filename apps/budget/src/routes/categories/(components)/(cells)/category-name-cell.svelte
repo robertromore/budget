@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
+import type { CategoryWithGroup } from '$core/server/domains/categories/repository';
 import Folder from '@lucide/svelte/icons/folder';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
 import Tag from '@lucide/svelte/icons/tag';

@@ -7,8 +7,8 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
-import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
-import { workspaces } from "../../../../../packages/core/src/schema/workspaces";
+import { AutomationRepository } from "$core/server/domains/automation/repository";
+import { workspaces } from "$core/schema/workspaces";
 import type { TriggerConfig, ConditionGroup, ActionConfig } from "$core/types/automation";
 
 // Test helpers

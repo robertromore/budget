@@ -5,7 +5,7 @@
  */
 
 import { createPayeeGrouper, createCategorySuggester } from "$lib/server/import/cleanup";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { z } from "zod/v4";

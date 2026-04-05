@@ -12,8 +12,8 @@ import { deleteBudget, updateBudget } from '$lib/query/budgets';
 import type { Account } from '$core/schema/accounts';
 import { budgetEnforcementLevels, budgetStatuses } from '$core/schema/budgets';
 import type { Category } from '$core/schema/categories';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
-import type { UpdateBudgetRequest } from '$lib/server/domains/budgets/services';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
+import type { UpdateBudgetRequest } from '$core/server/domains/budgets/services';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 

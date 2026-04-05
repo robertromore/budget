@@ -1,4 +1,4 @@
-import type { ScheduleWithDetails } from "$lib/server/domains/schedules";
+import type { ScheduleWithDetails } from "$core/server/domains/schedules";
 import { nextDaily, nextMonthly, nextWeekly, nextYearly } from "$lib/utils/date-frequency";
 import { currentDate, parseISOString } from "$lib/utils/dates";
 import { currencyFormatter, recurringFormatter } from "$lib/utils/formatters";

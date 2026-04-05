@@ -12,7 +12,7 @@ import * as Table from '$lib/components/ui/table';
 import { rpc } from '$lib/query';
 import { deletePayeeCategory, getUncategorizedPayeesCount } from '$lib/query/payee-categories';
 import type { PayeeCategory } from '$core/schema';
-import type { PayeeCategoryWithCounts } from '$lib/server/domains/payee-categories/repository';
+import type { PayeeCategoryWithCounts } from '$core/server/domains/payee-categories/repository';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
 import Lightbulb from '@lucide/svelte/icons/lightbulb';

@@ -31,9 +31,9 @@ import type {
 } from "$core/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 import type { z } from "zod/v4";
-import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
-import { TransferMappingService } from "$lib/server/domains/transfers/transfer-mapping-service";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
+import { TransferMappingService } from "$core/server/domains/transfers/transfer-mapping-service";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { CategoryMatcher } from "./matchers/category-matcher";
 import { PayeeMatcher } from "./matchers/payee-matcher";
 import { TransactionValidator } from "./validators/transaction-validator";

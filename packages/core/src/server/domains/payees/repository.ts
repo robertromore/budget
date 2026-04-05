@@ -830,7 +830,7 @@ export class PayeeRepository extends BaseRepository<
       budgetSuggestion = await this.budgetIntelligenceService.suggestBudgetForPayee(id);
     } else {
       // Fallback for backward compatibility - use serviceFactory
-      const { serviceFactory } = await import("$lib/server/shared/container/service-factory");
+      const { serviceFactory } = await import("$core/server/shared/container/service-factory");
       const intelligenceService = serviceFactory.getBudgetIntelligenceService();
       budgetSuggestion = await intelligenceService.suggestBudgetForPayee(id);
     }

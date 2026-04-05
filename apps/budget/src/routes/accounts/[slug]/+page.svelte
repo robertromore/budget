@@ -7,7 +7,7 @@ import { Label } from '$lib/components/ui/label';
 import * as Tabs from '$lib/components/ui/tabs';
 import type { Transaction } from '$core/schema';
 import type { Schedule } from '$core/schema/schedules';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
 import {
   deleteBudgetDialog,

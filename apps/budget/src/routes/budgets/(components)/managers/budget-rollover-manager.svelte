@@ -18,7 +18,7 @@ import {
   processEnvelopeRollover,
   updateRolloverSettings,
 } from '$lib/query/budgets';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import { currencyFormatter } from '$lib/utils/formatters';

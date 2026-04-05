@@ -143,7 +143,7 @@ async function applyTransferMappingSuggestions(
   rows: ImportRow[],
   ctx: EnrichmentContext
 ): Promise<void> {
-  const { getTransferMappingService } = await import("$lib/server/domains/transfers");
+  const { getTransferMappingService } = await import("$core/server/domains/transfers");
   const transferMappingService = getTransferMappingService();
 
   // Get all accounts for name lookup (exclude current and closed)
