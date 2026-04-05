@@ -7,7 +7,7 @@
 
 import type { Category } from "$core/schema/categories";
 import { calculateStringSimilarity } from "../utils";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 

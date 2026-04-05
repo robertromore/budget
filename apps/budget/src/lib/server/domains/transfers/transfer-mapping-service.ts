@@ -5,7 +5,7 @@ import type {
   TransferMappingStats,
   TransferMappingWithAccount,
 } from "$core/schema/transfer-mappings";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 import { TransferMappingRepository } from "./transfer-mapping-repository";
 
 /**

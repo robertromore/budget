@@ -12,7 +12,7 @@ import type {
   NormalizedTransaction,
 } from "$core/types/import";
 import Papa from "papaparse";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 import { FileValidationError, ParseError } from "../errors";
 import {
   detectCSVDelimiter,

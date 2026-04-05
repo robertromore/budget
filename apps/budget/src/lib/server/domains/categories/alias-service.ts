@@ -6,7 +6,7 @@ import type {
   CategoryAliasTrigger,
   CategoryAliasWithCategory,
 } from "$core/schema/category-aliases";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 import { CategoryAliasRepository } from "./alias-repository";
 
 /**

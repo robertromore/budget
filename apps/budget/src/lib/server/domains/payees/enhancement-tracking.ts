@@ -9,7 +9,7 @@ import {
 } from "$core/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
-import { getCurrentTimestamp } from "$lib/utils/dates-core";
+import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 // Types for the service

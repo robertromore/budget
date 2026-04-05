@@ -4,7 +4,7 @@ import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
+import { generateUniqueSlug } from "$core/utils/generate-unique-slug";
 import { getLocalTimeZone, today } from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
 import { SequenceService } from "../sequences/services";

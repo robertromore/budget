@@ -5,7 +5,7 @@
  * Creates diverse, realistic conversations covering all app capabilities.
  */
 
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import {
   BUDGET_ASSISTANT_SYSTEM_PROMPT,
   type TrainingCategory,

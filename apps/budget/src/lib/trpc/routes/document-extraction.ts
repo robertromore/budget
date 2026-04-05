@@ -17,7 +17,7 @@ import { DocumentExtractionService } from "$lib/server/domains/document-extracti
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 

@@ -1,5 +1,1 @@
 $ bunx svelte-kit sync && bunx svelte-check --tsconfig ./tsconfig.json
-Loading svelte-check in workspace: /Users/robert/Projects/JS/SvelteKit/budget/apps/budget
-Getting Svelte diagnostics...
-
-svelte-check found 0 errors and 0 warnings

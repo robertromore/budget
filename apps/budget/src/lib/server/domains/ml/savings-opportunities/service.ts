@@ -16,8 +16,8 @@ import type { MLModelStore } from "../model-store";
 import { createRecurringTransactionDetectionService } from "../recurring-detection/service";
 import type { RecurringPattern } from "../types";
 import { getWorkspaceAccountIds } from "../utils";
-import { nowISOString } from "$lib/utils/dates-core";
-import { formatPercentRaw } from "$lib/utils/formatters-core";
+import { nowISOString } from "$core/utils/dates-core";
+import { formatPercentRaw } from "$core/utils/formatters-core";
 
 // =============================================================================
 // Types

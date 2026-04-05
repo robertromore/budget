@@ -8,7 +8,7 @@ import type {
 } from "$core/schema/categories";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { isEmptyObject } from "$lib/utils/object-utilities";
+import { isEmptyObject } from "$core/utils/object-utilities";
 import { defaultCategories } from "./default-categories";
 import {
   CategoryRepository,

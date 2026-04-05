@@ -25,7 +25,9 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@internationalized/date": "^3.12.0",
     "@paralleldrive/cuid2": "^3.3.0",
+    "simple-statistics": "^7.8.9",
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
     "validator": "^13.15.26",

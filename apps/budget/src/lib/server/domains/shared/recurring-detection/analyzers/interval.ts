@@ -1,4 +1,4 @@
-import { mean, standardDeviation, median } from "$lib/utils/chart-statistics";
+import { mean, standardDeviation, median } from "$core/utils/chart-statistics";
 import { FREQUENCY_RANGES, type Frequency, type IntervalAnalysis } from "../types";
 
 /**

@@ -25,8 +25,8 @@ type CreateCategoryAliasInput = {
 import { categories, categoryAliases, payees } from "$core/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { normalize } from "$lib/utils/string-utilities";
-import { getCurrentTimestamp } from "$lib/utils/dates-core";
+import { normalize } from "$core/utils/string-utilities";
+import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 /**

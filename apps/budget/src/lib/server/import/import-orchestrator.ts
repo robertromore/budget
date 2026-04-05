@@ -37,8 +37,8 @@ import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { CategoryMatcher } from "./matchers/category-matcher";
 import { PayeeMatcher } from "./matchers/payee-matcher";
 import { TransactionValidator } from "./validators/transaction-validator";
-import { isNotEmptyObject } from "$lib/utils/object-utilities";
-import { normalize } from "$lib/utils/string-utilities";
+import { isNotEmptyObject } from "$core/utils/object-utilities";
+import { normalize } from "$core/utils/string-utilities";
 
 export interface ImportProgress {
   stage: "validating" | "matching" | "creating" | "complete";

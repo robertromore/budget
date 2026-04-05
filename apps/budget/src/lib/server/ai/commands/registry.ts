@@ -6,7 +6,7 @@
  */
 
 import type { AIToolName } from "../tools";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 
 export interface SlashCommand {
   name: string;

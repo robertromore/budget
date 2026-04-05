@@ -9,7 +9,7 @@ import { envelopeAllocations } from "$core/schema/budgets/envelope-allocations";
 import { transactions, type Transaction } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates-core";
+import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, between, eq, sum as sqlSum } from "drizzle-orm";
 import { EnvelopeService } from "./envelope-service";
 import { BudgetRepository } from "./repository";

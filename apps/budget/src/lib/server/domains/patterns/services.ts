@@ -617,7 +617,7 @@ export class PatternDetectionService {
     // Import db and schedule tables
     const { db } = await import("$lib/server/db");
     const { schedules, scheduleDates } = await import("$core/schema");
-    const { generateUniqueSlugForDB } = await import("$lib/utils/slug-utils");
+    const { generateUniqueSlugForDB } = await import("$core/utils/slug-utils");
     const slugify = (await import("@sindresorhus/slugify")).default;
 
     // Generate better schedule name

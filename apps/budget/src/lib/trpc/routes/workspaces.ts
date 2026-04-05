@@ -1,7 +1,7 @@
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { formInsertWorkspaceSchema, workspaces } from "$core/schema/workspaces";
 import { publicProcedure, t } from "$lib/trpc";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import { TRPCError } from "@trpc/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod/v4";

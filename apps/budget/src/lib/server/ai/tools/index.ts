@@ -18,7 +18,7 @@ import {
   budgetPeriodTemplates,
 } from "$core/schema/budgets";
 import { and, eq, gte, lte, like, desc, sql, isNull, inArray } from "drizzle-orm";
-import { roundToCents } from "$lib/utils/math-utilities";
+import { roundToCents } from "$core/utils/math-utilities";
 import {
   createMLModelStore,
   createSavingsOpportunityService,

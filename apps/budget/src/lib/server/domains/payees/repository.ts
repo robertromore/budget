@@ -13,7 +13,7 @@ import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { logger } from "$lib/server/shared/logging";
 import type { PaginatedResult, PaginationOptions } from "$lib/server/shared/types";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { currentDate, getCurrentTimestamp } from "$lib/utils/dates-core";
+import { currentDate, getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, count, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
 import type { PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo } from "./types";
 

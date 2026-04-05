@@ -14,7 +14,7 @@ import {
   intelligenceProfileSchema,
   superformInsertPayeeSchema,
 } from "$core/schema/superforms/payees";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 import {
   advancedSearchPayeesSchema,
   applyIntelligentDefaultsSchema,

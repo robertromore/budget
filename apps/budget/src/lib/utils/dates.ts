@@ -33,9 +33,9 @@ export {
   getCurrentTimestamp,
   nowISOString,
   formatTimeAgo,
-} from "./dates-core";
+} from "$core/utils/dates-core";
 
-import { timezone } from "./dates-core";
+import { timezone } from "$core/utils/dates-core";
 
 /**
  * Format DateValue for display using user preferences when in browser

@@ -14,7 +14,7 @@
 
 import { accounts, categories, payees, transactions } from "$core/schema";
 import { db } from "$lib/server/db";
-import { roundToCents } from "$lib/utils/math-utilities";
+import { roundToCents } from "$core/utils/math-utilities";
 import { and, eq, gte, isNull, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";
 import type {

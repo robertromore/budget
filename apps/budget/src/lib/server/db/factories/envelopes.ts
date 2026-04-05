@@ -7,7 +7,7 @@ import {
   type EnvelopeMetadata,
 } from "$core/schema/budgets/envelope-allocations";
 import { faker } from "@faker-js/faker";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 
 export interface EnvelopeFactoryOptions {
   allocatedAmount?: number;

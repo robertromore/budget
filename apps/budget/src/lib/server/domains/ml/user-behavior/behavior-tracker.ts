@@ -6,7 +6,7 @@
  */
 
 import type { RecommendationOutcome, UserBehaviorProfile } from "../types";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 
 // =============================================================================
 // Types

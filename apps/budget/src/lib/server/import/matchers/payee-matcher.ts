@@ -8,7 +8,7 @@
 import type { Payee } from "$core/schema/payees";
 import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { calculateStringSimilarity } from "../utils";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 

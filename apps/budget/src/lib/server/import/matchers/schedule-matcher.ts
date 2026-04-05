@@ -7,7 +7,7 @@
 
 import type { Payee } from "$core/schema/payees";
 import type { Schedule } from "$core/schema/schedules";
-import { addInterval, daysBetween, parseLocalDate } from "$lib/utils/date-helpers";
+import { addInterval, daysBetween, parseLocalDate } from "$core/utils/date-helpers";
 import { PayeeMatcher } from "./payee-matcher";
 
 export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";

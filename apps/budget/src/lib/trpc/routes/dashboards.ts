@@ -10,7 +10,7 @@ import {
 } from "$core/schema/dashboards";
 import { getTemplate, DASHBOARD_TEMPLATES } from "$lib/server/domains/dashboards";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
-import { slugify } from "$lib/utils/string-utilities";
+import { slugify } from "$core/utils/string-utilities";
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";

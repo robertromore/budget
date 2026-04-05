@@ -17,7 +17,7 @@ import type {
 import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
-import { median, mean, standardDeviation } from "$lib/utils/chart-statistics";
+import { median, mean, standardDeviation } from "$core/utils/chart-statistics";
 import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
 import {

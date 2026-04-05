@@ -3,7 +3,7 @@
  * Provides structured logging with different severity levels
  */
 
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import { getEnv } from "$lib/server/env";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";

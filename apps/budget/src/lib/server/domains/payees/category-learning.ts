@@ -12,7 +12,7 @@ import {
   type LearningMetrics,
 } from "$core/schema";
 import { db } from "$lib/server/db";
-import { currentDate, toISOString } from "$lib/utils/dates-core";
+import { currentDate, toISOString } from "$core/utils/dates-core";
 import { and, count, desc, eq, gte, inArray, isNull, lte, max, sql } from "drizzle-orm";
 
 /**

@@ -9,7 +9,7 @@ import type {
   SearchAdapter,
   SearchResult,
 } from "./types";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "$core/utils/string-utilities";
 
 // In-memory cache for search results (24-hour TTL)
 const searchCache = new Map<string, CachedSearchResult>();

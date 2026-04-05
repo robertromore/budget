@@ -16,7 +16,7 @@ import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
-import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
+import { generateUniqueSlugForDB } from "$core/utils/slug-utils";
 import { TRPCError } from "@trpc/server";
 import slugify from "@sindresorhus/slugify";
 import { and, eq, inArray, or, sql } from "drizzle-orm";

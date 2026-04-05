@@ -2,7 +2,7 @@ import { budgetTemplates, type BudgetTemplate, type NewBudgetTemplate } from "$c
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { isEmptyObject } from "$lib/utils/object-utilities";
+import { isEmptyObject } from "$core/utils/object-utilities";
 import { desc, eq } from "drizzle-orm";
 
 export interface CreateBudgetTemplateRequest {

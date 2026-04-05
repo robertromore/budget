@@ -22,7 +22,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import type * as schema from "$core/schema";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import {
   encryptionKeys,
   type EncryptionKeyTargetType,

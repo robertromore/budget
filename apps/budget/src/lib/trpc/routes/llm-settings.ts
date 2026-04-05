@@ -23,7 +23,7 @@ import {
 } from "$lib/server/shared/security";
 import { publicProcedure, secureOperationProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 

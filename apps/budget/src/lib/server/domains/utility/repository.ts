@@ -8,7 +8,7 @@ import {
 } from "$core/schema/utility-usage";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { getCurrentTimestamp } from "$lib/utils/dates-core";
+import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, desc, eq, gte, lte, sql, asc } from "drizzle-orm";
 
 // Types for utility usage operations

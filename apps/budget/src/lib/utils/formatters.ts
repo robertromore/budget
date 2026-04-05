@@ -19,7 +19,7 @@ export {
   formatNumberFixed,
   formatCompact,
   formatDisplayValue,
-} from "./formatters-core";
+} from "$core/utils/formatters-core";
 
 // Fallback formatters for SSR/server-side
 const fallbackCurrencyFormatter = new Intl.NumberFormat("en-US", {

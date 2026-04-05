@@ -13,7 +13,7 @@ import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 
 /** Round to 2 decimal places to avoid floating-point drift in money arithmetic */
 function roundCents(value: number): number {

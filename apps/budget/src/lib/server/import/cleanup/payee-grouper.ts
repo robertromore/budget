@@ -14,7 +14,7 @@ import { getTransferMappingService } from "$lib/server/domains/transfers";
 import { distance as fastLevenshtein } from "fastest-levenshtein";
 import { PayeeMatcher } from "../matchers/payee-matcher";
 import { normalizePayeeName } from "../utils";
-import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
+import { cleanStringForFuzzyMatching, normalize } from "$core/utils/string-utilities";
 import { createId } from "@paralleldrive/cuid2";
 
 /**

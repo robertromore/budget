@@ -10,7 +10,7 @@ import type { OnboardingFormData, OnboardingStatus } from "$core/types/onboardin
 import { DEFAULT_ONBOARDING_STATUS } from "$core/types/onboarding";
 import type { AccountService } from "$lib/server/domains/accounts/services";
 import type { CategoryService } from "$lib/server/domains/categories/services";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import {
   SmartDefaultsGenerator,
   type AccountConfig,

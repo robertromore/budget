@@ -8,7 +8,7 @@ import { z } from "zod/v4";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, t, secureOperationProcedure } from "$lib/trpc";
 import { db } from "$lib/server/db";
-import { nowISOString } from "$lib/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import {
   generateEncryptionKey,
   storeEncryptionKey,

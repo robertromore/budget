@@ -3,7 +3,7 @@ import { notifications } from "$core/schema/notifications";
 import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates-core";
+import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, eq, gte, isNull, lt, sql, sum } from "drizzle-orm";
 import type { MetricAlertRepository } from "./repository";
 
