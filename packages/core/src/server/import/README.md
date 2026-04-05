@@ -332,4 +332,4 @@ For issues or questions, please check:
 
 - Test files in `test-data/`
 - Example implementations in `__tests__/`
-- Type definitions in `$lib/types/import.ts`
+- Type definitions in `$core/types/import.ts`
