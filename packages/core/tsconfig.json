@@ -3,6 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
     "paths": {
       "$core": ["./src"],
       "$core/*": ["./src/*"]

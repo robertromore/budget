@@ -162,6 +162,7 @@
         "@libsql/client": "^0.15.15",
         "@paralleldrive/cuid2": "^3.3.0",
         "@sindresorhus/slugify": "^3.0.0",
+        "@trpc/server": "^11.16.0",
         "ai": "^6.0.141",
         "ai-sdk-ollama": "^3.8.2",
         "bcryptjs": "^3.0.3",

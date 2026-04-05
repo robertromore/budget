@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { payees, users, workspaceMembers, workspaces } from "$core/schema";
-import { createCaller } from "../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { clearTestDb, setupTestDb } from "./setup/test-db";
 
 describe("Payee Routes Caller Integration Tests", () => {

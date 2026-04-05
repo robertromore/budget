@@ -3,9 +3,9 @@ import {
   superformInsertCategorySchema,
   type SuperformInsertCategoryData,
 } from "$core/schema/superforms";
-import { createContext } from "$lib/trpc/context";
+import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
-import { createCaller } from "$lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";

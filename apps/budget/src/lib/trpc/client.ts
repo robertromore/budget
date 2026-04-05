@@ -1,4 +1,4 @@
-import type { Router } from "$lib/trpc/router";
+import type { Router } from "$core/trpc/router";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 
 let browserClient: ReturnType<typeof createTRPCClient<Router>>;

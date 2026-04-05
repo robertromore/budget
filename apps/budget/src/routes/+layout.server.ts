@@ -1,9 +1,9 @@
 import { formInsertScheduleSchema } from "$core/schema";
 import { superformInsertAccountSchema } from "$core/schema/superforms";
 import { auth } from "$core/server/auth";
-import { createContext } from "$lib/trpc/context";
+import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
-import { createCaller } from "$lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { redirect } from "@sveltejs/kit";
 import { getLocalTimeZone, today } from "@internationalized/date";
 import { superValidate } from "sveltekit-superforms";

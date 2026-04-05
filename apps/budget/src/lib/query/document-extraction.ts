@@ -8,7 +8,7 @@ import type {
   DocumentExtractionMethod,
   DocumentExtractionPreferences,
 } from "$core/schema/workspaces";
-import type { RouterOutputs } from "$lib/trpc/router";
+import type { RouterOutputs } from "$core/trpc/router";
 import { trpc } from "$lib/trpc/client";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

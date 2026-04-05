@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { describe, expect, it } from "vitest";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 
 function unauthenticatedContext() {
   return {

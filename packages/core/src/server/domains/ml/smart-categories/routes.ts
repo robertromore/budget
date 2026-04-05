@@ -5,7 +5,7 @@
  * payee matching, amount patterns, time patterns, and historical data.
  */
 
-import { rateLimitedProcedure, t } from "$lib/trpc";
+import { rateLimitedProcedure, t } from "$core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createMLModelStore } from "../model-store";

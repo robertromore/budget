@@ -5,7 +5,7 @@
  * trend indicators, period comparisons, and forecasts.
  */
 
-import { rateLimitedProcedure, t } from "$lib/trpc";
+import { rateLimitedProcedure, t } from "$core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createIncomeExpenseService } from "./service";

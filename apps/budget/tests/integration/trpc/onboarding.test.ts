@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { clearTestDb, setupTestDb } from "../setup/test-db";
 
 describe("Onboarding tRPC Integration Tests", () => {

@@ -1,6 +1,6 @@
-import { createContext } from "$lib/trpc/context";
+import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
-import { router } from "$lib/trpc/router";
+import { router } from "$core/trpc/router";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { RequestHandler } from "./$types";
 

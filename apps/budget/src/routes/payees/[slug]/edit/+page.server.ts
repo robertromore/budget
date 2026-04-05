@@ -1,8 +1,8 @@
 import { removePayeeSchema, type RemovePayeeData } from "$core/schema";
 import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$core/schema/superforms";
-import { createContext } from "$lib/trpc/context";
+import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
-import { createCaller } from "$lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import type { Actions } from "@sveltejs/kit";
 import { fail, redirect } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";

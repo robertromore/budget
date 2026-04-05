@@ -22,7 +22,7 @@ export class MetricAlertRepository extends BaseRepository<
     super(db, metricAlerts, "MetricAlert");
   }
 
-  async create(data: NewMetricAlert, workspaceId: number): Promise<MetricAlert> {
+  override async create(data: NewMetricAlert, workspaceId: number): Promise<MetricAlert> {
     const [alert] = await db
       .insert(metricAlerts)
       .values({ ...data, workspaceId })

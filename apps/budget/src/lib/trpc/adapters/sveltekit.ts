@@ -1,5 +1,5 @@
 import type { RequestEvent } from "@sveltejs/kit";
-import type { RequestAdapter } from "../context";
+import type { RequestAdapter } from "$core/trpc/context";
 
 /**
  * Creates a RequestAdapter from a SvelteKit RequestEvent.

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createTestContext, seedTestData, clearTestDb } from "./setup/test-db";
-import { createCaller } from "../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 
 describe("Schedule Creation with Repeating Dates", () => {
   let ctx: Awaited<ReturnType<typeof createTestContext>>;

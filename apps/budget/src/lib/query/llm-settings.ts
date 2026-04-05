@@ -1,7 +1,7 @@
 import type { ModelInfo } from "$core/schema/llm-models";
 import type { LLMFeatureModes, LLMPreferences, LLMProvider } from "$core/schema/workspaces";
 import { trpc } from "$lib/trpc/client";
-import type { RouterOutputs } from "$lib/trpc/router";
+import type { RouterOutputs } from "$core/trpc/router";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 

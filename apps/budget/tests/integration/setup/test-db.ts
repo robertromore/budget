@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import type { Context } from "../../../src/lib/trpc/context";
+import type { Context } from "$core/trpc/context";
 
 const DEFAULT_TEST_USER_ID = "system-test-user";
 const DEFAULT_TEST_EMAIL = "system-test@example.invalid";

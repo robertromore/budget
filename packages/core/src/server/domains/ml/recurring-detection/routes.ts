@@ -4,7 +4,7 @@
  * Provides API endpoints for detecting and analyzing recurring transaction patterns.
  */
 
-import { rateLimitedProcedure, t } from "$lib/trpc";
+import { rateLimitedProcedure, t } from "$core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createMLModelStore } from "../model-store";

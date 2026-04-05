@@ -4,7 +4,7 @@
  * Provides API endpoints for transaction anomaly detection and scoring.
  */
 
-import { rateLimitedProcedure, t } from "$lib/trpc";
+import { rateLimitedProcedure, t } from "$core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createMLModelStore } from "../model-store";

@@ -1,6 +1,6 @@
-import { createContext } from "$lib/trpc/context";
+import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
-import { createCaller } from "$lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import type { LayoutServerLoad } from "./$types";
 import { error } from "@sveltejs/kit";
 

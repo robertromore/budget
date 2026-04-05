@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { db, runWithDbForTesting, setDbForTesting } from "$core/server/db";
-import { __testables } from "$lib/trpc/router";
+import { __testables } from "$core/trpc/router";
 
 describe("Router test DB context helpers", () => {
   afterEach(() => {

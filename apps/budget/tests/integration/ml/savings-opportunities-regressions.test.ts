@@ -8,7 +8,7 @@ import {
   workspaceMembers,
   workspaces,
 } from "$core/schema";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { clearTestDb, setupTestDb } from "../setup/test-db";
 
 function isoDateMonthsAgo(monthsAgo: number, dayOfMonth = 1): string {

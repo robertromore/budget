@@ -3,10 +3,10 @@ import {
   authenticatedProcedure,
   publicProcedure,
   rateLimitedProcedure,
-} from "$lib/server/shared/trpc/procedures";
+} from "$core/server/shared/trpc/procedures";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { lazyService } from "$core/server/shared/container/lazy-service";
-import { t } from "$lib/trpc/t";
+import { t } from "$core/trpc/t";
 import { z } from "zod";
 
 // Get service from factory (handles dependency injection)

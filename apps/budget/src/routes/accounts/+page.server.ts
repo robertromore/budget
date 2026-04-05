@@ -5,9 +5,9 @@ import {
   type SuperformInsertAccountData,
   type SuperformInsertTransactionData,
 } from "$core/schema/superforms";
-import { createContext } from "$lib/trpc/context";
+import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
-import { createCaller } from "$lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
