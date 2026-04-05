@@ -6,7 +6,7 @@
   import Plus from "@lucide/svelte/icons/plus";
   import Wallet from "@lucide/svelte/icons/wallet";
   import Trash2 from "@lucide/svelte/icons/trash-2";
-  import { navigate } from "$lib/router.svelte";
+  import { routerState } from "$lib/router.svelte";
 
   const accountsResult = createQuery(accountsQuery.listAccounts().options());
   const accounts = $derived(accountsResult.data ?? []);
@@ -31,7 +31,7 @@
 <div class="mx-auto max-w-5xl space-y-6 p-6">
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold tracking-tight">Accounts</h1>
-    <Button onclick={() => navigate({ page: "account-detail", slug: "new" })}>
+    <Button onclick={() => routerState.current = ({ page: "account-detail", slug: "new" })}>
       <Plus class="mr-2 h-4 w-4" />
       Add Account
     </Button>
@@ -60,7 +60,7 @@
             <Card.Title>
               <button
                 class="text-foreground hover:text-primary flex items-center gap-2 text-left"
-                onclick={() => navigate({ page: "account-detail", slug: account.slug })}>
+                onclick={() => routerState.current = ({ page: "account-detail", slug: account.slug })}>
                 <span>{account.name}</span>
               </button>
             </Card.Title>
@@ -80,7 +80,7 @@
           </Card.Content>
           <Card.Footer class="flex gap-2">
             <Button
-              onclick={() => navigate({ page: "account-detail", slug: account.slug })}
+              onclick={() => routerState.current = ({ page: "account-detail", slug: account.slug })}
               variant="outline"
               size="sm">
               View

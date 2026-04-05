@@ -8,7 +8,7 @@
   let status = $state("");
   let isSubmitting = $state(false);
 
-  import { setPhase } from "$lib/app-state.svelte";
+  import { appState } from "$lib/app-state.svelte";
 
   // Load defaults from server config
   $effect(() => {
@@ -38,7 +38,7 @@
       const result = await res.json();
       if (result.success) {
         status = "Setup complete!";
-        setTimeout(() => setPhase("login"), 500);
+        setTimeout(() => appState.phase = "login", 500);
       } else {
         status = `Error: ${result.error}`;
         isSubmitting = false;

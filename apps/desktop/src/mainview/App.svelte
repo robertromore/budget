@@ -1,52 +1,48 @@
 <script lang="ts">
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import { queryClient } from "$core/query/_client";
-  import { getPhase, setPhase } from "$lib/app-state.svelte";
-  import { getCurrentRoute, navigate } from "$lib/router.svelte";
+  import { appState } from "$lib/app-state.svelte";
+  import { routerState } from "$lib/router.svelte";
   import Setup from "./pages/Setup.svelte";
   import Login from "./pages/Login.svelte";
   import Accounts from "./pages/Accounts.svelte";
 
-  // Check config on mount to decide initial phase
   $effect(() => {
     fetch(`${window.location.origin}/api/config`)
       .then((r) => r.json())
       .then((config: any) => {
-        setPhase(config.setupComplete ? "login" : "setup");
+        appState.phase = config.setupComplete ? "login" : "setup";
       })
       .catch(() => {
-        setPhase("setup");
+        appState.phase = "setup";
       });
   });
-
-  const phase = $derived(getPhase());
-  const route = $derived(getCurrentRoute());
 </script>
 
 <QueryClientProvider client={queryClient}>
-  {#if phase === "loading"}
+  {#if appState.phase === "loading"}
     <div class="flex min-h-screen items-center justify-center">
       <p class="text-muted-foreground">Loading...</p>
     </div>
-  {:else if phase === "setup"}
+  {:else if appState.phase === "setup"}
     <Setup />
-  {:else if phase === "login"}
+  {:else if appState.phase === "login"}
     <Login />
-  {:else if phase === "app"}
+  {:else if appState.phase === "app"}
     <nav class="border-b bg-card px-6 py-3">
       <div class="mx-auto flex max-w-5xl items-center gap-4">
         <span class="text-lg font-bold">Budget</span>
         <button
           class="text-sm hover:text-primary"
-          class:text-primary={route.page === "accounts"}
-          class:font-medium={route.page === "accounts"}
-          onclick={() => navigate({ page: "accounts" })}>
+          class:text-primary={routerState.current.page === "accounts"}
+          class:font-medium={routerState.current.page === "accounts"}
+          onclick={() => routerState.current = { page: "accounts" }}>
           Accounts
         </button>
       </div>
     </nav>
 
-    {#if route.page === "accounts"}
+    {#if routerState.current.page === "accounts"}
       <Accounts />
     {:else}
       <div class="flex min-h-[60vh] items-center justify-center">

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { setPhase } from "$lib/app-state.svelte";
-  import { setInitialRoute } from "$lib/router.svelte";
+  import { appState } from "$lib/app-state.svelte";
+  import { routerState } from "$lib/router.svelte";
 
   const SERVER = window.location.origin;
 
@@ -11,8 +11,8 @@
   let config = $state<any>(null);
 
   function onLoginSuccess() {
-    setInitialRoute({ page: "accounts" });
-    setPhase("app");
+    routerState.current = { page: "accounts" };
+    appState.phase = "app";
   }
 
   // Load config to check auth mode
