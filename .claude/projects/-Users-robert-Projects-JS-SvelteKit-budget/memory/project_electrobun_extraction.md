@@ -1,13 +1,15 @@
 ---
-name: Electrobun core extraction complete
-description: packages/core extraction from SvelteKit app is complete on the electrobun branch, ready for desktop app integration
+name: Electrobun desktop app PoC complete
+description: packages/core extraction and Electrobun desktop app are complete on the electrobun branch (18 commits)
 type: project
 ---
 
-The `packages/core` extraction is complete on the `electrobun` branch (14 commits). All server code (schema, domains, tRPC, query layer, utils, types) lives in `packages/core/` accessible via `$core/` alias. The SvelteKit app is a thin shell with re-export shims + platform adapters.
+The `packages/core` extraction and Electrobun desktop app PoC are complete on the `electrobun` branch (18 commits).
 
-**Why:** To enable sharing server code between the SvelteKit web app and a future Electrobun desktop app.
+**Core package**: All server code (schema, domains, tRPC, query layer) in `packages/core/` with 5 platform adapters. Zero SvelteKit dependencies. SvelteKit web app works via re-export shims.
 
-**How to apply:** The five platform adapters (`setEnvProvider`, `RequestAdapter`, `setTrpcClientFactory`, `setToastAdapter`, `setBudgetStateCallbacks`) are the integration points for any new consumer.
+**Desktop app**: `apps/desktop/` uses Electrobun v1.16.0 with Svelte frontend. Bun.serve() hosts core's tRPC router on localhost:2022. Setup wizard, login, and accounts list pages working.
 
-**Next steps:** Create an Electrobun app (`apps/desktop/`) that imports `@budget/core` and provides its own adapters (Bun.serve + localhost tRPC client).
+**Key technical finding**: Bun's module loader is stricter than Vite with circular dependencies. Fixed by having ML domain route files import `t` directly from `$core/trpc/t` instead of the `$core/trpc` barrel. Also needed explicit exports in core's package.json for Bun bundler compatibility.
+
+**Next steps**: The PoC works but needs polish before real use — proper toast UI, full page porting, auto-updates, cross-platform testing, production bundling (currently uses `packages: "external"` which requires node_modules at runtime).

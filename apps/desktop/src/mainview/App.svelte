@@ -5,7 +5,7 @@
   import Login from "./pages/Login.svelte";
   import Home from "./pages/Home.svelte";
 
-  const SERVER = "http://localhost:2022";
+  const SERVER = window.location.origin;
 
   type Page = "loading" | "setup" | "login" | "home";
   let currentPage = $state<Page>("loading");

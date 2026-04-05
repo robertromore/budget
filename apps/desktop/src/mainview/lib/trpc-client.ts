@@ -1,8 +1,8 @@
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { Router } from "$core/trpc/router";
 
-const SERVER_PORT = 2022;
-const SERVER_URL = `http://localhost:${SERVER_PORT}/api/trpc`;
+// Same-origin: frontend is served from the tRPC server
+const SERVER_URL = `${window.location.origin}/api/trpc`;
 
 let client: ReturnType<typeof createTRPCClient<Router>>;
 

@@ -1,9 +1,28 @@
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { router } from "@budget/core/trpc";
-import { createContext, type RequestAdapter, type CookieOptions } from "@budget/core/trpc";
 import { setEnvProvider } from "@budget/core/server/env";
-import { type DesktopConfig, saveConfig } from "./config";
+import { type DesktopConfig, saveConfig, loadConfig } from "./config";
 import { runMigrations } from "./migrate";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+// Wire env provider BEFORE any other @budget/core imports.
+// The auth module is a singleton that reads env at init time.
+const _config = loadConfig();
+setEnvProvider({
+	get: (key: string) => {
+		if (key === "DATABASE_URL") return `file:${_config.databasePath}`;
+		if (key === "BETTER_AUTH_SECRET") return "budget-desktop-local-secret-key";
+		if (key === "BETTER_AUTH_URL") return `http://localhost:2022`;
+		if (key === "BETTER_AUTH_TRUSTED_ORIGINS") return "http://localhost:2022,http://localhost:5174,views://mainview";
+		if (key === "NODE_ENV") return "production";
+		return process.env[key];
+	},
+});
+
+// Now safe to import core modules that depend on env
+const { router } = await import("@budget/core/trpc");
+const { createContext } = await import("@budget/core/trpc");
+type RequestAdapter = import("@budget/core/trpc").RequestAdapter;
+type CookieOptions = import("@budget/core/trpc").CookieOptions;
 
 function parseCookies(header: string): Record<string, string> {
 	const cookies: Record<string, string> = {};
@@ -22,30 +41,19 @@ function fromBunRequest(req: Request): RequestAdapter {
 		headers: req.headers,
 		getCookie: (name: string) => cookies[name],
 		setCookie: (name: string, value: string, _opts: CookieOptions) => {
-			// In a real implementation, we'd accumulate Set-Cookie headers
-			// For the PoC, cookies are handled by Better Auth's fetch handler
+			// Cookies handled by Better Auth's fetch handler
 		},
 	};
 }
 
 export function startServer(config: DesktopConfig): number {
-	// Wire env provider with config-derived values
-	setEnvProvider({
-		get: (key: string) => {
-			if (key === "DATABASE_URL") return `file:${config.databasePath}`;
-			if (key === "BETTER_AUTH_SECRET") return "budget-desktop-local-secret-key";
-			if (key === "BETTER_AUTH_URL") return `http://localhost`;
-			if (key === "NODE_ENV") return "production";
-			return process.env[key];
-		},
-	});
+	const { fetchRequestHandler } = require("@trpc/server/adapters/fetch");
 
 	const server = Bun.serve({
 		port: 2022,
 		fetch: async (req: Request) => {
 			const url = new URL(req.url);
 
-			// CORS headers for the webview
 			const corsHeaders = {
 				"Access-Control-Allow-Origin": "*",
 				"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -53,12 +61,11 @@ export function startServer(config: DesktopConfig): number {
 				"Access-Control-Allow-Credentials": "true",
 			};
 
-			// Handle preflight
 			if (req.method === "OPTIONS") {
 				return new Response(null, { status: 204, headers: corsHeaders });
 			}
 
-			// Handle desktop setup API
+			// Desktop setup API
 			if (url.pathname === "/api/setup" && req.method === "POST") {
 				try {
 					const body = await req.json() as {
@@ -68,31 +75,25 @@ export function startServer(config: DesktopConfig): number {
 						password?: string;
 					};
 
-					// Update config
 					config.databasePath = body.databasePath;
 					config.authMode = body.authMode;
 					config.setupComplete = true;
 					saveConfig(config);
 
-					// Re-run migrations with new path
 					await runMigrations(config.databasePath);
 
-					// Create initial user if password mode
 					if (body.authMode === "password" && body.email && body.password) {
 						const { auth } = await import("@budget/core/server/auth");
 						await auth.api.signUpEmail({
 							body: { email: body.email, password: body.password, name: "Admin" },
 						});
 					} else if (body.authMode === "local") {
-						// Create a default local user
 						const { auth } = await import("@budget/core/server/auth");
 						try {
 							await auth.api.signUpEmail({
 								body: { email: "local@budget.app", password: "local-desktop-user", name: "Local User" },
 							});
-						} catch {
-							// User may already exist
-						}
+						} catch {}
 					}
 
 					return Response.json({ success: true }, { headers: corsHeaders });
@@ -105,17 +106,16 @@ export function startServer(config: DesktopConfig): number {
 				}
 			}
 
-			// Handle desktop config API
+			// Desktop config API
 			if (url.pathname === "/api/config" && req.method === "GET") {
 				return Response.json(config, { headers: corsHeaders });
 			}
 
-			// Handle Better Auth routes
+			// Better Auth routes
 			if (url.pathname.startsWith("/api/auth")) {
 				try {
 					const { auth } = await import("@budget/core/server/auth");
 					const response = await auth.handler(req);
-					// Add CORS headers
 					for (const [key, value] of Object.entries(corsHeaders)) {
 						response.headers.set(key, value);
 					}
@@ -126,7 +126,7 @@ export function startServer(config: DesktopConfig): number {
 				}
 			}
 
-			// Handle tRPC routes
+			// tRPC routes
 			if (url.pathname.startsWith("/api/trpc")) {
 				try {
 					const response = await fetchRequestHandler({
@@ -134,11 +134,10 @@ export function startServer(config: DesktopConfig): number {
 						req,
 						router,
 						createContext: () => createContext(fromBunRequest(req)),
-						onError: ({ type, path, error }) => {
+						onError: ({ type, path, error }: any) => {
 							console.error(`tRPC error (${type} @ ${path}):`, error.message);
 						},
 					});
-					// Add CORS headers
 					for (const [key, value] of Object.entries(corsHeaders)) {
 						response.headers.set(key, value);
 					}
@@ -147,6 +146,21 @@ export function startServer(config: DesktopConfig): number {
 					console.error("tRPC error:", error);
 					return new Response("Server error", { status: 500, headers: corsHeaders });
 				}
+			}
+
+			// Serve static frontend files
+			const staticDir = resolve(import.meta.dir, "../views/mainview");
+			let filePath = url.pathname === "/" ? "/index.html" : url.pathname;
+			const fullPath = resolve(staticDir, `.${filePath}`);
+
+			if (existsSync(fullPath)) {
+				return new Response(Bun.file(fullPath), { headers: corsHeaders });
+			}
+
+			// SPA fallback
+			const indexPath = resolve(staticDir, "index.html");
+			if (existsSync(indexPath)) {
+				return new Response(Bun.file(indexPath), { headers: corsHeaders });
 			}
 
 			return new Response("Not Found", { status: 404, headers: corsHeaders });

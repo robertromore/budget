@@ -1,6 +1,5 @@
 import { BrowserWindow, Updater } from "electrobun/bun";
 import { loadConfig } from "./config";
-import { startServer } from "./server";
 import { runMigrations } from "./migrate";
 
 // Load desktop configuration
@@ -13,7 +12,8 @@ try {
 	console.error("Failed to run migrations:", error);
 }
 
-// Start the tRPC server
+// Start the tRPC server (env is wired inside server.ts before core imports)
+const { startServer } = await import("./server");
 const serverPort = startServer(config);
 
 // Dev server detection for Vite HMR
@@ -28,10 +28,10 @@ async function getMainViewUrl(): Promise<string> {
 			console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
 			return DEV_SERVER_URL;
 		} catch {
-			console.log("Vite dev server not running. Using bundled views.");
+			console.log("Vite dev server not running.");
 		}
 	}
-	return "views://mainview/index.html";
+	return `http://localhost:${serverPort}`;
 }
 
 const url = await getMainViewUrl();
@@ -48,5 +48,5 @@ const mainWindow = new BrowserWindow({
 });
 
 console.log(
-	`Budget desktop running (server: localhost:${serverPort}, setup: ${config.setupComplete ? "complete" : "pending"})`,
+	`Budget desktop running at ${url} (setup: ${config.setupComplete ? "complete" : "pending"})`,
 );

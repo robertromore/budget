@@ -1,5 +1,5 @@
 <script lang="ts">
-  const SERVER = "http://localhost:2022";
+  const SERVER = window.location.origin;
 
   let databasePath = $state("");
   let authMode = $state<"local" | "password">("local");
