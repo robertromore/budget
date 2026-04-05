@@ -11,7 +11,7 @@ import {
   rolloverModeOptions,
   type EnvelopeAllocation,
   type RolloverMode,
-} from '$lib/schema/budgets/envelope-allocations';
+} from '$core/schema/budgets/envelope-allocations';
 import { Settings2 } from '@lucide/svelte/icons';
 
 interface Props {

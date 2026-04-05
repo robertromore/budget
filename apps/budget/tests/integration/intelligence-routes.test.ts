@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { payees, users, workspaceMembers, workspaces } from "$lib/schema";
-import { createCaller } from "../../src/lib/trpc/router";
+import { payees, users, workspaceMembers, workspaces } from "$core/schema";
+import { createCaller } from "$core/trpc/router";
 import { clearTestDb, setupTestDb } from "./setup/test-db";
 
 describe("Payee Intelligence Routes Caller Integration Tests", () => {
@@ -64,7 +64,7 @@ describe("Payee Intelligence Routes Caller Integration Tests", () => {
       userId: testUserId,
       sessionId: "intelligence-routes-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
 

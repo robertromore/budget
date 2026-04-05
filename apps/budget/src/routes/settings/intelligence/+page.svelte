@@ -15,7 +15,7 @@ import type {
   DuplicateDetectionMethod,
   IntelligenceInputPreferences,
   WebSearchProvider,
-} from '$lib/schema/workspaces';
+} from '$core/schema/workspaces';
 import { formatPercent } from '$lib/utils';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Brain from '@lucide/svelte/icons/brain';

@@ -7,11 +7,11 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { setupTestDb } from "../setup/test-db";
-import * as schema from "../../../src/lib/schema";
+import * as schema from "$core/schema";
 import { eq } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { createId } from "@paralleldrive/cuid2";
-import type { WorkspacePreferences, MLPreferences } from "../../../src/lib/schema/workspaces";
+import type { WorkspacePreferences, MLPreferences } from "$core/schema/workspaces";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 

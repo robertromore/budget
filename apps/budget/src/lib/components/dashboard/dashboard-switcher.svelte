@@ -3,7 +3,7 @@ import { goto } from '$app/navigation';
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import { rpc } from '$lib/query';
-import type { DashboardWithWidgets } from '$lib/schema/dashboards';
+import type { DashboardWithWidgets } from '$core/schema/dashboards';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';

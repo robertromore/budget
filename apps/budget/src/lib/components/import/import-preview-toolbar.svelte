@@ -3,7 +3,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
-import type { CleanupState, ImportRow } from '$lib/types/import';
+import type { CleanupState, ImportRow } from '$core/types/import';
 import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import Check from '@lucide/svelte/icons/check';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';

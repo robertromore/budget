@@ -1,17 +1,18 @@
-import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
-import { ExcelProcessor } from "$lib/server/import/file-processors/excel-processor";
-import { OFXProcessor } from "$lib/server/import/file-processors/ofx-processor";
-import { QIFProcessor } from "$lib/server/import/file-processors/qif-processor";
-import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
-import type { ParseResult } from "$lib/types/import";
+import { CSVProcessor } from "$core/server/import/file-processors/csv-processor";
+import { ExcelProcessor } from "$core/server/import/file-processors/excel-processor";
+import { OFXProcessor } from "$core/server/import/file-processors/ofx-processor";
+import { QIFProcessor } from "$core/server/import/file-processors/qif-processor";
+import { ImportOrchestrator } from "$core/server/import/import-orchestrator";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
+import type { ParseResult } from "$core/types/import";
 import { fail, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
   // Load accounts, payees, and categories for import
-  const caller = createCaller(await createContext(event));
+  const caller = createCaller(await createContext(fromSvelteKit(event)));
   const accounts = await caller.accountRoutes.all();
   const payees = await caller.payeeRoutes.all();
   const categories = await caller.categoriesRoutes.all();

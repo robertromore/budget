@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { DashboardWithWidgets } from '$lib/schema/dashboards';
+import type { DashboardWithWidgets } from '$core/schema/dashboards';
 import DashboardSwitcher from './dashboard-switcher.svelte';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Check from '@lucide/svelte/icons/check';

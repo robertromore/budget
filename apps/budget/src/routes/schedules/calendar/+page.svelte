@@ -5,7 +5,7 @@ import * as Card from '$lib/components/ui/card';
 import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import { Skeleton } from '$lib/components/ui/skeleton';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { SchedulesState } from '$lib/states/entities';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { nextDaily, nextMonthly, nextWeekly, nextYearly } from '$lib/utils/date-frequency';

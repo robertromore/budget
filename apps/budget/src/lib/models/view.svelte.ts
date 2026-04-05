@@ -1,5 +1,5 @@
 import type { TableDensity } from "$lib/components/data-table/state/types";
-import type { View as ViewSchema } from "$lib/schema";
+import type { View as ViewSchema } from "$core/schema";
 import { rpc } from "$lib/query";
 import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
 import deeplyEqual, { equalArray } from "$lib/utils";
@@ -132,15 +132,16 @@ export default class View {
 
   updateSorter = (column: string, value: boolean) => {
     this.view.display = this.view.display || {};
+    const sort = this.view.display.sort as SortingState | undefined;
     this.view.display.sort =
-      this.view.display.sort?.map((sorter) => {
+      sort?.map((sorter) => {
         if (sorter.id !== column) {
           return sorter;
         }
         return Object.assign({}, sorter, { desc: value });
       }) || [];
-    if (!this.view.display.sort?.find((sorter) => sorter.id === column)) {
-      this.view.display.sort = this.view.display.sort?.concat({ id: column, desc: value });
+    if (!(this.view.display.sort as SortingState)?.find((sorter) => sorter.id === column)) {
+      this.view.display.sort = (this.view.display.sort as SortingState)?.concat({ id: column, desc: value });
     }
   };
 

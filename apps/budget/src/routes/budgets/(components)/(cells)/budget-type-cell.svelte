@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 
 interface Props {
   budget: BudgetWithRelations;

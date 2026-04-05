@@ -2,7 +2,7 @@
 import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
-import type { ScheduleWithDetails } from '$lib/server/domains/schedules';
+import type { ScheduleWithDetails } from '$core/server/domains/schedules';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { calculateNextOccurrence, formatAmount, formatRecurringPattern } from '../(data)';
 // Icons

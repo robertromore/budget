@@ -7,8 +7,8 @@ import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
-import type { Account } from '$lib/schema';
-import { isDebtAccount } from '$lib/schema/accounts';
+import type { Account } from '$core/schema';
+import { isDebtAccount } from '$core/schema/accounts';
 import Info from '@lucide/svelte/icons/info';
 
 interface Props {

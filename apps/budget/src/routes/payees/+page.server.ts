@@ -1,14 +1,15 @@
-import { removePayeeSchema, type RemovePayeeData } from "$lib/schema";
-import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+import { removePayeeSchema, type RemovePayeeData } from "$core/schema";
+import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$core/schema/superforms";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => ({
-  payees: await createCaller(await createContext(event)).payeeRoutes.all(),
+  payees: await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.all(),
   form: await superValidate(zod4(superformInsertPayeeSchema)),
   deleteForm: await superValidate(zod4(removePayeeSchema)),
 });
@@ -24,7 +25,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as SuperformInsertPayeeData;
-    const entity = await createCaller(await createContext(event)).payeeRoutes.save(data);
+    const entity = await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.save(data);
     return {
       form,
       entity,
@@ -40,7 +41,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as RemovePayeeData;
-    await createCaller(await createContext(event)).payeeRoutes.remove(data);
+    await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.remove(data);
     return {
       form,
     };

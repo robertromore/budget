@@ -4,7 +4,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Progress } from '$lib/components/ui/progress';
-import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import type { EnvelopeAllocation } from '$core/schema/budgets/envelope-allocations';
 import { cn } from '$lib/utils';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { ArrowUpDown, Settings2, Star, TrendingUp, TriangleAlert } from '@lucide/svelte/icons';

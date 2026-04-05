@@ -2,7 +2,7 @@
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-import type { Category } from '$lib/schema/categories';
+import type { Category } from '$core/schema/categories';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Check from '@lucide/svelte/icons/check';

@@ -8,7 +8,7 @@ import {
   listRecommendations,
   resetAppliedRecommendation,
 } from '$lib/query/budgets';
-import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import type { BudgetRecommendationWithRelations } from '$core/schema/recommendations';
 import { cn } from '$lib/utils';
 import Filter from '@lucide/svelte/icons/filter';
 import RotateCcw from '@lucide/svelte/icons/rotate-ccw';

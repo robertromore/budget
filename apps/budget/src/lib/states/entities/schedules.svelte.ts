@@ -1,5 +1,5 @@
 import { rpc } from "$lib/query";
-import type { Schedule } from "$lib/schema";
+import type { Schedule } from "$core/schema";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 

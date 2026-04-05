@@ -1,4 +1,4 @@
-import type { Budget, BudgetEnforcementLevel, BudgetStatus, BudgetType } from "$lib/schema/budgets";
+import type { Budget, BudgetEnforcementLevel, BudgetStatus, BudgetType } from "$core/schema/budgets";
 import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 

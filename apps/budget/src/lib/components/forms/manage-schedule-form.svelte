@@ -28,9 +28,9 @@ import { EntityInput, MultiNumericInput } from '$lib/components/input';
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
 
 // Schema imports
-import { type Schedule } from '$lib/schema/schedules';
-import { type Payee, type Category } from '$lib/schema';
-import { superformInsertScheduleSchema } from '$lib/schema/superforms';
+import { type Schedule } from '$core/schema/schedules';
+import { type Payee, type Category } from '$core/schema';
+import { superformInsertScheduleSchema } from '$core/schema/superforms';
 
 // State imports
 import { SchedulesState } from '$lib/states/entities';

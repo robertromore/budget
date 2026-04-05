@@ -7,8 +7,8 @@ import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Empty from '$lib/components/ui/empty';
-import type { Account } from '$lib/schema/accounts';
-import type { ImportProfile } from '$lib/schema/import-profiles';
+import type { Account } from '$core/schema/accounts';
+import type { ImportProfile } from '$core/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { trpc } from '$lib/trpc/client';
@@ -20,7 +20,7 @@ import type {
   ImportRow,
   ParseResult,
   ScheduleMatch,
-} from '$lib/types/import';
+} from '$core/types/import';
 import type { Table } from '@tanstack/table-core';
 import {
   PAYMENT_PROCESSORS,

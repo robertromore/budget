@@ -1,4 +1,4 @@
-import type { WorkspaceMember, WorkspaceRole } from "$lib/schema/workspace-members";
+import type { WorkspaceMember, WorkspaceRole } from "$core/schema/workspace-members";
 import { Context } from "runed";
 
 /**

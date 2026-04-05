@@ -7,7 +7,7 @@ import { getRelatedTransactions } from '$lib/query/transactions';
 import type {
   BudgetRecommendationWithRelations,
   RecommendationMetadata,
-} from '$lib/schema/recommendations';
+} from '$core/schema/recommendations';
 import { cn, formatCurrency, formatPercent } from '$lib/utils';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Calendar from '@lucide/svelte/icons/calendar';

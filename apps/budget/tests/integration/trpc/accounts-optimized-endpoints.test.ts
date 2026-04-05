@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 import {
   accounts,
@@ -9,7 +9,7 @@ import {
   users,
   workspaces,
   workspaceMembers,
-} from "$lib/schema";
+} from "$core/schema";
 import { queryCache } from "$lib/utils/cache";
 
 describe("Optimized Account Endpoints Integration Tests", () => {
@@ -52,7 +52,7 @@ describe("Optimized Account Endpoints Integration Tests", () => {
       userId: testUserId,
       sessionId: "test-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     };
     caller = createCaller(ctx);

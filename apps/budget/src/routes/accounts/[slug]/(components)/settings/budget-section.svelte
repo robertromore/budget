@@ -6,7 +6,7 @@ import { Button } from '$lib/components/ui/button';
 import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 import Info from '@lucide/svelte/icons/info';
 
 interface Props {

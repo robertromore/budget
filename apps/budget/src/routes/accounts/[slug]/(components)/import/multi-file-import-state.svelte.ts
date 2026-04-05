@@ -13,7 +13,7 @@ import type {
   ImportRow,
   MultiFileGlobalStep,
   ParseResult,
-} from "$lib/types/import";
+} from "$core/types/import";
 
 /**
  * Detects the file type from a file's extension

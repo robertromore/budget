@@ -2,7 +2,7 @@ import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import type { BudgetWithRelations } from "$core/server/domains/budgets";
 import { calculateActualSpent, calculateAllocated } from "$lib/utils/budget-calculations";
 import { formatCurrency } from "$lib/utils/formatters";
 import Archive from "@lucide/svelte/icons/archive";

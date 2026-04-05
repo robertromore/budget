@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import Archive from '@lucide/svelte/icons/archive';
 import ChartBar from '@lucide/svelte/icons/chart-bar';
 import Copy from '@lucide/svelte/icons/copy';

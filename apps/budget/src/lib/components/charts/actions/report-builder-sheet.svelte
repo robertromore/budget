@@ -20,7 +20,7 @@ import {
   PREDEFINED_TEMPLATES,
   type ReportConfig,
   type ReportTemplateType,
-} from '$lib/schema/report-templates';
+} from '$core/schema/report-templates';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { generatePdf, downloadHtml, downloadMarkdown } from '$lib/utils/pdf-client';
 import { toast } from '$lib/utils/toast-interceptor';

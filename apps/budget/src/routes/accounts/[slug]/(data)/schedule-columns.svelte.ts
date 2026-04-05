@@ -1,6 +1,6 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { Schedule } from "$lib/schema/schedules";
+import type { Schedule } from "$core/schema/schedules";
 import type { SchedulesState } from "$lib/states/entities/schedules.svelte";
 import Archive from "@lucide/svelte/icons/archive";
 import Calendar from "@lucide/svelte/icons/calendar";

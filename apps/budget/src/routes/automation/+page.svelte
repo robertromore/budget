@@ -8,7 +8,7 @@ import { goto } from '$app/navigation';
 import { RuleList } from '$lib/components/automation';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { rpc } from '$lib/query';
-import type { AutomationRule } from '$lib/schema/automation-rules';
+import type { AutomationRule } from '$core/schema/automation-rules';
 import { toast } from '$lib/utils/toast-interceptor';
 
 // Queries

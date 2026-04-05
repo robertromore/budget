@@ -5,7 +5,7 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Textarea } from '$lib/components/ui/textarea';
 import { Checkbox } from '$lib/components/ui/checkbox';
-import { medicalExpenseTypeEnum, medicalExpenseTypeKeys } from '$lib/schema/medical-expenses';
+import { medicalExpenseTypeEnum, medicalExpenseTypeKeys } from '$core/schema/medical-expenses';
 import ReceiptUploadWidget from './receipt-upload-widget.svelte';
 import * as Separator from '$lib/components/ui/separator';
 import ExpenseTypeSelector from './expense-type-selector.svelte';

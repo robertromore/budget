@@ -3,7 +3,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 import { convertPatternToSchedule, dismissPattern } from '$lib/query/patterns';
-import type { DetectedPattern } from '$lib/schema/detected-patterns';
+import type { DetectedPattern } from '$core/schema/detected-patterns';
 import { getConfidenceColor } from '$lib/utils/confidence-colors';
 import { formatDateDisplay, parseISOString } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils/formatters';

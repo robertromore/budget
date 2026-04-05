@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import type { BudgetRecommendationWithRelations } from '$core/schema/recommendations';
 import Check from '@lucide/svelte/icons/check';
 import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 import X from '@lucide/svelte/icons/x';

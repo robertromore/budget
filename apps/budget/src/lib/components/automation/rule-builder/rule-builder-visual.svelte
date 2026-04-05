@@ -21,7 +21,7 @@ import {
 } from '@xyflow/svelte';
 import '@xyflow/svelte/dist/style.css';
 
-import type { EntityType, FlowState } from '$lib/types/automation';
+import type { EntityType, FlowState } from '$core/types/automation';
 import { cn } from '$lib/utils';
 import { nanoid } from 'nanoid';
 import { nodeTypes } from './nodes';

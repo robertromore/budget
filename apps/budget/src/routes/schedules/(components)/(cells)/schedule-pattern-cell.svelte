@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { recurringFormatter } from '$lib/utils/formatters';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
 

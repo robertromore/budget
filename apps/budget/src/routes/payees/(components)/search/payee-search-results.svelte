@@ -2,7 +2,7 @@
 import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
 import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import { cn, currencyFormatter } from '$lib/utils';
 import { highlightMatches } from '$lib/utils/search';
 import Building from '@lucide/svelte/icons/building';

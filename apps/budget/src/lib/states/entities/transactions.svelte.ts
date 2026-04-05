@@ -1,11 +1,11 @@
 import { rpc } from "$lib/query";
-import type { Transaction } from "$lib/schema/transactions";
+import type { Transaction } from "$core/schema/transactions";
 import type {
   CreateTransactionData,
   PaginationParams,
   TransactionFilters,
   UpdateTransactionData,
-} from "$lib/server/domains/transactions";
+} from "$core/server/domains/transactions";
 import { getContext, setContext } from "svelte";
 
 const KEY = Symbol("transactions");

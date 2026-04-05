@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import type { Account } from "$lib/schema";
+import type { Account } from "$core/schema";
 import { sortAccounts } from "$lib/states/entities/accounts-sorting";
 
 // Mock accounts data for testing

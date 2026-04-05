@@ -5,7 +5,7 @@ import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Textarea } from '$lib/components/ui/textarea';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { EditableEntityItem } from '$lib/types';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';

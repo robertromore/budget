@@ -10,8 +10,8 @@ import { ColorPicker } from '$lib/components/ui/color-picker';
 import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
-import type { Account, AccountType } from '$lib/schema';
-import { accountTypeEnum } from '$lib/schema';
+import type { Account, AccountType } from '$core/schema';
+import { accountTypeEnum } from '$core/schema';
 import {
   createEncryptedFieldState,
   encryptFieldValue,

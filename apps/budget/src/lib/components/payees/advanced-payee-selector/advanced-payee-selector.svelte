@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import { rpc } from '$lib/query';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { cn } from '$lib/utils';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import Fuse from 'fuse.js';

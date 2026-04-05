@@ -5,7 +5,7 @@ import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
 import { rpc } from '$lib/query';
 import { bulkDeletePayees as bulkDeletePayeesMutation } from '$lib/query/payees';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';

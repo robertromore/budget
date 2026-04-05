@@ -1,4 +1,4 @@
-import type { Category, CategoryType } from "$lib/schema/categories";
+import type { Category, CategoryType } from "$core/schema/categories";
 
 export type LayoutMode = "slide-in" | "side-by-side";
 

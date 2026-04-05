@@ -3,7 +3,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
 import { Separator } from '$lib/components/ui/separator';
-import type { Transaction } from '$lib/schema';
+import type { Transaction } from '$core/schema';
 import { formatCurrency } from '$lib/utils/formatters';
 import { createEncryptedFieldState, isEncryptedValue } from '$lib/utils/use-encryption.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';

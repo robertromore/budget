@@ -11,7 +11,7 @@ import { ScrollArea } from '$lib/components/ui/scroll-area';
 import { getDuplicates, listPayees, mergeDuplicates } from '$lib/query/payees';
 import { LLMSettings } from '$lib/query';
 import type { DuplicateGroup, LLMLogEntry } from '$lib/query/payees-types';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { toast } from '$lib/utils/toast-interceptor';
 
 import DuplicateGroupCard from './duplicate-group-card.svelte';

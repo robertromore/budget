@@ -3,7 +3,7 @@ import { goto } from '$app/navigation';
 import { ManageAccountForm } from '$lib/components/forms';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 

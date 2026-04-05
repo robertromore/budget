@@ -4,7 +4,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Slider } from '$lib/components/ui/slider';
-	import type { ScheduleMatch } from '$lib/types/import';
+	import type { ScheduleMatch } from '$core/types/import';
 	import { formatCurrency } from '$lib/utils/formatters';
 	import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 

@@ -5,7 +5,7 @@ import { onMount, tick } from 'svelte';
 import { TourPromptDialog } from '$lib/components/onboarding';
 import { DashboardRenderer } from '$lib/components/dashboard';
 import { rpc } from '$lib/query';
-import type { DashboardWithWidgets } from '$lib/schema/dashboards';
+import type { DashboardWithWidgets } from '$core/schema/dashboards';
 import { Button } from '$lib/components/ui/button';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Settings from '@lucide/svelte/icons/settings';

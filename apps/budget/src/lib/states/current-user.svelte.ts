@@ -1,4 +1,4 @@
-import type { User, UserPreferences } from "$lib/schema/users";
+import type { User, UserPreferences } from "$core/schema/users";
 import { Context } from "runed";
 
 /**

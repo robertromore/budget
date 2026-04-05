@@ -5,7 +5,7 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { rpc } from '$lib/query';
-import { documentTypeEnum, type DocumentType } from '$lib/schema/account-documents';
+import { documentTypeEnum, type DocumentType } from '$core/schema/account-documents';
 import { formatFileSize } from '$lib/utils/formatters';
 
 /** Minimal account type for display purposes */

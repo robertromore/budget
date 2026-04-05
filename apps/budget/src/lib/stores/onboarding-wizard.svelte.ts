@@ -18,7 +18,7 @@ import {
   type IncomeFrequency,
   type IncomeSource,
   type SpendingArea,
-} from "$lib/types/onboarding";
+} from "$core/types/onboarding";
 
 /**
  * Onboarding wizard steps

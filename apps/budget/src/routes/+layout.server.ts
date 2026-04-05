@@ -1,8 +1,9 @@
-import { formInsertScheduleSchema } from "$lib/schema";
-import { superformInsertAccountSchema } from "$lib/schema/superforms";
-import { auth } from "$lib/server/auth";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+import { formInsertScheduleSchema } from "$core/schema";
+import { superformInsertAccountSchema } from "$core/schema/superforms";
+import { auth } from "$core/server/auth";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
 import { redirect } from "@sveltejs/kit";
 import { getLocalTimeZone, today } from "@internationalized/date";
 import { superValidate } from "sveltekit-superforms";
@@ -85,7 +86,7 @@ export const load: LayoutServerLoad = async (event) => {
   // Check if authenticated user needs onboarding (but not if already on onboarding page)
   // Skip redirect if user is in tour mode (tour bypasses onboarding temporarily)
   if (session?.user && !url.pathname.startsWith("/onboarding") && !isInTourMode(url)) {
-    const ctx = await createContext(event);
+    const ctx = await createContext(fromSvelteKit(event));
     const caller = createCaller(ctx);
     const workspace = await caller.workspaceRoutes.getCurrent();
 
@@ -111,7 +112,7 @@ export const load: LayoutServerLoad = async (event) => {
     };
   }
 
-  const ctx = await createContext(event);
+  const ctx = await createContext(fromSvelteKit(event));
   const caller = createCaller(ctx);
 
   return {

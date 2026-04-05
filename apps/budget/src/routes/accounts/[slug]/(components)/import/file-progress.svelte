@@ -4,7 +4,7 @@ import AlertCircle from '@lucide/svelte/icons/alert-circle';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
 import Circle from '@lucide/svelte/icons/circle';
 import Loader2 from '@lucide/svelte/icons/loader-2';
-import type { ImportFile } from '$lib/types/import';
+import type { ImportFile } from '$core/types/import';
 
 interface Props {
   files: ImportFile[];

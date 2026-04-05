@@ -6,16 +6,16 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import {
   budgetTypes,
   periodTemplateTypes,
   type BudgetEnforcementLevel,
   type BudgetType,
   type PeriodTemplateType,
-} from '$lib/schema/budgets';
-import type { Category } from '$lib/schema/categories';
-import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
+} from '$core/schema/budgets';
+import type { Category } from '$core/schema/categories';
+import type { CreateBudgetRequest } from '$core/server/domains/budgets/services';
 import {
   budgetWizardStore,
   type WizardStep as WizardStepType,

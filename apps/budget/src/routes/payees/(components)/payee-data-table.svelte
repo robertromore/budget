@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { ColumnDef, ColumnFiltersState, Table as TTable } from '@tanstack/table-core';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import {
   AdvancedDataTable,
   GenericDisplayInput,

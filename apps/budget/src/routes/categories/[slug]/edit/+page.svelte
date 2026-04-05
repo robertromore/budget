@@ -6,7 +6,7 @@ import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Tag from '@lucide/svelte/icons/tag';
 import { ManageCategoryForm } from '$lib/components/forms';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 import type { EditableEntityItem } from '$lib/types';
 import type { PageData } from './$types';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';

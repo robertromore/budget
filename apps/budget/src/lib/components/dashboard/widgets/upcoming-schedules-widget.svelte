@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 

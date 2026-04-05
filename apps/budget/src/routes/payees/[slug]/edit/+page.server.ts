@@ -1,7 +1,8 @@
-import { removePayeeSchema, type RemovePayeeData } from "$lib/schema";
-import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+import { removePayeeSchema, type RemovePayeeData } from "$core/schema";
+import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$core/schema/superforms";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
 import type { Actions } from "@sveltejs/kit";
 import { fail, redirect } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
@@ -15,13 +16,13 @@ export const load = async (event: any) => {
     throw redirect(303, "/payees");
   }
 
-  const payee = await createCaller(await createContext(event)).payeeRoutes.getBySlug({ slug });
+  const payee = await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.getBySlug({ slug });
 
   return {
     payee,
     form: await superValidate(zod4(superformInsertPayeeSchema)),
     deleteForm: await superValidate(zod4(removePayeeSchema)),
-    categories: await createCaller(await createContext(event)).categoriesRoutes.all(),
+    categories: await createCaller(await createContext(fromSvelteKit(event))).categoriesRoutes.all(),
   };
 };
 
@@ -37,7 +38,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as SuperformInsertPayeeData;
-    const entity = await createCaller(await createContext(event)).payeeRoutes.save(data);
+    const entity = await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.save(data);
     return {
       form,
       entity,
@@ -54,7 +55,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as RemovePayeeData;
-    await createCaller(await createContext(event)).payeeRoutes.remove(data);
+    await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.remove(data);
     return {
       form,
     };

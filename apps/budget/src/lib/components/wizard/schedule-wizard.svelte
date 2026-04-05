@@ -9,7 +9,7 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import {
   scheduleWizardStore,
   type WizardStep as WizardStepType,

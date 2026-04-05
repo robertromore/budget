@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import Clock from '@lucide/svelte/icons/clock';
 import Plus from '@lucide/svelte/icons/plus';
 import User from '@lucide/svelte/icons/user';

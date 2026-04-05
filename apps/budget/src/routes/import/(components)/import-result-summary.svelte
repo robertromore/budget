@@ -3,8 +3,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import Save from '@lucide/svelte/icons/save';
-	import type { ImportResult, ColumnMapping } from '$lib/types/import';
-	import type { ImportProfile } from '$lib/schema/import-profiles';
+	import type { ImportResult, ColumnMapping } from '$core/types/import';
+	import type { ImportProfile } from '$core/schema/import-profiles';
 
 	let {
 		importResult,

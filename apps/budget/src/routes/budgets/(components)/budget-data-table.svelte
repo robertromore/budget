@@ -4,7 +4,7 @@ import {
   GenericDisplayInput,
   GenericFilterInput,
 } from '$lib/components/data-table';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import type { FilterInputOption } from '$lib/types';
 import type { ColumnDef, ColumnFiltersState, Table as TTable } from '@tanstack/table-core';
 import BudgetBulkActions from './budget-bulk-actions.svelte';

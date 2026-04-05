@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { createTestContext } from "../setup/test-db";
 
 describe("Transaction Generation from Schedules Tests", () => {

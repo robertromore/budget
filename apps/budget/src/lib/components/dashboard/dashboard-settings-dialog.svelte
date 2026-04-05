@@ -7,7 +7,7 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Select from '$lib/components/ui/select';
 import IconPicker from '$lib/components/ui/icon-picker/icon-picker.svelte';
 import { rpc } from '$lib/query';
-import type { DashboardWithWidgets, DashboardLayoutConfig } from '$lib/schema/dashboards';
+import type { DashboardWithWidgets, DashboardLayoutConfig } from '$core/schema/dashboards';
 import { slugify } from '$lib/utils/string-utilities';
 
 let {

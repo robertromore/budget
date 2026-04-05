@@ -8,7 +8,7 @@ import { Label } from '$lib/components/ui/label';
 import * as Separator from '$lib/components/ui/separator';
 import { Textarea } from '$lib/components/ui/textarea';
 import { rpc } from '$lib/query';
-import { medicalExpenseTypeEnum } from '$lib/schema/medical-expenses';
+import { medicalExpenseTypeEnum } from '$core/schema/medical-expenses';
 import { parseDate } from '@internationalized/date';
 import Upload from '@lucide/svelte/icons/upload';
 import ExpenseTypeSelector from './expense-type-selector.svelte';

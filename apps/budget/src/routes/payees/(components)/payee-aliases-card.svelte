@@ -4,7 +4,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Input } from '$lib/components/ui/input';
 import { createPayeeAlias, deletePayeeAlias, getAliasesForPayee } from '$lib/query/payee-aliases';
-import type { PayeeAlias } from '$lib/schema/payee-aliases';
+import type { PayeeAlias } from '$core/schema/payee-aliases';
 import Link from '@lucide/svelte/icons/link';
 import Plus from '@lucide/svelte/icons/plus';
 import Trash2 from '@lucide/svelte/icons/trash-2';

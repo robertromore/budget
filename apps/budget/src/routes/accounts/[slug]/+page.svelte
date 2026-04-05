@@ -5,9 +5,9 @@ import { Button, buttonVariants } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import * as Tabs from '$lib/components/ui/tabs';
-import type { Transaction } from '$lib/schema';
-import type { Schedule } from '$lib/schema/schedules';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { Transaction } from '$core/schema';
+import type { Schedule } from '$core/schema/schedules';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
 import {
   deleteBudgetDialog,

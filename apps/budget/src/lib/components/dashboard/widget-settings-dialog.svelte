@@ -6,7 +6,7 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
 import { rpc } from '$lib/query';
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 
 let {

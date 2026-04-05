@@ -10,7 +10,7 @@ import { Progress } from '$lib/components/ui/progress';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
 import { Separator } from '$lib/components/ui/separator';
 import * as Popover from '$lib/components/ui/popover';
-import type { CleanupState, PayeeGroup, CategorySuggestion } from '$lib/types/import';
+import type { CleanupState, PayeeGroup, CategorySuggestion } from '$core/types/import';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { trpc } from '$lib/trpc/client';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';

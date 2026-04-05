@@ -14,7 +14,7 @@ import {
   triggerEvents,
   type Condition,
   type ConditionGroup,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import { formatDate } from '$lib/utils/date-formatters';
 import type { RuleConfig } from '../utils';
 

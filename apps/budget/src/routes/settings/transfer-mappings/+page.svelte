@@ -10,12 +10,12 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import * as Table from '$lib/components/ui/table';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import type {
   TransferMappingTrigger,
   TransferMappingWithAccount,
   TransferMappingStats,
-} from '$lib/schema/transfer-mappings';
+} from '$core/schema/transfer-mappings';
 import { trpc } from '$lib/trpc/client';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Building from '@lucide/svelte/icons/building';

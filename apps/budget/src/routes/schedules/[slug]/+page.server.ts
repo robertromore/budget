@@ -1,5 +1,5 @@
-import { schedules } from "$lib/schema";
-import { db } from "$lib/server/db";
+import { schedules } from "$core/schema";
+import { db } from "$core/server/db";
 import { error } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { PageServerLoad } from "./$types";

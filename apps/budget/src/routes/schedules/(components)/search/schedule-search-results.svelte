@@ -4,7 +4,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { currencyFormatter, recurringFormatter } from '$lib/utils/formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Clock from '@lucide/svelte/icons/clock';

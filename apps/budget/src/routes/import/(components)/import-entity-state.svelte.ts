@@ -6,7 +6,7 @@
  * along with bulk update dialog state and handlers.
  */
 
-import type { AliasCandidate, ImportRow } from '$lib/types/import';
+import type { AliasCandidate, ImportRow } from '$core/types/import';
 import { arePayeesSimilar } from '$lib/utils/payee-matching';
 import { toast } from '$lib/utils/toast-interceptor';
 

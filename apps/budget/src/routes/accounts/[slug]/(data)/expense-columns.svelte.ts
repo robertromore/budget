@@ -6,8 +6,8 @@ import { dateFormatter } from "$lib/utils/date-formatters";
 import { type DateValue, getLocalTimeZone } from "@internationalized/date";
 import type { CellContext, Column, ColumnDef } from "@tanstack/table-core";
 import type { Component } from "svelte";
-import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/medical-expenses";
-import { claimStatusEnum, claimStatusKeys, type ClaimStatus } from "$lib/schema/hsa-claims";
+import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$core/schema/medical-expenses";
+import { claimStatusEnum, claimStatusKeys, type ClaimStatus } from "$core/schema/hsa-claims";
 import { SvelteMap } from "svelte/reactivity";
 
 // Import shared cell components

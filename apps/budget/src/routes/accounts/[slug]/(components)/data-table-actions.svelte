@@ -6,7 +6,7 @@ import {
   unarchiveTransaction,
   getTransactionDetail,
 } from '$lib/query/transactions';
-import type { Transaction } from '$lib/schema';
+import type { Transaction } from '$core/schema';
 import type { TransactionsFormat } from '$lib/types';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Archive from '@lucide/svelte/icons/archive';

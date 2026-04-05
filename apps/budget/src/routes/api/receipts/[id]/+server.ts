@@ -1,10 +1,10 @@
-import { accounts } from "$lib/schema/accounts";
-import { medicalExpenses } from "$lib/schema/medical-expenses";
-import { workspaceMembers } from "$lib/schema/workspace-members";
-import { auth } from "$lib/server/auth";
-import { db } from "$lib/server/db";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { lazyService } from "$lib/server/shared/container/lazy-service";
+import { accounts } from "$core/schema/accounts";
+import { medicalExpenses } from "$core/schema/medical-expenses";
+import { workspaceMembers } from "$core/schema/workspace-members";
+import { auth } from "$core/server/auth";
+import { db } from "$core/server/db";
+import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { lazyService } from "$core/server/shared/container/lazy-service";
 import { error } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
 import { existsSync } from "node:fs";

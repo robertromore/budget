@@ -3,7 +3,7 @@ import { goto } from '$app/navigation';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { SchedulesState } from '$lib/states/entities';
 import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
 import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';

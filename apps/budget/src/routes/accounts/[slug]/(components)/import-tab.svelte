@@ -18,7 +18,7 @@ import { Checkbox } from '$lib/components/ui/checkbox';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Progress } from '$lib/components/ui/progress';
-import type { ImportProfile } from '$lib/schema/import-profiles';
+import type { ImportProfile } from '$core/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { currentWorkspace } from '$lib/states/current-workspace.svelte';
@@ -32,7 +32,7 @@ import type {
   ImportResult,
   ImportRow,
   ParseResult,
-} from '$lib/types/import';
+} from '$core/types/import';
 import {
   PAYMENT_PROCESSORS,
   countProcessorTransactions,

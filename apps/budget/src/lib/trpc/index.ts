@@ -1,7 +1,7 @@
-// tRPC barrel export for clean imports across the application
+// tRPC barrel export — re-exports from core + app-specific client
 export { trpc as client } from "./client";
-export { createContext, type Context } from "./context";
-export { router } from "./router";
+export { createContext, type Context, type RequestAdapter, type CookieOptions, type AuthenticatedContext } from "$core/trpc/context";
+export { router, type Router, type RouterInputs, type RouterOutputs, createCaller } from "$core/trpc/router";
 export {
   bulkOperationProcedure,
   openProcedure,
@@ -11,4 +11,4 @@ export {
   secureOperationProcedure,
   secureProtectedProcedure,
   t,
-} from "./t";
+} from "$core/trpc/t";

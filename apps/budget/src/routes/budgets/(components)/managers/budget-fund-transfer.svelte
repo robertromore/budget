@@ -5,7 +5,7 @@ import * as Card from '$lib/components/ui/card';
 import * as Dialog from '$lib/components/ui/dialog';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn } from '$lib/utils';
 import { calculateActualSpent } from '$lib/utils/budget-calculations';
 import { currencyFormatter } from '$lib/utils/formatters';

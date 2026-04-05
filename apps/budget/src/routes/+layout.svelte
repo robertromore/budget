@@ -26,6 +26,7 @@ import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
 import { SpotlightOverlay, TourContinuationDialog } from '$lib/components/onboarding';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import { LLMSettings, queryClient, rpc } from '$lib/query';
+import { setBudgetStateCallbacks } from '$lib/query/budgets';
 import { BudgetState } from '$lib/states/budgets.svelte';
 import { CurrentWorkspaceState, currentWorkspace } from '$lib/states/current-workspace.svelte';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
@@ -86,6 +87,11 @@ const payeesState = PayeesState.set([]);
 const categoriesState = CategoriesState.set([]);
 const schedulesState = SchedulesState.set([]);
 const budgetState = BudgetState.set([]);
+setBudgetStateCallbacks({
+  upsertBudget: (b) => budgetState.upsertBudget(b),
+  removeBudget: (id) => budgetState.removeBudget(id),
+  recordPeriodInstance: (instance) => budgetState.recordPeriodInstance(instance),
+});
 
 // Initialize current workspace state context
 const currentWorkspaceState = new CurrentWorkspaceState(null);

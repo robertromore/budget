@@ -10,7 +10,7 @@ import {
   payeeKeys,
 } from "$lib/query/payees";
 import type { PayeeSuggestions } from "$lib/query/payees-types";
-import type { IntelligenceProfile } from "$lib/schema/payees";
+import type { IntelligenceProfile } from "$core/schema/payees";
 import { useQueryClient } from "@tanstack/svelte-query";
 
 // Alert types for quick insights

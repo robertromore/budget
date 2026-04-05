@@ -8,7 +8,7 @@ import {
   FINANCIAL_GOAL_LABELS,
   type HouseholdType,
   type FinancialGoal,
-} from '$lib/types/onboarding';
+} from '$core/types/onboarding';
 import Home from '@lucide/svelte/icons/home';
 import Users from '@lucide/svelte/icons/users';
 import Target from '@lucide/svelte/icons/target';

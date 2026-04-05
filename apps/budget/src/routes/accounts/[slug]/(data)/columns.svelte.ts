@@ -8,7 +8,7 @@ import StickyNote from "@lucide/svelte/icons/sticky-note";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
-import type { Category, Payee } from "$lib/schema";
+import type { Category, Payee } from "$core/schema";
 import type { CategoriesState } from "$lib/states/entities/categories.svelte";
 import type { PayeesState } from "$lib/states/entities/payees.svelte";
 import type { EditableEntityItem, TransactionsFormat } from "$lib/types";

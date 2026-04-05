@@ -16,7 +16,7 @@ import {
   ENCRYPTED_FIELDS_BY_LEVEL,
   ENCRYPTION_LEVELS,
   type EncryptionLevel,
-} from "$lib/types/encryption";
+} from "$core/types/encryption";
 import { decryptField, encryptField, isEncryptedValue, safeDecryptField } from "./field-encryption";
 
 // =============================================================================

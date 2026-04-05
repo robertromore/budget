@@ -1,4 +1,4 @@
-import type { Schedule } from "$lib/schema/schedules";
+import type { Schedule } from "$core/schema/schedules";
 import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 

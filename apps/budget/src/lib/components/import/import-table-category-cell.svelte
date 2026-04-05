@@ -4,7 +4,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
-import type { CategorySuggestion, CategorySuggestionReason, ImportRow } from '$lib/types/import';
+import type { CategorySuggestion, CategorySuggestionReason, ImportRow } from '$core/types/import';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import Check from '@lucide/svelte/icons/check';

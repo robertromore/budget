@@ -2,7 +2,7 @@
 import { browser } from '$app/environment';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as ToggleGroup from '$lib/components/ui/toggle-group';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { rpc } from '$lib/query';
 import { cn } from '$lib/utils';

@@ -5,7 +5,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Collapsible from '$lib/components/ui/collapsible';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import type { BudgetSuggestion } from '$lib/hooks/use-payee-insights.svelte';
-import type { FeedbackRating } from '$lib/schema/prediction-feedback';
+import type { FeedbackRating } from '$core/schema/prediction-feedback';
 import { formatCurrency } from '$lib/utils/formatters';
 // Icons
 import Brain from '@lucide/svelte/icons/brain';

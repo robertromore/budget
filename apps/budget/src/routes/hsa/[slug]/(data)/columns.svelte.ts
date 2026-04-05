@@ -1,8 +1,8 @@
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
-import { claimStatusEnum, type ClaimStatus } from "$lib/schema/hsa-claims";
-import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/medical-expenses";
+import { claimStatusEnum, type ClaimStatus } from "$core/schema/hsa-claims";
+import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$core/schema/medical-expenses";
 import { dateFormatter } from "$lib/utils/date-formatters";
 import { currencyFormatter } from "$lib/utils/formatters";
 import { getLocalTimeZone, type DateValue } from "@internationalized/date";

@@ -14,11 +14,11 @@ import {
   destroyRuleEngine,
   destroyAllRuleEngines,
   type ActionExecutionContext,
-} from "../../../src/lib/server/domains/automation/rule-engine";
-import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
-import { automationEvents } from "../../../src/lib/server/domains/automation/event-emitter";
-import { workspaces } from "../../../src/lib/schema/workspaces";
-import type { TriggerConfig, ConditionGroup, ActionConfig, RuleEvent } from "$lib/types/automation";
+} from "$core/server/domains/automation/rule-engine";
+import { AutomationRepository } from "$core/server/domains/automation/repository";
+import { automationEvents } from "$core/server/domains/automation/event-emitter";
+import { workspaces } from "$core/schema/workspaces";
+import type { TriggerConfig, ConditionGroup, ActionConfig, RuleEvent } from "$core/types/automation";
 
 // Mock services for action execution
 function createMockServices(): ActionExecutionContext["services"] {

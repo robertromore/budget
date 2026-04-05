@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, seedTestData, clearTestDb } from "../setup/test-db";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { TRPCError } from "@trpc/server";
 
 describe("Accounts CRUD Integration Tests", () => {

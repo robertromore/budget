@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import { Textarea } from '$lib/components/ui/textarea';
 import { saveView } from '$lib/query/views';
-import type { View } from '$lib/schema/views';
+import type { View } from '$core/schema/views';
 import type { TableEntityType, ViewDisplayState, ViewFilter } from '$lib/types';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 

@@ -20,7 +20,7 @@ import {
   getActionsForEntity,
   type ActionConfig,
   type EntityType,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import Play from '@lucide/svelte/icons/play';
 import { Handle, Position } from '@xyflow/svelte';
 import { isHorizontalLayout, layoutDirection } from '../stores';

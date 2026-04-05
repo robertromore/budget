@@ -6,7 +6,7 @@ import { Skeleton } from '$lib/components/ui/skeleton';
 import { Switch } from '$lib/components/ui/switch';
 import { DocumentExtraction } from '$lib/query/document-extraction';
 import { LLMSettings } from '$lib/query/llm-settings';
-import type { DocumentExtractionMethod, LLMProvider } from '$lib/schema/workspaces';
+import type { DocumentExtractionMethod, LLMProvider } from '$core/schema/workspaces';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Bot from '@lucide/svelte/icons/bot';
 import Eye from '@lucide/svelte/icons/eye';

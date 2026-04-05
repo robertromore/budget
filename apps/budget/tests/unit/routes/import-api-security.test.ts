@@ -32,7 +32,7 @@ vi.mock("../../../src/routes/api/import/auth", () => ({
     mocks.requireImportWorkspaceAccess(...args),
 }));
 
-vi.mock("$lib/server/import/import-orchestrator", () => ({
+vi.mock("$core/server/import/import-orchestrator", () => ({
   ImportOrchestrator: class {
     processImport(...args: unknown[]) {
       return mocks.processImport(...args);

@@ -6,10 +6,10 @@ import Label from '$lib/components/ui/label/label.svelte';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
 import * as Sheet from '$lib/components/ui/sheet';
-import type { BudgetPeriodInstance } from '$lib/schema/budgets';
-import { rolloverModeOptions, type RolloverMode } from '$lib/schema/budgets/envelope-allocations';
-import type { Category } from '$lib/schema/categories';
-import type { EnvelopeAllocationRequest } from '$lib/server/domains/budgets/envelope-service';
+import type { BudgetPeriodInstance } from '$core/schema/budgets';
+import { rolloverModeOptions, type RolloverMode } from '$core/schema/budgets/envelope-allocations';
+import type { Category } from '$core/schema/categories';
+import type { EnvelopeAllocationRequest } from '$core/server/domains/budgets/envelope-service';
 
 interface Props {
   open?: boolean;

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { AdvancedDataTable } from '$lib/components/data-table';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { columns } from '../(data)/budget-columns.svelte.ts';
 import BudgetBulkActions from '../../../budgets/(components)/budget-bulk-actions.svelte';
 import AccountBudgetsEmptyState from './account-budgets-empty-state.svelte';

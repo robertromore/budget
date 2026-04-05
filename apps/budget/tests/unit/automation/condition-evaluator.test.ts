@@ -10,7 +10,7 @@ import {
   evaluateCondition,
   evaluateConditionGroup,
   getFieldValue,
-} from "$lib/server/domains/automation/condition-evaluator";
+} from "$core/server/domains/automation/condition-evaluator";
 import {
   createTestCondition,
   createTestConditionGroup,

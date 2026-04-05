@@ -1,6 +1,6 @@
 <script lang="ts">
 import { rpc } from '$lib/query';
-import type { DashboardWithWidgets, DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWithWidgets, DashboardWidget } from '$core/schema/dashboards';
 import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 import DashboardToolbar from './dashboard-toolbar.svelte';
 import WidgetGrid from './widget-grid.svelte';

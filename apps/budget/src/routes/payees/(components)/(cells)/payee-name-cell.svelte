@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import Building from '@lucide/svelte/icons/building';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
 import User from '@lucide/svelte/icons/user';

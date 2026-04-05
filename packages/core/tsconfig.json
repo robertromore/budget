@@ -1,0 +1,15 @@
+{
+  "extends": "@budget/config/tsconfig",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "paths": {
+      "$core": ["./src"],
+      "$core/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

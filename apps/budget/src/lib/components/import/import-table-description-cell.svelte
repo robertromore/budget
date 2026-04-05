@@ -1,6 +1,6 @@
 <script lang="ts">
 import TextAreaInput from '$lib/components/input/text-area-input.svelte';
-import type { ImportRow } from '$lib/types/import';
+import type { ImportRow } from '$core/types/import';
 import type { Row } from '@tanstack/table-core';
 
 interface Props {

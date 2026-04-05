@@ -2,7 +2,7 @@
 import { cn } from '$lib/utils';
 import { currencyFormatter } from '$lib/utils/formatters';
 import * as Tooltip from '$lib/components/ui/tooltip';
-import type { BudgetProgressStatus, BudgetEnforcementLevel } from '$lib/schema/budgets';
+import type { BudgetProgressStatus, BudgetEnforcementLevel } from '$core/schema/budgets';
 
 interface Props {
   consumed?: number;

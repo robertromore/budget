@@ -4,7 +4,7 @@ import { Checkbox } from '$lib/components/ui/checkbox';
 import * as Dialog from '$lib/components/ui/dialog';
 import { Label } from '$lib/components/ui/label';
 import * as Separator from '$lib/components/ui/separator';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import {
   AVAILABLE_METRICS,
   getEnabledMetrics,

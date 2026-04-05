@@ -9,7 +9,7 @@ import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { cachePatterns } from '$lib/query/_client';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 import { type DateValue } from '@internationalized/date';
 import { timezone } from '$lib/utils/dates';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';

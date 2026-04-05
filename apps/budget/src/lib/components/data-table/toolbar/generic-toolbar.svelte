@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
 import Toggle from '$lib/components/ui/toggle/toggle.svelte';
-import type { View } from '$lib/schema/views';
+import type { View } from '$core/schema/views';
 import type { FilterInputOption, TableEntityType } from '$lib/types';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Plus from '@lucide/svelte/icons/plus';

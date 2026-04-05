@@ -1,4 +1,4 @@
-import type { Category } from "$lib/schema";
+import type { Category } from "$core/schema";
 import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 

@@ -2,7 +2,7 @@
 import { Label } from '$lib/components/ui/label';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { onboardingWizardStore } from '$lib/stores/onboarding-wizard.svelte';
-import { ACCOUNT_TYPE_LABELS, type AccountToTrack } from '$lib/types/onboarding';
+import { ACCOUNT_TYPE_LABELS, type AccountToTrack } from '$core/types/onboarding';
 import Landmark from '@lucide/svelte/icons/landmark';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import CreditCard from '@lucide/svelte/icons/credit-card';

@@ -5,7 +5,7 @@ import { Button } from '$lib/components/ui/button';
 import { Switch } from '$lib/components/ui/switch';
 import * as Select from '$lib/components/ui/select';
 import { onboardingWizardStore } from '$lib/stores/onboarding-wizard.svelte';
-import { DEBT_TYPE_LABELS, type DebtType, type DebtItem } from '$lib/types/onboarding';
+import { DEBT_TYPE_LABELS, type DebtType, type DebtItem } from '$core/types/onboarding';
 import Plus from '@lucide/svelte/icons/plus';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import CreditCard from '@lucide/svelte/icons/credit-card';

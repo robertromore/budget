@@ -2,8 +2,8 @@
 import { Button } from '$lib/components/ui/button';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton';
-import type { AccountDocument } from '$lib/schema/account-documents';
-import { documentTypeEnum, type DocumentType } from '$lib/schema/account-documents';
+import type { AccountDocument } from '$core/schema/account-documents';
+import { documentTypeEnum, type DocumentType } from '$core/schema/account-documents';
 import { trpc } from '$lib/trpc/client';
 import Brain from '@lucide/svelte/icons/brain';
 import FileText from '@lucide/svelte/icons/file-text';

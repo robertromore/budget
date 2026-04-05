@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "$core": ["../../packages/core/src"],
+      "$core/*": ["../../packages/core/src/*"],
+      "$lib": ["./src/mainview/lib"],
+      "$lib/*": ["./src/mainview/lib/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

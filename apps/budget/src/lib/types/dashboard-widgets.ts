@@ -1,4 +1,4 @@
-import type { WidgetSettings, WidgetSize } from "$lib/schema/dashboards";
+import type { WidgetSettings, WidgetSize } from "$core/schema/dashboards";
 
 export type WidgetCategory = "metrics" | "charts" | "lists" | "actions";
 

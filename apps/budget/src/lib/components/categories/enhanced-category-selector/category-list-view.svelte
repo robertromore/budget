@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
-import type { Category } from '$lib/schema/categories';
+import type { Category } from '$core/schema/categories';
 import { cn } from '$lib/utils';
 import Plus from '@lucide/svelte/icons/plus';
 import Search from '@lucide/svelte/icons/search';

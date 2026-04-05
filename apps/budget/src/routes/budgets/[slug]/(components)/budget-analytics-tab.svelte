@@ -14,7 +14,7 @@ import {
   groupAnalyticsByCategory,
   type BudgetAnalyticType,
 } from './(analytics)/budget-analytics-types';
-import type { BudgetType } from '$lib/schema/budgets';
+import type { BudgetType } from '$core/schema/budgets';
 
 // Chart components
 import BudgetSpendingTrendsChart from './(analytics)/budget-spending-trends-chart.svelte';

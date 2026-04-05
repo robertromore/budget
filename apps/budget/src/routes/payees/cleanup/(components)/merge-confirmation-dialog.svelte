@@ -4,7 +4,7 @@ import * as Select from '$lib/components/ui/select';
 import { Button, buttonVariants } from '$lib/components/ui/button';
 import { Switch } from '$lib/components/ui/switch';
 import { Label } from '$lib/components/ui/label';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import GitMerge from '@lucide/svelte/icons/git-merge';

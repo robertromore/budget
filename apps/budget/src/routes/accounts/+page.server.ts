@@ -1,12 +1,13 @@
-import { removeAccountSchema, type RemoveAccountData } from "$lib/schema";
+import { removeAccountSchema, type RemoveAccountData } from "$core/schema";
 import {
   superformInsertAccountSchema,
   superformInsertTransactionSchema,
   type SuperformInsertAccountData,
   type SuperformInsertTransactionData,
-} from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+} from "$core/schema/superforms";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
@@ -28,7 +29,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as SuperformInsertAccountData;
-    const entity = await createCaller(await createContext(event)).accountRoutes.save(data);
+    const entity = await createCaller(await createContext(fromSvelteKit(event))).accountRoutes.save(data);
     return {
       form,
       entity,
@@ -44,7 +45,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as RemoveAccountData;
-    await createCaller(await createContext(event)).accountRoutes.remove(data);
+    await createCaller(await createContext(fromSvelteKit(event))).accountRoutes.remove(data);
     return {
       form,
     };
@@ -59,7 +60,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as SuperformInsertTransactionData;
-    const entity = await createCaller(await createContext(event)).transactionRoutes.save({
+    const entity = await createCaller(await createContext(fromSvelteKit(event))).transactionRoutes.save({
       ...data,
       date: data.date || new Date().toISOString().split("T")[0]!,
     });

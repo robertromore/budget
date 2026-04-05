@@ -7,7 +7,7 @@ import { Input } from '$lib/components/ui/input';
 import { Textarea } from '$lib/components/ui/textarea';
 import type { FieldEnhancementSummary } from '$lib/query/payee-enhancements';
 import { enrichPayeeContact, inferPayeeDetails } from '$lib/query/payees';
-import type { EnhanceableField } from '$lib/schema';
+import type { EnhanceableField } from '$core/schema';
 // Icons
 import Phone from '@lucide/svelte/icons/phone';
 

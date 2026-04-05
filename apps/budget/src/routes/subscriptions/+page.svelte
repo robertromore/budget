@@ -10,11 +10,11 @@ import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { SubscriptionFormDialog } from '$lib/components/subscriptions';
 import { rpc } from '$lib/query';
-import type { SubscriptionWithRelations } from '$lib/schema/subscriptions-table';
+import type { SubscriptionWithRelations } from '$core/schema/subscriptions-table';
 import type {
   DetectionResult,
   TransactionBasedDetectionResult,
-} from '$lib/server/domains/subscriptions';
+} from '$core/server/domains/subscriptions';
 import { currencyFormatter } from '$lib/utils/formatters';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';

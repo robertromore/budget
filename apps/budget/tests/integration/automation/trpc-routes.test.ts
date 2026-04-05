@@ -11,8 +11,8 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
-import { workspaces } from "../../../src/lib/schema/workspaces";
-import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
+import { workspaces } from "$core/schema/workspaces";
+import { AutomationRepository } from "$core/server/domains/automation/repository";
 import {
   createRule,
   updateRule,
@@ -30,7 +30,7 @@ import {
   testRule,
   type AutomationContext,
   type CreateRuleInput,
-} from "../../../src/lib/server/domains/automation/services";
+} from "$core/server/domains/automation/services";
 import {
   entityTypes,
   triggerEvents,

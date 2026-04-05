@@ -18,7 +18,7 @@ import {
   type Condition,
   type ConditionGroup,
   type ConditionOperator,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 
 // =============================================================================
 // Entity Types

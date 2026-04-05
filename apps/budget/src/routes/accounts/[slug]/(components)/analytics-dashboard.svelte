@@ -1,7 +1,7 @@
 <script lang="ts">
 import { cn } from '$lib/utils';
 import type { TransactionsFormat } from '$lib/types';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import { analyticsTypes } from './(analytics)/analytics-types';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import { chartSelection } from '$lib/states/ui/chart-selection.svelte';

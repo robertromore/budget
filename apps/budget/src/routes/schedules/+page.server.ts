@@ -1,10 +1,11 @@
-import { removeScheduleSchema, type RemoveScheduleData } from "$lib/schema";
+import { removeScheduleSchema, type RemoveScheduleData } from "$core/schema";
 import {
   superformInsertScheduleSchema,
   type SuperformInsertScheduleData,
-} from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+} from "$core/schema/superforms";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
@@ -12,7 +13,7 @@ import type { Actions, PageServerLoad } from "./$types";
 import { insertFormSchema } from "./schema";
 
 export const load: PageServerLoad = async (event) => ({
-  schedules: await createCaller(await createContext(event)).scheduleRoutes.all(),
+  schedules: await createCaller(await createContext(fromSvelteKit(event))).scheduleRoutes.all(),
   form: await superValidate(zod4(insertFormSchema)),
   deleteForm: await superValidate(zod4(removeScheduleSchema)),
 });
@@ -28,7 +29,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as SuperformInsertScheduleData;
-    const entity = await createCaller(await createContext(event)).scheduleRoutes.save(data);
+    const entity = await createCaller(await createContext(fromSvelteKit(event))).scheduleRoutes.save(data);
     return {
       form,
       entity,
@@ -44,7 +45,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as RemoveScheduleData;
-    await createCaller(await createContext(event)).scheduleRoutes.remove(data);
+    await createCaller(await createContext(fromSvelteKit(event))).scheduleRoutes.remove(data);
     return {
       form,
     };

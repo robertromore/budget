@@ -11,7 +11,7 @@ import {
 } from '@tanstack/table-core';
 import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
-import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import type { BudgetRecommendationWithRelations } from '$core/schema/recommendations';
 import { cn } from '$lib/utils';
 import DataTablePagination from '$lib/components/ui/data-table/data-table-pagination.svelte';
 import RecommendationBulkActions from './recommendation-bulk-actions.svelte';

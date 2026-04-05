@@ -7,14 +7,14 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { setupTestDb } from "../setup/test-db";
-import * as schema from "../../../src/lib/schema";
+import * as schema from "$core/schema";
 import { eq } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import type { ReportConfig } from "../../../src/lib/schema/report-templates";
+import type { ReportConfig } from "$core/schema/report-templates";
 import {
   DEFAULT_REPORT_CONFIG,
   PREDEFINED_TEMPLATES,
-} from "../../../src/lib/schema/report-templates";
+} from "$core/schema/report-templates";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 

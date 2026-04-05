@@ -6,18 +6,18 @@
  * eliminate duplication and behavioral divergence.
  */
 
-import { accounts as accountsTable } from "$lib/schema/accounts";
-import { payees as payeeTable } from "$lib/schema/payees";
-import { scheduleDates as scheduleDateTable } from "$lib/schema/schedule-dates";
-import type { Schedule } from "$lib/schema/schedules";
-import { schedules as scheduleTable } from "$lib/schema/schedules";
-import type { TransferMappingWithAccount } from "$lib/schema/transfer-mappings";
-import { db } from "$lib/server/db";
+import { accounts as accountsTable } from "$core/schema/accounts";
+import { payees as payeeTable } from "$core/schema/payees";
+import { scheduleDates as scheduleDateTable } from "$core/schema/schedule-dates";
+import type { Schedule } from "$core/schema/schedules";
+import { schedules as scheduleTable } from "$core/schema/schedules";
+import type { TransferMappingWithAccount } from "$core/schema/transfer-mappings";
+import { db } from "$core/server/db";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
-import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
-import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
-import { detectTransferTargetMatches } from "$lib/server/import/utils/transfer-target-detector";
-import type { ImportRow, ScheduleMatch } from "$lib/types/import";
+import { PayeeMatcher } from "$core/server/import/matchers/payee-matcher";
+import { ScheduleMatcher } from "$core/server/import/matchers/schedule-matcher";
+import { detectTransferTargetMatches } from "$core/server/import/utils/transfer-target-detector";
+import type { ImportRow, ScheduleMatch } from "$core/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 
 interface EnrichmentContext {
@@ -143,7 +143,7 @@ async function applyTransferMappingSuggestions(
   rows: ImportRow[],
   ctx: EnrichmentContext
 ): Promise<void> {
-  const { getTransferMappingService } = await import("$lib/server/domains/transfers");
+  const { getTransferMappingService } = await import("$core/server/domains/transfers");
   const transferMappingService = getTransferMappingService();
 
   // Get all accounts for name lookup (exclude current and closed)

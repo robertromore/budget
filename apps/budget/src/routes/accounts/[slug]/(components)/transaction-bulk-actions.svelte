@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Transaction } from '$lib/schema';
+import type { Transaction } from '$core/schema';
 import type { Table } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/types';
 import { Button } from '$lib/components/ui/button';

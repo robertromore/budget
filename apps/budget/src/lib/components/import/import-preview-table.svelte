@@ -1,7 +1,7 @@
 <script lang="ts">
 import { AdvancedDataTable } from '$lib/components/data-table/core';
 import { createTableState } from '$lib/components/data-table/state';
-import type { CleanupState, ImportRow } from '$lib/types/import';
+import type { CleanupState, ImportRow } from '$core/types/import';
 import type { RowSelectionState, Table } from '@tanstack/table-core';
 import {
   arrIncludesFilter,

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import * as Collapsible from '$lib/components/ui/collapsible';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
-import type { GroupedAccountBudgets } from '$lib/server/domains/budgets/services';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
+import type { GroupedAccountBudgets } from '$core/server/domains/budgets/services';
 import Calendar from '@lucide/svelte/icons/calendar';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import Target from '@lucide/svelte/icons/target';

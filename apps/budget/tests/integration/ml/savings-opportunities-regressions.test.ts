@@ -7,8 +7,8 @@ import {
   users,
   workspaceMembers,
   workspaces,
-} from "$lib/schema";
-import { createCaller } from "../../../src/lib/trpc/router";
+} from "$core/schema";
+import { createCaller } from "$core/trpc/router";
 import { clearTestDb, setupTestDb } from "../setup/test-db";
 
 function isoDateMonthsAgo(monthsAgo: number, dayOfMonth = 1): string {
@@ -156,7 +156,7 @@ describe("Savings opportunities regressions", () => {
       userId: testUserId,
       sessionId: "savings-regression-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
   });

@@ -1,7 +1,7 @@
 <script lang="ts" generics="TData, TValue">
 import type { Column } from '@tanstack/table-core';
 import DataTableEntityFacetedFilter from './data-table-entity-faceted-filter.svelte';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import { PayeesState } from '$lib/states/entities';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 

@@ -9,7 +9,7 @@ import { Switch } from '$lib/components/ui/switch';
 import { Badge } from '$lib/components/ui/badge';
 import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 import { bulkCreateAnnotations, getAnnotationsByMonths } from '$lib/query/annotations';
-import { ANNOTATION_TAGS, type AnnotationTag } from '$lib/schema/month-annotations';
+import { ANNOTATION_TAGS, type AnnotationTag } from '$core/schema/month-annotations';
 import { toast } from '$lib/utils/toast-interceptor';
 
 // Icons

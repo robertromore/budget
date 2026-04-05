@@ -1,13 +1,13 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import * as schema from "../../../src/lib/schema";
+import * as schema from "$core/schema";
 import { sql } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import type { Context } from "../../../src/lib/trpc/context";
+import type { Context } from "$core/trpc/context";
 
 const DEFAULT_TEST_USER_ID = "system-test-user";
 const DEFAULT_TEST_EMAIL = "system-test@example.invalid";
@@ -146,7 +146,7 @@ export async function createTestContext() {
     userId: testUserId,
     sessionId: "test-session",
     workspaceId: workspace.id,
-    event: {} as Context["event"],
+    request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as Context["request"],
     // Add a test flag to bypass rate limiting
     isTest: true,
   } as Context;

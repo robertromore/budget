@@ -13,13 +13,13 @@ import type {
   ConditionOperator,
   EntityType,
   TriggerConfig,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 import {
   conditionFields,
   getActionsForEntity,
   isConditionGroup,
   triggerEvents,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 
 // =============================================================================
 // Types

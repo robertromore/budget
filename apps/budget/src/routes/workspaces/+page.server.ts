@@ -1,5 +1,5 @@
-import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
-import { db } from "$lib/server/db";
+import { formInsertWorkspaceSchema, workspaces } from "$core/schema/workspaces";
+import { db } from "$core/server/db";
 import { fail } from "@sveltejs/kit";
 import { eq, isNull } from "drizzle-orm";
 import { superValidate } from "sveltekit-superforms";

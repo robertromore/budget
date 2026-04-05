@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { formatCurrency } from '$lib/utils';
 import { formatPercentRaw } from '$lib/utils/formatters';
 import { Progress } from '$lib/components/ui/progress';

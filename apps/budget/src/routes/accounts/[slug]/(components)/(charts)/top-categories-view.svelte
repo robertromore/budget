@@ -9,7 +9,7 @@ import { AnalyticsCard } from '$lib/components/ui/data-table';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import * as Tabs from '$lib/components/ui/tabs';
 import { rpc } from '$lib/query';
-import type { View } from '$lib/schema';
+import type { View } from '$core/schema';
 import type { FilterInputOption, TopCategoryData, TransactionsFormat } from '$lib/types';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import TableIcon from '@lucide/svelte/icons/table';

@@ -26,7 +26,7 @@ import type {
   ConditionGroup,
   EntityType,
   TriggerConfig,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 
 interface Props {
   /** Current rule configuration */

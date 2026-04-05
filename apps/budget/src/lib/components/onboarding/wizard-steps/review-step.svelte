@@ -12,7 +12,7 @@ import {
   ACCOUNT_TYPE_LABELS,
   SPENDING_AREA_LABELS,
   DEBT_TYPE_LABELS,
-} from '$lib/types/onboarding';
+} from '$core/types/onboarding';
 import Edit from '@lucide/svelte/icons/edit';
 import Check from '@lucide/svelte/icons/check';
 import Sparkles from '@lucide/svelte/icons/sparkles';

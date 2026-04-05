@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SubscriptionManagementService } from "../../src/lib/server/domains/payees/subscription-management";
+import { SubscriptionManagementService } from "$core/server/domains/payees/subscription-management";
 
 describe("SubscriptionManagementService", () => {
   let service: SubscriptionManagementService;

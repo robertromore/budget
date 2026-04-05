@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import { rpc } from '$lib/query';
 import { currencyFormatter } from '$lib/utils/formatters';
 import TrendingUp from '@lucide/svelte/icons/trending-up';

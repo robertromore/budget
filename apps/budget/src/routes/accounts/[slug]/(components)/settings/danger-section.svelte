@@ -8,7 +8,7 @@ import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { goto } from '$app/navigation';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Archive from '@lucide/svelte/icons/archive';
 import ArchiveRestore from '@lucide/svelte/icons/archive-restore';

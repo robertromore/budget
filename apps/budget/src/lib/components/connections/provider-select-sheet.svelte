@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
 import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import { rpc } from '$lib/query';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 import Link from '@lucide/svelte/icons/link';
 import Building2 from '@lucide/svelte/icons/building-2';
 import Zap from '@lucide/svelte/icons/zap';

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest";
-import type { Schedule } from "$lib/schema";
+import type { Schedule } from "$core/schema";
 
 // Mock schedules data for testing
 const mockSchedules = [

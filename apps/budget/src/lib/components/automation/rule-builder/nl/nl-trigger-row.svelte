@@ -12,7 +12,7 @@ import {
   triggerEvents,
   type EntityType,
   type TriggerConfig,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 
 interface Props {
   /** Current trigger configuration */

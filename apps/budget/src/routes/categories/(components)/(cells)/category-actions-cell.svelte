@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Tag from '@lucide/svelte/icons/tag';

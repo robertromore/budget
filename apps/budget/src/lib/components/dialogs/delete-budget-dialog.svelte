@@ -6,7 +6,7 @@ import { buttonVariants } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import { deleteBudget, getBudgetDetail } from '$lib/query/budgets';
-import type { BudgetMetadata } from '$lib/schema/budgets';
+import type { BudgetMetadata } from '$core/schema/budgets';
 import { deleteBudgetDialog, deleteBudgetId } from '$lib/states/ui/global.svelte';
 
 const _deleteBudgetDialog = $derived(deleteBudgetDialog);

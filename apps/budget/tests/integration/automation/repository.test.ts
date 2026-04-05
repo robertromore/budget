@@ -7,9 +7,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
-import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
-import { workspaces } from "../../../src/lib/schema/workspaces";
-import type { TriggerConfig, ConditionGroup, ActionConfig } from "$lib/types/automation";
+import { AutomationRepository } from "$core/server/domains/automation/repository";
+import { workspaces } from "$core/schema/workspaces";
+import type { TriggerConfig, ConditionGroup, ActionConfig } from "$core/types/automation";
 
 // Test helpers
 function createTestTrigger(entityType = "transaction", event = "created"): TriggerConfig {

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { eq } from "drizzle-orm";
-import { categories, payees, users, workspaceMembers, workspaces } from "$lib/schema";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { categories, payees, users, workspaceMembers, workspaces } from "$core/schema";
+import { createCaller } from "$core/trpc/router";
 import { clearTestDb, setupTestDb } from "../setup/test-db";
 
 describe("Similarity cache refresh", () => {
@@ -42,7 +42,7 @@ describe("Similarity cache refresh", () => {
       userId: testUserId,
       sessionId: "similarity-cache-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     });
   });

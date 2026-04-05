@@ -1,7 +1,8 @@
-import type { View } from "$lib/schema";
-import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+import type { View } from "$core/schema";
+import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$core/schema/superforms";
+import { createContext } from "$core/trpc/context";
+import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
+import { createCaller } from "$core/trpc/router";
 import { currentDate } from "$lib/utils/dates";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
@@ -253,7 +254,7 @@ export const load: PageServerLoad = async (event) => {
   ] as View[];
 
   // Load user-created views from database
-  const caller = createCaller(await createContext(event));
+  const caller = createCaller(await createContext(fromSvelteKit(event)));
   const userViews = await caller.viewsRoutes.all({ entityType: "transactions" });
 
   // Load active budgets for transaction form
@@ -283,7 +284,7 @@ export const actions: Actions = {
 
     // Cast form data to proper type (zod4 adapter returns unknown)
     const data = form.data as SuperformInsertPayeeData;
-    const entity = await createCaller(await createContext(event)).payeeRoutes.save(data);
+    const entity = await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.save(data);
     return {
       form,
       entity,

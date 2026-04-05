@@ -6,7 +6,7 @@ import { Label } from '$lib/components/ui/label';
 import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import * as Select from '$lib/components/ui/select';
 import { rpc } from '$lib/query';
-import { receiptTypeEnum, type ReceiptType } from '$lib/schema';
+import { receiptTypeEnum, type ReceiptType } from '$core/schema';
 import { formatFileSize } from '$lib/utils/formatters';
 import Download from '@lucide/svelte/icons/download';
 import FileText from '@lucide/svelte/icons/file-text';

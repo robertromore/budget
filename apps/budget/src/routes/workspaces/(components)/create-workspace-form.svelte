@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Form from '$lib/components/ui/form';
 import { Input } from '$lib/components/ui/input';
-import { formInsertWorkspaceSchema } from '$lib/schema/workspaces';
+import { formInsertWorkspaceSchema } from '$core/schema/workspaces';
 import { toast } from '$lib/utils/toast-interceptor';
 import type { SuperValidated } from 'sveltekit-superforms';
 import { superForm } from 'sveltekit-superforms';

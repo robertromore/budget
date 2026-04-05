@@ -1,12 +1,12 @@
-import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
-import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
-import { PayeeAliasService } from "$lib/server/domains/payees/alias-service";
-import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
-import { getTransferMappingService } from "$lib/server/domains/transfers";
-import { db } from "$lib/server/db";
-import { payees, categories, accounts } from "$lib/schema";
+import { CategoryMatcher } from "$core/server/import/matchers/category-matcher";
+import { PayeeMatcher } from "$core/server/import/matchers/payee-matcher";
+import { PayeeAliasService } from "$core/server/domains/payees/alias-service";
+import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
+import { getTransferMappingService } from "$core/server/domains/transfers";
+import { db } from "$core/server/db";
+import { payees, categories, accounts } from "$core/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import type { ImportRow } from "$lib/types/import";
+import type { ImportRow } from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import {
   isImportApiError,

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { createCaller } from "../../../src/lib/trpc/router";
+import { createCaller } from "$core/trpc/router";
 import { eq } from "drizzle-orm";
-import { categories, users, workspaces, workspaceMembers } from "$lib/schema";
+import { categories, users, workspaces, workspaceMembers } from "$core/schema";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 
 describe("Categories tRPC Integration Tests", () => {
@@ -63,7 +63,7 @@ describe("Categories tRPC Integration Tests", () => {
       userId: testUserId,
       sessionId: "test-session",
       workspaceId,
-      event: {} as any,
+      request: { headers: new Headers(), getCookie: () => undefined, setCookie: () => {} } as any,
       isTest: true,
     };
     caller = createCaller(ctx);

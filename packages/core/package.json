@@ -1,0 +1,60 @@
+{
+  "name": "@budget/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Shared server-side code: schema, domains, tRPC, utils",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./schema/*": "./src/schema/*",
+    "./server/env": "./src/server/env.ts",
+    "./server/auth": "./src/server/auth/index.ts",
+    "./server/db": "./src/server/db/index.ts",
+    "./server/*": "./src/server/*",
+    "./trpc": "./src/trpc/index.ts",
+    "./trpc/*": "./src/trpc/*",
+    "./utils/*": "./src/utils/*",
+    "./types/*": "./src/types/*",
+    "./query": "./src/query/index.ts",
+    "./query/*": "./src/query/*"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "echo '@budget/core - no build needed'",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/google": "^3.0.53",
+    "@ai-sdk/openai": "^3.0.48",
+    "ai": "^6.0.141",
+    "ai-sdk-ollama": "^3.8.2",
+    "@faker-js/faker": "^10.4.0",
+    "@internationalized/date": "^3.12.0",
+    "@libsql/client": "^0.15.15",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "@sindresorhus/slugify": "^3.0.0",
+    "@trpc/client": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.5.6",
+    "simple-statistics": "^7.8.9",
+    "drizzle-orm": "^0.44.7",
+    "drizzle-zod": "^0.8.3",
+    "validator": "^13.15.26",
+    "resend": "^6.9.4",
+    "zod": "4.3.6"
+  },
+  "peerDependencies": {
+    "@tanstack/svelte-query": "^6.0.0"
+  },
+  "devDependencies": {
+    "@budget/config": "workspace:*",
+    "@tanstack/svelte-query": "^6.1.10",
+    "typescript": "^5.8.3"
+  }
+}

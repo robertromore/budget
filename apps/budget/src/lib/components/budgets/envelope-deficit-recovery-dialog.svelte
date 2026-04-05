@@ -9,7 +9,7 @@ import * as RadioGroup from '$lib/components/ui/radio-group';
 import * as Select from '$lib/components/ui/select';
 import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
-import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import type { EnvelopeAllocation } from '$core/schema/budgets/envelope-allocations';
 import { rpc } from '$lib/query';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';

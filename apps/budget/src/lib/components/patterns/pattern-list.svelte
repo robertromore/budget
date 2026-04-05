@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-import type { DetectedPattern } from '$lib/schema/detected-patterns';
+import type { DetectedPattern } from '$core/schema/detected-patterns';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import PatternCard from './pattern-card.svelte';
