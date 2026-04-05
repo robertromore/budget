@@ -1,6 +1,6 @@
 <script lang="ts">
   import { QueryClientProvider } from "@tanstack/svelte-query";
-  import { queryClient } from "$core/query/_client";
+  import { queryClient } from "$lib/query-client";
   import { appState } from "$lib/app-state.svelte";
   import { routerState } from "$lib/router.svelte";
   import Setup from "./pages/Setup.svelte";
