@@ -18,12 +18,13 @@
       .then((r) => r.json())
       .then((c: any) => {
         config = c;
-        // Auto-login for local mode
         if (c.authMode === "local") {
           autoLogin();
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        status = `Config error: ${err}`;
+      });
   });
 
   async function autoLogin() {
@@ -32,14 +33,16 @@
       const res = await fetch(`${SERVER}/api/auth/sign-in/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: "local@budget.app", password: "local-desktop-user" }),
       });
       if (res.ok) {
+        status = "Success! Loading app...";
         onLogin();
       } else {
-        status = "Auto-login failed. Please sign in manually.";
-        // Fall through to manual login form
-        if (config) config.authMode = "password";
+        const text = await res.text();
+        status = `Login failed (${res.status}): ${text.slice(0, 100)}`;
+        config = { ...config, authMode: "password" };
       }
     } catch (err) {
       status = `Connection error: ${err}`;
@@ -53,6 +56,7 @@
       const res = await fetch(`${SERVER}/api/auth/sign-in/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
@@ -68,95 +72,35 @@
   }
 </script>
 
-<div class="login">
+<div class="mx-auto mt-20 max-w-sm px-6 text-center">
   {#if !config}
-    <p>Loading...</p>
+    <p class="text-muted-foreground">Loading...</p>
   {:else if config.authMode === "local"}
-    <h1>Budget</h1>
-    <p class="status">{status || "Signing in automatically..."}</p>
+    <h1 class="mb-4 text-2xl font-bold">Budget</h1>
+    <p class="text-muted-foreground">{status || "Signing in automatically..."}</p>
   {:else}
-    <h1>Sign In</h1>
+    <h1 class="mb-6 text-2xl font-bold">Sign In</h1>
 
-    <form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" bind:value={email} required />
+    <form class="space-y-4 text-left" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+      <div>
+        <label class="mb-1 block text-sm font-medium" for="email">Email</label>
+        <input id="email" type="email" bind:value={email} required
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm" />
       </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input id="password" type="password" bind:value={password} required />
+      <div>
+        <label class="mb-1 block text-sm font-medium" for="password">Password</label>
+        <input id="password" type="password" bind:value={password} required
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm" />
       </div>
 
       {#if status}
-        <p class="status">{status}</p>
+        <p class="text-sm text-destructive">{status}</p>
       {/if}
 
-      <button type="submit" disabled={isSubmitting}>
+      <button type="submit" disabled={isSubmitting}
+        class="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
         {isSubmitting ? "Signing in..." : "Sign In"}
       </button>
     </form>
   {/if}
 </div>
-
-<style>
-  .login {
-    max-width: 360px;
-    margin: 5rem auto;
-    padding: 0 1.5rem;
-    text-align: center;
-  }
-
-  h1 {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-  }
-
-  form {
-    text-align: left;
-  }
-
-  .field {
-    margin-bottom: 1rem;
-  }
-
-  .field label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.3rem;
-    font-size: 0.9rem;
-  }
-
-  input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    box-sizing: border-box;
-  }
-
-  .status {
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  button {
-    width: 100%;
-    padding: 0.7rem;
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 0.5rem;
-  }
-
-  button:hover:not(:disabled) { background: #1d4ed8; }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-  @media (prefers-color-scheme: dark) {
-    input { background: #2a2a2a; border-color: #444; color: #e0e0e0; }
-  }
-</style>

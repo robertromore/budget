@@ -49,8 +49,21 @@ function fromBunRequest(req: Request): RequestAdapter {
 export function startServer(config: DesktopConfig): number {
 	const { fetchRequestHandler } = require("@trpc/server/adapters/fetch");
 
+	// Try preferred port, fall back to next available
+	let port = 2022;
+	for (let attempt = 0; attempt < 10; attempt++) {
+		try {
+			const testServer = Bun.serve({ port: port + attempt, fetch: () => new Response("") });
+			testServer.stop();
+			port = port + attempt;
+			break;
+		} catch {
+			console.log(`Port ${port + attempt} in use, trying next...`);
+		}
+	}
+
 	const server = Bun.serve({
-		port: 2022,
+		port,
 		fetch: async (req: Request) => {
 			const url = new URL(req.url);
 
