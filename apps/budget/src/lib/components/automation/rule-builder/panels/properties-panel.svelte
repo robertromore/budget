@@ -15,7 +15,7 @@ import {
   operatorInfo,
   type ConditionOperator,
   type EntityType,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import Copy from '@lucide/svelte/icons/copy';
 import Settings from '@lucide/svelte/icons/settings';
 import Trash2 from '@lucide/svelte/icons/trash-2';

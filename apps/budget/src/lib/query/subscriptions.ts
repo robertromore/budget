@@ -1,4 +1,4 @@
-import type { BillingCycle, SubscriptionStatus, SubscriptionType } from "$lib/schema/subscriptions";
+import type { BillingCycle, SubscriptionStatus, SubscriptionType } from "$core/schema/subscriptions";
 import type {
   CreateSubscriptionInput,
   Subscription,
@@ -6,7 +6,7 @@ import type {
   SubscriptionPriceHistory,
   SubscriptionWithRelations,
   UpdateSubscriptionInput,
-} from "$lib/schema/subscriptions-table";
+} from "$core/schema/subscriptions-table";
 import type {
   CalendarEntry,
   DetectionResult,

@@ -10,7 +10,7 @@ import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { SubscriptionFormDialog } from '$lib/components/subscriptions';
 import { rpc } from '$lib/query';
-import type { SubscriptionWithRelations } from '$lib/schema/subscriptions-table';
+import type { SubscriptionWithRelations } from '$core/schema/subscriptions-table';
 import type {
   DetectionResult,
   TransactionBasedDetectionResult,

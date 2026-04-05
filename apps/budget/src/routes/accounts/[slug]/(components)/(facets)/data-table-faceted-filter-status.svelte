@@ -3,7 +3,7 @@ import type { Column } from '@tanstack/table-core';
 import DataTableEntityFacetedFilter from './data-table-entity-faceted-filter.svelte';
 import CircleUserRound from '@lucide/svelte/icons/circle-user-round';
 import UsersRound from '@lucide/svelte/icons/users-round';
-import { TransactionStatuses } from '$lib/schema';
+import { TransactionStatuses } from '$core/schema';
 
 type Props<TData, TValue> = {
   column: Column<TData, TValue>;

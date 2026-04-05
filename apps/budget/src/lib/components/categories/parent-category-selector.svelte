@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
-import type { Category } from '$lib/schema/categories';
+import type { Category } from '$core/schema/categories';
 
 let {
   categories,

@@ -5,7 +5,7 @@ import {
   type UtilityRateTier,
   type UsageUnit,
   calculateAverageDailyUsage,
-} from "$lib/schema/utility-usage";
+} from "$core/schema/utility-usage";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

@@ -5,8 +5,8 @@
  * using payee, amount, date, and account matching with confidence scoring.
  */
 
-import type { Payee } from "$lib/schema/payees";
-import type { Schedule } from "$lib/schema/schedules";
+import type { Payee } from "$core/schema/payees";
+import type { Schedule } from "$core/schema/schedules";
 import { addInterval, daysBetween, parseLocalDate } from "$lib/utils/date-helpers";
 import { PayeeMatcher } from "./payee-matcher";
 

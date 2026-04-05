@@ -2,7 +2,7 @@ import {
   formInsertPayeeCategorySchema,
   removePayeeCategoriesSchema,
   removePayeeCategorySchema,
-} from "$lib/schema/payee-categories";
+} from "$core/schema/payee-categories";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
@@ -266,7 +266,7 @@ export const payeeCategoriesRoutes = t.router({
       withErrorHandler(async ({ input, ctx }) => {
         // Import payee repository to update payees
         const { db } = await import("$lib/server/db");
-        const { payees } = await import("$lib/schema");
+        const { payees } = await import("$core/schema");
         const { and, eq, inArray, isNull } = await import("drizzle-orm");
 
         const updated = await db

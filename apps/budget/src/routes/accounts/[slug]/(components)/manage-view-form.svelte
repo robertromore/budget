@@ -2,8 +2,8 @@
 import { page } from '$app/state';
 import * as Form from '$lib/components/ui/form';
 import { Textarea } from '$lib/components/ui/textarea';
-import { type View } from '$lib/schema';
-import { superformInsertViewSchema } from '$lib/schema/superforms/views';
+import { type View } from '$core/schema';
+import { superformInsertViewSchema } from '$core/schema/superforms/views';
 import type { CurrentViewState } from '$lib/states/views';
 import { currentViews } from '$lib/states/views';
 import type { FilterInputOption, TransactionsFormat } from '$lib/types';

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-import type { Category } from '$lib/schema/categories';
+import type { Category } from '$core/schema/categories';
 import Plus from '@lucide/svelte/icons/plus';
 import Star from '@lucide/svelte/icons/star';
 import Tag from '@lucide/svelte/icons/tag';

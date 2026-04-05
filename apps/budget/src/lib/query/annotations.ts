@@ -1,4 +1,4 @@
-import type { MonthAnnotation } from "$lib/schema/month-annotations";
+import type { MonthAnnotation } from "$core/schema/month-annotations";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

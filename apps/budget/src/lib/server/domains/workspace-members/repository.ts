@@ -1,7 +1,7 @@
-import type { WorkspaceMember, WorkspaceRole } from "$lib/schema/workspace-members";
-import { workspaceMembers } from "$lib/schema/workspace-members";
-import { workspaces } from "$lib/schema/workspaces";
-import { users } from "$lib/schema/users";
+import type { WorkspaceMember, WorkspaceRole } from "$core/schema/workspace-members";
+import { workspaceMembers } from "$core/schema/workspace-members";
+import { workspaces } from "$core/schema/workspaces";
+import { users } from "$core/schema/users";
 import { db } from "$lib/server/shared/database";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
 import { and, eq, isNull, desc } from "drizzle-orm";

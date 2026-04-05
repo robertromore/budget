@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Check from '@lucide/svelte/icons/check';

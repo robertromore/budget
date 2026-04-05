@@ -4,7 +4,7 @@
  * Provides reactive query/mutation interfaces for the onboarding system.
  */
 
-import type { OnboardingFormData } from "$lib/types/onboarding";
+import type { OnboardingFormData } from "$core/types/onboarding";
 import { trpc } from "$lib/trpc/client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 

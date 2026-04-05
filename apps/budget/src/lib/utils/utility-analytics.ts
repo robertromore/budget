@@ -7,7 +7,7 @@
  * - Bill projection (estimate next bill amount)
  */
 
-import type { UtilityUsage } from "$lib/schema/utility-usage";
+import type { UtilityUsage } from "$core/schema/utility-usage";
 import { formatPercentRaw } from "$lib/utils/formatters";
 import { roundToCents } from "$lib/utils/math-utilities";
 

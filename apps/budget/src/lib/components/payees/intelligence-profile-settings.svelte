@@ -9,7 +9,7 @@ import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-shee
 import * as Select from '$lib/components/ui/select';
 import * as Sheet from '$lib/components/ui/sheet';
 import { Switch } from '$lib/components/ui/switch';
-import type { IntelligenceProfile, IntelligenceProfileFilters } from '$lib/schema/payees';
+import type { IntelligenceProfile, IntelligenceProfileFilters } from '$core/schema/payees';
 import {
   resetIntelligenceProfile,
   suggestIntelligenceProfileDefaults,

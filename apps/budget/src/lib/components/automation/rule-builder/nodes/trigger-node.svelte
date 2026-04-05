@@ -12,7 +12,7 @@ import {
   triggerEvents,
   type EntityType,
   type TriggerConfig,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import Zap from '@lucide/svelte/icons/zap';
 import { Handle, Position } from '@xyflow/svelte';
 import { isHorizontalLayout, layoutDirection } from '../stores';

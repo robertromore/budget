@@ -1,6 +1,6 @@
-import { workspaces } from "$lib/schema/workspaces";
-import { workspaceMembers } from "$lib/schema/workspace-members";
-import { users } from "$lib/schema/users";
+import { workspaces } from "$core/schema/workspaces";
+import { workspaceMembers } from "$core/schema/workspace-members";
+import { users } from "$core/schema/users";
 import { db } from "$lib/server/db";
 import { auth } from "$lib/server/auth";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";

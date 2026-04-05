@@ -1,6 +1,6 @@
 import slugify from "@sindresorhus/slugify";
 import { db } from "..";
-import { accounts } from "$lib/schema";
+import { accounts } from "$core/schema";
 import { faker } from "@faker-js/faker";
 import { transactionFactory } from "./transactions";
 

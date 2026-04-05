@@ -2,7 +2,7 @@
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Tabs from '$lib/components/ui/tabs';
 import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
-import type { Transaction } from '$lib/schema';
+import type { Transaction } from '$core/schema';
 import { CategoriesState, PayeesState } from '$lib/states/entities';
 import { CurrentAccountState } from '$lib/states/views/current-account.svelte';
 import ManageTransactionForm from '../(forms)/manage-transaction-form.svelte';

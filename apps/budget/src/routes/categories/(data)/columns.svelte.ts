@@ -1,7 +1,7 @@
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
-import type { Category } from "$lib/schema";
+import type { Category } from "$core/schema";
 import type { CategoryWithGroup } from "$lib/server/domains/categories/repository";
 import type { CategoriesState } from "$lib/states/entities/categories.svelte";
 import { compareAlphanumeric } from "$lib/utils";

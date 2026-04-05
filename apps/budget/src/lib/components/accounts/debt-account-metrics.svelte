@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Progress } from '$lib/components/ui/progress';
 import { accountKeys } from '$lib/query/accounts';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import { trpc } from '$lib/trpc/client';
 import type { TransactionsFormat } from '$lib/types';
 import { formatCurrency, formatPercentage } from '$lib/utils/account-display';

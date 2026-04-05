@@ -7,16 +7,16 @@
 
 import { tool, jsonSchema } from "ai";
 import { db } from "$lib/server/db";
-import { accounts } from "$lib/schema/accounts";
-import { transactions } from "$lib/schema/transactions";
-import { categories } from "$lib/schema/categories";
-import { payees } from "$lib/schema/payees";
+import { accounts } from "$core/schema/accounts";
+import { transactions } from "$core/schema/transactions";
+import { categories } from "$core/schema/categories";
+import { payees } from "$core/schema/payees";
 import {
   budgets,
   budgetCategories,
   budgetPeriodInstances,
   budgetPeriodTemplates,
-} from "$lib/schema/budgets";
+} from "$core/schema/budgets";
 import { and, eq, gte, lte, like, desc, sql, isNull, inArray } from "drizzle-orm";
 import { roundToCents } from "$lib/utils/math-utilities";
 import {

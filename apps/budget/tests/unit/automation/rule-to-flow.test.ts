@@ -19,7 +19,7 @@ import type {
   ActionConfig,
   FlowState,
   EntityType,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 
 // =============================================================================
 // Test Helpers

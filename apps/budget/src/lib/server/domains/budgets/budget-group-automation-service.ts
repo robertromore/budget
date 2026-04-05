@@ -14,9 +14,9 @@ import {
   budgetAutomationSettings,
   type AutomationActionType,
   type BudgetAutomationSettings,
-} from "$lib/schema/budget-automation-settings";
-import { budgetGroupMemberships, budgetGroups } from "$lib/schema/budgets";
-import { type BudgetRecommendation } from "$lib/schema/recommendations";
+} from "$core/schema/budget-automation-settings";
+import { budgetGroupMemberships, budgetGroups } from "$core/schema/budgets";
+import { type BudgetRecommendation } from "$core/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";

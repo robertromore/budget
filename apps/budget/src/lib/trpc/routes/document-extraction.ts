@@ -10,8 +10,8 @@ import {
   type DocumentExtractionMethod,
   type DocumentExtractionPreferences,
   workspaces,
-} from "$lib/schema/workspaces";
-import { extractionMethodKeys, extractionStatusKeys } from "$lib/schema/account-documents";
+} from "$core/schema/workspaces";
+import { extractionMethodKeys, extractionStatusKeys } from "$core/schema/account-documents";
 import { db } from "$lib/server/db";
 import { DocumentExtractionService } from "$lib/server/domains/document-extraction";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";

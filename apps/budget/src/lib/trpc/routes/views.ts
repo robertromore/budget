@@ -1,4 +1,4 @@
-import { insertViewSchema, removeViewSchema, removeViewsSchema, views } from "$lib/schema";
+import { insertViewSchema, removeViewSchema, removeViewsSchema, views } from "$core/schema";
 import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import type { ViewDisplayState } from "$lib/types";
 import { TRPCError } from "@trpc/server";

@@ -1,4 +1,4 @@
-import type { Account } from "$lib/schema";
+import type { Account } from "$core/schema";
 
 export type AccountSortField = "name" | "balance" | "dateOpened" | "status" | "createdAt";
 export type SortDirection = "asc" | "desc";

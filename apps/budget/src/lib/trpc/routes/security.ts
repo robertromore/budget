@@ -30,11 +30,11 @@ import {
   validateLevelChange,
   resolveEncryptionContext,
 } from "$lib/server/shared/security/encryption-levels";
-import type { EncryptionLevel } from "$lib/types/encryption";
-import { DEFAULT_USER_ENCRYPTION_PREFERENCES } from "$lib/schema/users";
-import { DEFAULT_ENCRYPTION_PREFERENCES, workspaces } from "$lib/schema/workspaces";
-import { users } from "$lib/schema/users";
-import { accounts } from "$lib/schema/accounts";
+import type { EncryptionLevel } from "$core/types/encryption";
+import { DEFAULT_USER_ENCRYPTION_PREFERENCES } from "$core/schema/users";
+import { DEFAULT_ENCRYPTION_PREFERENCES, workspaces } from "$core/schema/workspaces";
+import { users } from "$core/schema/users";
+import { accounts } from "$core/schema/accounts";
 import { eq } from "drizzle-orm";
 
 // Validation schemas

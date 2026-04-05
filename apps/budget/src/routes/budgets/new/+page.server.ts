@@ -1,9 +1,9 @@
 import { getBudgetTemplateById } from "$lib/constants/budget-templates";
-import type { BudgetMetadata } from "$lib/schema/budgets";
+import type { BudgetMetadata } from "$core/schema/budgets";
 import {
   superformInsertBudgetSchema,
   type SuperformInsertBudgetData,
-} from "$lib/schema/superforms";
+} from "$core/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

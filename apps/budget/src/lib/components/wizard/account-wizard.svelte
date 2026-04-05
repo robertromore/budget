@@ -8,7 +8,7 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
 import { Textarea } from '$lib/components/ui/textarea';
-import { accountTypeEnum, type Account } from '$lib/schema';
+import { accountTypeEnum, type Account } from '$core/schema';
 import {
   accountWizardStore,
   type WizardStep as WizardStepType,

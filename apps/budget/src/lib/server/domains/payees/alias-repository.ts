@@ -4,8 +4,8 @@ import type {
   PayeeAlias,
   PayeeAliasStats,
   PayeeAliasWithPayee,
-} from "$lib/schema/payee-aliases";
-import { payeeAliases, payees } from "$lib/schema";
+} from "$core/schema/payee-aliases";
+import { payeeAliases, payees } from "$core/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";

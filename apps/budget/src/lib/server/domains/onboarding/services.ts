@@ -5,9 +5,9 @@
  * and tour status management.
  */
 
-import type { WorkspacePreferences } from "$lib/schema/workspaces";
-import type { OnboardingFormData, OnboardingStatus } from "$lib/types/onboarding";
-import { DEFAULT_ONBOARDING_STATUS } from "$lib/types/onboarding";
+import type { WorkspacePreferences } from "$core/schema/workspaces";
+import type { OnboardingFormData, OnboardingStatus } from "$core/types/onboarding";
+import { DEFAULT_ONBOARDING_STATUS } from "$core/types/onboarding";
 import type { AccountService } from "$lib/server/domains/accounts/services";
 import type { CategoryService } from "$lib/server/domains/categories/services";
 import { nowISOString } from "$lib/utils/dates-core";

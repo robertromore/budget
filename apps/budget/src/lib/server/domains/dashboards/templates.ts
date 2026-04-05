@@ -1,4 +1,4 @@
-import type { DashboardLayoutConfig, WidgetSettings, WidgetSize } from "$lib/schema/dashboards";
+import type { DashboardLayoutConfig, WidgetSettings, WidgetSize } from "$core/schema/dashboards";
 
 export interface DashboardTemplateWidget {
   widgetType: string;

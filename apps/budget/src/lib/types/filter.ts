@@ -5,14 +5,8 @@ import type { Column } from "@tanstack/table-core";
 import type { Component } from "svelte";
 import type { SvelteSet } from "svelte/reactivity";
 
-/**
- * The raw filter applied to a column.
- */
-export type ViewFilter = {
-  column: string;
-  filter: string;
-  value: unknown[];
-};
+import type { ViewFilter } from "$core/types/filter";
+export type { ViewFilter };
 
 /**
  * Same as `ViewFilter` but the value is wrapped in a Svelte set.

@@ -4,7 +4,7 @@
  * Business logic for managing automation rules.
  */
 
-import type { AutomationRule, AutomationRuleLog } from "$lib/schema/automation-rules";
+import type { AutomationRule, AutomationRuleLog } from "$core/schema/automation-rules";
 import type { db } from "$lib/server/db";
 import type {
   ActionConfig,
@@ -12,7 +12,7 @@ import type {
   EntityType,
   FlowState,
   TriggerConfig,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 import type { ActionExecutionContext } from "./action-executor";
 import { AutomationRepository } from "./repository";
 import { getRuleEngine } from "./rule-engine";

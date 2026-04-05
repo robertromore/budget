@@ -1,6 +1,6 @@
-import type { Account, AccountType } from "$lib/schema/accounts";
-import { accounts } from "$lib/schema/accounts";
-import { transactions } from "$lib/schema/transactions";
+import type { Account, AccountType } from "$core/schema/accounts";
+import { accounts } from "$core/schema/accounts";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";

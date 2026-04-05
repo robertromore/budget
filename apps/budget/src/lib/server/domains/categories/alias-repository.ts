@@ -5,7 +5,7 @@ import type {
   CategoryAliasStats,
   CategoryAliasTrigger,
   CategoryAliasWithCategory,
-} from "$lib/schema/category-aliases";
+} from "$core/schema/category-aliases";
 
 /**
  * Input type for creating a category alias.
@@ -22,7 +22,7 @@ type CreateCategoryAliasInput = {
   sourceAccountId?: number;
   lastMatchedAt?: string;
 };
-import { categories, categoryAliases, payees } from "$lib/schema";
+import { categories, categoryAliases, payees } from "$core/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { normalize } from "$lib/utils/string-utilities";

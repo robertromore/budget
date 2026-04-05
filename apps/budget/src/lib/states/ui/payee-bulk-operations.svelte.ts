@@ -1,4 +1,4 @@
-import type { Payee } from "$lib/schema/payees";
+import type { Payee } from "$core/schema/payees";
 import { getContext, setContext } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 

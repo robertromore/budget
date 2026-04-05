@@ -1,7 +1,7 @@
 <script lang="ts">
 import { browser } from '$app/environment';
 import { Skeleton } from '$lib/components/ui/skeleton';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import { columns } from '../(data)/columns.svelte';
 import PayeeDataTable from './payee-data-table.svelte';
 

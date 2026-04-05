@@ -7,7 +7,7 @@ import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import { listBudgets, deleteBudget } from '$lib/query/budgets';
 import { remove as removeSchedule } from '$lib/query/schedules';
-import type { BudgetMetadata } from '$lib/schema/budgets';
+import type { BudgetMetadata } from '$core/schema/budgets';
 import { deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
 
 const _deleteScheduleDialog = $derived(deleteScheduleDialog);

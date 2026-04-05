@@ -24,9 +24,9 @@ import {
   type PayeeDetailsSuggestions,
   type PayeeSuggestions,
 } from '$lib/query/payees';
-import type { EnhanceableField } from '$lib/schema';
-import type { Payee, PayeeAiPreferences, PaymentFrequency } from '$lib/schema/payees';
-import { superformInsertPayeeSchema } from '$lib/schema/superforms';
+import type { EnhanceableField } from '$core/schema';
+import type { Payee, PayeeAiPreferences, PaymentFrequency } from '$core/schema/payees';
+import { superformInsertPayeeSchema } from '$core/schema/superforms';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { trpc } from '$lib/trpc/client';
 import type { EditableEntityItem } from '$lib/types';

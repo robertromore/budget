@@ -8,7 +8,7 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { AliasCandidate, CategorySuggestion, ImportRow } from "$lib/types/import";
+import type { AliasCandidate, CategorySuggestion, ImportRow } from "$core/types/import";
 import AlertCircle from "@lucide/svelte/icons/alert-circle";
 import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
 import ArrowRightLeft from "@lucide/svelte/icons/arrow-right-left";

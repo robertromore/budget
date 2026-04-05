@@ -5,7 +5,7 @@
  * using alias lookups first, then fuzzy string matching and confidence scoring.
  */
 
-import type { Payee } from "$lib/schema/payees";
+import type { Payee } from "$core/schema/payees";
 import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { calculateStringSimilarity } from "../utils";
 import { normalize } from "$lib/utils/string-utilities";

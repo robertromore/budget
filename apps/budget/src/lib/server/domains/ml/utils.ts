@@ -4,7 +4,7 @@
  * Shared helper functions for ML services.
  */
 
-import { accounts } from "$lib/schema";
+import { accounts } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, eq, isNull } from "drizzle-orm";
 

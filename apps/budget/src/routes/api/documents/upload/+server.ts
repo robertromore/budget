@@ -2,14 +2,14 @@ import {
   ALLOWED_DOCUMENT_MIMES,
   MAX_DOCUMENT_SIZE,
   documentTypeKeys,
-} from "$lib/schema/account-documents";
-import { accounts } from "$lib/schema/accounts";
-import { workspaceMembers } from "$lib/schema/workspace-members";
+} from "$core/schema/account-documents";
+import { accounts } from "$core/schema/accounts";
+import { workspaceMembers } from "$core/schema/workspace-members";
 import {
   DEFAULT_DOCUMENT_EXTRACTION_PREFERENCES,
   DEFAULT_LLM_PREFERENCES,
   workspaces,
-} from "$lib/schema/workspaces";
+} from "$core/schema/workspaces";
 import { auth } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { DocumentExtractionService } from "$lib/server/domains/document-extraction";

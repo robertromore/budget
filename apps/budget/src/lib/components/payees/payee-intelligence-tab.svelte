@@ -13,7 +13,7 @@ import {
   suggestIntelligenceProfileDefaults,
   updateIntelligenceProfile,
 } from '$lib/query/payees';
-import type { FeedbackRating, FeedbackType } from '$lib/schema/prediction-feedback';
+import type { FeedbackRating, FeedbackType } from '$core/schema/prediction-feedback';
 import { aiChat } from '$lib/states/ui/ai-chat.svelte';
 import { formatCurrency, formatCurrencyAbs } from '$lib/utils/formatters';
 // Sub-components

@@ -1,5 +1,5 @@
 import { rpc } from "$lib/query";
-import { type Payee } from "$lib/schema";
+import { type Payee } from "$core/schema";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 

@@ -3,7 +3,7 @@ import {
   insertNotificationSchema,
   markNotificationReadSchema,
   notifications,
-} from "$lib/schema";
+} from "$core/schema";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";

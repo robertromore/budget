@@ -1,4 +1,4 @@
-import { transactions as transactionTable } from "$lib/schema/transactions";
+import { transactions as transactionTable } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
 import { ExcelProcessor } from "$lib/server/import/file-processors/excel-processor";
@@ -9,7 +9,7 @@ import { QBOProcessor } from "$lib/server/import/file-processors/qbo-processor";
 import { QIFProcessor } from "$lib/server/import/file-processors/qif-processor";
 import { isQuickBooksCSV } from "$lib/server/import/utils";
 import { TransactionValidator } from "$lib/server/import/validators/transaction-validator";
-import type { ParseResult } from "$lib/types/import";
+import type { ParseResult } from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
 import { enrichImportRows } from "../match-enrichment";
@@ -122,7 +122,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const columns = validatedData.length > 0 ? Object.keys(validatedData[0]?.rawData || {}) : [];
 
     // Enrich rows with schedule matches, transfer targets, and transfer mapping suggestions
-    let enrichment: { rows: typeof validatedData; scheduleMatches?: import("$lib/types/import").ScheduleMatch[] } = { rows: validatedData };
+    let enrichment: { rows: typeof validatedData; scheduleMatches?: import("$core/types/import").ScheduleMatch[] } = { rows: validatedData };
     if (accountId !== null && authorizedAccount) {
       enrichment = await enrichImportRows(validatedData, {
         accountId,

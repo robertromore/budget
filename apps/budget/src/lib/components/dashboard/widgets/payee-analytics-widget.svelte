@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { getPayeeAnalytics } from '$lib/query/payees';

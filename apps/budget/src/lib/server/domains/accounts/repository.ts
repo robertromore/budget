@@ -1,8 +1,8 @@
-import type { Account, AccountType } from "$lib/schema/accounts";
-import { accounts } from "$lib/schema/accounts";
-import { categories } from "$lib/schema/categories";
-import { payees } from "$lib/schema/payees";
-import { transactions } from "$lib/schema/transactions";
+import type { Account, AccountType } from "$core/schema/accounts";
+import { accounts } from "$core/schema/accounts";
+import { categories } from "$core/schema/categories";
+import { payees } from "$core/schema/payees";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError } from "$lib/server/shared/types/errors";

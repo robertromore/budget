@@ -1,10 +1,10 @@
-import type { AmountType } from "$lib/schema/category-aliases";
+import type { AmountType } from "$core/schema/category-aliases";
 import type {
   CategoryAlias,
   CategoryAliasMatch,
   CategoryAliasStats,
   CategoryAliasWithCategory,
-} from "$lib/schema/category-aliases";
+} from "$core/schema/category-aliases";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

@@ -1,4 +1,4 @@
-import { columnMappingSchema } from "$lib/schema/import-profiles";
+import { columnMappingSchema } from "$core/schema/import-profiles";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, t } from "$lib/trpc";

@@ -1,6 +1,6 @@
 import { db } from "$lib/server/db";
-import { workspaces } from "$lib/schema/workspaces";
-import { workspaceMembers } from "$lib/schema/workspace-members";
+import { workspaces } from "$core/schema/workspaces";
+import { workspaceMembers } from "$core/schema/workspace-members";
 
 /**
  * Creates a default "Personal" workspace for a new user

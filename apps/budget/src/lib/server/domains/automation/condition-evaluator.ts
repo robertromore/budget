@@ -5,8 +5,8 @@
  * Supports nested AND/OR groups, various operators, and deep field access.
  */
 
-import type { Condition, ConditionGroup, ConditionOperator } from "$lib/types/automation";
-import { isConditionGroup } from "$lib/types/automation";
+import type { Condition, ConditionGroup, ConditionOperator } from "$core/types/automation";
+import { isConditionGroup } from "$core/types/automation";
 
 /**
  * Evaluate a condition group (AND/OR) against an entity

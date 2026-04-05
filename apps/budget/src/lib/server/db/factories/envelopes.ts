@@ -5,7 +5,7 @@ import {
   type EnvelopeStatus,
   type RolloverMode,
   type EnvelopeMetadata,
-} from "$lib/schema/budgets/envelope-allocations";
+} from "$core/schema/budgets/envelope-allocations";
 import { faker } from "@faker-js/faker";
 import { nowISOString } from "$lib/utils/dates-core";
 

@@ -1,6 +1,6 @@
 import slugify from "@sindresorhus/slugify";
 import { db } from "..";
-import { workspaces, type Workspace, type WorkspacePreferences } from "$lib/schema/workspaces";
+import { workspaces, type Workspace, type WorkspacePreferences } from "$core/schema/workspaces";
 import { faker } from "@faker-js/faker";
 
 /**

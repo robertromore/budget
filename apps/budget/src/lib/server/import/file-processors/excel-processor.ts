@@ -5,7 +5,7 @@
  * header normalization, and data transformation.
  */
 
-import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import type { FileProcessor, ImportRow, NormalizedTransaction } from "$core/types/import";
 import * as XLSX from "xlsx";
 import { FileValidationError, ParseError } from "../errors";
 import { normalizeHeader, parseAmount, parseDate, sanitizeText, validateFileType } from "../utils";

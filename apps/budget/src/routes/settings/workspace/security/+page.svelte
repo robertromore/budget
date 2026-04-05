@@ -19,7 +19,7 @@ import Lock from '@lucide/svelte/icons/lock';
 import Shield from '@lucide/svelte/icons/shield';
 import ShieldAlert from '@lucide/svelte/icons/shield-alert';
 import ShieldCheck from '@lucide/svelte/icons/shield-check';
-import type { EncryptionLevel } from '$lib/types/encryption';
+import type { EncryptionLevel } from '$core/types/encryption';
 
 // Get current workspace
 const workspace = currentWorkspace.get();

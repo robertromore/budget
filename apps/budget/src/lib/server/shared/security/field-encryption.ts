@@ -6,8 +6,8 @@
  */
 
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
-import type { EncryptionLevel } from "$lib/types/encryption";
-import { ENCRYPTED_FIELDS_BY_LEVEL } from "$lib/types/encryption";
+import type { EncryptionLevel } from "$core/types/encryption";
+import { ENCRYPTED_FIELDS_BY_LEVEL } from "$core/types/encryption";
 import { normalize } from "$lib/utils/string-utilities";
 
 // Constants

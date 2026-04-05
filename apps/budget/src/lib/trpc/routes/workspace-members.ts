@@ -2,7 +2,7 @@ import {
   WorkspaceMemberRepository,
   WorkspaceMemberService,
 } from "$lib/server/domains/workspace-members";
-import { workspaceRoleEnum } from "$lib/schema/workspace-members";
+import { workspaceRoleEnum } from "$core/schema/workspace-members";
 import { publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";

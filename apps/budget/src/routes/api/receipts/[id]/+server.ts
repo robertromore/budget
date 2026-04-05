@@ -1,6 +1,6 @@
-import { accounts } from "$lib/schema/accounts";
-import { medicalExpenses } from "$lib/schema/medical-expenses";
-import { workspaceMembers } from "$lib/schema/workspace-members";
+import { accounts } from "$core/schema/accounts";
+import { medicalExpenses } from "$core/schema/medical-expenses";
+import { workspaceMembers } from "$core/schema/workspace-members";
 import { auth } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import type { CategoryTreeNode } from '$lib/types/categories';
+import type { CategoryTreeNode } from '$core/types/categories';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import Folder from '@lucide/svelte/icons/folder';

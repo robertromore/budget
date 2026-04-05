@@ -11,7 +11,7 @@ import type {
   EntityType,
   FlowState,
   TriggerConfig,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 

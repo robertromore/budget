@@ -1,5 +1,5 @@
 import type { PasswordValidationResult } from "$lib/server/domains/auth";
-import type { UserPreferences } from "$lib/schema/users";
+import type { UserPreferences } from "$core/schema/users";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

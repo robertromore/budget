@@ -1,5 +1,5 @@
-import type { Payee, PayeeCategory } from "$lib/schema";
-import { categories, payeeCategories, payees, transactions } from "$lib/schema";
+import type { Payee, PayeeCategory } from "$core/schema";
+import { categories, payeeCategories, payees, transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { formatPercentRaw } from "$lib/utils/formatters-core";

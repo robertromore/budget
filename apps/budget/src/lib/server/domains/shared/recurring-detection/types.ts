@@ -1,4 +1,4 @@
-import type { ScheduleSubscriptionType } from "$lib/schema/schedules";
+import type { ScheduleSubscriptionType } from "$core/schema/schedules";
 
 // ==================== FREQUENCY TYPES ====================
 

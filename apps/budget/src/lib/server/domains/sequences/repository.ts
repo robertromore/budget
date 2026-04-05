@@ -3,7 +3,7 @@ import {
   workspaceCounters,
   type SequencedEntityType,
   type WorkspaceCounter,
-} from "$lib/schema/workspace-counters";
+} from "$core/schema/workspace-counters";
 import { and, eq, sql } from "drizzle-orm";
 
 /**

@@ -1,10 +1,10 @@
-import type { IntelligenceProfile, Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
+import type { IntelligenceProfile, Payee, PayeeType, PaymentFrequency } from "$core/schema/payees";
 import type {
   FeedbackRating,
   FeedbackType,
   PredictionFeedback,
   RecordPredictionFeedbackInput,
-} from "$lib/schema/prediction-feedback";
+} from "$core/schema/prediction-feedback";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

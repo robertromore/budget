@@ -3,7 +3,7 @@ import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
 import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { highlightMatches } from '$lib/utils/search';

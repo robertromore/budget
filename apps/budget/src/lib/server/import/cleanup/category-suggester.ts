@@ -5,7 +5,7 @@
  * using the smart category service.
  */
 
-import type { CategorySuggestion, CategorySuggestionOption } from "$lib/types/import";
+import type { CategorySuggestion, CategorySuggestionOption } from "$core/types/import";
 import {
   createSmartCategoryService,
   type SmartCategoryService,

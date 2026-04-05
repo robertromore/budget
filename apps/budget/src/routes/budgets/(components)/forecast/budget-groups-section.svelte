@@ -3,7 +3,7 @@ import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { deleteBudgetGroup, listBudgetGroups } from '$lib/query/budgets';
-import type { BudgetGroup } from '$lib/schema/budgets';
+import type { BudgetGroup } from '$core/schema/budgets';
 import {
   ChevronDown,
   ChevronRight,

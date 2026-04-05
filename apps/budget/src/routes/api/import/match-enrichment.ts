@@ -6,18 +6,18 @@
  * eliminate duplication and behavioral divergence.
  */
 
-import { accounts as accountsTable } from "$lib/schema/accounts";
-import { payees as payeeTable } from "$lib/schema/payees";
-import { scheduleDates as scheduleDateTable } from "$lib/schema/schedule-dates";
-import type { Schedule } from "$lib/schema/schedules";
-import { schedules as scheduleTable } from "$lib/schema/schedules";
-import type { TransferMappingWithAccount } from "$lib/schema/transfer-mappings";
+import { accounts as accountsTable } from "$core/schema/accounts";
+import { payees as payeeTable } from "$core/schema/payees";
+import { scheduleDates as scheduleDateTable } from "$core/schema/schedule-dates";
+import type { Schedule } from "$core/schema/schedules";
+import { schedules as scheduleTable } from "$core/schema/schedules";
+import type { TransferMappingWithAccount } from "$core/schema/transfer-mappings";
 import { db } from "$lib/server/db";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
 import { detectTransferTargetMatches } from "$lib/server/import/utils/transfer-target-detector";
-import type { ImportRow, ScheduleMatch } from "$lib/types/import";
+import type { ImportRow, ScheduleMatch } from "$core/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 
 interface EnrichmentContext {

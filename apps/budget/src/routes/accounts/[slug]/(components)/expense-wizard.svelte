@@ -10,7 +10,7 @@ import ExpenseTypeSelector from './expense-type-selector.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
 import { parseDate, type DateValue } from '@internationalized/date';
-import { medicalExpenseTypeEnum } from '$lib/schema/medical-expenses';
+import { medicalExpenseTypeEnum } from '$core/schema/medical-expenses';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import Check from '@lucide/svelte/icons/check';

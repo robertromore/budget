@@ -1,7 +1,7 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { Payee } from "$lib/schema";
+import type { Payee } from "$core/schema";
 import { compareAlphanumeric } from "$lib/utils";
 import Briefcase from "@lucide/svelte/icons/briefcase";
 import Building from "@lucide/svelte/icons/building";

@@ -7,7 +7,7 @@ import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { AccountsState } from '$lib/states/entities';
-import type { AliasCandidate, ImportRow } from '$lib/types/import';
+import type { AliasCandidate, ImportRow } from '$core/types/import';
 import { cn } from '$lib/utils';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Check from '@lucide/svelte/icons/check';

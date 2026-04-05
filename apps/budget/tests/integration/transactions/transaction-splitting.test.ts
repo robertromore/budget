@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { setupTestDb } from "../setup/test-db";
-import * as schema from "../../../src/lib/schema";
+import * as schema from "../../../../../packages/core/src/schema";
 import { eq, isNull, sql } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 

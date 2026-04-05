@@ -7,10 +7,10 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { setupTestDb } from "../setup/test-db";
-import * as schema from "../../../src/lib/schema";
+import * as schema from "../../../../../packages/core/src/schema";
 import { eq, and } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { generateColumnSignature } from "../../../src/lib/schema/import-profiles";
+import { generateColumnSignature } from "../../../../../packages/core/src/schema/import-profiles";
 
 type TestDb = BunSQLiteDatabase<typeof schema>;
 

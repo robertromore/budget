@@ -1,5 +1,5 @@
-import type { UtilityUsage, UsageUnit, UtilityRateTier } from "$lib/schema/utility-usage";
-import type { UtilitySubtype } from "$lib/schema/accounts";
+import type { UtilityUsage, UsageUnit, UtilityRateTier } from "$core/schema/utility-usage";
+import type { UtilitySubtype } from "$core/schema/accounts";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

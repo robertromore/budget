@@ -5,14 +5,14 @@
  * to transaction creation. Provides progress tracking and error handling.
  */
 
-import { accounts as accountTable, type Account } from "$lib/schema/accounts";
-import type { Category } from "$lib/schema/categories";
-import { categories as categoryTable } from "$lib/schema/categories";
-import type { Payee } from "$lib/schema/payees";
-import { payees as payeeTable } from "$lib/schema/payees";
-import { payeeCategoryCorrections } from "$lib/schema/payee-category-corrections";
-import type { selectTransactionSchema } from "$lib/schema/transactions";
-import { transactions as transactionTable } from "$lib/schema/transactions";
+import { accounts as accountTable, type Account } from "$core/schema/accounts";
+import type { Category } from "$core/schema/categories";
+import { categories as categoryTable } from "$core/schema/categories";
+import type { Payee } from "$core/schema/payees";
+import { payees as payeeTable } from "$core/schema/payees";
+import { payeeCategoryCorrections } from "$core/schema/payee-category-corrections";
+import type { selectTransactionSchema } from "$core/schema/transactions";
+import { transactions as transactionTable } from "$core/schema/transactions";
 import {
   utilityUsage,
   calculateUsageFromReadings,
@@ -20,7 +20,7 @@ import {
   calculateCostPerUnit,
   DEFAULT_UNITS_BY_SUBTYPE,
   type UsageUnit,
-} from "$lib/schema/utility-usage";
+} from "$core/schema/utility-usage";
 import { db, runInTransaction } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import type {
@@ -28,7 +28,7 @@ import type {
   ImportResult,
   ImportRow,
   TransferTargetMatch,
-} from "$lib/types/import";
+} from "$core/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 import type { z } from "zod/v4";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";

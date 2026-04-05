@@ -1,4 +1,4 @@
-import type { Dashboard, DashboardWidget, DashboardWithWidgets } from "$lib/schema/dashboards";
+import type { Dashboard, DashboardWidget, DashboardWithWidgets } from "$core/schema/dashboards";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

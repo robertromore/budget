@@ -3,7 +3,7 @@ import * as Card from '$lib/components/ui/card';
 import { Label } from '$lib/components/ui/label';
 import * as RadioGroup from '$lib/components/ui/radio-group';
 import * as Select from '$lib/components/ui/select';
-import type { LLMFeatureConfig, LLMFeatureMode, LLMProvider } from '$lib/schema/workspaces';
+import type { LLMFeatureConfig, LLMFeatureMode, LLMProvider } from '$core/schema/workspaces';
 import { cn } from '$lib/utils';
 import type { Component } from 'svelte';
 

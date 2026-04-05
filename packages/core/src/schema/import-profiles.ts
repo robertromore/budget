@@ -8,7 +8,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { accounts } from "./accounts";
 import { workspaces } from "./workspaces";
-import { normalize } from "$lib/utils/string-utilities";
+import { normalize } from "../utils/string-utilities";
 
 // Column mapping structure for CSV imports
 // Supports both schema naming (inflow/outflow/memo) and UI naming (credit/debit/notes)

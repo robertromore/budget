@@ -1,8 +1,8 @@
-import { removeScheduleSchema, type RemoveScheduleData } from "$lib/schema";
+import { removeScheduleSchema, type RemoveScheduleData } from "$core/schema";
 import {
   superformInsertScheduleSchema,
   type SuperformInsertScheduleData,
-} from "$lib/schema/superforms";
+} from "$core/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

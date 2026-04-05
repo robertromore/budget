@@ -22,7 +22,7 @@ import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
 import Calendar from '@lucide/svelte/icons/calendar';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import {
   budgetAssociationTypes,
   budgetEnforcementLevels,
@@ -31,12 +31,12 @@ import {
   type BudgetAssociationType,
   type BudgetScope,
   type BudgetType,
-} from '$lib/schema/budgets';
-import type { AccountAssociation } from '$lib/schema/superforms/budgets';
-import type { Category } from '$lib/schema/categories';
-import type { Payee } from '$lib/schema/payees';
-import type { Schedule } from '$lib/schema/schedules';
-import { superformInsertBudgetSchema } from '$lib/schema/superforms';
+} from '$core/schema/budgets';
+import type { AccountAssociation } from '$core/schema/superforms/budgets';
+import type { Category } from '$core/schema/categories';
+import type { Payee } from '$core/schema/payees';
+import type { Schedule } from '$core/schema/schedules';
+import { superformInsertBudgetSchema } from '$core/schema/superforms';
 import { BudgetState } from '$lib/states/budgets.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { EditableEntityItem } from '$lib/types';

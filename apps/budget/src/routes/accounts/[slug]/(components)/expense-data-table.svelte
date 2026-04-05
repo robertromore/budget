@@ -38,7 +38,7 @@ import {
 } from '$lib/components/shared/data-table/state';
 import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
 import { currentViews, CurrentViewsState, CurrentViewState } from '$lib/states/views';
-import type { View } from '$lib/schema';
+import type { View } from '$core/schema';
 import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
 import type { FacetedFilterOption } from '$lib/types';
 import { dayFmt } from '$lib/utils/date-formatters';
@@ -171,7 +171,7 @@ $effect(() => {
   const signature = viewList
     .map((view: View) => {
       const sortSignature =
-        view.display?.sort?.map((sort) => `${sort.id}:${sort.desc ?? false}`).join('|') ?? '';
+        view.display?.sort?.map((sort: { id: string; desc: boolean }) => `${sort.id}:${sort.desc ?? false}`).join('|') ?? '';
       return `${view.id}:${sortSignature}`;
     })
     .join(';');

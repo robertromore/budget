@@ -21,7 +21,7 @@ import {
   type Condition,
   type ConditionOperator,
   type EntityType,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import { parseDate, type DateValue } from '@internationalized/date';
 import Filter from '@lucide/svelte/icons/filter';
 import { Handle, Position } from '@xyflow/svelte';

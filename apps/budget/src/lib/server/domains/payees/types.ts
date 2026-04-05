@@ -5,15 +5,15 @@
  * ML intelligence, contact management, subscriptions, and budget allocation.
  */
 
-import type { Budget } from "$lib/schema/budgets";
-import type { Category } from "$lib/schema/categories";
+import type { Budget } from "$core/schema/budgets";
+import type { Category } from "$core/schema/categories";
 import type {
   Payee,
   PayeeAddress,
   PayeeType,
   PaymentFrequency,
   SubscriptionInfo,
-} from "$lib/schema/payees";
+} from "$core/schema/payees";
 
 // Re-export schema types for external use
 export type { PayeeAddress, SubscriptionInfo };

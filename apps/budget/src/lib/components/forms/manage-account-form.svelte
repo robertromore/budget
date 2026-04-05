@@ -20,8 +20,8 @@ import {
   type Account,
   type AccountType,
   type UtilitySubtype,
-} from '$lib/schema';
-import { superformInsertAccountSchema } from '$lib/schema/superforms';
+} from '$core/schema';
+import { superformInsertAccountSchema } from '$core/schema/superforms';
 import Zap from '@lucide/svelte/icons/zap';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { accountWizardStore } from '$lib/stores/wizardStore.svelte';

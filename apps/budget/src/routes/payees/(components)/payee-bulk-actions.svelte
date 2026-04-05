@@ -1,6 +1,6 @@
 <script lang="ts">
 import EntityBulkActions from '$lib/components/shared/data-table/entity-bulk-actions.svelte';
-import type { Payee } from '$lib/schema';
+import type { Payee } from '$core/schema';
 import type { Table } from '@tanstack/table-core';
 
 interface Props {

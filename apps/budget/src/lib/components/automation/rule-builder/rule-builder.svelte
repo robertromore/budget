@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
 import * as Tabs from '$lib/components/ui/tabs';
-import type { EntityType, FlowState } from '$lib/types/automation';
+import type { EntityType, FlowState } from '$core/types/automation';
 import { cn } from '$lib/utils';
 import { NlSentenceBuilder } from './nl';
 import RuleBuilderNl from './rule-builder-nl.svelte';

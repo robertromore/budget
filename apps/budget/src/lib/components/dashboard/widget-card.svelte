@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import { Button } from '$lib/components/ui/button';
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 import GripVertical from '@lucide/svelte/icons/grip-vertical';
 import Settings from '@lucide/svelte/icons/settings';

@@ -5,16 +5,16 @@
  * intelligent budget recommendations for creation and optimization.
  */
 
-import { accounts } from "$lib/schema/accounts";
-import { budgetAccounts, budgetCategories, budgets } from "$lib/schema/budgets";
-import { categories } from "$lib/schema/categories";
-import { payees } from "$lib/schema/payees";
+import { accounts } from "$core/schema/accounts";
+import { budgetAccounts, budgetCategories, budgets } from "$core/schema/budgets";
+import { categories } from "$core/schema/categories";
+import { payees } from "$core/schema/payees";
 import type {
   RecommendationMetadata,
   RecommendationPriority,
   RecommendationType,
-} from "$lib/schema/recommendations";
-import { transactions } from "$lib/schema/transactions";
+} from "$core/schema/recommendations";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { median, mean, standardDeviation } from "$lib/utils/chart-statistics";

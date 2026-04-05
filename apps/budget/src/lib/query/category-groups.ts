@@ -1,10 +1,10 @@
-import type { Category } from "$lib/schema/categories";
+import type { Category } from "$core/schema/categories";
 import type {
   CategoryGroup,
   CategoryGroupRecommendation,
   CategoryGroupSettings,
-} from "$lib/schema/category-groups";
-import { formInsertCategoryGroupSchema } from "$lib/schema/category-groups";
+} from "$core/schema/category-groups";
+import { formInsertCategoryGroupSchema } from "$core/schema/category-groups";
 import type { CategoryGroupWithCounts } from "$lib/server/domains/category-groups/repository";
 import { trpc } from "$lib/trpc/client";
 import type { z } from "zod";

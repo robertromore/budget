@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';
 import type { Table } from '@tanstack/table-core';

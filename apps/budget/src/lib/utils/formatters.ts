@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { Transaction } from "$lib/schema";
+import type { Transaction } from "$core/schema";
 import { displayPreferences } from "$lib/stores/display-preferences.svelte";
 import type { TransactionsFormat } from "$lib/types";
 import { parseDate, toCalendarDate } from "@internationalized/date";

@@ -1,4 +1,4 @@
-import * as schema from "$lib/schema/index";
+import * as schema from "$core/schema/index";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { AsyncLocalStorage } from "node:async_hooks";

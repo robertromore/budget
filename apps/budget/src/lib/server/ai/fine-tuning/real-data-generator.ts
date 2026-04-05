@@ -12,7 +12,7 @@
  */
 
 import { db } from "$lib/server/db";
-import { accounts, budgets, budgetCategories, categories, payees, transactions } from "$lib/schema";
+import { accounts, budgets, budgetCategories, categories, payees, transactions } from "$core/schema";
 import { formatPercent } from "$lib/server/utils/formatters";
 import { nowISOString } from "$lib/utils/dates-core";
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";

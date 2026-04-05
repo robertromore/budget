@@ -4,7 +4,7 @@
  */
 
 import { browser } from "$app/environment";
-import type { UserPreferences } from "$lib/schema/users";
+import type { UserPreferences } from "$core/schema/users";
 import { updatePreferences, getPreferences, authKeys } from "$lib/query/auth";
 import { queryClient } from "$lib/query/_client";
 

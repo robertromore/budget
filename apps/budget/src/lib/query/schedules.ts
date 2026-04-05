@@ -3,7 +3,7 @@ import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 import { transactionKeys } from "./transactions";
 
-import type { ScheduleSubscriptionStatus, ScheduleSubscriptionType } from "$lib/schema/schedules";
+import type { ScheduleSubscriptionStatus, ScheduleSubscriptionType } from "$core/schema/schedules";
 
 /**
  * Query Keys for schedule operations

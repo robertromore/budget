@@ -5,7 +5,7 @@
  * merchant variants for better categorization and reporting.
  */
 
-import { payees } from "$lib/schema";
+import { payees } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { MerchantCanonical, PayeeSimilarityMatch } from "../types";

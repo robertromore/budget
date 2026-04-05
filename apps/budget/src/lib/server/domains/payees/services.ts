@@ -14,8 +14,8 @@ import type {
   PredictionFeedback,
   RecordPredictionFeedbackInput,
   WorkspacePreferences,
-} from "$lib/schema";
-import { budgets, categories, predictionFeedback, transactions, workspaces } from "$lib/schema";
+} from "$core/schema";
+import { budgets, categories, predictionFeedback, transactions, workspaces } from "$core/schema";
 import { db } from "$lib/server/db";
 import { compact } from "$lib/utils/array-utilities";
 import { isEmptyObject, isNotEmptyObject } from "$lib/utils/object-utilities";
@@ -86,7 +86,7 @@ import type {
   SubscriptionInfo,
 } from "./types";
 import { createIntelligenceCoordinator } from "$lib/server/ai/intelligence-coordinator";
-import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$lib/schema/workspaces";
+import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$core/schema/workspaces";
 
 export interface CreatePayeeData {
   name: string;
@@ -5033,7 +5033,7 @@ export class PayeeService {
     totalPairsAnalyzed: number;
   }> {
     const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-    const { workspaces } = await import("$lib/schema/workspaces");
+    const { workspaces } = await import("$core/schema/workspaces");
     const { db } = await import("$lib/server/db");
     const { eq } = await import("drizzle-orm");
     const { generateText } = await import("ai");
@@ -5312,7 +5312,7 @@ Respond in JSON format only:
     totalPairsAnalyzed: number;
   }> {
     const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-    const { workspaces } = await import("$lib/schema/workspaces");
+    const { workspaces } = await import("$core/schema/workspaces");
     const { db } = await import("$lib/server/db");
     const { eq } = await import("drizzle-orm");
     const { generateText } = await import("ai");

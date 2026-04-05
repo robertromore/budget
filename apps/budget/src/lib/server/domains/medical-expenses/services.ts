@@ -1,6 +1,6 @@
-import { accounts } from "$lib/schema/accounts";
-import type { MedicalExpense, MedicalExpenseType } from "$lib/schema/medical-expenses";
-import { transactions } from "$lib/schema/transactions";
+import { accounts } from "$core/schema/accounts";
+import type { MedicalExpense, MedicalExpenseType } from "$core/schema/medical-expenses";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/shared/database";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";

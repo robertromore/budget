@@ -1,7 +1,7 @@
 <script lang="ts">
 import { browser } from '$app/environment';
 import { Skeleton } from '$lib/components/ui/skeleton';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
 import type { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { ColumnDef } from '@tanstack/table-core';

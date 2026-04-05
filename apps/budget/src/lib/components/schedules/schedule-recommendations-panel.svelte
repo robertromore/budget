@@ -8,9 +8,9 @@ import {
   dismissPattern,
   listPatterns,
 } from '$lib/query/patterns';
-import type { Category } from '$lib/schema/categories';
-import type { DetectedPattern } from '$lib/schema/detected-patterns';
-import type { Payee } from '$lib/schema/payees';
+import type { Category } from '$core/schema/categories';
+import type { DetectedPattern } from '$core/schema/detected-patterns';
+import type { Payee } from '$core/schema/payees';
 import { formatCurrency } from '$lib/utils/formatters';
 import {
   Calendar,

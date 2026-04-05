@@ -1,8 +1,8 @@
 import { db } from "..";
-import { transactions, type Category, type NewTransaction } from "$lib/schema";
+import { transactions, type Category, type NewTransaction } from "$core/schema";
 import { faker } from "@faker-js/faker";
 import { payeeFactory } from "./payees";
-import type { Payee } from "$lib/schema/payees";
+import type { Payee } from "$core/schema/payees";
 import { categoryFactory } from "./categories";
 import { CalendarDate } from "@internationalized/date";
 

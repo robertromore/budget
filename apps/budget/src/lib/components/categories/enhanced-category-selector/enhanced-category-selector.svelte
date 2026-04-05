@@ -3,7 +3,7 @@ import { browser } from '$app/environment';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as ToggleGroup from '$lib/components/ui/toggle-group';
-import type { Category } from '$lib/schema/categories';
+import type { Category } from '$core/schema/categories';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { rpc } from '$lib/query';
 import { cn } from '$lib/utils';

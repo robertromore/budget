@@ -2,7 +2,7 @@ import {
   createMetricAlertSchema,
   metricAlertIdSchema,
   updateMetricAlertSchema,
-} from "$lib/schema/metric-alerts";
+} from "$core/schema/metric-alerts";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";

@@ -7,8 +7,8 @@ import type {
   NewSyncHistoryRecord,
   SyncHistoryRecord,
   SyncHistoryStatus,
-} from "$lib/schema/account-connections";
-import { accountConnections, syncHistory, accounts } from "$lib/schema";
+} from "$core/schema/account-connections";
+import { accountConnections, syncHistory, accounts } from "$core/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

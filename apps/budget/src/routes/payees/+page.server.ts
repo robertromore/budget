@@ -1,5 +1,5 @@
-import { removePayeeSchema, type RemovePayeeData } from "$lib/schema";
-import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$lib/schema/superforms";
+import { removePayeeSchema, type RemovePayeeData } from "$core/schema";
+import { superformInsertPayeeSchema, type SuperformInsertPayeeData } from "$core/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

@@ -16,8 +16,8 @@ import {
   type TaxCategory,
   spendingPriorityEnum,
   incomeReliabilityEnum,
-} from '$lib/schema';
-import { superformInsertCategorySchema } from '$lib/schema/superforms';
+} from '$core/schema';
+import { superformInsertCategorySchema } from '$core/schema/superforms';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { EditableEntityItem } from '$lib/types';
 import { IconPicker } from '$lib/components/ui/icon-picker';

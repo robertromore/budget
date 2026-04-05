@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
-import { type Payee } from '$lib/schema';
-import { superformInsertPayeeSchema } from '$lib/schema/superforms';
+import { type Payee } from '$core/schema';
+import { superformInsertPayeeSchema } from '$core/schema/superforms';
 import { Textarea } from '$lib/components/ui/textarea';
 import { Input } from '$lib/components/ui/input';
 import { PayeesState } from '$lib/states/entities/payees.svelte';

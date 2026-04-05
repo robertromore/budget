@@ -5,8 +5,8 @@ import type {
   PayeeAiPreferences,
   PayeeType,
   PaymentFrequency,
-} from "$lib/schema";
-import { budgets, categories, payees, transactions } from "$lib/schema";
+} from "$core/schema";
+import { budgets, categories, payees, transactions } from "$core/schema";
 import { DATABASE_CONFIG } from "$lib/server/config/database";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";

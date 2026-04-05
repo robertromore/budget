@@ -10,7 +10,7 @@ import {
   executeActions,
   type ActionExecutionContext,
 } from "../../../src/lib/server/domains/automation/action-executor";
-import type { ActionConfig, ActionResult } from "$lib/types/automation";
+import type { ActionConfig, ActionResult } from "$core/types/automation";
 
 // Create mock services that track calls
 function createMockServices(): ActionExecutionContext["services"] {

@@ -12,8 +12,8 @@ import type {
   LLMProvider,
   MLPreferences,
   WorkspacePreferences,
-} from "$lib/schema/workspaces";
-import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$lib/schema/workspaces";
+} from "$core/schema/workspaces";
+import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$core/schema/workspaces";
 import { createProvider, getActiveProvider, type ProviderInstance } from "./providers";
 
 // Feature names that can use ML, LLM, or both

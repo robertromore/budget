@@ -1,4 +1,4 @@
-import type { Notification as DbNotification } from "$lib/schema/notifications";
+import type { Notification as DbNotification } from "$core/schema/notifications";
 import { trpc } from "$lib/trpc/client";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

@@ -1,5 +1,5 @@
 import { accountKeys, cachePatterns, rpc } from "$lib/query";
-import type { Account } from "$lib/schema";
+import type { Account } from "$core/schema";
 import {
   sortAccounts,
   type AccountSortField,

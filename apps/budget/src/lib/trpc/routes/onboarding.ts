@@ -4,7 +4,7 @@
  * API endpoints for the onboarding wizard and tour system.
  */
 
-import { workspaces, type WorkspacePreferences } from "$lib/schema/workspaces";
+import { workspaces, type WorkspacePreferences } from "$core/schema/workspaces";
 import {
   OnboardingService,
   type OnboardingWorkspaceRepository,

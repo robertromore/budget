@@ -3,7 +3,7 @@ import type {
   TransferMappingMatch,
   TransferMappingStats,
   TransferMappingWithAccount,
-} from "$lib/schema/transfer-mappings";
+} from "$core/schema/transfer-mappings";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

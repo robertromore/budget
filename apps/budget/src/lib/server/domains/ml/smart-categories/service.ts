@@ -9,8 +9,8 @@
  * - Historical user behavior and corrections
  */
 
-import { accounts, categories, payees, transactions } from "$lib/schema";
-import type { AmountType } from "$lib/schema/category-aliases";
+import { accounts, categories, payees, transactions } from "$core/schema";
+import type { AmountType } from "$core/schema/category-aliases";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { db } from "$lib/server/db";
 import { and, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
@@ -477,7 +477,7 @@ export interface SmartCategoryService {
     workspaceId: number,
     context: CategoryTransactionContext,
     limit?: number,
-    aliasCache?: import("$lib/schema/category-aliases").CategoryAlias[]
+    aliasCache?: import("$core/schema/category-aliases").CategoryAlias[]
   ): Promise<SmartCategorySuggestion[]>;
 
   /**
@@ -678,7 +678,7 @@ export function createSmartCategoryService(
       workspaceId: number,
       context: CategoryTransactionContext,
       limit: number = 5,
-      aliasCache?: import("$lib/schema/category-aliases").CategoryAlias[]
+      aliasCache?: import("$core/schema/category-aliases").CategoryAlias[]
     ): Promise<SmartCategorySuggestion[]> {
       const workspaceCategories = await loadCategories(workspaceId);
       // console.log('[SmartCategoryService] Loaded', workspaceCategories.length, 'categories for workspace', workspaceId);

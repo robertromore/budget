@@ -10,7 +10,7 @@ import {
   type CorrectionPattern,
   type CorrectionTrigger,
   type LearningMetrics,
-} from "$lib/schema";
+} from "$core/schema";
 import { db } from "$lib/server/db";
 import { currentDate, toISOString } from "$lib/utils/dates-core";
 import { and, count, desc, eq, gte, inArray, isNull, lte, max, sql } from "drizzle-orm";
@@ -1269,4 +1269,4 @@ export type {
   CategoryRecommendation,
   CorrectionPattern,
   LearningMetrics,
-} from "$lib/schema";
+} from "$core/schema";

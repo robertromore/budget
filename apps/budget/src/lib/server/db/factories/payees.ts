@@ -1,5 +1,5 @@
 import slugify from "@sindresorhus/slugify";
-import { payees, type Payee } from "$lib/schema";
+import { payees, type Payee } from "$core/schema";
 import { db } from "..";
 import { faker } from "@faker-js/faker";
 

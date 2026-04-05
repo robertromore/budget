@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { ImportRow } from '$lib/types/import';
+import type { ImportRow } from '$core/types/import';
 import { formatCurrency } from '$lib/utils/formatters';
 import type { Row } from '@tanstack/table-core';
 

@@ -6,7 +6,7 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
 import { createBudgetGroup, listBudgetGroups, updateBudgetGroup } from '$lib/query/budgets';
-import type { BudgetGroup } from '$lib/schema/budgets';
+import type { BudgetGroup } from '$core/schema/budgets';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {

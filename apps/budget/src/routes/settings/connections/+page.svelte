@@ -8,7 +8,7 @@ import { Separator } from '$lib/components/ui/separator';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { Switch } from '$lib/components/ui/switch';
 import { rpc } from '$lib/query';
-import type { TellerProviderSettings } from '$lib/schema/workspaces';
+import type { TellerProviderSettings } from '$core/schema/workspaces';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Building2 from '@lucide/svelte/icons/building-2';
 import CheckCircle from '@lucide/svelte/icons/check-circle';

@@ -1,4 +1,4 @@
-import { metricAlerts, type MetricAlert, type NewMetricAlert } from "$lib/schema/metric-alerts";
+import { metricAlerts, type MetricAlert, type NewMetricAlert } from "$core/schema/metric-alerts";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

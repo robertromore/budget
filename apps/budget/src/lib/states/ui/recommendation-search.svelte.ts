@@ -3,7 +3,7 @@ import type {
   RecommendationPriority,
   RecommendationStatus,
   RecommendationType,
-} from "$lib/schema/recommendations";
+} from "$core/schema/recommendations";
 import { isNotEmptyObject } from "$lib/utils";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 

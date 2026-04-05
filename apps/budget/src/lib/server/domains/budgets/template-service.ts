@@ -1,4 +1,4 @@
-import { budgetTemplates, type BudgetTemplate, type NewBudgetTemplate } from "$lib/schema/budgets";
+import { budgetTemplates, type BudgetTemplate, type NewBudgetTemplate } from "$core/schema/budgets";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";

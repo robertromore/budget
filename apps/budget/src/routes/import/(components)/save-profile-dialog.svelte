@@ -4,8 +4,8 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { ColumnMapping } from '$lib/types/import';
-	import type { ImportProfile } from '$lib/schema/import-profiles';
+	import type { ColumnMapping } from '$core/types/import';
+	import type { ImportProfile } from '$core/schema/import-profiles';
 	import { trpc } from '$lib/trpc/client';
 	import { toast } from '$lib/utils/toast-interceptor';
 

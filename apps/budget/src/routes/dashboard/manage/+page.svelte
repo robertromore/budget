@@ -4,7 +4,7 @@ import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import { Switch } from '$lib/components/ui/switch';
-import type { DashboardWithWidgets } from '$lib/schema/dashboards';
+import type { DashboardWithWidgets } from '$core/schema/dashboards';
 import ConfirmDialog from '$lib/components/dashboard/confirm-dialog.svelte';
 import {
   DndContext,

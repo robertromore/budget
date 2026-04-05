@@ -7,7 +7,7 @@ import {
   removeDashboardWidgetSchema,
   reorderWidgetsSchema,
   type DashboardWithWidgets,
-} from "$lib/schema/dashboards";
+} from "$core/schema/dashboards";
 import { getTemplate, DASHBOARD_TEMPLATES } from "$lib/server/domains/dashboards";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { slugify } from "$lib/utils/string-utilities";

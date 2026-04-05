@@ -3,7 +3,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Dialog from '$lib/components/ui/dialog';
-import type { BudgetRecommendation } from '$lib/schema/recommendations';
+import type { BudgetRecommendation } from '$core/schema/recommendations';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';

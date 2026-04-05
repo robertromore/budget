@@ -9,7 +9,7 @@
  * Run with: bun run ./src/lib/server/db/seeders
  */
 
-import * as schema from "$lib/schema";
+import * as schema from "$core/schema";
 import type { TableConfig } from "drizzle-orm/mysql-core";
 import { db } from "..";
 

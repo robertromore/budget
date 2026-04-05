@@ -9,11 +9,11 @@ import {
   removePayeeSchema,
   removePayeesSchema,
   updateEnhancementFeedbackSchema,
-} from "$lib/schema";
+} from "$core/schema";
 import {
   intelligenceProfileSchema,
   superformInsertPayeeSchema,
-} from "$lib/schema/superforms/payees";
+} from "$core/schema/superforms/payees";
 import { normalize } from "$lib/utils/string-utilities";
 import {
   advancedSearchPayeesSchema,
@@ -1643,7 +1643,7 @@ export const payeeRoutes = t.router({
     .mutation(
       withErrorHandler(async ({ input, ctx }) => {
         const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-        const { workspaces } = await import("$lib/schema/workspaces");
+        const { workspaces } = await import("$core/schema/workspaces");
         const { db } = await import("$lib/server/db");
         const { eq } = await import("drizzle-orm");
         const { generateText } = await import("ai");
@@ -1735,8 +1735,8 @@ Cleaned name:`;
     .mutation(
       withErrorHandler(async ({ input, ctx }) => {
         const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-        const { workspaces } = await import("$lib/schema/workspaces");
-        const { categories } = await import("$lib/schema/categories");
+        const { workspaces } = await import("$core/schema/workspaces");
+        const { categories } = await import("$core/schema/categories");
         const { db } = await import("$lib/server/db");
         const { eq } = await import("drizzle-orm");
         const { generateText } = await import("ai");
@@ -1943,7 +1943,7 @@ Return ONLY valid JSON, no explanation:`;
   explainInsights: rateLimitedProcedure.input(payeeIdSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
       const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-      const { workspaces } = await import("$lib/schema/workspaces");
+      const { workspaces } = await import("$core/schema/workspaces");
       const { db } = await import("$lib/server/db");
       const { eq } = await import("drizzle-orm");
       const { generateText } = await import("ai");
@@ -2039,7 +2039,7 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
         const explanation = result.text.trim();
 
         // Save the explanation to the payee record
-        const { payees } = await import("$lib/schema/payees");
+        const { payees } = await import("$core/schema/payees");
         await db
           .update(payees)
           .set({
@@ -2072,7 +2072,7 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
       const { createSearchAdapter, WebSearchService } =
         await import("$lib/server/domains/web-search");
       const { createIntelligenceCoordinator } = await import("$lib/server/ai");
-      const { workspaces } = await import("$lib/schema/workspaces");
+      const { workspaces } = await import("$core/schema/workspaces");
       const { db } = await import("$lib/server/db");
       const { eq } = await import("drizzle-orm");
       const { generateText } = await import("ai");
@@ -2090,7 +2090,7 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
       const prefs = workspace.preferences
         ? (JSON.parse(
             workspace.preferences
-          ) as import("$lib/schema/workspaces").WorkspacePreferences)
+          ) as import("$core/schema/workspaces").WorkspacePreferences)
         : {};
 
       const webSearchPrefs = prefs.webSearch || { enabled: true, provider: "duckduckgo" as const };

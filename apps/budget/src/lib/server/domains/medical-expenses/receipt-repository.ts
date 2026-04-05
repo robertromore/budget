@@ -2,7 +2,7 @@ import {
   expenseReceipts,
   type ExpenseReceipt,
   type ReceiptType,
-} from "$lib/schema/expense-receipts";
+} from "$core/schema/expense-receipts";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { and, desc, eq, isNull } from "drizzle-orm";

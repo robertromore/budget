@@ -3,8 +3,8 @@ import type {
   ExternalAccount,
   ProviderCredentials,
   SimplefinCredentials,
-} from "$lib/schema/account-connections";
-import type { ImportRow } from "$lib/types/import";
+} from "$core/schema/account-connections";
+import type { ImportRow } from "$core/types/import";
 import type { ConnectionProviderInterface, SimpleFIN } from "../types";
 
 /**

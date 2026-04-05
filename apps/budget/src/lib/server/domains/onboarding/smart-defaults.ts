@@ -5,8 +5,8 @@
  * based on user financial profile collected during onboarding.
  */
 
-import type { AccountType, NewAccount } from "$lib/schema/accounts";
-import type { NewCategory } from "$lib/schema";
+import type { AccountType, NewAccount } from "$core/schema/accounts";
+import type { NewCategory } from "$core/schema";
 import { defaultCategories } from "$lib/server/domains/categories/default-categories";
 import { BUDGET_TEMPLATES, type BudgetTemplate } from "$lib/constants/budget-templates";
 import type {
@@ -17,7 +17,7 @@ import type {
   HouseholdType,
   OnboardingFormData,
   SpendingArea,
-} from "$lib/types/onboarding";
+} from "$core/types/onboarding";
 
 /**
  * Account configuration for creation

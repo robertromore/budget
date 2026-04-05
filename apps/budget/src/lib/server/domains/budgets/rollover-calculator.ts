@@ -1,11 +1,11 @@
-import { budgetPeriodInstances } from "$lib/schema/budgets";
+import { budgetPeriodInstances } from "$core/schema/budgets";
 import {
   type EnvelopeAllocation,
   type EnvelopeRolloverHistory,
   type RolloverMode,
   envelopeAllocations,
   envelopeRolloverHistory,
-} from "$lib/schema/budgets/envelope-allocations";
+} from "$core/schema/budgets/envelope-allocations";
 import { db } from "$lib/server/db";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { nowISOString } from "$lib/utils/dates-core";

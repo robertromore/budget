@@ -1,5 +1,5 @@
-import { users, type UserPreferences } from "$lib/schema/users";
-import { sessions, authAccounts, type Session } from "$lib/schema/auth";
+import { users, type UserPreferences } from "$core/schema/users";
+import { sessions, authAccounts, type Session } from "$core/schema/auth";
 import { db } from "$lib/server/shared/database";
 import { AUTH_CONFIG } from "$lib/server/config/auth";
 import { ValidationError, NotFoundError, UnauthorizedError } from "$lib/server/shared/types/errors";

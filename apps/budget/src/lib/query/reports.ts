@@ -2,7 +2,7 @@ import type {
   ReportConfig,
   ReportTemplate,
   ReportTemplateType,
-} from "$lib/schema/report-templates";
+} from "$core/schema/report-templates";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

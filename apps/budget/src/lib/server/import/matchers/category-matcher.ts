@@ -5,7 +5,7 @@
  * using keyword patterns, fuzzy string matching, and confidence scoring.
  */
 
-import type { Category } from "$lib/schema/categories";
+import type { Category } from "$core/schema/categories";
 import { calculateStringSimilarity } from "../utils";
 import { normalize } from "$lib/utils/string-utilities";
 

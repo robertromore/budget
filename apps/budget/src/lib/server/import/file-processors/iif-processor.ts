@@ -10,7 +10,7 @@ import type {
   IIFTransaction,
   ImportRow,
   NormalizedTransaction,
-} from "$lib/types/import";
+} from "$core/types/import";
 import { FileValidationError, ParseError } from "../errors";
 import {
   normalizeIIFTransactionType,

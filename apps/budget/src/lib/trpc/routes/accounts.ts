@@ -5,13 +5,13 @@ import {
   transactions,
   type Account,
   type Transaction,
-} from "$lib/schema";
-import { budgetAccounts, budgets } from "$lib/schema/budgets";
-import { detectedPatterns } from "$lib/schema/detected-patterns";
-import { importProfiles } from "$lib/schema/import-profiles";
-import { scheduleDates } from "$lib/schema/schedule-dates";
-import { scheduleSkips } from "$lib/schema/schedule-skips";
-import { schedules } from "$lib/schema/schedules";
+} from "$core/schema";
+import { budgetAccounts, budgets } from "$core/schema/budgets";
+import { detectedPatterns } from "$core/schema/detected-patterns";
+import { importProfiles } from "$core/schema/import-profiles";
+import { scheduleDates } from "$core/schema/schedule-dates";
+import { scheduleSkips } from "$core/schema/schedule-skips";
+import { schedules } from "$core/schema/schedules";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { compact } from "$lib/utils/array-utilities";

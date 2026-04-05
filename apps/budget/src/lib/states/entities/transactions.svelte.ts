@@ -1,5 +1,5 @@
 import { rpc } from "$lib/query";
-import type { Transaction } from "$lib/schema/transactions";
+import type { Transaction } from "$core/schema/transactions";
 import type {
   CreateTransactionData,
   PaginationParams,

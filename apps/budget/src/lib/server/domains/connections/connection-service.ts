@@ -7,7 +7,7 @@ import type {
   ProviderCredentials,
   SimplefinCredentials,
   TellerCredentials,
-} from "$lib/schema/account-connections";
+} from "$core/schema/account-connections";
 import { ConnectionRepository } from "./connection-repository";
 import { encryptCredentials, decryptCredentials } from "./credential-encryption";
 import type {

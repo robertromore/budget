@@ -3,7 +3,7 @@ import type {
   AccountConnectionWithAccount,
   ExternalAccount,
   SyncHistoryRecord,
-} from "$lib/schema/account-connections";
+} from "$core/schema/account-connections";
 import type { ConnectionStats, SyncResult } from "$lib/server/domains/connections";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
@@ -274,7 +274,7 @@ export const providerSettingsKeys = {
  * Get connection provider settings
  */
 export const getProviderSettings = () =>
-  defineQuery<import("$lib/schema/workspaces").ConnectionProviderPreferences>({
+  defineQuery<import("$core/schema/workspaces").ConnectionProviderPreferences>({
     queryKey: providerSettingsKeys.all(),
     queryFn: async () => {
       return await trpc().connectionRoutes.getProviderSettings.query();

@@ -2,7 +2,7 @@
 import { page } from '$app/state';
 import { FlexRender, createSvelteTable } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
-import type { View } from '$lib/schema';
+import type { View } from '$core/schema';
 import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
 import { CurrentViewState, CurrentViewsState, currentViews } from '$lib/states/views';
 import type { FacetedFilterOption, TransactionsFormat } from '$lib/types';
@@ -326,7 +326,7 @@ $effect(() => {
   const signature = viewList
     .map((view: View) => {
       const sortSignature =
-        view.display?.sort?.map((sort) => `${sort.id}:${sort.desc ?? false}`).join('|') ?? '';
+        view.display?.sort?.map((sort: { id: string; desc: boolean }) => `${sort.id}:${sort.desc ?? false}`).join('|') ?? '';
       return `${view.id}:${sortSignature}`;
     })
     .join(';');

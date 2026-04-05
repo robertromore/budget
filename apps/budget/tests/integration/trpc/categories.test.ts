@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { createCaller } from "../../../src/lib/trpc/router";
 import { eq } from "drizzle-orm";
-import { categories, users, workspaces, workspaceMembers } from "$lib/schema";
+import { categories, users, workspaces, workspaceMembers } from "$core/schema";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 
 describe("Categories tRPC Integration Tests", () => {

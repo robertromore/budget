@@ -5,7 +5,7 @@ import {
   type SuperformInsertTransactionData,
   type SuperformUpdateTransactionData,
   type SuperformDeleteTransactionData,
-} from "$lib/schema/superforms/transactions";
+} from "$core/schema/superforms/transactions";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

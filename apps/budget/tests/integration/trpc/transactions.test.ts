@@ -9,7 +9,7 @@ import {
   users,
   workspaces,
   workspaceMembers,
-} from "$lib/schema";
+} from "$core/schema";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 import { parseDate, today, getLocalTimeZone } from "@internationalized/date";
 

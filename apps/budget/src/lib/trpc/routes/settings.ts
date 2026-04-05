@@ -7,7 +7,7 @@ import {
   type WebSearchPreferences,
   type WebSearchProvider,
   workspaces,
-} from "$lib/schema/workspaces";
+} from "$core/schema/workspaces";
 import { db } from "$lib/server/db";
 import { encryptApiKey } from "$lib/server/shared/security/encryption";
 import { publicProcedure, secureOperationProcedure, t } from "$lib/trpc";

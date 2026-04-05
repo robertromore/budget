@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import type { EntityType } from '$lib/types/automation';
+import type { EntityType } from '$core/types/automation';
 import { cn } from '$lib/utils';
 import Combine from '@lucide/svelte/icons/combine';
 import Filter from '@lucide/svelte/icons/filter';

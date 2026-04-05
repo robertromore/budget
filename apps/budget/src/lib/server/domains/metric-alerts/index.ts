@@ -4,4 +4,4 @@ export {
   metricAlertIdSchema,
   createMetricAlertSchema,
   updateMetricAlertSchema,
-} from "$lib/schema/metric-alerts";
+} from "$core/schema/metric-alerts";

@@ -1,4 +1,4 @@
-import { categories, type Category } from "$lib/schema/categories";
+import { categories, type Category } from "$core/schema/categories";
 import {
   categoryGroupMemberships,
   categoryGroupRecommendations,
@@ -13,7 +13,7 @@ import {
   type NewCategoryGroupMembership,
   type NewCategoryGroupRecommendation,
   type NewCategoryGroupSettings,
-} from "$lib/schema/category-groups";
+} from "$core/schema/category-groups";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError } from "$lib/server/shared/types/errors";

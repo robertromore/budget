@@ -1,4 +1,4 @@
-import { usageUnitEnum } from "$lib/schema/utility-usage";
+import { usageUnitEnum } from "$core/schema/utility-usage";
 import { utilityUsageService } from "$lib/server/domains/utility";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";

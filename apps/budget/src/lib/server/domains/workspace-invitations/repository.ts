@@ -1,7 +1,7 @@
-import type { WorkspaceInvitation, InvitationStatus } from "$lib/schema/workspace-invitations";
-import { workspaceInvitations } from "$lib/schema/workspace-invitations";
-import { workspaces } from "$lib/schema/workspaces";
-import { users } from "$lib/schema/users";
+import type { WorkspaceInvitation, InvitationStatus } from "$core/schema/workspace-invitations";
+import { workspaceInvitations } from "$core/schema/workspace-invitations";
+import { workspaces } from "$core/schema/workspaces";
+import { users } from "$core/schema/users";
 import { db } from "$lib/server/shared/database";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

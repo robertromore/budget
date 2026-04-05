@@ -2,7 +2,7 @@
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
-import type { ColumnMapping } from '$lib/types/import';
+import type { ColumnMapping } from '$core/types/import';
 import { formatPreviewAmount } from '$lib/utils/import';
 import { normalize } from '$lib/utils/string-utilities';
 

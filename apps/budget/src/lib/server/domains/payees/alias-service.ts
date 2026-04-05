@@ -4,7 +4,7 @@ import type {
   PayeeAlias,
   PayeeAliasStats,
   PayeeAliasWithPayee,
-} from "$lib/schema/payee-aliases";
+} from "$core/schema/payee-aliases";
 import { normalize } from "$lib/utils/string-utilities";
 import { PayeeAliasRepository } from "./alias-repository";
 

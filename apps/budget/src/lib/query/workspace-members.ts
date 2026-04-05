@@ -1,4 +1,4 @@
-import type { WorkspaceMember, WorkspaceRole } from "$lib/schema/workspace-members";
+import type { WorkspaceMember, WorkspaceRole } from "$core/schema/workspace-members";
 import type { MemberWithUser, MemberWithWorkspace } from "$lib/server/domains/workspace-members";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";

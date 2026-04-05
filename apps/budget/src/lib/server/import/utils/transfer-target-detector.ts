@@ -6,10 +6,10 @@
  * reconciled with existing transfers instead of creating duplicates.
  */
 
-import { accounts as accountTable } from "$lib/schema/accounts";
-import { transactions as transactionTable } from "$lib/schema/transactions";
+import { accounts as accountTable } from "$core/schema/accounts";
+import { transactions as transactionTable } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
-import type { ImportRow, TransferTargetMatch } from "$lib/types/import";
+import type { ImportRow, TransferTargetMatch } from "$core/types/import";
 import { compact } from "$lib/utils/array-utilities";
 import { daysBetweenDates, parseLocalDate } from "$lib/utils/date-helpers";
 import { and, eq, inArray, isNull } from "drizzle-orm";

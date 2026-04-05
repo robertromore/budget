@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
-	import type { Account } from '$lib/schema/accounts';
+	import type { Account } from '$core/schema/accounts';
 	import Settings from '@lucide/svelte/icons/settings';
 
 	let {

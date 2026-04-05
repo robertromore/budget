@@ -1,7 +1,7 @@
 <script lang="ts">
 import { browser } from '$app/environment';
 import { Skeleton } from '$lib/components/ui/skeleton';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { columns } from '../(data)/columns.svelte';
 import ScheduleDataTable from './schedule-data-table.svelte';
 

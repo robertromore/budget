@@ -4,7 +4,7 @@ import { page } from '$app/state';
 import { ManageScheduleForm } from '$lib/components/forms';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Calendar from '@lucide/svelte/icons/calendar';
 

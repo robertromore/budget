@@ -2,8 +2,8 @@ import type {
   DocumentExtractionMethod,
   DocumentExtractionPreferences,
   LLMPreferences,
-} from "$lib/schema/workspaces";
-import type { ExtractionMethod, ExtractionStatus } from "$lib/schema/account-documents";
+} from "$core/schema/workspaces";
+import type { ExtractionMethod, ExtractionStatus } from "$core/schema/account-documents";
 import type { AccountDocumentRepository } from "../account-documents/repository";
 import { extractPdfText, hasPdfText } from "./extractors/pdf-extractor";
 import { extractWithOcr } from "./extractors/ocr-extractor";

@@ -1,7 +1,7 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { Schedule } from "$lib/schema/schedules";
+import type { Schedule } from "$core/schema/schedules";
 import Archive from "@lucide/svelte/icons/archive";
 import Calendar from "@lucide/svelte/icons/calendar";
 import CircleCheck from "@lucide/svelte/icons/circle-check";

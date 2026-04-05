@@ -6,7 +6,7 @@ import {
   type NewPayeeAiEnhancement,
   type PayeeAiEnhancement,
   type PayeeAiPreferences,
-} from "$lib/schema";
+} from "$core/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

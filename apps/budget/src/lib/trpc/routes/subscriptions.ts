@@ -1,8 +1,8 @@
-import { billingCycles, subscriptionStatuses, subscriptionTypes } from "$lib/schema/subscriptions";
+import { billingCycles, subscriptionStatuses, subscriptionTypes } from "$core/schema/subscriptions";
 import {
   insertSubscriptionSchema,
   updateSubscriptionSchema,
-} from "$lib/schema/subscriptions-table";
+} from "$core/schema/subscriptions-table";
 import { SubscriptionService } from "$lib/server/domains/subscriptions";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";

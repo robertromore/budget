@@ -1,6 +1,6 @@
 <script lang="ts">
 import { EnhancedCategorySelector } from '$lib/components/categories/enhanced-category-selector';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 
 let {
   value,

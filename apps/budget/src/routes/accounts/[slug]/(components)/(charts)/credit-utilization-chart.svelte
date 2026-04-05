@@ -15,7 +15,7 @@ import { AnalysisDropdown, ChartSelectionPanel } from '$lib/components/charts';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import { formatMonthYear, toMonthString } from '$lib/utils/date-formatters';
 import type { TransactionsFormat } from '$lib/types';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import {
   calculateLinearTrend,

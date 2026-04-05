@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
 import { db } from "..";
-import { schedules, type Schedule } from "$lib/schema/schedules";
-import { scheduleDates } from "$lib/schema/schedule-dates";
+import { schedules, type Schedule } from "$core/schema/schedules";
+import { scheduleDates } from "$core/schema/schedule-dates";
 import { faker } from "@faker-js/faker";
 import { sequence } from "./utils/sequence";
 import { payeeFactory } from "./payees";

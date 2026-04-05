@@ -3,8 +3,8 @@ import type {
   ReportConfig,
   ReportTemplate,
   ReportTemplateType,
-} from "$lib/schema/report-templates";
-import { DEFAULT_REPORT_CONFIG, PREDEFINED_TEMPLATES } from "$lib/schema/report-templates";
+} from "$core/schema/report-templates";
+import { DEFAULT_REPORT_CONFIG, PREDEFINED_TEMPLATES } from "$core/schema/report-templates";
 import { ReportTemplateRepository, type UpdateReportTemplateData } from "./repository";
 
 /**

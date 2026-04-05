@@ -5,7 +5,7 @@
  * Services emit events when entities change, and the rule engine subscribes to them.
  */
 
-import type { EntityType, RuleEvent } from "$lib/types/automation";
+import type { EntityType, RuleEvent } from "$core/types/automation";
 
 /**
  * Event listener callback type

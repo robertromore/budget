@@ -1,6 +1,6 @@
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
-import type { BudgetRecommendationWithRelations } from "$lib/schema/recommendations";
+import type { BudgetRecommendationWithRelations } from "$core/schema/recommendations";
 import type { ColumnDef } from "@tanstack/table-core";
 import RecommendationColumnHeader from "../recommendation-column-header.svelte";
 import RecommendationTitleCell from "../cells/recommendation-title-cell.svelte";

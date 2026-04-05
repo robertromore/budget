@@ -5,7 +5,7 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { createPeriodTemplate } from '$lib/query/budgets';
-import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
+import type { BudgetPeriodTemplate } from '$core/schema/budgets';
 import { isoWeekdayOptions, monthStringOptions } from '$lib/utils/date-options';
 import {
   currentDate,

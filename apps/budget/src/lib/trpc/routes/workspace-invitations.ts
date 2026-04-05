@@ -246,7 +246,7 @@ export const workspaceInvitationsRoutes = t.router({
     }
 
     // Get user's email to find their invitations
-    const { users } = await import("$lib/schema/users");
+    const { users } = await import("$core/schema/users");
     const { eq } = await import("drizzle-orm");
 
     const [user] = await ctx.db

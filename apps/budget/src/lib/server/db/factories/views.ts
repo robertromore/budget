@@ -1,5 +1,5 @@
 import { db } from "..";
-import { views, type View } from "$lib/schema/views";
+import { views, type View } from "$core/schema/views";
 import type { ViewFilter, ViewDisplayState } from "$lib/types";
 import { faker } from "@faker-js/faker";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

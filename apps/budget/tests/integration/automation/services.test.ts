@@ -25,8 +25,8 @@ import {
   type AutomationContext,
 } from "../../../src/lib/server/domains/automation/services";
 import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
-import { workspaces } from "../../../src/lib/schema/workspaces";
-import type { TriggerConfig, ConditionGroup, ActionConfig } from "$lib/types/automation";
+import { workspaces } from "../../../../../packages/core/src/schema/workspaces";
+import type { TriggerConfig, ConditionGroup, ActionConfig } from "$core/types/automation";
 
 // Test helpers
 function createValidInput(): CreateRuleInput {

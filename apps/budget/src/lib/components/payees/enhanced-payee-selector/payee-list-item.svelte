@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
 import Pencil from '@lucide/svelte/icons/pencil';

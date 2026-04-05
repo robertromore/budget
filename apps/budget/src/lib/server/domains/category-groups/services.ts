@@ -1,9 +1,9 @@
-import { categories, type Category } from "$lib/schema/categories";
-import type { CategoryGroup, NewCategoryGroup } from "$lib/schema/category-groups";
+import { categories, type Category } from "$core/schema/categories";
+import type { CategoryGroup, NewCategoryGroup } from "$core/schema/category-groups";
 import {
   categoryGroupMemberships,
   categoryGroupRecommendations,
-} from "$lib/schema/category-groups";
+} from "$core/schema/category-groups";
 import { db } from "$lib/server/db";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";

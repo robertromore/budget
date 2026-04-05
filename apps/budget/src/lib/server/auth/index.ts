@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "$lib/server/db";
 import { AUTH_CONFIG } from "$lib/server/config/auth";
 import { getEnv } from "$lib/server/env";
-import * as schema from "$lib/schema";
+import * as schema from "$core/schema";
 import { createDefaultWorkspaceForUser } from "./workspace-setup";
 
 /**

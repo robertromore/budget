@@ -5,10 +5,10 @@
  * Uses multiple similarity algorithms for robust matching.
  */
 
-import type { Payee } from "$lib/schema/payees";
-import type { PayeeAlias } from "$lib/schema/payee-aliases";
-import type { TransferMappingWithAccount } from "$lib/schema/transfer-mappings";
-import type { PayeeGroup, PayeeGroupMember, ExistingPayeeMatch } from "$lib/types/import";
+import type { Payee } from "$core/schema/payees";
+import type { PayeeAlias } from "$core/schema/payee-aliases";
+import type { TransferMappingWithAccount } from "$core/schema/transfer-mappings";
+import type { PayeeGroup, PayeeGroupMember, ExistingPayeeMatch } from "$core/types/import";
 import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { getTransferMappingService } from "$lib/server/domains/transfers";
 import { distance as fastLevenshtein } from "fastest-levenshtein";

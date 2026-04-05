@@ -9,8 +9,8 @@ import {
   type AccountDocument,
   type DocumentType,
   type ExtractionStatus,
-} from '$lib/schema/account-documents';
-import type { DocumentExtractionMethod } from '$lib/schema/workspaces';
+} from '$core/schema/account-documents';
+import type { DocumentExtractionMethod } from '$core/schema/workspaces';
 import { formatFileSize } from '$lib/utils/formatters';
 import AlertCircle from '@lucide/svelte/icons/alert-circle';
 import Brain from '@lucide/svelte/icons/brain';

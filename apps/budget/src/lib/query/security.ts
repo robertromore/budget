@@ -6,7 +6,7 @@
  */
 
 import { trpc } from "$lib/trpc/client";
-import type { EncryptionLevel, EncryptionKeyType } from "$lib/types/encryption";
+import type { EncryptionLevel, EncryptionKeyType } from "$core/types/encryption";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 

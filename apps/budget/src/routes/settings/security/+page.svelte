@@ -32,7 +32,7 @@ import ShieldAlert from '@lucide/svelte/icons/shield-alert';
 import ShieldCheck from '@lucide/svelte/icons/shield-check';
 import Smartphone from '@lucide/svelte/icons/smartphone';
 import X from '@lucide/svelte/icons/x';
-import type { EncryptionLevel, EncryptionKeyType } from '$lib/types/encryption';
+import type { EncryptionLevel, EncryptionKeyType } from '$core/types/encryption';
 
 // Queries - these return QueryWrapper objects that need .options() called
 const levelOptionsQuery = getEncryptionLevelOptions().options();

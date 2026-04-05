@@ -1,4 +1,4 @@
-import { accounts, categories, schedules, transactions } from "$lib/schema";
+import { accounts, categories, schedules, transactions } from "$core/schema";
 import {
   budgetAccounts,
   budgetAssociationTypes,
@@ -24,7 +24,7 @@ import {
   type NewBudgetPeriodInstance,
   type NewBudgetPeriodTemplate,
   type NewBudgetTransaction,
-} from "$lib/schema/budgets";
+} from "$core/schema/budgets";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

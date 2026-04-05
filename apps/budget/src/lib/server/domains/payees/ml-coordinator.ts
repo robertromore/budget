@@ -1,4 +1,4 @@
-import { payees, transactions } from "$lib/schema";
+import { payees, transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { formatPercent } from "$lib/server/utils/formatters";

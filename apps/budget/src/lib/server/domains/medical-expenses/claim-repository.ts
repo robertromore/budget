@@ -1,4 +1,4 @@
-import { hsaClaims, type ClaimStatus, type HsaClaim } from "$lib/schema/hsa-claims";
+import { hsaClaims, type ClaimStatus, type HsaClaim } from "$core/schema/hsa-claims";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";

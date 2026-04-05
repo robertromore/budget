@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
-import { workspaces } from "../../../src/lib/schema/workspaces";
+import { workspaces } from "../../../../../packages/core/src/schema/workspaces";
 import { AutomationRepository } from "../../../src/lib/server/domains/automation/repository";
 import {
   createRule,

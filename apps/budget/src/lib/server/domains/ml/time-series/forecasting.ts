@@ -5,7 +5,7 @@
  * using exponential smoothing, Holt-Winters, and ensemble methods.
  */
 
-import { transactions } from "$lib/schema";
+import { transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, linearRegressionLine, mean, standardDeviation } from "simple-statistics";

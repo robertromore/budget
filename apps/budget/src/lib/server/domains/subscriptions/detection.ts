@@ -1,9 +1,9 @@
-import { accounts } from "$lib/schema/accounts";
-import { categories } from "$lib/schema/categories";
-import type { Payee } from "$lib/schema/payees";
-import { payees } from "$lib/schema/payees";
-import type { BillingCycle, SubscriptionType } from "$lib/schema/subscriptions";
-import { transactions } from "$lib/schema/transactions";
+import { accounts } from "$core/schema/accounts";
+import { categories } from "$core/schema/categories";
+import type { Payee } from "$core/schema/payees";
+import { payees } from "$core/schema/payees";
+import type { BillingCycle, SubscriptionType } from "$core/schema/subscriptions";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import {
   getRecurringDetectionService,

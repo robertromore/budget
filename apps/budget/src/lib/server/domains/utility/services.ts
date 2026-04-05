@@ -1,5 +1,5 @@
-import { accounts, isUtilityAccount } from "$lib/schema/accounts";
-import type { UtilityUsage, UtilityRateTier, UsageUnit } from "$lib/schema/utility-usage";
+import { accounts, isUtilityAccount } from "$core/schema/accounts";
+import type { UtilityUsage, UtilityRateTier, UsageUnit } from "$core/schema/utility-usage";
 import { db } from "$lib/server/shared/database";
 import { ValidationError } from "$lib/server/shared/types";
 import { eq } from "drizzle-orm";

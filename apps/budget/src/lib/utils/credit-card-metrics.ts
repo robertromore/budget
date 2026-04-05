@@ -1,4 +1,4 @@
-import type { Account } from "$lib/schema/accounts";
+import type { Account } from "$core/schema/accounts";
 
 export type MetricId =
   // Credit Health

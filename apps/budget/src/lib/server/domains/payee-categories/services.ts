@@ -1,4 +1,4 @@
-import type { PayeeCategory } from "$lib/schema/payee-categories";
+import type { PayeeCategory } from "$core/schema/payee-categories";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { defaultPayeeCategories } from "./default-payee-categories";

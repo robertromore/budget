@@ -2,7 +2,7 @@ import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
-import { REPORT_TEMPLATE_TYPES, type ReportConfig } from "$lib/schema/report-templates";
+import { REPORT_TEMPLATE_TYPES, type ReportConfig } from "$core/schema/report-templates";
 import { z } from "zod";
 
 const reportTemplateService = lazyService(() => serviceFactory.getReportTemplateService());

@@ -7,7 +7,7 @@ import type {
   BudgetPeriodInstance,
   BudgetPeriodTemplate,
   BudgetTransaction,
-} from "$lib/schema/budgets";
+} from "$core/schema/budgets";
 import type { BudgetWithRelations } from "$lib/server/domains/budgets";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";

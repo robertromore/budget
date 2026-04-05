@@ -6,11 +6,11 @@
  * about any aspect of the user's finances.
  */
 
-import { accounts, categories, payees, transactions } from "$lib/schema";
-import { isDebtAccount, type AccountType } from "$lib/schema/accounts";
-import { budgets, envelopeAllocations } from "$lib/schema/budgets";
-import { scheduleDates } from "$lib/schema/schedule-dates";
-import { schedules } from "$lib/schema/schedules";
+import { accounts, categories, payees, transactions } from "$core/schema";
+import { isDebtAccount, type AccountType } from "$core/schema/accounts";
+import { budgets, envelopeAllocations } from "$core/schema/budgets";
+import { scheduleDates } from "$core/schema/schedule-dates";
+import { schedules } from "$core/schema/schedules";
 import { db } from "$lib/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
 import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates-core";

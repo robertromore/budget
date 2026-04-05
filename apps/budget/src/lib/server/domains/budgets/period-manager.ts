@@ -3,7 +3,7 @@ import {
   budgetPeriodInstances,
   type BudgetPeriodTemplate,
   budgetPeriodTemplates,
-} from "$lib/schema/budgets";
+} from "$core/schema/budgets";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { currentDate as defaultCurrentDate, parseISOString, toISOString } from "$lib/utils/dates-core";

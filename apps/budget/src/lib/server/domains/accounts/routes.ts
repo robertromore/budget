@@ -1,4 +1,4 @@
-import { removeAccountSchema } from "$lib/schema/accounts";
+import { removeAccountSchema } from "$core/schema/accounts";
 import {
   authenticatedProcedure,
   publicProcedure,

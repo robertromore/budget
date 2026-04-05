@@ -1,4 +1,4 @@
-import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
+import { formInsertWorkspaceSchema, workspaces } from "$core/schema/workspaces";
 import { db } from "$lib/server/db";
 import { fail } from "@sveltejs/kit";
 import { eq, isNull } from "drizzle-orm";

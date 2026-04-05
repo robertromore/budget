@@ -8,15 +8,15 @@
 
 import { and, eq, gte, desc, sql } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
-import type * as schema from "$lib/schema";
+import type * as schema from "$core/schema";
 import {
   userTrustedContexts,
   accessLog,
   type TrustedContextType,
   type NewAccessLogEntry,
   type NewTrustedContext,
-} from "$lib/schema/security";
-import type { RiskScore, RiskFactor, RiskFactorSettings } from "$lib/types/encryption";
+} from "$core/schema/security";
+import type { RiskScore, RiskFactor, RiskFactorSettings } from "$core/types/encryption";
 import { nowISOString } from "$lib/utils/dates-core";
 import { createHash } from "node:crypto";
 

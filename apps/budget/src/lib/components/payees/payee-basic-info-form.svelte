@@ -17,8 +17,8 @@ import {
   inferPayeeDetails,
   type PayeeDetailsSuggestions,
 } from '$lib/query/payees';
-import type { EnhanceableField, PayeeAiPreferences } from '$lib/schema';
-import { payeeTypes, paymentFrequencies } from '$lib/schema/payees';
+import type { EnhanceableField, PayeeAiPreferences } from '$core/schema';
+import { payeeTypes, paymentFrequencies } from '$core/schema/payees';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeeCategoriesState } from '$lib/states/entities/payee-categories.svelte';
 import type { EditableEntityItem } from '$lib/types';

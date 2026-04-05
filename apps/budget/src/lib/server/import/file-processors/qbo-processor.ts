@@ -9,7 +9,7 @@ import type {
   ImportRow,
   NormalizedTransaction,
   QBOTransaction,
-} from "$lib/types/import";
+} from "$core/types/import";
 import { XMLParser } from "fast-xml-parser";
 import { FileValidationError, ParseError } from "../errors";
 import { extractQBOTransactions, parseQBODate, sanitizeText, validateFileType } from "../utils";

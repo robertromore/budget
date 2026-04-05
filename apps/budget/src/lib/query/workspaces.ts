@@ -1,4 +1,4 @@
-import type { Workspace } from "$lib/schema/workspaces";
+import type { Workspace } from "$core/schema/workspaces";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

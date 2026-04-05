@@ -1,10 +1,10 @@
-import { removeAccountSchema, type RemoveAccountData } from "$lib/schema";
+import { removeAccountSchema, type RemoveAccountData } from "$core/schema";
 import {
   superformInsertAccountSchema,
   superformInsertTransactionSchema,
   type SuperformInsertAccountData,
   type SuperformInsertTransactionData,
-} from "$lib/schema/superforms";
+} from "$core/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

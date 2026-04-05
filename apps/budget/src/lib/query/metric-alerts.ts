@@ -1,4 +1,4 @@
-import type { MetricAlert } from "$lib/schema/metric-alerts";
+import type { MetricAlert } from "$core/schema/metric-alerts";
 import type { EvaluationResult } from "$lib/server/domains/metric-alerts/services";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";

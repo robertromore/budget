@@ -10,7 +10,7 @@ import {
   type BudgetType,
   type BudgetScope,
   type PeriodTemplateType,
-} from "$lib/schema/budgets";
+} from "$core/schema/budgets";
 import { faker } from "@faker-js/faker";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { sequence } from "./utils/sequence";

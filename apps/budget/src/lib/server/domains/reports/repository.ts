@@ -3,7 +3,7 @@ import {
   type ReportTemplate,
   type NewReportTemplate,
   type ReportTemplateType,
-} from "$lib/schema/report-templates";
+} from "$core/schema/report-templates";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { and, desc, eq } from "drizzle-orm";

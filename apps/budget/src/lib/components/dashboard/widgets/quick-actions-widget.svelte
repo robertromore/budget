@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Download from '@lucide/svelte/icons/download';

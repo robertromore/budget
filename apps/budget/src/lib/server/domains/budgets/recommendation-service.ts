@@ -10,7 +10,7 @@ import {
   type RecommendationPriority,
   type RecommendationStatus,
   type RecommendationType,
-} from "$lib/schema/recommendations";
+} from "$core/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";

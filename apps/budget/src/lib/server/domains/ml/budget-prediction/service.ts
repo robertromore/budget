@@ -16,7 +16,7 @@ import {
   budgets,
   categories,
   transactions,
-} from "$lib/schema";
+} from "$core/schema";
 import { db } from "$lib/server/db";
 import { formatPercent } from "$lib/server/utils/formatters";
 import { getCurrentTimestamp, nowISOString } from "$lib/utils/dates-core";

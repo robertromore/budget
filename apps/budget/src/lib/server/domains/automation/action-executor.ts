@@ -11,7 +11,7 @@ import {
   type ActionConfig,
   type ActionResult,
   type EntityType,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 
 // Database connection type derived from the actual db export
 type DatabaseConnection = Omit<typeof db, "batch">;

@@ -4,7 +4,7 @@ import {
   GenericDisplayInput,
   GenericFilterInput,
 } from '$lib/components/data-table';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import type { FilterInputOption } from '$lib/types';
 import type { ColumnDef, ColumnFiltersState, Table as TTable } from '@tanstack/table-core';
 import ScheduleBulkActions from './schedule-bulk-actions.svelte';

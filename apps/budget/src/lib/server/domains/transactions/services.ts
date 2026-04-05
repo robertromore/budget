@@ -1,8 +1,8 @@
-import { accounts, transactions } from "$lib/schema";
-import { budgetTransactions } from "$lib/schema/budgets";
-import { categories } from "$lib/schema/categories";
-import { payees } from "$lib/schema/payees";
-import type { NewTransaction, Transaction } from "$lib/schema/transactions";
+import { accounts, transactions } from "$core/schema";
+import { budgetTransactions } from "$core/schema/budgets";
+import { categories } from "$core/schema/categories";
+import { payees } from "$core/schema/payees";
+import type { NewTransaction, Transaction } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
@@ -1655,7 +1655,7 @@ export class TransactionService {
     // This would typically call the account repository
     // For now, we'll use a simple check
     const { db } = await import("$lib/server/db");
-    const { accounts } = await import("$lib/schema");
+    const { accounts } = await import("$core/schema");
     const { eq, isNull, and } = await import("drizzle-orm");
 
     const [account] = await db

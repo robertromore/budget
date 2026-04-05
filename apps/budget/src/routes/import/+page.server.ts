@@ -6,7 +6,7 @@ import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";
-import type { ParseResult } from "$lib/types/import";
+import type { ParseResult } from "$core/types/import";
 import { fail, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 

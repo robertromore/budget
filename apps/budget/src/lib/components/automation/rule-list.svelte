@@ -7,8 +7,8 @@
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import * as Select from '$lib/components/ui/select';
-import type { AutomationRule } from '$lib/schema/automation-rules';
-import { entityTypes } from '$lib/types/automation';
+import type { AutomationRule } from '$core/schema/automation-rules';
+import { entityTypes } from '$core/types/automation';
 import Plus from '@lucide/svelte/icons/plus';
 import Search from '@lucide/svelte/icons/search';
 import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';

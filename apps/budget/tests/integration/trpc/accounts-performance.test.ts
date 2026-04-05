@@ -9,7 +9,7 @@ import {
   users,
   workspaces,
   workspaceMembers,
-} from "$lib/schema";
+} from "$core/schema";
 import { createId } from "@paralleldrive/cuid2";
 
 describe("Accounts Performance Testing Concepts", () => {

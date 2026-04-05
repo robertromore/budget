@@ -1,7 +1,7 @@
 <script lang="ts">
 import { useSortable } from '@dnd-kit-svelte/sortable';
 import { CSS } from '@dnd-kit-svelte/utilities';
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import type { Snippet } from 'svelte';
 
 let {

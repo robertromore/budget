@@ -1,7 +1,7 @@
-import type { WorkspaceInvitation } from "$lib/schema/workspace-invitations";
-import type { WorkspaceRole } from "$lib/schema/workspace-members";
-import { users } from "$lib/schema/users";
-import { workspaces } from "$lib/schema/workspaces";
+import type { WorkspaceInvitation } from "$core/schema/workspace-invitations";
+import type { WorkspaceRole } from "$core/schema/workspace-members";
+import { users } from "$core/schema/users";
+import { workspaces } from "$core/schema/workspaces";
 import { db } from "$lib/server/shared/database";
 import { ConflictError, ForbiddenError, ValidationError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

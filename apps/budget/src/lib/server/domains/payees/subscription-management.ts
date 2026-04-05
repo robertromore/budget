@@ -1,4 +1,4 @@
-import type { Payee } from "$lib/schema";
+import type { Payee } from "$core/schema";
 
 // ==================== SUBSCRIPTION INTERFACES ====================
 

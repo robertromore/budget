@@ -4,9 +4,9 @@ import { PayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { getCategoryAliasService } from "$lib/server/domains/categories/alias-service";
 import { getTransferMappingService } from "$lib/server/domains/transfers";
 import { db } from "$lib/server/db";
-import { payees, categories, accounts } from "$lib/schema";
+import { payees, categories, accounts } from "$core/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import type { ImportRow } from "$lib/types/import";
+import type { ImportRow } from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import {
   isImportApiError,

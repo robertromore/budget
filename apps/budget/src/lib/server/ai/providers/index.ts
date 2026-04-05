@@ -10,7 +10,7 @@ import type {
   LLMPreferences,
   LLMProvider,
   LLMProviderConfig,
-} from "$lib/schema/workspaces";
+} from "$core/schema/workspaces";
 import { decryptApiKey } from "$lib/server/shared/security";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";

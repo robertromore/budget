@@ -10,8 +10,8 @@ import {
   updateAccountEncryptionSettings,
   getEffectiveEncryptionLevel,
 } from '$lib/query/security';
-import type { Account } from '$lib/schema';
-import type { EncryptionLevel } from '$lib/types/encryption';
+import type { Account } from '$core/schema';
+import type { EncryptionLevel } from '$core/types/encryption';
 import Shield from '@lucide/svelte/icons/shield';
 import ShieldCheck from '@lucide/svelte/icons/shield-check';
 import Lock from '@lucide/svelte/icons/lock';

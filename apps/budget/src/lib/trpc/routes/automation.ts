@@ -22,14 +22,14 @@ import {
   updateRule,
 } from "$lib/server/domains/automation/services";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
-import type { EntityType } from "$lib/types/automation";
+import type { EntityType } from "$core/types/automation";
 import {
   actionDefinitions,
   conditionFields,
   entityTypes,
   getActionsForEntity,
   triggerEvents,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 

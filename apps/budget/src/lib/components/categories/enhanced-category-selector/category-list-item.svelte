@@ -1,6 +1,6 @@
 <script lang="ts">
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-import type { Category } from '$lib/schema/categories';
+import type { Category } from '$core/schema/categories';
 import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
 import Pencil from '@lucide/svelte/icons/pencil';

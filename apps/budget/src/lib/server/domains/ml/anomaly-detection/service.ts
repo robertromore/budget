@@ -5,7 +5,7 @@
  * and identify potentially fraudulent or unusual patterns.
  */
 
-import { transactions } from "$lib/schema";
+import { transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, desc, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";

@@ -5,7 +5,7 @@
  * API keys, and feature modes.
  */
 
-import { LLM_MODELS } from "$lib/schema/llm-models";
+import { LLM_MODELS } from "$core/schema/llm-models";
 import {
   DEFAULT_LLM_PREFERENCES,
   type LLMFeatureConfig,
@@ -13,7 +13,7 @@ import {
   type LLMPreferences,
   type LLMProviderConfig,
   workspaces,
-} from "$lib/schema/workspaces";
+} from "$core/schema/workspaces";
 import { db } from "$lib/server/db";
 import {
   decryptApiKey,

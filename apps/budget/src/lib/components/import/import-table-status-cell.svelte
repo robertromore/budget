@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
-import type { ImportRow, ValidationError } from '$lib/types/import';
+import type { ImportRow, ValidationError } from '$core/types/import';
 import { formatDisplayValue } from '$lib/utils/formatters';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';

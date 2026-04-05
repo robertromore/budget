@@ -12,7 +12,7 @@
  * - Identify subscription creep
  */
 
-import { accounts, categories, payees, transactions } from "$lib/schema";
+import { accounts, categories, payees, transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { roundToCents } from "$lib/utils/math-utilities";
 import { and, eq, gte, isNull, ne, sql } from "drizzle-orm";

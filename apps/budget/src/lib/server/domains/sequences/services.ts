@@ -1,4 +1,4 @@
-import type { SequencedEntityType } from "$lib/schema/workspace-counters";
+import type { SequencedEntityType } from "$core/schema/workspace-counters";
 import { SequenceRepository } from "./repository";
 
 /**

@@ -10,7 +10,7 @@ import {
   SimplefinSetupWizard,
   TellerSetupWizard,
 } from '$lib/components/connections';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 import Link from '@lucide/svelte/icons/link';
 import Unlink from '@lucide/svelte/icons/unlink';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';

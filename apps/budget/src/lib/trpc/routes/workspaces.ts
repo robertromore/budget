@@ -1,5 +1,5 @@
-import { workspaceMembers } from "$lib/schema/workspace-members";
-import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
+import { workspaceMembers } from "$core/schema/workspace-members";
+import { formInsertWorkspaceSchema, workspaces } from "$core/schema/workspaces";
 import { publicProcedure, t } from "$lib/trpc";
 import { nowISOString } from "$lib/utils/dates-core";
 import { TRPCError } from "@trpc/server";

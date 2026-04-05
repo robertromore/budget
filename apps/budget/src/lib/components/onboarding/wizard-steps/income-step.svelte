@@ -10,7 +10,7 @@ import {
   type IncomeSource,
   type IncomeFrequency,
   type EmploymentStatus,
-} from '$lib/types/onboarding';
+} from '$core/types/onboarding';
 
 const formData = $derived(onboardingWizardStore.typedFormData);
 

@@ -1,4 +1,4 @@
-import type { AccountDocument, DocumentType } from "$lib/schema/account-documents";
+import type { AccountDocument, DocumentType } from "$core/schema/account-documents";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

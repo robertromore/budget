@@ -3,7 +3,7 @@ import type {
   PayeeAlias,
   PayeeAliasStats,
   PayeeAliasWithPayee,
-} from "$lib/schema/payee-aliases";
+} from "$core/schema/payee-aliases";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

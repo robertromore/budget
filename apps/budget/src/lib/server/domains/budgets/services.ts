@@ -16,12 +16,12 @@ import {
   type BudgetType,
   type NewBudgetGroup,
   type NewBudgetTransaction,
-} from "$lib/schema/budgets";
-import { payees } from "$lib/schema/payees";
-import { scheduleDates } from "$lib/schema/schedule-dates";
-import { schedules } from "$lib/schema/schedules";
-import type { Transaction } from "$lib/schema/transactions";
-import { transactions } from "$lib/schema/transactions";
+} from "$core/schema/budgets";
+import { payees } from "$core/schema/payees";
+import { scheduleDates } from "$core/schema/schedule-dates";
+import { schedules } from "$core/schema/schedules";
+import type { Transaction } from "$core/schema/transactions";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { isEmptyObject } from "$lib/utils/object-utilities";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
@@ -634,7 +634,7 @@ export class BudgetService {
   async updateEnvelopeSettings(
     envelopeId: number,
     settings: {
-      rolloverMode?: import("$lib/schema/budgets/envelope-allocations").RolloverMode;
+      rolloverMode?: import("$core/schema/budgets/envelope-allocations").RolloverMode;
       metadata?: Record<string, unknown>;
     }
   ) {
@@ -2218,7 +2218,7 @@ export class BudgetForecastService {
   }
 
   private async getSchedulesForBudget(budgetId: number): Promise<any[]> {
-    const schedulesModule = await import("$lib/schema/schedules");
+    const schedulesModule = await import("$core/schema/schedules");
     const { schedules } = schedulesModule;
     const results = await db.select().from(schedules).where(eq(schedules.budgetId, budgetId));
     return results;
@@ -2241,7 +2241,7 @@ export class BudgetForecastService {
       return null;
     }
 
-    const scheduleDatesModule = await import("$lib/schema/schedule-dates");
+    const scheduleDatesModule = await import("$core/schema/schedule-dates");
     const { scheduleDates } = scheduleDatesModule;
 
     const dateConfig = await db.query.scheduleDates.findFirst({

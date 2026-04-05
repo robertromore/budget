@@ -2,7 +2,7 @@ import {
   monthAnnotations,
   type MonthAnnotation,
   type NewMonthAnnotation,
-} from "$lib/schema/month-annotations";
+} from "$core/schema/month-annotations";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { and, desc, eq, inArray } from "drizzle-orm";

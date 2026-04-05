@@ -10,7 +10,7 @@ import type {
   ConditionGroup,
   FlowState,
   TriggerConfig,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 import type { Edge, Node } from "@xyflow/svelte";
 
 interface FlowNode extends Node {

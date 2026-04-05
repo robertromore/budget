@@ -1,4 +1,4 @@
-import type { CategoryGroupSettings } from "$lib/schema/category-groups";
+import type { CategoryGroupSettings } from "$core/schema/category-groups";
 import { ValidationError } from "$lib/server/shared/types/errors";
 import { CategoryGroupSettingsRepository } from "./repository";
 

@@ -1,5 +1,5 @@
-import type { ExpenseReceipt, ReceiptType } from "$lib/schema/expense-receipts";
-import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$lib/schema/expense-receipts";
+import type { ExpenseReceipt, ReceiptType } from "$core/schema/expense-receipts";
+import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$core/schema/expense-receipts";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { existsSync } from "node:fs";

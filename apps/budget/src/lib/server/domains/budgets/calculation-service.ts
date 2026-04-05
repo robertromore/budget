@@ -1,12 +1,12 @@
-import { isDebtAccount, type Account } from "$lib/schema/accounts";
+import { isDebtAccount, type Account } from "$core/schema/accounts";
 import {
   budgetPeriodInstances,
   budgetPeriodTemplates,
   budgets,
   budgetTransactions,
-} from "$lib/schema/budgets";
-import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
-import { transactions, type Transaction } from "$lib/schema/transactions";
+} from "$core/schema/budgets";
+import { envelopeAllocations } from "$core/schema/budgets/envelope-allocations";
+import { transactions, type Transaction } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";

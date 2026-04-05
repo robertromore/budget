@@ -1,10 +1,10 @@
-import type { ImportRow } from "$lib/types/import";
+import type { ImportRow } from "$core/types/import";
 import type {
   AccountConnection,
   ExternalAccount,
   ProviderCredentials,
   SyncHistoryRecord,
-} from "$lib/schema/account-connections";
+} from "$core/schema/account-connections";
 
 /**
  * Connection provider interface

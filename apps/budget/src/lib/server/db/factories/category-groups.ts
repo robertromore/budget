@@ -4,7 +4,7 @@ import {
   categoryGroups,
   categoryGroupMemberships,
   type CategoryGroup,
-} from "$lib/schema/category-groups";
+} from "$core/schema/category-groups";
 import { faker } from "@faker-js/faker";
 import { sequence } from "./utils/sequence";
 import { categoryFactory } from "./categories";

@@ -24,7 +24,13 @@
     "build": "echo '@budget/core - no build needed'",
     "check": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@paralleldrive/cuid2": "^3.3.0",
+    "drizzle-orm": "^0.44.7",
+    "drizzle-zod": "^0.8.3",
+    "validator": "^13.15.26",
+    "zod": "4.3.6"
+  },
   "devDependencies": {
     "@budget/config": "workspace:*",
     "typescript": "^5.8.3"

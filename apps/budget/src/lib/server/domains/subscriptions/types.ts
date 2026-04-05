@@ -6,8 +6,8 @@ import type {
   SubscriptionAlert,
   SubscriptionPriceHistory,
   SubscriptionWithRelations,
-} from "$lib/schema/subscriptions-table";
-import type { BillingCycle, SubscriptionStatus, SubscriptionType } from "$lib/schema/subscriptions";
+} from "$core/schema/subscriptions-table";
+import type { BillingCycle, SubscriptionStatus, SubscriptionType } from "$core/schema/subscriptions";
 
 // ==================== RE-EXPORTS ====================
 
@@ -70,8 +70,8 @@ export interface TransactionBasedDetectionResult {
   accountId: number;
   accountName?: string;
   detectionConfidence: number;
-  subscriptionType: import("$lib/schema/subscriptions").SubscriptionType;
-  billingCycle: import("$lib/schema/subscriptions").BillingCycle;
+  subscriptionType: import("$core/schema/subscriptions").SubscriptionType;
+  billingCycle: import("$core/schema/subscriptions").BillingCycle;
   estimatedAmount: number;
   amountVariance: number;
   transactionCount: number;

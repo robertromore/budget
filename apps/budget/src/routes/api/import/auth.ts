@@ -1,5 +1,5 @@
-import { accounts } from "$lib/schema/accounts";
-import { workspaceMembers } from "$lib/schema/workspace-members";
+import { accounts } from "$core/schema/accounts";
+import { workspaceMembers } from "$core/schema/workspace-members";
 import { auth } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { and, eq, isNull } from "drizzle-orm";

@@ -9,7 +9,7 @@ import Database from '@lucide/svelte/icons/database';
 import Scale from '@lucide/svelte/icons/scale';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import Link from '@lucide/svelte/icons/link';
-import type { Account } from '$lib/schema';
+import type { Account } from '$core/schema';
 
 import GeneralSection from './settings/general-section.svelte';
 import FinancialSection from './settings/financial-section.svelte';

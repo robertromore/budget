@@ -5,7 +5,7 @@ import { Button } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { cn } from '$lib/utils';
 import type { DuplicateGroup } from '$lib/query/payees-types';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 
 import ArrowRight from '@lucide/svelte/icons/arrow-right';
 import GitMerge from '@lucide/svelte/icons/git-merge';

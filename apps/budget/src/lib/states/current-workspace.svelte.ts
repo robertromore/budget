@@ -1,4 +1,4 @@
-import type { Workspace, WorkspacePreferences } from "$lib/schema/workspaces";
+import type { Workspace, WorkspacePreferences } from "$core/schema/workspaces";
 import { Context } from "runed";
 
 /**

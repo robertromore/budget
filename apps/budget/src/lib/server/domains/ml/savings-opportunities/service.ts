@@ -8,7 +8,7 @@
  * - Merchants where spending increased significantly
  */
 
-import { categories, payees, transactions } from "$lib/schema";
+import { categories, payees, transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { mean } from "simple-statistics";

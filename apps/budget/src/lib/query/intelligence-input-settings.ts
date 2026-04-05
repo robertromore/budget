@@ -1,4 +1,4 @@
-import type { IntelligenceInputPreferences } from "$lib/schema/workspaces";
+import type { IntelligenceInputPreferences } from "$core/schema/workspaces";
 import { trpc } from "$lib/trpc/client";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

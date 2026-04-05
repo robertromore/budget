@@ -11,9 +11,9 @@ import {
   type AutomationRuleLog,
   type NewAutomationRule,
   type NewAutomationRuleLog,
-} from "$lib/schema/automation-rules";
+} from "$core/schema/automation-rules";
 import type { db } from "$lib/server/db";
-import type { EntityType } from "$lib/types/automation";
+import type { EntityType } from "$core/types/automation";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 // Database connection type derived from the actual db export

@@ -44,8 +44,8 @@ import {
   updatePeriodTemplate,
 } from '$lib/query/budgets';
 import { listCategories } from '$lib/query/categories';
-import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
-import type { Schedule } from '$lib/schema/schedules';
+import type { EnvelopeAllocation } from '$core/schema/budgets/envelope-allocations';
+import type { Schedule } from '$core/schema/schedules';
 import { deleteBudgetDialog, deleteBudgetId } from '$lib/states/ui/global.svelte';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';

@@ -5,8 +5,8 @@
  * Supports tool calling for read/write operations on user data.
  */
 
-import { aiConversations, aiConversationMessages } from "$lib/schema/ai-conversations";
-import { DEFAULT_LLM_PREFERENCES, workspaces } from "$lib/schema/workspaces";
+import { aiConversations, aiConversationMessages } from "$core/schema/ai-conversations";
+import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
 import { fetchFinancialContext } from "$lib/server/ai/financial-context";
 import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$lib/server/ai/prompts/chat-assistant";
 import { getActiveProvider, type ProviderInstance } from "$lib/server/ai/providers";

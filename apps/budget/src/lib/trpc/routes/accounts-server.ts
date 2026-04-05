@@ -1,5 +1,5 @@
-import { accounts, transactions } from "$lib/schema";
-import type { Account } from "$lib/schema/accounts";
+import { accounts, transactions } from "$core/schema";
+import type { Account } from "$core/schema/accounts";
 import { publicProcedure, t } from "$lib/trpc";
 import { cacheKeys, queryCache } from "$lib/utils/cache";
 import { trackQuery } from "$lib/utils/performance";

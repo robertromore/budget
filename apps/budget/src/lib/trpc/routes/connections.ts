@@ -1,9 +1,9 @@
-import { workspaces } from "$lib/schema";
+import { workspaces } from "$core/schema";
 import {
   DEFAULT_CONNECTION_PROVIDER_PREFERENCES,
   type ConnectionProviderPreferences,
   type WorkspacePreferences,
-} from "$lib/schema/workspaces";
+} from "$core/schema/workspaces";
 import { db } from "$lib/server/db";
 import { getConnectionService } from "$lib/server/domains/connections";
 import {

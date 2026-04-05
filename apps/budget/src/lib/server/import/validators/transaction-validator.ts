@@ -6,8 +6,8 @@
  * duplicate detection, and data quality checks.
  */
 
-import type { selectTransactionSchema } from "$lib/schema/transactions";
-import type { ImportRow, NormalizedTransaction, ValidationError } from "$lib/types/import";
+import type { selectTransactionSchema } from "$core/schema/transactions";
+import type { ImportRow, NormalizedTransaction, ValidationError } from "$core/types/import";
 import type { z } from "zod/v4";
 import { isValidDate, parseDate } from "../utils";
 

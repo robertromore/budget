@@ -5,7 +5,7 @@
  * QIF format uses single-letter codes followed by data on each line.
  */
 
-import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import type { FileProcessor, ImportRow, NormalizedTransaction } from "$core/types/import";
 import { isNotEmptyObject } from "$lib/utils/object-utilities";
 import { FileValidationError, ParseError } from "../errors";
 import { parseDate, sanitizeText, validateFileType } from "../utils";

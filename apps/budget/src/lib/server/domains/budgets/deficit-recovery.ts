@@ -3,8 +3,8 @@ import {
   type EnvelopeTransfer,
   envelopeAllocations,
   envelopeTransfers,
-} from "$lib/schema/budgets/envelope-allocations";
-import { categories } from "$lib/schema/categories";
+} from "$core/schema/budgets/envelope-allocations";
+import { categories } from "$core/schema/categories";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { nowISOString } from "$lib/utils/dates-core";

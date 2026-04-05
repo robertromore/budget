@@ -5,7 +5,7 @@ import type {
   NewCategory,
   SpendingPriority,
   TaxCategory,
-} from "$lib/schema/categories";
+} from "$core/schema/categories";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { isEmptyObject } from "$lib/utils/object-utilities";

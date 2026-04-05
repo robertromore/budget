@@ -1,4 +1,4 @@
-import type { Account } from "$lib/schema/accounts";
+import type { Account } from "$core/schema/accounts";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

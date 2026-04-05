@@ -1,7 +1,7 @@
-import type { ExpenseReceipt, ReceiptType } from "$lib/schema/expense-receipts";
-import type { ClaimStatus, HsaClaim } from "$lib/schema/hsa-claims";
-import type { MedicalExpense } from "$lib/schema/medical-expenses";
-import { medicalExpenseTypeEnum } from "$lib/schema/medical-expenses";
+import type { ExpenseReceipt, ReceiptType } from "$core/schema/expense-receipts";
+import type { ClaimStatus, HsaClaim } from "$core/schema/hsa-claims";
+import type { MedicalExpense } from "$core/schema/medical-expenses";
+import { medicalExpenseTypeEnum } from "$core/schema/medical-expenses";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

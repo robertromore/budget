@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { currencyFormatter } from '$lib/utils/formatters';
 
 interface Props {

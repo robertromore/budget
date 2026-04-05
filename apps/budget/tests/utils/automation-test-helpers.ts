@@ -13,7 +13,7 @@ import type {
   TriggerConfig,
   RuleEvent,
   ActionResult,
-} from "$lib/types/automation";
+} from "$core/types/automation";
 import type { EvaluationContext } from "$lib/server/domains/automation/condition-evaluator";
 
 // =============================================================================

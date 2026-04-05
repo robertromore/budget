@@ -12,7 +12,7 @@ import { ChartSelectionPanel } from '$lib/components/charts';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { formatMonthYear } from '$lib/utils/date-formatters';
 import type { TransactionsFormat } from '$lib/types';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import { timePeriodFilter } from '$lib/states/ui/time-period-filter.svelte';
 import { analyzePayments, type PaymentAnalysisPoint } from '$lib/utils/credit-card-analytics';
 import { LayerCake, Svg } from 'layercake';

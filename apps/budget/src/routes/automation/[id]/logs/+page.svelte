@@ -12,7 +12,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { rpc } from '$lib/query';
-import type { AutomationRuleLog } from '$lib/schema/automation-rules';
+import type { AutomationRuleLog } from '$core/schema/automation-rules';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Check from '@lucide/svelte/icons/check';

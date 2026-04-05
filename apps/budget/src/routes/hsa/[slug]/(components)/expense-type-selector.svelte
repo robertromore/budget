@@ -3,7 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import { Label } from '$lib/components/ui/label';
 import * as Popover from '$lib/components/ui/popover';
-import { medicalExpenseCategories } from '$lib/schema/medical-expenses';
+import { medicalExpenseCategories } from '$core/schema/medical-expenses';
 import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';

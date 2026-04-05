@@ -11,7 +11,7 @@ import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import FileText from '@lucide/svelte/icons/file-text';
 import Loader2 from '@lucide/svelte/icons/loader-2';
-import type { ImportFile, ImportRow } from '$lib/types/import';
+import type { ImportFile, ImportRow } from '$core/types/import';
 
 interface Props {
   files: ImportFile[];

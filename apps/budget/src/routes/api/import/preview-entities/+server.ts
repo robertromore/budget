@@ -1,5 +1,5 @@
-import { categories as categoryTable } from "$lib/schema/categories";
-import { payees as payeeTable } from "$lib/schema/payees";
+import { categories as categoryTable } from "$core/schema/categories";
+import { payees as payeeTable } from "$core/schema/payees";
 import { db } from "$lib/server/db";
 import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
@@ -8,7 +8,7 @@ import type {
   ImportPreviewData,
   ImportRow,
   PayeePreview,
-} from "$lib/types/import";
+} from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
 import {

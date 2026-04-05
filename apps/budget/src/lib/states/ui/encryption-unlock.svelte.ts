@@ -8,7 +8,7 @@
 
 import { browser } from "$app/environment";
 import { trpc } from "$lib/trpc/client";
-import type { EncryptionKeyType } from "$lib/types/encryption";
+import type { EncryptionKeyType } from "$core/types/encryption";
 import { nowISOString } from "$lib/utils/dates";
 
 // =============================================================================

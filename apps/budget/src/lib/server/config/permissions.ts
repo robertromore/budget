@@ -1,4 +1,4 @@
-import type { WorkspaceRole } from "$lib/schema/workspace-members";
+import type { WorkspaceRole } from "$core/schema/workspace-members";
 
 /**
  * Entity types that can have permissions

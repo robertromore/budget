@@ -13,8 +13,8 @@ import {
   moveCategoryToGroup,
   removeCategoryFromGroup,
 } from '$lib/query/category-groups';
-import type { Category } from '$lib/schema/categories';
-import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
+import type { Category } from '$core/schema/categories';
+import type { CategoryGroupWithCounts } from '$core/schema/category-groups';
 import {
   FolderOpen,
   GripVertical,

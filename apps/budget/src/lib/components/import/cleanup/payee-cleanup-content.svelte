@@ -5,7 +5,7 @@ import * as Card from '$lib/components/ui/card';
 import { Input } from '$lib/components/ui/input';
 import { Progress } from '$lib/components/ui/progress';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
-import type { CleanupState, PayeeGroup } from '$lib/types/import';
+import type { CleanupState, PayeeGroup } from '$core/types/import';
 import Check from '@lucide/svelte/icons/check';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import ChevronUp from '@lucide/svelte/icons/chevron-up';

@@ -1,6 +1,6 @@
 import type { TableDensity } from "$lib/components/data-table/state/types";
 import { default as ViewModel } from "$lib/models/view.svelte";
-import type { View } from "$lib/schema";
+import type { View } from "$core/schema";
 import type { TransactionsFormat, ViewFilter } from "$lib/types";
 import type {
   ColumnPinningState,

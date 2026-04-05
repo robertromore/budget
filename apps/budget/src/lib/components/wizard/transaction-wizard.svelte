@@ -7,8 +7,8 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
 import { usePayeeIntelligence } from '$lib/hooks/use-payee-intelligence.svelte';
-import type { Transaction } from '$lib/schema';
-import type { Payee } from '$lib/schema/payees';
+import type { Transaction } from '$core/schema';
+import type { Payee } from '$core/schema/payees';
 import {
   transactionWizardStore,
   type WizardStep as WizardStepType,

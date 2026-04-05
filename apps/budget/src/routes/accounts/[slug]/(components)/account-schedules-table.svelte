@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Schedule } from '$lib/schema/schedules';
+import type { Schedule } from '$core/schema/schedules';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
 import { columns } from '../(data)/schedule-columns.svelte';
 import ScheduleDataTable from '../../../schedules/(components)/schedule-data-table.svelte';

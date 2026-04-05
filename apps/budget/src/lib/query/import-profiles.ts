@@ -1,4 +1,4 @@
-import type { ColumnMapping, ImportProfile } from "$lib/schema/import-profiles";
+import type { ColumnMapping, ImportProfile } from "$core/schema/import-profiles";
 import { trpc } from "$lib/trpc/client";
 import { queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

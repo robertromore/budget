@@ -21,7 +21,7 @@ import {
   type Condition,
   type ConditionOperator,
   type EntityType,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import X from '@lucide/svelte/icons/x';
 
 // Get entity states for reference selectors

@@ -1,6 +1,6 @@
 import { rpc } from "$lib/query";
-import type { Category, Payee, Transaction } from "$lib/schema";
-import type { Account } from "$lib/schema/accounts";
+import type { Category, Payee, Transaction } from "$core/schema";
+import type { Account } from "$core/schema/accounts";
 import type { TransactionsFormat } from "$lib/types";
 import { compact, without } from "$lib/utils";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";

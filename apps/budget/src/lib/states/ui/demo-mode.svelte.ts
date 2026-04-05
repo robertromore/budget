@@ -6,12 +6,12 @@
  */
 
 import { browser } from "$app/environment";
-import type { Account, AccountType } from "$lib/schema/accounts";
+import type { Account, AccountType } from "$core/schema/accounts";
 import { roundToCents } from "$lib/utils/math-utilities";
 import { nowISOString } from "$lib/utils/dates";
-import type { Category } from "$lib/schema/categories";
-import type { Payee } from "$lib/schema/payees";
-import type { Schedule } from "$lib/schema/schedules";
+import type { Category } from "$core/schema/categories";
+import type { Payee } from "$core/schema/payees";
+import type { Schedule } from "$core/schema/schedules";
 // No longer need CalendarDate - using ISO date strings for demo transactions
 
 // =============================================================================

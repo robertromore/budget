@@ -3,7 +3,7 @@ import { Area, AxisX, AxisY, Bar, Line, Scatter, Tooltip } from '$lib/components
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { rpc } from '$lib/query';
-import { USAGE_UNIT_LABELS, type UsageUnit } from '$lib/schema/utility-usage';
+import { USAGE_UNIT_LABELS, type UsageUnit } from '$core/schema/utility-usage';
 import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import { formatMonthYearShort } from '$lib/utils/date-formatters';
 import { LayerCake, Svg } from 'layercake';

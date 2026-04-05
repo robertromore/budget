@@ -1,4 +1,4 @@
-import { budgetPeriodInstances, budgetTransactions } from "$lib/schema/budgets";
+import { budgetPeriodInstances, budgetTransactions } from "$core/schema/budgets";
 import {
   envelopeAllocations,
   envelopeRolloverHistory,
@@ -8,8 +8,8 @@ import {
   type EnvelopeStatus,
   type EnvelopeTransfer,
   type RolloverMode,
-} from "$lib/schema/budgets/envelope-allocations";
-import { transactions } from "$lib/schema/transactions";
+} from "$core/schema/budgets/envelope-allocations";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";

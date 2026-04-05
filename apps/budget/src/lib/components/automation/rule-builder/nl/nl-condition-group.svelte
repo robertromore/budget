@@ -12,7 +12,7 @@ import {
   type Condition,
   type ConditionGroup,
   type EntityType,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import X from '@lucide/svelte/icons/x';
 import NlAddButton from './nl-add-button.svelte';
 import NlConditionRow from './nl-condition-row.svelte';

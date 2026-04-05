@@ -1,4 +1,4 @@
-import type { EnhanceableField, LlmProvider, PayeeAiPreferences } from "$lib/schema";
+import type { EnhanceableField, LlmProvider, PayeeAiPreferences } from "$core/schema";
 import { trpc } from "$lib/trpc/client";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

@@ -4,7 +4,7 @@ import {
   type DocumentType,
   type ExtractionStatus,
   type ExtractionMethod,
-} from "$lib/schema/account-documents";
+} from "$core/schema/account-documents";
 import { db } from "$lib/server/shared/database";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";

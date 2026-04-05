@@ -6,7 +6,7 @@
  * feature availability.
  */
 
-import type { EncryptionLevel, FeatureAvailability } from "$lib/types/encryption";
+import type { EncryptionLevel, FeatureAvailability } from "$core/types/encryption";
 import {
   getFeatureAvailability,
   getEncryptionWarnings,
@@ -14,10 +14,10 @@ import {
   ENCRYPTION_LEVELS,
   ENCRYPTION_LEVEL_NAMES,
   ENCRYPTION_LEVEL_DESCRIPTIONS,
-} from "$lib/types/encryption";
-import type { UserPreferences } from "$lib/schema/users";
-import type { WorkspacePreferences } from "$lib/schema/workspaces";
-import { parseAccountEncryptionLevel } from "$lib/schema/accounts";
+} from "$core/types/encryption";
+import type { UserPreferences } from "$core/schema/users";
+import type { WorkspacePreferences } from "$core/schema/workspaces";
+import { parseAccountEncryptionLevel } from "$core/schema/accounts";
 
 /**
  * Context for resolving encryption level

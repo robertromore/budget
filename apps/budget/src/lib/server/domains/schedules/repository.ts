@@ -1,6 +1,6 @@
-import { schedules, transactions } from "$lib/schema";
-import type { Schedule } from "$lib/schema/schedules";
-import type { NewTransaction } from "$lib/schema/transactions";
+import { schedules, transactions } from "$core/schema";
+import type { Schedule } from "$core/schema/schedules";
+import type { NewTransaction } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { and, eq } from "drizzle-orm";
 

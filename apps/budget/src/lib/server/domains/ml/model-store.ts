@@ -11,7 +11,7 @@ import {
   mlPredictions,
   mlTrainingData,
   userBehaviorEvents,
-} from "$lib/schema";
+} from "$core/schema";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { nowISOString } from "$lib/utils/dates-core";

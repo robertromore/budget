@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DashboardWidget, DashboardLayoutConfig } from '$lib/schema/dashboards';
+import type { DashboardWidget, DashboardLayoutConfig } from '$core/schema/dashboards';
 import {
   DndContext,
   PointerSensor,

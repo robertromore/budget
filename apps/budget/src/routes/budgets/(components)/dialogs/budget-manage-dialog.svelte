@@ -9,9 +9,9 @@ import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-shee
 import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
 import { deleteBudget, updateBudget } from '$lib/query/budgets';
-import type { Account } from '$lib/schema/accounts';
-import { budgetEnforcementLevels, budgetStatuses } from '$lib/schema/budgets';
-import type { Category } from '$lib/schema/categories';
+import type { Account } from '$core/schema/accounts';
+import { budgetEnforcementLevels, budgetStatuses } from '$core/schema/budgets';
+import type { Category } from '$core/schema/categories';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import type { UpdateBudgetRequest } from '$lib/server/domains/budgets/services';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';

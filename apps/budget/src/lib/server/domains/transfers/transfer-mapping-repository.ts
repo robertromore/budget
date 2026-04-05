@@ -4,8 +4,8 @@ import type {
   TransferMapping,
   TransferMappingStats,
   TransferMappingWithAccount,
-} from "$lib/schema/transfer-mappings";
-import { transferMappings, accounts } from "$lib/schema";
+} from "$core/schema/transfer-mappings";
+import { transferMappings, accounts } from "$core/schema";
 import { db } from "$lib/server/db";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";

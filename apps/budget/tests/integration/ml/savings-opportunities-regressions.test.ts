@@ -7,7 +7,7 @@ import {
   users,
   workspaceMembers,
   workspaces,
-} from "$lib/schema";
+} from "$core/schema";
 import { createCaller } from "../../../src/lib/trpc/router";
 import { clearTestDb, setupTestDb } from "../setup/test-db";
 

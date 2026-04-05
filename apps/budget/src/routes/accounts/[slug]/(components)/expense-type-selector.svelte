@@ -5,7 +5,7 @@ import * as Popover from '$lib/components/ui/popover';
 import { Button } from '$lib/components/ui/button';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
-import { medicalExpenseCategories } from '$lib/schema/medical-expenses';
+import { medicalExpenseCategories } from '$core/schema/medical-expenses';
 import { cn } from '$lib/utils';
 
 interface Props {

@@ -1,5 +1,5 @@
 // $lib/types/transaction.ts
-import type { Category, Payee } from "$lib/schema";
+import type { Category, Payee } from "$core/schema";
 import type { DateValue } from "@internationalized/date";
 
 /**

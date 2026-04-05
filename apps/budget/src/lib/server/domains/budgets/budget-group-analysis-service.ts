@@ -9,8 +9,8 @@
  * - Name keyword similarity
  */
 
-import { budgetGroups, budgets } from "$lib/schema/budgets";
-import type { RecommendationMetadata, RecommendationPriority } from "$lib/schema/recommendations";
+import { budgetGroups, budgets } from "$core/schema/budgets";
+import type { RecommendationMetadata, RecommendationPriority } from "$core/schema/recommendations";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { compact } from "$lib/utils/array-utilities";

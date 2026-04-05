@@ -19,7 +19,7 @@ import {
   getActionsForEntity,
   type ActionConfig,
   type EntityType,
-} from '$lib/types/automation';
+} from '$core/types/automation';
 import X from '@lucide/svelte/icons/x';
 
 // Get entity states for reference selectors

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DashboardWidget } from '$lib/schema/dashboards';
+import type { DashboardWidget } from '$core/schema/dashboards';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { currencyFormatter } from '$lib/utils/formatters';
 import Wallet from '@lucide/svelte/icons/wallet';

@@ -11,7 +11,7 @@ import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-shee
 import * as Separator from '$lib/components/ui/separator';
 import { Textarea } from '$lib/components/ui/textarea';
 import { rpc } from '$lib/query';
-import { claimStatusEnum, type ClaimStatus } from '$lib/schema/hsa-claims';
+import { claimStatusEnum, type ClaimStatus } from '$core/schema/hsa-claims';
 import { displayPreferences } from '$lib/stores/display-preferences.svelte';
 import { currentDate, timezone } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils/formatters';

@@ -2,7 +2,7 @@ import {
   formInsertCategorySchema,
   removeCategoriesSchema,
   removeCategorySchema,
-} from "$lib/schema";
+} from "$core/schema";
 import {
   categoryIdSchema,
   mergeCategoriesSchema,

@@ -1,4 +1,4 @@
-import type { MLPreferences } from "$lib/schema/workspaces";
+import type { MLPreferences } from "$core/schema/workspaces";
 import { trpc } from "$lib/trpc/client";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

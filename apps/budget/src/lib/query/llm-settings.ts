@@ -1,5 +1,5 @@
-import type { ModelInfo } from "$lib/schema/llm-models";
-import type { LLMFeatureModes, LLMPreferences, LLMProvider } from "$lib/schema/workspaces";
+import type { ModelInfo } from "$core/schema/llm-models";
+import type { LLMFeatureModes, LLMPreferences, LLMProvider } from "$core/schema/workspaces";
 import { trpc } from "$lib/trpc/client";
 import type { RouterOutputs } from "$lib/trpc/router";
 import { queryClient } from "./_client";

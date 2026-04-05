@@ -9,7 +9,7 @@
  * - Income-to-expense ratio tracking
  */
 
-import { transactions } from "$lib/schema";
+import { transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { linearRegression, mean, standardDeviation } from "simple-statistics";

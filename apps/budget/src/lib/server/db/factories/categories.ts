@@ -1,5 +1,5 @@
 import slugify from "@sindresorhus/slugify";
-import { categories, type Category } from "$lib/schema";
+import { categories, type Category } from "$core/schema";
 import { db } from "..";
 import { faker } from "@faker-js/faker";
 

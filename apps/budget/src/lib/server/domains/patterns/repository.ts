@@ -1,5 +1,5 @@
-import { accounts, detectedPatterns } from "$lib/schema";
-import type { DetectedPattern, NewDetectedPattern } from "$lib/schema/detected-patterns";
+import { accounts, detectedPatterns } from "$core/schema";
+import type { DetectedPattern, NewDetectedPattern } from "$core/schema/detected-patterns";
 import { db } from "$lib/server/db";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 

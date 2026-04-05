@@ -1,5 +1,5 @@
-import type { WorkspaceRole } from "$lib/schema/workspace-members";
-import { workspaceMembers } from "$lib/schema/workspace-members";
+import type { WorkspaceRole } from "$core/schema/workspace-members";
+import { workspaceMembers } from "$core/schema/workspace-members";
 import type { Permission } from "$lib/server/config/permissions";
 import { roleHasPermission } from "$lib/server/config/permissions";
 import { ForbiddenError, UnauthorizedError } from "$lib/server/shared/types";

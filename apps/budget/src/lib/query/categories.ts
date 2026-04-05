@@ -1,5 +1,5 @@
-import type { Category } from "$lib/schema/categories";
-import { formInsertCategorySchema } from "$lib/schema/categories";
+import type { Category } from "$core/schema/categories";
+import { formInsertCategorySchema } from "$core/schema/categories";
 import type {
   CategoryDetailedStats,
   CategoryMonthlySpending,
@@ -10,7 +10,7 @@ import type {
   CategoryWithStats,
 } from "$lib/server/domains/categories/repository";
 import { trpc } from "$lib/trpc/client";
-import type { CategoryTreeNode } from "$lib/types/categories";
+import type { CategoryTreeNode } from "$core/types/categories";
 import { z } from "zod";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";

@@ -2,7 +2,7 @@
 import { Label } from '$lib/components/ui/label';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { onboardingWizardStore } from '$lib/stores/onboarding-wizard.svelte';
-import { SPENDING_AREA_LABELS, type SpendingArea } from '$lib/types/onboarding';
+import { SPENDING_AREA_LABELS, type SpendingArea } from '$core/types/onboarding';
 import Home from '@lucide/svelte/icons/home';
 import Car from '@lucide/svelte/icons/car';
 import ShoppingCart from '@lucide/svelte/icons/shopping-cart';

@@ -1,4 +1,4 @@
-import type { WorkspaceInvitation } from "$lib/schema/workspace-invitations";
+import type { WorkspaceInvitation } from "$core/schema/workspace-invitations";
 import type { InvitationWithDetails } from "$lib/server/domains/workspace-invitations";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";

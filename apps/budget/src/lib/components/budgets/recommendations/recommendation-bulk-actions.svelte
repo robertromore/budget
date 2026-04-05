@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import type { BudgetRecommendationWithRelations } from '$core/schema/recommendations';
 import type { Table } from '@tanstack/table-core';
 import { Button } from '$lib/components/ui/button';
 import Check from '@lucide/svelte/icons/check';

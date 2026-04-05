@@ -83,7 +83,7 @@ export const OLLAMA_TOOL_MODELS = new Set([
  */
 export function ollamaModelSupportsTools(modelId: string): boolean {
   // Extract base model name (before any colon for tags)
-  const baseName = modelId.split(":")[0].toLowerCase();
+  const baseName = modelId.split(":")[0]!.toLowerCase();
 
   // Check exact match first
   if (OLLAMA_TOOL_MODELS.has(baseName)) return true;

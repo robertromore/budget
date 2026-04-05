@@ -5,7 +5,7 @@
  * All utilities ensure tests remain isolated and don't pollute the main database.
  */
 
-import * as schema from "$lib/schema";
+import * as schema from "$core/schema";
 import { Database } from "bun:sqlite";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/bun-sqlite";

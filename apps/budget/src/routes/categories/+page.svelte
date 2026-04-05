@@ -23,9 +23,9 @@ const sheets = getContext<{
   openGroupManagement: () => void;
   openSeedDefaultCategories: () => void;
 }>('categories-sheets');
-import type { CategoryTreeNode } from '$lib/types/categories';
+import type { CategoryTreeNode } from '$core/types/categories';
 import { goto } from '$app/navigation';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 import {
   reorderCategories,
   getCategoryHierarchyTree,

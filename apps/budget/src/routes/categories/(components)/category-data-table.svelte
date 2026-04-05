@@ -5,7 +5,7 @@ import {
   GenericFilterInput,
 } from '$lib/components/data-table';
 import EntityBulkActions from '$lib/components/shared/data-table/entity-bulk-actions.svelte';
-import type { Category } from '$lib/schema';
+import type { Category } from '$core/schema';
 import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
 import type { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { FilterInputOption } from '$lib/types';

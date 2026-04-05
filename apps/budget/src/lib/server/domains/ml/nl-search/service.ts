@@ -11,7 +11,7 @@
  * - "Large transactions over $500 this year"
  */
 
-import { accounts, categories, payees, transactions } from "$lib/schema";
+import { accounts, categories, payees, transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { normalize } from "$lib/utils/string-utilities";
 import { and, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";

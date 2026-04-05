@@ -8,7 +8,7 @@ import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
 import { Textarea } from '$lib/components/ui/textarea';
 import { rpc } from '$lib/query';
-import { medicalExpenseTypeEnum } from '$lib/schema/medical-expenses';
+import { medicalExpenseTypeEnum } from '$core/schema/medical-expenses';
 import { cn } from '$lib/utils';
 import { formatCurrency } from '$lib/utils/formatters';
 import { parseDate, type DateValue } from '@internationalized/date';

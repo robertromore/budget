@@ -1,4 +1,4 @@
-import type { Transaction } from "$lib/schema";
+import type { Transaction } from "$core/schema";
 import type {
   CreateTransactionData,
   PaginationParams,

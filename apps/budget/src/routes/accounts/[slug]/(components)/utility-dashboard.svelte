@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import { rpc } from '$lib/query';
-import type { Account } from '$lib/schema';
-import { USAGE_UNIT_LABELS } from '$lib/schema/utility-usage';
+import type { Account } from '$core/schema';
+import { USAGE_UNIT_LABELS } from '$core/schema/utility-usage';
 import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import Activity from '@lucide/svelte/icons/activity';
 import Calendar from '@lucide/svelte/icons/calendar';

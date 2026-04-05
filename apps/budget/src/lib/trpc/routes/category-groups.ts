@@ -2,7 +2,7 @@ import {
   formInsertCategoryGroupSchema,
   formUpdateCategoryGroupSchema,
   formUpdateCategoryGroupSettingsSchema,
-} from "$lib/schema/category-groups";
+} from "$core/schema/category-groups";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { lazyService } from "$lib/server/shared/container/lazy-service";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";

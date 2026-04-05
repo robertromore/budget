@@ -6,9 +6,9 @@
  * category mappings, account scope, and historical patterns.
  */
 
-import { budgetAccounts, budgetCategories, budgets, budgetTransactions } from "$lib/schema/budgets";
-import { payees } from "$lib/schema/payees";
-import { transactions } from "$lib/schema/transactions";
+import { budgetAccounts, budgetCategories, budgets, budgetTransactions } from "$core/schema/budgets";
+import { payees } from "$core/schema/payees";
+import { transactions } from "$core/schema/transactions";
 import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
@@ -182,7 +182,7 @@ export class BudgetIntelligenceService {
 
     try {
       // Get workspace for this account to ensure we only look at same-workspace transactions
-      const { accounts } = await import("$lib/schema/accounts");
+      const { accounts } = await import("$core/schema/accounts");
       const account = await db.query.accounts.findFirst({
         where: eq(accounts.id, accountId),
         columns: { workspaceId: true },

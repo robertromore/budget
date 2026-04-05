@@ -2,7 +2,7 @@ import {
   importProfiles,
   type ImportProfile,
   type NewImportProfile,
-} from "$lib/schema/import-profiles";
+} from "$core/schema/import-profiles";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { DatabaseError } from "$lib/server/shared/types/errors";

@@ -4,13 +4,13 @@ import type {
   BudgetPeriodTemplate,
   BudgetTemplate,
   BudgetTransaction,
-} from "$lib/schema/budgets";
+} from "$core/schema/budgets";
 import type {
   BudgetRecommendationWithRelations,
   RecommendationPriority,
   RecommendationStatus,
   RecommendationType,
-} from "$lib/schema/recommendations";
+} from "$core/schema/recommendations";
 import type { BudgetWithRelations } from "$lib/server/domains/budgets";
 import type { BudgetRecommendationDraft } from "$lib/server/domains/budgets/budget-analysis-service";
 import type { PeriodAnalytics, PeriodComparison } from "$lib/server/domains/budgets/period-manager";

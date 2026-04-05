@@ -1,4 +1,4 @@
-import type { Category, Payee, Transaction } from "$lib/schema";
+import type { Category, Payee, Transaction } from "$core/schema";
 import { trpc } from "$lib/trpc/client";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
 import { getContext, setContext } from "svelte";

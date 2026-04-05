@@ -5,7 +5,7 @@
  * Combines TF-IDF vectorization, n-gram similarity, and LSH for fast approximate matching.
  */
 
-import { categories, payees } from "$lib/schema";
+import { categories, payees } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { MLModelStore } from "../model-store";

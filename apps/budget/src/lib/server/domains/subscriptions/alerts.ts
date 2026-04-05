@@ -1,4 +1,4 @@
-import type { SubscriptionAlertType } from "$lib/schema/subscriptions-table";
+import type { SubscriptionAlertType } from "$core/schema/subscriptions-table";
 import type { SubscriptionRepository } from "./repository";
 import type { CreateAlertInput, Subscription } from "./types";
 

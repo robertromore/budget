@@ -9,7 +9,7 @@ import {
   users,
   workspaces,
   workspaceMembers,
-} from "$lib/schema";
+} from "$core/schema";
 import { queryCache } from "$lib/utils/cache";
 
 describe("Optimized Account Endpoints Integration Tests", () => {

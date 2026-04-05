@@ -1,4 +1,4 @@
-import type { LLMPreferences, LLMProvider } from "$lib/schema/workspaces";
+import type { LLMPreferences, LLMProvider } from "$core/schema/workspaces";
 import { createProvider, getActiveProvider } from "$lib/server/ai/providers";
 import { generateText } from "ai";
 import { readFile } from "node:fs/promises";

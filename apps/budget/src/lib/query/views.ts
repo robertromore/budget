@@ -1,4 +1,4 @@
-import type { View } from "$lib/schema/views";
+import type { View } from "$core/schema/views";
 import { trpc } from "$lib/trpc/client";
 import type { TableEntityType } from "$lib/types";
 import { queryClient, queryPresets } from "./_client";

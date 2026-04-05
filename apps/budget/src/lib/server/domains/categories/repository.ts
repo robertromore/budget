@@ -1,6 +1,6 @@
-import { categories, payees, schedules, transactions } from "$lib/schema";
-import { budgetCategories, budgets } from "$lib/schema/budgets";
-import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
+import { categories, payees, schedules, transactions } from "$core/schema";
+import { budgetCategories, budgets } from "$core/schema/budgets";
+import { envelopeAllocations } from "$core/schema/budgets/envelope-allocations";
 import type {
   Category,
   CategoryType,
@@ -8,12 +8,12 @@ import type {
   NewCategory,
   SpendingPriority,
   TaxCategory,
-} from "$lib/schema/categories";
-import { categoryGroupMemberships, categoryGroups } from "$lib/schema/category-groups";
+} from "$core/schema/categories";
+import { categoryGroupMemberships, categoryGroups } from "$core/schema/category-groups";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import type { CategoryTreeNode } from "$lib/types/categories";
+import type { CategoryTreeNode } from "$core/types/categories";
 import { getCurrentTimestamp } from "$lib/utils/dates-core";
 import { and, count, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 

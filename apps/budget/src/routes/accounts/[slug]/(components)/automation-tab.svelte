@@ -16,8 +16,8 @@ import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-shee
 import { Switch } from '$lib/components/ui/switch';
 import { Textarea } from '$lib/components/ui/textarea';
 import { rpc } from '$lib/query';
-import type { AutomationRule } from '$lib/schema/automation-rules';
-import type { FlowState } from '$lib/types/automation';
+import type { AutomationRule } from '$core/schema/automation-rules';
+import type { FlowState } from '$core/types/automation';
 import Plus from '@lucide/svelte/icons/plus';
 import Save from '@lucide/svelte/icons/save';
 import Zap from '@lucide/svelte/icons/zap';

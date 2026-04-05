@@ -11,8 +11,8 @@ import type {
   EntityType,
   FlowState,
   TriggerConfig,
-} from "$lib/types/automation";
-import { isConditionGroup } from "$lib/types/automation";
+} from "$core/types/automation";
+import { isConditionGroup } from "$core/types/automation";
 import type { Edge, Node } from "@xyflow/svelte";
 
 interface RuleConfig {

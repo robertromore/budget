@@ -1,5 +1,5 @@
-import { superformInsertViewSchema, type SuperformInsertViewData } from "$lib/schema/superforms";
-import { removeViewSchema, type RemoveViewData } from "$lib/schema/views";
+import { superformInsertViewSchema, type SuperformInsertViewData } from "$core/schema/superforms";
+import { removeViewSchema, type RemoveViewData } from "$core/schema/views";
 import { createContext } from "$lib/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$lib/trpc/router";

@@ -12,7 +12,7 @@ import {
 } from '$lib/components/layercake';
 import { currencyFormatter, formatPercentRaw } from '$lib/utils/formatters';
 import type { TransactionsFormat } from '$lib/types';
-import type { Account } from '$lib/schema/accounts';
+import type { Account } from '$core/schema/accounts';
 import {
   calculatePayoffScenarios,
   getCurrentBalance,

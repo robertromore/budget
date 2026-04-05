@@ -5,7 +5,7 @@
  * Extracts transaction, temporal, payee, and aggregation features.
  */
 
-import { transactions } from "$lib/schema";
+import { transactions } from "$core/schema";
 import { db } from "$lib/server/db";
 import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { mean, standardDeviation } from "simple-statistics";

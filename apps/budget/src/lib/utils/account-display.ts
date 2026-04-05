@@ -1,4 +1,4 @@
-import { isDebtAccount, type Account } from "$lib/schema/accounts";
+import { isDebtAccount, type Account } from "$core/schema/accounts";
 import {
   formatCurrency as formatCurrencyFromFormatters,
   formatPercentRaw,

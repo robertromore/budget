@@ -8,7 +8,7 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Collapsible from '$lib/components/ui/collapsible';
 import * as Table from '$lib/components/ui/table';
-import type { AutomationRuleLog } from '$lib/schema/automation-rules';
+import type { AutomationRuleLog } from '$core/schema/automation-rules';
 import { cn } from '$lib/utils';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Check from '@lucide/svelte/icons/check';

@@ -10,7 +10,7 @@ import type {
   FileProcessor,
   ImportRow,
   NormalizedTransaction,
-} from "$lib/types/import";
+} from "$core/types/import";
 import Papa from "papaparse";
 import { normalize } from "$lib/utils/string-utilities";
 import { FileValidationError, ParseError } from "../errors";

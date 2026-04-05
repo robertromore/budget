@@ -1,4 +1,4 @@
-import type { Payee, PaymentFrequency } from "$lib/schema/payees";
+import type { Payee, PaymentFrequency } from "$core/schema/payees";
 import { formatTimeAgo } from "$lib/utils/dates";
 import { debounce } from "$lib/utils/search";
 import type { GroupStrategy, PayeeGroup, PayeeWithMetadata, TransactionContext } from "./types";

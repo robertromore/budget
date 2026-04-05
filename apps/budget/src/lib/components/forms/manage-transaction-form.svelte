@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
-import { type Transaction } from '$lib/schema';
-import { superformInsertTransactionSchema } from '$lib/schema/superforms';
+import { type Transaction } from '$core/schema';
+import { superformInsertTransactionSchema } from '$core/schema/superforms';
 import { currentDate } from '$lib/utils/dates';
 import type { EditableDateItem, EditableEntityItem } from '$lib/types';
-import type { Payee } from '$lib/schema/payees';
+import type { Payee } from '$core/schema/payees';
 import { Textarea } from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
 import IntelligentEntityInput from '$lib/components/input/intelligent-entity-input.svelte';

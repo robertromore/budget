@@ -1,4 +1,4 @@
-import type { DetectedPattern } from "$lib/schema/detected-patterns";
+import type { DetectedPattern } from "$core/schema/detected-patterns";
 import type { DetectedPatternData, DetectionCriteria } from "$lib/server/domains/patterns/types";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";
