@@ -13,7 +13,9 @@
       "$core": ["../../packages/core/src"],
       "$core/*": ["../../packages/core/src/*"],
       "$lib": ["./src/mainview/lib"],
-      "$lib/*": ["./src/mainview/lib/*"]
+      "$lib/*": ["./src/mainview/lib/*"],
+      "$ui": ["../../packages/ui/src"],
+      "$ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": ["src"],

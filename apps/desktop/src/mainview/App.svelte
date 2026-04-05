@@ -1,52 +1,67 @@
 <script lang="ts">
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import { queryClient } from "$core/query/_client";
+  import { getCurrentRoute, navigate, setInitialRoute, type Route } from "$lib/router.svelte";
   import Setup from "./pages/Setup.svelte";
   import Login from "./pages/Login.svelte";
-  import Home from "./pages/Home.svelte";
+  import Accounts from "./pages/Accounts.svelte";
 
   const SERVER = window.location.origin;
 
-  type Page = "loading" | "setup" | "login" | "home";
-  let currentPage = $state<Page>("loading");
+  type AppPhase = "loading" | "setup" | "login" | "app";
+  let phase = $state<AppPhase>("loading");
 
-  // Check config on mount to decide initial page
+  // Check config on mount to decide initial phase
   $effect(() => {
     fetch(`${SERVER}/api/config`)
       .then((r) => r.json())
       .then((config: any) => {
-        currentPage = config.setupComplete ? "login" : "setup";
+        phase = config.setupComplete ? "login" : "setup";
       })
       .catch(() => {
-        currentPage = "setup";
+        phase = "setup";
       });
   });
+
+  function onLoginComplete() {
+    setInitialRoute({ page: "accounts" });
+    phase = "app";
+  }
+
+  const route = $derived(getCurrentRoute());
 </script>
 
 <QueryClientProvider client={queryClient}>
-  {#if currentPage === "loading"}
-    <div class="center">
-      <p>Loading...</p>
+  {#if phase === "loading"}
+    <div class="flex min-h-screen items-center justify-center">
+      <p class="text-muted-foreground">Loading...</p>
     </div>
-  {:else if currentPage === "setup"}
-    <Setup onComplete={() => currentPage = "login"} />
-  {:else if currentPage === "login"}
-    <Login onLogin={() => currentPage = "home"} />
-  {:else if currentPage === "home"}
-    <Home />
+  {:else if phase === "setup"}
+    <Setup onComplete={() => phase = "login"} />
+  {:else if phase === "login"}
+    <Login onLogin={onLoginComplete} />
+  {:else if phase === "app"}
+    <!-- App navigation bar -->
+    <nav class="border-b bg-card px-6 py-3">
+      <div class="mx-auto flex max-w-5xl items-center gap-4">
+        <span class="text-lg font-bold">Budget</span>
+        <button
+          class="text-sm hover:text-primary"
+          class:text-primary={route.page === "accounts"}
+          class:font-medium={route.page === "accounts"}
+          onclick={() => navigate({ page: "accounts" })}>
+          Accounts
+        </button>
+      </div>
+    </nav>
+
+    <!-- Page content -->
+    {#if route.page === "accounts"}
+      <Accounts />
+    {:else}
+      <div class="flex min-h-[60vh] items-center justify-center">
+        <p class="text-muted-foreground">Page not found</p>
+      </div>
+    {/if}
   {/if}
 </QueryClientProvider>
-
-<style>
-  :global(body) {
-    font-family: system-ui, -apple-system, sans-serif;
-  }
-
-  .center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    color: #888;
-  }
-</style>
