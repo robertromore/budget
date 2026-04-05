@@ -8,11 +8,7 @@
   let status = $state("");
   let isSubmitting = $state(false);
 
-  let props = $props<{ onComplete: () => void }>();
-
-  function triggerComplete() {
-    props.onComplete();
-  }
+  import { setPhase } from "$lib/app-state.svelte";
 
   // Load defaults from server config
   $effect(() => {
@@ -42,7 +38,7 @@
       const result = await res.json();
       if (result.success) {
         status = "Setup complete!";
-        setTimeout(triggerComplete, 500);
+        setTimeout(() => setPhase("login"), 500);
       } else {
         status = `Error: ${result.error}`;
         isSubmitting = false;

@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { setPhase } from "$lib/app-state.svelte";
+  import { setInitialRoute } from "$lib/router.svelte";
+
   const SERVER = window.location.origin;
 
   let email = $state("");
@@ -7,10 +10,9 @@
   let isSubmitting = $state(false);
   let config = $state<any>(null);
 
-  let props = $props<{ onLogin: () => void }>();
-
-  function triggerLogin() {
-    props.triggerLogin();
+  function onLoginSuccess() {
+    setInitialRoute({ page: "accounts" });
+    setPhase("app");
   }
 
   // Load config to check auth mode
@@ -39,7 +41,7 @@
       });
       if (res.ok) {
         status = "Success! Loading app...";
-        triggerLogin();
+        onLoginSuccess();
       } else {
         const text = await res.text();
         status = `Login failed (${res.status}): ${text.slice(0, 100)}`;
@@ -61,7 +63,7 @@
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
-        triggerLogin();
+        onLoginSuccess();
       } else {
         status = "Invalid email or password.";
         isSubmitting = false;
