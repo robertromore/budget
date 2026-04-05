@@ -6,7 +6,7 @@
  * questions about any aspect of the user's finances.
  */
 
-import type { ChatContext } from "$lib/states/ui/ai-chat.svelte";
+import type { ChatContext } from "$core/types/ai";
 import { isNotEmptyObject } from "$core/utils/object-utilities";
 import { formatContextForPrompt, type FinancialContext } from "../financial-context";
 

@@ -15,18 +15,8 @@ import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 // Types
 // =============================================================================
 
-export type ChatStatus = "idle" | "submitted" | "streaming" | "error";
-
-export interface ChatContext {
-  /** Current page/route the user is on */
-  page: string;
-  /** Selected entity type (account, payee, transaction, etc.) */
-  entityType?: "account" | "payee" | "transaction" | "category" | "budget";
-  /** Selected entity ID */
-  entityId?: number;
-  /** Additional context data (varies by page) */
-  data?: Record<string, unknown>;
-}
+import type { ChatStatus, ChatContext } from "$core/types/ai";
+export type { ChatStatus, ChatContext };
 
 /**
  * Chat message interface for the AI assistant.
