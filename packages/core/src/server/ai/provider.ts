@@ -6,7 +6,7 @@ import { getEnv } from "$core/server/env";
  *
  * Usage:
  * ```typescript
- * import { openai } from '$lib/server/ai/provider';
+ * import { openai } from '$core/server/ai/provider';
  * import { generateText } from 'ai';
  *
  * const { text } = await generateText({

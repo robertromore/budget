@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
-import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
-import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
-import { TransactionValidator } from "$lib/server/import/validators/transaction-validator";
+import { CSVProcessor } from "$core/server/import/file-processors/csv-processor";
+import { PayeeMatcher } from "$core/server/import/matchers/payee-matcher";
+import { CategoryMatcher } from "$core/server/import/matchers/category-matcher";
+import { TransactionValidator } from "$core/server/import/validators/transaction-validator";
 
 /**
  * Integration tests for the Financial Import System

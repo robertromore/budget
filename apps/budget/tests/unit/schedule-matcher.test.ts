@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
+import { ScheduleMatcher } from "$core/server/import/matchers/schedule-matcher";
 import type { Schedule } from "$core/schema/schedules";
 import type { Payee } from "$core/schema/payees";
 

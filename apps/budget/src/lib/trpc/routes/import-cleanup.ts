@@ -4,7 +4,7 @@
  * Routes for payee cleanup and category suggestions during import.
  */
 
-import { createPayeeGrouper, createCategorySuggester } from "$lib/server/import/cleanup";
+import { createPayeeGrouper, createCategorySuggester } from "$core/server/import/cleanup";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";

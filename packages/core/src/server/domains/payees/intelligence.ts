@@ -22,8 +22,8 @@ import {
 import {
   createIntelligenceCoordinator,
   type StrategyResult,
-} from "$lib/server/ai/intelligence-coordinator";
-import type { ProviderInstance } from "$lib/server/ai/providers";
+} from "$core/server/ai/intelligence-coordinator";
+import type { ProviderInstance } from "$core/server/ai/providers";
 import { generateText } from "ai";
 
 // Comprehensive analysis interfaces for payee intelligence

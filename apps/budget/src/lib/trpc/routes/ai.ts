@@ -7,16 +7,16 @@
 
 import { aiConversations, aiConversationMessages } from "$core/schema/ai-conversations";
 import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
-import { fetchFinancialContext } from "$lib/server/ai/financial-context";
-import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$lib/server/ai/prompts/chat-assistant";
-import { getActiveProvider, type ProviderInstance } from "$lib/server/ai/providers";
-import { createAITools } from "$lib/server/ai/tools";
+import { fetchFinancialContext } from "$core/server/ai/financial-context";
+import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$core/server/ai/prompts/chat-assistant";
+import { getActiveProvider, type ProviderInstance } from "$core/server/ai/providers";
+import { createAITools } from "$core/server/ai/tools";
 import { db } from "$core/server/db";
 import { formatCurrency } from "$lib/server/utils/formatters";
 import { publicProcedure, t } from "$lib/trpc";
 import { translateDomainError } from "$lib/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";
-import { parseSlashCommand, formatCommandResult, SLASH_COMMANDS } from "$lib/server/ai/commands";
+import { parseSlashCommand, formatCommandResult, SLASH_COMMANDS } from "$core/server/ai/commands";
 import { TRPCError } from "@trpc/server";
 import { generateText, stepCountIs } from "ai";
 import { and, asc, desc, eq, isNull, lt, sql } from "drizzle-orm";

@@ -6,7 +6,7 @@
  */
 
 import { distance as levenshteinDistance } from "fastest-levenshtein";
-import { normalizeText as baseNormalizeText } from "$lib/server/import/utils";
+import { normalizeText as baseNormalizeText } from "$core/server/import/utils";
 
 // =============================================================================
 // Text Preprocessing

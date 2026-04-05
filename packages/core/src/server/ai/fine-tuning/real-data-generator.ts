@@ -13,7 +13,7 @@
 
 import { db } from "$core/server/db";
 import { accounts, budgets, budgetCategories, categories, payees, transactions } from "$core/schema";
-import { formatPercent } from "$lib/server/utils/formatters";
+import { formatPercent } from "$core/utils/formatters-core";
 import { nowISOString } from "$core/utils/dates-core";
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import {

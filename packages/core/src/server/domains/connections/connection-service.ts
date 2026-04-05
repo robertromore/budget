@@ -20,7 +20,7 @@ import { SimpleFINProvider } from "./providers/simplefin";
 import { TellerProvider } from "./providers/teller";
 import { ConflictError, NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
-import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
+import { ImportOrchestrator } from "$core/server/import/import-orchestrator";
 import { logger } from "$core/server/shared/logging";
 
 /**

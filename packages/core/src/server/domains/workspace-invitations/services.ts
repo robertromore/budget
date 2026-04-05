@@ -11,8 +11,8 @@ import { randomBytes } from "node:crypto";
 import { WorkspaceInvitationRepository, type InvitationWithDetails } from "./repository";
 import { WorkspaceMemberRepository } from "../workspace-members/repository";
 import { logger } from "$core/server/shared/logging";
-import { sendEmail } from "$lib/server/email";
-import { workspaceInvitationEmail } from "$lib/server/email/templates";
+import { sendEmail } from "$core/server/email";
+import { workspaceInvitationEmail } from "$core/server/email/templates";
 import { getEnv } from "$core/server/env";
 
 // Invitation expiry in days

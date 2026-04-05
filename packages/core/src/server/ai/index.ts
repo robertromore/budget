@@ -5,7 +5,7 @@
  *
  * @example
  * ```typescript
- * import { parseTransactionDescription, isAIEnabled } from '$lib/server/ai';
+ * import { parseTransactionDescription, isAIEnabled } from '$core/server/ai';
  *
  * if (isAIEnabled()) {
  *   const parsed = await parseTransactionDescription('SQ *COFFEE ROASTER');

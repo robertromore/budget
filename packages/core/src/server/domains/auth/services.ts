@@ -8,8 +8,8 @@ import { eq, and } from "drizzle-orm";
 import { logger } from "$core/server/shared/logging";
 import { authRepository } from "./repository";
 import { hashPassword, verifyPassword } from "$core/server/auth/password";
-import { sendEmail } from "$lib/server/email";
-import { emailVerificationEmail } from "$lib/server/email/templates";
+import { sendEmail } from "$core/server/email";
+import { emailVerificationEmail } from "$core/server/email/templates";
 
 /**
  * Default user preferences

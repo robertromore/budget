@@ -558,7 +558,7 @@ export const llmSettingsRoutes = t.router({
    */
   getIntelligenceStatus: publicProcedure.query(async ({ ctx }) => {
     try {
-      const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+      const { createIntelligenceCoordinator } = await import("$core/server/ai");
 
       const [workspace] = await db
         .select({ preferences: workspaces.preferences })

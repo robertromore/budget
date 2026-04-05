@@ -161,3 +161,29 @@ export function formatDisplayValue(value: any): string {
 
   return String(value);
 }
+
+// Server-safe currency and number formatters (no user preferences)
+const defaultCurrencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const defaultNumberFormatter = new Intl.NumberFormat("en-US", {
+  style: "decimal",
+});
+
+/**
+ * Format a number as USD currency (server-safe, no user preferences)
+ */
+export function formatCurrency(amount: number): string {
+  return defaultCurrencyFormatter.format(amount);
+}
+
+/**
+ * Format a number with thousands separators (server-safe)
+ */
+export function formatNumber(value: number): string {
+  return defaultNumberFormatter.format(value);
+}

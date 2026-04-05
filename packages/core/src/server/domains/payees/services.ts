@@ -85,7 +85,7 @@ import type {
   PaymentMethodReference,
   SubscriptionInfo,
 } from "./types";
-import { createIntelligenceCoordinator } from "$lib/server/ai/intelligence-coordinator";
+import { createIntelligenceCoordinator } from "$core/server/ai/intelligence-coordinator";
 import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$core/schema/workspaces";
 
 export interface CreatePayeeData {
@@ -5032,7 +5032,7 @@ export class PayeeService {
     }>;
     totalPairsAnalyzed: number;
   }> {
-    const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+    const { createIntelligenceCoordinator } = await import("$core/server/ai");
     const { workspaces } = await import("$core/schema/workspaces");
     const { db } = await import("$core/server/db");
     const { eq } = await import("drizzle-orm");
@@ -5311,7 +5311,7 @@ Respond in JSON format only:
     }>;
     totalPairsAnalyzed: number;
   }> {
-    const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+    const { createIntelligenceCoordinator } = await import("$core/server/ai");
     const { workspaces } = await import("$core/schema/workspaces");
     const { db } = await import("$core/server/db");
     const { eq } = await import("drizzle-orm");

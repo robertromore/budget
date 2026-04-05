@@ -25,6 +25,11 @@
     "check": "echo '@budget/core check deferred until Phase 5 (pending $lib/trpc migration)'"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/google": "^3.0.53",
+    "@ai-sdk/openai": "^3.0.48",
+    "ai": "^6.0.141",
+    "ai-sdk-ollama": "^3.8.2",
     "@faker-js/faker": "^10.4.0",
     "@internationalized/date": "^3.12.0",
     "@libsql/client": "^0.15.15",
@@ -36,6 +41,7 @@
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
     "validator": "^13.15.26",
+    "resend": "^6.9.4",
     "zod": "4.3.6"
   },
   "devDependencies": {

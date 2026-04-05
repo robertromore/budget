@@ -1,5 +1,5 @@
-import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
-import type { CategoryDismissal, ImportProgress } from "$lib/server/import/import-orchestrator";
+import { ImportOrchestrator } from "$core/server/import/import-orchestrator";
+import type { CategoryDismissal, ImportProgress } from "$core/server/import/import-orchestrator";
 import type { ImportRow } from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import { z } from "zod/v4";

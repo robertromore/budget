@@ -1,6 +1,6 @@
 import { AuthService } from "$core/server/domains/auth";
-import { sendEmail } from "$lib/server/email";
-import { passwordResetEmail } from "$lib/server/email/templates";
+import { sendEmail } from "$core/server/email";
+import { passwordResetEmail } from "$core/server/email/templates";
 import {
   openProcedure,
   protectedProcedure,

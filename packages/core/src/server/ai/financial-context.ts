@@ -12,7 +12,7 @@ import { budgets, envelopeAllocations } from "$core/schema/budgets";
 import { scheduleDates } from "$core/schema/schedule-dates";
 import { schedules } from "$core/schema/schedules";
 import { db } from "$core/server/db";
-import { formatCurrency } from "$lib/server/utils/formatters";
+import { formatCurrency } from "$core/utils/formatters-core";
 import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
 import { roundToCents } from "$core/utils/math-utilities";
 import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
@@ -476,7 +476,7 @@ export async function fetchFinancialContext(workspaceId: number): Promise<Financ
 // Formatting for Prompt
 // =============================================================================
 
-// Note: formatCurrency is imported from $lib/server/utils/formatters
+// Note: formatCurrency is imported from $core/utils/formatters-core
 
 /**
  * Format financial context for inclusion in AI system prompt

@@ -9,7 +9,7 @@
  *
  * @example Synthetic data
  * ```typescript
- * import { generateTrainingDataset, exportToJSONL } from '$lib/server/ai/fine-tuning';
+ * import { generateTrainingDataset, exportToJSONL } from '$core/server/ai/fine-tuning';
  *
  * const dataset = generateTrainingDataset({ minQuality: 4 });
  * const jsonl = exportToJSONL(dataset);
@@ -17,7 +17,7 @@
  *
  * @example Real data (personalized)
  * ```typescript
- * import { generateRealDataset, exportRealToJSONL } from '$lib/server/ai/fine-tuning';
+ * import { generateRealDataset, exportRealToJSONL } from '$core/server/ai/fine-tuning';
  *
  * const dataset = await generateRealDataset(workspaceId);
  * const jsonl = exportRealToJSONL(dataset);

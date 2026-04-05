@@ -14,9 +14,9 @@ import { schedules as scheduleTable } from "$core/schema/schedules";
 import type { TransferMappingWithAccount } from "$core/schema/transfer-mappings";
 import { db } from "$core/server/db";
 import { cleanStringForFuzzyMatching, normalize } from "$lib/utils/string-utilities";
-import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
-import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
-import { detectTransferTargetMatches } from "$lib/server/import/utils/transfer-target-detector";
+import { PayeeMatcher } from "$core/server/import/matchers/payee-matcher";
+import { ScheduleMatcher } from "$core/server/import/matchers/schedule-matcher";
+import { detectTransferTargetMatches } from "$core/server/import/utils/transfer-target-detector";
 import type { ImportRow, ScheduleMatch } from "$core/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 

@@ -5,7 +5,7 @@
  */
 
 import { SLASH_COMMANDS } from "./registry";
-import { formatCurrency } from "$lib/server/utils/formatters";
+import { formatCurrency } from "$core/utils/formatters-core";
 
 type ToolResult = { success: true } | { success: false; message: string };
 
@@ -494,4 +494,4 @@ function formatGenericResult(result: unknown): string {
 // UTILITIES
 // ============================================
 
-// Note: formatCurrency is imported from $lib/server/utils/formatters
+// Note: formatCurrency is imported from $core/utils/formatters-core

@@ -1,5 +1,5 @@
-import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
-import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
+import { CategoryMatcher } from "$core/server/import/matchers/category-matcher";
+import { PayeeMatcher } from "$core/server/import/matchers/payee-matcher";
 import { PayeeAliasService } from "$core/server/domains/payees/alias-service";
 import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
 import { getTransferMappingService } from "$core/server/domains/transfers";

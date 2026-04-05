@@ -1,7 +1,7 @@
 import { transactions as transactionTable } from "$core/schema/transactions";
 import { db } from "$core/server/db";
-import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
-import { TransactionValidator } from "$lib/server/import/validators/transaction-validator";
+import { CSVProcessor } from "$core/server/import/file-processors/csv-processor";
+import { TransactionValidator } from "$core/server/import/validators/transaction-validator";
 import type { ColumnMapping, ParseResult } from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";

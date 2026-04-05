@@ -1642,7 +1642,7 @@ export const payeeRoutes = t.router({
     )
     .mutation(
       withErrorHandler(async ({ input, ctx }) => {
-        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+        const { createIntelligenceCoordinator } = await import("$core/server/ai");
         const { workspaces } = await import("$core/schema/workspaces");
         const { db } = await import("$core/server/db");
         const { eq } = await import("drizzle-orm");
@@ -1734,7 +1734,7 @@ Cleaned name:`;
     )
     .mutation(
       withErrorHandler(async ({ input, ctx }) => {
-        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+        const { createIntelligenceCoordinator } = await import("$core/server/ai");
         const { workspaces } = await import("$core/schema/workspaces");
         const { categories } = await import("$core/schema/categories");
         const { db } = await import("$core/server/db");
@@ -1942,7 +1942,7 @@ Return ONLY valid JSON, no explanation:`;
   // Explain ML insights using LLM
   explainInsights: rateLimitedProcedure.input(payeeIdSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
-      const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+      const { createIntelligenceCoordinator } = await import("$core/server/ai");
       const { workspaces } = await import("$core/schema/workspaces");
       const { db } = await import("$core/server/db");
       const { eq } = await import("drizzle-orm");
@@ -2071,7 +2071,7 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
     withErrorHandler(async ({ input, ctx }) => {
       const { createSearchAdapter, WebSearchService } =
         await import("$core/server/domains/web-search");
-      const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+      const { createIntelligenceCoordinator } = await import("$core/server/ai");
       const { workspaces } = await import("$core/schema/workspaces");
       const { db } = await import("$core/server/db");
       const { eq } = await import("drizzle-orm");
