@@ -1,20 +1,38 @@
-import { BrowserWindow, Updater } from "electrobun/bun";
+import { BrowserWindow, BrowserView, Updater } from "electrobun/bun";
 import { loadConfig } from "./config";
 import { runMigrations } from "./migrate";
+import { executeTrpcCall, handleSetup, handleAutoLogin, getConfig } from "./server";
+import type { AppRPC } from "../shared/rpc";
 
-// Load desktop configuration
+// Load config and run migrations
 const config = loadConfig();
-
-// Run database migrations
 try {
 	await runMigrations(config.databasePath);
 } catch (error) {
 	console.error("Failed to run migrations:", error);
 }
 
-// Start the tRPC server (env is wired inside server.ts before core imports)
-const { startServer } = await import("./server");
-const serverPort = startServer(config);
+// Define RPC handlers
+const rpc = BrowserView.defineRPC<AppRPC>({
+	maxRequestTime: 30000,
+	handlers: {
+		requests: {
+			trpcCall: async ({ path, input, type }) => {
+				return await executeTrpcCall(path, input, type);
+			},
+			getConfig: () => {
+				return getConfig();
+			},
+			setup: async (params) => {
+				return await handleSetup(params);
+			},
+			autoLogin: async () => {
+				return await handleAutoLogin();
+			},
+		},
+		messages: {},
+	},
+});
 
 // Dev server detection for Vite HMR
 const DEV_SERVER_PORT = 5174;
@@ -28,10 +46,10 @@ async function getMainViewUrl(): Promise<string> {
 			console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
 			return DEV_SERVER_URL;
 		} catch {
-			console.log("Vite dev server not running.");
+			console.log("Vite dev server not running. Using bundled views.");
 		}
 	}
-	return `http://localhost:${serverPort}`;
+	return "views://mainview/index.html";
 }
 
 const url = await getMainViewUrl();
@@ -39,6 +57,7 @@ const url = await getMainViewUrl();
 const mainWindow = new BrowserWindow({
 	title: "Budget",
 	url,
+	rpc,
 	frame: {
 		width: 1200,
 		height: 800,
@@ -47,6 +66,4 @@ const mainWindow = new BrowserWindow({
 	},
 });
 
-console.log(
-	`Budget desktop running at ${url} (setup: ${config.setupComplete ? "complete" : "pending"})`,
-);
+console.log(`Budget desktop running (setup: ${config.setupComplete ? "complete" : "pending"})`);

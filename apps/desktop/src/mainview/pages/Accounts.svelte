@@ -1,20 +1,25 @@
 <script lang="ts">
-  import { createQuery } from "@tanstack/svelte-query";
-  import { trpc } from "$lib/trpc-client";
+  import { rpc } from "$lib/electrobun";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import Plus from "@lucide/svelte/icons/plus";
   import Wallet from "@lucide/svelte/icons/wallet";
-  import Trash2 from "@lucide/svelte/icons/trash-2";
   import { routerState } from "$lib/router.svelte";
 
-  const accountsResult = createQuery({
-    queryKey: ["accounts", "list"],
-    queryFn: () => trpc().accountRoutes.all.query(),
-  });
+  let accounts = $state<any[]>([]);
+  let loading = $state(true);
+  let error = $state("");
 
-  const accounts = $derived(accountsResult.data ?? []);
-  const hasNoAccounts = $derived(accounts.length === 0);
+  $effect(() => {
+    rpc.trpcCall({ path: "accountRoutes.all", type: "query" })
+      .then((data) => {
+        accounts = data ?? [];
+        loading = false;
+      })
+      .catch((err) => {
+        error = String(err);
+        loading = false;
+      });
+  });
 
   function formatCurrency(amount: number): string {
     return new Intl.NumberFormat("en-US", {
@@ -29,16 +34,16 @@
     <h1 class="text-2xl font-bold tracking-tight">Accounts</h1>
   </div>
 
-  {#if accountsResult.isLoading}
+  {#if loading}
     <div class="flex items-center justify-center py-12">
       <p class="text-muted-foreground">Loading accounts...</p>
     </div>
-  {:else if accountsResult.error}
+  {:else if error}
     <div class="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
       <p class="font-medium text-red-800 dark:text-red-200">Failed to load accounts</p>
-      <p class="mt-1 text-sm text-red-600 dark:text-red-400">{accountsResult.error.message}</p>
+      <p class="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
     </div>
-  {:else if hasNoAccounts}
+  {:else if accounts.length === 0}
     <div class="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center dark:border-blue-800 dark:bg-blue-950">
       <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
         <Wallet class="h-8 w-8 text-blue-600 dark:text-blue-400" />
