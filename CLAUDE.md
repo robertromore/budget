@@ -45,7 +45,7 @@ A comprehensive personal finance application built as a Turbo monorepo with:
 ┌─────────────────────────────────────────────────────────────┐
 │                     Service Layer                           │
 │  tRPC routes → Domain services → Repositories               │
-│  Location: packages/core/src/trpc/, src/server/domains/     │
+│  Location: packages/core/src/{trpc/, server/domains/}       │
 │  Alias: $core/trpc/*, $core/server/domains/*                │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -53,7 +53,7 @@ A comprehensive personal finance application built as a Turbo monorepo with:
 ┌─────────────────────────────────────────────────────────────┐
 │                     Database Layer                          │
 │  Drizzle ORM with SQLite                                   │
-│  Location: packages/core/src/schema/, src/server/db/        │
+│  Location: packages/core/src/{schema/, server/db/}           │
 │  Alias: $core/schema/*, $core/server/db/*                   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -202,7 +202,7 @@ src/lib/components/
 
 ## Account Types
 
-The app supports various account types defined in `src/lib/schema/accounts.ts`:
+The app supports various account types defined in `$core/schema/accounts.ts`:
 
 | Type | Description |
 |------|-------------|
@@ -225,11 +225,11 @@ Utility accounts have special features:
 - **Import Integration**: Automatically creates utility_usage records
 
 Key files:
-- Schema: `src/lib/schema/utility-usage.ts`
-- Service: `src/lib/server/domains/utility/`
-- Analytics: `src/lib/utils/utility-analytics.ts`
-- Routes: `src/lib/trpc/routes/utility.ts`
-- Query: `src/lib/query/utility.ts`
+- Schema: `$core/schema/utility-usage.ts`
+- Service: `$core/server/domains/utility/`
+- Analytics: `$core/utils/utility-analytics.ts`
+- Routes: `$core/trpc/routes/utility.ts`
+- Query: `$core/query/utility.ts`
 
 ## Bank Connections
 
@@ -238,10 +238,10 @@ Supports two providers for automatic transaction sync:
 - **Teller**: Free dev tier, official bank APIs
 
 Key files:
-- Schema: `src/lib/schema/account-connections.ts`
-- Providers: `src/lib/server/domains/connections/providers/`
-- Routes: `src/lib/trpc/routes/connections.ts`
-- Query: `src/lib/query/connections.ts`
+- Schema: `$core/schema/account-connections.ts`
+- Providers: `$core/server/domains/connections/providers/`
+- Routes: `$core/trpc/routes/connections.ts`
+- Query: `$core/query/connections.ts`
 
 ## Transfer Detection
 
@@ -251,9 +251,9 @@ The import system detects and handles transfers:
 - **UI**: Convert/unlink transfer dialogs
 
 Key files:
-- Schema: `src/lib/schema/transfer-mappings.ts`
-- Service: `src/lib/server/domains/transfers/`
-- Detector: `src/lib/server/import/utils/transfer-target-detector.ts`
+- Schema: `$core/schema/transfer-mappings.ts`
+- Service: `$core/server/domains/transfers/`
+- Detector: `$core/server/import/utils/transfer-target-detector.ts`
 
 ## Query Layer Patterns
 

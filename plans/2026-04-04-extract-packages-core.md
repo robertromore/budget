@@ -1092,8 +1092,8 @@ All phases completed on 2026-04-05.
 
 ### What lives in `packages/core/`
 
-- Schema (50 files), types (8 files), utils (15 files), constants (2 files)
-- Server: config, db, auth, shared, 31 domain directories, import, AI, email
+- Schema (51 files), types (8 files), utils (16 files), constants (2 files)
+- Server: config, db, auth, shared, 30 domain directories, import, AI, email
 - tRPC: router, 40+ routes, middleware, context, client-factory
 - Query: _client, _factory, _toast, 40+ domain query modules
 
