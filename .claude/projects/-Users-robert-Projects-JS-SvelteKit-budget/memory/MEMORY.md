@@ -1,0 +1,1 @@
+- [Electrobun core extraction](project_electrobun_extraction.md) — packages/core extraction complete on electrobun branch, ready for desktop app

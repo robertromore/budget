@@ -1,0 +1,28 @@
+{
+  "name": "@budget/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Budget desktop app powered by Electrobun",
+  "scripts": {
+    "start": "vite build && electrobun dev",
+    "dev": "electrobun dev --watch",
+    "dev:hmr": "concurrently \"bun run hmr\" \"bun run start\"",
+    "hmr": "vite --port 5174",
+    "build:canary": "vite build && electrobun build --env=canary"
+  },
+  "dependencies": {
+    "@budget/core": "workspace:*",
+    "@trpc/client": "^11.16.0",
+    "@tanstack/svelte-query": "^6.1.10",
+    "electrobun": "1.16.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.1",
+    "@types/bun": "latest",
+    "concurrently": "^9.1.0",
+    "svelte": "^5.14.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.0.3"
+  }
+}
