@@ -13,7 +13,7 @@ try {
 	console.error("Failed to run migrations:", error);
 }
 
-// Start the tRPC server on an ephemeral port
+// Start the tRPC server
 const serverPort = startServer(config);
 
 // Dev server detection for Vite HMR
@@ -26,20 +26,19 @@ async function getMainViewUrl(): Promise<string> {
 		try {
 			await fetch(DEV_SERVER_URL, { method: "HEAD" });
 			console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
-			return `${DEV_SERVER_URL}?serverPort=${serverPort}`;
+			return DEV_SERVER_URL;
 		} catch {
 			console.log("Vite dev server not running. Using bundled views.");
 		}
 	}
-	return `views://mainview/index.html?serverPort=${serverPort}`;
+	return "views://mainview/index.html";
 }
 
 const url = await getMainViewUrl();
-const showSetup = !config.setupComplete;
 
 const mainWindow = new BrowserWindow({
 	title: "Budget",
-	url: showSetup ? `${url}&setup=true` : url,
+	url,
 	frame: {
 		width: 1200,
 		height: 800,
@@ -49,5 +48,5 @@ const mainWindow = new BrowserWindow({
 });
 
 console.log(
-	`Budget desktop running (server: localhost:${serverPort}, setup: ${showSetup ? "pending" : "complete"})`,
+	`Budget desktop running (server: localhost:${serverPort}, setup: ${config.setupComplete ? "complete" : "pending"})`,
 );

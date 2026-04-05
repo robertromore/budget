@@ -40,7 +40,7 @@ export function startServer(config: DesktopConfig): number {
 	});
 
 	const server = Bun.serve({
-		port: 0, // Ephemeral port
+		port: 2022,
 		fetch: async (req: Request) => {
 			const url = new URL(req.url);
 
