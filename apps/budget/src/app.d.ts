@@ -6,7 +6,12 @@ import type {Column, RowData} from "@tanstack/table-core";
 declare global {
   namespace App {
     // interface Error {}
-    // interface Locals {}
+    interface Locals {
+      /** Set by the desktop auto-login hook when DESKTOP_MODE=true */
+      preAuth?: { userId: string; sessionToken: string };
+      /** The signed-in user object from desktop auto-login */
+      desktopUser?: any;
+    }
     // interface PageData {}
     // interface PageState {}
     // interface Platform {}

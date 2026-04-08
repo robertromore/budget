@@ -8,6 +8,7 @@ import { redirect } from "@sveltejs/kit";
 import { getLocalTimeZone, today } from "@internationalized/date";
 import { superValidate } from "sveltekit-superforms";
 import { zod4 } from "sveltekit-superforms/adapters";
+import { env } from "$env/dynamic/private";
 import type { LayoutServerLoad } from "./$types";
 
 /**
@@ -62,12 +63,20 @@ export const load: LayoutServerLoad = async (event) => {
   const { url, request } = event;
 
   // Get the current session
-  const session = await auth.api.getSession({
+  let session = await auth.api.getSession({
     headers: request.headers,
   });
 
   // Check if this is a public route
   const isPublic = isPublicRoute(url.pathname);
+
+  // Desktop auto-login: the hook (hooks.server.ts) handles sign-in for every
+  // request and stores the user in event.locals.desktopUser. Use it here to
+  // populate the session object so the rest of the layout load can proceed as
+  // if the user authenticated normally.
+  if (!session?.user && event.locals.desktopUser) {
+    session = { user: event.locals.desktopUser, session: { id: "", token: "" } } as typeof session;
+  }
 
   // If not authenticated and trying to access protected route, redirect to login
   if (!session?.user && !isPublic) {
@@ -85,8 +94,14 @@ export const load: LayoutServerLoad = async (event) => {
 
   // Check if authenticated user needs onboarding (but not if already on onboarding page)
   // Skip redirect if user is in tour mode (tour bypasses onboarding temporarily)
-  if (session?.user && !url.pathname.startsWith("/onboarding") && !isInTourMode(url)) {
-    const ctx = await createContext(fromSvelteKit(event));
+  // Skip redirect in desktop mode — the desktop setup wizard handles first-launch config.
+  if (
+    session?.user &&
+    !url.pathname.startsWith("/onboarding") &&
+    !isInTourMode(url) &&
+    env.DESKTOP_MODE !== "true"
+  ) {
+    const ctx = await createContext(fromSvelteKit(event), event.locals.preAuth);
     const caller = createCaller(ctx);
     const workspace = await caller.workspaceRoutes.getCurrent();
 
@@ -112,7 +127,7 @@ export const load: LayoutServerLoad = async (event) => {
     };
   }
 
-  const ctx = await createContext(fromSvelteKit(event));
+  const ctx = await createContext(fromSvelteKit(event), event.locals.preAuth);
   const caller = createCaller(ctx);
 
   return {

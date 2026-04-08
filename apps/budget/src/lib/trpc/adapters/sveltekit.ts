@@ -21,5 +21,6 @@ export function fromSvelteKit(event: RequestEvent): RequestAdapter {
         domain: opts.domain,
         expires: opts.expires,
       }),
+    preAuth: event.locals.preAuth,
   };
 }
