@@ -1,6 +1,7 @@
 import { workspaces } from "$core/schema/workspaces";
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { users } from "$core/schema/users";
+import { sessions } from "$core/schema/auth";
 import { db } from "$core/server/db";
 import { auth } from "$core/server/auth";
 import { generateUniqueSlugForDB } from "$core/utils/slug-utils";
@@ -20,6 +21,17 @@ export interface CookieOptions {
 }
 
 /**
+ * Pre-authenticated identity for bypassing cookie-based session lookup.
+ * Used in desktop mode where the session is established server-side.
+ * `sessionToken` is the raw session token returned by Better Auth's
+ * signInEmail endpoint — the database session ID is resolved from it.
+ */
+export interface PreAuthContext {
+  userId: string;
+  sessionToken: string;
+}
+
+/**
  * Platform-agnostic request adapter.
  *
  * Abstracts cookie/header access so the tRPC context layer works with
@@ -29,6 +41,8 @@ export interface RequestAdapter {
   headers: Headers;
   getCookie(name: string): string | undefined;
   setCookie(name: string, value: string, options: CookieOptions): void;
+  /** Pre-authenticated identity, bypasses cookie-based session lookup. */
+  preAuth?: PreAuthContext;
 }
 
 /**
@@ -219,10 +233,36 @@ async function getOrCreateDefaultWorkspace(userId: string): Promise<number> {
 }
 
 /**
- * Create tRPC context with user and workspace isolation
+ * Resolve the database session ID from a Better Auth session token.
  */
-export async function createContext(request: RequestAdapter) {
-  const { userId, sessionId } = await getSessionInfo(request.headers);
+async function resolveSessionId(token: string): Promise<string | null> {
+  const [row] = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(eq(sessions.token, token))
+    .limit(1);
+  return row?.id ?? null;
+}
+
+/**
+ * Create tRPC context with user and workspace isolation.
+ *
+ * When `preAuth` is provided (second argument or via `request.preAuth`),
+ * the cookie-based session lookup is skipped. The session token is used
+ * directly as the session identifier — it's unique and satisfies the
+ * isAuthenticated middleware without a DB round-trip.
+ */
+export async function createContext(request: RequestAdapter, preAuth?: PreAuthContext) {
+  const effectivePreAuth = preAuth ?? request.preAuth;
+  let userId: string | null;
+  let sessionId: string | null;
+
+  if (effectivePreAuth) {
+    userId = effectivePreAuth.userId;
+    sessionId = effectivePreAuth.sessionToken;
+  } else {
+    ({ userId, sessionId } = await getSessionInfo(request.headers));
+  }
   const workspaceId = await getCurrentWorkspaceId(request.getCookie("workspaceId"), userId);
 
   return {
