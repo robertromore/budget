@@ -3,6 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
+      "dependsOn": ["@budget/budget#build"],
       "outputs": []
     },
     "check": {

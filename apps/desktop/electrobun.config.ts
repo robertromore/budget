@@ -15,6 +15,7 @@ export default {
 		copy: {
 			"dist/index.html": "views/mainview/index.html",
 			"dist/assets": "views/mainview/assets",
+			"../../apps/budget/build": "budget-server",
 		},
 		watchIgnore: ["dist/**"],
 		mac: {

@@ -3,6 +3,8 @@ import { type DesktopConfig, saveConfig, loadConfig } from "./config";
 import { runMigrations } from "./migrate";
 
 // Wire env provider BEFORE any other @budget/core imports.
+// This is used during the setup phase only; the SvelteKit server sets its own
+// process.env values in sveltekit-server.ts before importing the handler.
 const _config = loadConfig();
 setEnvProvider({
 	get: (key: string) => {
@@ -15,56 +17,8 @@ setEnvProvider({
 	},
 });
 
-// Now safe to import core modules
-const { createCaller } = await import("@budget/core/trpc");
-const { createContext } = await import("@budget/core/trpc");
-
 /**
- * Create a tRPC caller context for desktop use.
- * No HTTP request involved — we construct a minimal RequestAdapter.
- */
-function createDesktopContext() {
-	return createContext({
-		headers: new Headers(),
-		getCookie: () => undefined,
-		setCookie: () => {},
-	});
-}
-
-/**
- * Execute a tRPC procedure by path using the server-side caller.
- */
-export async function executeTrpcCall(
-	path: string,
-	input: any,
-	type: "query" | "mutate"
-): Promise<any> {
-	const ctx = await createDesktopContext();
-	const caller = createCaller(ctx);
-
-	// Navigate the caller object by dot-separated path
-	// e.g. "accountRoutes.all" → caller.accountRoutes.all
-	const parts = path.split(".");
-	let current: any = caller;
-	for (const part of parts) {
-		current = current[part];
-		if (!current) throw new Error(`Unknown procedure path: ${path}`);
-	}
-
-	// Call the procedure
-	if (type === "query") {
-		return typeof current.query === "function"
-			? await current.query(input)
-			: await current(input);
-	} else {
-		return typeof current.mutate === "function"
-			? await current.mutate(input)
-			: await current(input);
-	}
-}
-
-/**
- * Handle setup flow — save config, run migrations, create user.
+ * Handle setup flow — save config, run migrations, create the local user.
  */
 export async function handleSetup(params: {
 	databasePath: string;
@@ -104,16 +58,28 @@ export async function handleSetup(params: {
 }
 
 /**
- * Auto-login for local auth mode.
+ * Verify the local user can sign in. Called during the setup phase to confirm
+ * credentials before handing off to the SvelteKit server.
  */
 export async function handleAutoLogin(): Promise<{ success: boolean; user?: { name: string; email: string } }> {
 	try {
-		// For local mode, just verify the user exists and return it
-		const ctx = await createDesktopContext();
-		const caller = createCaller(ctx);
-		// The user is already "logged in" since we bypass auth for desktop
-		return { success: true, user: { name: "Local User", email: "local@budget.app" } };
+		const { auth } = await import("@budget/core/server/auth");
+
+		const response = await auth.api.signInEmail({
+			body: { email: "local@budget.app", password: "local-desktop-user" },
+			asResponse: true,
+		});
+
+		if (!response.ok) {
+			console.error("Auto-login failed:", response.status, await response.text());
+			return { success: false };
+		}
+
+		const data = await response.json() as any;
+		const user = data?.user ?? {};
+		return { success: true, user: { name: user.name ?? "Local User", email: user.email ?? "local@budget.app" } };
 	} catch (error) {
+		console.error("Auto-login error:", error);
 		return { success: false };
 	}
 }

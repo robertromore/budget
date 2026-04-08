@@ -10,6 +10,7 @@ export default defineConfig({
 		alias: {
 			$core: resolve(__dirname, "../../packages/core/src"),
 			$lib: resolve(__dirname, "src/mainview/lib"),
+			$ui: resolve(__dirname, "../../packages/ui/src"),
 		},
 	},
 	build: {
