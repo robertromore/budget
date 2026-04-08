@@ -1,27 +1,15 @@
 import type { RPCSchema } from "electrobun/bun";
 
 /**
- * RPC schema for communication between the Bun main process and the webview.
+ * RPC schema for the setup/login phase of the desktop app.
  *
- * Instead of running an HTTP server, the webview sends tRPC-like procedure
- * calls through Electrobun's encrypted RPC channel. The main process executes
- * them against @budget/core's tRPC router via createCaller().
+ * These handlers run before the SvelteKit server takes over. Once setup is
+ * complete and autoLogin succeeds, the main process navigates the webview to
+ * the full SvelteKit app and this RPC channel is no longer used for data.
  */
 export type AppRPC = {
 	bun: RPCSchema<{
 		requests: {
-			/** Execute a tRPC procedure (query or mutation) */
-			trpcCall: {
-				params: {
-					/** Dot-separated procedure path, e.g. "accountRoutes.all" */
-					path: string;
-					/** Input data for the procedure */
-					input?: any;
-					/** "query" or "mutate" */
-					type: "query" | "mutate";
-				};
-				response: any;
-			};
 			/** Get desktop app configuration */
 			getConfig: {
 				params: {};
@@ -41,7 +29,7 @@ export type AppRPC = {
 				};
 				response: { success: boolean; error?: string };
 			};
-			/** Auto-login for local auth mode */
+			/** Auto-login for local auth mode, then hands off to SvelteKit */
 			autoLogin: {
 				params: {};
 				response: { success: boolean; user?: { name: string; email: string } };

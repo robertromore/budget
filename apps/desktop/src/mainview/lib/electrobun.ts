@@ -19,7 +19,7 @@ function getRpc() {
 
 export const rpc = {
 	getConfig: (params: {}) => getRpc().request.getConfig(params),
-	setup: (params: { databasePath: string; authMode: "local" | "password"; email?: string; password?: string }) => getRpc().request.setup(params),
+	setup: (params: { databasePath: string; authMode: "local" | "password"; email?: string; password?: string }) =>
+		getRpc().request.setup(params),
 	autoLogin: (params: {}) => getRpc().request.autoLogin(params),
-	trpcCall: (params: { path: string; input?: any; type: "query" | "mutate" }) => getRpc().request.trpcCall(params),
 };
