@@ -31,4 +31,11 @@ export function trpc() {
 
 // Wire up adapters for core query layer
 setTrpcClientFactory(trpc);
-setToastAdapter(appToast);
+// Use lazy wrappers so appToast is accessed at call time rather than at module
+// evaluation time — avoids a TDZ error when circular imports cause client.ts
+// to evaluate before toast-interceptor.ts has finished initializing.
+setToastAdapter({
+  success: (msg, opts) => appToast.success(msg, opts),
+  error: (msg, opts) => appToast.error(msg, opts),
+  info: (msg, opts) => appToast.info(msg, opts),
+});
