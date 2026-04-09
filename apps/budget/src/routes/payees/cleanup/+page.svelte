@@ -4,8 +4,10 @@ import { Button } from '$lib/components/ui/button';
 
 import DuplicateDetectionPanel from './(components)/duplicate-detection-panel.svelte';
 import NameNormalizationPanel from './(components)/name-normalization-panel.svelte';
+import ImportCleanupPanel from './(components)/import-cleanup-panel.svelte';
 
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+import Eraser from '@lucide/svelte/icons/eraser';
 import GitMerge from '@lucide/svelte/icons/git-merge';
 import Wand2 from '@lucide/svelte/icons/wand-2';
 
@@ -34,7 +36,7 @@ let activeTab = $state('duplicates');
 
   <!-- Tabs -->
   <Tabs.Root bind:value={activeTab} class="w-full">
-    <Tabs.List class="grid w-full grid-cols-2">
+    <Tabs.List class="grid w-full grid-cols-3">
       <Tabs.Trigger value="duplicates" class="flex items-center gap-2">
         <GitMerge class="h-4 w-4" />
         Detect Duplicates
@@ -42,6 +44,10 @@ let activeTab = $state('duplicates');
       <Tabs.Trigger value="normalize" class="flex items-center gap-2">
         <Wand2 class="h-4 w-4" />
         Normalize Names
+      </Tabs.Trigger>
+      <Tabs.Trigger value="import-cleanup" class="flex items-center gap-2">
+        <Eraser class="h-4 w-4" />
+        Remove Noise
       </Tabs.Trigger>
     </Tabs.List>
 
@@ -52,6 +58,10 @@ let activeTab = $state('duplicates');
 
       <Tabs.Content value="normalize">
         <NameNormalizationPanel />
+      </Tabs.Content>
+
+      <Tabs.Content value="import-cleanup">
+        <ImportCleanupPanel />
       </Tabs.Content>
     </div>
   </Tabs.Root>

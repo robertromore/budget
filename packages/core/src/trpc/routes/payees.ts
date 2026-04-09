@@ -10,6 +10,7 @@ import {
   removePayeesSchema,
   updateEnhancementFeedbackSchema,
 } from "$core/schema";
+import { PayeeMatcher } from "$core/server/import/matchers/payee-matcher";
 import {
   intelligenceProfileSchema,
   superformInsertPayeeSchema,
@@ -2302,4 +2303,34 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
       return stats;
     })
   ),
+
+  /**
+   * Preview import-style cleanup for payee names — strips transactional noise
+   * (ACH/DEBIT/POS prefixes, check numbers, store numbers, card numbers, etc.)
+   * using the same logic applied during transaction import.
+   */
+  previewImportCleanup: rateLimitedProcedure
+    .input(
+      z.object({
+        descriptions: z.array(z.string().min(1).max(500)).max(500),
+      })
+    )
+    .query(({ input }) => {
+      const matcher = new PayeeMatcher();
+      const results = input.descriptions.map((description) => {
+        const normalized = matcher.cleanPayeeName(description);
+        return {
+          original: description,
+          normalized,
+          wouldChange: description.trim() !== normalized,
+        };
+      });
+      const changesNeeded = results.filter((r) => r.wouldChange).length;
+      return {
+        results,
+        total: results.length,
+        changesNeeded,
+        alreadyNormalized: results.length - changesNeeded,
+      };
+    }),
 });

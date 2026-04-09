@@ -1140,3 +1140,16 @@ export const getPredictionAccuracyMetrics = (payeeId?: number, predictionType?: 
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
   });
+
+
+/**
+ * Preview import-style cleanup for payee names.
+ * Strips transactional noise (ACH/DEBIT/POS prefixes, check numbers, store
+ * numbers, card numbers, etc.) using the same logic applied during import.
+ */
+export const previewImportCleanup = (descriptions: string[]) =>
+  defineQuery({
+    queryKey: [...payeeKeys.all(), "import-cleanup", descriptions],
+    queryFn: () => trpc().payeeRoutes.previewImportCleanup.query({ descriptions }),
+    options: { staleTime: 0 },
+  });
