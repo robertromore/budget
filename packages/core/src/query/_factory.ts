@@ -4,6 +4,27 @@ import { TRPCError } from "@trpc/server";
 import { toast } from "./_toast";
 import { queryClient } from "./_client";
 
+// Svelte 5 SSR evaluates $derived eagerly, outside component context, so
+// createQuery/createMutation (which call getQueryClientContext inside $derived)
+// always throw "No QueryClient found" during server-side rendering. Guard all
+// .options() calls to return a loading-state stub on the server instead.
+const browser = typeof window !== "undefined";
+
+function ssrQueryStub<TData>(): any {
+  return {
+    data: undefined as TData | undefined,
+    error: null,
+    isLoading: false,
+    isFetching: false,
+    isPending: true,
+    isError: false,
+    isSuccess: false,
+    status: "pending" as const,
+    fetchStatus: "idle" as const,
+    refetch: () => Promise.resolve({ data: undefined, error: null }),
+  };
+}
+
 /**
  * Notification importance level for filtering based on user verbosity settings
  * - critical: Always shown (e.g., account deletion, bulk operations)
@@ -169,6 +190,7 @@ export function defineQuery<TParams, TData, TError = Error>(
           Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">
         >
       ) {
+        if (!browser) return ssrQueryStub<TData>();
         const queryKey = paramConfig.queryKey(params);
         const enabled = paramConfig.enabled ? paramConfig.enabled(params) : true;
 
@@ -184,7 +206,7 @@ export function defineQuery<TParams, TData, TError = Error>(
           enabled,
           ...paramConfig.options,
           ...(additionalOptions ? additionalOptions() : {}),
-        }));
+        }), () => queryClient);
       },
 
       async execute(params: TParams) {
@@ -219,6 +241,7 @@ export function defineQuery<TParams, TData, TError = Error>(
         Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">
       >
     ) {
+      if (!browser) return ssrQueryStub<TData>();
       return createQuery(() => ({
         queryKey,
         queryFn: async () => {
@@ -230,7 +253,7 @@ export function defineQuery<TParams, TData, TError = Error>(
         },
         ...options,
         ...(additionalOptions ? additionalOptions() : {}),
-      }));
+      }), () => queryClient);
     },
 
     async execute() {
@@ -318,10 +341,11 @@ export function defineMutation<TVariables, TData, TError = Error>(
         }
       },
       ...options,
-    }));
+    }), () => queryClient);
 
   return {
     options() {
+      if (!browser) return ssrQueryStub<TData>();
       return createMutationWithConfig();
     },
 

@@ -133,7 +133,7 @@ $effect.pre(() => {
 
 // Re-apply chart palette when theme mode changes
 $effect(() => {
-  const _ = mode.current;
+  mode.current;
   chartPalette.onThemeModeChange();
 });
 
