@@ -1,12 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {
-  archiveTransaction,
-  unarchiveTransaction,
-  getTransactionDetail,
-} from '$lib/query/transactions';
-import type { Transaction } from '$core/schema';
+import { archiveTransaction, unarchiveTransaction } from '$lib/query/transactions';
 import type { TransactionsFormat } from '$lib/types';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Archive from '@lucide/svelte/icons/archive';
@@ -16,7 +11,7 @@ import Unlink from '@lucide/svelte/icons/unlink';
 import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import DeleteTransactionDialog from '../(dialogs)/delete-transaction-dialog.svelte';
-import TransactionDetailsDialog from '../(dialogs)/transaction-details-dialog.svelte';
+import TransactionDetailSheet from './transaction-detail-sheet.svelte';
 import ConvertToTransferDialog from '../(dialogs)/convert-to-transfer-dialog.svelte';
 import UnlinkTransferDialog from '../(dialogs)/unlink-transfer-dialog.svelte';
 
@@ -32,7 +27,6 @@ let deleteOpen = $state(false);
 let detailsOpen = $state(false);
 let convertToTransferOpen = $state(false);
 let unlinkTransferOpen = $state(false);
-let selectedTransaction = $state<Transaction | null>(null);
 
 // Check if this is a transfer
 const isTransfer = $derived(transaction.isTransfer === true);
@@ -47,19 +41,6 @@ async function handleToggleArchive() {
     await archiveTransaction.execute({ id });
   }
 }
-
-// Fetch transaction details when opening the details dialog
-const transactionQuery = $derived(
-  getTransactionDetail(id).options(() => ({
-    enabled: detailsOpen,
-  }))
-);
-
-$effect(() => {
-  if (detailsOpen && transactionQuery.data) {
-    selectedTransaction = transactionQuery.data;
-  }
-});
 </script>
 
 <DropdownMenu.Root>
@@ -123,7 +104,7 @@ $effect(() => {
 {/if}
 
 {#if detailsOpen}
-  <TransactionDetailsDialog bind:transaction={selectedTransaction} bind:dialogOpen={detailsOpen} />
+  <TransactionDetailSheet {id} bind:open={detailsOpen} />
 {/if}
 
 {#if convertToTransferOpen}
