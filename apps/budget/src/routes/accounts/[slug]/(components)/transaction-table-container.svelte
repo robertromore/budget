@@ -1,7 +1,9 @@
 <script lang="ts">
 import { browser } from '$app/environment';
-import { Input } from '$lib/components/ui/input';
+import { MediaQuery } from 'svelte/reactivity';
 import TransactionSkeleton from './transaction-skeleton.svelte';
+import TransactionCardList from './transaction-card-list.svelte';
+import { displayPreferences } from '$lib/stores/display-preferences.svelte';
 import { DataTable } from '.';
 
 interface TransferAccount {
@@ -47,11 +49,17 @@ let {
   transferAccounts?: TransferAccount[];
   onTransferSelect?: (transactionId: number, targetAccountId: number) => void;
 } = $props();
+
+const isMobile = new MediaQuery('(max-width: 767px)');
+const showCardView = $derived(isMobile.current && displayPreferences.mobileTableView === 'cards');
 </script>
 
 {#if isLoading}
   <!-- Loading state: Show skeleton while fetching data -->
   <TransactionSkeleton rows={10} />
+{:else if browser && showCardView}
+  <!-- Mobile card view -->
+  <TransactionCardList transactions={formattedTransactions} />
 {:else if browser && categoriesState && payeesState}
   <!-- Show the data table (with filtering controls) regardless of data presence -->
   <div data-help-id="transaction-table" data-help-title="Transaction Table">
