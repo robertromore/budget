@@ -8,6 +8,7 @@ import { Switch } from '$lib/components/ui/switch';
 import {
   displayPreferences,
   type DateFormat,
+  type MobileTableView,
   type NumberFormat,
   type TableDisplayMode,
   type NotificationMode,
@@ -28,6 +29,7 @@ const currentShowCents = $derived(displayPreferences.showCents);
 const currentTableDisplayMode = $derived(displayPreferences.tableDisplayMode);
 const currentNotificationMode = $derived(displayPreferences.notificationMode);
 const currentNotificationVerbosity = $derived(displayPreferences.notificationVerbosity);
+const currentMobileTableView = $derived(displayPreferences.mobileTableView);
 const currentHeaderActionsMode = $derived(headerActionsMode.value);
 const currentHeaderActionsDisplay = $derived(headerActionsMode.displayMode);
 const currentHeaderTabsMode = $derived(headerActionsMode.tabsMode);
@@ -195,6 +197,23 @@ function handleNotificationModeChange(value: string) {
 function handleNotificationVerbosityChange(value: string) {
   displayPreferences.setNotificationVerbosity(value as NotificationVerbosity);
 }
+
+function handleMobileTableViewChange(value: string) {
+  displayPreferences.setMobileTableView(value as MobileTableView);
+}
+
+const mobileTableViewOptions = [
+  {
+    value: 'table',
+    label: 'Responsive table',
+    description: 'Show a table with fewer columns on small screens, tap rows to view details',
+  },
+  {
+    value: 'cards',
+    label: 'Card list',
+    description: 'Show transactions as cards on mobile for easier reading and tapping',
+  },
+] as const;
 </script>
 
 <svelte:head>
@@ -442,6 +461,31 @@ function handleNotificationVerbosityChange(value: string) {
             <Checkbox
               checked={currentHeaderTabsDisplay === option.value}
               onCheckedChange={() => handleHeaderTabsDisplayChange(option.value)}
+              class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
+            <div class="grid gap-1.5 font-normal">
+              <p class="text-sm leading-none font-medium">{option.label}</p>
+              <p class="text-muted-foreground text-sm">{option.description}</p>
+            </div>
+          </Label>
+        {/each}
+      </div>
+    </Card.Content>
+  </Card.Root>
+
+  <!-- Mobile View -->
+  <Card.Root data-help-id="display-mobile-view" data-help-title="Mobile View">
+    <Card.Header>
+      <Card.Title>Mobile View</Card.Title>
+      <Card.Description>Choose how transactions are displayed on small screens</Card.Description>
+    </Card.Header>
+    <Card.Content>
+      <div class="space-y-3">
+        {#each mobileTableViewOptions as option}
+          <Label
+            class="hover:bg-accent/50 has-aria-checked:border-primary has-aria-checked:bg-primary/10 flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+            <Checkbox
+              checked={currentMobileTableView === option.value}
+              onCheckedChange={() => handleMobileTableViewChange(option.value)}
               class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
             <div class="grid gap-1.5 font-normal">
               <p class="text-sm leading-none font-medium">{option.label}</p>

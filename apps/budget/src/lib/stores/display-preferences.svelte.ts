@@ -8,6 +8,7 @@ const STORAGE_KEY = "display-preferences";
 export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
 export type NumberFormat = "en-US" | "de-DE" | "fr-FR";
 export type TableDisplayMode = "popover" | "sheet";
+export type MobileTableView = "table" | "cards";
 export type BorderRadius = "none" | "sm" | "md" | "lg" | "xl";
 export type NotificationMode = "toast" | "popover";
 export type NotificationVerbosity = "all" | "important" | "errors-only";
@@ -30,6 +31,7 @@ interface DisplayPreferencesData {
   borderRadius: BorderRadius;
   notificationMode: NotificationMode;
   notificationVerbosity: NotificationVerbosity;
+  mobileTableView: MobileTableView;
 }
 
 const defaults: DisplayPreferencesData = {
@@ -41,6 +43,7 @@ const defaults: DisplayPreferencesData = {
   borderRadius: "lg",
   notificationMode: "toast",
   notificationVerbosity: "all",
+  mobileTableView: "table",
 };
 
 /**
@@ -94,6 +97,10 @@ class DisplayPreferencesStore {
     return this.preferences.notificationVerbosity;
   }
 
+  get mobileTableView(): MobileTableView {
+    return this.preferences.mobileTableView;
+  }
+
   setDateFormat(format: DateFormat) {
     this.preferences.dateFormat = format;
     this.saveToStorage();
@@ -141,6 +148,12 @@ class DisplayPreferencesStore {
     this.preferences.notificationVerbosity = verbosity;
     this.saveToStorage();
     this.syncToBackend({ notificationVerbosity: verbosity });
+  }
+
+  setMobileTableView(view: MobileTableView) {
+    this.preferences.mobileTableView = view;
+    this.saveToStorage();
+    this.syncToBackend({ mobileTableView: view });
   }
 
   /**
@@ -239,6 +252,8 @@ class DisplayPreferencesStore {
           displayPrefs.notificationMode = backendPrefs.notificationMode;
         if (backendPrefs.notificationVerbosity)
           displayPrefs.notificationVerbosity = backendPrefs.notificationVerbosity;
+        if (backendPrefs.mobileTableView)
+          displayPrefs.mobileTableView = backendPrefs.mobileTableView;
 
         if (isNotEmptyObject(displayPrefs)) {
           this.preferences = { ...this.preferences, ...displayPrefs };

@@ -142,6 +142,7 @@ export const authRoutes = t.router({
         numberFormat: z.enum(["en-US", "de-DE", "fr-FR"]).optional(),
         showCents: z.boolean().optional(),
         tableDisplayMode: z.enum(["popover", "sheet"]).optional(),
+        mobileTableView: z.enum(["table", "cards"]).optional(),
 
         // Notification preferences
         notificationMode: z.enum(["toast", "popover"]).optional(),

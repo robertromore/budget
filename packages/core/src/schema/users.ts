@@ -76,6 +76,7 @@ export interface UserPreferences {
   showCents?: boolean;
   tableDisplayMode?: "popover" | "sheet";
   borderRadius?: "none" | "sm" | "md" | "lg" | "xl";
+  mobileTableView?: "table" | "cards";
 
   // Notification preferences
   notificationMode?: "toast" | "popover";
