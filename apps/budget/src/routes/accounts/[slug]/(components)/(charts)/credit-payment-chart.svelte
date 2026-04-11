@@ -645,83 +645,85 @@ const groupedData = $derived(
           </LayerCake>
         {/if}
       </div>
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      {#if viewMode === 'payments' || viewMode === 'stacked'}
-        <div class="text-muted-foreground mt-3 flex shrink-0 justify-center gap-6 text-xs">
+  {#snippet belowChart()}
+    <!-- Legend -->
+    {#if viewMode === 'payments' || viewMode === 'stacked'}
+      <div class="text-muted-foreground mt-3 flex shrink-0 justify-center gap-6 text-xs">
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2);"></div>
+          <span>Payments</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1);"></div>
+          <span>Charges</span>
+        </div>
+        {#if minimumPayment > 0}
           <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2);"></div>
-            <span>Payments</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1);"></div>
-            <span>Charges</span>
-          </div>
-          {#if minimumPayment > 0}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-5);">
-              </div>
-              <span>Min Payment</span>
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-5);">
             </div>
+            <span>Min Payment</span>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div
+        class="text-muted-foreground mt-3 flex shrink-0 flex-wrap justify-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2);"></div>
+          <span>Full</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-3);"></div>
+          <span>Above Min</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-5);"></div>
+          <span>Minimum</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1);"></div>
+          <span>Below Min</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--destructive);"></div>
+          <span>Missed</span>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Summary stats -->
+    {#if summaryStats}
+      <div class="text-muted-foreground mt-3 shrink-0 border-t pt-3 text-center text-xs">
+        <div class="flex justify-center gap-6">
+          <span
+            >Total Paid: <strong class="text-foreground"
+              >{currencyFormatter.format(summaryStats.totalPayments)}</strong
+            ></span>
+          <span
+            >Total Charged: <strong class="text-foreground"
+              >{currencyFormatter.format(summaryStats.totalCharges)}</strong
+            ></span>
+          {#if summaryStats.totalInterest > 0}
+            <span
+              >Interest Paid: <strong class="text-foreground"
+                >{currencyFormatter.format(summaryStats.totalInterest)}</strong
+              ></span>
           {/if}
         </div>
-      {:else}
-        <div
-          class="text-muted-foreground mt-3 flex shrink-0 flex-wrap justify-center gap-4 text-xs">
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2);"></div>
-            <span>Full</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-3);"></div>
-            <span>Above Min</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-5);"></div>
-            <span>Minimum</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1);"></div>
-            <span>Below Min</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--destructive);"></div>
-            <span>Missed</span>
-          </div>
-        </div>
-      {/if}
+      </div>
+    {/if}
 
-      <!-- Summary stats -->
-      {#if summaryStats}
-        <div class="text-muted-foreground mt-3 shrink-0 border-t pt-3 text-center text-xs">
-          <div class="flex justify-center gap-6">
-            <span
-              >Total Paid: <strong class="text-foreground"
-                >{currencyFormatter.format(summaryStats.totalPayments)}</strong
-              ></span>
-            <span
-              >Total Charged: <strong class="text-foreground"
-                >{currencyFormatter.format(summaryStats.totalCharges)}</strong
-              ></span>
-            {#if summaryStats.totalInterest > 0}
-              <span
-                >Interest Paid: <strong class="text-foreground"
-                  >{currencyFormatter.format(summaryStats.totalInterest)}</strong
-                ></span>
-            {/if}
-          </div>
-        </div>
-      {/if}
-
-      <!-- Selection hint -->
-      {#if !chartSelection.isActive}
-        <p class="text-muted-foreground mt-2 shrink-0 text-center text-xs">
-          {viewMode === 'breakdown'
-            ? 'Click or drag to select, double-click for details'
-            : 'Click or drag to select'}
-        </p>
-      {/if}
-    </div>
+    <!-- Selection hint -->
+    {#if !chartSelection.isActive}
+      <p class="text-muted-foreground mt-2 shrink-0 text-center text-xs">
+        {viewMode === 'breakdown'
+          ? 'Click or drag to select, double-click for details'
+          : 'Click or drag to select'}
+      </p>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
 

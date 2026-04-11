@@ -735,153 +735,155 @@ const colors = ['var(--chart-1)', 'var(--chart-2)'];
           </Svg>
         </LayerCake>
       {/if}
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex flex-wrap justify-center gap-4">
-        <div class="flex items-center gap-2">
-          <div class="bg-primary h-3 w-3 rounded-sm"></div>
-          <span class="text-sm">Recurring</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
-          <span class="text-sm">One-time</span>
-        </div>
-        {#each activeOverlays as overlay}
-          <div class="flex items-center gap-2">
-            <div
-              class="h-0.5 w-4"
-              style="background-color: {overlay.color}; {overlay.dashed
-                ? 'background: repeating-linear-gradient(90deg, ' +
-                  overlay.color +
-                  ' 0px, ' +
-                  overlay.color +
-                  ' 4px, transparent 4px, transparent 8px);'
-                : ''}">
-            </div>
-            <span class="text-xs">{overlay.label}</span>
-          </div>
-        {/each}
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      <div class="flex items-center gap-2">
+        <div class="bg-primary h-3 w-3 rounded-sm"></div>
+        <span class="text-sm">Recurring</span>
       </div>
-
-      <!-- Recurring payees list (enhanced with selection) -->
-      {#if recurringPayeeDetails.length > 0}
-        <div class="mt-4 rounded-lg border p-4">
-          <div class="mb-3 flex items-center justify-between">
-            <h4 class="text-sm font-medium">Detected Recurring Payees</h4>
-            <span class="text-muted-foreground text-xs">{recurringPayeeDetails.length} found</span>
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
+        <span class="text-sm">One-time</span>
+      </div>
+      {#each activeOverlays as overlay}
+        <div class="flex items-center gap-2">
+          <div
+            class="h-0.5 w-4"
+            style="background-color: {overlay.color}; {overlay.dashed
+              ? 'background: repeating-linear-gradient(90deg, ' +
+                overlay.color +
+                ' 0px, ' +
+                overlay.color +
+                ' 4px, transparent 4px, transparent 8px);'
+              : ''}">
           </div>
-          <div class="max-h-48 space-y-1 overflow-y-auto">
-            {#each recurringPayeeDetails.slice(0, 10) as payee}
-              <button
-                type="button"
-                class="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-2 text-left transition-colors
-								{selectedPayee === payee.name ? 'bg-muted' : ''}"
-                onclick={() => (selectedPayee = selectedPayee === payee.name ? null : payee.name)}>
-                <div class="flex items-center gap-2">
-                  <!-- Confidence indicator -->
-                  <div
-                    class="h-2 w-2 rounded-full {payee.confidence >= 70
-                      ? 'bg-green-500'
-                      : payee.confidence >= 50
-                        ? 'bg-yellow-500'
-                        : 'bg-orange-500'}"
-                    title="{payee.confidence}% confidence">
-                  </div>
-                  <div>
-                    <span class="block max-w-32 truncate text-sm">{payee.name}</span>
-                    <span class="text-muted-foreground text-xs capitalize">{payee.pattern}</span>
-                  </div>
-                </div>
-                <div class="text-muted-foreground flex items-center gap-3 text-xs">
-                  <span>{payee.occurrences}×</span>
-                  <span class="tabular-nums">{currencyFormatter.format(payee.avgAmount)}/avg</span>
-                  <span class="w-8 text-right text-[10px] tabular-nums">{payee.confidence}%</span>
-                </div>
-              </button>
-            {/each}
-            {#if recurringPayeeDetails.length > 10}
-              <p class="text-muted-foreground pt-2 text-center text-xs">
-                +{recurringPayeeDetails.length - 10} more recurring payees
-              </p>
-            {/if}
-          </div>
+          <span class="text-xs">{overlay.label}</span>
+        </div>
+      {/each}
+    </div>
 
-          <!-- Selected payee details panel -->
-          {#if selectedPayee}
-            {@const payee = recurringPayeeDetails.find((p) => p.name === selectedPayee)}
-            {#if payee}
-              <div class="mt-3 border-t pt-3">
-                <div class="mb-2 flex items-center justify-between">
-                  <span class="max-w-48 truncate text-sm font-medium">{payee.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-6 w-6"
-                    onclick={() => (selectedPayee = null)}>
-                    <X class="h-4 w-4" />
-                  </Button>
+    <!-- Recurring payees list (enhanced with selection) -->
+    {#if recurringPayeeDetails.length > 0}
+      <div class="mt-4 rounded-lg border p-4">
+        <div class="mb-3 flex items-center justify-between">
+          <h4 class="text-sm font-medium">Detected Recurring Payees</h4>
+          <span class="text-muted-foreground text-xs">{recurringPayeeDetails.length} found</span>
+        </div>
+        <div class="max-h-48 space-y-1 overflow-y-auto">
+          {#each recurringPayeeDetails.slice(0, 10) as payee}
+            <button
+              type="button"
+              class="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-2 text-left transition-colors
+							{selectedPayee === payee.name ? 'bg-muted' : ''}"
+              onclick={() => (selectedPayee = selectedPayee === payee.name ? null : payee.name)}>
+              <div class="flex items-center gap-2">
+                <!-- Confidence indicator -->
+                <div
+                  class="h-2 w-2 rounded-full {payee.confidence >= 70
+                    ? 'bg-green-500'
+                    : payee.confidence >= 50
+                      ? 'bg-yellow-500'
+                      : 'bg-orange-500'}"
+                  title="{payee.confidence}% confidence">
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <p class="text-muted-foreground">Pattern</p>
-                    <p class="font-medium capitalize">{payee.pattern}</p>
-                  </div>
-                  <div>
-                    <p class="text-muted-foreground">Confidence</p>
-                    <p class="font-medium">{payee.confidence}%</p>
-                  </div>
-                  <div>
-                    <p class="text-muted-foreground">Avg Amount</p>
-                    <p class="font-medium tabular-nums">
-                      {currencyFormatter.format(payee.avgAmount)}
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-muted-foreground">Amount Range</p>
-                    <p class="font-medium tabular-nums">
-                      {currencyFormatter.format(payee.minAmount)} - {currencyFormatter.format(
-                        payee.maxAmount
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-muted-foreground">Occurrences</p>
-                    <p class="font-medium">{payee.occurrences} transactions</p>
-                  </div>
-                  <div>
-                    <p class="text-muted-foreground">Total Spend</p>
-                    <p class="font-medium tabular-nums">
-                      {currencyFormatter.format(payee.totalSpend)}
-                    </p>
-                  </div>
-                </div>
-                <div class="mt-3 flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="flex-1"
-                    onclick={() =>
-                      chartInteractions.openDrillDown({
-                        type: 'payee',
-                        value: payee.name,
-                        label: `${payee.name} Transactions`,
-                      })}>
-                    View Transactions
-                  </Button>
+                <div>
+                  <span class="block max-w-32 truncate text-sm">{payee.name}</span>
+                  <span class="text-muted-foreground text-xs capitalize">{payee.pattern}</span>
                 </div>
               </div>
-            {/if}
+              <div class="text-muted-foreground flex items-center gap-3 text-xs">
+                <span>{payee.occurrences}×</span>
+                <span class="tabular-nums">{currencyFormatter.format(payee.avgAmount)}/avg</span>
+                <span class="w-8 text-right text-[10px] tabular-nums">{payee.confidence}%</span>
+              </div>
+            </button>
+          {/each}
+          {#if recurringPayeeDetails.length > 10}
+            <p class="text-muted-foreground pt-2 text-center text-xs">
+              +{recurringPayeeDetails.length - 10} more recurring payees
+            </p>
           {/if}
         </div>
-      {/if}
 
-      <!-- Selection hint -->
-      {#if !chartSelection.isActive}
-        <p class="text-muted-foreground mt-2 text-center text-xs">
-          Click points to select, or drag to select a range
-        </p>
-      {/if}
-    </div>
+        <!-- Selected payee details panel -->
+        {#if selectedPayee}
+          {@const payee = recurringPayeeDetails.find((p) => p.name === selectedPayee)}
+          {#if payee}
+            <div class="mt-3 border-t pt-3">
+              <div class="mb-2 flex items-center justify-between">
+                <span class="max-w-48 truncate text-sm font-medium">{payee.name}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-6 w-6"
+                  onclick={() => (selectedPayee = null)}>
+                  <X class="h-4 w-4" />
+                </Button>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p class="text-muted-foreground">Pattern</p>
+                  <p class="font-medium capitalize">{payee.pattern}</p>
+                </div>
+                <div>
+                  <p class="text-muted-foreground">Confidence</p>
+                  <p class="font-medium">{payee.confidence}%</p>
+                </div>
+                <div>
+                  <p class="text-muted-foreground">Avg Amount</p>
+                  <p class="font-medium tabular-nums">
+                    {currencyFormatter.format(payee.avgAmount)}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-muted-foreground">Amount Range</p>
+                  <p class="font-medium tabular-nums">
+                    {currencyFormatter.format(payee.minAmount)} - {currencyFormatter.format(
+                      payee.maxAmount
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-muted-foreground">Occurrences</p>
+                  <p class="font-medium">{payee.occurrences} transactions</p>
+                </div>
+                <div>
+                  <p class="text-muted-foreground">Total Spend</p>
+                  <p class="font-medium tabular-nums">
+                    {currencyFormatter.format(payee.totalSpend)}
+                  </p>
+                </div>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="flex-1"
+                  onclick={() =>
+                    chartInteractions.openDrillDown({
+                      type: 'payee',
+                      value: payee.name,
+                      label: `${payee.name} Transactions`,
+                    })}>
+                  View Transactions
+                </Button>
+              </div>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    {/if}
+
+    <!-- Selection hint -->
+    {#if !chartSelection.isActive}
+      <p class="text-muted-foreground mt-2 text-center text-xs">
+        Click points to select, or drag to select a range
+      </p>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
 

@@ -277,17 +277,19 @@ const yMax = $derived.by(() => {
           {/if}
         </Html>
       </LayerCake>
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex justify-center gap-6">
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1)"></div>
-          <span class="text-sm">Weekdays</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
-          <span class="text-sm">Weekends</span>
-        </div>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex justify-center gap-6">
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1)"></div>
+        <span class="text-sm">Weekdays</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
+        <span class="text-sm">Weekends</span>
       </div>
     </div>
   {/snippet}

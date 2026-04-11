@@ -747,62 +747,64 @@ function handleBrushClick(_x: number, clickValue: Date | number) {
           </Svg>
         </LayerCake>
       </div>
-
-      <!-- Reference benchmarks -->
-      <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
-        <span class="text-green-600">●</span>
-        {savingsTarget}%+ On target |
-        <span class="text-yellow-600">●</span> 0-{savingsTarget}% Below target |
-        <span class="text-red-600">●</span> Below 0% Overspending
-      </div>
-
-      <!-- Active overlays legend -->
-      {#if activeAnalysisCount > 0}
-        <div
-          class="text-muted-foreground mt-2 flex shrink-0 flex-wrap justify-center gap-3 text-xs">
-          {#if showMovingAvg}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4" style="background-color: var(--chart-1);"></div>
-              <span>{MOVING_AVG_WINDOW}-mo Avg</span>
-            </div>
-          {/if}
-          {#if showYoYComparison}
-            <div class="flex items-center gap-1.5">
-              <div class="border-muted-foreground h-0.5 w-4 border-t border-dashed"></div>
-              <span>Last Year</span>
-            </div>
-          {/if}
-          {#if showLinearTrend}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-4);">
-              </div>
-              <span>Trend</span>
-            </div>
-          {/if}
-          {#if showHistoricalAvg}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-6);">
-              </div>
-              <span>Hist. Avg</span>
-            </div>
-          {/if}
-          {#if showForecast}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-2);">
-              </div>
-              <span>Forecast</span>
-            </div>
-          {/if}
-        </div>
-      {/if}
-
-      <!-- Selection hint -->
-      {#if !chartSelection.isActive}
-        <p class="text-muted-foreground mt-2 shrink-0 text-center text-xs">
-          Click or drag to select points, double-click for details
-        </p>
-      {/if}
     </div>
+  {/snippet}
+
+  {#snippet belowChart()}
+    <!-- Reference benchmarks -->
+    <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
+      <span class="text-green-600">●</span>
+      {savingsTarget}%+ On target |
+      <span class="text-yellow-600">●</span> 0-{savingsTarget}% Below target |
+      <span class="text-red-600">●</span> Below 0% Overspending
+    </div>
+
+    <!-- Active overlays legend -->
+    {#if activeAnalysisCount > 0}
+      <div
+        class="text-muted-foreground mt-2 flex shrink-0 flex-wrap justify-center gap-3 text-xs">
+        {#if showMovingAvg}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4" style="background-color: var(--chart-1);"></div>
+            <span>{MOVING_AVG_WINDOW}-mo Avg</span>
+          </div>
+        {/if}
+        {#if showYoYComparison}
+          <div class="flex items-center gap-1.5">
+            <div class="border-muted-foreground h-0.5 w-4 border-t border-dashed"></div>
+            <span>Last Year</span>
+          </div>
+        {/if}
+        {#if showLinearTrend}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-4);">
+            </div>
+            <span>Trend</span>
+          </div>
+        {/if}
+        {#if showHistoricalAvg}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-6);">
+            </div>
+            <span>Hist. Avg</span>
+          </div>
+        {/if}
+        {#if showForecast}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-2);">
+            </div>
+            <span>Forecast</span>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    <!-- Selection hint -->
+    {#if !chartSelection.isActive}
+      <p class="text-muted-foreground mt-2 shrink-0 text-center text-xs">
+        Click or drag to select points, double-click for details
+      </p>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
 

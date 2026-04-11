@@ -393,12 +393,14 @@ function getBarColor(payee: (typeof payeeData)[0]): string {
         </LayerCake>
       {/if}
     </div>
+  {/snippet}
 
+  {#snippet belowChart()}
     <!-- Insights summary instead of redundant badges -->
     {#if periodRanges}
-      {@const increasing = data.filter((p) => p.change !== null && p.change > 0)}
-      {@const decreasing = data.filter((p) => p.change !== null && p.change < 0)}
-      {@const newPayees = data.filter((p) => p.isNew)}
+      {@const increasing = payeeData.filter((p) => p.change !== null && p.change > 0)}
+      {@const decreasing = payeeData.filter((p) => p.change !== null && p.change < 0)}
+      {@const newPayees = payeeData.filter((p) => p.isNew)}
       <div class="mt-2 flex flex-wrap gap-3 text-xs">
         {#if increasing.length > 0}
           <div class="text-destructive flex items-center gap-1.5">

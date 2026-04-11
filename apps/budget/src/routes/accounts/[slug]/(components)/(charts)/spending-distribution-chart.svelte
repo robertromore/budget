@@ -552,53 +552,55 @@ const amountExtent = $derived.by((): [number, number] => {
           </LayerCake>
         {/if}
       {/key}
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 space-y-2">
-        {#if chartStyle === 'histogram'}
-          <!-- Histogram legend with mean/median -->
-          <div class="flex flex-wrap justify-center gap-4">
-            <div class="flex items-center gap-2">
-              <div
-                class="h-3 w-3 rounded-sm"
-                style="background-color: {viewMode === 'expenses'
-                  ? 'var(--destructive)'
-                  : 'var(--chart-2)'}">
-              </div>
-              <span class="text-sm">{viewMode === 'expenses' ? 'Expenses' : 'Income'}</span>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 space-y-2">
+      {#if chartStyle === 'histogram'}
+        <!-- Histogram legend with mean/median -->
+        <div class="flex flex-wrap justify-center gap-4">
+          <div class="flex items-center gap-2">
+            <div
+              class="h-3 w-3 rounded-sm"
+              style="background-color: {viewMode === 'expenses'
+                ? 'var(--destructive)'
+                : 'var(--chart-2)'}">
             </div>
-            <div class="flex items-center gap-2">
-              <div class="h-0.5 w-4" style="background-color: var(--chart-4)"></div>
-              <span class="text-sm">Mean ({currencyFormatter.format(distributionStats.mean)})</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="h-0.5 w-4" style="background-color: var(--chart-3)"></div>
-              <span class="text-sm"
-                >Median ({currencyFormatter.format(distributionStats.median)})</span>
-            </div>
+            <span class="text-sm">{viewMode === 'expenses' ? 'Expenses' : 'Income'}</span>
           </div>
-          <div class="text-muted-foreground text-center text-xs">
-            25th: {currencyFormatter.format(distributionStats.percentile25)} | 75th: {currencyFormatter.format(
-              distributionStats.percentile75
-            )} | 90th: {currencyFormatter.format(distributionStats.percentile90)}
+          <div class="flex items-center gap-2">
+            <div class="h-0.5 w-4" style="background-color: var(--chart-4)"></div>
+            <span class="text-sm">Mean ({currencyFormatter.format(distributionStats.mean)})</span>
           </div>
-        {:else}
-          <!-- Grouped/Stacked legend -->
-          <div class="flex flex-wrap justify-center gap-4">
-            <div class="flex items-center gap-2">
-              <div class="bg-destructive h-3 w-3 rounded-sm"></div>
-              <span class="text-sm">Expenses ({expenseTransactions.length})</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
-              <span class="text-sm">Income ({incomeTransactions.length})</span>
-            </div>
+          <div class="flex items-center gap-2">
+            <div class="h-0.5 w-4" style="background-color: var(--chart-3)"></div>
+            <span class="text-sm"
+              >Median ({currencyFormatter.format(distributionStats.median)})</span>
           </div>
-          <div class="text-muted-foreground text-center text-xs">
-            Compare how expense and income transaction amounts are distributed
+        </div>
+        <div class="text-muted-foreground text-center text-xs">
+          25th: {currencyFormatter.format(distributionStats.percentile25)} | 75th: {currencyFormatter.format(
+            distributionStats.percentile75
+          )} | 90th: {currencyFormatter.format(distributionStats.percentile90)}
+        </div>
+      {:else}
+        <!-- Grouped/Stacked legend -->
+        <div class="flex flex-wrap justify-center gap-4">
+          <div class="flex items-center gap-2">
+            <div class="bg-destructive h-3 w-3 rounded-sm"></div>
+            <span class="text-sm">Expenses ({expenseTransactions.length})</span>
           </div>
-        {/if}
-      </div>
+          <div class="flex items-center gap-2">
+            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
+            <span class="text-sm">Income ({incomeTransactions.length})</span>
+          </div>
+        </div>
+        <div class="text-muted-foreground text-center text-xs">
+          Compare how expense and income transaction amounts are distributed
+        </div>
+      {/if}
     </div>
   {/snippet}
 </AnalyticsChartShell>

@@ -200,16 +200,18 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
           </LayerCake>
         {/if}
       </div>
-
-      <!-- Category breakdown list -->
-      <div class="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-        {#each categoryData as [name, value]}
-          <div class="rounded-lg border p-2">
-            <p class="truncate text-xs font-medium" title={name}>{name}</p>
-            <p class="text-primary text-sm font-semibold">{currencyFormatter.format(value)}</p>
-          </div>
-        {/each}
-      </div>
     {/if}
+  {/snippet}
+
+  {#snippet belowChart()}
+    <!-- Category breakdown list -->
+    <div class="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+      {#each categoryData as [name, value]}
+        <div class="rounded-lg border p-2">
+          <p class="truncate text-xs font-medium" title={name}>{name}</p>
+          <p class="text-primary text-sm font-semibold">{currencyFormatter.format(value)}</p>
+        </div>
+      {/each}
+    </div>
   {/snippet}
 </AnalyticsChartShell>

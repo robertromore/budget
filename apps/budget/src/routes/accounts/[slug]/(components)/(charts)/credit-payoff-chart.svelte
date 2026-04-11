@@ -288,80 +288,82 @@ const suggestedPayment = $derived.by(() => {
             </Svg>
           </LayerCake>
         </div>
+      {/if}
+    </div>
+  {/snippet}
 
-        <!-- Interactive Legend -->
-        <div class="mt-3 flex shrink-0 flex-wrap justify-center gap-4">
+  {#snippet belowChart()}
+    <!-- Interactive Legend -->
+    <div class="mt-3 flex shrink-0 flex-wrap justify-center gap-4">
+      {#each scenarios as scenario}
+        <button
+          class="hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1 text-xs transition-opacity"
+          class:opacity-40={hiddenSeries.has(scenario.id)}
+          onclick={() => toggleSeries(scenario.id)}>
+          <div
+            class="h-3 w-3 rounded-full"
+            style="background-color: {getSeriesColor(scenario.id)};">
+          </div>
+          <span>{scenario.label}</span>
+        </button>
+      {/each}
+    </div>
+
+    <!-- Scenario comparison table -->
+    <div class="mt-4 shrink-0 overflow-x-auto border-t pt-4">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-muted-foreground border-b">
+            <th class="pb-2 text-left font-medium">Scenario</th>
+            <th class="pb-2 text-right font-medium">Payment/mo</th>
+            <th class="pb-2 text-right font-medium">Time to Payoff</th>
+            <th class="pb-2 text-right font-medium">Total Interest</th>
+            <th class="pb-2 text-right font-medium">Total Paid</th>
+          </tr>
+        </thead>
+        <tbody>
           {#each scenarios as scenario}
-            <button
-              class="hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1 text-xs transition-opacity"
-              class:opacity-40={hiddenSeries.has(scenario.id)}
-              onclick={() => toggleSeries(scenario.id)}>
-              <div
-                class="h-3 w-3 rounded-full"
-                style="background-color: {getSeriesColor(scenario.id)};">
-              </div>
-              <span>{scenario.label}</span>
-            </button>
+            <tr
+              class="border-border/50 border-b"
+              class:opacity-40={hiddenSeries.has(scenario.id)}>
+              <td class="py-2">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="h-2 w-2 rounded-full"
+                    style="background-color: {getSeriesColor(scenario.id)};">
+                  </div>
+                  {scenario.label}
+                </div>
+              </td>
+              <td class="py-2 text-right font-mono"
+                >{currencyFormatter.format(scenario.monthlyPayment)}</td>
+              <td class="py-2 text-right">{formatMonths(scenario.months)}</td>
+              <td class="py-2 text-right font-mono text-amber-600">
+                {scenario.totalInterest === Infinity
+                  ? '∞'
+                  : currencyFormatter.format(scenario.totalInterest)}
+              </td>
+              <td class="py-2 text-right font-mono">
+                {scenario.totalPaid === Infinity
+                  ? '∞'
+                  : currencyFormatter.format(scenario.totalPaid)}
+              </td>
+            </tr>
           {/each}
-        </div>
+        </tbody>
+      </table>
+    </div>
 
-        <!-- Scenario comparison table -->
-        <div class="mt-4 shrink-0 overflow-x-auto border-t pt-4">
-          <table class="w-full text-xs">
-            <thead>
-              <tr class="text-muted-foreground border-b">
-                <th class="pb-2 text-left font-medium">Scenario</th>
-                <th class="pb-2 text-right font-medium">Payment/mo</th>
-                <th class="pb-2 text-right font-medium">Time to Payoff</th>
-                <th class="pb-2 text-right font-medium">Total Interest</th>
-                <th class="pb-2 text-right font-medium">Total Paid</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each scenarios as scenario}
-                <tr
-                  class="border-border/50 border-b"
-                  class:opacity-40={hiddenSeries.has(scenario.id)}>
-                  <td class="py-2">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="h-2 w-2 rounded-full"
-                        style="background-color: {getSeriesColor(scenario.id)};">
-                      </div>
-                      {scenario.label}
-                    </div>
-                  </td>
-                  <td class="py-2 text-right font-mono"
-                    >{currencyFormatter.format(scenario.monthlyPayment)}</td>
-                  <td class="py-2 text-right">{formatMonths(scenario.months)}</td>
-                  <td class="py-2 text-right font-mono text-amber-600">
-                    {scenario.totalInterest === Infinity
-                      ? '∞'
-                      : currencyFormatter.format(scenario.totalInterest)}
-                  </td>
-                  <td class="py-2 text-right font-mono">
-                    {scenario.totalPaid === Infinity
-                      ? '∞'
-                      : currencyFormatter.format(scenario.totalPaid)}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Current status summary -->
-        <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
-          Current Balance: <strong class="text-foreground"
-            >{currencyFormatter.format(currentBalance)}</strong>
-          {#if interestRate > 0}
-            | APR: <strong class="text-foreground">{formatPercentRaw(interestRate, 2)}</strong>
-          {/if}
-          {#if minimumPayment > 0}
-            | Minimum: <strong class="text-foreground"
-              >{currencyFormatter.format(minimumPayment)}/mo</strong>
-          {/if}
-        </div>
+    <!-- Current status summary -->
+    <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
+      Current Balance: <strong class="text-foreground"
+        >{currencyFormatter.format(currentBalance)}</strong>
+      {#if interestRate > 0}
+        | APR: <strong class="text-foreground">{formatPercentRaw(interestRate, 2)}</strong>
+      {/if}
+      {#if minimumPayment > 0}
+        | Minimum: <strong class="text-foreground"
+          >{currencyFormatter.format(minimumPayment)}/mo</strong>
       {/if}
     </div>
   {/snippet}

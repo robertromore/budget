@@ -740,38 +740,40 @@ const yMax = $derived.by(() => {
           {/if}
         {/key}
       {/if}
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex flex-wrap justify-center gap-4">
-        {#if viewMode === 'both'}
-          <!-- Show income/expense legend with year groupings -->
-          {#each availableYears as year, i}
-            <div class="flex items-center gap-2 rounded border px-2 py-1">
-              <span class="text-xs font-medium">{year}:</span>
-              <div class="flex items-center gap-1">
-                <div class="h-3 w-3 rounded-sm" style="background-color: {chartColors[i * 2]}">
-                </div>
-                <span class="text-xs">In</span>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      {#if viewMode === 'both'}
+        <!-- Show income/expense legend with year groupings -->
+        {#each availableYears as year, i}
+          <div class="flex items-center gap-2 rounded border px-2 py-1">
+            <span class="text-xs font-medium">{year}:</span>
+            <div class="flex items-center gap-1">
+              <div class="h-3 w-3 rounded-sm" style="background-color: {chartColors[i * 2]}">
               </div>
-              <div class="flex items-center gap-1">
-                <div class="h-3 w-3 rounded-sm" style="background-color: {chartColors[i * 2 + 1]}">
-                </div>
-                <span class="text-xs">Out</span>
-              </div>
+              <span class="text-xs">In</span>
             </div>
-          {/each}
-        {:else}
-          {#each availableYears as year, i}
-            <div class="flex items-center gap-2">
-              <div
-                class="h-3 w-3 rounded-sm"
-                style="background-color: {yearColors[i % yearColors.length]}">
+            <div class="flex items-center gap-1">
+              <div class="h-3 w-3 rounded-sm" style="background-color: {chartColors[i * 2 + 1]}">
               </div>
-              <span class="text-sm">{year}</span>
+              <span class="text-xs">Out</span>
             </div>
-          {/each}
-        {/if}
-      </div>
+          </div>
+        {/each}
+      {:else}
+        {#each availableYears as year, i}
+          <div class="flex items-center gap-2">
+            <div
+              class="h-3 w-3 rounded-sm"
+              style="background-color: {yearColors[i % yearColors.length]}">
+            </div>
+            <span class="text-sm">{year}</span>
+          </div>
+        {/each}
+      {/if}
     </div>
   {/snippet}
 </AnalyticsChartShell>

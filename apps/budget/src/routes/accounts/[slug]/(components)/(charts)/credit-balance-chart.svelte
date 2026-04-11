@@ -617,57 +617,59 @@ const chartData = $derived(
           </Svg>
         </LayerCake>
       </div>
-
-      <!-- Current balance summary -->
-      {#if creditLimit > 0}
-        <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
-          Current: {currencyFormatter.format(currentBalance)} of {currencyFormatter.format(
-            creditLimit
-          )} ({formatPercentRaw((currentBalance / creditLimit) * 100, 1)} used)
-        </div>
-      {/if}
-
-      <!-- Active overlays legend -->
-      {#if activeAnalysisCount > 0}
-        <div
-          class="text-muted-foreground mt-2 flex shrink-0 flex-wrap justify-center gap-3 text-xs">
-          {#if showMovingAvg}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4" style="background-color: var(--chart-1);"></div>
-              <span>{MOVING_AVG_WINDOW}-mo Avg</span>
-            </div>
-          {/if}
-          {#if showLinearTrend}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-4);">
-              </div>
-              <span>Trend</span>
-            </div>
-          {/if}
-          {#if showHistoricalAvg}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-6);">
-              </div>
-              <span>Hist. Avg</span>
-            </div>
-          {/if}
-          {#if showForecast}
-            <div class="flex items-center gap-1.5">
-              <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-2);">
-              </div>
-              <span>Forecast</span>
-            </div>
-          {/if}
-        </div>
-      {/if}
-
-      <!-- Selection hint -->
-      {#if !chartSelection.isActive}
-        <p class="text-muted-foreground mt-2 shrink-0 text-center text-xs">
-          Click or drag to select points, double-click for details
-        </p>
-      {/if}
     </div>
+  {/snippet}
+
+  {#snippet belowChart()}
+    <!-- Current balance summary -->
+    {#if creditLimit > 0}
+      <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
+        Current: {currencyFormatter.format(currentBalance)} of {currencyFormatter.format(
+          creditLimit
+        )} ({formatPercentRaw((currentBalance / creditLimit) * 100, 1)} used)
+      </div>
+    {/if}
+
+    <!-- Active overlays legend -->
+    {#if activeAnalysisCount > 0}
+      <div
+        class="text-muted-foreground mt-2 flex shrink-0 flex-wrap justify-center gap-3 text-xs">
+        {#if showMovingAvg}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4" style="background-color: var(--chart-1);"></div>
+            <span>{MOVING_AVG_WINDOW}-mo Avg</span>
+          </div>
+        {/if}
+        {#if showLinearTrend}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-4);">
+            </div>
+            <span>Trend</span>
+          </div>
+        {/if}
+        {#if showHistoricalAvg}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-6);">
+            </div>
+            <span>Hist. Avg</span>
+          </div>
+        {/if}
+        {#if showForecast}
+          <div class="flex items-center gap-1.5">
+            <div class="h-0.5 w-4 border-t-2 border-dashed" style="border-color: var(--chart-2);">
+            </div>
+            <span>Forecast</span>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    <!-- Selection hint -->
+    {#if !chartSelection.isActive}
+      <p class="text-muted-foreground mt-2 shrink-0 text-center text-xs">
+        Click or drag to select points, double-click for details
+      </p>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
 

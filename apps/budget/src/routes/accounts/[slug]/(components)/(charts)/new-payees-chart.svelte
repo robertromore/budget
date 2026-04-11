@@ -306,7 +306,9 @@ const recentNewPayees = $derived.by(() => {
         </LayerCake>
       {/if}
     </div>
+  {/snippet}
 
+  {#snippet belowChart()}
     <!-- Recent new payees list -->
     <div class="mt-4 rounded-lg border p-4">
       <h4 class="mb-3 text-sm font-medium">Recently Discovered Payees</h4>

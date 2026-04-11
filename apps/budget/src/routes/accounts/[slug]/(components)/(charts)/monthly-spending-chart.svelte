@@ -60,18 +60,25 @@ let showPercentileBands = $state(false);
 let brushHoverX = $state<number | null>(null);
 
 // Fetch monthly spending aggregates from dedicated endpoint
-// svelte-ignore state_referenced_locally
-const monthlySpendingQuery = getMonthlySpendingAggregates(accountId).options();
+const monthlySpendingQuery = $derived(
+  getMonthlySpendingAggregates(accountId).options(() => ({
+    enabled: accountId > 0,
+  }))
+);
 
 // Fetch budgets for this account to get monthly target
-// svelte-ignore state_referenced_locally
-const budgetsQuery = getByAccount(accountId).options();
+const budgetsQuery = $derived(
+  getByAccount(accountId).options(() => ({
+    enabled: accountId > 0,
+  }))
+);
 
 // Fetch forecast data (enabled when showForecast toggle is on)
-// svelte-ignore state_referenced_locally
-const forecastQuery = getMonthlySpendingForecast(accountId, 3).options(() => ({
-  enabled: showForecast,
-}));
+const forecastQuery = $derived(
+  getMonthlySpendingForecast(accountId, 3).options(() => ({
+    enabled: accountId > 0 && showForecast,
+  }))
+);
 
 // Get monthly budget target from budgets
 const budgetTarget = $derived.by(() => {
@@ -1116,57 +1123,59 @@ const activeAnalysisCount = $derived(
             captureEvents={chartType !== 'bar'} />
         </Svg>
       </LayerCake>
-
-      <!-- Overlay legend -->
-      {#if activeOverlays.length > 0}
-        <div class="mt-2 flex flex-wrap justify-center gap-4">
-          <div class="flex items-center gap-2">
-            <div class="h-0.5 w-4" style="background-color: var(--chart-1);"></div>
-            <span class="text-xs">Monthly spending</span>
-          </div>
-          {#each activeOverlays as overlay}
-            <div class="flex items-center gap-2">
-              <div
-                class="h-0.5 w-4"
-                style="background-color: {overlay.color}; {overlay.dashed
-                  ? 'background: repeating-linear-gradient(90deg, ' +
-                    overlay.color +
-                    ' 0px, ' +
-                    overlay.color +
-                    ' 4px, transparent 4px, transparent 8px);'
-                  : ''}">
-              </div>
-              <span class="text-xs">{overlay.label}</span>
-            </div>
-          {/each}
-        </div>
-      {/if}
-
-      <!-- Budget status legend -->
-      {#if budgetTarget}
-        <div class="mt-2 flex flex-wrap justify-center gap-4 text-xs">
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-3);"></div>
-            <span>Under budget</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-4);"></div>
-            <span>Near budget</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--destructive);"></div>
-            <span>Over budget</span>
-          </div>
-        </div>
-      {/if}
-
-      <!-- Selection hint -->
-      {#if !chartSelection.isActive}
-        <p class="text-muted-foreground mt-2 text-center text-xs">
-          Click points to select, or drag to select a range
-        </p>
-      {/if}
     </div>
+  {/snippet}
+
+  {#snippet belowChart()}
+    <!-- Overlay legend -->
+    {#if activeOverlays.length > 0}
+      <div class="mt-2 flex flex-wrap justify-center gap-4">
+        <div class="flex items-center gap-2">
+          <div class="h-0.5 w-4" style="background-color: var(--chart-1);"></div>
+          <span class="text-xs">Monthly spending</span>
+        </div>
+        {#each activeOverlays as overlay}
+          <div class="flex items-center gap-2">
+            <div
+              class="h-0.5 w-4"
+              style="background-color: {overlay.color}; {overlay.dashed
+                ? 'background: repeating-linear-gradient(90deg, ' +
+                  overlay.color +
+                  ' 0px, ' +
+                  overlay.color +
+                  ' 4px, transparent 4px, transparent 8px);'
+                : ''}">
+            </div>
+            <span class="text-xs">{overlay.label}</span>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
+    <!-- Budget status legend -->
+    {#if budgetTarget}
+      <div class="mt-2 flex flex-wrap justify-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-3);"></div>
+          <span>Under budget</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-4);"></div>
+          <span>Near budget</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--destructive);"></div>
+          <span>Over budget</span>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Selection hint -->
+    {#if !chartSelection.isActive}
+      <p class="text-muted-foreground mt-2 text-center text-xs">
+        Click points to select, or drag to select a range
+      </p>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
 

@@ -430,16 +430,18 @@ const yMax = $derived.by(() => {
           </Tooltip>
         </Svg>
       </LayerCake>
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex flex-wrap justify-center gap-4">
-        {#each topPayees as payee, i}
-          <div class="flex items-center gap-2">
-            <div class="h-0.5 w-4" style="background-color: {colors[i % colors.length]}"></div>
-            <span class="text-sm">{payee}</span>
-          </div>
-        {/each}
-      </div>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      {#each topPayees as payee, i}
+        <div class="flex items-center gap-2">
+          <div class="h-0.5 w-4" style="background-color: {colors[i % colors.length]}"></div>
+          <span class="text-sm">{payee}</span>
+        </div>
+      {/each}
     </div>
   {/snippet}
 </AnalyticsChartShell>

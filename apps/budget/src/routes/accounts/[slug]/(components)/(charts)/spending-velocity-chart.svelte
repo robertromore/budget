@@ -653,29 +653,31 @@ const historicalAvgForTooltip = $derived.by((): number | null => {
             cursor="crosshair" />
         </Svg>
       </LayerCake>
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex flex-wrap justify-center gap-4">
-        <div class="flex items-center gap-2">
-          <div class="h-0.5 w-4" style="background-color: var(--chart-1)"></div>
-          <span class="text-sm">{windowSize}-Day Rolling Average</span>
-        </div>
-        {#if showForecast && forecastData.length > 0}
-          <div class="flex items-center gap-2">
-            <div class="h-0.5 w-4" style="background-color: var(--chart-4); border-style: dashed;">
-            </div>
-            <span class="text-sm">7-Day Forecast</span>
-          </div>
-        {/if}
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      <div class="flex items-center gap-2">
+        <div class="h-0.5 w-4" style="background-color: var(--chart-1)"></div>
+        <span class="text-sm">{windowSize}-Day Rolling Average</span>
       </div>
-
-      <!-- Selection hint -->
-      {#if !chartSelection.isActive}
-        <p class="text-muted-foreground mt-2 text-center text-xs">
-          Click points to select, or drag to select a range
-        </p>
+      {#if showForecast && forecastData.length > 0}
+        <div class="flex items-center gap-2">
+          <div class="h-0.5 w-4" style="background-color: var(--chart-4); border-style: dashed;">
+          </div>
+          <span class="text-sm">7-Day Forecast</span>
+        </div>
       {/if}
     </div>
+
+    <!-- Selection hint -->
+    {#if !chartSelection.isActive}
+      <p class="text-muted-foreground mt-2 text-center text-xs">
+        Click points to select, or drag to select a range
+      </p>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
 

@@ -497,34 +497,36 @@ const supportedChartTypes = $derived.by((): ('bar' | 'line')[] => {
           </Html>
         </LayerCake>
       {/key}
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex justify-center gap-6">
-        {#if viewMode === 'net'}
-          <div class="flex items-center gap-2">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
-            <span class="text-sm">Positive (income > expenses)</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="bg-destructive h-3 w-3 rounded-sm"></div>
-            <span class="text-sm">Negative (expenses > income)</span>
-          </div>
-        {:else if viewMode === 'stacked'}
-          <div class="flex items-center gap-2">
-            <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
-            <span class="text-sm">Income</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="bg-destructive h-3 w-3 rounded-sm"></div>
-            <span class="text-sm">Expenses</span>
-          </div>
-        {:else}
-          <div class="flex items-center gap-2">
-            <div class="h-0.5 w-4" style="background-color: var(--chart-2)"></div>
-            <span class="text-sm">Running total</span>
-          </div>
-        {/if}
-      </div>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex justify-center gap-6">
+      {#if viewMode === 'net'}
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
+          <span class="text-sm">Positive (income > expenses)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="bg-destructive h-3 w-3 rounded-sm"></div>
+          <span class="text-sm">Negative (expenses > income)</span>
+        </div>
+      {:else if viewMode === 'stacked'}
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
+          <span class="text-sm">Income</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="bg-destructive h-3 w-3 rounded-sm"></div>
+          <span class="text-sm">Expenses</span>
+        </div>
+      {:else}
+        <div class="flex items-center gap-2">
+          <div class="h-0.5 w-4" style="background-color: var(--chart-2)"></div>
+          <span class="text-sm">Running total</span>
+        </div>
+      {/if}
     </div>
   {/snippet}
 </AnalyticsChartShell>

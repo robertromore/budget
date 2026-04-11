@@ -342,25 +342,27 @@ const formatValue = (v: number) => {
           {/if}
         </Html>
       </LayerCake>
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex flex-wrap justify-center gap-4">
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1)"></div>
-          <span class="text-sm">Weekly</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
-          <span class="text-sm">Bi-weekly</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-3)"></div>
-          <span class="text-sm">Monthly</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="bg-muted-foreground h-3 w-3 rounded-sm"></div>
-          <span class="text-sm">Occasional/One-time</span>
-        </div>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-1)"></div>
+        <span class="text-sm">Weekly</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-2)"></div>
+        <span class="text-sm">Bi-weekly</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-sm" style="background-color: var(--chart-3)"></div>
+        <span class="text-sm">Monthly</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="bg-muted-foreground h-3 w-3 rounded-sm"></div>
+        <span class="text-sm">Occasional/One-time</span>
       </div>
     </div>
   {/snippet}

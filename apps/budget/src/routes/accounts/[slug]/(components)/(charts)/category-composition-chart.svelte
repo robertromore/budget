@@ -324,17 +324,19 @@ const maxValue = $derived.by(() => {
           </Html>
         </LayerCake>
       {/if}
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex flex-wrap justify-center gap-4">
-        {#each stackKeys as key, i}
-          <div class="flex items-center gap-2">
-            <div class="h-3 w-3 rounded-sm" style="background-color: {colors[i % colors.length]}">
-            </div>
-            <span class="text-sm">{key}</span>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      {#each stackKeys as key, i}
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-sm" style="background-color: {colors[i % colors.length]}">
           </div>
-        {/each}
-      </div>
+          <span class="text-sm">{key}</span>
+        </div>
+      {/each}
     </div>
   {/snippet}
 </AnalyticsChartShell>

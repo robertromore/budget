@@ -536,9 +536,10 @@ const chartPadding = $derived.by(() => {
 
   {#snippet chart({ data }: { data: typeof beeswarmData })}
     <div
-      class="relative h-112.5 w-full"
+      class="relative h-full w-full"
       bind:clientWidth={containerWidth}
       bind:clientHeight={containerHeight}>
+
       {#if containerReady}
         <LayerCake {data} x="absAmount" xScale={scaleLinear()} {xDomain} padding={chartPadding}>
           <Svg>
@@ -702,9 +703,12 @@ const chartPadding = $derived.by(() => {
           </Html>
         </LayerCake>
       {/if}
+    </div>
+  {/snippet}
 
-      <!-- Legend and Outlier List -->
-      <div class="mt-4 space-y-4">
+  {#snippet belowChart()}
+    <!-- Legend and Outlier List -->
+    <div class="mt-4 space-y-4">
         <div class="flex flex-wrap justify-center gap-4">
           {#if chartStyle === 'beeswarm'}
             <!-- Beeswarm legend: Expense/Income colors -->
@@ -827,15 +831,15 @@ const chartPadding = $derived.by(() => {
                   <button
                     class="hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between rounded px-1 py-0.5 text-sm transition-colors"
                     onclick={(e) => handlePointClick(outlier, e)}>
-                    <div class="flex flex-col items-start">
-                      <div class="flex items-center gap-1.5">
+                    <div class="min-w-0 flex-1 flex flex-col items-start">
+                      <div class="flex min-w-0 items-center gap-1.5">
                         <div
-                          class="h-2 w-2 rounded-full"
+                          class="h-2 w-2 shrink-0 rounded-full"
                           style="background-color: {getPointColor(outlier)}">
                         </div>
-                        <span class="text-muted-foreground">{outlier.payee}</span>
+                        <span class="text-muted-foreground truncate">{outlier.payee}</span>
                         <span
-                          class="rounded px-1 py-0.5 text-[10px] {isExpense
+                          class="shrink-0 rounded px-1 py-0.5 text-[10px] {isExpense
                             ? 'bg-destructive/10 text-destructive'
                             : 'bg-green-500/10 text-green-600'}">
                           {isExpense ? 'E' : 'I'}
@@ -844,7 +848,7 @@ const chartPadding = $derived.by(() => {
                       <span class="text-muted-foreground/70 ml-3.5 text-xs"
                         >{outlier.date.toLocaleDateString()}</span>
                     </div>
-                    <div class="flex flex-col items-end">
+                    <div class="ml-2 flex shrink-0 flex-col items-end">
                       <span class="font-medium" style="color: {getPointColor(outlier)}">
                         {currencyFormatter.format(outlier.absAmount)}
                       </span>
@@ -889,7 +893,6 @@ const chartPadding = $derived.by(() => {
             </div>
           {/if}
         </div>
-      </div>
     </div>
   {/snippet}
 </AnalyticsChartShell>

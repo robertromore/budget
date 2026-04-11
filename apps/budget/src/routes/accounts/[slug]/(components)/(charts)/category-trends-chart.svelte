@@ -574,23 +574,25 @@ const decreaseCount = $derived(rawCategoryComparison.filter((c) => c.changeAbs <
           {/if}
         </Html>
       </LayerCake>
+    </div>
+  {/snippet}
 
-      <!-- Legend -->
-      <div class="mt-4 flex justify-center gap-6">
-        <div class="flex items-center gap-2">
-          <div class="bg-muted-foreground h-3 w-3 rounded-full opacity-60"></div>
-          <span class="text-sm">{comparisonPeriodLabels[comparisonPeriod].previous}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="bg-destructive h-3 w-3 rounded-full"></div>
-          <span class="text-sm"
-            >{comparisonPeriodLabels[comparisonPeriod].current} (increased)</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-full" style="background-color: var(--chart-2)"></div>
-          <span class="text-sm"
-            >{comparisonPeriodLabels[comparisonPeriod].current} (decreased)</span>
-        </div>
+  {#snippet belowChart()}
+    <!-- Legend -->
+    <div class="mt-4 flex justify-center gap-6">
+      <div class="flex items-center gap-2">
+        <div class="bg-muted-foreground h-3 w-3 rounded-full opacity-60"></div>
+        <span class="text-sm">{comparisonPeriodLabels[comparisonPeriod].previous}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="bg-destructive h-3 w-3 rounded-full"></div>
+        <span class="text-sm"
+          >{comparisonPeriodLabels[comparisonPeriod].current} (increased)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-3 w-3 rounded-full" style="background-color: var(--chart-2)"></div>
+        <span class="text-sm"
+          >{comparisonPeriodLabels[comparisonPeriod].current} (decreased)</span>
       </div>
     </div>
   {/snippet}

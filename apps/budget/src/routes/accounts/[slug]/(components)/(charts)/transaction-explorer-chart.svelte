@@ -306,7 +306,9 @@ let hoveredPoint = $state<(typeof scatterData)[0] | null>(null);
         </LayerCake>
       {/if}
     </div>
+  {/snippet}
 
+  {#snippet belowChart()}
     <!-- Insight callouts -->
     <div class="text-muted-foreground mt-4 text-center text-xs">
       {#if viewMode === 'expenses'}

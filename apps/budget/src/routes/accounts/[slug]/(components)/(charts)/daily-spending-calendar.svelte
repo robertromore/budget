@@ -373,25 +373,27 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
           </Svg>
         </LayerCake>
       {/if}
-
-      <!-- Legend -->
-      {#if hasData && legendSteps.length > 0}
-        <div class="mt-4 flex items-center justify-center gap-2 text-xs">
-          <span class="text-muted-foreground"
-            >{currencyFormatter.format(legendSteps[0]?.value ?? 0)}</span>
-          <div class="flex gap-0.5">
-            {#each legendSteps as step}
-              <div
-                class="h-3.5 w-3.5 rounded-sm"
-                style:background-color={getColorWithOpacity(step.opacity)}
-                title={currencyFormatter.format(step.value)}>
-              </div>
-            {/each}
-          </div>
-          <span class="text-muted-foreground"
-            >{currencyFormatter.format(legendSteps[legendSteps.length - 1]?.value ?? 0)}</span>
-        </div>
-      {/if}
     </div>
+  {/snippet}
+
+  {#snippet belowChart()}
+    <!-- Legend -->
+    {#if hasData && legendSteps.length > 0}
+      <div class="mt-4 flex items-center justify-center gap-2 text-xs">
+        <span class="text-muted-foreground"
+          >{currencyFormatter.format(legendSteps[0]?.value ?? 0)}</span>
+        <div class="flex gap-0.5">
+          {#each legendSteps as step}
+            <div
+              class="h-3.5 w-3.5 rounded-sm"
+              style:background-color={getColorWithOpacity(step.opacity)}
+              title={currencyFormatter.format(step.value)}>
+            </div>
+          {/each}
+        </div>
+        <span class="text-muted-foreground"
+          >{currencyFormatter.format(legendSteps[legendSteps.length - 1]?.value ?? 0)}</span>
+      </div>
+    {/if}
   {/snippet}
 </AnalyticsChartShell>
