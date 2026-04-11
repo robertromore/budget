@@ -26,6 +26,8 @@ declare module "@tanstack/table-core" {
     headerClass?: string;
     cellClass?: string;
     hiddenByDefault?: boolean;
+    mobileHidden?: boolean;
+    tabletHidden?: boolean;
   }
 }
 

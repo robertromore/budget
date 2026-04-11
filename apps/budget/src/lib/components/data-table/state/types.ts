@@ -17,6 +17,12 @@ import type {
 export interface ExtendedColumnMeta {
   headerClass?: string;
   cellClass?: string;
+  label?: string;
+  hiddenByDefault?: boolean;
+  /** Hide this column below 768px (mobile breakpoint) */
+  mobileHidden?: boolean;
+  /** Hide this column below 1024px (tablet breakpoint) */
+  tabletHidden?: boolean;
 }
 
 /**

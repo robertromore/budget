@@ -38,7 +38,9 @@ import {
   type ColumnDef,
   type Table as TTable,
 } from '@tanstack/table-core';
+import { MediaQuery } from 'svelte/reactivity';
 import { untrack } from 'svelte';
+import type { ExtendedColumnMeta } from '$lib/components/data-table/state/types';
 import { DataTablePagination } from '.';
 import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
 import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
@@ -58,6 +60,7 @@ import {
 import DataTableToolbar from './data-table-toolbar.svelte';
 import SortableHeader from './sortable-header.svelte';
 import TransactionBulkActions from './transaction-bulk-actions.svelte';
+import TransactionDetailSheet from './transaction-detail-sheet.svelte';
 
 interface Props {
   columns: ColumnDef<TransactionsFormat, TValue>[];
@@ -169,19 +172,37 @@ $effect(() => {
   }
 });
 
+// Breakpoint detection for responsive column visibility
+const isMobile = new MediaQuery('(max-width: 767px)');
+const isTablet = new MediaQuery('(max-width: 1023px)');
+
 // Intercept visibility state to hide balance column when sorting by columns
 // other than id or date, and hide budget column when no budgets exist.
+// Also hides columns based on breakpoint meta (mobileHidden/tabletHidden)
+// unless the user has explicitly set visibility for that column.
 // Using $derived ensures reactivity when budgetCount, sorting, or visibility changes.
 const columnVisibility = $derived.by(() => {
   let visibleColumns = visibility();
   const sortingState = sorting();
   const firstSort = sortingState[0];
 
-  // Hide columns marked with hiddenByDefault in meta, unless user has explicitly set visibility
   for (const col of columns) {
     const colId = col.id ?? (col as any).accessorKey;
-    if (colId && (col.meta as any)?.hiddenByDefault && !(colId in visibleColumns)) {
+    if (!colId) continue;
+    const meta = col.meta as ExtendedColumnMeta | undefined;
+
+    // Hide columns marked with hiddenByDefault in meta, unless user has explicitly set visibility
+    if (meta?.hiddenByDefault && !(colId in visibleColumns)) {
       visibleColumns = Object.assign({}, visibleColumns, { [colId]: false });
+    }
+
+    // Breakpoint hiding — only when user hasn't explicitly set visibility
+    if (!(colId in visibleColumns)) {
+      if (isMobile.current && meta?.mobileHidden) {
+        visibleColumns = Object.assign({}, visibleColumns, { [colId]: false });
+      } else if (isTablet.current && meta?.tabletHidden) {
+        visibleColumns = Object.assign({}, visibleColumns, { [colId]: false });
+      }
     }
   }
 
@@ -524,6 +545,29 @@ function updateColumnTransform(columnId: string, transform: string) {
   }
 }
 
+// Mobile row tap → opens detail sheet
+let tappedTransactionId = $state<number | null>(null);
+let mobileDetailOpen = $state(false);
+
+$effect(() => {
+  if (!mobileDetailOpen) {
+    tappedTransactionId = null;
+  }
+});
+
+function handleRowClick(event: MouseEvent, transaction: TransactionsFormat) {
+  if (!isMobile.current) return;
+  if (transaction.status === 'scheduled') return;
+  if (transaction.isReconciliationMarker) return;
+  // Skip clicks on interactive elements (buttons, dropdowns, inputs)
+  const target = event.target as HTMLElement;
+  if (target.closest('button, [role="button"], input, select, a, [data-radix-collection-item]')) return;
+  if (typeof transaction.id === 'number') {
+    tappedTransactionId = transaction.id;
+    mobileDetailOpen = true;
+  }
+}
+
 // Guard condition - only render when fully initialized
 const canRender = $derived(isContextReady && isViewsInitialized);
 </script>
@@ -588,7 +632,12 @@ const canRender = $derived(isContextReady && isViewsInitialized);
                 data-adjustment={isAdjustment || undefined}
                 data-reconciliation-marker={isReconciliationMarker || undefined}
                 data-marker-type={markerType || undefined}
+                onclick={(e) => handleRowClick(e, row.original)}
                 class={cn(
+                  isMobile.current &&
+                    !row.original.isReconciliationMarker &&
+                    row.original.status !== 'scheduled' &&
+                    'cursor-pointer',
                   'data-[state=selected]:border-l-primary data-[state=selected]:border-l-4',
                   isTransfer && 'border-l-2 border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20',
                   isArchived &&
@@ -692,6 +741,13 @@ const canRender = $derived(isContextReady && isViewsInitialized);
     </div>
     <DataTablePagination {table} />
   </div>
+
+  <!-- Mobile tap-to-open detail sheet -->
+  {#if tappedTransactionId !== null}
+    <TransactionDetailSheet
+      id={tappedTransactionId}
+      bind:open={mobileDetailOpen} />
+  {/if}
 {:else}
   <!-- Loading state while context initializes -->
   <div class="flex items-center justify-center p-8">

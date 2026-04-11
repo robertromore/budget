@@ -427,6 +427,8 @@ export const columns = (
       enableGrouping: false,
       meta: {
         label: "Notes",
+        tabletHidden: true,
+        mobileHidden: true,
       },
     },
     {
@@ -488,6 +490,7 @@ export const columns = (
             label: "is not",
           },
         ],
+        tabletHidden: true,
       },
     },
     {
@@ -605,6 +608,8 @@ export const columns = (
       enableSorting: false,
       meta: {
         label: "Balance",
+        tabletHidden: true,
+        mobileHidden: true,
       },
     },
     {
@@ -635,6 +640,8 @@ export const columns = (
             label: "is",
           },
         ],
+        tabletHidden: true,
+        mobileHidden: true,
       },
     },
     {
@@ -680,6 +687,7 @@ export const columns = (
             label: "is not",
           },
         ],
+        mobileHidden: true,
       },
     },
     {
