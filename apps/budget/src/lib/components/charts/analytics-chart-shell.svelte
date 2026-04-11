@@ -29,6 +29,8 @@ type Props<TData> = {
   subtitle?: any;
   headerActions?: any;
   chart: any;
+  /** Optional content rendered below the fixed-height chart area, inside the card */
+  belowChart?: any;
 };
 
 let {
@@ -46,6 +48,7 @@ let {
   subtitle,
   headerActions,
   chart,
+  belowChart,
 }: Props<TData> = $props();
 
 // Tab state
@@ -156,34 +159,37 @@ const containerReady = $derived(containerWidth > 0 && containerHeight > 0);
           {/if}
 
           {#if loading}
-            <div class="flex h-[450px] w-full items-center justify-center">
+            <div class="flex h-70 md:h-112.5 w-full items-center justify-center">
               <div class="text-center">
                 <Skeleton class="mx-auto h-8 w-8 rounded-full" />
                 <p class="text-muted-foreground mt-2 text-sm">Loading chart data...</p>
               </div>
             </div>
           {:else if error}
-            <div class="flex h-[450px] w-full items-center justify-center">
+            <div class="flex h-70 md:h-112.5 w-full items-center justify-center">
               <div class="text-center">
                 <p class="text-destructive text-sm">Error loading chart data</p>
                 <p class="text-muted-foreground mt-1 text-xs">{error}</p>
               </div>
             </div>
           {:else if showEmpty}
-            <div class="flex h-[450px] w-full items-center justify-center">
+            <div class="flex h-70 md:h-112.5 w-full items-center justify-center">
               <div class="text-center">
                 <p class="text-muted-foreground text-sm">{emptyMessage}</p>
               </div>
             </div>
           {:else if showChart}
             <div
-              class="h-[450px] w-full"
+              class="h-70 md:h-112.5 w-full"
               bind:clientWidth={containerWidth}
               bind:clientHeight={containerHeight}>
               {#if containerReady}
                 {@render chart?.({ data, chartType: effectiveChartType })}
               {/if}
             </div>
+            {#if belowChart}
+              {@render belowChart()}
+            {/if}
           {/if}
         </Tabs.Content>
 
