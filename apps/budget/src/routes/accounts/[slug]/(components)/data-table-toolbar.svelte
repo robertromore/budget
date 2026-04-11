@@ -3,6 +3,9 @@ import type { Table } from '@tanstack/table-core';
 import type { FilterInputOption, TransactionsFormat } from '$lib/types';
 import { Separator } from '$lib/components/ui/separator';
 import CirclePlus from '@lucide/svelte/icons/circle-plus';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronUp from '@lucide/svelte/icons/chevron-up';
+import Filter from '@lucide/svelte/icons/filter';
 import Layers from '@lucide/svelte/icons/layers';
 import PencilLine from '@lucide/svelte/icons/pencil-line';
 import Toggle from '$lib/components/ui/toggle/toggle.svelte';
@@ -27,6 +30,7 @@ let { table }: Props = $props();
 let manageViewForm = $state(false);
 let editViewId = $state(0);
 let editViewsMode = $state(false);
+let filterOpen = $state(false);
 
 // svelte-ignore state_referenced_locally
 const columns = table.getAllColumns();
@@ -54,7 +58,10 @@ const editableViewsSize = $derived(editableViews.length);
 const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
 </script>
 
-<div class="flex text-sm" data-help-id="transaction-toolbar" data-help-title="Transaction Toolbar">
+<div
+  class="flex flex-wrap items-center gap-y-1 text-sm"
+  data-help-id="transaction-toolbar"
+  data-help-title="Transaction Toolbar">
   <Tabs.Root
     bind:value={currentViewValue}
     onValueChange={(value) => {
@@ -206,8 +213,29 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
       bind:viewId={editViewId} />
   </div>
 {:else}
-  <div class="mt-4 flex">
-    <div data-help-id="transaction-filters" data-help-title="Filter Transactions">
+  <div class="mt-4 flex flex-wrap gap-y-2">
+    <!-- Mobile filter toggle button -->
+    <Button
+      variant="outline"
+      size="sm"
+      class="flex sm:hidden"
+      onclick={() => (filterOpen = !filterOpen)}>
+      <Filter class="mr-1.5 h-3.5 w-3.5" />
+      Filters
+      {#if filterOpen}
+        <ChevronUp class="ml-1 h-3 w-3 opacity-60" />
+      {:else}
+        <ChevronDown class="ml-1 h-3 w-3 opacity-60" />
+      {/if}
+    </Button>
+
+    <div
+      class={cn(
+        'w-full sm:w-auto',
+        filterOpen ? 'block' : 'hidden sm:block'
+      )}
+      data-help-id="transaction-filters"
+      data-help-title="Filter Transactions">
       <FilterInput availableFilters={filterComponents} />
     </div>
 

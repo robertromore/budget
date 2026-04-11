@@ -5,6 +5,7 @@ import { Button, buttonVariants } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { Label } from '$lib/components/ui/label';
 import * as Tabs from '$lib/components/ui/tabs';
+import * as Select from '$lib/components/ui/select';
 import type { Transaction } from '$core/schema';
 import type { Schedule } from '$core/schema/schedules';
 import type { BudgetWithRelations } from '$core/server/domains/budgets';
@@ -184,6 +185,26 @@ function setActiveTab(value: TabValue) {
 // Register tabs for header display
 const pageTabsContext = getPageTabsContext();
 const showTabsOnPage = $derived(headerActionsMode.tabsMode === 'off');
+
+const mobileTabOptions = $derived.by(() => [
+  { value: 'transactions' as TabValue, label: 'Transactions' },
+  ...(isHsaAccount
+    ? [
+        { value: 'hsa-expenses' as TabValue, label: 'Medical Expenses' },
+        { value: 'hsa-dashboard' as TabValue, label: 'HSA Dashboard' },
+      ]
+    : []),
+  ...(isUtilityAccount ? [{ value: 'utility-dashboard' as TabValue, label: 'Usage' }] : []),
+  { value: 'analytics' as TabValue, label: 'Analytics' },
+  { value: 'subscriptions' as TabValue, label: 'Subscriptions' },
+  { value: 'intelligence' as TabValue, label: 'Intelligence' },
+  { value: 'automation' as TabValue, label: 'Automation' },
+  { value: 'schedules' as TabValue, label: 'Schedules' },
+  { value: 'budgets' as TabValue, label: 'Budgets' },
+  { value: 'documents' as TabValue, label: 'Documents' },
+  { value: 'import' as TabValue, label: 'Import' },
+  { value: 'settings' as TabValue, label: 'Settings' },
+]);
 
 // Keep tabs context updated reactively
 $effect(() => {
@@ -1140,7 +1161,27 @@ $effect(() => {
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as TabValue)}
         class="tabs-connected w-full">
-        <Tabs.List class="tabs-connected-list">
+
+        <!-- Mobile tab dropdown -->
+        <div class="md:hidden mb-1">
+          <Select.Root
+            type="single"
+            value={activeTab}
+            onValueChange={(value) => { if (value) setActiveTab(value as TabValue); }}>
+            <Select.Trigger class="w-full">
+              {mobileTabOptions.find((opt) => opt.value === activeTab)?.label ?? 'Select section'}
+            </Select.Trigger>
+            <Select.Content>
+              {#each mobileTabOptions as option}
+                <Select.Item value={option.value}>{option.label}</Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+        </div>
+
+        <!-- Desktop tab list -->
+        <div class="hidden md:block">
+          <Tabs.List class="tabs-connected-list">
           <Tabs.Trigger
             value="transactions"
             class="tabs-connected-trigger px-6 font-medium"
@@ -1253,7 +1294,8 @@ $effect(() => {
             <SlidersHorizontal class="mr-2 h-4 w-4" />
             Settings
           </Tabs.Trigger>
-        </Tabs.List>
+          </Tabs.List>
+        </div>
 
         <!-- Transactions Tab Content -->
         <Tabs.Content value="transactions" class="tabs-connected-content space-y-4">

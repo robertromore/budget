@@ -236,3 +236,9 @@ html {
   background-color: var(--background);
   position: relative;
 }
+
+@media (max-width: 767px) {
+  .tabs-connected-content {
+    @apply rounded-tl-lg;
+  }
+}
