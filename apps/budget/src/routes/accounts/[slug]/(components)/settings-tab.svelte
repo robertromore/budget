@@ -10,6 +10,7 @@ import Scale from '@lucide/svelte/icons/scale';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import Link from '@lucide/svelte/icons/link';
 import type { Account } from '$core/schema';
+import * as Select from '$lib/components/ui/select';
 
 import GeneralSection from './settings/general-section.svelte';
 import FinancialSection from './settings/financial-section.svelte';
@@ -72,9 +73,31 @@ function isActive(id: string): boolean {
 }
 </script>
 
-<div class="flex gap-8">
-  <!-- Settings Sidebar -->
-  <aside class="w-56 shrink-0">
+<div class="flex flex-col gap-6 md:flex-row md:gap-8">
+  <!-- Mobile: Select dropdown -->
+  <div class="md:hidden">
+    <Select.Root
+      type="single"
+      value={activeSection}
+      onValueChange={(value) => { if (value) setActiveSection(value); }}>
+      <Select.Trigger class="w-full">
+        {settingsNav.flatMap((g) => g.items).find((i) => i.id === activeSection)?.label ?? 'Select section'}
+      </Select.Trigger>
+      <Select.Content>
+        {#each settingsNav as group}
+          <Select.Group>
+            <Select.GroupHeading>{group.title}</Select.GroupHeading>
+            {#each group.items as item}
+              <Select.Item value={item.id}>{item.label}</Select.Item>
+            {/each}
+          </Select.Group>
+        {/each}
+      </Select.Content>
+    </Select.Root>
+  </div>
+
+  <!-- Desktop: Settings Sidebar -->
+  <aside class="hidden w-56 shrink-0 md:block">
     <nav class="space-y-6">
       {#each settingsNav as group}
         <div>
@@ -106,7 +129,7 @@ function isActive(id: string): boolean {
     </nav>
   </aside>
 
-  <Separator orientation="vertical" class="h-auto" />
+  <Separator orientation="vertical" class="hidden h-auto md:block" />
 
   <!-- Main Content -->
   <main class="min-w-0 flex-1">

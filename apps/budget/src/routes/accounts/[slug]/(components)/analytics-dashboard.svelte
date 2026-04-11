@@ -3,6 +3,7 @@ import { cn } from '$lib/utils';
 import type { TransactionsFormat } from '$lib/types';
 import type { Account } from '$core/schema/accounts';
 import { analyticsTypes } from './(analytics)/analytics-types';
+import * as Select from '$lib/components/ui/select';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 
@@ -109,9 +110,31 @@ const groupedAnalytics = $derived.by(() => {
   </div>
 
   <!-- Main Layout: Vertical Tabs + Content -->
-  <div class="flex gap-6" data-tour-id="analytics-period-selector">
-    <!-- Vertical Tab List -->
-    <div class="w-56 shrink-0 space-y-4">
+  <div class="flex flex-col gap-6 md:flex-row" data-tour-id="analytics-period-selector">
+    <!-- Mobile: Select dropdown -->
+    <div class="md:hidden">
+      <Select.Root
+        type="single"
+        value={effectiveSelectedAnalytic}
+        onValueChange={(value) => { if (value) selectedAnalytic = value; }}>
+        <Select.Trigger class="w-full">
+          {filteredAnalyticsTypes.find((a) => a.id === effectiveSelectedAnalytic)?.title ?? 'Select chart'}
+        </Select.Trigger>
+        <Select.Content>
+          {#each groupedAnalytics as [category, analytics]}
+            <Select.Group>
+              <Select.GroupHeading>{category}</Select.GroupHeading>
+              {#each analytics as analytic}
+                <Select.Item value={analytic.id}>{analytic.title}</Select.Item>
+              {/each}
+            </Select.Group>
+          {/each}
+        </Select.Content>
+      </Select.Root>
+    </div>
+
+    <!-- Desktop: Vertical Tab List -->
+    <div class="hidden w-56 shrink-0 space-y-4 md:block">
       {#each groupedAnalytics as [category, analytics]}
         <div class="space-y-1">
           <h3 class="text-muted-foreground px-2 text-xs font-semibold tracking-wider uppercase">
