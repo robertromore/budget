@@ -57,6 +57,25 @@
   --account-loan: oklch(0.577 0.245 27.325);
   --account-cash: oklch(0.556 0 0);
 
+  /* Semantic status colors */
+  --success: oklch(0.627 0.194 149.214);
+  --warning: oklch(0.681 0.162 75.834);
+  --info: oklch(0.546 0.245 262.881);
+
+  /* Status badge surfaces (soft background + readable foreground pairs) */
+  --success-bg: oklch(0.962 0.044 156.743);
+  --success-fg: oklch(0.527 0.154 150.069);
+  --warning-bg: oklch(0.973 0.071 103.193);
+  --warning-fg: oklch(0.554 0.135 66.442);
+  --danger-bg: oklch(0.936 0.032 17.717);
+  --danger-fg: oklch(0.505 0.213 27.518);
+  --info-bg: oklch(0.932 0.032 255.585);
+  --info-fg: oklch(0.488 0.243 264.376);
+
+  /* Financial amount polarity */
+  --amount-positive: oklch(0.627 0.194 149.214);
+  --amount-negative: oklch(0.577 0.245 27.325);
+
   /* Budget status colors */
   --budget-success: oklch(0.696 0.17 162.48);
   --budget-success-foreground: oklch(0.985 0 0);
@@ -121,6 +140,25 @@ html {
   --account-loan: oklch(0.704 0.191 22.216);
   --account-cash: oklch(0.708 0 0);
 
+  /* Semantic status colors */
+  --success: oklch(0.792 0.209 151.711);
+  --warning: oklch(0.852 0.199 91.936);
+  --info: oklch(0.707 0.165 254.624);
+
+  /* Status badge surfaces */
+  --success-bg: oklch(0.393 0.095 152.535 / 30%);
+  --success-fg: oklch(0.792 0.209 151.711);
+  --warning-bg: oklch(0.421 0.095 57.708 / 30%);
+  --warning-fg: oklch(0.852 0.199 91.936);
+  --danger-bg: oklch(0.396 0.141 25.723 / 30%);
+  --danger-fg: oklch(0.704 0.191 22.216);
+  --info-bg: oklch(0.379 0.146 265.522 / 30%);
+  --info-fg: oklch(0.707 0.165 254.624);
+
+  /* Financial amount polarity */
+  --amount-positive: oklch(0.792 0.209 151.711);
+  --amount-negative: oklch(0.704 0.191 22.216);
+
   /* Budget status colors */
   --budget-success: oklch(0.696 0.17 162.48);
   --budget-success-foreground: oklch(0.145 0 0);
@@ -173,6 +211,25 @@ html {
   --color-account-investment: var(--account-investment);
   --color-account-loan: var(--account-loan);
   --color-account-cash: var(--account-cash);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-fg: var(--danger-fg);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-amount-positive: var(--amount-positive);
+  --color-amount-negative: var(--amount-negative);
+  --color-budget-success: var(--budget-success);
+  --color-budget-success-foreground: var(--budget-success-foreground);
+  --color-budget-warning: var(--budget-warning);
+  --color-budget-warning-foreground: var(--budget-warning-foreground);
+  --color-budget-danger: var(--budget-danger);
+  --color-budget-danger-foreground: var(--budget-danger-foreground);
 }
 
 @layer base {
@@ -185,7 +242,7 @@ html {
   }
 }
 
-/* Connected Tabs - Browser/Folder tab style */
+/* Connected Tabs - Browser/Folder tab style (used by analytics-chart-shell) */
 .tabs-connected {
   @apply flex flex-col;
 }
@@ -227,7 +284,6 @@ html {
   border-bottom: 0 !important;
   /* Ensure it's above the content border */
   z-index: 1;
-  /* box-shadow: 0 3px 0 0 var(--background) !important; */
 }
 
 .tabs-connected-content {
@@ -242,3 +298,4 @@ html {
     @apply rounded-tl-lg;
   }
 }
+

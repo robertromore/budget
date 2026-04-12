@@ -159,7 +159,7 @@ const crossoverMonth = $derived.by(() => {
                           <div class="h-2 w-2 rounded-full" style="background: var(--chart-2);"></div>
                           <span>Principal paid</span>
                         </div>
-                        <span class="font-mono text-green-600">{currencyFormatter.format(point.yEquity)}</span>
+                        <span class="font-mono text-amount-positive">{currencyFormatter.format(point.yEquity)}</span>
                       </div>
                       <div class="text-muted-foreground border-t pt-1">
                         <p>{formatPercentRaw(equityPct, 1)} paid off</p>
@@ -184,7 +184,7 @@ const crossoverMonth = $derived.by(() => {
       </div>
       <div class="flex items-center gap-2 text-xs">
         <div class="h-0.5 w-6" style="background: var(--chart-2);"></div>
-        <span class="text-green-600">Principal Paid</span>
+        <span class="text-amount-positive">Principal Paid</span>
       </div>
     </div>
 
@@ -199,7 +199,7 @@ const crossoverMonth = $derived.by(() => {
           <p class="text-muted-foreground text-xs">Progress</p>
           {#if originalPrincipal > 0 && originalPrincipal > balance}
             {@const paidOff = originalPrincipal - balance}
-            <p class="font-semibold text-sm text-green-600">
+            <p class="font-semibold text-sm text-amount-positive">
               {formatPercentRaw((paidOff / originalPrincipal) * 100, 1)} paid
             </p>
           {:else}

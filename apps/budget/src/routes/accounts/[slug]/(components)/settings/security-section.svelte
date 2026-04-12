@@ -149,7 +149,7 @@ const hasChanges = $derived(
               {/if}
             </p>
             {#if effectiveLevelQuery.data.requiresKey}
-              <p class="mt-2 text-sm text-amber-600 dark:text-amber-400">
+              <p class="mt-2 text-sm text-warning">
                 <AlertCircle class="mr-1 inline h-4 w-4" />
                 Encryption key required to access data
               </p>
@@ -231,12 +231,12 @@ const hasChanges = $derived(
               available: {
                 variant: 'secondary' as const,
                 label: 'Available',
-                class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                class: 'bg-success-bg text-success-fg',
               },
               limited: {
                 variant: 'outline' as const,
                 label: 'Limited',
-                class: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                class: 'bg-warning-bg text-warning-fg',
               },
               disabled: { variant: 'destructive' as const, label: 'Disabled', class: '' },
             }[status]}

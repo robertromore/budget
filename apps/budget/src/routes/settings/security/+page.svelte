@@ -100,13 +100,13 @@ function getFeatureBadge(status: 'available' | 'limited' | 'disabled') {
       return {
         variant: 'secondary' as const,
         label: 'Available',
-        class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        class: 'bg-success-bg text-success-fg',
       };
     case 'limited':
       return {
         variant: 'outline' as const,
         label: 'Limited',
-        class: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+        class: 'bg-warning-bg text-warning-fg',
       };
     case 'disabled':
       return { variant: 'destructive' as const, label: 'Disabled', class: '' };
@@ -254,10 +254,10 @@ const passphraseValid = $derived(
                     <p class="text-muted-foreground text-sm">{option.description}</p>
 
                     {#if selectedLevel === option.value && option.warnings.length > 0}
-                      <div class="mt-2 space-y-1 rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                      <div class="bg-warning-bg mt-2 space-y-1 rounded-md p-3">
                         {#each option.warnings as warning}
                           <div
-                            class="flex items-start gap-2 text-sm text-yellow-700 dark:text-yellow-400">
+                            class="text-warning-fg flex items-start gap-2 text-sm">
                             <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
                             <span>{warning}</span>
                           </div>
@@ -364,17 +364,17 @@ const passphraseValid = $derived(
         <Card.Content>
           {#if userPrefsQuery.data?.hasEncryptionKey}
             <div
-              class="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-900/20">
+              class="flex items-center justify-between rounded-lg border border-success/20 bg-success-bg p-4">
               <div class="flex items-center gap-3">
                 <div
-                  class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
-                  <KeyRound class="h-5 w-5 text-green-600 dark:text-green-400" />
+                  class="flex h-10 w-10 items-center justify-center rounded-full bg-success-bg">
+                  <KeyRound class="h-5 w-5 text-success" />
                 </div>
                 <div>
-                  <p class="font-medium text-green-700 dark:text-green-400">
+                  <p class="font-medium text-success-fg">
                     Encryption Key Active
                   </p>
-                  <p class="text-sm text-green-600 dark:text-green-500">
+                  <p class="text-sm text-success">
                     Type: {userPrefsQuery.data.encryption.keyType ?? 'token'}
                   </p>
                 </div>
@@ -449,8 +449,8 @@ const passphraseValid = $derived(
                 </div>
               {/if}
 
-              <div class="rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
-                <div class="flex gap-2 text-sm text-yellow-700 dark:text-yellow-400">
+              <div class="bg-warning-bg rounded-md p-3">
+                <div class="text-warning-fg flex gap-2 text-sm">
                   <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
                   <div>
                     <p class="font-medium">Important</p>
@@ -554,7 +554,7 @@ const passphraseValid = $derived(
   <Dialog.Content class="sm:max-w-lg">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
-        <KeyRound class="h-5 w-5 text-green-500" />
+        <KeyRound class="h-5 w-5 text-success" />
         Encryption Key Generated
       </Dialog.Title>
       <Dialog.Description>
@@ -571,7 +571,7 @@ const passphraseValid = $derived(
             class="bg-muted overflow-x-auto rounded-md p-3 pr-12 text-sm break-all whitespace-pre-wrap">{generatedKey}</pre>
           <Button variant="ghost" size="icon" class="absolute top-2 right-2" onclick={copyKey}>
             {#if keyCopied}
-              <Check class="h-4 w-4 text-green-500" />
+              <Check class="h-4 w-4 text-success" />
             {:else}
               <Copy class="h-4 w-4" />
             {/if}

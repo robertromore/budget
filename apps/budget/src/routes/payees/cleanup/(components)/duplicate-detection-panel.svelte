@@ -565,7 +565,7 @@ async function handleBulkMerge() {
                         {#if entry.error}
                           <CircleAlert class="text-destructive h-4 w-4" />
                         {:else if entry.parsedResult}
-                          <CircleCheck class="h-4 w-4 text-green-500" />
+                          <CircleCheck class="h-4 w-4 text-success" />
                         {:else}
                           <Loader2 class="h-4 w-4 animate-spin" />
                         {/if}
@@ -642,9 +642,9 @@ async function handleBulkMerge() {
                                       </td>
                                       <td class="py-1">
                                         {#if result.isMatch}
-                                          <span class="text-green-600">Yes</span>
+                                          <span class="text-success">Yes</span>
                                         {:else}
-                                          <span class="text-red-600">No</span>
+                                          <span class="text-destructive">No</span>
                                         {/if}
                                       </td>
                                       <td class="py-1">{Math.round(result.confidence * 100)}%</td>

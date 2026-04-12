@@ -58,8 +58,8 @@ function handleFinish() {
   <AlertDialog.Content class="max-w-md">
     <AlertDialog.Header>
       <div
-        class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
-        <Check class="h-7 w-7 text-green-600 dark:text-green-400" />
+        class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-bg">
+        <Check class="h-7 w-7 text-success" />
       </div>
       <AlertDialog.Title class="text-center text-xl">Tour Complete!</AlertDialog.Title>
       <AlertDialog.Description class="text-center">

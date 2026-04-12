@@ -20,7 +20,7 @@ function getStatusIcon(file: ImportFile, index: number) {
     return { icon: AlertCircle, class: 'text-destructive' };
   }
   if (file.status === 'ready') {
-    return { icon: CheckCircle, class: 'text-green-600' };
+    return { icon: CheckCircle, class: 'text-success' };
   }
   if (index === currentIndex && ['uploading', 'mapping', 'preview'].includes(file.status)) {
     return { icon: Loader2, class: 'text-primary animate-spin' };
@@ -51,7 +51,7 @@ function getStatusIcon(file: ImportFile, index: number) {
           isCurrent && 'border-primary bg-primary text-primary-foreground shadow-sm',
           !isCurrent &&
             isPast &&
-            'border-green-500 bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400',
+            'border-success/50 bg-success-bg text-success-fg',
           !isCurrent && !isPast && 'border-muted bg-muted/30 text-muted-foreground',
           file.status === 'error' && 'border-destructive bg-destructive/10 text-destructive',
           canClick && 'cursor-pointer hover:opacity-80',

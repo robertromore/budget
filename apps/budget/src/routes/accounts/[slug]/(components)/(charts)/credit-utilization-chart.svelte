@@ -337,15 +337,15 @@ function handleBrushClick(_x: number, clickValue: Date | number) {
 // Get utilization status text
 function getUtilizationStatus(utilization: number): { text: string; class: string } {
   if (utilization <= EXCELLENT_THRESHOLD) {
-    return { text: 'Excellent', class: 'text-green-600' };
+    return { text: 'Excellent', class: 'text-success' };
   }
   if (utilization <= WARNING_THRESHOLD) {
-    return { text: 'Good', class: 'text-yellow-600' };
+    return { text: 'Good', class: 'text-warning' };
   }
   if (utilization <= LIMIT_THRESHOLD) {
     return { text: 'High', class: 'text-orange-600' };
   }
-  return { text: 'Over Limit', class: 'text-red-600' };
+  return { text: 'Over Limit', class: 'text-destructive' };
 }
 </script>
 
@@ -539,13 +539,13 @@ function getUtilizationStatus(utilization: number): { text: string; class: strin
                   {#if activeAnalysisCount > 0}
                     <div class="mt-2 space-y-1 border-t pt-2 text-xs">
                       {#if showHistoricalAvg && histAvgDiff !== null}
-                        <p class={histAvgDiff <= 0 ? 'text-green-600' : 'text-amber-600'}>
+                        <p class={histAvgDiff <= 0 ? 'text-amount-positive' : 'text-warning'}>
                           {histAvgDiff <= 0 ? '' : '+'}{histAvgDiff.toFixed(1)}pp vs historical avg
                         </p>
                       {/if}
 
                       {#if showLinearTrend && trendDiff !== null}
-                        <p class={trendDiff <= 0 ? 'text-green-600' : 'text-amber-600'}>
+                        <p class={trendDiff <= 0 ? 'text-amount-positive' : 'text-warning'}>
                           {trendDiff <= 0 ? '' : '+'}{trendDiff.toFixed(1)}pp vs trend
                         </p>
                       {/if}
@@ -579,15 +579,15 @@ function getUtilizationStatus(utilization: number): { text: string; class: strin
   {#snippet belowChart()}
     <!-- Reference benchmarks - only show relevant ones based on data range -->
     <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
-      <span class="text-green-600">●</span> 0-30% Excellent
+      <span class="text-success">●</span> 0-30% Excellent
       {#if WARNING_THRESHOLD <= yDomain[1]}
-        | <span class="text-yellow-600">●</span> 30-70% Good
+        | <span class="text-warning">●</span> 30-70% Good
       {/if}
       {#if LIMIT_THRESHOLD <= yDomain[1]}
         | <span class="text-orange-600">●</span> 70-100% High
       {/if}
       {#if LIMIT_THRESHOLD < yDomain[1]}
-        | <span class="text-red-600">●</span> >100% Over Limit
+        | <span class="text-destructive">●</span> >100% Over Limit
       {/if}
     </div>
 

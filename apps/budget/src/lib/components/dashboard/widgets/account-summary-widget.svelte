@@ -17,8 +17,8 @@ const visibleAccounts = $derived(accounts.slice(0, limit));
       <span class="truncate text-sm font-medium">{account.name}</span>
       <span
         class="text-sm"
-        class:text-green-600={account.balance && account.balance > 0}
-        class:text-red-600={account.balance && account.balance < 0}
+        class:text-amount-positive={account.balance && account.balance > 0}
+        class:text-amount-negative={account.balance && account.balance < 0}
         class:text-muted-foreground={!account.balance || account.balance === 0}>
         {currencyFormatter.format(account.balance || 0)}
       </span>

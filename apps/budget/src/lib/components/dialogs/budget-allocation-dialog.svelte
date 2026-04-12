@@ -441,7 +441,7 @@ const availableBudgetOptions = $derived.by(() => {
                             class={cn(
                               'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
                               budget.type === 'account-monthly' &&
-                                'bg-blue-100 dark:bg-blue-900/30',
+                                'bg-info-bg',
                               budget.type === 'category-envelope' &&
                                 'bg-emerald-100 dark:bg-emerald-900/30',
                               budget.type === 'goal-based' && 'bg-purple-100 dark:bg-purple-900/30',
@@ -458,13 +458,13 @@ const availableBudgetOptions = $derived.by(() => {
                               class={cn(
                                 'h-4 w-4',
                                 budget.type === 'account-monthly' &&
-                                  'text-blue-600 dark:text-blue-400',
+                                  'text-info',
                                 budget.type === 'category-envelope' &&
                                   'text-emerald-600 dark:text-emerald-400',
                                 budget.type === 'goal-based' &&
                                   'text-purple-600 dark:text-purple-400',
                                 budget.type === 'scheduled-expense' &&
-                                  'text-amber-600 dark:text-amber-400',
+                                  'text-warning',
                                 ![
                                   'account-monthly',
                                   'category-envelope',
@@ -507,7 +507,7 @@ const availableBudgetOptions = $derived.by(() => {
                   <div
                     id="amount-error"
                     role="alert"
-                    class="flex items-center gap-1 text-xs text-red-600">
+                    class="flex items-center gap-1 text-xs text-destructive">
                     <TriangleAlert class="h-3 w-3" aria-hidden="true" />
                     <span>{validationError}</span>
                   </div>
@@ -612,12 +612,12 @@ const availableBudgetOptions = $derived.by(() => {
             </div>
           </div>
         {:else if !hasUnallocatedAmount}
-          <div class="rounded-lg border bg-green-50 p-3 text-center dark:bg-green-950/20">
-            <CircleDollarSign class="mx-auto h-8 w-8 text-green-600" />
-            <p class="mt-2 text-sm font-medium text-green-800 dark:text-green-200">
+          <div class="bg-success-bg rounded-lg border p-3 text-center">
+            <CircleDollarSign class="mx-auto h-8 w-8 text-success" />
+            <p class="text-success-fg mt-2 text-sm font-medium">
               Transaction Fully Allocated
             </p>
-            <p class="text-xs text-green-600 dark:text-green-400">
+            <p class="text-xs text-success">
               All funds have been allocated to budgets
             </p>
           </div>

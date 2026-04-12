@@ -90,8 +90,8 @@ function handleClose() {
               ({currencyFormatter.format(trendInfo.change)})
             </span>
           {:else if trendInfo.percentChange < 0}
-            <TrendingDown class="h-5 w-5 text-green-600" />
-            <span class="text-green-600">
+            <TrendingDown class="h-5 w-5 text-amount-positive" />
+            <span class="text-amount-positive">
               Spending decreased {formatPercentRaw(Math.abs(trendInfo.percentChange), 1)}
               ({currencyFormatter.format(Math.abs(trendInfo.change))})
             </span>
@@ -133,7 +133,7 @@ function handleClose() {
                   {currencyFormatter.format(point.value)}
                 </Table.Cell>
                 <Table.Cell class="text-right tabular-nums">
-                  <span class:text-destructive={vsAvg > 0} class:text-green-600={vsAvg < 0}>
+                  <span class:text-destructive={vsAvg > 0} class:text-amount-positive={vsAvg < 0}>
                     {#if vsAvg > 0}
                       <ArrowUp class="inline h-3 w-3" />
                     {:else if vsAvg < 0}
@@ -146,7 +146,7 @@ function handleClose() {
                   {#if vsAvgPercent > 20}
                     <Badge variant="destructive">High</Badge>
                   {:else if vsAvgPercent < -20}
-                    <Badge class="bg-green-600">Low</Badge>
+                    <Badge class="bg-success">Low</Badge>
                   {:else}
                     <Badge variant="secondary">Normal</Badge>
                   {/if}

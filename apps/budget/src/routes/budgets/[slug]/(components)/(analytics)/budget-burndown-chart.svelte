@@ -127,15 +127,15 @@ const utilizationRate = $derived(allocation > 0 ? (currentSpent / allocation) * 
 
 // Get status info
 function getStatusColor(rate: number): string {
-  if (rate > 100) return 'text-red-500';
-  if (rate > 80) return 'text-yellow-500';
-  return 'text-green-500';
+  if (rate > 100) return 'text-destructive';
+  if (rate > 80) return 'text-warning';
+  return 'text-success';
 }
 
 function getProgressClass(rate: number): string {
-  if (rate > 100) return '[&>div]:bg-red-500';
-  if (rate > 80) return '[&>div]:bg-yellow-500';
-  return '[&>div]:bg-green-500';
+  if (rate > 100) return '[&>div]:bg-destructive';
+  if (rate > 80) return '[&>div]:bg-warning';
+  return '[&>div]:bg-success';
 }
 
 // Filter to show only days with spending or today/nearby
@@ -224,7 +224,7 @@ const displayDays = $derived.by(() => {
             <TrendingUp class="h-4 w-4" />
             Remaining
           </div>
-          <div class="mt-1 text-2xl font-bold {remaining < 0 ? 'text-red-500' : 'text-green-500'}">
+          <div class="mt-1 text-2xl font-bold {remaining < 0 ? 'text-destructive' : 'text-success'}">
             {currencyFormatter.format(remaining)}
           </div>
           <div class="text-muted-foreground mt-1 text-xs">
@@ -287,7 +287,7 @@ const displayDays = $derived.by(() => {
               <div class="text-muted-foreground flex items-center gap-2 text-xs">
                 <span>Cumulative: {currencyFormatter.format(day.cumulativeSpending)}</span>
                 <span>•</span>
-                <span class={day.actualRemaining < 0 ? 'text-red-500' : ''}>
+                <span class={day.actualRemaining < 0 ? 'text-destructive' : ''}>
                   Remaining: {currencyFormatter.format(day.actualRemaining)}
                 </span>
               </div>
@@ -304,13 +304,13 @@ const displayDays = $derived.by(() => {
             <span class="text-muted-foreground text-sm">At current pace:</span>
             <span
               class="text-lg font-bold {projectedTotal > allocation
-                ? 'text-red-500'
-                : 'text-green-500'}">
+                ? 'text-destructive'
+                : 'text-success'}">
               {currencyFormatter.format(projectedTotal)}
             </span>
           </div>
           <div
-            class="mt-2 text-sm {projectedTotal > allocation ? 'text-red-500' : 'text-green-500'}">
+            class="mt-2 text-sm {projectedTotal > allocation ? 'text-destructive' : 'text-success'}">
             {#if projectedTotal > allocation}
               {currencyFormatter.format(projectedTotal - allocation)} over budget
             {:else}

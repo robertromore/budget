@@ -17,16 +17,16 @@ const isPositive = $derived(netFlow >= 0);
 <div class="flex items-center gap-3">
   <div class="bg-primary/10 rounded-lg p-2.5">
     {#if isPositive}
-      <TrendingUp class="h-5 w-5 text-green-600" />
+      <TrendingUp class="h-5 w-5 text-amount-positive" />
     {:else}
-      <TrendingDown class="h-5 w-5 text-red-600" />
+      <TrendingDown class="h-5 w-5 text-amount-negative" />
     {/if}
   </div>
   <div class="min-w-0 flex-1">
     <div
       class="text-2xl font-bold"
-      class:text-green-600={isPositive && netFlow !== 0}
-      class:text-red-600={!isPositive}
+      class:text-amount-positive={isPositive && netFlow !== 0}
+      class:text-amount-negative={!isPositive}
       class:text-muted-foreground={netFlow === 0}>
       {currencyFormatter.format(netFlow)}
     </div>

@@ -44,13 +44,13 @@ const accountTypeLabels: Record<string, string> = {
 };
 
 const accountTypeColors: Record<string, string> = {
-  checking: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  savings: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  checking: 'bg-info-bg text-info-fg',
+  savings: 'bg-success-bg text-success-fg',
   credit_card: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
   investment: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
   loan: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   cash: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
-  hsa: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  hsa: 'bg-danger-bg text-danger-fg',
 };
 
 const availableAccounts = $derived.by(() => {

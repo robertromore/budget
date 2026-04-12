@@ -49,7 +49,7 @@ const hasDuplicates = $derived(duplicateGroups.length > 0);
         Payee Matching
       </Card.Title>
       {#if hasDuplicates}
-        <Badge variant="outline" class="text-blue-500">
+        <Badge variant="outline" class="text-info">
           {duplicateCount} duplicates
         </Badge>
       {/if}
@@ -82,7 +82,7 @@ const hasDuplicates = $derived(duplicateGroups.length > 0);
           <div class="rounded-lg border p-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <GitMerge class="h-4 w-4 text-blue-500" />
+                <GitMerge class="h-4 w-4 text-info" />
                 <span class="text-sm font-medium">{group.canonicalName}</span>
               </div>
               <Badge variant="outline" class="text-xs">

@@ -70,7 +70,7 @@ let {
 
   <!-- Auto-add result message -->
   {#if autoAddResult}
-    <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+    <div class="bg-success-bg text-success-fg rounded-lg border border-success/20 p-3 text-sm">
       {autoAddResult}
     </div>
   {/if}

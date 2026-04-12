@@ -25,10 +25,10 @@ const icons = {
 };
 
 const iconColors = {
-  success: 'text-green-500',
-  error: 'text-red-500',
-  info: 'text-blue-500',
-  warning: 'text-yellow-500',
+  success: 'text-success',
+  error: 'text-destructive',
+  info: 'text-info',
+  warning: 'text-warning',
   loading: 'text-muted-foreground',
 };
 

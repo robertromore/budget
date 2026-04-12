@@ -155,7 +155,7 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
         <div class="text-sm font-medium">Transaction Details</div>
         <div class="mt-2 flex items-center justify-between text-sm">
           <span class="text-muted-foreground">Amount</span>
-          <span class={isOutgoing ? 'text-red-600' : 'text-green-600'}>
+          <span class={isOutgoing ? 'text-amount-negative' : 'text-amount-positive'}>
             {formatCurrency(transaction.amount)}
           </span>
         </div>
@@ -176,9 +176,9 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
           <div class="text-sm font-medium">Current Account</div>
         </div>
         {#if isOutgoing}
-          <ArrowRight class="h-5 w-5 text-blue-500" />
+          <ArrowRight class="h-5 w-5 text-info" />
         {:else}
-          <ArrowLeft class="h-5 w-5 text-blue-500" />
+          <ArrowLeft class="h-5 w-5 text-info" />
         {/if}
         <div class="text-center">
           <div class="text-muted-foreground text-xs">
@@ -206,14 +206,14 @@ function handleAccountSelect(account?: EditableEntityItem & { accountIcon?: stri
       <!-- Similar transactions checkbox -->
       {#if similarCount > 0}
         <div
-          class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+          class="bg-info-bg rounded-lg border border-info/20 p-3">
           <div class="flex items-start gap-3">
             <Checkbox id="convert-similar" bind:checked={convertSimilar} class="mt-0.5" />
             <div class="space-y-1">
               <Label
                 for="convert-similar"
                 class="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                <Users class="h-4 w-4 text-blue-600" />
+                <Users class="h-4 w-4 text-info" />
                 Also convert {similarCount} similar transaction{similarCount > 1 ? 's' : ''}
               </Label>
               <p class="text-muted-foreground text-xs">

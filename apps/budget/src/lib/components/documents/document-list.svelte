@@ -356,7 +356,7 @@ function formatDate(dateStr: string | null | undefined): string {
                 <DropdownMenu.Content align="end">
                   {#if doc.extractedText}
                     <DropdownMenu.Item onclick={() => handleViewExtractedText(doc)}>
-                      <Text class="mr-2 h-4 w-4 text-green-500" />
+                      <Text class="mr-2 h-4 w-4 text-success" />
                       View Extracted Text
                     </DropdownMenu.Item>
                     {#if aiEnabled}
@@ -378,7 +378,7 @@ function formatDate(dateStr: string | null | undefined): string {
                         <RefreshCw class="mr-2 h-4 w-4 text-orange-500" />
                         Retry Extraction
                       {:else}
-                        <ScanText class="mr-2 h-4 w-4 text-blue-500" />
+                        <ScanText class="mr-2 h-4 w-4 text-info" />
                         Extract Text
                       {/if}
                     </DropdownMenu.Item>
@@ -431,7 +431,7 @@ function formatDate(dateStr: string | null | undefined): string {
   {#snippet header()}
     <div class="flex flex-col gap-1">
       <h2 class="flex items-center gap-2 text-lg font-semibold">
-        <Text class="h-5 w-5 text-green-500" />
+        <Text class="h-5 w-5 text-success" />
         Extracted Text
       </h2>
       {#if documentToView}

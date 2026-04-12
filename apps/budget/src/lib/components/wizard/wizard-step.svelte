@@ -132,7 +132,7 @@ $effect(() => {
       {#if isOptional}
         <div class="flex items-center gap-2">
           <span
-            class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+            class="inline-flex items-center rounded-full bg-info-bg px-2 py-1 text-xs font-medium text-info-fg">
             Optional Step
           </span>
         </div>

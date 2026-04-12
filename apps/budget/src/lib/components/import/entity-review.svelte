@@ -115,7 +115,7 @@ const selectedCategoriesCount = $derived(
                     aria-label="Select payee for creation" />
                 {:else}
                   <div class="flex h-5 w-5 items-center justify-center">
-                    <CircleCheck class="h-5 w-5 text-green-500" />
+                    <CircleCheck class="h-5 w-5 text-success" />
                   </div>
                 {/if}
 
@@ -186,7 +186,7 @@ const selectedCategoriesCount = $derived(
                     aria-label="Select category for creation" />
                 {:else}
                   <div class="flex h-5 w-5 items-center justify-center">
-                    <CircleCheck class="h-5 w-5 text-green-500" />
+                    <CircleCheck class="h-5 w-5 text-success" />
                   </div>
                 {/if}
 

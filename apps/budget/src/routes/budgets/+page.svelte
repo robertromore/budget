@@ -27,14 +27,12 @@ import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
 import { formatCurrency, formatPercentRaw } from '$lib/utils/formatters';
 import {
-  ArrowRightLeft,
   ChartBar,
   CircleCheck,
   DollarSign,
   FolderTree,
   Grid3x3,
   Plus,
-  RotateCcw,
   Sparkles,
   TrendingUp,
   TriangleAlert,
@@ -46,7 +44,6 @@ import BudgetManageDialog from './(components)/dialogs/budget-manage-dialog.svel
 import BudgetTemplatePicker from './(components)/dialogs/budget-template-picker.svelte';
 import BudgetForecastDisplay from './(components)/forecast/budget-forecast-display.svelte';
 import BudgetGroupsSection from './(components)/forecast/budget-groups-section.svelte';
-import BudgetFundTransfer from './(components)/managers/budget-fund-transfer.svelte';
 import BudgetSearchResults from './(components)/search/budget-search-results.svelte';
 
 // Demo mode detection
@@ -141,8 +138,6 @@ $effect(() => {
         { id: 'overview', label: 'Budget Overview', icon: Grid3x3 },
         { id: 'recommendations', label: 'Recommendations', icon: Sparkles },
         { id: 'groups', label: 'Groups', icon: FolderTree },
-        { id: 'transfer', label: 'Fund Transfer', icon: ArrowRightLeft },
-        { id: 'rollover', label: 'Rollover Manager', icon: RotateCcw },
         { id: 'analytics', label: 'Analytics & Insights', icon: ChartBar },
       ],
       activeTab,
@@ -224,11 +219,6 @@ async function confirmDeleteBudget() {
   deleteDialogOpen = false;
   budgetToDelete = null;
   deleteLinkedSchedule = false;
-}
-
-async function handleFundTransfer(_fromId: number, _toId: number, _amount: number) {
-  // This would integrate with your tRPC mutations once the backend is ready
-  await new Promise((resolve) => setTimeout(resolve, 1000));
 }
 
 function handleCreateGroup() {
@@ -492,11 +482,76 @@ const summaryMetrics = $derived.by(() => {
       {/each}
     </div>
   {:else}
-    <!-- Show tabs even when there are no budgets so users can access Recommendations -->
+    {#snippet overviewContent()}
+      {#if budgets.length === 0}
+        <Empty.Empty>
+          <Empty.EmptyMedia variant="icon">
+            <DollarSign class="size-6" />
+          </Empty.EmptyMedia>
+          <Empty.EmptyHeader>
+            <Empty.EmptyTitle>No Budgets Yet</Empty.EmptyTitle>
+            <Empty.EmptyDescription>
+              Get started by creating your first budget. Track your spending across different
+              categories and manage your finances effectively.
+            </Empty.EmptyDescription>
+          </Empty.EmptyHeader>
+          <Empty.EmptyContent>
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <Button href="/budgets/new">
+                <Plus class="mr-2 h-4 w-4" />
+                Create Your First Budget
+              </Button>
+              <Button variant="outline" onclick={() => setActiveTab('recommendations')}>
+                <Sparkles class="mr-2 h-4 w-4" />
+                View Recommendations
+              </Button>
+            </div>
+          </Empty.EmptyContent>
+        </Empty.Empty>
+      {:else}
+        <div data-tour-id="budget-list">
+          <BudgetSearchResults
+            {budgets}
+            isLoading={budgetsLoading}
+            searchQuery=""
+            viewMode="list"
+            onView={handleViewBudget}
+            onEdit={handleEditBudget}
+            onDelete={handleDeleteBudget}
+            onDuplicate={handleDuplicateBudget}
+            onArchive={handleArchiveBudget}
+            onBulkDelete={handleBulkDeleteBudgets}
+            onBulkArchive={handleBulkArchiveBudgets} />
+        </div>
+      {/if}
+    {/snippet}
+
+    {#snippet recommendationsContent()}
+      <BudgetRecommendationsPanel />
+    {/snippet}
+
+    {#snippet groupsContent()}
+      <BudgetGroupsSection onCreateGroup={handleCreateGroup} onEditGroup={handleEditGroup} />
+    {/snippet}
+
+    {#snippet analyticsContent()}
+      {#if budgets.filter((b) => b.status === 'active').length > 0}
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {#each budgets.filter((b) => b.status === 'active').slice(0, 4) as budget}
+            <BudgetForecastDisplay
+              budgetId={budget.id}
+              daysAhead={30}
+              showAutoAllocate={false} />
+          {/each}
+        </div>
+      {/if}
+      <BudgetAnalyticsDashboard {budgets} />
+    {/snippet}
+
     {#if showTabsOnPage}
       <Tabs.Root value={activeTab} onValueChange={setActiveTab} class="space-y-6">
         <Tabs.List
-          class="grid w-full grid-cols-6"
+          class="grid w-full grid-cols-4"
           data-help-id="budget-tabs"
           data-help-title="Budget Tabs"
           data-tour-id="budget-tabs">
@@ -527,20 +582,6 @@ const summaryMetrics = $derived.by(() => {
             Groups
           </Tabs.Trigger>
           <Tabs.Trigger
-            value="transfer"
-            class="flex items-center gap-2"
-            data-tour-id="budget-fund-transfer-tab">
-            <ArrowRightLeft class="h-4 w-4" />
-            Fund Transfer
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="rollover"
-            class="flex items-center gap-2"
-            data-tour-id="budget-rollover-tab">
-            <RotateCcw class="h-4 w-4" />
-            Rollover Manager
-          </Tabs.Trigger>
-          <Tabs.Trigger
             value="analytics"
             class="flex items-center gap-2"
             data-tour-id="budget-analytics-tab">
@@ -549,158 +590,29 @@ const summaryMetrics = $derived.by(() => {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <!-- Budget Overview Tab -->
         <Tabs.Content value="overview" class="space-y-6">
-          {#if budgets.length === 0}
-            <!-- Empty state when no budgets -->
-            <Empty.Empty>
-              <Empty.EmptyMedia variant="icon">
-                <DollarSign class="size-6" />
-              </Empty.EmptyMedia>
-              <Empty.EmptyHeader>
-                <Empty.EmptyTitle>No Budgets Yet</Empty.EmptyTitle>
-                <Empty.EmptyDescription>
-                  Get started by creating your first budget. Track your spending across different
-                  categories and manage your finances effectively.
-                </Empty.EmptyDescription>
-              </Empty.EmptyHeader>
-              <Empty.EmptyContent>
-                <div class="flex flex-col gap-2 sm:flex-row">
-                  <Button href="/budgets/new">
-                    <Plus class="mr-2 h-4 w-4" />
-                    Create Your First Budget
-                  </Button>
-                  <Button variant="outline" onclick={() => setActiveTab('recommendations')}>
-                    <Sparkles class="mr-2 h-4 w-4" />
-                    View Recommendations
-                  </Button>
-                </div>
-              </Empty.EmptyContent>
-            </Empty.Empty>
-          {:else}
-            <!-- Budget Results -->
-            <div data-tour-id="budget-list">
-              <BudgetSearchResults
-                {budgets}
-                isLoading={budgetsLoading}
-                searchQuery=""
-                viewMode="list"
-                onView={handleViewBudget}
-                onEdit={handleEditBudget}
-                onDelete={handleDeleteBudget}
-                onDuplicate={handleDuplicateBudget}
-                onArchive={handleArchiveBudget}
-                onBulkDelete={handleBulkDeleteBudgets}
-                onBulkArchive={handleBulkArchiveBudgets} />
-            </div>
-          {/if}
+          {@render overviewContent()}
         </Tabs.Content>
-
-        <!-- Recommendations Tab -->
         <Tabs.Content value="recommendations" class="space-y-6">
-          <BudgetRecommendationsPanel />
+          {@render recommendationsContent()}
         </Tabs.Content>
-
-        <!-- Budget Groups Tab -->
         <Tabs.Content value="groups" class="space-y-6">
-          <BudgetGroupsSection onCreateGroup={handleCreateGroup} onEditGroup={handleEditGroup} />
+          {@render groupsContent()}
         </Tabs.Content>
-
-        <!-- Fund Transfer Tab -->
-        <Tabs.Content value="transfer" class="space-y-6">
-          <BudgetFundTransfer {budgets} onFundTransfer={handleFundTransfer} />
-        </Tabs.Content>
-
-        <!-- Rollover Manager Tab -->
-        <Tabs.Content value="rollover" class="space-y-6">
-          <!-- <BudgetRolloverManager {budgets} /> -->
-        </Tabs.Content>
-
-        <!-- Analytics & Insights Tab -->
         <Tabs.Content value="analytics" class="space-y-6">
-          <!-- Forecast Summary for Active Budgets -->
-          {#if budgets.filter((b) => b.status === 'active').length > 0}
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {#each budgets.filter((b) => b.status === 'active').slice(0, 4) as budget}
-                <BudgetForecastDisplay
-                  budgetId={budget.id}
-                  daysAhead={30}
-                  showAutoAllocate={false} />
-              {/each}
-            </div>
-          {/if}
-
-          <BudgetAnalyticsDashboard {budgets} />
+          {@render analyticsContent()}
         </Tabs.Content>
       </Tabs.Root>
     {:else}
-      <!-- Content rendered directly when tabs are in header -->
       <div class="space-y-6">
         {#if activeTab === 'overview'}
-          {#if budgets.length === 0}
-            <!-- Empty state when no budgets -->
-            <Empty.Empty>
-              <Empty.EmptyMedia variant="icon">
-                <DollarSign class="size-6" />
-              </Empty.EmptyMedia>
-              <Empty.EmptyHeader>
-                <Empty.EmptyTitle>No Budgets Yet</Empty.EmptyTitle>
-                <Empty.EmptyDescription>
-                  Get started by creating your first budget. Track your spending across different
-                  categories and manage your finances effectively.
-                </Empty.EmptyDescription>
-              </Empty.EmptyHeader>
-              <Empty.EmptyContent>
-                <div class="flex flex-col gap-2 sm:flex-row">
-                  <Button href="/budgets/new">
-                    <Plus class="mr-2 h-4 w-4" />
-                    Create Your First Budget
-                  </Button>
-                  <Button variant="outline" onclick={() => setActiveTab('recommendations')}>
-                    <Sparkles class="mr-2 h-4 w-4" />
-                    View Recommendations
-                  </Button>
-                </div>
-              </Empty.EmptyContent>
-            </Empty.Empty>
-          {:else}
-            <!-- Budget Results -->
-            <div data-tour-id="budget-list">
-              <BudgetSearchResults
-                {budgets}
-                isLoading={budgetsLoading}
-                searchQuery=""
-                viewMode="list"
-                onView={handleViewBudget}
-                onEdit={handleEditBudget}
-                onDelete={handleDeleteBudget}
-                onDuplicate={handleDuplicateBudget}
-                onArchive={handleArchiveBudget}
-                onBulkDelete={handleBulkDeleteBudgets}
-                onBulkArchive={handleBulkArchiveBudgets} />
-            </div>
-          {/if}
+          {@render overviewContent()}
         {:else if activeTab === 'recommendations'}
-          <BudgetRecommendationsPanel />
+          {@render recommendationsContent()}
         {:else if activeTab === 'groups'}
-          <BudgetGroupsSection onCreateGroup={handleCreateGroup} onEditGroup={handleEditGroup} />
-        {:else if activeTab === 'transfer'}
-          <BudgetFundTransfer {budgets} onFundTransfer={handleFundTransfer} />
-        {:else if activeTab === 'rollover'}
-          <!-- <BudgetRolloverManager {budgets} /> -->
+          {@render groupsContent()}
         {:else if activeTab === 'analytics'}
-          <!-- Forecast Summary for Active Budgets -->
-          {#if budgets.filter((b) => b.status === 'active').length > 0}
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {#each budgets.filter((b) => b.status === 'active').slice(0, 4) as budget}
-                <BudgetForecastDisplay
-                  budgetId={budget.id}
-                  daysAhead={30}
-                  showAutoAllocate={false} />
-              {/each}
-            </div>
-          {/if}
-          <BudgetAnalyticsDashboard {budgets} />
+          {@render analyticsContent()}
         {/if}
       </div>
     {/if}

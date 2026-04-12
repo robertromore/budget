@@ -113,13 +113,13 @@ const severityConfig = $derived.by(() => {
 
   switch (analysis.deficitSeverity) {
     case 'critical':
-      return { color: 'text-red-600', label: 'Critical', icon: TriangleAlert };
+      return { color: 'text-destructive', label: 'Critical', icon: TriangleAlert };
     case 'severe':
       return { color: 'text-orange-600', label: 'Severe', icon: TriangleAlert };
     case 'moderate':
-      return { color: 'text-yellow-600', label: 'Moderate', icon: TrendingDown };
+      return { color: 'text-warning', label: 'Moderate', icon: TrendingDown };
     case 'mild':
-      return { color: 'text-blue-600', label: 'Mild', icon: Info };
+      return { color: 'text-info', label: 'Mild', icon: Info };
     default:
       return { color: 'text-muted-foreground', label: analysis.deficitSeverity, icon: Info };
   }
@@ -261,8 +261,8 @@ async function handleResetEnvelope() {
   <Dialog.Content class="max-h-[90vh] max-w-3xl overflow-y-auto">
     <Dialog.Header>
       <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-red-50 p-2 dark:bg-red-950/20">
-          <TriangleAlert class="h-5 w-5 text-red-600" />
+        <div class="rounded-lg bg-danger-bg p-2">
+          <TriangleAlert class="h-5 w-5 text-destructive" />
         </div>
         <div>
           <Dialog.Title>Deficit Recovery</Dialog.Title>
@@ -285,7 +285,7 @@ async function handleResetEnvelope() {
         <Card.Content class="space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium">Current Deficit:</span>
-            <span class="text-2xl font-bold text-red-600">
+            <span class="text-2xl font-bold text-destructive">
               {currencyFormatter.format(envelope.deficitAmount)}
             </span>
           </div>
@@ -347,13 +347,12 @@ async function handleResetEnvelope() {
                   {#each analysis.autoRecoveryOptions as option, index}
                     {@const typeConfig = {
                       transfer: {
-                        color:
-                          'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
+                        color: 'bg-info-bg border-info/20',
                         icon: ArrowRight,
                         label: 'Transfer',
                       },
                       emergency_fund: {
-                        color: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800',
+                        color: 'bg-danger-bg border-destructive/20',
                         icon: TriangleAlert,
                         label: 'Emergency Fund',
                       },
@@ -364,8 +363,7 @@ async function handleResetEnvelope() {
                         label: 'Reallocation',
                       },
                       borrowing: {
-                        color:
-                          'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800',
+                        color: 'bg-warning-bg border-warning/20',
                         icon: Info,
                         label: 'Borrowing',
                       },
@@ -521,7 +519,7 @@ async function handleResetEnvelope() {
           <Card.Root>
             <Card.Header>
               <div class="flex items-center gap-2">
-                <ArrowRight class="h-5 w-5 text-blue-600" />
+                <ArrowRight class="h-5 w-5 text-info" />
                 <Card.Title class="text-base">Transfer from Another Envelope</Card.Title>
               </div>
               <Card.Description>
@@ -604,7 +602,7 @@ async function handleResetEnvelope() {
           <Card.Root>
             <Card.Header>
               <div class="flex items-center gap-2">
-                <TriangleAlert class="h-5 w-5 text-red-600" />
+                <TriangleAlert class="h-5 w-5 text-destructive" />
                 <Card.Title class="text-base">Use Emergency Fund</Card.Title>
               </div>
               <Card.Description>
@@ -621,7 +619,7 @@ async function handleResetEnvelope() {
                   (opt) => opt.type === 'emergency_fund'
                 )}
                 {#if emergencyOption && emergencyOption.sourceEnvelopeId}
-                  <div class="space-y-2 rounded-lg bg-red-50 p-3 dark:bg-red-950/20">
+                  <div class="space-y-2 rounded-lg bg-danger-bg p-3">
                     <div class="flex justify-between text-sm">
                       <span class="text-muted-foreground">Available:</span>
                       <span class="font-medium"
@@ -673,7 +671,7 @@ async function handleResetEnvelope() {
                 </div>
                 <div class="flex justify-between">
                   <span class="text-muted-foreground">Deficit:</span>
-                  <span class="font-medium text-red-600"
+                  <span class="font-medium text-destructive"
                     >{currencyFormatter.format(envelope.deficitAmount)}</span>
                 </div>
                 <Separator />
@@ -711,7 +709,7 @@ async function handleResetEnvelope() {
               </Card.Description>
             </Card.Header>
             <Card.Content>
-              <div class="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/20">
+              <div class="bg-warning-bg rounded-lg p-3">
                 <p class="text-muted-foreground text-sm">
                   ⚠️ This will adjust the allocated amount to match spending, effectively accepting
                   the overspend. The deficit will be removed but the overspending will remain

@@ -10,6 +10,7 @@ import { goto } from '$app/navigation';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';
 import BookOpen from '@lucide/svelte/icons/book-open';
+import ExternalLink from '@lucide/svelte/icons/external-link';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import Search from '@lucide/svelte/icons/search';
@@ -58,7 +59,9 @@ const parsedContent = $derived.by(() => {
 
 const title = $derived(parsedContent?.frontmatter.title ?? helpId ?? 'Help');
 const description = $derived(parsedContent?.frontmatter.description);
-const relatedIds = $derived(parsedContent?.frontmatter.related ?? []);
+const relatedIds = $derived(
+  (parsedContent?.frontmatter.related ?? []).filter((id: string) => hasHelpContent(id))
+);
 const navigateTo = $derived(parsedContent?.frontmatter.navigateTo as string | undefined);
 const htmlContent = $derived(parsedContent?.html ?? '');
 
@@ -281,13 +284,25 @@ function handleGlobalKeydown(e: KeyboardEvent) {
           <h3 class="mb-3 text-sm font-medium">Related Topics</h3>
           <div class="flex flex-wrap gap-2">
             {#each relatedIds as relatedId}
-              {#if hasHelpContent(relatedId)}
-                <Button variant="outline" size="sm" onclick={() => navigateToRelated(relatedId)}>
-                  {relatedId.replace(/-/g, ' ')}
-                </Button>
-              {/if}
+              <Button variant="outline" size="sm" onclick={() => navigateToRelated(relatedId)}>
+                {relatedId.replace(/-/g, ' ')}
+              </Button>
             {/each}
           </div>
+        </div>
+      {/if}
+
+      <!-- Link to full documentation page -->
+      {#if helpId}
+        <div class="mt-6 border-t pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-muted-foreground w-full"
+            onclick={() => { helpMode.deactivate(); goto(`/help?topic=${helpId}`); }}>
+            <ExternalLink class="mr-2 h-3.5 w-3.5" />
+            View in full documentation
+          </Button>
         </div>
       {/if}
     {/if}

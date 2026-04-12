@@ -501,7 +501,7 @@ const decreaseCount = $derived(rawCategoryComparison.filter((c) => c.changeAbs <
               Increased ({increaseCount})
             </DropdownMenu.RadioItem>
             <DropdownMenu.RadioItem value="decreased">
-              <TrendingDown class="mr-2 h-4 w-4 text-green-600" />
+              <TrendingDown class="mr-2 h-4 w-4 text-amount-positive" />
               Decreased ({decreaseCount})
             </DropdownMenu.RadioItem>
           </DropdownMenu.RadioGroup>
@@ -547,7 +547,7 @@ const decreaseCount = $derived(rawCategoryComparison.filter((c) => c.changeAbs <
                     hoveredItem.previous
                   )}
                 </p>
-                <p class={hoveredItem.change >= 0 ? 'text-destructive' : 'text-green-600'}>
+                <p class={hoveredItem.change >= 0 ? 'text-destructive' : 'text-amount-positive'}>
                   {comparisonPeriodLabels[comparisonPeriod].current}: {currencyFormatter.format(
                     hoveredItem.current
                   )}
@@ -556,12 +556,12 @@ const decreaseCount = $derived(rawCategoryComparison.filter((c) => c.changeAbs <
                   {#if hoveredItem.change >= 0}
                     <TrendingUp class="text-destructive h-3 w-3" />
                   {:else}
-                    <TrendingDown class="h-3 w-3 text-green-600" />
+                    <TrendingDown class="h-3 w-3 text-amount-positive" />
                   {/if}
                   <p
                     class={hoveredItem.change >= 0
                       ? 'text-destructive text-xs'
-                      : 'text-xs text-green-600'}>
+                      : 'text-xs text-amount-positive'}>
                     {hoveredItem.change >= 0 ? '+' : ''}{formatPercentRaw(hoveredItem.change, 1)} ({hoveredItem.changeAbs >=
                     0
                       ? '+'

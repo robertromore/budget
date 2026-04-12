@@ -138,8 +138,8 @@ function handleClose() {
       <!-- Existing annotations warning -->
       {#if existingAnnotationsQuery?.data && existingAnnotationsQuery.data.length > 0}
         <div
-          class="rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-950">
-          <p class="text-sm text-yellow-800 dark:text-yellow-200">
+          class="bg-warning-bg rounded-lg border border-warning/20 p-3">
+          <p class="text-warning-fg text-sm">
             {existingAnnotationsQuery.data.length === 1
               ? 'An existing annotation will be updated.'
               : `${existingAnnotationsQuery.data.length} existing annotations will be updated.`}

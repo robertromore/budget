@@ -1,10 +1,13 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+import * as Empty from '$lib/components/ui/empty';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
 import { currencyFormatter } from '$lib/utils/formatters';
+import Ellipsis from '@lucide/svelte/icons/ellipsis';
 import Plus from '@lucide/svelte/icons/plus';
 import Wallet from '@lucide/svelte/icons/wallet';
 import SeedDefaultAccountsButton from './(components)/seed-default-accounts-button.svelte';
@@ -36,7 +39,9 @@ const deleteAccount = (id: number) => {
     data-help-title="Accounts Page">
     <h1 class="text-2xl font-bold tracking-tight">Accounts</h1>
     <div class="flex items-center gap-2">
-      <SeedDefaultAccountsButton />
+      {#if !hasNoAccounts}
+        <SeedDefaultAccountsButton />
+      {/if}
       <Button href="/accounts/new" data-help-id="add-account-button" data-help-title="Add Account">
         <Plus class="mr-2 h-4 w-4" />
         Add Account
@@ -46,25 +51,27 @@ const deleteAccount = (id: number) => {
 
   <!-- Content -->
   {#if hasNoAccounts}
-    <!-- Empty State -->
-    <div class="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
-      <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-        <Wallet class="h-8 w-8 text-blue-600" />
-      </div>
-      <h2 class="mb-2 text-xl font-semibold text-blue-900">No Accounts Yet</h2>
-      <p class="mx-auto mb-6 max-w-md text-blue-700">
-        Get started by creating your first account. You can add checking accounts, savings accounts,
-        credit cards, or any other financial account you want to track.
-      </p>
-      <div class="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-        <SeedDefaultAccountsButton />
-        <span class="text-sm text-blue-700">or</span>
-        <Button href="/accounts/new" class="bg-blue-600 hover:bg-blue-700">
-          <Plus class="mr-2 h-4 w-4" />
-          Create Your First Account
-        </Button>
-      </div>
-    </div>
+    <Empty.Empty>
+      <Empty.EmptyMedia variant="icon">
+        <Wallet class="size-6" />
+      </Empty.EmptyMedia>
+      <Empty.EmptyHeader>
+        <Empty.EmptyTitle>No Accounts Yet</Empty.EmptyTitle>
+        <Empty.EmptyDescription>
+          Get started by creating your first account. You can add checking accounts, savings
+          accounts, credit cards, or any other financial account you want to track.
+        </Empty.EmptyDescription>
+      </Empty.EmptyHeader>
+      <Empty.EmptyContent>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <SeedDefaultAccountsButton />
+          <Button href="/accounts/new">
+            <Plus class="mr-2 h-4 w-4" />
+            Create Your First Account
+          </Button>
+        </div>
+      </Empty.EmptyContent>
+    </Empty.Empty>
   {:else}
     <!-- Accounts Grid -->
     <div
@@ -76,21 +83,40 @@ const deleteAccount = (id: number) => {
           class="border-l-4"
           style={accountColor ? `border-left-color: ${accountColor}` : ''}>
           <Card.Header>
-            <Card.Title>
-              <a
-                href="/accounts/{slug}"
-                class="text-foreground hover:text-primary focus:text-primary focus:ring-primary flex items-center gap-2 rounded focus:ring-2 focus:ring-offset-2 focus:outline-none">
-                {#if accountIcon}
-                  {@const IconComponent = getIconByName(accountIcon)?.icon}
-                  {#if IconComponent}
-                    <IconComponent
-                      class="h-5 w-5"
-                      style={accountColor ? `color: ${accountColor}` : ''} />
+            <div class="flex items-start justify-between gap-2">
+              <Card.Title>
+                <a
+                  href="/accounts/{slug}"
+                  class="text-foreground hover:text-primary focus:text-primary focus:ring-primary flex items-center gap-2 rounded focus:ring-2 focus:ring-offset-2 focus:outline-none">
+                  {#if accountIcon}
+                    {@const IconComponent = getIconByName(accountIcon)?.icon}
+                    {#if IconComponent}
+                      <IconComponent
+                        class="h-5 w-5"
+                        style={accountColor ? `color: ${accountColor}` : ''} />
+                    {/if}
                   {/if}
-                {/if}
-                <span>{name}</span>
-              </a>
-            </Card.Title>
+                  <span>{name}</span>
+                </a>
+              </Card.Title>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  <button
+                    class="text-muted-foreground hover:text-foreground -mr-2 -mt-1 rounded p-1"
+                    aria-label="Account actions for {name}">
+                    <Ellipsis class="h-4 w-4" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content align="end">
+                  <DropdownMenu.Item>
+                    <a href="/accounts/{slug}/edit" class="w-full">Edit</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item onclick={() => deleteAccount(id)}>
+                    <span>Delete</span>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </div>
             <Card.Description class="space-y-1">
               {#if accountType || institution}
                 <span class="text-muted-foreground flex items-center gap-1 text-xs">
@@ -116,22 +142,6 @@ const deleteAccount = (id: number) => {
             <strong>Balance:</strong>
             {currencyFormatter.format(balance ?? 0)}
           </Card.Content>
-          <Card.Footer class="flex gap-2">
-            <Button
-              href="/accounts/{slug}/edit"
-              variant="outline"
-              size="sm"
-              aria-label="Edit account {name}">
-              Edit
-            </Button>
-            <Button
-              onclick={() => deleteAccount(id)}
-              variant="secondary"
-              size="sm"
-              aria-label="Delete account {name}">
-              Delete
-            </Button>
-          </Card.Footer>
         </Card.Root>
       {/each}
     </div>

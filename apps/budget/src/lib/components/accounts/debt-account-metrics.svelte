@@ -191,7 +191,7 @@ function getMetricCardClass(
   calculatedMetrics: ReturnType<typeof calculateAllMetrics>
 ) {
   if (metricId === 'overLimit' && calculatedMetrics.isOverLimit) {
-    return 'border-red-600 bg-red-50 dark:bg-red-950';
+    return 'border-destructive bg-danger-bg';
   }
   return '';
 }
@@ -202,18 +202,18 @@ function getMetricValueClass(
 ) {
   if (metricId === 'availableCredit') {
     const available = calculatedMetrics.availableCredit || 0;
-    return available > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+    return available > 0 ? 'text-amount-positive' : 'text-amount-negative';
   }
   if (metricId === 'creditUtilization') {
     const util = calculatedMetrics.creditUtilization || 0;
     return util < 30
-      ? 'text-green-600 dark:text-green-400'
+      ? 'text-success'
       : util < 70
-        ? 'text-yellow-600 dark:text-yellow-400'
-        : 'text-red-600 dark:text-red-400';
+        ? 'text-warning'
+        : 'text-destructive';
   }
   if (metricId === 'overLimit') {
-    return 'text-red-600 dark:text-red-400';
+    return 'text-destructive';
   }
   return '';
 }
@@ -241,13 +241,13 @@ function getMetricValueClass(
             <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
               <Card.Title
                 class="text-sm font-medium {metric.id === 'overLimit'
-                  ? 'text-red-600 dark:text-red-400'
+                  ? 'text-destructive'
                   : ''}">
                 {metric.label}
               </Card.Title>
               <Icon
                 class="h-4 w-4 {metric.id === 'overLimit'
-                  ? 'text-red-600 dark:text-red-400'
+                  ? 'text-destructive'
                   : 'text-muted-foreground'}" />
             </Card.Header>
             <Card.Content>
@@ -263,7 +263,7 @@ function getMetricValueClass(
               {#if description}
                 <p
                   class="mt-1 text-xs {metric.id === 'overLimit'
-                    ? 'text-red-600 dark:text-red-400'
+                    ? 'text-destructive'
                     : 'text-muted-foreground'}">
                   {description}
                 </p>

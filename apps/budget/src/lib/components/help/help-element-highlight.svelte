@@ -35,17 +35,22 @@ $effect(() => {
 
   updateRect();
 
-  // Watch for position changes
+  // Watch for size changes on the element itself
   const resizeObserver = new ResizeObserver(updateRect);
   resizeObserver.observe(element);
 
-  // Also update on scroll
+  // Update on scroll
   const scrollHandler = () => updateRect();
   window.addEventListener('scroll', scrollHandler, { passive: true });
+
+  // Update after layout transitions (sidebar toggle, sheet open/close)
+  const transitionHandler = () => updateRect();
+  document.body.addEventListener('transitionend', transitionHandler);
 
   return () => {
     resizeObserver.disconnect();
     window.removeEventListener('scroll', scrollHandler);
+    document.body.removeEventListener('transitionend', transitionHandler);
   };
 });
 

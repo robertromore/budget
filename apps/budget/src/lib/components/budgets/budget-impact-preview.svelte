@@ -68,13 +68,13 @@ const budgetImpacts = $derived.by(() => {
 function getStatusClasses(status: 'safe' | 'warning' | 'danger' | 'over') {
   switch (status) {
     case 'safe':
-      return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800';
+      return 'text-success bg-success-bg border-success/20';
     case 'warning':
       return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800';
     case 'danger':
-      return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800';
+      return 'text-destructive bg-danger-bg border-destructive/20';
     case 'over':
-      return 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-950/50 border-red-300 dark:border-red-700';
+      return 'text-destructive bg-danger-bg border-destructive/30';
     default:
       return '';
   }
@@ -111,7 +111,7 @@ function getStatusIcon(status: 'safe' | 'warning' | 'danger' | 'over', isNegativ
             </div>
             {#if impact.status === 'over'}
               <span
-                class="rounded bg-red-200 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-200">
+                class="bg-danger-bg text-danger-fg rounded px-2 py-0.5 text-xs font-medium">
                 Over Budget
               </span>
             {/if}
@@ -138,8 +138,7 @@ function getStatusIcon(status: 'safe' | 'warning' | 'danger' | 'over', isNegativ
                 </span>
                 {#if impact.remaining !== null}
                   <span
-                    class:text-red-600={impact.remaining < 0}
-                    class:dark:text-red-400={impact.remaining < 0}>
+                    class:text-destructive={impact.remaining < 0}>
                     {impact.remaining >= 0 ? 'Remaining' : 'Over'}: {formatCurrency(
                       Math.abs(impact.remaining)
                     )}
@@ -155,8 +154,7 @@ function getStatusIcon(status: 'safe' | 'warning' | 'danger' | 'over', isNegativ
             <span class="text-muted-foreground">Transaction Impact:</span>
             <span
               class="font-mono font-medium"
-              class:text-green-600={impact.allocation.amount < 0}
-              class:dark:text-green-400={impact.allocation.amount < 0}>
+              class:text-amount-positive={impact.allocation.amount < 0}>
               {impact.allocation.amount < 0 ? '−' : '+'}{formatCurrency(
                 Math.abs(impact.allocation.amount)
               )}

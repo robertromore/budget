@@ -338,7 +338,7 @@ const suggestedPayment = $derived.by(() => {
               <td class="py-2 text-right font-mono"
                 >{currencyFormatter.format(scenario.monthlyPayment)}</td>
               <td class="py-2 text-right">{formatMonths(scenario.months)}</td>
-              <td class="py-2 text-right font-mono text-amber-600">
+              <td class="py-2 text-right font-mono text-warning">
                 {scenario.totalInterest === Infinity
                   ? '∞'
                   : currencyFormatter.format(scenario.totalInterest)}

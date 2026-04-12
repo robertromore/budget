@@ -78,7 +78,7 @@ const canContinue = $derived(importState.files.length > 0);
               class={cn(
                 'flex items-center justify-between rounded-lg border p-3 transition-colors',
                 file.status === 'error' && 'border-destructive bg-destructive/5',
-                file.status === 'ready' && 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                file.status === 'ready' && 'border-success bg-success-bg'
               )}>
               <div class="flex items-center gap-3">
                 <div
@@ -87,13 +87,13 @@ const canContinue = $derived(importState.files.length > 0);
                     file.status === 'error'
                       ? 'bg-destructive/10'
                       : file.status === 'ready'
-                        ? 'bg-green-100 dark:bg-green-900/30'
+                        ? 'bg-success-bg'
                         : 'bg-primary/10'
                   )}>
                   {#if file.status === 'error'}
                     <AlertCircle class="text-destructive h-5 w-5" />
                   {:else if file.status === 'ready'}
-                    <CheckCircle class="h-5 w-5 text-green-600" />
+                    <CheckCircle class="h-5 w-5 text-success" />
                   {:else}
                     <FileText class="text-primary h-5 w-5" />
                   {/if}

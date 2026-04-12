@@ -335,7 +335,7 @@ function formatCurrency(amount: number): string {
           <Card.Root class="border-yellow-500/50 bg-yellow-500/10">
             <Card.Content class="pt-4">
               <div class="flex gap-3">
-                <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+                <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                 <div class="space-y-1">
                   <p class="text-sm font-medium">Medium confidence recommendation</p>
                   <p class="text-muted-foreground text-sm">

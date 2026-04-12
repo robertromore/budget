@@ -203,7 +203,7 @@ function handleGenerate() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      class="h-7 w-7 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950"
+                      class="h-7 w-7 text-success hover:bg-success-bg hover:text-success"
                       onclick={() => handleApprove(recommendation.id)}
                       disabled={isProcessing}
                       title="Approve">
@@ -212,7 +212,7 @@ function handleGenerate() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      class="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                      class="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onclick={() => handleReject(recommendation.id)}
                       disabled={isProcessing}
                       title="Reject">

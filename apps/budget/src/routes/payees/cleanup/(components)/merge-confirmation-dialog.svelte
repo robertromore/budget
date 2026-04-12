@@ -68,8 +68,8 @@ function handleOpenChange(isOpen: boolean) {
     <AlertDialog.Header>
       <div class="flex items-center gap-3">
         <div
-          class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-          <GitMerge class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-info-bg">
+          <GitMerge class="h-5 w-5 text-info" />
         </div>
         <AlertDialog.Title>Merge Payees</AlertDialog.Title>
       </div>
@@ -101,7 +101,7 @@ function handleOpenChange(isOpen: boolean) {
       <!-- Warning -->
       <div
         class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/50">
-        <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-warning" />
         <div class="text-sm text-amber-800 dark:text-amber-200">
           <strong>This action cannot be undone.</strong> All transactions from the duplicate payees will
           be reassigned to the primary payee.

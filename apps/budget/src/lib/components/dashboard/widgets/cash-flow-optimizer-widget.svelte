@@ -37,7 +37,7 @@ const hasTargetBalances = $derived(
   </div>
 {:else if idleCash.length === 0}
   <div class="flex flex-col items-center gap-2 py-6 text-center">
-    <TrendingUpIcon class="h-8 w-8 text-green-500"></TrendingUpIcon>
+    <TrendingUpIcon class="h-8 w-8 text-success"></TrendingUpIcon>
     <p class="text-sm font-medium">All balances within target</p>
     <p class="text-muted-foreground text-xs">No idle cash detected across tracked accounts.</p>
   </div>
@@ -46,7 +46,7 @@ const hasTargetBalances = $derived(
     <!-- Summary -->
     <div class="flex items-center justify-between">
       <span class="text-muted-foreground text-xs">Total idle cash</span>
-      <span class="font-semibold text-amber-600 dark:text-amber-400">
+      <span class="font-semibold text-warning">
         {currencyFormatter.format(totalIdle)}
       </span>
     </div>
@@ -56,7 +56,7 @@ const hasTargetBalances = $derived(
       {#each idleCash as item (item.accountId)}
         <div class="flex items-center justify-between text-sm">
           <span class="text-muted-foreground truncate">{item.accountName}</span>
-          <span class="shrink-0 font-medium text-amber-600 dark:text-amber-400">
+          <span class="shrink-0 font-medium text-warning">
             +{currencyFormatter.format(item.surplus)}
           </span>
         </div>

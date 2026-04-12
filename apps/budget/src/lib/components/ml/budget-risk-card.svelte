@@ -40,9 +40,9 @@ let {
 
 const riskConfig = {
   none: {
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20',
+    color: 'text-success',
+    bgColor: 'bg-success/10',
+    borderColor: 'border-success/20',
     label: 'On Track',
     icon: CheckCircle,
   },
@@ -61,16 +61,16 @@ const riskConfig = {
     icon: AlertTriangle,
   },
   high: {
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
-    borderColor: 'border-red-500/20',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+    borderColor: 'border-destructive/20',
     label: 'High Risk',
     icon: AlertTriangle,
   },
   critical: {
-    color: 'text-red-600',
-    bgColor: 'bg-red-600/10',
-    borderColor: 'border-red-600/20',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+    borderColor: 'border-destructive/20',
     label: 'Critical',
     icon: AlertTriangle,
   },
@@ -102,7 +102,7 @@ const RiskIcon = $derived(config.icon);
       <!-- Predicted Overspend -->
       <div class="space-y-1">
         <p class="text-muted-foreground text-xs">Predicted Overspend</p>
-        <p class="text-2xl font-bold text-red-500">
+        <p class="text-2xl font-bold text-destructive">
           {formatCurrency(predictedOverspend)}
         </p>
       </div>
@@ -138,7 +138,7 @@ const RiskIcon = $derived(config.icon);
     {:else}
       <!-- All Clear -->
       <div class="py-4 text-center">
-        <CheckCircle class="mx-auto h-8 w-8 text-green-500" />
+        <CheckCircle class="mx-auto h-8 w-8 text-success" />
         <p class="mt-2 text-sm font-medium">All budgets on track</p>
         <p class="text-muted-foreground text-xs">No overspending predicted</p>
       </div>

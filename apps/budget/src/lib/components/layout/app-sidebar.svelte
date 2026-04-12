@@ -37,6 +37,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import Tags from '@lucide/svelte/icons/tags';
 import User from '@lucide/svelte/icons/user';
 import Wallet from '@lucide/svelte/icons/wallet';
+import BookOpen from '@lucide/svelte/icons/book-open';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Zap from '@lucide/svelte/icons/zap';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
@@ -233,6 +234,16 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
+                <a href="/help" {...props} class="flex items-center gap-3">
+                  <BookOpen class="h-4 w-4"></BookOpen>
+                  <span class="font-medium">Help</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
         </Sidebar.Menu>
       </Sidebar.GroupContent>
     </Sidebar.Group>
@@ -246,8 +257,8 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
       <div class="flex items-center justify-between px-2 text-xs">
         <span
           class="font-medium"
-          class:text-green-600={onBudgetBalance > 0}
-          class:text-red-600={onBudgetBalance < 0}
+          class:text-amount-positive={onBudgetBalance > 0}
+          class:text-amount-negative={onBudgetBalance < 0}
           class:text-muted-foreground={onBudgetBalance === 0}
           title="On-Budget Balance">
           {currencyFormatter.format(onBudgetBalance)}
@@ -426,129 +437,6 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
       </Sidebar.GroupContent>
     </Sidebar.Group>
 
-    <!-- <Sidebar.Group>
-      <Sidebar.GroupLabel><a href="/schedules">Schedules</a></Sidebar.GroupLabel>
-      <Sidebar.GroupAction
-        title="Add Schedule"
-        onclick={() => goto('/schedules/new')}>
-        <Plus /> <span class="sr-only">Add Schedule</span>
-      </Sidebar.GroupAction>
-      <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          {#each schedules as schedule}
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                {#snippet child({props})}
-                  <a href="/schedules/{schedule.slug}" {...props}>
-                    <span class="text-sm">{schedule.name}</span>
-                  </a>
-                {/snippet}
-              </Sidebar.MenuButton>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger>
-                  {#snippet child({props})}
-                    <Sidebar.MenuAction {...props}>
-                      <Ellipsis />
-                    </Sidebar.MenuAction>
-                  {/snippet}
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item>
-                    <a href="/schedules/{schedule.slug}/edit" class="w-full">Edit</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item onclick={() => {
-                    _deleteScheduleId.current = schedule.id;
-                    _deleteScheduleDialog.setTrue();
-                  }}>
-                    <span>Delete</span>
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
-            </Sidebar.MenuItem>
-          {/each}
-        </Sidebar.Menu>
-      </Sidebar.GroupContent>
-    </Sidebar.Group>
-
-    <Sidebar.Group>
-      <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
-              {#snippet child({props})}
-                <a href="/patterns" {...props} class="flex items-center gap-3">
-                  <Sparkles class="h-4 w-4"></Sparkles>
-                  <span class="font-medium">Patterns</span>
-                </a>
-              {/snippet}
-            </Sidebar.MenuButton>
-          </Sidebar.MenuItem>
-        </Sidebar.Menu>
-      </Sidebar.GroupContent>
-    </Sidebar.Group>
-
-    <Sidebar.Group>
-      <Sidebar.GroupLabel><a href="/budgets">Budgets</a></Sidebar.GroupLabel>
-      <Sidebar.GroupAction
-        title="Add Budget"
-        onclick={() => goto('/budgets/new')}>
-        <Plus /> <span class="sr-only">Add Budget</span>
-      </Sidebar.GroupAction>
-      <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          {#each budgets as budget}
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                {#snippet child({props})}
-                  <a href="/budgets/{budget.slug}" {...props}>
-                    <span class="text-sm">{budget.name}</span>
-                  </a>
-                {/snippet}
-              </Sidebar.MenuButton>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger>
-                  {#snippet child({props})}
-                    <Sidebar.MenuAction {...props}>
-                      <Ellipsis />
-                    </Sidebar.MenuAction>
-                  {/snippet}
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item>
-                    <a href="/budgets/{budget.slug}/edit" class="w-full">Edit</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _deleteBudgetId.current = budget.id;
-                      _deleteBudgetDialog.setTrue();
-                    }}>
-                    <span>Delete</span>
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
-            </Sidebar.MenuItem>
-          {/each}
-        </Sidebar.Menu>
-      </Sidebar.GroupContent>
-    </Sidebar.Group>
-
-    <Sidebar.Group>
-      <Sidebar.GroupLabel><a href="/payees">Payees</a></Sidebar.GroupLabel>
-      <Sidebar.GroupAction
-        title="Add Payee"
-        onclick={() => goto('/payees/new')}>
-        <Plus /> <span class="sr-only">Add Payee</span>
-      </Sidebar.GroupAction>
-    </Sidebar.Group>
-
-    <Sidebar.Group>
-      <Sidebar.GroupLabel><a href="/categories">Categories</a></Sidebar.GroupLabel>
-      <Sidebar.GroupAction
-        title="Add Category"
-        onclick={() => goto('/categories/new')}>
-        <Plus /> <span class="sr-only">Add Category</span>
-      </Sidebar.GroupAction>
-    </Sidebar.Group> -->
   </Sidebar.Content>
 
   <Sidebar.Footer class="border-sidebar-border border-t">

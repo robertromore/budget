@@ -23,9 +23,13 @@ const confirmDeleteAccount = async () => {
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
       <AlertDialog.Description>
-        This action cannot be undone. This will permanently delete your account and any associated
-        information with it.
+        This action cannot be undone. Deleting this account will also permanently remove:
       </AlertDialog.Description>
+      <ul class="text-muted-foreground ml-6 list-disc text-sm">
+        <li>All transactions in this account</li>
+        <li>Schedules linked to this account</li>
+        <li>Budget associations with this account</li>
+      </ul>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>

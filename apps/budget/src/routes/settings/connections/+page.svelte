@@ -191,7 +191,7 @@ const selectedInterval = $derived(intervalOptions.find((o) => o.value === autoSy
           <div class="flex items-center justify-between">
             <Label for="simplefin-url">Shared Access URL (Optional)</Label>
             {#if hasSimplefinUrl}
-              <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <div class="flex items-center gap-2 text-sm text-success">
                 <CheckCircle class="h-4 w-4" />
                 <span>Configured</span>
               </div>
@@ -237,7 +237,7 @@ const selectedInterval = $derived(intervalOptions.find((o) => o.value === autoSy
         </div>
 
         <div class="flex items-center gap-2">
-          <div class="h-2 w-2 rounded-full bg-green-500"></div>
+          <div class="h-2 w-2 rounded-full bg-success"></div>
           <span class="text-muted-foreground text-sm">Always available</span>
           {#if updateSimplefinMutation.isPending}
             <RefreshCw class="text-muted-foreground h-3 w-3 animate-spin" />
@@ -246,8 +246,8 @@ const selectedInterval = $derived(intervalOptions.find((o) => o.value === autoSy
 
         <!-- Where credentials are entered -->
         <div
-          class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
-          <p class="text-xs text-blue-700 dark:text-blue-300">
+          class="bg-info-bg rounded-lg border border-info/20 p-3">
+          <p class="text-info-fg text-xs">
             <strong>Where to connect:</strong> Go to an account's Settings tab &rarr; Bank Connection
             section to connect it with SimpleFIN.
           </p>
@@ -332,7 +332,7 @@ const selectedInterval = $derived(intervalOptions.find((o) => o.value === autoSy
 
         <div class="flex items-center gap-2">
           {#if tellerSettings.enabled}
-            <div class="h-2 w-2 rounded-full bg-green-500"></div>
+            <div class="h-2 w-2 rounded-full bg-success"></div>
             <span class="text-muted-foreground text-sm">Enabled</span>
           {:else}
             <div class="h-2 w-2 rounded-full bg-gray-400"></div>
@@ -345,8 +345,8 @@ const selectedInterval = $derived(intervalOptions.find((o) => o.value === autoSy
 
         <!-- Where credentials are entered -->
         <div
-          class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
-          <p class="text-xs text-blue-700 dark:text-blue-300">
+          class="bg-info-bg rounded-lg border border-info/20 p-3">
+          <p class="text-info-fg text-xs">
             <strong>Where to connect:</strong> Configure the Application ID above, then go to an account's
             Settings tab &rarr; Bank Connection to connect via Teller.
           </p>
@@ -409,7 +409,7 @@ const selectedInterval = $derived(intervalOptions.find((o) => o.value === autoSy
 
         <div class="flex items-center gap-2">
           {#if autoSyncEnabled}
-            <div class="h-2 w-2 rounded-full bg-green-500"></div>
+            <div class="h-2 w-2 rounded-full bg-success"></div>
             <span class="text-muted-foreground text-sm">Enabled</span>
           {:else}
             <div class="h-2 w-2 rounded-full bg-gray-400"></div>

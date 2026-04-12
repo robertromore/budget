@@ -222,12 +222,12 @@ const avgAmount = $derived.by(() => {
               <Badge variant="outline" class="text-xs"
                 >{formatCategoryType(category.categoryType)}</Badge>
               {#if category.isTaxDeductible}
-                <Badge variant="outline" class="border-amber-500 text-xs text-amber-600">
+                <Badge variant="outline" class="border-amber-500 text-xs text-warning">
                   Tax Deductible
                 </Badge>
               {/if}
               {#if category.isSeasonal}
-                <Badge variant="outline" class="border-blue-500 text-xs text-blue-600">
+                <Badge variant="outline" class="border-blue-500 text-xs text-info">
                   Seasonal
                 </Badge>
               {/if}
@@ -394,8 +394,8 @@ const avgAmount = $derived.by(() => {
                           <div class="text-muted-foreground">Available</div>
                           <div
                             class="font-medium"
-                            class:text-green-600={budget.availableAmount > 0}
-                            class:text-red-600={budget.availableAmount < 0}>
+                            class:text-amount-positive={budget.availableAmount > 0}
+                            class:text-amount-negative={budget.availableAmount < 0}>
                             {formatCurrency(budget.availableAmount)}
                           </div>
                         </div>
@@ -409,7 +409,7 @@ const avgAmount = $derived.by(() => {
                         <div class="border-t pt-2">
                           <div class="flex items-center justify-between text-sm">
                             <span class="text-muted-foreground">Deficit</span>
-                            <span class="font-medium text-red-600"
+                            <span class="font-medium text-amount-negative"
                               >{formatCurrency(budget.deficitAmount)}</span>
                           </div>
                         </div>
@@ -448,8 +448,8 @@ const avgAmount = $derived.by(() => {
                       </div>
                       <span
                         class="font-semibold"
-                        class:text-red-600={txn.amount < 0}
-                        class:text-green-600={txn.amount > 0}>
+                        class:text-amount-negative={txn.amount < 0}
+                        class:text-amount-positive={txn.amount > 0}>
                         {formatCurrency(txn.amount)}
                       </span>
                     </div>
@@ -541,7 +541,7 @@ const avgAmount = $derived.by(() => {
             <!-- Monthly Spending Chart -->
             <section class="rounded-lg border p-5">
               <div class="mb-4 flex items-center gap-2">
-                <Activity class="h-5 w-5 text-blue-500" />
+                <Activity class="h-5 w-5 text-info" />
                 <h3 class="font-semibold">Monthly Spending</h3>
               </div>
 
@@ -664,7 +664,7 @@ const avgAmount = $derived.by(() => {
                 <!-- Spending Forecast Card -->
                 <div class="rounded-lg border p-6">
                   <div class="mb-4 flex items-center gap-2">
-                    <TrendingUp class="h-5 w-5 text-blue-500" />
+                    <TrendingUp class="h-5 w-5 text-info" />
                     <h3 class="font-semibold">Spending Forecast</h3>
                   </div>
 
@@ -711,12 +711,12 @@ const avgAmount = $derived.by(() => {
                     <div class="space-y-4">
                       <div
                         class="flex items-start gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
-                        <div class="rounded-full bg-green-100 p-2 dark:bg-green-950">
-                          <DollarSign class="h-4 w-4 text-green-600" />
+                        <div class="rounded-full bg-success-bg p-2">
+                          <DollarSign class="h-4 w-4 text-success" />
                         </div>
                         <div>
                           <p class="font-medium">Suggested Monthly Budget</p>
-                          <p class="text-2xl font-bold text-green-600">
+                          <p class="text-2xl font-bold text-success">
                             {formatCurrency(Math.abs(stats.monthlyAverage * 1.1))}
                           </p>
                           <p class="text-muted-foreground text-sm">
@@ -731,7 +731,7 @@ const avgAmount = $derived.by(() => {
                         <div
                           class="flex items-start gap-3 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
                           <div class="rounded-full bg-amber-100 p-2 dark:bg-amber-950">
-                            <Activity class="h-4 w-4 text-amber-600" />
+                            <Activity class="h-4 w-4 text-warning" />
                           </div>
                           <div>
                             <p class="font-medium text-amber-800 dark:text-amber-200">

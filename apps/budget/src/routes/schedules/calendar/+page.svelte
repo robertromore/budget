@@ -254,10 +254,10 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Expected Income</Card.Title>
-        <TrendingUp class="h-4 w-4 text-green-500" />
+        <TrendingUp class="h-4 w-4 text-success" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+        <div class="text-2xl font-bold text-amount-positive">
           {currencyFormatter.format(monthlyIncome)}
         </div>
         <p class="text-muted-foreground text-xs">From scheduled deposits</p>
@@ -267,10 +267,10 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Expected Expenses</Card.Title>
-        <TrendingDown class="h-4 w-4 text-red-500" />
+        <TrendingDown class="h-4 w-4 text-destructive" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+        <div class="text-2xl font-bold text-amount-negative">
           {currencyFormatter.format(monthlyExpenses)}
         </div>
         <p class="text-muted-foreground text-xs">From scheduled bills</p>
@@ -285,8 +285,8 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       <Card.Content>
         <div
           class="text-2xl font-bold {monthlyNet >= 0
-            ? 'text-green-600 dark:text-green-400'
-            : 'text-red-600 dark:text-red-400'}">
+            ? 'text-amount-positive'
+            : 'text-amount-negative'}">
           {currencyFormatter.format(monthlyNet)}
         </div>
         <p class="text-muted-foreground text-xs">Expected monthly balance</p>
@@ -342,8 +342,8 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
               {#if dayOccurrences.length > 0}
                 <span
                   class="text-xs font-medium"
-                  class:text-green-600={dayTotal >= 0}
-                  class:text-red-600={dayTotal < 0}>
+                  class:text-amount-positive={dayTotal >= 0}
+                  class:text-amount-negative={dayTotal < 0}>
                   {currencyFormatter.format(dayTotal)}
                 </span>
               {/if}
@@ -358,8 +358,8 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                       type="button"
                       class="flex w-full items-center justify-between rounded px-1 py-0.5 text-xs transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 {occ.amount >
                       0
-                        ? 'bg-green-50 dark:bg-green-950/30'
-                        : 'bg-red-50 dark:bg-red-950/30'}"
+                        ? 'bg-success-bg'
+                        : 'bg-danger-bg'}"
                       onclick={() => viewSchedule(occ.schedule)}>
                       <span class="truncate">{occ.schedule.name}</span>
                     </button>
@@ -409,8 +409,8 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 <div
                   class="flex h-10 w-10 flex-col items-center justify-center rounded-lg text-xs {occ.amount >
                   0
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}">
+                    ? 'bg-success-bg text-success-fg'
+                    : 'bg-danger-bg text-danger-fg'}">
                   <span class="font-bold">{occ.date.getDate()}</span>
                   <span class="text-[10px]"
                     >{occ.date.toLocaleDateString('en-US', { month: 'short' })}</span>
@@ -429,8 +429,8 @@ const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
               <div class="text-right">
                 <p
                   class="font-semibold"
-                  class:text-green-600={occ.amount > 0}
-                  class:text-red-600={occ.amount < 0}>
+                  class:text-amount-positive={occ.amount > 0}
+                  class:text-amount-negative={occ.amount < 0}>
                   {currencyFormatter.format(occ.amount)}
                 </p>
                 <p class="text-muted-foreground text-xs">

@@ -72,16 +72,16 @@ function formatPeriodLabel(startDate: string, endDate: string): string {
 
 // Get utilization color
 function getUtilizationColor(rate: number): string {
-  if (rate > 100) return 'text-red-500';
-  if (rate > 80) return 'text-yellow-500';
-  return 'text-green-500';
+  if (rate > 100) return 'text-destructive';
+  if (rate > 80) return 'text-warning';
+  return 'text-success';
 }
 
 // Get progress color class
 function getProgressClass(rate: number): string {
-  if (rate > 100) return '[&>div]:bg-red-500';
-  if (rate > 80) return '[&>div]:bg-yellow-500';
-  return '[&>div]:bg-green-500';
+  if (rate > 100) return '[&>div]:bg-destructive';
+  if (rate > 80) return '[&>div]:bg-warning';
+  return '[&>div]:bg-success';
 }
 </script>
 
@@ -126,11 +126,11 @@ function getProgressClass(rate: number): string {
             </div>
             <div class="mt-1 flex items-center gap-1">
               {#if summary.trend === 'up'}
-                <TrendingUp class="h-4 w-4 text-red-500" />
-                <span class="text-xs text-red-500">Trending up</span>
+                <TrendingUp class="h-4 w-4 text-destructive" />
+                <span class="text-xs text-destructive">Trending up</span>
               {:else if summary.trend === 'down'}
-                <TrendingDown class="h-4 w-4 text-green-500" />
-                <span class="text-xs text-green-500">Trending down</span>
+                <TrendingDown class="h-4 w-4 text-success" />
+                <span class="text-xs text-success">Trending down</span>
               {:else}
                 <Minus class="text-muted-foreground h-4 w-4" />
                 <span class="text-muted-foreground text-xs">Stable</span>
@@ -159,10 +159,10 @@ function getProgressClass(rate: number): string {
               <Badge
                 variant="outline"
                 class={period.utilizationRate > 100
-                  ? 'border-red-500 text-red-500'
+                  ? 'border-destructive text-destructive'
                   : period.utilizationRate > 80
-                    ? 'border-yellow-500 text-yellow-500'
-                    : 'border-green-500 text-green-500'}>
+                    ? 'border-warning text-warning'
+                    : 'border-success text-success'}>
                 {formatPercentRaw(period.utilizationRate, 0)}
               </Badge>
             </div>

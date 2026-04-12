@@ -109,7 +109,7 @@ const seasonalAnalysis = $derived.by(() => {
 
   // Calculate seasonal (quarter) patterns
   const quarters = [
-    { name: 'Q1 (Jan-Mar)', icon: Snowflake, months: [0, 1, 2], color: 'text-blue-500' },
+    { name: 'Q1 (Jan-Mar)', icon: Snowflake, months: [0, 1, 2], color: 'text-info' },
     { name: 'Q2 (Apr-Jun)', icon: Flower2, months: [3, 4, 5], color: 'text-green-500' },
     { name: 'Q3 (Jul-Sep)', icon: Sun, months: [6, 7, 8], color: 'text-yellow-500' },
     { name: 'Q4 (Oct-Dec)', icon: Leaf, months: [9, 10, 11], color: 'text-orange-500' },
@@ -210,8 +210,8 @@ const seasonalAnalysis = $derived.by(() => {
 });
 
 function getSeasonalityLabel(strength: number): { label: string; color: string } {
-  if (strength >= 30) return { label: 'Strong', color: 'text-green-600' };
-  if (strength >= 15) return { label: 'Moderate', color: 'text-yellow-600' };
+  if (strength >= 30) return { label: 'Strong', color: 'text-success' };
+  if (strength >= 15) return { label: 'Moderate', color: 'text-warning' };
   if (strength >= 5) return { label: 'Weak', color: 'text-orange-600' };
   return { label: 'None', color: 'text-muted-foreground' };
 }
@@ -267,7 +267,7 @@ function handleClose() {
               </div>
               <div>
                 <p class="text-muted-foreground text-xs">Lowest Month</p>
-                <p class="text-lg font-semibold text-green-600">
+                <p class="text-amount-positive text-lg font-semibold">
                   {seasonalAnalysis.lowestMonth?.fullName ?? 'N/A'}
                 </p>
               </div>
@@ -296,7 +296,7 @@ function handleClose() {
                       {#if isHighest}
                         <Badge variant="destructive" class="px-1 py-0 text-[10px]">Highest</Badge>
                       {:else if isLowest}
-                        <Badge class="bg-green-600 px-1 py-0 text-[10px]">Lowest</Badge>
+                        <Badge class="bg-success px-1 py-0 text-[10px]">Lowest</Badge>
                       {/if}
                     </div>
                     <div class="flex items-center gap-3">
@@ -310,7 +310,7 @@ function handleClose() {
                       <span
                         class="w-16 text-right text-xs tabular-nums"
                         class:text-destructive={month.percentFromMean > 0}
-                        class:text-green-600={month.percentFromMean < 0}>
+                        class:text-amount-positive={month.percentFromMean < 0}>
                         {month.percentFromMean > 0 ? '+' : ''}{formatPercentRaw(
                           month.percentFromMean,
                           0
@@ -322,7 +322,7 @@ function handleClose() {
                     <div
                       class="h-full rounded-full transition-all"
                       class:bg-destructive={isHighest}
-                      class:bg-green-600={isLowest}
+                      class:bg-success={isLowest}
                       class:bg-primary={!isHighest && !isLowest}
                       style="width: {barWidth}%">
                     </div>
@@ -346,7 +346,7 @@ function handleClose() {
                 <div
                   class="rounded-lg border p-3 {isHighest
                     ? 'border-destructive bg-destructive/5'
-                    : ''} {isLowest ? 'border-green-600 bg-green-50 dark:bg-green-950' : ''}">
+                    : ''} {isLowest ? 'border-success bg-success-bg' : ''}">
                   <div class="flex items-center gap-2">
                     <quarter.icon class="h-4 w-4 {quarter.color}" />
                     <span class="text-sm font-medium">{quarter.name}</span>
@@ -357,7 +357,7 @@ function handleClose() {
                   <p
                     class="text-xs tabular-nums"
                     class:text-destructive={quarter.percentFromMean > 0}
-                    class:text-green-600={quarter.percentFromMean < 0}>
+                    class:text-amount-positive={quarter.percentFromMean < 0}>
                     {quarter.percentFromMean > 0 ? '+' : ''}{formatPercentRaw(
                       quarter.percentFromMean,
                       0
@@ -388,7 +388,7 @@ function handleClose() {
                         {#if yoy.change > 0}
                           <TrendingUp class="text-destructive h-4 w-4" />
                         {:else}
-                          <TrendingDown class="h-4 w-4 text-green-600" />
+                          <TrendingDown class="text-amount-positive h-4 w-4" />
                         {/if}
                         <span class="font-medium">{yoy.fullName}</span>
                       </div>
@@ -401,13 +401,13 @@ function handleClose() {
                       <p
                         class="font-semibold tabular-nums"
                         class:text-destructive={yoy.change > 0}
-                        class:text-green-600={yoy.change < 0}>
+                        class:text-amount-positive={yoy.change < 0}>
                         {yoy.change > 0 ? '+' : ''}{currencyFormatter.format(yoy.change)}
                       </p>
                       <p
                         class="text-xs tabular-nums"
                         class:text-destructive={yoy.percentChange > 0}
-                        class:text-green-600={yoy.percentChange < 0}>
+                        class:text-amount-positive={yoy.percentChange < 0}>
                         {yoy.percentChange > 0 ? '+' : ''}{formatPercentRaw(yoy.percentChange, 1)}
                       </p>
                     </div>
@@ -442,7 +442,7 @@ function handleClose() {
                       <td class="py-2 font-medium">{month.fullName}</td>
                       <td class="py-2 text-right tabular-nums"
                         >{currencyFormatter.format(month.average)}</td>
-                      <td class="py-2 text-right text-green-600 tabular-nums"
+                      <td class="text-amount-positive py-2 text-right tabular-nums"
                         >{currencyFormatter.format(month.min)}</td>
                       <td class="text-destructive py-2 text-right tabular-nums"
                         >{currencyFormatter.format(month.max)}</td>

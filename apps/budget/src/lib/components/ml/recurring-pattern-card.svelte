@@ -106,7 +106,7 @@ function formatDate(dateStr: string): string {
 }
 
 function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.8) return 'text-green-500';
+  if (confidence >= 0.8) return 'text-success';
   if (confidence >= 0.6) return 'text-yellow-500';
   return 'text-orange-500';
 }
@@ -138,13 +138,13 @@ const hasInactive = $derived(inactivePatterns.length > 0);
       <div class="grid grid-cols-2 gap-3">
         <div class="space-y-1 rounded-lg border p-3">
           <p class="text-muted-foreground text-xs">Monthly Income</p>
-          <p class="text-lg font-semibold text-green-600">
+          <p class="text-lg font-semibold text-amount-positive">
             {formatCurrency(monthlyIncome)}
           </p>
         </div>
         <div class="space-y-1 rounded-lg border p-3">
           <p class="text-muted-foreground text-xs">Monthly Expenses</p>
-          <p class="text-lg font-semibold text-red-600">
+          <p class="text-lg font-semibold text-amount-negative">
             {formatCurrency(monthlyExpenses)}
           </p>
         </div>
@@ -174,9 +174,9 @@ const hasInactive = $derived(inactivePatterns.length > 0);
                 <div
                   class="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
                   {#if pattern.averageAmount >= 0}
-                    <TrendingUp class="h-4 w-4 text-green-500" />
+                    <TrendingUp class="h-4 w-4 text-amount-positive" />
                   {:else}
-                    <CreditCard class="h-4 w-4 text-red-500" />
+                    <CreditCard class="h-4 w-4 text-amount-negative" />
                   {/if}
                 </div>
                 <div class="min-w-0">
@@ -194,8 +194,8 @@ const hasInactive = $derived(inactivePatterns.length > 0);
               <div class="shrink-0 text-right">
                 <p
                   class={cn('text-sm font-semibold', {
-                    'text-green-600': pattern.averageAmount >= 0,
-                    'text-red-600': pattern.averageAmount < 0,
+                    'text-amount-positive': pattern.averageAmount >= 0,
+                    'text-amount-negative': pattern.averageAmount < 0,
                   })}>
                   {formatCurrency(pattern.averageAmount)}
                 </p>
@@ -215,7 +215,7 @@ const hasInactive = $derived(inactivePatterns.length > 0);
             <Clock class="text-muted-foreground h-4 w-4" />
             <span class="text-sm">{subscriptions.length} subscriptions detected</span>
           </div>
-          <p class="text-sm font-medium text-red-600">
+          <p class="text-sm font-medium text-destructive">
             {formatCurrency(
               subscriptions.reduce(
                 (sum, s) => sum + Math.abs(s.averageAmount) * (30 / s.interval),

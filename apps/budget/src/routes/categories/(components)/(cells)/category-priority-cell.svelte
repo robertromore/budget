@@ -10,11 +10,11 @@ let { priority }: Props = $props();
 const getPriorityColor = (priority: string | null) => {
   switch (priority) {
     case 'essential':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
+      return 'bg-danger-bg text-danger-fg';
     case 'important':
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
     case 'discretionary':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
+      return 'bg-info-bg text-info-fg';
     case 'luxury':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200';
     default:

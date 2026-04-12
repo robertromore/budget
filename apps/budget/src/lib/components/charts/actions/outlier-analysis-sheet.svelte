@@ -134,13 +134,13 @@ const outlierAnalysis = $derived.by(() => {
 function getCategoryColor(category: string): string {
   switch (category) {
     case 'extreme':
-      return 'text-red-600';
+      return 'text-destructive';
     case 'significant':
       return 'text-orange-600';
     case 'moderate':
-      return 'text-yellow-600';
+      return 'text-warning';
     default:
-      return 'text-green-600';
+      return 'text-success';
   }
 }
 
@@ -225,7 +225,7 @@ function handleClose() {
                   style="width: {(outlierAnalysis.aboveMean / chartSelection.count) * 100}%">
                 </div>
                 <div
-                  class="bg-green-600/70"
+                  class="bg-success/70"
                   style="width: {(outlierAnalysis.belowMean / chartSelection.count) * 100}%">
                 </div>
               </div>
@@ -290,7 +290,7 @@ function handleClose() {
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <div class="h-3 w-3 rounded-full bg-green-600"></div>
+                  <div class="h-3 w-3 rounded-full bg-success"></div>
                   <span class="text-sm">Normal (&lt;1σ)</span>
                 </div>
                 <div class="flex items-center gap-2">
@@ -323,7 +323,7 @@ function handleClose() {
                         {#if point.isAbove}
                           <TrendingUp class="text-destructive h-4 w-4" />
                         {:else}
-                          <TrendingDown class="h-4 w-4 text-green-600" />
+                          <TrendingDown class="h-4 w-4 text-success" />
                         {/if}
                         <span class="font-medium">{point.label}</span>
                         <Badge variant={getCategoryBadge(point.category)}>
@@ -332,7 +332,7 @@ function handleClose() {
                       </div>
                       <p class="text-muted-foreground text-sm">
                         {currencyFormatter.format(point.value)}
-                        <span class={point.isAbove ? 'text-destructive' : 'text-green-600'}>
+                        <span class={point.isAbove ? 'text-destructive' : 'text-success'}>
                           ({point.percentFromMean > 0 ? '+' : ''}{formatPercentRaw(
                             point.percentFromMean,
                             0
@@ -356,7 +356,7 @@ function handleClose() {
         {:else}
           <Card.Root>
             <Card.Content class="py-6">
-              <div class="flex items-center justify-center gap-2 text-green-600">
+              <div class="flex items-center justify-center gap-2 text-success">
                 <CheckCircle class="h-5 w-5" />
                 <span class="font-medium">No significant outliers detected</span>
               </div>
@@ -429,7 +429,7 @@ function handleClose() {
                         <TrendingUp class="text-destructive h-4 w-4" />
                         <span class="text-sm font-medium">Consecutive high values</span>
                       {:else}
-                        <TrendingDown class="h-4 w-4 text-green-600" />
+                        <TrendingDown class="h-4 w-4 text-success" />
                         <span class="text-sm font-medium">Consecutive low values</span>
                       {/if}
                     </div>
@@ -459,7 +459,7 @@ function handleClose() {
                       class:bg-red-600={point.category === 'extreme'}
                       class:bg-orange-600={point.category === 'significant'}
                       class:bg-yellow-600={point.category === 'moderate'}
-                      class:bg-green-600={point.category === 'normal'}>
+                      class:bg-success={point.category === 'normal'}>
                     </div>
                     <span>{point.label}</span>
                   </div>

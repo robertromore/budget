@@ -134,8 +134,8 @@ const hasMore = $derived((logsQuery.data?.length ?? 0) >= limit);
 
         <Card.Root>
           <Card.Content class="flex items-center gap-3 pt-6">
-            <div class="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
-              <Check class="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div class="rounded-full bg-success-bg p-2">
+              <Check class="h-4 w-4 text-success" />
             </div>
             <div>
               <div class="text-2xl font-bold">{statsQuery.data.success}</div>
@@ -146,8 +146,8 @@ const hasMore = $derived((logsQuery.data?.length ?? 0) >= limit);
 
         <Card.Root>
           <Card.Content class="flex items-center gap-3 pt-6">
-            <div class="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
-              <X class="h-4 w-4 text-red-600 dark:text-red-400" />
+            <div class="rounded-full bg-danger-bg p-2">
+              <X class="h-4 w-4 text-destructive" />
             </div>
             <div>
               <div class="text-2xl font-bold">{statsQuery.data.failed}</div>
@@ -158,8 +158,8 @@ const hasMore = $derived((logsQuery.data?.length ?? 0) >= limit);
 
         <Card.Root>
           <Card.Content class="flex items-center gap-3 pt-6">
-            <div class="rounded-full bg-yellow-100 p-2 dark:bg-yellow-900/30">
-              <AlertTriangle class="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <div class="rounded-full bg-warning-bg p-2">
+              <AlertTriangle class="h-4 w-4 text-warning" />
             </div>
             <div>
               <div class="text-2xl font-bold">{statsQuery.data.skipped}</div>

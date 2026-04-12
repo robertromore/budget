@@ -225,7 +225,7 @@ function handleEndpointInput(e: Event) {
                     {#if modelOption.supportsTools}
                       <Badge
                         variant="outline"
-                        class="h-5 gap-1 border-blue-500/30 px-1.5 text-[10px] text-blue-600 dark:text-blue-400">
+                        class="h-5 gap-1 border-info/30 px-1.5 text-[10px] text-info">
                         <Wrench class="h-3 w-3" />
                         Tools
                       </Badge>
@@ -233,7 +233,7 @@ function handleEndpointInput(e: Event) {
                     {#if provider === 'ollama' && modelOption.installed === false}
                       <Badge
                         variant="outline"
-                        class="h-5 gap-1 border-amber-500/30 px-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+                        class="h-5 gap-1 border-amber-500/30 px-1.5 text-[10px] text-warning">
                         <Download class="h-3 w-3" />
                         Not installed
                       </Badge>

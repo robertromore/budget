@@ -158,6 +158,11 @@ function duplicateSchedule() {
 }
 </script>
 
+<svelte:head>
+  <title>{schedule.name} - Schedules - Budget App</title>
+  <meta name="description" content="Manage recurring schedule: {schedule.name}" />
+</svelte:head>
+
 <div class="container mx-auto space-y-4 p-4">
   <!-- Navigation -->
   <div class="text-muted-foreground flex items-center space-x-2 text-sm">

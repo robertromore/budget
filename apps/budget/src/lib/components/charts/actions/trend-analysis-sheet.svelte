@@ -141,9 +141,9 @@ const trendAnalysis = $derived.by(() => {
 });
 
 function getTrendStrength(rSquared: number): { label: string; color: string } {
-  if (rSquared >= 0.8) return { label: 'Very Strong', color: 'text-green-600' };
-  if (rSquared >= 0.6) return { label: 'Strong', color: 'text-blue-600' };
-  if (rSquared >= 0.4) return { label: 'Moderate', color: 'text-yellow-600' };
+  if (rSquared >= 0.8) return { label: 'Very Strong', color: 'text-success' };
+  if (rSquared >= 0.6) return { label: 'Strong', color: 'text-info' };
+  if (rSquared >= 0.4) return { label: 'Moderate', color: 'text-warning' };
   if (rSquared >= 0.2) return { label: 'Weak', color: 'text-orange-600' };
   return { label: 'Very Weak', color: 'text-muted-foreground' };
 }
@@ -160,7 +160,7 @@ function handleClose() {
       {#if trendAnalysis?.direction === 'increasing'}
         <TrendingUp class="text-destructive h-5 w-5" />
       {:else if trendAnalysis?.direction === 'decreasing'}
-        <TrendingDown class="h-5 w-5 text-green-600" />
+        <TrendingDown class="text-amount-positive h-5 w-5" />
       {:else}
         <Minus class="text-muted-foreground h-5 w-5" />
       {/if}
@@ -188,8 +188,8 @@ function handleClose() {
                     <ArrowUpRight class="text-destructive h-4 w-4" />
                     <span class="text-destructive font-semibold">Increasing</span>
                   {:else if trendAnalysis.direction === 'decreasing'}
-                    <ArrowDownRight class="h-4 w-4 text-green-600" />
-                    <span class="font-semibold text-green-600">Decreasing</span>
+                    <ArrowDownRight class="text-amount-positive h-4 w-4" />
+                    <span class="text-amount-positive font-semibold">Decreasing</span>
                   {:else}
                     <Minus class="text-muted-foreground h-4 w-4" />
                     <span class="font-semibold">Stable</span>
@@ -201,7 +201,7 @@ function handleClose() {
                 <p
                   class="text-lg font-semibold tabular-nums"
                   class:text-destructive={trendAnalysis.monthlyChange > 0}
-                  class:text-green-600={trendAnalysis.monthlyChange < 0}>
+                  class:text-amount-positive={trendAnalysis.monthlyChange < 0}>
                   {trendAnalysis.monthlyChange > 0 ? '+' : ''}{currencyFormatter.format(
                     trendAnalysis.monthlyChange
                   )}
@@ -212,7 +212,7 @@ function handleClose() {
                 <p
                   class="text-lg font-semibold tabular-nums"
                   class:text-destructive={trendAnalysis.totalChange > 0}
-                  class:text-green-600={trendAnalysis.totalChange < 0}>
+                  class:text-amount-positive={trendAnalysis.totalChange < 0}>
                   {trendAnalysis.totalChange > 0 ? '+' : ''}{currencyFormatter.format(
                     trendAnalysis.totalChange
                   )}
@@ -223,7 +223,7 @@ function handleClose() {
                 <p
                   class="text-lg font-semibold tabular-nums"
                   class:text-destructive={trendAnalysis.percentTotalChange > 0}
-                  class:text-green-600={trendAnalysis.percentTotalChange < 0}>
+                  class:text-amount-positive={trendAnalysis.percentTotalChange < 0}>
                   {trendAnalysis.percentTotalChange > 0 ? '+' : ''}{formatPercentRaw(
                     trendAnalysis.percentTotalChange,
                     1
@@ -271,7 +271,7 @@ function handleClose() {
                 <p
                   class="text-lg font-semibold tabular-nums"
                   class:text-destructive={trendAnalysis.momentum > 0}
-                  class:text-green-600={trendAnalysis.momentum < 0}>
+                  class:text-amount-positive={trendAnalysis.momentum < 0}>
                   {trendAnalysis.momentum > 0 ? '+' : ''}{currencyFormatter.format(
                     trendAnalysis.momentum
                   )}
@@ -304,7 +304,7 @@ function handleClose() {
                   <p
                     class="text-xs tabular-nums"
                     class:text-destructive={projection.change > 0}
-                    class:text-green-600={projection.change < 0}>
+                    class:text-amount-positive={projection.change < 0}>
                     {projection.change > 0 ? '+' : ''}{currencyFormatter.format(projection.change)}
                   </p>
                 </div>
@@ -322,7 +322,7 @@ function handleClose() {
             <div class="space-y-3">
               {#if trendAnalysis.largestIncrease && trendAnalysis.largestIncrease.change > 0}
                 <div
-                  class="flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
+                  class="bg-danger-bg flex items-center justify-between rounded-md border border-destructive/20 p-3">
                   <div>
                     <p class="text-sm font-medium">Largest Increase</p>
                     <p class="text-muted-foreground text-xs">
@@ -342,7 +342,7 @@ function handleClose() {
 
               {#if trendAnalysis.largestDecrease && trendAnalysis.largestDecrease.change < 0}
                 <div
-                  class="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950">
+                  class="bg-success-bg flex items-center justify-between rounded-md border border-success/20 p-3">
                   <div>
                     <p class="text-sm font-medium">Largest Decrease</p>
                     <p class="text-muted-foreground text-xs">
@@ -350,10 +350,10 @@ function handleClose() {
                     </p>
                   </div>
                   <div class="text-right">
-                    <p class="font-semibold text-green-600 tabular-nums">
+                    <p class="text-amount-positive font-semibold tabular-nums">
                       {currencyFormatter.format(trendAnalysis.largestDecrease.change)}
                     </p>
-                    <p class="text-xs text-green-600">
+                    <p class="text-amount-positive text-xs">
                       {formatPercentRaw(trendAnalysis.largestDecrease.percentChange, 1)}
                     </p>
                   </div>
@@ -383,7 +383,7 @@ function handleClose() {
                   <div class="text-right">
                     <Badge
                       variant={point.residual > 0 ? 'destructive' : 'secondary'}
-                      class={point.residual < 0 ? 'bg-green-600' : ''}>
+                      class={point.residual < 0 ? 'bg-success' : ''}>
                       {point.residual > 0 ? '+' : ''}{currencyFormatter.format(point.residual)}
                     </Badge>
                     <p class="text-muted-foreground text-xs">
@@ -410,7 +410,7 @@ function handleClose() {
                   <span
                     class="tabular-nums"
                     class:text-destructive={change.change > 0}
-                    class:text-green-600={change.change < 0}>
+                    class:text-amount-positive={change.change < 0}>
                     {change.change > 0 ? '+' : ''}{currencyFormatter.format(change.change)}
                     <span class="ml-1 text-xs">
                       ({change.percentChange > 0 ? '+' : ''}{formatPercentRaw(

@@ -140,8 +140,8 @@ function getConfidenceBadgeVariant(
         </div>
 
         <div class="flex items-center gap-2 rounded-md border p-3">
-          <div class="rounded-lg bg-green-500/10 p-1.5">
-            <Merge class="h-4 w-4 text-green-600" />
+          <div class="rounded-lg bg-success/10 p-1.5">
+            <Merge class="h-4 w-4 text-success" />
           </div>
           <div>
             <p class="text-lg font-bold">{stats.withExisting}</p>
@@ -176,11 +176,11 @@ function getConfidenceBadgeVariant(
 
           <div
             class="rounded-lg border p-3 transition-colors {group.userDecision === 'accept'
-              ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+              ? 'border-success/20 bg-success-bg'
               : group.userDecision === 'reject'
-                ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
+                ? 'border-destructive/20 bg-danger-bg'
                 : group.userDecision === 'custom'
-                  ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
+                  ? 'border-info/20 bg-info-bg'
                   : ''}">
             <div class="flex items-start gap-2">
               <!-- Expand/Collapse Toggle -->

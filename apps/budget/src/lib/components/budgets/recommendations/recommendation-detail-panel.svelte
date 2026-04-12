@@ -183,8 +183,8 @@ function getTypeLabel(type: string): string {
             <div
               class={cn(
                 'rounded p-1.5',
-                metadata.trend === 'decreasing' && 'bg-green-500/10 text-green-600',
-                metadata.trend === 'increasing' && 'bg-red-500/10 text-red-600',
+                metadata.trend === 'decreasing' && 'bg-success/10 text-success',
+                metadata.trend === 'increasing' && 'bg-destructive/10 text-destructive',
                 metadata.trend === 'stable' && 'bg-muted text-muted-foreground'
               )}>
               {#if TrendIcon}
@@ -230,13 +230,13 @@ function getTypeLabel(type: string): string {
           {#if metadata?.monthsExceeded !== undefined && metadata.monthsExceeded > 0}
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Months Exceeded</span>
-              <span class="font-medium text-red-600">{metadata.monthsExceeded}</span>
+              <span class="text-destructive font-medium">{metadata.monthsExceeded}</span>
             </div>
           {/if}
           {#if metadata?.monthsUnderutilized !== undefined && metadata.monthsUnderutilized > 0}
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Months Underutilized</span>
-              <span class="font-medium text-amber-600">{metadata.monthsUnderutilized}</span>
+              <span class="text-warning font-medium">{metadata.monthsUnderutilized}</span>
             </div>
           {/if}
         </Card.Content>
@@ -289,8 +289,8 @@ function getTypeLabel(type: string): string {
               <span
                 class={cn(
                   'ml-3 font-medium tabular-nums',
-                  transaction.amount < 0 && 'text-red-600',
-                  transaction.amount > 0 && 'text-green-600'
+                  transaction.amount < 0 && 'text-amount-negative',
+                  transaction.amount > 0 && 'text-amount-positive'
                 )}>
                 {formatCurrency(transaction.amount)}
               </span>

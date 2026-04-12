@@ -161,7 +161,7 @@ const sortedTransactions = $derived(
         </div>
         <div class="bg-muted/50 rounded-lg p-3">
           <p class="text-muted-foreground text-xs">Total Income</p>
-          <p class="text-lg font-semibold text-green-600">
+          <p class="text-lg font-semibold text-amount-positive">
             {currencyFormatter.format(summaryStats.income)}
           </p>
         </div>
@@ -169,7 +169,7 @@ const sortedTransactions = $derived(
           <p class="text-muted-foreground text-xs">Net Change</p>
           <p
             class="text-lg font-semibold {summaryStats.total >= 0
-              ? 'text-green-600'
+              ? 'text-amount-positive'
               : 'text-destructive'}">
             {currencyFormatter.format(summaryStats.total)}
           </p>
@@ -193,7 +193,7 @@ const sortedTransactions = $derived(
                 {#if isExpense}
                   <ArrowUpRight class="text-destructive h-4 w-4" />
                 {:else}
-                  <ArrowDownLeft class="h-4 w-4 text-green-600" />
+                  <ArrowDownLeft class="h-4 w-4 text-amount-positive" />
                 {/if}
               </div>
               <div class="min-w-0">
@@ -208,7 +208,7 @@ const sortedTransactions = $derived(
                 </div>
               </div>
             </div>
-            <p class="font-semibold {isExpense ? 'text-destructive' : 'text-green-600'}">
+            <p class="font-semibold {isExpense ? 'text-destructive' : 'text-amount-positive'}">
               {currencyFormatter.format(tx.amount)}
             </p>
           </div>

@@ -57,7 +57,7 @@ function handleEventChange(value: string | undefined) {
 </script>
 
 <div
-  class="group flex flex-wrap items-center gap-2 rounded-md border border-green-200 bg-green-50/50 px-3 py-2 text-base dark:border-green-800 dark:bg-green-950/30">
+  class="group flex flex-wrap items-center gap-2 rounded-md border border-success/20 bg-success-bg/50 px-3 py-2 text-base">
   <span class="text-foreground font-medium">When</span>
 
   <!-- Entity Type Select -->
@@ -67,7 +67,7 @@ function handleEventChange(value: string | undefined) {
     onValueChange={handleEntityTypeChange}
     disabled={entityTypeDisabled}>
     <Select.Trigger
-      class="h-8 w-auto min-w-32 gap-1 border-green-300 bg-green-50 px-3 font-medium text-green-700 hover:bg-green-100 dark:border-green-700 dark:bg-green-950 dark:text-green-300 dark:hover:bg-green-900">
+      class="h-8 w-auto min-w-32 gap-1 border-success/30 bg-success-bg px-3 font-medium text-success-fg hover:bg-success-bg/80">
       {entityLabel}
     </Select.Trigger>
     <Select.Content>
@@ -84,7 +84,7 @@ function handleEventChange(value: string | undefined) {
   <!-- Event Select -->
   <Select.Root type="single" value={trigger.event} onValueChange={handleEventChange}>
     <Select.Trigger
-      class="h-8 w-auto min-w-36 gap-1 border-green-300 bg-green-50 px-3 font-medium text-green-700 hover:bg-green-100 dark:border-green-700 dark:bg-green-950 dark:text-green-300 dark:hover:bg-green-900">
+      class="h-8 w-auto min-w-36 gap-1 border-success/30 bg-success-bg px-3 font-medium text-success-fg hover:bg-success-bg/80">
       {eventLabel}
     </Select.Trigger>
     <Select.Content>

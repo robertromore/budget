@@ -371,7 +371,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 
   <!-- Reorder Mode Help -->
   {#if isReorderMode}
-    <div class="text-muted-foreground rounded-lg bg-blue-50 p-3 text-sm dark:bg-blue-950/30">
+    <div class="text-muted-foreground bg-info-bg rounded-lg p-3 text-sm">
       <strong>Reorder Mode:</strong> Drag categories to reorder them. Changes are saved
       automatically.
       {#if search.viewMode === 'list'}

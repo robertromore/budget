@@ -124,8 +124,8 @@ const yDomain = $derived([rawMin - yPad, rawMax + yPad] as [number, number]);
           <p class="text-muted-foreground text-xs">Net Worth</p>
           <p
             class="font-semibold"
-            class:text-green-600={latestSnapshot.totalNetWorth > 0}
-            class:text-red-600={latestSnapshot.totalNetWorth < 0}>
+            class:text-amount-positive={latestSnapshot.totalNetWorth > 0}
+            class:text-amount-negative={latestSnapshot.totalNetWorth < 0}>
             {currencyFormatter.format(latestSnapshot.totalNetWorth)}
           </p>
         </div>

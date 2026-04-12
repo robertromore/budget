@@ -175,8 +175,8 @@ async function handleDelete(snapshot: InvestmentValueSnapshot) {
               </div>
               <span class="font-mono text-right">{currencyFormatter.format(snapshot.value)}</span>
               <span class="hidden text-right text-xs sm:block"
-                class:text-green-600={change !== null && change >= 0}
-                class:text-red-600={change !== null && change < 0}
+                class:text-amount-positive={change !== null && change >= 0}
+                class:text-amount-negative={change !== null && change < 0}
                 class:text-muted-foreground={change === null}>
                 {#if change !== null && changePct !== null}
                   {change >= 0 ? '+' : ''}{changePct.toFixed(1)}%

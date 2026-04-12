@@ -1020,7 +1020,7 @@ $effect(() => {
                 class="flex h-12 w-12 items-center justify-center rounded-full text-sm font-medium transition-all {isCurrent
                   ? 'bg-primary text-primary-foreground shadow-md'
                   : isComplete
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-success text-white'
                     : 'bg-muted text-muted-foreground'}">
                 {#if isComplete}
                   <CircleCheck class="h-6 w-6" />
@@ -1034,7 +1034,7 @@ $effect(() => {
                 class="absolute top-full left-1/2 mt-3 -translate-x-1/2 text-sm font-medium whitespace-nowrap transition-colors {isCurrent
                   ? 'text-primary'
                   : isComplete
-                    ? 'text-green-600'
+                    ? 'text-success'
                     : 'text-muted-foreground'}">
                 {step.label}
               </div>
@@ -1042,7 +1042,7 @@ $effect(() => {
             {#if index < steps.length - 1}
               <div
                 class="mx-4 h-1 w-32 rounded-full transition-all {isComplete
-                  ? 'bg-green-500'
+                  ? 'bg-success'
                   : 'bg-muted'}">
               </div>
             {/if}

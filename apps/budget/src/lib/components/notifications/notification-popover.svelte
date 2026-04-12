@@ -32,7 +32,13 @@ function handleMarkAsRead(id: string) {
 <Popover.Root bind:open={isOpen}>
   <Popover.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="ghost" size="icon" class="relative">
+      <Button
+        {...props}
+        variant="ghost"
+        size="icon"
+        class="relative"
+        data-help-id="notification-bell"
+        data-help-title="Notifications">
         <Bell class="h-5 w-5" />
         {#if store.unreadCount > 0}
           <span

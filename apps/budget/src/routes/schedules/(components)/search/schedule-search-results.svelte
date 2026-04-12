@@ -113,7 +113,7 @@ function getStatusVariant(status: string | null) {
               </Badge>
             {/if}
             {#if schedule.auto_add}
-              <Badge variant="outline" class="bg-blue-50 text-xs dark:bg-blue-950">Auto-Add</Badge>
+              <Badge variant="outline" class="bg-info-bg text-xs">Auto-Add</Badge>
             {/if}
           </div>
         </div>

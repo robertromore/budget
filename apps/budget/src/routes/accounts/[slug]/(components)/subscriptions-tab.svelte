@@ -36,11 +36,11 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
     label: 'Entertainment',
   },
   utilities: {
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    color: 'bg-info-bg text-info-fg',
     label: 'Utilities',
   },
   software: {
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    color: 'bg-success-bg text-success-fg',
     label: 'Software',
   },
   membership: {
@@ -52,7 +52,7 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
     label: 'Communication',
   },
   finance: {
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    color: 'bg-warning-bg text-warning-fg',
     label: 'Finance',
   },
   shopping: {
@@ -60,7 +60,7 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
     label: 'Shopping',
   },
   health: {
-    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    color: 'bg-danger-bg text-danger-fg',
     label: 'Health',
   },
   education: {

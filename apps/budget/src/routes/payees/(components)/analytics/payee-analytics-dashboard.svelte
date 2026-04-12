@@ -419,7 +419,7 @@ const chartConfig = {
               <Card.Content class="space-y-4">
                 {#if analytics.intelligence.categoryRecommendation}
                   <div class="flex items-center gap-2 rounded-lg bg-blue-50 p-3">
-                    <CircleCheck class="h-4 w-4 text-blue-500" />
+                    <CircleCheck class="h-4 w-4 text-info" />
                     <span class="text-sm">
                       <strong>Category:</strong>
                       {analytics.intelligence.categoryRecommendation.name}
@@ -430,7 +430,7 @@ const chartConfig = {
                 {/if}
                 {#if analytics.intelligence.frequencyPrediction}
                   <div class="flex items-center gap-2 rounded-lg bg-green-50 p-3">
-                    <Calendar class="h-4 w-4 text-green-500" />
+                    <Calendar class="h-4 w-4 text-success" />
                     <span class="text-sm">
                       <strong>Frequency:</strong>
                       {analytics.intelligence.frequencyPrediction}
@@ -509,7 +509,7 @@ const chartConfig = {
                       <div class="space-y-2">
                         {#each mlInsights.unifiedRecommendations.automationSuggestions as suggestion}
                           <div class="flex items-center gap-2">
-                            <CircleCheck class="h-4 w-4 text-green-500" />
+                            <CircleCheck class="h-4 w-4 text-success" />
                             <span class="text-sm">{suggestion.description}</span>
                             <Badge variant="outline">{suggestion.impact}</Badge>
                           </div>
@@ -534,14 +534,14 @@ const chartConfig = {
               <Card.Content>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div class="bg-muted/50 rounded-lg p-4 text-center">
-                    <Brain class="mx-auto mb-2 h-6 w-6 text-blue-500" />
+                    <Brain class="mx-auto mb-2 h-6 w-6 text-info" />
                     <div class="text-lg font-bold">
                       {Math.round((mlInsights.crossSystemLearning.categoryAccuracy || 0) * 100)}%
                     </div>
                     <div class="text-muted-foreground text-sm">Category Accuracy</div>
                   </div>
                   <div class="bg-muted/50 rounded-lg p-4 text-center">
-                    <Target class="mx-auto mb-2 h-6 w-6 text-green-500" />
+                    <Target class="mx-auto mb-2 h-6 w-6 text-success" />
                     <div class="text-lg font-bold">
                       {Math.round((mlInsights.crossSystemLearning.budgetAccuracy || 0) * 100)}%
                     </div>
@@ -575,9 +575,9 @@ const chartConfig = {
                       <div class="flex items-start gap-3 rounded-lg border p-3">
                         <div class="mt-0.5">
                           {#if change.type === 'increase'}
-                            <TrendingUp class="h-4 w-4 text-green-500" />
+                            <TrendingUp class="h-4 w-4 text-success" />
                           {:else if change.type === 'decrease'}
-                            <TrendingDown class="h-4 w-4 text-red-500" />
+                            <TrendingDown class="h-4 w-4 text-destructive" />
                           {:else}
                             <CircleAlert class="h-4 w-4 text-orange-500" />
                           {/if}
@@ -656,7 +656,7 @@ const chartConfig = {
                     <div class="space-y-2">
                       {#each recommendations.budgetOptimization.recommendations as recommendation}
                         <div class="flex items-start gap-3 rounded-lg border p-3">
-                          <Sparkles class="mt-0.5 h-4 w-4 text-blue-500" />
+                          <Sparkles class="mt-0.5 h-4 w-4 text-info" />
                           <div class="flex-1">
                             <p class="text-sm font-medium">{recommendation.title}</p>
                             <p class="text-muted-foreground text-xs">
@@ -693,9 +693,9 @@ const chartConfig = {
                       <div class="flex items-start gap-3 rounded-lg border p-3">
                         <div class="mt-0.5">
                           {#if insight.type === 'optimization'}
-                            <TrendingUp class="h-4 w-4 text-green-500" />
+                            <TrendingUp class="h-4 w-4 text-success" />
                           {:else if insight.type === 'prediction'}
-                            <Brain class="h-4 w-4 text-blue-500" />
+                            <Brain class="h-4 w-4 text-info" />
                           {:else if insight.type === 'automation'}
                             <Target class="h-4 w-4 text-purple-500" />
                           {:else}
@@ -885,7 +885,7 @@ const chartConfig = {
                 <div class="space-y-3">
                   {#each performanceMetrics.insights as insight}
                     <div class="bg-muted/50 flex items-start gap-3 rounded-lg p-3">
-                      <Brain class="mt-0.5 h-4 w-4 text-blue-500" />
+                      <Brain class="mt-0.5 h-4 w-4 text-info" />
                       <div class="flex-1">
                         <p class="text-sm font-medium">{insight.title}</p>
                         <p class="text-muted-foreground text-xs">{insight.description}</p>

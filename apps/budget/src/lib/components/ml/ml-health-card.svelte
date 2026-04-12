@@ -30,22 +30,22 @@ const statusConfig = {
   healthy: {
     icon: CheckCircle2,
     variant: 'default' as const,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
+    color: 'text-success',
+    bgColor: 'bg-success/10',
     label: 'Healthy',
   },
   degraded: {
     icon: AlertTriangle,
     variant: 'secondary' as const,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10',
+    color: 'text-warning',
+    bgColor: 'bg-warning/10',
     label: 'Degraded',
   },
   error: {
     icon: XCircle,
     variant: 'destructive' as const,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
     label: 'Error',
   },
   offline: {

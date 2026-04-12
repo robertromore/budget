@@ -71,8 +71,8 @@ const formatPayeeType = (type: string | null) => {
 const getStatusDisplay = (isActive: boolean) => {
   return {
     icon: isActive ? CircleCheck : TriangleAlert,
-    color: isActive ? 'text-green-600' : 'text-orange-600',
-    bgColor: isActive ? 'bg-green-50 dark:bg-green-950' : 'bg-orange-50 dark:bg-orange-950',
+    color: isActive ? 'text-success' : 'text-orange-600',
+    bgColor: isActive ? 'bg-success-bg' : 'bg-orange-50 dark:bg-orange-950',
     label: isActive ? 'Active' : 'Inactive',
   };
 };

@@ -4,7 +4,7 @@ import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$core/trpc/router";
 import type { Actions } from "@sveltejs/kit";
-import { fail, redirect } from "@sveltejs/kit";
+import { error, fail, redirect } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
 
@@ -16,13 +16,20 @@ export const load = async (event: any) => {
     throw redirect(303, "/payees");
   }
 
-  const payee = await createCaller(await createContext(fromSvelteKit(event))).payeeRoutes.getBySlug({ slug });
+  const caller = createCaller(await createContext(fromSvelteKit(event)));
+
+  let payee;
+  try {
+    payee = await caller.payeeRoutes.getBySlug({ slug });
+  } catch {
+    throw error(404, "Payee not found");
+  }
 
   return {
     payee,
     form: await superValidate(zod4(superformInsertPayeeSchema)),
     deleteForm: await superValidate(zod4(removePayeeSchema)),
-    categories: await createCaller(await createContext(fromSvelteKit(event))).categoriesRoutes.all(),
+    categories: await caller.categoriesRoutes.all(),
   };
 };
 

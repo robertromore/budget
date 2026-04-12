@@ -13,7 +13,7 @@ const transferAccountId = $derived((transaction as any).transferAccountId);
   <div class="flex items-center gap-2">
     <Badge
       variant="outline"
-      class="flex items-center gap-1 border-blue-600/30 text-xs text-blue-600 dark:text-blue-400">
+      class="flex items-center gap-1 border-info/30 text-xs text-info">
       <ArrowRightLeft class="h-3 w-3"></ArrowRightLeft>
       <span>Transfer</span>
     </Badge>

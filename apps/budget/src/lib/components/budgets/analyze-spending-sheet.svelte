@@ -94,8 +94,8 @@ $effect(() => {
       <!-- Analysis Complete State -->
       <div class="flex flex-col items-center justify-center py-12 text-center">
         {#if analysisResult.count > 0}
-          <div class="mb-4 rounded-full bg-green-100 p-4 dark:bg-green-900/30">
-            <CheckCircle class="h-10 w-10 text-green-600 dark:text-green-400" />
+          <div class="mb-4 rounded-full bg-success-bg p-4">
+            <CheckCircle class="h-10 w-10 text-success" />
           </div>
           <h3 class="text-lg font-semibold">Analysis Complete!</h3>
           <p class="text-muted-foreground mt-2">

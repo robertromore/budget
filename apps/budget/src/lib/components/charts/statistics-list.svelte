@@ -58,8 +58,8 @@ let { stats, loading = false }: Props = $props();
             {#if stats.comparison.vsHistoricalAvgPercent !== null}
               <p
                 class="text-xs tabular-nums"
-                class:text-red-600={stats.comparison.vsHistoricalAvgPercent > 0}
-                class:text-green-600={stats.comparison.vsHistoricalAvgPercent < 0}
+                class:text-amount-negative={stats.comparison.vsHistoricalAvgPercent > 0}
+                class:text-amount-positive={stats.comparison.vsHistoricalAvgPercent < 0}
                 class:text-muted-foreground={stats.comparison.vsHistoricalAvgPercent === 0}>
                 {formatStatPercent(stats.comparison.vsHistoricalAvgPercent)} vs historical
               </p>
@@ -87,8 +87,8 @@ let { stats, loading = false }: Props = $props();
             {#if stats.comparison.vsLastYearPercent !== null}
               <p
                 class="text-xs tabular-nums"
-                class:text-red-600={stats.comparison.vsLastYearPercent > 0}
-                class:text-green-600={stats.comparison.vsLastYearPercent < 0}
+                class:text-amount-negative={stats.comparison.vsLastYearPercent > 0}
+                class:text-amount-positive={stats.comparison.vsLastYearPercent < 0}
                 class:text-muted-foreground={stats.comparison.vsLastYearPercent === 0}>
                 {formatStatPercent(stats.comparison.vsLastYearPercent)} vs last year
               </p>
@@ -112,8 +112,8 @@ let { stats, loading = false }: Props = $props();
           </div>
           <p
             class="text-sm font-semibold"
-            class:text-red-600={stats.trend.direction === 'up'}
-            class:text-green-600={stats.trend.direction === 'down'}
+            class:text-amount-negative={stats.trend.direction === 'up'}
+            class:text-amount-positive={stats.trend.direction === 'down'}
             class:text-muted-foreground={stats.trend.direction === 'flat'}>
             {getTrendIndicator(stats.trend.direction)}
             {stats.trend.direction === 'up'
@@ -131,8 +131,8 @@ let { stats, loading = false }: Props = $props();
             </div>
             <p
               class="text-sm font-semibold tabular-nums"
-              class:text-red-600={stats.trend.growthRate > 0}
-              class:text-green-600={stats.trend.growthRate < 0}>
+              class:text-amount-negative={stats.trend.growthRate > 0}
+              class:text-amount-positive={stats.trend.growthRate < 0}>
               {formatStatPercent(stats.trend.growthRate)}
             </p>
           </div>
@@ -144,8 +144,8 @@ let { stats, loading = false }: Props = $props();
           </div>
           <p
             class="text-sm font-semibold tabular-nums"
-            class:text-red-600={stats.trend.monthlyChange > 0}
-            class:text-green-600={stats.trend.monthlyChange < 0}>
+            class:text-amount-negative={stats.trend.monthlyChange > 0}
+            class:text-amount-positive={stats.trend.monthlyChange < 0}>
             {stats.trend.monthlyChange > 0 ? '+' : ''}{formatStatCurrency(
               stats.trend.monthlyChange
             )}/mo
@@ -166,7 +166,7 @@ let { stats, loading = false }: Props = $props();
             <p class="text-sm font-medium">Highest Month</p>
             <p class="text-muted-foreground text-xs">{stats.distribution.highest.monthLabel}</p>
           </div>
-          <p class="text-sm font-semibold text-red-600 tabular-nums">
+          <p class="text-sm font-semibold text-amount-negative tabular-nums">
             {formatStatCurrency(stats.distribution.highest.value)}
           </p>
         </div>
@@ -175,7 +175,7 @@ let { stats, loading = false }: Props = $props();
             <p class="text-sm font-medium">Lowest Month</p>
             <p class="text-muted-foreground text-xs">{stats.distribution.lowest.monthLabel}</p>
           </div>
-          <p class="text-sm font-semibold text-green-600 tabular-nums">
+          <p class="text-sm font-semibold text-amount-positive tabular-nums">
             {formatStatCurrency(stats.distribution.lowest.value)}
           </p>
         </div>
@@ -244,7 +244,7 @@ let { stats, loading = false }: Props = $props();
               <p class="text-sm font-medium">Unusual Months</p>
               <p class="text-muted-foreground text-xs">Outside normal spending range (1.5x IQR)</p>
             </div>
-            <p class="text-sm font-semibold text-amber-600 tabular-nums">
+            <p class="text-sm font-semibold text-warning tabular-nums">
               {stats.outliers.count}
             </p>
           </div>
@@ -258,8 +258,8 @@ let { stats, loading = false }: Props = $props();
               </div>
               <p
                 class="text-sm font-semibold tabular-nums"
-                class:text-red-600={outlier.type === 'high'}
-                class:text-green-600={outlier.type === 'low'}>
+                class:text-amount-negative={outlier.type === 'high'}
+                class:text-amount-positive={outlier.type === 'low'}>
                 {formatStatCurrency(outlier.value)}
               </p>
             </div>
@@ -285,8 +285,8 @@ let { stats, loading = false }: Props = $props();
               <div class="text-right">
                 <p
                   class="text-sm font-semibold tabular-nums"
-                  class:text-red-600={stats.comparison.vsHistoricalAvg > 0}
-                  class:text-green-600={stats.comparison.vsHistoricalAvg < 0}>
+                  class:text-amount-negative={stats.comparison.vsHistoricalAvg > 0}
+                  class:text-amount-positive={stats.comparison.vsHistoricalAvg < 0}>
                   {stats.comparison.vsHistoricalAvg > 0 ? '+' : ''}{formatStatCurrency(
                     stats.comparison.vsHistoricalAvg
                   )}
@@ -306,8 +306,8 @@ let { stats, loading = false }: Props = $props();
               <div class="text-right">
                 <p
                   class="text-sm font-semibold tabular-nums"
-                  class:text-red-600={stats.comparison.vsBudgetTarget > 0}
-                  class:text-green-600={stats.comparison.vsBudgetTarget < 0}>
+                  class:text-amount-negative={stats.comparison.vsBudgetTarget > 0}
+                  class:text-amount-positive={stats.comparison.vsBudgetTarget < 0}>
                   {stats.comparison.vsBudgetTarget > 0 ? '+' : ''}{formatStatCurrency(
                     stats.comparison.vsBudgetTarget
                   )}
@@ -327,8 +327,8 @@ let { stats, loading = false }: Props = $props();
               <div class="text-right">
                 <p
                   class="text-sm font-semibold tabular-nums"
-                  class:text-red-600={stats.comparison.vsLastYearTotal > 0}
-                  class:text-green-600={stats.comparison.vsLastYearTotal < 0}>
+                  class:text-amount-negative={stats.comparison.vsLastYearTotal > 0}
+                  class:text-amount-positive={stats.comparison.vsLastYearTotal < 0}>
                   {stats.comparison.vsLastYearTotal > 0 ? '+' : ''}{formatStatCurrency(
                     stats.comparison.vsLastYearTotal
                   )}

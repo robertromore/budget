@@ -55,11 +55,11 @@ function getStepClasses(stepIndex: number) {
 
   switch (status) {
     case 'completed':
-      return cn(baseClasses, 'text-green-600 dark:text-green-400');
+      return cn(baseClasses, 'text-success');
     case 'current':
       return cn(baseClasses, 'text-primary');
     case 'in-progress':
-      return cn(baseClasses, 'text-amber-600 dark:text-amber-400');
+      return cn(baseClasses, 'text-warning');
     default:
       return cn(baseClasses, 'text-muted-foreground');
   }
@@ -71,11 +71,11 @@ function getIconClasses(stepIndex: number) {
 
   switch (status) {
     case 'completed':
-      return cn(baseClasses, 'text-green-600 dark:text-green-400');
+      return cn(baseClasses, 'text-success');
     case 'current':
       return cn(baseClasses, 'text-primary');
     case 'in-progress':
-      return cn(baseClasses, 'text-amber-600 dark:text-amber-400');
+      return cn(baseClasses, 'text-warning');
     default:
       return cn(baseClasses, 'text-muted-foreground');
   }

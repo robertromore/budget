@@ -105,7 +105,7 @@ function handleRowSelect(payeeId: number, checked: boolean | 'indeterminate') {
             </Table.Cell>
             <Table.Cell
               class={cn(
-                preview.wouldChange ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                preview.wouldChange ? 'text-success' : 'text-muted-foreground'
               )}>
               {preview.normalized}
             </Table.Cell>
@@ -113,13 +113,13 @@ function handleRowSelect(payeeId: number, checked: boolean | 'indeterminate') {
               {#if preview.wouldChange}
                 <Badge
                   variant="outline"
-                  class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                  class="bg-warning-bg text-warning-fg">
                   Will change
                 </Badge>
               {:else}
                 <Badge
                   variant="outline"
-                  class="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                  class="bg-success-bg text-success-fg">
                   <Check class="mr-1 h-3 w-3" />
                   Clean
                 </Badge>

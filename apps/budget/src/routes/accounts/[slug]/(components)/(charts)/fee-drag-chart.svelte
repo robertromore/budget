@@ -171,7 +171,7 @@ const settingsHref = $derived(
       <div class="mt-4 grid shrink-0 grid-cols-3 gap-4 border-t pt-4 text-center text-sm">
         <div>
           <p class="text-muted-foreground text-xs">Total Fee Drag</p>
-          <p class="font-semibold text-amber-600 dark:text-amber-400">
+          <p class="font-semibold text-warning">
             {totalDrag !== null ? currencyFormatter.format(totalDrag) : '—'}
           </p>
         </div>
@@ -181,7 +181,7 @@ const settingsHref = $derived(
         </div>
         <div>
           <p class="text-muted-foreground text-xs">Projected Annual</p>
-          <p class="font-semibold text-amber-600 dark:text-amber-400">
+          <p class="font-semibold text-warning">
             {currencyFormatter.format(projectedAnnualDrag)}
           </p>
         </div>

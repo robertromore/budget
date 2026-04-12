@@ -731,8 +731,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                     class={cn(
                       isStartDate
                         ? outsideMonth
-                          ? 'bg-white! font-semibold text-green-600/50! ring-2 ring-green-500/40 dark:bg-transparent! dark:text-green-400/50!'
-                          : 'bg-white! font-semibold text-green-600! ring-2 ring-green-500 dark:bg-transparent! dark:text-green-400!'
+                          ? 'bg-white! font-semibold text-success/50! ring-2 ring-success/40 dark:bg-transparent! dark:text-success/50!'
+                          : 'bg-white! font-semibold text-success! ring-2 ring-success dark:bg-transparent! dark:text-success!'
                         : isSpecific
                           ? outsideMonth
                             ? 'border-2 border-dotted border-amber-500/50 bg-amber-500/30 text-amber-700 hover:bg-amber-500/40'
@@ -743,8 +743,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                               : 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
                             : isToday
                               ? outsideMonth
-                                ? 'border-2 border-blue-500/40 font-medium text-blue-600/50! dark:text-blue-400/50!'
-                                : 'border-2 border-blue-500 font-medium text-blue-600! dark:text-blue-400!'
+                                ? 'border-2 border-info/40 font-medium text-info/50! dark:text-info/50!'
+                                : 'border-2 border-info font-medium text-info! dark:text-info!'
                               : outsideMonth
                                 ? 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
                                 : '',
@@ -819,7 +819,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
           <Label class="text-muted-foreground text-xs font-medium">Legend:</Label>
           <div class="flex flex-wrap gap-3 text-xs">
             <div class="flex items-center gap-1">
-              <div class="h-3 w-3 rounded bg-white ring-2 ring-green-500 dark:bg-transparent"></div>
+              <div class="h-3 w-3 rounded bg-white ring-2 ring-success dark:bg-transparent"></div>
               <span>Start date</span>
             </div>
             <div class="flex items-center gap-1">
@@ -838,7 +838,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
               </div>
             {/if}
             <div class="flex items-center gap-1">
-              <div class="h-3 w-3 rounded border-2 border-blue-500"></div>
+              <div class="h-3 w-3 rounded border-2 border-info"></div>
               <span>Today</span>
             </div>
           </div>

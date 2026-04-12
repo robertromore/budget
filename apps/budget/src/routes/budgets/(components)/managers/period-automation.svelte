@@ -81,9 +81,9 @@ const automationStatus = $derived.by(() => {
 function getAutomationStatusColor(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      return 'bg-success-bg text-success-fg';
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      return 'bg-warning-bg text-warning-fg';
     case 'disabled':
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     default:
@@ -246,15 +246,15 @@ function saveAutomationSettings() {
                 {#if nextPeriodDue !== null}
                   <div class="flex items-center gap-1">
                     {#if nextPeriodDue <= 0}
-                      <TriangleAlert class="h-4 w-4 text-red-500" />
-                      <span class="text-sm font-medium text-red-600">Period ended</span>
+                      <TriangleAlert class="h-4 w-4 text-destructive" />
+                      <span class="text-sm font-medium text-destructive">Period ended</span>
                     {:else if nextPeriodDue <= settings.advanceNotice}
-                      <TriangleAlert class="h-4 w-4 text-yellow-500" />
-                      <span class="text-sm font-medium text-yellow-600"
+                      <TriangleAlert class="h-4 w-4 text-warning" />
+                      <span class="text-sm font-medium text-warning"
                         >{nextPeriodDue} days remaining</span>
                     {:else}
-                      <CircleCheck class="h-4 w-4 text-green-500" />
-                      <span class="text-sm text-green-600">{nextPeriodDue} days remaining</span>
+                      <CircleCheck class="h-4 w-4 text-success" />
+                      <span class="text-sm text-success">{nextPeriodDue} days remaining</span>
                     {/if}
                   </div>
                 {/if}
@@ -263,11 +263,11 @@ function saveAutomationSettings() {
 
             {#if settings.enabled && nextPeriodDue !== null && nextPeriodDue <= settings.advanceNotice}
               <div
-                class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-950">
+                class="bg-warning-bg rounded-lg border border-warning/20 p-4">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <Info class="h-4 w-4 text-yellow-600" />
-                    <span class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    <Info class="h-4 w-4 text-warning" />
+                    <span class="text-warning-fg text-sm font-medium">
                       Next period creation due
                     </span>
                   </div>
@@ -436,7 +436,7 @@ function saveAutomationSettings() {
 
         <!-- Next Period Preview -->
         {#if nextPeriodPreview}
-          <Card.Root class="border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-950">
+          <Card.Root class="border-info/20 bg-info-bg">
             <Card.Header>
               <Card.Title class="flex items-center gap-2 text-sm">
                 <Info class="h-4 w-4" />

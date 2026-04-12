@@ -118,7 +118,7 @@ function getFileStats(file: ImportFile) {
         </div>
         <div class="flex items-center gap-2">
           {#if crossFileDuplicates.length > 0}
-            <Badge variant="outline" class="border-yellow-500 text-yellow-600">
+            <Badge variant="outline" class="border-yellow-500 text-warning">
               <AlertTriangle class="mr-1 h-3 w-3" />
               {crossFileDuplicates.length} potential duplicates
             </Badge>
@@ -130,9 +130,9 @@ function getFileStats(file: ImportFile) {
 
   <!-- Cross-file duplicates warning -->
   {#if crossFileDuplicates.length > 0}
-    <Card.Root class="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+    <Card.Root class="border-warning bg-warning-bg">
       <Card.Header class="pb-2">
-        <Card.Title class="flex items-center gap-2 text-base text-yellow-700 dark:text-yellow-400">
+        <Card.Title class="flex items-center gap-2 text-base text-warning-fg">
           <AlertTriangle class="h-4 w-4" />
           Potential Duplicates Across Files
         </Card.Title>
@@ -188,13 +188,13 @@ function getFileStats(file: ImportFile) {
                     {#if stats.valid > 0}
                       <Badge
                         variant="secondary"
-                        class="bg-green-100 text-green-700 dark:bg-green-900/30">
+                        class="bg-success-bg text-success-fg">
                         <CheckCircle class="mr-1 h-3 w-3" />
                         {stats.valid} ready
                       </Badge>
                     {/if}
                     {#if stats.duplicates > 0}
-                      <Badge variant="secondary" class="bg-yellow-100 text-yellow-700">
+                      <Badge variant="secondary" class="bg-warning-bg text-warning-fg">
                         {stats.duplicates} duplicates
                       </Badge>
                     {/if}
@@ -241,9 +241,9 @@ function getFileStats(file: ImportFile) {
                         </td>
                         <td class="px-3 py-2 text-center">
                           {#if row.validationStatus === 'valid'}
-                            <Badge variant="outline" class="text-green-600">Valid</Badge>
+                            <Badge variant="outline" class="text-success">Valid</Badge>
                           {:else if row.validationStatus === 'duplicate'}
-                            <Badge variant="outline" class="text-yellow-600">Duplicate</Badge>
+                            <Badge variant="outline" class="text-warning">Duplicate</Badge>
                           {:else if row.validationStatus === 'invalid'}
                             <Badge variant="destructive">Error</Badge>
                           {:else}

@@ -85,8 +85,8 @@ const suggestionsWithMatch = $derived(results.filter((r) => r.topSuggestion));
   <Card.Header>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-blue-500/10 p-2">
-          <Tags class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <div class="rounded-lg bg-info/10 p-2">
+          <Tags class="h-5 w-5 text-info" />
         </div>
         <div>
           <Card.Title class="text-lg">Category Patterns</Card.Title>
@@ -118,8 +118,8 @@ const suggestionsWithMatch = $derived(results.filter((r) => r.topSuggestion));
     {:else if uncategorizedCount === 0}
       <div class="p-6 text-center">
         <div
-          class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
-          <Tags class="h-5 w-5 text-green-600 dark:text-green-400" />
+          class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+          <Tags class="h-5 w-5 text-success" />
         </div>
         <p class="font-medium">All transactions are categorized</p>
         <p class="text-muted-foreground mt-1 text-sm">

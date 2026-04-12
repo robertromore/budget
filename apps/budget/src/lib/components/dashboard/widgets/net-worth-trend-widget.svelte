@@ -61,8 +61,8 @@ const yMax = $derived(rawMax > 0 ? rawMax * 1.05 : rawMax * 0.97);
     <div class="text-center">
       <div
         class="text-3xl font-bold"
-        class:text-green-600={netWorth > 0}
-        class:text-red-600={netWorth < 0}
+        class:text-amount-positive={netWorth > 0}
+        class:text-amount-negative={netWorth < 0}
         class:text-muted-foreground={netWorth === 0}>
         {currencyFormatter.format(netWorth)}
       </div>

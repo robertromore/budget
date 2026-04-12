@@ -29,15 +29,15 @@ const riskConfig = {
   low: {
     icon: Info,
     variant: 'secondary' as const,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
+    color: 'text-info',
+    bgColor: 'bg-info/10',
     label: 'Low',
   },
   medium: {
     icon: AlertCircle,
     variant: 'outline' as const,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10',
+    color: 'text-warning',
+    bgColor: 'bg-warning/10',
     label: 'Medium',
   },
   high: {
@@ -50,8 +50,8 @@ const riskConfig = {
   critical: {
     icon: ShieldAlert,
     variant: 'destructive' as const,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
     label: 'Critical',
   },
   // Fallback for unknown risk levels

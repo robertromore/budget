@@ -52,14 +52,14 @@ const expenseChange = $derived(
 const trendConfig = {
   increasing: {
     icon: TrendingUp,
-    color: 'text-green-500',
-    expenseColor: 'text-red-500', // For expenses, increasing is bad
+    color: 'text-success',
+    expenseColor: 'text-destructive', // For expenses, increasing is bad
     label: 'Up',
   },
   decreasing: {
     icon: TrendingDown,
-    color: 'text-red-500',
-    expenseColor: 'text-green-500', // For expenses, decreasing is good
+    color: 'text-destructive',
+    expenseColor: 'text-success', // For expenses, decreasing is good
     label: 'Down',
   },
   stable: {
@@ -82,11 +82,11 @@ const expenseCfg = $derived(trendConfig[expenseTrend]);
         Income vs Expenses
       </Card.Title>
       {#if savingsRate > 0}
-        <Badge variant="outline" class="text-green-500">
+        <Badge variant="outline" class="text-success">
           {formatPercentRaw(savingsRate, 0)} saved
         </Badge>
       {:else if savingsRate < 0}
-        <Badge variant="outline" class="text-red-500">
+        <Badge variant="outline" class="text-destructive">
           {formatPercentRaw(Math.abs(savingsRate), 0)} over
         </Badge>
       {/if}
@@ -101,8 +101,8 @@ const expenseCfg = $derived(trendConfig[expenseTrend]);
       <div class="flex items-baseline gap-2">
         <span
           class={cn('text-2xl font-bold', {
-            'text-green-500': netThisMonth > 0,
-            'text-red-500': netThisMonth < 0,
+            'text-amount-positive': netThisMonth > 0,
+            'text-amount-negative': netThisMonth < 0,
           })}>
           {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth)}
         </span>
@@ -110,8 +110,8 @@ const expenseCfg = $derived(trendConfig[expenseTrend]);
           {@const netChange = netThisMonth - netLastMonth}
           <span
             class={cn('flex items-center text-sm', {
-              'text-green-500': netChange > 0,
-              'text-red-500': netChange < 0,
+              'text-amount-positive': netChange > 0,
+              'text-amount-negative': netChange < 0,
             })}>
             {#if netChange > 0}
               <ArrowUp class="h-3 w-3" />
@@ -134,14 +134,14 @@ const expenseCfg = $derived(trendConfig[expenseTrend]);
             <incomeCfg.icon class="h-3 w-3" />
           </Badge>
         </div>
-        <p class="text-lg font-semibold text-green-600">
+        <p class="text-lg font-semibold text-amount-positive">
           {formatCurrency(thisMonthIncome)}
         </p>
         {#if incomeChange !== 0}
           <p
             class={cn('text-xs', {
-              'text-green-500': incomeChange > 0,
-              'text-red-500': incomeChange < 0,
+              'text-success': incomeChange > 0,
+              'text-destructive': incomeChange < 0,
             })}>
             {incomeChange > 0 ? '+' : ''}{formatPercentRaw(incomeChange, 1)} from last month
           </p>
@@ -156,14 +156,14 @@ const expenseCfg = $derived(trendConfig[expenseTrend]);
             <expenseCfg.icon class="h-3 w-3" />
           </Badge>
         </div>
-        <p class="text-lg font-semibold text-red-600">
+        <p class="text-lg font-semibold text-amount-negative">
           {formatCurrency(thisMonthExpenses)}
         </p>
         {#if expenseChange !== 0}
           <p
             class={cn('text-xs', {
-              'text-red-500': expenseChange > 0,
-              'text-green-500': expenseChange < 0,
+              'text-destructive': expenseChange > 0,
+              'text-success': expenseChange < 0,
             })}>
             {expenseChange > 0 ? '+' : ''}{formatPercentRaw(expenseChange, 1)} from last month
           </p>

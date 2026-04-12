@@ -78,12 +78,12 @@ async function handleSubmit() {
 
 <div class="space-y-4">
   <div class="flex items-center gap-2 border-b pb-2">
-    <ArrowRightLeft class="h-5 w-5 text-blue-600"></ArrowRightLeft>
+    <ArrowRightLeft class="h-5 w-5 text-info"></ArrowRightLeft>
     <h3 class="text-lg font-semibold">Transfer Money</h3>
   </div>
 
   {#if error}
-    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+    <div class="rounded-lg border border-destructive/20 bg-danger-bg p-3 text-sm text-danger-fg">
       {error}
     </div>
   {/if}

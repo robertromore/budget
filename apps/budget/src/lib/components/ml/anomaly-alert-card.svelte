@@ -49,17 +49,17 @@ const riskConfig = {
   low: {
     icon: Info,
     variant: 'secondary' as const,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
+    color: 'text-info',
+    bgColor: 'bg-info/10',
+    borderColor: 'border-info/20',
     label: 'Low Risk',
   },
   medium: {
     icon: AlertCircle,
     variant: 'outline' as const,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10',
-    borderColor: 'border-yellow-500/20',
+    color: 'text-warning',
+    bgColor: 'bg-warning/10',
+    borderColor: 'border-warning/20',
     label: 'Medium Risk',
   },
   high: {
@@ -73,9 +73,9 @@ const riskConfig = {
   critical: {
     icon: ShieldAlert,
     variant: 'destructive' as const,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
-    borderColor: 'border-red-500/20',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+    borderColor: 'border-destructive/20',
     label: 'Critical',
   },
   // Fallback for unknown risk levels
@@ -140,10 +140,10 @@ const topDimensions = $derived(() => {
                 <div class="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
                   <div
                     class={cn('h-full rounded-full', {
-                      'bg-blue-500': dim.score < 0.4,
-                      'bg-yellow-500': dim.score >= 0.4 && dim.score < 0.7,
+                      'bg-info': dim.score < 0.4,
+                      'bg-warning': dim.score >= 0.4 && dim.score < 0.7,
                       'bg-orange-500': dim.score >= 0.7 && dim.score < 0.9,
-                      'bg-red-500': dim.score >= 0.9,
+                      'bg-destructive': dim.score >= 0.9,
                     })}
                     style="width: {dim.score * 100}%">
                   </div>

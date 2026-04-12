@@ -231,7 +231,7 @@ function resetAllDecisions() {
             <Badge variant="secondary" class="ml-1">
               {cleanupStats.totalGroups}
               {#if cleanupStats.pending > 0}
-                <span class="text-yellow-600"> · {cleanupStats.pending} pending</span>
+                <span class="text-warning"> · {cleanupStats.pending} pending</span>
               {/if}
             </Badge>
           {:else if cleanupState?.isAnalyzing}
@@ -275,7 +275,7 @@ function resetAllDecisions() {
         <span>
           {categorySuggestionStats.autoFilled} categories auto-filled
           {#if categorySuggestionStats.needsReview > 0}
-            <span class="text-yellow-600">· {categorySuggestionStats.needsReview} to review</span>
+            <span class="text-warning">· {categorySuggestionStats.needsReview} to review</span>
           {/if}
         </span>
       </div>
@@ -295,10 +295,10 @@ function resetAllDecisions() {
   <div class="text-muted-foreground flex items-center gap-3 text-sm">
     <span class="font-medium">{data.length} rows</span>
     <span class="text-border">·</span>
-    <span class="text-green-600">{validCount} valid</span>
+    <span class="text-success">{validCount} valid</span>
     {#if warningCount > 0}
       <span class="text-border">·</span>
-      <span class="text-yellow-600">{warningCount} warnings</span>
+      <span class="text-warning">{warningCount} warnings</span>
     {/if}
     {#if invalidCount > 0}
       <span class="text-border">·</span>

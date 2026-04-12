@@ -379,7 +379,7 @@ const hasIntelligenceInputChanges = $derived(() => {
                 <Label
                   for="detect-simple"
                   class="flex cursor-pointer items-center gap-2 font-medium">
-                  <Zap class="h-4 w-4 text-yellow-500" />
+                  <Zap class="h-4 w-4 text-warning" />
                   Simple
                 </Label>
                 <p class="text-muted-foreground mt-0.5 text-sm">
@@ -541,7 +541,7 @@ const hasIntelligenceInputChanges = $derived(() => {
                       <Label for="brave-key" class="text-sm">API Key</Label>
                       {#if hasBraveApiKey}
                         <span
-                          class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                          class="inline-flex items-center gap-1 text-xs text-success">
                           <Check class="h-3 w-3" />
                           Configured
                         </span>
@@ -583,7 +583,7 @@ const hasIntelligenceInputChanges = $derived(() => {
                       <Label for="ollama-key" class="text-sm">API Key</Label>
                       {#if hasOllamaCloudApiKey}
                         <span
-                          class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                          class="inline-flex items-center gap-1 text-xs text-success">
                           <Check class="h-3 w-3" />
                           Configured
                         </span>

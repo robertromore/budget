@@ -4,7 +4,7 @@ import { createContext } from "$core/trpc/context";
 import { fromSvelteKit } from "$lib/trpc/adapters/sveltekit";
 import { createCaller } from "$core/trpc/router";
 import { currentDate } from "$lib/utils/dates";
-import { fail } from "@sveltejs/kit";
+import { error, fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
@@ -255,10 +255,15 @@ export const load: PageServerLoad = async (event) => {
 
   // Load user-created views from database
   const caller = createCaller(await createContext(fromSvelteKit(event)));
-  const userViews = await caller.viewsRoutes.all({ entityType: "transactions" });
 
-  // Load active budgets for transaction form
-  const budgets = await caller.budgetRoutes.list({ status: "active" });
+  // Validate account exists (throws TRPCError NOT_FOUND if invalid slug)
+  try {
+    await caller.accountRoutes.getBySlug({ slug: params.slug });
+  } catch {
+    throw error(404, "Account not found");
+  }
+
+  const userViews = await caller.viewsRoutes.all({ entityType: "transactions" });
 
   return {
     accountSlug: params.slug,
@@ -267,9 +272,6 @@ export const load: PageServerLoad = async (event) => {
     // Keep old views property for backward compatibility temporarily
     views: defaultTransactionViews.concat(userViews),
     managePayeeForm: await superValidate(zod4(superformInsertPayeeSchema)),
-    budgets,
-    // Still keep the load minimal - no transactions, accounts, or forms
-    // The heavy data will be loaded client-side to prevent hydration issues
   };
 };
 

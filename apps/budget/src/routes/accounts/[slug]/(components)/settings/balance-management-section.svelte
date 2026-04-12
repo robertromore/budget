@@ -282,7 +282,7 @@ function formatDateString(dateStr: string | null | undefined): string {
     <p class="text-muted-foreground text-sm">
       Correct balance discrepancies after importing historical transactions.
       {#if isDebt}
-        <span class="text-amber-600 dark:text-amber-400">
+        <span class="text-warning">
           For credit accounts, enter positive values for amounts owed.
         </span>
       {/if}
@@ -298,13 +298,13 @@ function formatDateString(dateStr: string | null | undefined): string {
   {:else}
     <!-- Current Status Overview -->
     {#if balanceInfo?.balanceResetDate || balanceInfo?.reconciledDate || (balanceInfo?.archivedTransactionCount ?? 0) > 0}
-      <Card.Root class="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
+      <Card.Root class="border-info/20 bg-info-bg">
         <Card.Content class="pt-4">
           <div class="flex items-start gap-3">
-            <Info class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+            <Info class="mt-0.5 h-5 w-5 shrink-0 text-info" />
             <div class="space-y-1 text-sm">
-              <p class="font-medium text-blue-900 dark:text-blue-100">Active Balance Settings</p>
-              <ul class="space-y-1 text-blue-700 dark:text-blue-300">
+              <p class="text-info-fg font-medium">Active Balance Settings</p>
+              <ul class="text-info-fg space-y-1">
                 {#if balanceInfo?.reconciledDate}
                   <li>
                     Reconciled on {formatDateString(balanceInfo.reconciledDate)} at {formatBalance(

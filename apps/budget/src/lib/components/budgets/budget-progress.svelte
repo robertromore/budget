@@ -64,41 +64,41 @@ const statusLabel = $derived.by(() => {
 const statusClasses = $derived.by(() => {
   switch (status) {
     case 'approaching':
-      return 'bg-[hsl(var(--budget-warning))] text-[hsl(var(--budget-warning-foreground))]';
+      return 'bg-budget-warning text-budget-warning-foreground';
     case 'over':
-      return 'bg-[hsl(var(--budget-danger))] text-[hsl(var(--budget-danger-foreground))]';
+      return 'bg-budget-danger text-budget-danger-foreground';
     case 'paused':
       return 'bg-muted text-muted-foreground';
     case 'setup_needed':
-      return 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300';
+      return 'bg-info-bg text-info-fg';
     case 'on_track':
     default:
-      return 'bg-[hsl(var(--budget-success))] text-[hsl(var(--budget-success-foreground))]';
+      return 'bg-budget-success text-budget-success-foreground';
   }
 });
 
 const barClasses = $derived.by(() => {
   switch (status) {
     case 'approaching':
-      return 'bg-[hsl(var(--budget-warning))]';
+      return 'bg-budget-warning';
     case 'over':
-      return 'bg-[hsl(var(--budget-danger))]';
+      return 'bg-budget-danger';
     case 'paused':
       return 'bg-muted-foreground';
     case 'setup_needed':
-      return 'bg-blue-500';
+      return 'bg-info';
     case 'on_track':
     default:
-      return 'bg-[hsl(var(--budget-success))]';
+      return 'bg-budget-success';
   }
 });
 
 const enforcementClasses = $derived.by(() => {
   switch (enforcementLevel) {
     case 'strict':
-      return 'ring-1 ring-[hsl(var(--budget-danger)_/_0.4)]';
+      return 'ring-1 ring-budget-danger/40';
     case 'warning':
-      return 'ring-1 ring-[hsl(var(--budget-warning)_/_0.2)]';
+      return 'ring-1 ring-budget-warning/20';
     case 'none':
     default:
       return '';

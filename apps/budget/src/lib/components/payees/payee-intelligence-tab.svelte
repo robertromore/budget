@@ -305,13 +305,13 @@ const trendConfig = $derived.by(() => {
       return {
         icon: TrendingUp,
         // For income: up is good (green), for expenses: up is bad (red)
-        class: isIncomePayee ? 'text-green-600' : 'text-red-600',
+        class: isIncomePayee ? 'text-amount-positive' : 'text-amount-negative',
       };
     case 'down':
       return {
         icon: TrendingDown,
         // For income: down is bad (red), for expenses: down is good (green)
-        class: isIncomePayee ? 'text-red-600' : 'text-green-600',
+        class: isIncomePayee ? 'text-amount-negative' : 'text-amount-positive',
       };
     default:
       return {
@@ -411,7 +411,7 @@ const trendConfig = $derived.by(() => {
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-3">
             <div class="rounded-full bg-amber-100 p-2 dark:bg-amber-900/50">
-              <Sparkles class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <Sparkles class="h-4 w-4 text-warning" />
             </div>
             <div class="space-y-1">
               <p class="font-medium text-amber-900 dark:text-amber-100">

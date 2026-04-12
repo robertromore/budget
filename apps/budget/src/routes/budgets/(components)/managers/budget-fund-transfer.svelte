@@ -202,7 +202,7 @@ function getEnvelopeStyle(envelope: BudgetEnvelope) {
   let baseStyle = 'relative transition-all duration-200 cursor-pointer';
 
   if (envelope.status === 'overspent') {
-    baseStyle += ' border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/20';
+    baseStyle += ' border-destructive/30 bg-danger-bg';
   } else if (envelope.status === 'paused') {
     baseStyle += ' border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-950/20';
   } else {
@@ -259,13 +259,13 @@ const isValidTransfer = $derived.by(() => {
 
   <!-- Overspent Envelopes (Priority) -->
   {#if overspentEnvelopes.length > 0}
-    <Card.Root class="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/10">
+    <Card.Root class="border-destructive/20 bg-danger-bg">
       <Card.Header>
-        <Card.Title class="flex items-center gap-2 text-red-700 dark:text-red-300">
+        <Card.Title class="flex items-center gap-2 text-danger-fg">
           <CircleAlert class="h-5 w-5" />
           Overspent Envelopes - Need Funding
         </Card.Title>
-        <Card.Description class="text-red-600 dark:text-red-400">
+        <Card.Description class="text-destructive">
           These envelopes are over budget and need funds transferred to them
         </Card.Description>
       </Card.Header>
@@ -282,12 +282,12 @@ const isValidTransfer = $derived.by(() => {
               tabindex="0">
               <div class="mb-3 flex items-center gap-3">
                 <div
-                  class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                  <Icon class="h-4 w-4 text-red-600 dark:text-red-400" />
+                  class="bg-danger-bg flex h-8 w-8 items-center justify-center rounded-full">
+                  <Icon class="h-4 w-4 text-destructive" />
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 class="truncate font-medium">{envelope.name}</h4>
-                  <p class="text-xs text-red-600 dark:text-red-400">{envelope.type}</p>
+                  <p class="text-xs text-destructive">{envelope.type}</p>
                 </div>
                 <Badge variant="destructive" class="text-xs">
                   -{currencyFormatter.format(envelope.spentAmount - envelope.allocatedAmount)}
@@ -296,8 +296,8 @@ const isValidTransfer = $derived.by(() => {
 
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-red-600 dark:text-red-400">Deficit:</span>
-                  <span class="font-mono font-medium text-red-700 dark:text-red-300">
+                  <span class="text-destructive">Deficit:</span>
+                  <span class="text-danger-fg font-mono font-medium">
                     {currencyFormatter.format(envelope.spentAmount - envelope.allocatedAmount)}
                   </span>
                 </div>
@@ -481,8 +481,8 @@ const isValidTransfer = $derived.by(() => {
             class={cn(
               'flex items-center gap-2 rounded-lg p-3',
               transferResult.success
-                ? 'bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200'
-                : 'bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200'
+                ? 'bg-success-bg text-success-fg'
+                : 'bg-danger-bg text-danger-fg'
             )}>
             {#if transferResult.success}
               <CircleCheck class="h-4 w-4" />

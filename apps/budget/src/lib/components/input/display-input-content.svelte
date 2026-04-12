@@ -351,7 +351,6 @@ const updateColumnOrder = (newOrder: string[]) => {
       if (!currentView) return;
       currentView.updateTableAllRowsExpanded(checked ? true : {});
     }}
-    aria-labelledby="Expand all rows"
     disabled={grouping.value.length === 0} />
   <Label
     for="expand-all"
@@ -368,7 +367,7 @@ const updateColumnOrder = (newOrder: string[]) => {
       if (!currentView) return;
       currentView.updateTableDensity(checked ? 'dense' : 'normal');
     }}
-    aria-labelledby="Dense mode" />
+  />
   <Label
     for="dense-mode"
     class="ml-1 text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -384,7 +383,7 @@ const updateColumnOrder = (newOrder: string[]) => {
       if (!currentView) return;
       currentView.view.setStickyHeader(checked);
     }}
-    aria-labelledby="Sticky header" />
+  />
   <Label
     for="sticky-header"
     class="ml-1 text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

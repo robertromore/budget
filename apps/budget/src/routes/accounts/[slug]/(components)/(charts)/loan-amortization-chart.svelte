@@ -137,7 +137,7 @@ const yDomain = $derived.by((): [number, number] => {
                           <div class="h-2 w-2 rounded-full" style="background: var(--chart-1);"></div>
                           <span>Interest paid</span>
                         </div>
-                        <span class="font-mono text-amber-600">{currencyFormatter.format(point.cumulativeInterest)}</span>
+                        <span class="font-mono text-warning">{currencyFormatter.format(point.cumulativeInterest)}</span>
                       </div>
                       {#if point.month > 0}
                         <div class="text-muted-foreground border-t pt-1">
@@ -167,7 +167,7 @@ const yDomain = $derived.by((): [number, number] => {
       </div>
       <div class="flex items-center gap-2 text-xs">
         <div class="h-3 w-3 rounded-full" style="background: var(--chart-1);"></div>
-        <span class="text-amber-600">Interest</span>
+        <span class="text-warning">Interest</span>
       </div>
     </div>
 
@@ -180,7 +180,7 @@ const yDomain = $derived.by((): [number, number] => {
         </div>
         <div>
           <p class="text-muted-foreground text-xs">Total Interest</p>
-          <p class="font-semibold text-sm text-amber-600">{currencyFormatter.format(totalInterest)}</p>
+          <p class="font-semibold text-sm text-warning">{currencyFormatter.format(totalInterest)}</p>
         </div>
         <div>
           <p class="text-muted-foreground text-xs">Total Paid</p>

@@ -60,15 +60,15 @@ const trendConfig = $derived(() => {
       return {
         icon: TrendingUp,
         // For income: up is good (green), for expenses: up is bad (red)
-        class: isIncomePayee ? 'text-green-600' : 'text-red-600',
-        bgClass: isIncomePayee ? 'bg-green-100 dark:bg-green-950' : 'bg-red-100 dark:bg-red-950',
+        class: isIncomePayee ? 'text-success' : 'text-destructive',
+        bgClass: isIncomePayee ? 'bg-success-bg' : 'bg-danger-bg',
       };
     case 'down':
       return {
         icon: TrendingDown,
         // For income: down is bad (red), for expenses: down is good (green)
-        class: isIncomePayee ? 'text-red-600' : 'text-green-600',
-        bgClass: isIncomePayee ? 'bg-red-100 dark:bg-red-950' : 'bg-green-100 dark:bg-green-950',
+        class: isIncomePayee ? 'text-destructive' : 'text-success',
+        bgClass: isIncomePayee ? 'bg-danger-bg' : 'bg-success-bg',
       };
     default:
       return {

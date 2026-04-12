@@ -689,7 +689,7 @@ const colors = ['var(--chart-1)', 'var(--chart-2)'];
                     {@const change = point.total - prevMonth.total}
                     {@const changePercent =
                       prevMonth.total > 0 ? (change / prevMonth.total) * 100 : 0}
-                    <p class="mt-1 text-xs {change > 0 ? 'text-destructive' : 'text-green-600'}">
+                    <p class="mt-1 text-xs {change > 0 ? 'text-destructive' : 'text-amount-positive'}">
                       {change > 0 ? '↑' : '↓'}
                       {currencyFormatter.format(Math.abs(change))} ({changePercent > 0
                         ? '+'
@@ -784,7 +784,7 @@ const colors = ['var(--chart-1)', 'var(--chart-2)'];
                 <!-- Confidence indicator -->
                 <div
                   class="h-2 w-2 rounded-full {payee.confidence >= 70
-                    ? 'bg-green-500'
+                    ? 'bg-success'
                     : payee.confidence >= 50
                       ? 'bg-yellow-500'
                       : 'bg-orange-500'}"

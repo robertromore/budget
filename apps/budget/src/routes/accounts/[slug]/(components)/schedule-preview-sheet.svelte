@@ -50,8 +50,8 @@ const formatFrequency = (freq?: string, int: number = 1) => {
 
 const getFrequencyColor = (freq?: string) => {
   const colors: Record<string, string> = {
-    daily: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    weekly: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    daily: 'bg-success-bg text-success-fg',
+    weekly: 'bg-info-bg text-info-fg',
     monthly: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
     yearly: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
   };
@@ -104,8 +104,8 @@ const canSkip = $derived.by(() => {
   {#snippet header()}
     <div class="flex items-center gap-3">
       <div
-        class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-        <Calendar class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-info-bg">
+        <Calendar class="h-5 w-5 text-info" />
       </div>
       <div>
         <h2 class="text-lg font-semibold tracking-tight">Schedule Preview</h2>
@@ -162,8 +162,8 @@ const canSkip = $derived.by(() => {
 
       <!-- Info Note -->
       <div
-        class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/50">
-        <p class="text-sm text-blue-800 dark:text-blue-300">
+        class="bg-info-bg rounded-lg border border-info/20 p-4">
+        <p class="text-info-fg text-sm">
           This is a preview of an upcoming scheduled transaction. The actual transaction will be
           created automatically on the scheduled date.
         </p>

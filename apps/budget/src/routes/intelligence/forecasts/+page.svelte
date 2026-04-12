@@ -140,7 +140,7 @@ const granularityOptions = [
         <Card.Root>
           <Card.Header class="pb-2">
             <Card.Title class="flex items-center gap-2 text-sm font-medium">
-              <ArrowUp class="h-4 w-4 text-green-500" />
+              <ArrowUp class="h-4 w-4 text-success" />
               Projected Income
             </Card.Title>
           </Card.Header>
@@ -150,7 +150,7 @@ const granularityOptions = [
                 (sum, p) => sum + p.value,
                 0
               )}
-              <p class="text-2xl font-bold text-green-600">
+              <p class="text-2xl font-bold text-amount-positive">
                 {formatCurrency(totalIncome)}
               </p>
               <p class="text-muted-foreground text-xs">
@@ -165,7 +165,7 @@ const granularityOptions = [
         <Card.Root>
           <Card.Header class="pb-2">
             <Card.Title class="flex items-center gap-2 text-sm font-medium">
-              <ArrowDown class="h-4 w-4 text-red-500" />
+              <ArrowDown class="h-4 w-4 text-destructive" />
               Projected Expenses
             </Card.Title>
           </Card.Header>
@@ -175,7 +175,7 @@ const granularityOptions = [
                 (sum, p) => sum + Math.abs(p.value),
                 0
               )}
-              <p class="text-2xl font-bold text-red-600">
+              <p class="text-2xl font-bold text-amount-negative">
                 {formatCurrency(totalExpenses)}
               </p>
               <p class="text-muted-foreground text-xs">

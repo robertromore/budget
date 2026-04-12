@@ -24,7 +24,7 @@ const config = $derived.by(() => {
       return {
         icon: Calendar,
         class:
-          'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60',
+          'bg-info-bg text-info-fg hover:bg-info-bg/80',
       };
     case 'category_mismatch':
       return {
@@ -42,7 +42,7 @@ const config = $derived.by(() => {
       return {
         icon: DollarSign,
         class:
-          'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60',
+          'bg-danger-bg text-danger-fg hover:bg-danger-bg/80',
       };
     case 'new_payee':
       return {

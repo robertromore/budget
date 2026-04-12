@@ -263,7 +263,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
         <!-- Rollover Info -->
         {#if currentPeriod.rolloverAmount && currentPeriod.rolloverAmount !== 0}
           <div class="bg-muted/30 flex items-center gap-2 rounded-md p-3 text-sm">
-            <TrendingUp class="h-4 w-4 text-green-600" />
+            <TrendingUp class="text-amount-positive h-4 w-4" />
             <span>
               Rolled over {formatCurrency(currentPeriod.rolloverAmount)} from previous period
             </span>
@@ -355,7 +355,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
                   <span>Spent: {formatCurrency(period.spent)}</span>
                   <span>Budget: {formatCurrency(period.allocated)}</span>
                   <span
-                    class:text-green-600={period.remaining > 0}
+                    class:text-amount-positive={period.remaining > 0}
                     class:text-destructive={period.remaining < 0}>
                     {period.remaining >= 0 ? 'Under' : 'Over'} by {formatCurrency(
                       Math.abs(period.remaining)

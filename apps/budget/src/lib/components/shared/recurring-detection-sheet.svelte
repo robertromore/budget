@@ -206,7 +206,7 @@ $effect(() => {
         </div>
       {:else if patterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <CheckCircle class="h-10 w-10 text-green-600" />
+          <CheckCircle class="h-10 w-10 text-success" />
           <h3 class="mt-4 font-semibold">No New Patterns Found</h3>
           <p class="text-muted-foreground mt-2 text-sm">
             All recurring payments are already being tracked.
@@ -311,7 +311,7 @@ $effect(() => {
                 {:else}
                   <Card.Footer class="pt-2">
                     <div
-                      class="flex w-full items-center justify-center gap-2 text-sm text-green-600">
+                      class="flex w-full items-center justify-center gap-2 text-sm text-success">
                       <CheckCircle class="h-4 w-4" />
                       Processed
                     </div>
@@ -329,7 +329,7 @@ $effect(() => {
           </div>
         {:else}
           <div class="mt-4 text-center">
-            <p class="text-sm text-green-600">All patterns have been processed!</p>
+            <p class="text-sm text-success">All patterns have been processed!</p>
             <Button class="mt-2" onclick={() => onOpenChange(false)}>Close</Button>
           </div>
         {/if}

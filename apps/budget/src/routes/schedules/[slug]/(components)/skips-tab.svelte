@@ -215,12 +215,12 @@ const pushForwardCount = $derived(skips.filter((s) => s.skipType === 'push_forwa
     </Card.Root>
 
     <!-- Info Note -->
-    <Card.Root class="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50">
+    <Card.Root class="border-info/20 bg-info-bg">
       <Card.Content class="pt-4">
-        <p class="text-sm text-blue-800 dark:text-blue-300">
+        <p class="text-info-fg text-sm">
           <strong>Single Skip:</strong> Only skips one specific date. Other occurrences remain unchanged.
         </p>
-        <p class="mt-2 text-sm text-blue-800 dark:text-blue-300">
+        <p class="text-info-fg mt-2 text-sm">
           <strong>Push Forward:</strong> Shifts all future occurrences forward by one interval. This is
           reversible - restoring will shift dates back.
         </p>

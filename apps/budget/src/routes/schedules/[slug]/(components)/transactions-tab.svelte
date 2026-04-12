@@ -96,8 +96,8 @@ const handleWizardComplete = async (data: Record<string, any>) => {
                   <Table.Cell>
                     <span
                       class="font-mono {transaction.amount >= 0
-                        ? 'text-green-600'
-                        : 'text-red-600'}">
+                        ? 'text-amount-positive'
+                        : 'text-amount-negative'}">
                       {currencyFormatter.format(transaction.amount)}
                     </span>
                   </Table.Cell>

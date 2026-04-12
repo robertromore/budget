@@ -98,7 +98,7 @@ function handleSelect(provider: 'simplefin' | 'teller') {
             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-colors {tellerAvailable()
               ? 'bg-blue-500/10 group-hover:bg-blue-500/20'
               : 'bg-muted'}">
-            <Zap class="h-6 w-6 {tellerAvailable() ? 'text-blue-500' : 'text-muted-foreground'}" />
+            <Zap class="h-6 w-6 {tellerAvailable() ? 'text-info' : 'text-muted-foreground'}" />
           </div>
           <div class="flex-1">
             <div class="mb-1 flex items-center gap-2">
@@ -113,7 +113,7 @@ function handleSelect(provider: 'simplefin' | 'teller') {
               Connect directly to official bank APIs for real-time transaction updates.
             </p>
             {#if !tellerAvailable()}
-              <div class="mb-3 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+              <div class="mb-3 flex items-center gap-2 text-xs text-warning">
                 <AlertCircle class="h-3 w-3" />
                 <span>Configure Teller in Settings to enable</span>
               </div>

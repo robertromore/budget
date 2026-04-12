@@ -7,8 +7,8 @@ import { DashboardRenderer } from '$lib/components/dashboard';
 import { rpc } from '$lib/query';
 import type { DashboardWithWidgets } from '$core/schema/dashboards';
 import { Button } from '$lib/components/ui/button';
+import * as Empty from '$lib/components/ui/empty';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
-import Settings from '@lucide/svelte/icons/settings';
 
 // Load default dashboard
 const defaultQuery = rpc.dashboards.getDefaultDashboard().options();
@@ -58,17 +58,42 @@ function handleTourPromptClose() {
 
 <div class="space-y-6" data-tour-id="dashboard">
   {#if isLoading}
-    <div class="flex h-64 items-center justify-center">
-      <p class="text-muted-foreground">Loading dashboard...</p>
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {#each Array(4) as _}
+          <div class="rounded-lg border p-6">
+            <div class="bg-muted h-4 w-1/2 animate-pulse rounded"></div>
+            <div class="bg-muted mt-3 h-8 w-3/4 animate-pulse rounded"></div>
+            <div class="bg-muted mt-2 h-3 w-full animate-pulse rounded"></div>
+          </div>
+        {/each}
+      </div>
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {#each Array(2) as _}
+          <div class="rounded-lg border p-6">
+            <div class="bg-muted h-4 w-1/3 animate-pulse rounded"></div>
+            <div class="bg-muted mt-4 h-48 w-full animate-pulse rounded"></div>
+          </div>
+        {/each}
+      </div>
     </div>
   {:else if defaultDashboard}
     <DashboardRenderer dashboard={defaultDashboard} />
   {:else}
-    <div class="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed py-16">
-      <LayoutDashboard class="text-muted-foreground h-12 w-12" />
-      <p class="text-muted-foreground text-lg">No dashboard configured</p>
-      <Button href="/dashboard/manage">Set Up Your Dashboard</Button>
-    </div>
+    <Empty.Empty>
+      <Empty.EmptyMedia variant="icon">
+        <LayoutDashboard class="size-6" />
+      </Empty.EmptyMedia>
+      <Empty.EmptyHeader>
+        <Empty.EmptyTitle>No Dashboard Configured</Empty.EmptyTitle>
+        <Empty.EmptyDescription>
+          Set up your dashboard to see financial insights and track your accounts at a glance.
+        </Empty.EmptyDescription>
+      </Empty.EmptyHeader>
+      <Empty.EmptyContent>
+        <Button href="/dashboard/manage">Set Up Your Dashboard</Button>
+      </Empty.EmptyContent>
+    </Empty.Empty>
   {/if}
 </div>
 

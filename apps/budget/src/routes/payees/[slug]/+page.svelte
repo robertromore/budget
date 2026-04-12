@@ -277,12 +277,12 @@ function handleDetectSubscription() {
                 <Badge variant="outline" class="text-xs">{formatPayeeType(payee.payeeType)}</Badge>
               {/if}
               {#if payee.taxRelevant}
-                <Badge variant="outline" class="border-amber-500 text-xs text-amber-600">
+                <Badge variant="outline" class="border-amber-500 text-xs text-warning">
                   Tax Relevant
                 </Badge>
               {/if}
               {#if payee.isSeasonal}
-                <Badge variant="outline" class="border-blue-500 text-xs text-blue-600">
+                <Badge variant="outline" class="border-blue-500 text-xs text-info">
                   Seasonal
                 </Badge>
               {/if}
@@ -411,7 +411,7 @@ function handleDetectSubscription() {
                     </div>
                     <p
                       class="text-2xl font-bold {isIncome
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'text-amount-positive'
                         : ''}">
                       {formatCurrency(Math.abs(stats.totalAmount))}
                     </p>
@@ -448,7 +448,7 @@ function handleDetectSubscription() {
                     </div>
                     <p
                       class="text-2xl font-bold {isIncome
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'text-amount-positive'
                         : ''}">
                       {formatCurrency(Math.abs(stats.monthlyAverage))}
                     </p>
@@ -525,8 +525,8 @@ function handleDetectSubscription() {
                       </div>
                       <span
                         class="font-semibold {txn.amount < 0
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-green-600 dark:text-green-400'}">
+                          ? 'text-amount-negative'
+                          : 'text-amount-positive'}">
                         {formatCurrency(txn.amount)}
                       </span>
                     </div>
@@ -667,7 +667,7 @@ function handleDetectSubscription() {
                     </div>
                     <p
                       class="text-2xl font-bold {isIncome
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'text-amount-positive'
                         : ''}">
                       {formatCurrency(Math.abs(stats.totalAmount))}
                     </p>
@@ -688,7 +688,7 @@ function handleDetectSubscription() {
                     </div>
                     <p
                       class="text-2xl font-bold {isIncome
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'text-amount-positive'
                         : ''}">
                       {formatCurrency(Math.abs(stats.monthlyAverage))}
                     </p>
@@ -775,7 +775,7 @@ function handleDetectSubscription() {
               <section class="rounded-lg border p-5">
                 <div class="mb-4 flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <Activity class="h-5 w-5 text-blue-500" />
+                    <Activity class="h-5 w-5 text-info" />
                     <h3 class="font-semibold">Spending Timeline</h3>
                   </div>
                   {#if isRegular && avgDays}
@@ -906,7 +906,7 @@ function handleDetectSubscription() {
                   {#if intel.patterns}
                     <div class="rounded-lg border p-5">
                       <div class="mb-3 flex items-center gap-2">
-                        <Activity class="h-5 w-5 text-blue-500" />
+                        <Activity class="h-5 w-5 text-info" />
                         <h3 class="font-semibold">Pattern Analysis</h3>
                       </div>
                       <div class="space-y-3">
@@ -1021,12 +1021,12 @@ function handleDetectSubscription() {
                         <div
                           class="flex h-10 w-10 items-center justify-center rounded-full {txn.amount <
                           0
-                            ? 'bg-red-100 dark:bg-red-900/30'
-                            : 'bg-green-100 dark:bg-green-900/30'}">
+                            ? 'bg-danger-bg'
+                            : 'bg-success-bg'}">
                           {#if txn.amount < 0}
-                            <TrendingDown class="h-5 w-5 text-red-600 dark:text-red-400" />
+                            <TrendingDown class="h-5 w-5 text-amount-negative" />
                           {:else}
-                            <TrendingUp class="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <TrendingUp class="h-5 w-5 text-amount-positive" />
                           {/if}
                         </div>
                         <div>
@@ -1038,8 +1038,8 @@ function handleDetectSubscription() {
                       </div>
                       <span
                         class="text-lg font-semibold {txn.amount < 0
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-green-600 dark:text-green-400'}">
+                          ? 'text-amount-negative'
+                          : 'text-amount-positive'}">
                         {formatCurrency(txn.amount)}
                       </span>
                     </div>

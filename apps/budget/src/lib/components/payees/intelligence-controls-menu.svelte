@@ -84,7 +84,7 @@ let {
           Profile Settings
           {#if hasActiveProfile}
             <span
-              class="ml-auto rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+              class="bg-info-bg text-info-fg ml-auto rounded px-1.5 py-0.5 text-[10px] font-medium">
               Active
             </span>
           {/if}

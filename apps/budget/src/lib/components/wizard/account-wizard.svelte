@@ -216,13 +216,13 @@ const accountTypes = [
   {
     category: 'Banking Accounts',
     examples: ['Checking', 'Savings', 'Money Market'],
-    color: 'text-blue-600',
+    color: 'text-info',
     description: 'Checking, Savings, Money Market',
   },
   {
     category: 'Credit Accounts',
     examples: ['Credit Card', 'Line of Credit'],
-    color: 'text-green-600',
+    color: 'text-success',
     description: 'Credit Cards, Lines of Credit',
   },
   {
@@ -246,7 +246,7 @@ const accountTypes = [
   {
     category: 'Utility Accounts',
     examples: ['Electric', 'Gas', 'Water', 'Internet'],
-    color: 'text-amber-600',
+    color: 'text-warning',
     description: 'Track usage and bills',
   },
 ];
@@ -954,14 +954,14 @@ const selectedIcon = $derived(() => {
 
       <!-- Info Box -->
       <div
-        class="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+        class="mt-3 rounded-md bg-info-bg border border-info/20 p-3">
         <div class="flex items-start gap-2">
-          <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <Info class="mt-0.5 h-4 w-4 shrink-0 text-info" />
           <div class="space-y-1">
-            <p class="text-xs font-medium text-blue-900 dark:text-blue-100">
+            <p class="text-xs font-medium text-info-fg">
               When to use off-budget accounts:
             </p>
-            <ul class="list-inside list-disc space-y-0.5 text-xs text-blue-700 dark:text-blue-200">
+            <ul class="list-inside list-disc space-y-0.5 text-xs text-info-fg">
               <li>Investment accounts (401k, IRA, brokerage)</li>
               <li>Loan accounts (mortgage, car loans)</li>
               <li>Accounts you track for net worth but don't actively budget</li>
@@ -1107,7 +1107,7 @@ const selectedIcon = $derived(() => {
   <div class="space-y-4">
     <div class="space-y-2">
       <h3 class="flex items-center gap-2 text-lg font-semibold">
-        <CircleCheck class="h-5 w-5 text-green-600" />
+        <CircleCheck class="h-5 w-5 text-success" />
         Account Summary
       </h3>
     </div>
@@ -1296,14 +1296,14 @@ const selectedIcon = $derived(() => {
 
       <!-- Creation Notice -->
       <div
-        class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+        class="mt-4 rounded-lg bg-info-bg border border-info/20 p-4">
         <div class="flex items-start gap-3">
-          <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <Info class="mt-0.5 h-4 w-4 shrink-0 text-info" />
           <div class="space-y-1">
-            <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+            <p class="text-sm font-medium text-info-fg">
               Ready to Create Account
             </p>
-            <p class="text-sm text-blue-700 dark:text-blue-200">
+            <p class="text-sm text-info-fg">
               Click "Complete" to create your account. You can edit these details later if needed.
             </p>
           </div>
@@ -1320,22 +1320,22 @@ const selectedIcon = $derived(() => {
     <div class="space-y-3">
       <div class="flex items-center gap-3">
         <div
-          class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-          <span class="text-xs font-medium text-blue-600 dark:text-blue-300">1</span>
+          class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+          <span class="text-xs font-medium text-info">1</span>
         </div>
         <p class="text-sm">Your account will be created and available immediately</p>
       </div>
       <div class="flex items-center gap-3">
         <div
-          class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-          <span class="text-xs font-medium text-blue-600 dark:text-blue-300">2</span>
+          class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+          <span class="text-xs font-medium text-info">2</span>
         </div>
         <p class="text-sm">You can start adding transactions and tracking balances</p>
       </div>
       <div class="flex items-center gap-3">
         <div
-          class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-          <span class="text-xs font-medium text-blue-600 dark:text-blue-300">3</span>
+          class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+          <span class="text-xs font-medium text-info">3</span>
         </div>
         <p class="text-sm">Set up budgets and schedules for better financial management</p>
       </div>

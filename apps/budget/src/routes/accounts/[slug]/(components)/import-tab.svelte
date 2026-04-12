@@ -1991,7 +1991,7 @@ $effect(() => {
             class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all {isCurrent
               ? 'bg-primary text-primary-foreground shadow-md'
               : isComplete
-                ? 'bg-green-500 text-white'
+                ? 'bg-success text-white'
                 : 'bg-muted text-muted-foreground'}">
             {#if isComplete}
               <CircleCheck class="h-5 w-5" />
@@ -2005,7 +2005,7 @@ $effect(() => {
             class="absolute top-full left-1/2 mt-2 hidden -translate-x-1/2 text-xs font-medium whitespace-nowrap transition-colors md:block {isCurrent
               ? 'text-primary'
               : isComplete
-                ? 'text-green-600'
+                ? 'text-success'
                 : 'text-muted-foreground'}">
             {step.label}
           </div>
@@ -2013,7 +2013,7 @@ $effect(() => {
         {#if index < steps.length - 1}
           <div
             class="mx-2 h-1 w-16 rounded-full transition-all md:mx-4 md:w-24 {isComplete
-              ? 'bg-green-500'
+              ? 'bg-success'
               : 'bg-muted'}">
           </div>
         {/if}
@@ -2294,8 +2294,8 @@ $effect(() => {
     <div class="space-y-6" data-tour-id="import-complete">
       <div class="text-center">
         <div
-          class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-          <CircleCheck class="h-8 w-8 text-green-600" />
+          class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+          <CircleCheck class="h-8 w-8 text-success" />
         </div>
         <h2 class="text-2xl font-bold">Import Complete!</h2>
         <p class="text-muted-foreground mt-2">
@@ -2310,14 +2310,14 @@ $effect(() => {
         <Card.Content class="space-y-4">
           <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div>
-              <div class="text-2xl font-bold text-green-600">
+              <div class="text-2xl font-bold text-success">
                 {importResult.transactionsCreated ?? 0}
               </div>
               <div class="text-muted-foreground text-sm">Transactions Created</div>
             </div>
             {#if importResult.reconciled && importResult.reconciled > 0}
               <div>
-                <div class="text-2xl font-bold text-blue-600">
+                <div class="text-2xl font-bold text-info">
                   {importResult.reconciled}
                 </div>
                 <div class="text-muted-foreground text-sm">Transfers Reconciled</div>
@@ -2336,7 +2336,7 @@ $effect(() => {
 
           {#if importResult.reconciledTransactions && importResult.reconciledTransactions.length > 0}
             <div class="border-t pt-4">
-              <p class="mb-2 text-sm font-medium text-blue-600">
+              <p class="mb-2 text-sm font-medium text-info">
                 Reconciled with Existing Transfers
               </p>
               <p class="text-muted-foreground mb-2 text-xs">

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { browser } from '$app/environment';
 import { Button } from '$lib/components/ui/button';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import { IntelligenceInputSettings } from '$lib/query/intelligence-input-settings';
@@ -31,6 +32,24 @@ const isActive = $derived(intelligenceInputMode.isActive);
 const isEnabled = $derived(intelligenceInputMode.isEnabled);
 const showInHeader = $derived(preferencesQuery.data?.showInHeader ?? true);
 
+// Track whether any intelligence fields exist on the current page
+let hasFieldsOnPage = $state(false);
+
+$effect(() => {
+  if (!browser) return;
+
+  const check = () => {
+    hasFieldsOnPage = document.querySelectorAll('[data-intelligence-id]').length > 0;
+  };
+
+  check();
+
+  const observer = new MutationObserver(check);
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  return () => observer.disconnect();
+});
+
 let shortcutModifier = $state('Ctrl');
 
 onMount(() => {
@@ -47,6 +66,7 @@ onMount(() => {
           variant="ghost"
           size="icon"
           onclick={() => intelligenceInputMode.toggle()}
+          disabled={!hasFieldsOnPage && !isActive}
           aria-label={isActive ? 'Exit intelligence mode' : 'Enter intelligence mode'}
           aria-pressed={isActive}
           data-help-id="intelligence-input-button"
@@ -57,15 +77,19 @@ onMount(() => {
           )}>
           <Brain class="h-4 w-4" />
           {#if isActive}
-            <span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500"></span>
+            <span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-success"></span>
           {/if}
         </Button>
       {/snippet}
     </Tooltip.Trigger>
     <Tooltip.Content>
       <p>
-        {isActive ? 'Exit intelligence mode' : 'Intelligence mode'}
-        <Kbd class="ml-2">{shortcutModifier}⇧I</Kbd>
+        {#if !hasFieldsOnPage && !isActive}
+          No intelligence fields on this page
+        {:else}
+          {isActive ? 'Exit intelligence mode' : 'Intelligence mode'}
+          <Kbd class="ml-2">{shortcutModifier}⇧I</Kbd>
+        {/if}
       </p>
     </Tooltip.Content>
   </Tooltip.Root>

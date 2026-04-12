@@ -227,31 +227,31 @@ function formatAccountType(type: string): string {
             <h3 class="mb-3 font-medium">About Teller</h3>
             <ul class="text-muted-foreground space-y-2 text-sm">
               <li class="flex items-start gap-2">
-                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <span>Connect directly to your bank using official APIs</span>
               </li>
               <li class="flex items-start gap-2">
-                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <span>7,000+ supported financial institutions</span>
               </li>
               <li class="flex items-start gap-2">
-                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <span>Free for personal use (100 connections)</span>
               </li>
               <li class="flex items-start gap-2">
-                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                <CheckCircle class="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <span>Real-time transaction updates</span>
               </li>
             </ul>
           </div>
 
           <div
-            class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+            class="bg-info-bg rounded-lg border border-info/20 p-4">
             <div class="flex gap-3">
-              <Zap class="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <Zap class="h-5 w-5 shrink-0 text-info" />
               <div class="text-sm">
-                <p class="font-medium text-blue-900 dark:text-blue-100">Secure Connection</p>
-                <p class="text-blue-700 dark:text-blue-300">
+                <p class="text-info-fg font-medium">Secure Connection</p>
+                <p class="text-info-fg">
                   You'll be redirected to Teller's secure login. Your bank credentials are never
                   shared with this app.
                 </p>
@@ -363,12 +363,12 @@ function formatAccountType(type: string): string {
           {/if}
 
           <div
-            class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
+            class="bg-success-bg rounded-lg border border-success/20 p-4">
             <div class="flex gap-3">
-              <CheckCircle class="h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
+              <CheckCircle class="h-5 w-5 shrink-0 text-success" />
               <div class="text-sm">
-                <p class="font-medium text-green-900 dark:text-green-100">Ready to connect</p>
-                <p class="text-green-700 dark:text-green-300">
+                <p class="text-success-fg font-medium">Ready to connect</p>
+                <p class="text-success-fg">
                   After connecting, transactions will be automatically synced from your bank.
                 </p>
               </div>

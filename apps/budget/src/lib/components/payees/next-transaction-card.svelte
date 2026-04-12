@@ -130,10 +130,10 @@ const daysUntilText = $derived.by(() => {
 const confidenceBadgeClass = $derived.by(() => {
   if (!prediction) return '';
   if (prediction.confidence >= 0.8)
-    return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
+    return 'bg-success-bg text-success-fg';
   if (prediction.confidence >= 0.6)
-    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
-  return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
+    return 'bg-warning-bg text-warning-fg';
+  return 'bg-danger-bg text-danger-fg';
 });
 
 // Start editing date
@@ -195,7 +195,7 @@ function submitRating(rating: FeedbackRating) {
     <!-- Thinking/Loading state -->
     <div class="mb-1.5 flex items-center justify-between">
       <div class="flex items-center gap-1.5">
-        <Calendar class="h-3.5 w-3.5 text-blue-500" />
+        <Calendar class="h-3.5 w-3.5 text-info" />
         <span class="text-sm font-medium">Next Transaction</span>
       </div>
     </div>
@@ -210,7 +210,7 @@ function submitRating(rating: FeedbackRating) {
     <!-- Header with tier badge, confidence, and refresh button -->
     <div class="mb-1.5 flex items-center justify-between">
       <div class="flex items-center gap-1.5">
-        <Calendar class="h-3.5 w-3.5 text-blue-500" />
+        <Calendar class="h-3.5 w-3.5 text-info" />
         <span class="text-sm font-medium">Next Transaction</span>
         {#if prediction.tier === 'ai'}
           <Tooltip.Root>
@@ -243,7 +243,7 @@ function submitRating(rating: FeedbackRating) {
             <Tooltip.Trigger>
               <Badge
                 variant="outline"
-                class="h-4 border-yellow-400/50 px-1 text-[10px] text-yellow-600">
+                class="h-4 border-yellow-400/50 px-1 text-[10px] text-warning">
                 <Zap class="mr-0.5 h-2.5 w-2.5" />
                 Fast
               </Badge>
@@ -291,13 +291,13 @@ function submitRating(rating: FeedbackRating) {
             handleSubmit={handleDateSubmit}
             buttonClass="h-7 text-xs" />
         {:else}
-          <span class="font-semibold {correctedDate ? 'text-green-600 dark:text-green-400' : ''}">
+          <span class="font-semibold {correctedDate ? 'text-success' : ''}">
             {formatDateString(displayDate ?? prediction.date)}
           </span>
           {#if correctedDate}
             <Tooltip.Root>
               <Tooltip.Trigger>
-                <span class="text-xs text-green-600 dark:text-green-400">✓</span>
+                <span class="text-xs text-success">✓</span>
               </Tooltip.Trigger>
               <Tooltip.Content>
                 <p>Corrected from {formatDateString(prediction.date)}</p>
@@ -336,7 +336,7 @@ function submitRating(rating: FeedbackRating) {
             <Tooltip.Trigger>
               <span
                 class="font-semibold {correctedAmount !== null
-                  ? 'text-green-600 dark:text-green-400'
+                  ? 'text-success'
                   : ''}">
                 ~{formatCurrency(displayAmount ?? prediction.amount)}
               </span>
@@ -354,7 +354,7 @@ function submitRating(rating: FeedbackRating) {
             </Tooltip.Content>
           </Tooltip.Root>
           {#if correctedAmount !== null}
-            <span class="text-xs text-green-600 dark:text-green-400">✓</span>
+            <span class="text-xs text-success">✓</span>
           {/if}
           {#if onFeedback}
             <Tooltip.Root>
@@ -386,8 +386,8 @@ function submitRating(rating: FeedbackRating) {
             variant="ghost"
             size="sm"
             class="h-5 w-5 p-0 {submittedRating === 'positive'
-              ? 'bg-green-100 text-green-600 dark:bg-green-950'
-              : 'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-950'}"
+              ? 'bg-success-bg text-success'
+              : 'hover:bg-success-bg hover:text-success'}"
             onclick={() => submitRating('positive')}>
             <ThumbsUp class="h-3 w-3" />
           </Button>
@@ -395,8 +395,8 @@ function submitRating(rating: FeedbackRating) {
             variant="ghost"
             size="sm"
             class="h-5 w-5 p-0 {submittedRating === 'negative'
-              ? 'bg-red-100 text-red-600 dark:bg-red-950'
-              : 'hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950'}"
+              ? 'bg-danger-bg text-destructive'
+              : 'hover:bg-danger-bg hover:text-destructive'}"
             onclick={() => submitRating('negative')}>
             <ThumbsDown class="h-3 w-3" />
           </Button>
@@ -445,7 +445,7 @@ function submitRating(rating: FeedbackRating) {
     <!-- Empty state - compact -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-1.5">
-        <Calendar class="h-3.5 w-3.5 text-blue-500" />
+        <Calendar class="h-3.5 w-3.5 text-info" />
         <span class="text-sm font-medium">Next Transaction</span>
       </div>
       {#if onRefresh}

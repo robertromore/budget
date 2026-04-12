@@ -63,21 +63,21 @@ const getCategoryTypeInfo = (type: string | null) => {
         icon: TrendingUp,
         label: 'Income',
         variant: 'default' as const,
-        color: 'text-green-600',
+        color: 'text-success',
       };
     case 'expense':
       return {
         icon: TrendingDown,
         label: 'Expense',
         variant: 'secondary' as const,
-        color: 'text-red-600',
+        color: 'text-destructive',
       };
     case 'transfer':
       return {
         icon: ArrowLeftRight,
         label: 'Transfer',
         variant: 'outline' as const,
-        color: 'text-blue-600',
+        color: 'text-info',
       };
     case 'savings':
       return {
@@ -100,11 +100,11 @@ const getCategoryTypeInfo = (type: string | null) => {
 const getPriorityColor = (priority: string | null) => {
   switch (priority) {
     case 'essential':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
+      return 'bg-danger-bg text-danger-fg';
     case 'important':
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
     case 'discretionary':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
+      return 'bg-info-bg text-info-fg';
     case 'luxury':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200';
     default:
@@ -196,7 +196,7 @@ const getPriorityColor = (priority: string | null) => {
           {#if c.isTaxDeductible}
             <Badge
               variant="secondary"
-              class="bg-green-100 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-200">
+              class="bg-success-bg text-xs text-success-fg">
               <Receipt class="mr-1 h-3 w-3" />
               Tax Deductible
             </Badge>

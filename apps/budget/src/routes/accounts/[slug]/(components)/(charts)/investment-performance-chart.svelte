@@ -124,8 +124,8 @@ const settingsHref = $derived(account ? `/accounts/${account.slug}/settings?sect
           <p class="text-muted-foreground text-xs">Total Return</p>
           <p
             class="font-semibold"
-            class:text-green-600={latestReturn >= 0}
-            class:text-red-600={latestReturn < 0}>
+            class:text-amount-positive={latestReturn >= 0}
+            class:text-amount-negative={latestReturn < 0}>
             {latestReturn >= 0 ? '+' : ''}{(latestReturn * 100).toFixed(2)}%
           </p>
         </div>

@@ -18,8 +18,8 @@ const accountCount = $derived(accountsState.accounts.size);
   <div class="min-w-0 flex-1">
     <div
       class="truncate text-2xl font-bold"
-      class:text-green-600={totalBalance > 0}
-      class:text-red-600={totalBalance < 0}
+      class:text-amount-positive={totalBalance > 0}
+      class:text-amount-negative={totalBalance < 0}
       class:text-muted-foreground={totalBalance === 0}>
       {currencyFormatter.format(totalBalance)}
     </div>

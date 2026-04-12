@@ -183,7 +183,7 @@ function handleClose() {
           </div>
           <div>
             <span class="text-muted-foreground">Lowest:</span>
-            <span class="ml-1 font-semibold text-green-600"
+            <span class="text-amount-positive ml-1 font-semibold"
               >{currencyFormatter.format(stats.lowest)}</span>
           </div>
         </div>

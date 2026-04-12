@@ -89,8 +89,8 @@ const trendDirection = $derived.by(() => {
             <span class="text-destructive"
               >{formatPercentRaw(usageChangePercent ?? 0, 1)} vs last period</span>
           {:else if trendDirection === 'down'}
-            <TrendingDown class="mr-1 h-3 w-3 text-green-500" />
-            <span class="text-green-500"
+            <TrendingDown class="mr-1 h-3 w-3 text-amount-positive" />
+            <span class="text-amount-positive"
               >{formatPercentRaw(Math.abs(usageChangePercent ?? 0), 1)} vs last period</span>
           {:else}
             <span>No previous data</span>

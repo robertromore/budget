@@ -152,7 +152,7 @@ function formatUsage(value: number): string {
             <p class="text-muted-foreground text-xs">Trend</p>
             <p
               class="flex items-center justify-center font-semibold"
-              class:text-green-600={stats.trendPercent < 0}
+              class:text-amount-positive={stats.trendPercent < 0}
               class:text-destructive={stats.trendPercent > 0}>
               {#if stats.trendPercent > 0}
                 <TrendingUp class="mr-1 h-3 w-3" />

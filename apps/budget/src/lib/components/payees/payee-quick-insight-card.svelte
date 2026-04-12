@@ -27,9 +27,9 @@ const config = $derived(() => {
     case 'subscription_detected':
       return {
         icon: Calendar,
-        borderClass: 'border-blue-200 dark:border-blue-900',
-        bgClass: 'bg-blue-50/50 dark:bg-blue-950/20',
-        iconClass: 'text-blue-500',
+        borderClass: 'border-info/20',
+        bgClass: 'bg-info-bg/50',
+        iconClass: 'text-info',
       };
     case 'category_mismatch':
       return {
@@ -48,9 +48,9 @@ const config = $derived(() => {
     case 'budget_exceeded':
       return {
         icon: DollarSign,
-        borderClass: 'border-red-200 dark:border-red-900',
-        bgClass: 'bg-red-50/50 dark:bg-red-950/20',
-        iconClass: 'text-red-500',
+        borderClass: 'border-destructive/20',
+        bgClass: 'bg-danger-bg/50',
+        iconClass: 'text-destructive',
       };
     case 'new_payee':
       return {
@@ -73,11 +73,11 @@ const config = $derived(() => {
 const priorityDot = $derived(() => {
   switch (priority) {
     case 'high':
-      return 'bg-red-500';
+      return 'bg-destructive';
     case 'medium':
-      return 'bg-yellow-500';
+      return 'bg-warning';
     case 'low':
-      return 'bg-green-500';
+      return 'bg-success';
   }
 });
 

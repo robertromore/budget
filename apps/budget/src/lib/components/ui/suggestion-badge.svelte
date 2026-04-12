@@ -51,16 +51,16 @@ const Icon = $derived(typeIconMap[type]);
 
 const getVariantStyles = (variant: SuggestionVariant, applied: boolean) => {
   if (applied) {
-    return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-100 dark:border-green-800';
+    return 'bg-success-bg text-success-fg border-success/20';
   }
 
   switch (variant) {
     case 'success':
-      return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-100 dark:border-green-800';
+      return 'bg-success-bg text-success-fg border-success/20';
     case 'warning':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-100 dark:border-yellow-800';
+      return 'bg-warning-bg text-warning-fg border-warning/20';
     case 'info':
-      return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-800';
+      return 'bg-info-bg text-info-fg border-info/20';
     case 'accent':
       return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-100 dark:border-purple-800';
     default:
@@ -77,7 +77,7 @@ const confidencePercentage = $derived(confidence ? Math.round(confidence * 100) 
     'group inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-all duration-300 ease-out',
     'animate-in fade-in-0 slide-in-from-top-2',
     getVariantStyles(variant, applied),
-    applied && 'scale-105 ring-1 ring-green-300 dark:ring-green-700',
+    applied && 'scale-105 ring-1 ring-success/50',
     className
   )}
   style="animation-duration: 400ms;"

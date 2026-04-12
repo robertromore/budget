@@ -645,9 +645,9 @@ const selectedCategories = $derived.by(() => {
     <!-- Goal-specific fields -->
     {#if isGoalBased}
       <div
-        class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+        class="bg-info-bg rounded-lg border border-info/20 p-4">
         <h4
-          class="mb-4 flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100">
+          class="text-info-fg mb-4 flex items-center gap-2 text-sm font-medium">
           <Target class="h-4 w-4" />
           Goal Settings
         </h4>
@@ -869,7 +869,7 @@ const selectedCategories = $derived.by(() => {
     <Card.Root>
       <Card.Header class="pb-4">
         <Card.Title class="flex items-center gap-2">
-          <CheckCircle2 class="h-5 w-5 text-green-600" />
+          <CheckCircle2 class="h-5 w-5 text-success" />
           Budget Summary
         </Card.Title>
       </Card.Header>
@@ -1034,15 +1034,15 @@ const selectedCategories = $derived.by(() => {
         <div class="space-y-3">
           <div class="flex items-center gap-3">
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">1</span>
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+              <span class="text-xs font-medium text-info">1</span>
             </div>
             <p class="text-sm">Your budget will be created and activated</p>
           </div>
           <div class="flex items-center gap-3">
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">2</span>
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+              <span class="text-xs font-medium text-info">2</span>
             </div>
             <p class="text-sm">
               {formData['enforcementLevel'] === 'none'
@@ -1054,8 +1054,8 @@ const selectedCategories = $derived.by(() => {
           </div>
           <div class="flex items-center gap-3">
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">3</span>
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+              <span class="text-xs font-medium text-info">3</span>
             </div>
             <p class="text-sm">Monitor progress and adjust settings from the budgets page</p>
           </div>

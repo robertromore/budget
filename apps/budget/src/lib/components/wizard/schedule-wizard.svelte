@@ -567,7 +567,7 @@ const scheduleTypes = [
     <Card.Root>
       <Card.Header class="pb-4">
         <Card.Title class="flex items-center gap-2">
-          <CircleCheck class="h-5 w-5 text-green-600" />
+          <CircleCheck class="h-5 w-5 text-success" />
           Schedule Summary
         </Card.Title>
       </Card.Header>
@@ -635,14 +635,14 @@ const scheduleTypes = [
 
         <!-- Creation Notice -->
         <div
-          class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          class="mt-4 rounded-lg bg-info-bg border border-info/20 p-4">
           <div class="flex items-start gap-3">
-            <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+            <Info class="mt-0.5 h-4 w-4 shrink-0 text-info" />
             <div class="space-y-1">
-              <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+              <p class="text-sm font-medium text-info-fg">
                 Ready to Create Schedule
               </p>
-              <p class="text-sm text-blue-700 dark:text-blue-200">
+              <p class="text-sm text-info-fg">
                 Click "Complete" to create your schedule. You can edit these details later if
                 needed.
               </p>
@@ -661,15 +661,15 @@ const scheduleTypes = [
         <div class="space-y-3">
           <div class="flex items-center gap-3">
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">1</span>
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+              <span class="text-xs font-medium text-info">1</span>
             </div>
             <p class="text-sm">Your schedule will be created and activated</p>
           </div>
           <div class="flex items-center gap-3">
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">2</span>
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+              <span class="text-xs font-medium text-info">2</span>
             </div>
             <p class="text-sm">
               {formData['auto_add']
@@ -679,8 +679,8 @@ const scheduleTypes = [
           </div>
           <div class="flex items-center gap-3">
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">3</span>
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg">
+              <span class="text-xs font-medium text-info">3</span>
             </div>
             <p class="text-sm">Manage and edit your schedule from the schedules page</p>
           </div>

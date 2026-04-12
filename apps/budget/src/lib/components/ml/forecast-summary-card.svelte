@@ -73,14 +73,14 @@ const totals = $derived.by(() => {
 const trendConfig = {
   up: {
     icon: TrendingUp,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
+    color: 'text-success',
+    bgColor: 'bg-success/10',
     label: 'Increasing',
   },
   down: {
     icon: TrendingDown,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
     label: 'Decreasing',
   },
   stable: {
@@ -130,8 +130,8 @@ const periodLabel = $derived(
             {#if totals.percentChange !== 0}
               <span
                 class={cn('flex items-center text-sm font-medium', {
-                  'text-green-500': totals.percentChange > 0,
-                  'text-red-500': totals.percentChange < 0,
+                  'text-success': totals.percentChange > 0,
+                  'text-destructive': totals.percentChange < 0,
                 })}>
                 {#if totals.percentChange > 0}
                   <ArrowUp class="h-3 w-3" />
@@ -165,8 +165,8 @@ const periodLabel = $derived(
           <p class="text-muted-foreground text-xs">Net Change</p>
           <p
             class={cn('font-medium', {
-              'text-green-600': totals.netChange > 0,
-              'text-red-600': totals.netChange < 0,
+              'text-amount-positive': totals.netChange > 0,
+              'text-amount-negative': totals.netChange < 0,
             })}>
             {totals.netChange >= 0 ? '+' : ''}{formatCurrency(totals.netChange)}
           </p>

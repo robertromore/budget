@@ -81,13 +81,13 @@ function getFeatureBadge(status: 'available' | 'limited' | 'disabled') {
       return {
         variant: 'secondary' as const,
         label: 'Available',
-        class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        class: 'bg-success-bg text-success-fg',
       };
     case 'limited':
       return {
         variant: 'outline' as const,
         label: 'Limited',
-        class: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+        class: 'bg-warning-bg text-warning-fg',
       };
     case 'disabled':
       return { variant: 'destructive' as const, label: 'Disabled', class: '' };
@@ -126,14 +126,14 @@ const hasEncryptionKey = $derived(userPrefsQuery.data?.hasEncryptionKey ?? false
 <div class="space-y-6">
   <!-- User Key Status -->
   {#if !hasEncryptionKey}
-    <Card.Root class="border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-900/10">
+    <Card.Root class="border-warning/50 bg-warning-bg/50">
       <Card.Content class="flex items-start gap-3 pt-6">
-        <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-yellow-600 dark:text-yellow-400" />
+        <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-warning" />
         <div class="space-y-1">
-          <p class="font-medium text-yellow-800 dark:text-yellow-200">
+          <p class="text-warning-fg font-medium">
             No encryption key configured
           </p>
-          <p class="text-sm text-yellow-700 dark:text-yellow-300">
+          <p class="text-warning-fg text-sm">
             You need to generate a personal encryption key before enabling workspace encryption.
             <a href="/settings/security" class="underline hover:no-underline">
               Go to Security Settings
@@ -212,10 +212,10 @@ const hasEncryptionKey = $derived(userPrefsQuery.data?.hasEncryptionKey ?? false
                 <p class="text-muted-foreground text-sm">{option.description}</p>
 
                 {#if selectedLevel === option.value && option.warnings.length > 0}
-                  <div class="mt-2 space-y-1 rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                  <div class="bg-warning-bg mt-2 space-y-1 rounded-md p-3">
                     {#each option.warnings as warning, i (i)}
                       <div
-                        class="flex items-start gap-2 text-sm text-yellow-700 dark:text-yellow-400">
+                        class="text-warning-fg flex items-start gap-2 text-sm">
                         <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
                         <span>{warning}</span>
                       </div>

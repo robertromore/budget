@@ -313,7 +313,7 @@ async function handleSaveSettings() {
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
           <Card.Title class="text-sm font-medium">Rolled Into Period</Card.Title>
-          <TrendingUp class="h-4 w-4 text-green-600" />
+          <TrendingUp class="h-4 w-4 text-amount-positive" />
         </Card.Header>
         <Card.Content>
           {#if isLoadingSummary}
@@ -322,7 +322,7 @@ async function handleSaveSettings() {
               <span class="text-muted-foreground text-sm">Loading...</span>
             </div>
           {:else}
-            <div class="text-2xl font-bold text-green-600">
+            <div class="text-2xl font-bold text-amount-positive">
               {currencyFormatter.format(totalRolledIn)}
             </div>
             <p class="text-muted-foreground text-xs">
@@ -336,7 +336,7 @@ async function handleSaveSettings() {
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
           <Card.Title class="text-sm font-medium">Rolled Out of Period</Card.Title>
-          <TrendingDown class="h-4 w-4 text-blue-600" />
+          <TrendingDown class="h-4 w-4 text-info" />
         </Card.Header>
         <Card.Content>
           {#if isLoadingSummary}
@@ -345,7 +345,7 @@ async function handleSaveSettings() {
               <span class="text-muted-foreground text-sm">Loading...</span>
             </div>
           {:else}
-            <div class="text-2xl font-bold text-blue-600">
+            <div class="text-2xl font-bold text-info">
               {currencyFormatter.format(totalRolledOut)}
             </div>
             <p class="text-muted-foreground text-xs">
@@ -453,7 +453,7 @@ async function handleSaveSettings() {
                   </p>
                 </div>
                 <div class="text-right">
-                  <div class="text-2xl font-bold text-green-600">
+                  <div class="text-2xl font-bold text-amount-positive">
                     {currencyFormatter.format(estimatedRollover)}
                   </div>
                   <p class="text-muted-foreground text-xs">
@@ -477,12 +477,12 @@ async function handleSaveSettings() {
 
               {#if deficitImpact > 0}
                 <div
-                  class="flex items-center justify-between rounded-lg bg-red-50 p-3 dark:bg-red-950/20">
+                  class="bg-danger-bg flex items-center justify-between rounded-lg p-3">
                   <div class="flex items-center gap-2">
-                    <TrendingDown class="h-4 w-4 text-red-600" />
+                    <TrendingDown class="h-4 w-4 text-destructive" />
                     <span class="text-sm font-medium">Deficit Impact</span>
                   </div>
-                  <span class="text-sm font-medium text-red-600">
+                  <span class="text-sm font-medium text-destructive">
                     {currencyFormatter.format(deficitImpact)}
                   </span>
                 </div>
@@ -505,7 +505,7 @@ async function handleSaveSettings() {
                 {@const hasDeficit = transition.hasDeficit}
                 <div
                   class="flex items-center justify-between rounded-lg border p-3 {hasDeficit
-                    ? 'bg-red-50 dark:bg-red-950/10'
+                    ? 'bg-danger-bg'
                     : ''}">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
@@ -521,7 +521,7 @@ async function handleSaveSettings() {
                   <div class="flex shrink-0 items-center gap-4">
                     {#if hasDeficit}
                       <div class="text-right">
-                        <div class="text-sm font-medium text-red-600">
+                        <div class="text-sm font-medium text-destructive">
                           -{currencyFormatter.format(transition.deficitAmount)}
                         </div>
                         <div class="text-muted-foreground text-xs">Deficit</div>
@@ -538,7 +538,7 @@ async function handleSaveSettings() {
                     <div class="text-right">
                       <div
                         class="text-sm font-medium {isPositive
-                          ? 'text-green-600'
+                          ? 'text-amount-positive'
                           : 'text-muted-foreground'}">
                         {isPositive ? '+' : ''}{currencyFormatter.format(transition.rolloverAmount)}
                       </div>
@@ -598,7 +598,7 @@ async function handleSaveSettings() {
 
                   <div class="flex items-center gap-4">
                     <div class="text-right">
-                      <div class="font-mono {isPositive ? 'text-green-600' : 'text-red-600'}">
+                      <div class="font-mono {isPositive ? 'text-amount-positive' : 'text-amount-negative'}">
                         {isPositive ? '+' : ''}{currencyFormatter.format(amount)}
                       </div>
                       <div class="text-muted-foreground text-xs">
@@ -797,7 +797,7 @@ async function handleSaveSettings() {
         <div class="space-y-3 rounded-lg border p-4">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium">Total to Roll Over:</span>
-            <span class="text-lg font-bold text-green-600">
+            <span class="text-lg font-bold text-amount-positive">
               {currencyFormatter.format(estimatedRollover)}
             </span>
           </div>

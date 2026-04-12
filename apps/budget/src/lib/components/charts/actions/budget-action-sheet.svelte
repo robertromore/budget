@@ -175,7 +175,7 @@ function handleClose() {
           </div>
           <div>
             <span class="text-muted-foreground">Lowest:</span>
-            <span class="ml-1 font-semibold text-green-600"
+            <span class="text-amount-positive ml-1 font-semibold"
               >{currencyFormatter.format(stats.lowest)}</span>
           </div>
         </div>
@@ -263,7 +263,7 @@ function handleClose() {
               : 'Not set'}
             {#if selectedBudget.metadata?.allocatedAmount}
               {@const diff = suggestedAmount - selectedBudget.metadata.allocatedAmount}
-              <span class:text-destructive={diff > 0} class:text-green-600={diff < 0}>
+              <span class:text-destructive={diff > 0} class:text-amount-positive={diff < 0}>
                 ({diff > 0 ? '+' : ''}{currencyFormatter.format(diff)})
               </span>
             {/if}

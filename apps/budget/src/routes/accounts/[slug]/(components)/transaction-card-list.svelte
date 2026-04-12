@@ -36,8 +36,8 @@ function formatCardDate(transaction: TransactionsFormat): string {
 }
 
 function getAmountClass(amount: number): string {
-  if (amount < 0) return 'text-red-600 dark:text-red-400';
-  if (amount > 0) return 'text-green-600 dark:text-green-400';
+  if (amount < 0) return 'text-amount-negative';
+  if (amount > 0) return 'text-amount-positive';
   return '';
 }
 </script>
@@ -53,9 +53,9 @@ function getAmountClass(amount: number): string {
       class={cn(
         'bg-card w-full border rounded-lg px-4 py-3 flex items-center gap-3 text-left',
         isTappable ? 'cursor-pointer hover:bg-accent/30 active:bg-accent/50' : 'cursor-default',
-        transaction.isTransfer && 'border-l-2 border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20',
+        transaction.isTransfer && 'border-l-2 border-l-info bg-info-bg/30',
         transaction.isArchived && 'opacity-60',
-        isReconciliationMarker && 'border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/30'
+        isReconciliationMarker && 'border-l-4 border-l-success bg-success-bg'
       )}
       onclick={() => { if (isTappable) handleCardTap(transaction); }}>
       <!-- Date -->

@@ -626,12 +626,12 @@ const yMax = $derived.by(() => {
                         {#each availableYears as year, yi}
                           <div class="mt-1 {yi > 0 ? 'border-t pt-1' : ''}">
                             <p class="text-muted-foreground text-xs font-medium">{year}</p>
-                            <p class="text-green-600">
+                            <p class="text-amount-positive">
                               Income: {currencyFormatter.format(
                                 (point[`${year}_income`] as number) || 0
                               )}
                             </p>
-                            <p class="text-red-600">
+                            <p class="text-amount-negative">
                               Expenses: {currencyFormatter.format(
                                 (point[`${year}_expenses`] as number) || 0
                               )}
@@ -711,12 +711,12 @@ const yMax = $derived.by(() => {
                         {#each availableYears as year, yi}
                           <div class="mt-1 {yi > 0 ? 'border-t pt-1' : ''}">
                             <p class="text-muted-foreground text-xs font-medium">{year}</p>
-                            <p class="text-green-600">
+                            <p class="text-amount-positive">
                               Income: {currencyFormatter.format(
                                 (point[`${year}_income`] as number) || 0
                               )}
                             </p>
-                            <p class="text-red-600">
+                            <p class="text-amount-negative">
                               Expenses: {currencyFormatter.format(
                                 (point[`${year}_expenses`] as number) || 0
                               )}

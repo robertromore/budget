@@ -107,7 +107,7 @@ const entityForm = useEntityForm({
   },
 });
 
-const { form: formData, enhance } = entityForm;
+const { form: formData, enhance, submitting } = entityForm;
 
 // Initialize form data for existing account
 const initialData: Partial<Account> = {};
@@ -893,8 +893,12 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
 
       <!-- Submit Button -->
       <div class="flex justify-end">
-        <Form.Button class="w-full px-8 sm:w-auto">
-          {isUpdate ? 'Update Account' : 'Create Account'}
+        <Form.Button disabled={$submitting} class="w-full px-8 sm:w-auto">
+          {#if $submitting}
+            {isUpdate ? 'Updating...' : 'Creating...'}
+          {:else}
+            {isUpdate ? 'Update Account' : 'Create Account'}
+          {/if}
         </Form.Button>
       </div>
     </form>

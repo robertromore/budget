@@ -48,13 +48,13 @@ function getStatusIcon(status: string) {
 function getStatusColor(status: string) {
   switch (status) {
     case 'valid':
-      return 'text-green-600';
+      return 'text-success';
     case 'invalid':
       return 'text-destructive';
     case 'warning':
-      return 'text-yellow-600';
+      return 'text-warning';
     case 'transfer_match':
-      return 'text-blue-600';
+      return 'text-info';
     default:
       return 'text-muted-foreground';
   }
@@ -83,13 +83,13 @@ const badge = $derived(getStatusBadge(status));
   <Tooltip.Root>
     <Tooltip.Trigger class="flex cursor-help items-center gap-2">
       <StatusIcon class={`h-4 w-4 ${getStatusColor(status)}`} />
-      <Badge variant={badge.variant} class="bg-blue-100 text-xs text-blue-800">
+      <Badge variant={badge.variant} class="bg-info-bg text-xs text-info-fg">
         {badge.label}
       </Badge>
     </Tooltip.Trigger>
     <Tooltip.Content class="max-w-md">
       <div class="space-y-2">
-        <p class="text-sm font-semibold text-blue-600">Matches Existing Transfer</p>
+        <p class="text-sm font-semibold text-info">Matches Existing Transfer</p>
         <div class="space-y-1 text-xs">
           <p>
             <span class="font-medium">From:</span>

@@ -441,7 +441,7 @@ const groupedData = $derived(
                     {formatMonthYear(point.date, { long: true, utc: true })}
                   </p>
                   <div class="mt-1 space-y-1">
-                    <p class="text-green-600">
+                    <p class="text-amount-positive">
                       Payment: {currencyFormatter.format(point.payment)}
                     </p>
                     <p class="text-orange-600">
@@ -449,8 +449,8 @@ const groupedData = $derived(
                     </p>
                     <p
                       class={netFlow >= 0
-                        ? 'font-semibold text-green-600'
-                        : 'font-semibold text-red-600'}>
+                        ? 'font-semibold text-amount-positive'
+                        : 'font-semibold text-amount-negative'}>
                       Net: {netFlow >= 0 ? '+' : ''}{currencyFormatter.format(netFlow)}
                     </p>
                   </div>
@@ -531,7 +531,7 @@ const groupedData = $derived(
                     {formatMonthYear(point.date, { long: true, utc: true })}
                   </p>
                   <div class="mt-1 space-y-1">
-                    <p class="text-green-600">
+                    <p class="text-amount-positive">
                       Payment: {currencyFormatter.format(point.payment)}
                     </p>
                     <p class="text-orange-600">
@@ -542,8 +542,8 @@ const groupedData = $derived(
                     </p>
                     <p
                       class={netFlow >= 0
-                        ? 'font-semibold text-green-600'
-                        : 'font-semibold text-red-600'}>
+                        ? 'font-semibold text-amount-positive'
+                        : 'font-semibold text-amount-negative'}>
                       Net: {netFlow >= 0 ? '+' : ''}{currencyFormatter.format(netFlow)}
                     </p>
                   </div>

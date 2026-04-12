@@ -48,13 +48,13 @@ const confidenceLabel = $derived.by(() => {
 const qualityBadgeClass = $derived.by(() => {
   switch (dataQuality) {
     case 'excellent':
-      return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
+      return 'bg-success-bg text-success-fg';
     case 'good':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+      return 'bg-info-bg text-info-fg';
     case 'fair':
-      return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
+      return 'bg-warning-bg text-warning-fg';
     case 'poor':
-      return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
+      return 'bg-danger-bg text-danger-fg';
   }
 });
 </script>

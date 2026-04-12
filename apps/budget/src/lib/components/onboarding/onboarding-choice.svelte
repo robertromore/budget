@@ -97,8 +97,8 @@ function handleChooseSetup() {
         </div>
         <CardHeader class="pt-6">
           <div
-            class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-            <Map class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            class="bg-info-bg mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+            <Map class="h-6 w-6 text-info" />
           </div>
           <CardTitle class="text-xl">Take a Tour First</CardTitle>
           <CardDescription>
@@ -108,15 +108,15 @@ function handleChooseSetup() {
         <CardContent class="space-y-4">
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2">
-              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
               <span>See all features in action with demo data</span>
             </li>
             <li class="flex items-start gap-2">
-              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
               <span>Learn the interface before adding your info</span>
             </li>
             <li class="flex items-start gap-2">
-              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
               <span>No commitment - explore risk-free</span>
             </li>
           </ul>
@@ -145,7 +145,7 @@ function handleChooseSetup() {
         <CardHeader class="pt-6">
           <div
             class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
-            <Settings class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            <Settings class="h-6 w-6 text-warning" />
           </div>
           <CardTitle class="text-xl">Set Up My Account</CardTitle>
           <CardDescription>
@@ -155,15 +155,15 @@ function handleChooseSetup() {
         <CardContent class="space-y-4">
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2">
-              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
               <span>Add your bank accounts and cards</span>
             </li>
             <li class="flex items-start gap-2">
-              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
               <span>Set up categories and budgets</span>
             </li>
             <li class="flex items-start gap-2">
-              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+              <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
               <span>Smart defaults based on your profile</span>
             </li>
           </ul>

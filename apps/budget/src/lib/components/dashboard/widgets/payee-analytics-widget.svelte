@@ -38,7 +38,7 @@ const topCategories = $derived(analytics?.topCategories?.slice(0, 3) || []);
         <div class="text-muted-foreground text-xs">{activePayees} active</div>
       </div>
       <div class="rounded-lg border p-2.5 text-center">
-        <CheckCircle class="mx-auto h-4 w-4 text-green-600" />
+        <CheckCircle class="mx-auto h-4 w-4 text-success" />
         <div class="mt-1 text-lg font-bold">{payeesWithDefaults}</div>
         <div class="text-muted-foreground text-xs">With defaults</div>
       </div>

@@ -28,8 +28,8 @@
 <div class="space-y-6">
 	<div class="text-center">
 		<div
-			class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-			<CircleCheck class="h-8 w-8 text-green-600" />
+			class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+			<CircleCheck class="h-8 w-8 text-success" />
 		</div>
 		<h2 class="text-2xl font-bold">Import Complete!</h2>
 		<p class="text-muted-foreground mt-2">
@@ -45,7 +45,7 @@
 		<Card.Content class="space-y-4">
 			<div class="grid grid-cols-2 gap-4">
 				<div>
-					<div class="text-2xl font-bold text-green-600">
+					<div class="text-2xl font-bold text-success">
 						{importResult.transactionsCreated}
 					</div>
 					<div class="text-muted-foreground text-sm">Transactions Created</div>

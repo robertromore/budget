@@ -12,7 +12,7 @@ let { isTaxDeductible }: Props = $props();
 {#if isTaxDeductible}
   <Badge
     variant="secondary"
-    class="bg-green-100 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-200">
+    class="bg-success-bg text-xs text-success-fg">
     <Receipt class="mr-1 h-3 w-3" />
     Yes
   </Badge>

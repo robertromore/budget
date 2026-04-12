@@ -35,17 +35,17 @@ let { overall, score, services, metrics, class: className }: Props = $props();
 const overallConfig = {
   healthy: {
     label: 'All Systems Operational',
-    color: 'text-green-500',
+    color: 'text-success',
     badgeVariant: 'default' as const,
   },
   degraded: {
     label: 'Some Systems Degraded',
-    color: 'text-yellow-500',
+    color: 'text-warning',
     badgeVariant: 'secondary' as const,
   },
   critical: {
     label: 'Critical Issues Detected',
-    color: 'text-red-500',
+    color: 'text-destructive',
     badgeVariant: 'destructive' as const,
   },
   // Fallback for unknown status
@@ -137,10 +137,10 @@ function formatServiceName(name: string): string {
       <div class="grid grid-cols-2 gap-2">
         {#each services as service}
           {@const statusColors: Record<string, string> = {
-            healthy: "bg-green-500",
-            degraded: "bg-yellow-500",
-            error: "bg-red-500",
-            offline: "bg-red-500",
+            healthy: "bg-success",
+            degraded: "bg-warning",
+            error: "bg-destructive",
+            offline: "bg-destructive",
             no_data: "bg-muted-foreground",
           }}
           <div class="bg-muted/50 flex items-center gap-2 rounded-md px-3 py-2">

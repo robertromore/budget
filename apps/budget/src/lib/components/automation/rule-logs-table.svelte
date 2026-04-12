@@ -64,19 +64,19 @@ function getStatusBadge(status: string) {
       return {
         icon: Check,
         label: 'Success',
-        class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        class: 'bg-success-bg text-success-fg',
       };
     case 'failed':
       return {
         icon: X,
         label: 'Failed',
-        class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+        class: 'bg-danger-bg text-danger-fg',
       };
     case 'skipped':
       return {
         icon: AlertTriangle,
         label: 'Skipped',
-        class: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+        class: 'bg-warning-bg text-warning-fg',
       };
     default:
       return { icon: Clock, label: status, class: 'bg-muted' };
@@ -179,9 +179,9 @@ function getStatusBadge(status: string) {
                         {#each log.actionsExecuted as action, i (i)}
                           <li class="flex items-center gap-2">
                             {#if action.success}
-                              <Check class="h-3 w-3 text-green-500" />
+                              <Check class="h-3 w-3 text-success" />
                             {:else}
-                              <X class="h-3 w-3 text-red-500" />
+                              <X class="h-3 w-3 text-destructive" />
                             {/if}
                             <span>{action.actionType}</span>
                             {#if action.error}

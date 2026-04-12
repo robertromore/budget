@@ -762,7 +762,6 @@ async function handleApplyAllIntelligence(strategy: IntelligenceStrategy = selec
       });
     }
   } catch (error) {
-    console.error('Failed to apply intelligence:', error);
     toast.error('Failed to apply intelligence', {
       id: toastId,
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -807,8 +806,8 @@ if (_id && _id > 0) {
       .then((data) => {
         enhancementSummary = data ?? [];
       })
-      .catch((error) => {
-        console.error('Failed to load enhancement summary:', error);
+      .catch(() => {
+        // Silently handled - enhancement summary is optional
       });
   }
 } else {
@@ -868,8 +867,8 @@ async function detectSubscription() {
     });
 
     subscriptionInfo = result;
-  } catch (error) {
-    console.error('Failed to detect subscription:', error);
+  } catch {
+    // Silently handled - subscription detection is optional
   } finally {
     isLoadingSubscriptionDetection = false;
   }
@@ -932,13 +931,13 @@ $effect(() => {
               {#if strategy.icon === 'sparkles'}
                 <Sparkles class="h-4 w-4 text-violet-500" />
               {:else if strategy.icon === 'brain'}
-                <Brain class="h-4 w-4 text-blue-500" />
+                <Brain class="h-4 w-4 text-info" />
               {:else if strategy.icon === 'sparkles-brain'}
                 <Sparkles class="h-4 w-4 text-violet-500" />
                 <ArrowRight class="text-muted-foreground h-3 w-3" />
-                <Brain class="h-4 w-4 text-blue-500" />
+                <Brain class="h-4 w-4 text-info" />
               {:else if strategy.icon === 'brain-sparkles'}
-                <Brain class="h-4 w-4 text-blue-500" />
+                <Brain class="h-4 w-4 text-info" />
                 <ArrowRight class="text-muted-foreground h-3 w-3" />
                 <Sparkles class="h-4 w-4 text-violet-500" />
               {/if}
@@ -973,7 +972,7 @@ $effect(() => {
         Basic Info
         {#if tabErrors.basic}
           <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"
+            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-destructive"
             title="Has validation errors">
           </div>
         {:else if tabRequiredFields.basic}
@@ -988,7 +987,7 @@ $effect(() => {
         Contact
         {#if tabErrors.contact}
           <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"
+            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-destructive"
             title="Has validation errors">
           </div>
         {:else if tabRequiredFields.contact}
@@ -1003,7 +1002,7 @@ $effect(() => {
         Business
         {#if tabErrors.business}
           <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"
+            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-destructive"
             title="Has validation errors">
           </div>
         {:else if tabRequiredFields.business}
@@ -1113,7 +1112,7 @@ $effect(() => {
       <div class="flex items-center gap-3">
         <div
           class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-          <TriangleAlert class="h-5 w-5 text-amber-600 dark:text-amber-500" />
+          <TriangleAlert class="h-5 w-5 text-warning" />
         </div>
         <AlertDialog.Title>Unsaved Changes</AlertDialog.Title>
       </div>

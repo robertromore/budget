@@ -28,7 +28,7 @@ function navigateToAccount() {
 <Button
   variant="ghost"
   size="sm"
-  class="h-8 justify-start gap-1.5 px-2 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/50 dark:hover:text-blue-300"
+  class="h-8 justify-start gap-1.5 px-2 text-info hover:bg-info-bg hover:text-info/80"
   onclick={navigateToAccount}
   disabled={!accountSlug}>
   {#if isOutgoing}

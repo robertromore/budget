@@ -171,7 +171,7 @@ function handleClose() {
             </div>
             <div>
               <p class="text-muted-foreground text-xs">Minimum</p>
-              <p class="text-lg font-semibold text-green-600 tabular-nums">
+              <p class="text-amount-positive text-lg font-semibold tabular-nums">
                 {currencyFormatter.format(chartSelection.minValue)}
               </p>
             </div>
@@ -261,7 +261,7 @@ function handleClose() {
               {#if additionalStats.absoluteChange > 0}
                 <TrendingUp class="text-destructive h-4 w-4" />
               {:else if additionalStats.absoluteChange < 0}
-                <TrendingDown class="h-4 w-4 text-green-600" />
+                <TrendingDown class="text-amount-positive h-4 w-4" />
               {:else}
                 <Minus class="text-muted-foreground h-4 w-4" />
               {/if}
@@ -287,7 +287,7 @@ function handleClose() {
                 <p
                   class="font-semibold tabular-nums"
                   class:text-destructive={additionalStats.absoluteChange > 0}
-                  class:text-green-600={additionalStats.absoluteChange < 0}>
+                  class:text-amount-positive={additionalStats.absoluteChange < 0}>
                   {additionalStats.absoluteChange > 0 ? '+' : ''}{currencyFormatter.format(
                     additionalStats.absoluteChange
                   )}
@@ -298,7 +298,7 @@ function handleClose() {
                 <p
                   class="font-semibold tabular-nums"
                   class:text-destructive={additionalStats.percentChange > 0}
-                  class:text-green-600={additionalStats.percentChange < 0}>
+                  class:text-amount-positive={additionalStats.percentChange < 0}>
                   {additionalStats.percentChange > 0 ? '+' : ''}{formatPercentRaw(
                     additionalStats.percentChange,
                     1
@@ -352,7 +352,7 @@ function handleClose() {
               </div>
             </div>
             <div>
-              <p class="mb-2 text-xs font-medium text-green-600">Lowest Values</p>
+              <p class="text-amount-positive mb-2 text-xs font-medium">Lowest Values</p>
               <div class="space-y-1">
                 {#each [...sortedByValue].reverse().slice(0, 5) as point, i}
                   <div class="flex items-center justify-between text-sm">

@@ -30,13 +30,13 @@ const duplicatePayees = $derived(
 );
 
 const riskColors = {
-  low: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  high: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  low: 'bg-success-bg text-success-fg',
+  medium: 'bg-warning-bg text-warning-fg',
+  high: 'bg-danger-bg text-danger-fg',
 };
 
 const actionColors = {
-  merge: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  merge: 'bg-info-bg text-info-fg',
   review: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
   ignore: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
 };
@@ -129,7 +129,7 @@ function handleCheckChange(checked: boolean | 'indeterminate') {
             <div class="bg-muted rounded px-2 py-1 text-xs">
               <span class="font-medium">{sim.field}:</span>
               <span class="text-muted-foreground ml-1">{sim.matchType}</span>
-              <span class="ml-1 text-green-600">({Math.round(sim.confidence * 100)}%)</span>
+              <span class="ml-1 text-success">({Math.round(sim.confidence * 100)}%)</span>
             </div>
           {/each}
         </div>

@@ -69,7 +69,7 @@ function handleToggle(checked: boolean) {
           class={cn(
             'rounded-md p-1.5',
             rule.isEnabled
-              ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
+              ? 'bg-success-bg text-success'
               : 'bg-muted text-muted-foreground'
           )}>
           <Zap class="h-4 w-4" />
@@ -139,7 +139,7 @@ function handleToggle(checked: boolean) {
     <div class="text-muted-foreground mt-3 flex items-center gap-4 text-xs">
       <div class="flex items-center gap-1">
         {#if rule.isEnabled}
-          <Play class="h-3 w-3 text-green-500" />
+          <Play class="h-3 w-3 text-success" />
         {:else}
           <Pause class="h-3 w-3" />
         {/if}

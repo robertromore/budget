@@ -58,7 +58,7 @@ const categoryData = $derived.by(() => {
 const formattedDate = $derived(formatDate(transaction.date.toDate(getLocalTimeZone())));
 
 // Determine amount color (negative = red, positive = green)
-const amountClass = $derived(transaction.amount < 0 ? 'text-destructive' : 'text-green-600');
+const amountClass = $derived(transaction.amount < 0 ? 'text-amount-negative' : 'text-amount-positive');
 
 // Status badge variant
 const statusVariant = $derived.by((): 'default' | 'secondary' | 'outline' => {

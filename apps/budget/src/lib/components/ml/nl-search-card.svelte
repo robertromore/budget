@@ -214,9 +214,9 @@ const displayResults = $derived(results.slice(0, 10));
                   <div
                     class="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
                     {#if result.amount >= 0}
-                      <DollarSign class="h-4 w-4 text-green-500" />
+                      <DollarSign class="h-4 w-4 text-amount-positive" />
                     {:else}
-                      <DollarSign class="h-4 w-4 text-red-500" />
+                      <DollarSign class="h-4 w-4 text-amount-negative" />
                     {/if}
                   </div>
                   <div class="min-w-0">
@@ -240,8 +240,8 @@ const displayResults = $derived(results.slice(0, 10));
                 <div class="flex items-center gap-2">
                   <span
                     class={cn('text-sm font-semibold', {
-                      'text-green-600': result.amount >= 0,
-                      'text-red-600': result.amount < 0,
+                      'text-amount-positive': result.amount >= 0,
+                      'text-amount-negative': result.amount < 0,
                     })}>
                     {formatCurrency(result.amount)}
                   </span>

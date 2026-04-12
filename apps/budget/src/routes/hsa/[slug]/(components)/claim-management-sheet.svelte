@@ -375,21 +375,21 @@ function getStatusBadgeVariant(
                   {#if claim.approvedAmount != null && claim.approvedAmount > 0}
                     <div>
                       <span class="text-muted-foreground">Approved:</span>
-                      <span class="ml-2 font-medium text-green-600"
+                      <span class="ml-2 font-medium text-amount-positive"
                         >{formatCurrency(claim.approvedAmount)}</span>
                     </div>
                   {/if}
                   {#if claim.deniedAmount != null && claim.deniedAmount > 0}
                     <div>
                       <span class="text-muted-foreground">Denied:</span>
-                      <span class="ml-2 font-medium text-red-600"
+                      <span class="ml-2 font-medium text-amount-negative"
                         >{formatCurrency(claim.deniedAmount)}</span>
                     </div>
                   {/if}
                   {#if claim.paidAmount != null && claim.paidAmount > 0}
                     <div>
                       <span class="text-muted-foreground">Paid:</span>
-                      <span class="ml-2 font-medium text-green-600"
+                      <span class="ml-2 font-medium text-amount-positive"
                         >{formatCurrency(claim.paidAmount)}</span>
                     </div>
                   {/if}

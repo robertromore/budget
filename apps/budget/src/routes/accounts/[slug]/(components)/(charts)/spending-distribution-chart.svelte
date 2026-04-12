@@ -479,10 +479,10 @@ const amountExtent = $derived.by((): [number, number] => {
                     <p class="font-medium">
                       {currencyFormatter.format(bin.x0)} - {currencyFormatter.format(bin.x1)}
                     </p>
-                    <p class="text-red-600">
+                    <p class="text-amount-negative">
                       Expenses: {bin.expenses} transaction{bin.expenses !== 1 ? 's' : ''}
                     </p>
-                    <p class="text-green-600">
+                    <p class="text-amount-positive">
                       Income: {bin.income} transaction{bin.income !== 1 ? 's' : ''}
                     </p>
                   </div>
@@ -536,10 +536,10 @@ const amountExtent = $derived.by((): [number, number] => {
                     <p class="font-medium">
                       {currencyFormatter.format(bin.x0)} - {currencyFormatter.format(bin.x1)}
                     </p>
-                    <p class="text-red-600">
+                    <p class="text-amount-negative">
                       Expenses: {bin.expenses} transaction{bin.expenses !== 1 ? 's' : ''}
                     </p>
-                    <p class="text-green-600">
+                    <p class="text-amount-positive">
                       Income: {bin.income} transaction{bin.income !== 1 ? 's' : ''}
                     </p>
                     <p class="text-muted-foreground mt-1 border-t pt-1 text-xs">

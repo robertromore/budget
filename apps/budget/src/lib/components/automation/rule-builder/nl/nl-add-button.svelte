@@ -39,7 +39,7 @@ const displayLabel = $derived(label ?? defaultLabels[variant]);
 
 // Variant-specific styles
 const variantStyles: Record<ButtonVariant, string> = {
-  condition: 'text-blue-600 hover:text-blue-700 hover:bg-blue-50',
+  condition: 'text-info hover:text-info/80 hover:bg-info-bg',
   group: 'text-purple-600 hover:text-purple-700 hover:bg-purple-50',
   action: 'text-orange-600 hover:text-orange-700 hover:bg-orange-50',
   custom: '',

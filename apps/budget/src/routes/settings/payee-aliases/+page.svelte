@@ -284,8 +284,8 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="rounded-md bg-blue-500/10 p-2">
-              <Users class="h-4 w-4 text-blue-500" />
+            <div class="rounded-md bg-info/10 p-2">
+              <Users class="h-4 w-4 text-info" />
             </div>
             <div>
               <p class="text-muted-foreground text-xs font-medium uppercase">Unique Payees</p>
@@ -298,8 +298,8 @@ function getTriggerVariant(trigger: AliasTrigger): 'default' | 'secondary' | 'ou
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="rounded-md bg-green-500/10 p-2">
-              <Zap class="h-4 w-4 text-green-500" />
+            <div class="rounded-md bg-success/10 p-2">
+              <Zap class="h-4 w-4 text-success" />
             </div>
             <div>
               <p class="text-muted-foreground text-xs font-medium uppercase">Total Matches</p>

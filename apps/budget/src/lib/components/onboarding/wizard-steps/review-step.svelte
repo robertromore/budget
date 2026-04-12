@@ -169,19 +169,19 @@ function formatCurrency(amount: number): string {
     <h4 class="font-medium">What happens when you complete setup:</h4>
     <ul class="text-muted-foreground mt-2 space-y-1 text-sm">
       <li class="flex items-center gap-2">
-        <Check class="h-4 w-4 text-green-500" />
+        <Check class="h-4 w-4 text-success" />
         Create {formData.accountsToTrack?.length ?? 0} starter accounts
       </li>
       <li class="flex items-center gap-2">
-        <Check class="h-4 w-4 text-green-500" />
+        <Check class="h-4 w-4 text-success" />
         Set up {formData.spendingAreas?.length ?? 0}+ spending categories
       </li>
       <li class="flex items-center gap-2">
-        <Check class="h-4 w-4 text-green-500" />
+        <Check class="h-4 w-4 text-success" />
         Configure your currency and date preferences
       </li>
       <li class="flex items-center gap-2">
-        <Check class="h-4 w-4 text-green-500" />
+        <Check class="h-4 w-4 text-success" />
         Start a guided tour of the app
       </li>
     </ul>

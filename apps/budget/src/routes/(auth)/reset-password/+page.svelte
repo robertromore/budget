@@ -104,7 +104,7 @@ async function handleSubmit(e: Event) {
               {#each passwordRequirements as req}
                 <li class="flex items-center gap-2 text-xs">
                   {#if req.met}
-                    <Check class="h-3 w-3 text-green-500" />
+                    <Check class="h-3 w-3 text-success" />
                     <span class="text-muted-foreground">{req.label}</span>
                   {:else}
                     <X class="text-destructive h-3 w-3" />
@@ -128,7 +128,7 @@ async function handleSubmit(e: Event) {
           {#if confirmPassword.length > 0}
             <p class="text-xs">
               {#if passwordsMatch}
-                <span class="flex items-center gap-1 text-green-500">
+                <span class="flex items-center gap-1 text-success">
                   <Check class="h-3 w-3" />
                   Passwords match
                 </span>

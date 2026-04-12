@@ -38,27 +38,27 @@ const statusConfig = $derived.by(() => {
     case 'sufficient':
       return {
         icon: CircleCheck,
-        color: 'text-green-600 dark:text-green-400',
-        bgColor: 'bg-green-50 dark:bg-green-950/50',
-        borderColor: 'border-green-200 dark:border-green-800',
+        color: 'text-success',
+        bgColor: 'bg-success-bg',
+        borderColor: 'border-success/20',
         label: 'Sufficient',
         variant: 'default' as const,
       };
     case 'tight':
       return {
         icon: CircleAlert,
-        color: 'text-yellow-600 dark:text-yellow-400',
-        bgColor: 'bg-yellow-50 dark:bg-yellow-950/50',
-        borderColor: 'border-yellow-200 dark:border-yellow-800',
+        color: 'text-warning',
+        bgColor: 'bg-warning-bg',
+        borderColor: 'border-warning/20',
         label: 'Tight',
         variant: 'secondary' as const,
       };
     case 'exceeded':
       return {
         icon: TrendingDown,
-        color: 'text-red-600 dark:text-red-400',
-        bgColor: 'bg-red-50 dark:bg-red-950/50',
-        borderColor: 'border-red-200 dark:border-red-800',
+        color: 'text-destructive',
+        bgColor: 'bg-danger-bg',
+        borderColor: 'border-destructive/20',
         label: 'Exceeded',
         variant: 'destructive' as const,
       };
@@ -125,8 +125,8 @@ const statusConfig = $derived.by(() => {
           <div class="text-muted-foreground text-xs">Balance</div>
           <div
             class="text-sm font-semibold {forecast.projectedBalance < 0
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-green-600 dark:text-green-400'}">
+              ? 'text-amount-negative'
+              : 'text-amount-positive'}">
             {currencyFormatter.format(forecast.projectedBalance)}
           </div>
         </div>

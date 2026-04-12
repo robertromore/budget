@@ -459,12 +459,12 @@ const supportedChartTypes = $derived.by((): ('bar' | 'line')[] => {
                   {#if viewMode === 'cumulative'}
                     <p
                       class={hoveredItem.cumulative >= 0
-                        ? 'font-semibold text-green-600'
-                        : 'font-semibold text-red-600'}>
+                        ? 'font-semibold text-amount-positive'
+                        : 'font-semibold text-amount-negative'}>
                       Cumulative: {currencyFormatter.format(hoveredItem.cumulative)}
                     </p>
                   {/if}
-                  <p class={hoveredItem.net >= 0 ? 'text-green-600' : 'text-red-600'}>
+                  <p class={hoveredItem.net >= 0 ? 'text-amount-positive' : 'text-amount-negative'}>
                     Net: {currencyFormatter.format(hoveredItem.net)}
                   </p>
                   <div class="text-muted-foreground text-xs">
@@ -479,10 +479,10 @@ const supportedChartTypes = $derived.by((): ('bar' | 'line')[] => {
               <div class="pointer-events-none absolute top-4 left-1/2 z-10 -translate-x-1/2">
                 <div class="bg-popover rounded-md border px-3 py-2 text-sm shadow-md">
                   <p class="font-medium">{point.date.toLocaleDateString()}</p>
-                  <p class="text-green-600">
+                  <p class="text-amount-positive">
                     Income: {currencyFormatter.format(point.income)}
                   </p>
-                  <p class="text-red-600">
+                  <p class="text-amount-negative">
                     Expenses: {currencyFormatter.format(point.expenses)}
                   </p>
                   <p class="text-muted-foreground mt-1 border-t pt-1 text-xs">

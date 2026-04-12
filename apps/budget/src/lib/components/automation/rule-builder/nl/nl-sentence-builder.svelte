@@ -224,9 +224,9 @@ function getSegmentClasses(type: SegmentType): string {
   const base = 'mx-0.5 rounded border px-1.5 py-0.5 font-medium';
   switch (type) {
     case 'trigger':
-      return `${base} border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300`;
+      return `${base} border-success/30 bg-success-bg text-success-fg`;
     case 'condition':
-      return `${base} border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300`;
+      return `${base} border-info/30 bg-info-bg text-info-fg`;
     case 'action':
       return `${base} border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-300`;
     default:

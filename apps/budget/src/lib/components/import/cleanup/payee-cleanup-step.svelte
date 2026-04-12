@@ -259,10 +259,10 @@ function resetGroup(groupId: string) {
 }
 
 function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.9) return 'text-green-600 dark:text-green-400';
-  if (confidence >= 0.8) return 'text-yellow-600 dark:text-yellow-400';
+  if (confidence >= 0.9) return 'text-success';
+  if (confidence >= 0.8) return 'text-warning';
   if (confidence >= 0.7) return 'text-orange-600 dark:text-orange-400';
-  return 'text-red-600 dark:text-red-400';
+  return 'text-destructive';
 }
 
 function getConfidenceBadgeVariant(
@@ -332,8 +332,8 @@ function handleProceed() {
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-green-500/10 p-2">
-              <Merge class="h-5 w-5 text-green-600" />
+            <div class="rounded-lg bg-success/10 p-2">
+              <Merge class="h-5 w-5 text-success" />
             </div>
             <div>
               <p class="text-2xl font-bold">{stats.withExisting}</p>
@@ -346,8 +346,8 @@ function handleProceed() {
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-blue-500/10 p-2">
-              <Sparkles class="h-5 w-5 text-blue-600" />
+            <div class="rounded-lg bg-info/10 p-2">
+              <Sparkles class="h-5 w-5 text-info" />
             </div>
             <div>
               <p class="text-2xl font-bold">{stats.autoFilled}</p>
@@ -360,8 +360,8 @@ function handleProceed() {
       <Card.Root>
         <Card.Content class="p-4">
           <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-yellow-500/10 p-2">
-              <Edit3 class="h-5 w-5 text-yellow-600" />
+            <div class="rounded-lg bg-warning/10 p-2">
+              <Edit3 class="h-5 w-5 text-warning" />
             </div>
             <div>
               <p class="text-2xl font-bold">{stats.pending}</p>
@@ -412,11 +412,11 @@ function handleProceed() {
                   class="rounded-lg border p-3 transition-colors {isTransfer
                     ? 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950'
                     : group.userDecision === 'accept'
-                      ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                      ? 'border-success/30 bg-success-bg'
                       : group.userDecision === 'reject'
-                        ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
+                        ? 'border-destructive/30 bg-danger-bg'
                         : group.userDecision === 'custom'
-                          ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
+                          ? 'border-info/30 bg-info-bg'
                           : ''}">
                   <div class="flex items-start gap-3">
                     <!-- Expand/Collapse Toggle -->
@@ -487,7 +487,7 @@ function handleProceed() {
                         <!-- Custom name set - show confirmation state -->
                         <div class="flex flex-wrap items-center gap-2">
                           <div
-                            class="flex items-center gap-1.5 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                            class="bg-info-bg text-info-fg flex items-center gap-1.5 rounded-md px-2 py-1 text-sm">
                             <Check class="h-3 w-3" />
                             <span>Renamed</span>
                           </div>
@@ -561,7 +561,7 @@ function handleProceed() {
                         <!-- Accepted - show confirmation state -->
                         <div class="flex flex-wrap items-center gap-2">
                           <div
-                            class="flex items-center gap-1.5 rounded-md bg-green-100 px-2 py-1 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+                            class="bg-success-bg text-success-fg flex items-center gap-1.5 rounded-md px-2 py-1 text-sm">
                             <Check class="h-3 w-3" />
                             <span>Accepted</span>
                           </div>
@@ -635,7 +635,7 @@ function handleProceed() {
                         <!-- Rejected - show confirmation state -->
                         <div class="flex flex-wrap items-center gap-2">
                           <div
-                            class="flex items-center gap-1.5 rounded-md bg-red-100 px-2 py-1 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
+                            class="bg-danger-bg text-danger-fg flex items-center gap-1.5 rounded-md px-2 py-1 text-sm">
                             <X class="h-3 w-3" />
                             <span>Skipped</span>
                           </div>

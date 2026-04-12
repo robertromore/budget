@@ -22,8 +22,8 @@ const confirmDeleteCategory = async () => {
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
       <AlertDialog.Description>
-        This action cannot be undone. This will permanently delete this category and any associated
-        information with it.
+        This action cannot be undone. Transactions using this category will not be deleted, but they
+        will lose their category assignment.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

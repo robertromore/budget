@@ -30,7 +30,7 @@ const topCategories = $derived(analytics?.topCategories?.slice(0, 3) || []);
 <Card.Root data-help-id="payee-intelligence-summary" data-help-title="Payee Intelligence Summary">
   <Card.Header>
     <Card.Title class="flex items-center gap-2">
-      <Brain class="h-5 w-5 text-blue-500" />
+      <Brain class="h-5 w-5 text-info" />
       Payee Intelligence Summary
     </Card.Title>
     <Card.Description>ML-powered insights and analytics across all your payees</Card.Description>
@@ -58,24 +58,24 @@ const topCategories = $derived(analytics?.topCategories?.slice(0, 3) || []);
       <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div class="text-center">
           <div
-            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-            <Users class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-info-bg">
+            <Users class="h-5 w-5 text-info" />
           </div>
           <div class="text-2xl font-bold">{totalPayees}</div>
           <div class="text-muted-foreground text-xs">Total Payees</div>
-          <div class="mt-1 text-xs text-green-600">
+          <div class="mt-1 text-xs text-success">
             {activePayees} active
           </div>
         </div>
 
         <div class="text-center">
           <div
-            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <CheckCircle class="h-5 w-5 text-green-600 dark:text-green-400" />
+            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-success-bg">
+            <CheckCircle class="h-5 w-5 text-success" />
           </div>
           <div class="text-2xl font-bold">{payeesWithDefaults}</div>
           <div class="text-muted-foreground text-xs">With Defaults</div>
-          <div class="mt-1 text-xs text-green-600">Configured</div>
+          <div class="mt-1 text-xs text-success">Configured</div>
         </div>
 
         <div class="text-center">

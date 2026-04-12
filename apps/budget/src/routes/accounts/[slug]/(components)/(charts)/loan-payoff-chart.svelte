@@ -276,12 +276,12 @@ function getSeriesColor(id: string): string {
               </td>
               <td class="py-2 text-right font-mono">{currencyFormatter.format(scenario.monthlyPayment)}</td>
               <td class="py-2 text-right">{formatLoanMonths(scenario.months)}</td>
-              <td class="py-2 text-right font-mono text-amber-600">
+              <td class="py-2 text-right font-mono text-warning">
                 {scenario.totalInterest === Infinity
                   ? '∞'
                   : currencyFormatter.format(scenario.totalInterest)}
               </td>
-              <td class="py-2 text-right font-mono text-green-600">
+              <td class="py-2 text-right font-mono text-amount-positive">
                 {scenario.interestSaved > 0 ? currencyFormatter.format(scenario.interestSaved) : '—'}
               </td>
             </tr>

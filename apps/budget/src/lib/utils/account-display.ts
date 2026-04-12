@@ -102,9 +102,9 @@ export function formatPercentage(value: number): string {
 export function getBalanceColorClass(color: BalanceColor): string {
   switch (color) {
     case "positive":
-      return "text-green-600 dark:text-green-400";
+      return "text-amount-positive";
     case "negative":
-      return "text-red-600 dark:text-red-400";
+      return "text-amount-negative";
     case "neutral":
       return "text-muted-foreground";
   }

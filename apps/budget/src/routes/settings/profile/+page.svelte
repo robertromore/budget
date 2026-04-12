@@ -97,8 +97,8 @@ function calculatePasswordStrength(password: string): {
   if (/[^a-zA-Z0-9]/.test(password)) score += 10;
 
   if (score < 50) return { score, label: 'Weak', color: 'bg-destructive' };
-  if (score < 75) return { score, label: 'Fair', color: 'bg-yellow-500' };
-  return { score, label: 'Strong', color: 'bg-green-500' };
+  if (score < 75) return { score, label: 'Fair', color: 'bg-warning' };
+  return { score, label: 'Strong', color: 'bg-success' };
 }
 
 function parseUserAgent(userAgent: string | null): { device: string; browser: string } {
@@ -311,9 +311,9 @@ const canChangePassword = $derived(
                 <span class="text-muted-foreground">Password strength</span>
                 <span
                   class={passwordStrength.score >= 75
-                    ? 'text-green-500'
+                    ? 'text-success'
                     : passwordStrength.score >= 50
-                      ? 'text-yellow-500'
+                      ? 'text-warning'
                       : 'text-destructive'}>
                   {passwordStrength.label}
                 </span>

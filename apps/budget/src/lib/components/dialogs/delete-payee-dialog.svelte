@@ -20,8 +20,8 @@ const confirmDeletePayee = async () => {
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
       <AlertDialog.Description>
-        This action cannot be undone. This will permanently delete this payee and any associated
-        information with it.
+        This action cannot be undone. Transactions using this payee will not be deleted, but they
+        will lose their payee assignment.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

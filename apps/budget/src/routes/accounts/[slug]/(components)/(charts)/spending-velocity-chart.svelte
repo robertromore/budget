@@ -618,7 +618,7 @@ const historicalAvgForTooltip = $derived.by((): number | null => {
 
                   <!-- Comparison to historical average -->
                   {#if vsAvg !== null}
-                    <p class="mt-1 text-xs {vsAvg > 0 ? 'text-destructive' : 'text-green-600'}">
+                    <p class="mt-1 text-xs {vsAvg > 0 ? 'text-destructive' : 'text-amount-positive'}">
                       {vsAvg > 0 ? '+' : ''}{formatPercentRaw(vsAvg, 1)} vs avg
                     </p>
                   {/if}

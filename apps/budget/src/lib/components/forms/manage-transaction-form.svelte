@@ -52,7 +52,7 @@ const form = useEntityForm({
   ...(_onSave && { onSave: _onSave }),
 });
 
-const { form: formData, enhance } = form;
+const { form: formData, enhance, submitting } = form;
 
 // Initialize account ID
 $effect(() => {
@@ -540,7 +540,10 @@ $effect(() => {
       </div>
     {/if}
 
-    <Form.Button class="col-span-full" disabled={isOverAllocated || hasStrictViolations}
-      >save</Form.Button>
+    <Form.Button
+      class="col-span-full"
+      disabled={isOverAllocated || hasStrictViolations || $submitting}>
+      {$submitting ? 'Saving...' : 'Save'}
+    </Form.Button>
   </form>
 </div>

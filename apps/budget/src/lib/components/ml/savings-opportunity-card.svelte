@@ -64,14 +64,14 @@ const typeConfig = {
   duplicate_service: {
     icon: Copy,
     label: 'Duplicate',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
+    color: 'text-info',
+    bgColor: 'bg-info/10',
   },
   spending_increase: {
     icon: AlertTriangle,
     label: 'Spending Up',
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
   },
   negotiation_candidate: {
     icon: DollarSign,
@@ -84,7 +84,7 @@ const typeConfig = {
 const priorityConfig = {
   low: { color: 'text-gray-500', label: 'Low' },
   medium: { color: 'text-yellow-500', label: 'Medium' },
-  high: { color: 'text-red-500', label: 'High' },
+  high: { color: 'text-destructive', label: 'High' },
 };
 
 const displayOpportunities = $derived(
@@ -100,7 +100,7 @@ const displayOpportunities = $derived(
         Savings Opportunities
       </Card.Title>
       {#if opportunityCount > 0}
-        <Badge variant="outline" class="text-green-500">
+        <Badge variant="outline" class="text-success">
           {opportunityCount} found
         </Badge>
       {/if}
@@ -114,7 +114,7 @@ const displayOpportunities = $derived(
       <div class="space-y-1">
         <p class="text-muted-foreground text-xs">Potential Monthly Savings</p>
         <div class="flex items-baseline gap-2">
-          <span class="text-2xl font-bold text-green-500">
+          <span class="text-2xl font-bold text-success">
             {formatCurrency(totalMonthlyPotential)}
           </span>
           <span class="text-muted-foreground text-sm"> / month </span>
@@ -142,7 +142,7 @@ const displayOpportunities = $derived(
                   </div>
                 </div>
                 <div class="text-right">
-                  <p class="text-sm font-semibold text-green-600">
+                  <p class="text-sm font-semibold text-success">
                     {formatCurrency(opportunity.estimatedMonthlySavings)}
                   </p>
                   <Badge variant="secondary" class={cn('text-xs', priorityCfg.color)}>

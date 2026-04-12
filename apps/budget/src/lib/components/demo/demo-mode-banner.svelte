@@ -28,7 +28,7 @@ function handleExitTourMode() {
     aria-live="polite">
     <div
       class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 shadow-lg dark:border-amber-700 dark:bg-amber-950">
-      <Info class="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+      <Info class="h-5 w-5 flex-shrink-0 text-warning" />
 
       <div class="flex items-center gap-2">
         <span class="font-medium text-amber-800 dark:text-amber-200">Demo Mode</span>

@@ -82,8 +82,8 @@ function getStatusDisplay(status: string) {
     case 'on_track':
       return {
         icon: CircleCheck,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50 dark:bg-green-950',
+        color: 'text-success',
+        bgColor: 'bg-success-bg',
         label: 'On Track',
       };
     case 'approaching':
@@ -96,8 +96,8 @@ function getStatusDisplay(status: string) {
     case 'over':
       return {
         icon: TriangleAlert,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50 dark:bg-red-950',
+        color: 'text-destructive',
+        bgColor: 'bg-danger-bg',
         label: 'Over Budget',
       };
     case 'paused':
@@ -110,8 +110,8 @@ function getStatusDisplay(status: string) {
     default:
       return {
         icon: CircleCheck,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50 dark:bg-green-950',
+        color: 'text-success',
+        bgColor: 'bg-success-bg',
         label: 'On Track',
       };
   }

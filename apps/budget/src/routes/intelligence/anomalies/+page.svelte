@@ -127,7 +127,7 @@ const limitOptions = [
 
   <!-- Scan Results Toast -->
   {#if scanAndAlertMutation.isSuccess}
-    <Card.Root class="border-green-500/50 bg-green-500/5">
+    <Card.Root class="border-success/50 bg-success/5">
       <Card.Content class="py-4">
         <p class="text-sm">
           Scanned {scanAndAlertMutation.data.transactionsScanned} transactions, created {scanAndAlertMutation

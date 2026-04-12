@@ -188,13 +188,13 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
               <div class="space-y-4">
                 <div class="flex items-center justify-between">
                   <span class="text-muted-foreground text-sm">Income</span>
-                  <span class="font-semibold text-green-600">
+                  <span class="font-semibold text-amount-positive">
                     {formatCurrency(breakdown.currentMonth.income)}
                   </span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-muted-foreground text-sm">Expenses</span>
-                  <span class="font-semibold text-red-600">
+                  <span class="font-semibold text-amount-negative">
                     {formatCurrency(breakdown.currentMonth.expenses)}
                   </span>
                 </div>
@@ -203,8 +203,8 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
                     <span class="text-sm font-medium">Net Savings</span>
                     <span
                       class="text-lg font-bold"
-                      class:text-green-600={breakdown.currentMonth.netSavings >= 0}
-                      class:text-red-600={breakdown.currentMonth.netSavings < 0}>
+                      class:text-amount-positive={breakdown.currentMonth.netSavings >= 0}
+                      class:text-amount-negative={breakdown.currentMonth.netSavings < 0}>
                       {formatCurrency(breakdown.currentMonth.netSavings)}
                     </span>
                   </div>
@@ -253,7 +253,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
                     <div class="flex-1">
                       <div class="bg-muted h-4 w-full overflow-hidden rounded-full">
                         <div
-                          class="h-full rounded-full bg-red-500/80 transition-all"
+                          class="h-full rounded-full bg-destructive/80 transition-all"
                           style="width: {barWidth}%">
                         </div>
                       </div>
@@ -284,7 +284,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
                 Unusual Spending
               </Card.Title>
               {#if anomalies.length > 0}
-                <Badge variant="outline" class="text-yellow-500">
+                <Badge variant="outline" class="text-warning">
                   {anomalies.length} detected
                 </Badge>
               {/if}
@@ -337,8 +337,8 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
         <Card.Root>
           <Card.Content class="pt-4">
             <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                <Calendar class="h-5 w-5 text-blue-500" />
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
+                <Calendar class="h-5 w-5 text-info" />
               </div>
               <div>
                 <p class="text-2xl font-bold">{missingPatterns.length}</p>
@@ -352,8 +352,8 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
         <Card.Root>
           <Card.Content class="pt-4">
             <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
-                <Wallet class="h-5 w-5 text-yellow-500" />
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
+                <Wallet class="h-5 w-5 text-warning" />
               </div>
               <div>
                 {#if forecast}
@@ -376,8 +376,8 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
         <Card.Root>
           <Card.Content class="pt-4">
             <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10">
-                <TrendingDown class="h-5 w-5 text-red-500" />
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+                <TrendingDown class="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <p class="text-2xl font-bold">{budgetsAtRisk.length}</p>
@@ -433,8 +433,8 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
             </Card.Header>
             <Card.Content class="flex h-[240px] items-center justify-center">
               <div class="text-center">
-                <TrendingUp class="mx-auto h-8 w-8 text-green-500" />
-                <p class="mt-2 font-medium text-green-600">All budgets on track</p>
+                <TrendingUp class="mx-auto h-8 w-8 text-success" />
+                <p class="mt-2 font-medium text-success">All budgets on track</p>
                 <p class="text-muted-foreground text-sm">No overspending predicted</p>
               </div>
             </Card.Content>
@@ -466,7 +466,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
                     </p>
                   </div>
                   <div class="text-right">
-                    <p class="font-semibold text-red-600">
+                    <p class="font-semibold text-amount-negative">
                       {formatCurrency(pattern.expectedAmount)}
                     </p>
                     <Badge variant="outline" class="text-xs">
@@ -490,13 +490,13 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
     ====================================================================== -->
     <Tabs.Content value="optimization" class="space-y-6">
       <!-- Savings Summary Header -->
-      <Card.Root class="border-green-500/20 bg-gradient-to-r from-green-500/10 to-emerald-500/10">
+      <Card.Root class="border-success/20 bg-gradient-to-r from-success/10 to-emerald-500/10">
         <Card.Content class="py-6">
           <div class="flex flex-col items-center justify-center gap-2 text-center">
-            <PiggyBank class="h-8 w-8 text-green-500" />
+            <PiggyBank class="h-8 w-8 text-success" />
             <div>
               <p class="text-muted-foreground text-sm">Potential Monthly Savings</p>
-              <p class="text-3xl font-bold text-green-600">
+              <p class="text-3xl font-bold text-success">
                 {#if savingsSummaryQuery.isLoading}
                   <Skeleton class="mx-auto h-9 w-24" />
                 {:else}
@@ -529,7 +529,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
             <div class="flex items-center justify-between">
               <Card.Title class="text-sm font-medium">Unused Subscriptions</Card.Title>
               {#if unusedSubscriptions.length > 0}
-                <Badge variant="outline" class="text-yellow-500">
+                <Badge variant="outline" class="text-warning">
                   {unusedSubscriptions.length} found
                 </Badge>
               {/if}
@@ -551,7 +551,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
                           : 'Unknown'}
                       </p>
                     </div>
-                    <p class="font-semibold text-green-600">
+                    <p class="font-semibold text-amount-positive">
                       {formatCurrency(sub.estimatedMonthlySavings)}/mo
                     </p>
                   </div>
@@ -614,7 +614,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
         <Card.Root>
           <Card.Header class="pb-2">
             <Card.Title class="flex items-center gap-2 text-sm font-medium">
-              <AlertTriangle class="h-4 w-4 text-blue-500" />
+              <AlertTriangle class="h-4 w-4 text-info" />
               Potential Duplicate Services
             </Card.Title>
             <Card.Description>Similar services that might be redundant</Card.Description>
@@ -632,7 +632,7 @@ const totalMonthlySavings = $derived(savingsSummary?.totalMonthlyPotential ?? 0)
                       </p>
                     </div>
                     <div class="text-right">
-                      <p class="text-sm font-semibold text-green-600">
+                      <p class="text-sm font-semibold text-amount-positive">
                         Save {formatCurrency(duplicate.estimatedMonthlySavings)}/mo
                       </p>
                     </div>

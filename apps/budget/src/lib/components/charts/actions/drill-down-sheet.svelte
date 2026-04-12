@@ -174,7 +174,7 @@ function handleClose() {
           </div>
           <div class="bg-muted/50 rounded-lg p-3">
             <p class="text-muted-foreground text-xs">Total Income</p>
-            <p class="text-lg font-semibold text-green-600">
+            <p class="text-amount-positive text-lg font-semibold">
               {currencyFormatter.format(summaryStats.income)}
             </p>
           </div>
@@ -182,7 +182,7 @@ function handleClose() {
             <p class="text-muted-foreground text-xs">Net Change</p>
             <p
               class="text-lg font-semibold"
-              class:text-green-600={summaryStats.total >= 0}
+              class:text-amount-positive={summaryStats.total >= 0}
               class:text-destructive={summaryStats.total < 0}>
               {currencyFormatter.format(summaryStats.total)}
             </p>
@@ -217,7 +217,7 @@ function handleClose() {
                       {#if isExpense}
                         <ArrowUpRight class="text-destructive h-4 w-4" />
                       {:else}
-                        <ArrowDownLeft class="h-4 w-4 text-green-600" />
+                        <ArrowDownLeft class="text-amount-positive h-4 w-4" />
                       {/if}
                     </div>
                     <div class="min-w-0">
@@ -235,7 +235,7 @@ function handleClose() {
                   <p
                     class="font-semibold"
                     class:text-destructive={isExpense}
-                    class:text-green-600={!isExpense}>
+                    class:text-amount-positive={!isExpense}>
                     {currencyFormatter.format(tx.amount)}
                   </p>
                 </div>
@@ -256,7 +256,7 @@ function handleClose() {
                   <div class="mb-2 flex items-center justify-between">
                     <h4 class="font-semibold">{getMonthLabel(monthId)}</h4>
                     <div class="flex items-center gap-3 text-sm">
-                      <span class="text-green-600">+{currencyFormatter.format(monthIncome)}</span>
+                      <span class="text-amount-positive">+{currencyFormatter.format(monthIncome)}</span>
                       <span class="text-destructive"
                         >-{currencyFormatter.format(monthExpenses)}</span>
                       <Badge variant="outline">{transactions.length} txns</Badge>
@@ -273,7 +273,7 @@ function handleClose() {
                             {#if isExpense}
                               <ArrowUpRight class="text-destructive h-3 w-3" />
                             {:else}
-                              <ArrowDownLeft class="h-3 w-3 text-green-600" />
+                              <ArrowDownLeft class="text-amount-positive h-3 w-3" />
                             {/if}
                           </div>
                           <div class="min-w-0">
@@ -293,7 +293,7 @@ function handleClose() {
                         <p
                           class="text-sm font-semibold"
                           class:text-destructive={isExpense}
-                          class:text-green-600={!isExpense}>
+                          class:text-amount-positive={!isExpense}>
                           {currencyFormatter.format(tx.amount)}
                         </p>
                       </div>

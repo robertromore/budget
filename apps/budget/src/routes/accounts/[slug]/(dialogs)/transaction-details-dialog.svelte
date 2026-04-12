@@ -141,8 +141,8 @@ const hasImportMetadata = $derived(
                 <div class="text-muted-foreground text-xs">Amount</div>
                 <div
                   class="text-sm font-medium"
-                  class:text-red-600={transaction.amount < 0}
-                  class:text-green-600={transaction.amount > 0}>
+                  class:text-amount-negative={transaction.amount < 0}
+                  class:text-amount-positive={transaction.amount > 0}>
                   {formatCurrency(transaction.amount)}
                 </div>
               </div>
@@ -352,7 +352,7 @@ const hasImportMetadata = $derived(
                                 >{key}:</span>
                               <span
                                 class="ml-auto {value
-                                  ? 'text-green-600 dark:text-green-400'
+                                  ? 'text-success'
                                   : 'text-muted-foreground'}">
                                 {value ? 'Yes' : 'No'}
                               </span>

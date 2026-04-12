@@ -1016,7 +1016,7 @@ const activeAnalysisCount = $derived(
                     <p
                       class="text-xs"
                       class:text-destructive={point.changeFromPrevious > 0}
-                      class:text-green-600={point.changeFromPrevious < 0}>
+                      class:text-amount-positive={point.changeFromPrevious < 0}>
                       {point.changeFromPrevious > 0 ? '↑' : '↓'}
                       {formatPercentRaw(Math.abs(point.changeFromPrevious), 1)} vs prev month
                     </p>

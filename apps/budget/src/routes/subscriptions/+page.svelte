@@ -77,11 +77,11 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
     label: 'Entertainment',
   },
   utilities: {
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    color: 'bg-info-bg text-info-fg',
     label: 'Utilities',
   },
   software: {
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    color: 'bg-success-bg text-success-fg',
     label: 'Software',
   },
   membership: {
@@ -93,7 +93,7 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
     label: 'Communication',
   },
   finance: {
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    color: 'bg-warning-bg text-warning-fg',
     label: 'Finance',
   },
   shopping: {
@@ -101,7 +101,7 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
     label: 'Shopping',
   },
   health: {
-    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    color: 'bg-danger-bg text-danger-fg',
     label: 'Health',
   },
   education: {
@@ -117,19 +117,19 @@ const subscriptionTypeConfig: Record<string, { color: string; label: string }> =
 // Status colors
 const statusConfig: Record<string, { color: string; label: string }> = {
   active: {
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    color: 'bg-success-bg text-success-fg',
     label: 'Active',
   },
   trial: {
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    color: 'bg-info-bg text-info-fg',
     label: 'Trial',
   },
   paused: {
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    color: 'bg-warning-bg text-warning-fg',
     label: 'Paused',
   },
   cancelled: {
-    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    color: 'bg-danger-bg text-danger-fg',
     label: 'Cancelled',
   },
 };
@@ -312,7 +312,7 @@ function refreshData() {
           <p class="text-muted-foreground text-xs">
             In the next 7 days
             {#if (analytics?.trialEnding ?? 0) > 0}
-              <span class="text-amber-600"> ({analytics?.trialEnding} trial ending)</span>
+              <span class="text-warning"> ({analytics?.trialEnding} trial ending)</span>
             {/if}
           </p>
         {/if}
@@ -475,7 +475,7 @@ function refreshData() {
       <Card.Root>
         <Card.Header>
           <Card.Title class="flex items-center gap-2">
-            <Search class="h-5 w-5 text-blue-500" />
+            <Search class="h-5 w-5 text-info" />
             Transaction Analysis
           </Card.Title>
           <Card.Description>
@@ -511,12 +511,12 @@ function refreshData() {
                 {@const billingLabel = billingCycleLabels[detection.billingCycle] ?? 'Monthly'}
 
                 <div
-                  class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+                  class="bg-info-bg rounded-lg border border-info/20 p-4">
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/50">
-                        <RefreshCw class="h-5 w-5 text-blue-600" />
+                        class="bg-info-bg flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                        <RefreshCw class="h-5 w-5 text-info" />
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
@@ -541,7 +541,7 @@ function refreshData() {
                             <Tooltip.Provider>
                               <Tooltip.Root>
                                 <Tooltip.Trigger class="inline-flex items-center gap-1">
-                                  <span class="text-blue-600 dark:text-blue-400"
+                                  <span class="text-info"
                                     >{confidence}% confidence</span>
                                 </Tooltip.Trigger>
                                 <Tooltip.Content side="bottom" class="max-w-xs">
@@ -629,7 +629,7 @@ function refreshData() {
                 <div class="flex items-center gap-4">
                   <div
                     class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50">
-                    <Search class="h-5 w-5 text-amber-600" />
+                    <Search class="h-5 w-5 text-warning" />
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
@@ -678,7 +678,7 @@ function refreshData() {
       <Card.Root>
         <Card.Header>
           <Card.Title class="flex items-center gap-2">
-            <Bell class="h-5 w-5 text-blue-500" />
+            <Bell class="h-5 w-5 text-info" />
             Subscription Alerts
           </Card.Title>
           <Card.Description>Important notifications about your subscriptions</Card.Description>
@@ -687,12 +687,12 @@ function refreshData() {
           <div class="space-y-3">
             {#each alerts as alert}
               {@const alertTypeLabels: Record<string, { icon: typeof AlertTriangle; color: string; label: string }> = {
-                renewal_upcoming: { icon: Calendar, color: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900', label: 'Upcoming Renewal' },
-                price_increase: { icon: TrendingDown, color: 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900', label: 'Price Increase' },
+                renewal_upcoming: { icon: Calendar, color: 'bg-info-bg border-info/20', label: 'Upcoming Renewal' },
+                price_increase: { icon: TrendingDown, color: 'bg-danger-bg border-destructive/20', label: 'Price Increase' },
                 trial_ending: { icon: AlertTriangle, color: 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900', label: 'Trial Ending' },
-                payment_failed: { icon: AlertTriangle, color: 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900', label: 'Payment Issue' },
-                duplicate_detected: { icon: AlertTriangle, color: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900', label: 'Possible Duplicate' },
-                unused: { icon: PiggyBank, color: 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900', label: 'Unused Subscription' },
+                payment_failed: { icon: AlertTriangle, color: 'bg-danger-bg border-destructive/20', label: 'Payment Issue' },
+                duplicate_detected: { icon: AlertTriangle, color: 'bg-warning-bg border-warning/20', label: 'Possible Duplicate' },
+                unused: { icon: PiggyBank, color: 'bg-success-bg border-success/20', label: 'Unused Subscription' },
                 confirmation_needed: { icon: Search, color: 'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-900', label: 'Needs Confirmation' },
               }}
               {@const config = alertTypeLabels[alert.alertType] ?? alertTypeLabels.renewal_upcoming}
@@ -750,10 +750,10 @@ function refreshData() {
                       ? new Date(subscription.renewalDate).toLocaleDateString()
                       : 'soon'}
                     {#if daysUntil > 0}
-                      <span class="text-amber-600"
+                      <span class="text-warning"
                         >({daysUntil} day{daysUntil !== 1 ? 's' : ''})</span>
                     {:else if daysUntil === 0}
-                      <span class="text-red-600">(Today!)</span>
+                      <span class="text-destructive">(Today!)</span>
                     {/if}
                   </p>
                 </div>

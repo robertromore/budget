@@ -113,7 +113,7 @@ const chartData = $derived(summary ? [{ label: 'Contributions', value: summary.c
                   {currencyFormatter.format(summary.remaining)} remaining
                 </span>
               {:else if percentUsed >= 100}
-                <span class="font-medium text-green-600 dark:text-green-400">Limit reached!</span>
+                <span class="font-medium text-success">Limit reached!</span>
               {/if}
             </div>
           </div>

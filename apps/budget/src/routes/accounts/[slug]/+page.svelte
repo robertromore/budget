@@ -631,7 +631,6 @@ const submitTransaction = async (formData: any) => {
     });
     // TanStack Query mutation handles all cache invalidation automatically
   } catch (err: any) {
-    console.error('❌ Failed to create transaction:', err);
     throw err;
   }
 };
@@ -809,8 +808,8 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
         queryClient.setQueryData(currentQuery.queryKey, newData);
       }
     }
-  } catch (err: any) {
-    console.error('Failed to update transaction:', err);
+  } catch {
+    // Error handled by mutation's error toast
   }
 };
 
@@ -894,7 +893,7 @@ const confirmBulkDelete = async () => {
     transactionsToDelete = [];
     alsoDeleteLinkedTransfers = true; // Reset for next time
   } catch (error) {
-    console.error('Failed to delete transactions:', error);
+    // Error handled by mutation's error toast
   } finally {
     isDeletingBulk = false;
   }
@@ -933,7 +932,7 @@ const confirmBulkPayeeUpdate = async () => {
 
     bulkPayeeUpdateDialog.open = false;
   } catch (error) {
-    console.error('Failed to bulk update payee:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -955,7 +954,7 @@ const confirmBulkCategoryUpdateByPayee = async () => {
 
     bulkCategoryUpdateDialog.open = false;
   } catch (error) {
-    console.error('Failed to bulk update category by payee:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -975,7 +974,7 @@ const confirmBulkCategoryUpdateByCategory = async () => {
 
     bulkCategoryUpdateDialog.open = false;
   } catch (error) {
-    console.error('Failed to bulk update category by category:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -1015,7 +1014,7 @@ const confirmBulkDeleteSchedules = async () => {
     bulkDeleteSchedulesDialogOpen = false;
     schedulesToDelete = [];
   } catch (error) {
-    console.error('Failed to bulk delete schedules:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -1032,7 +1031,7 @@ const handleDuplicateBudget = async (budget: BudgetWithRelations) => {
   try {
     await duplicateBudgetMutation.mutateAsync({ id: budget.id });
   } catch (error) {
-    console.error('Failed to duplicate budget:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -1040,7 +1039,7 @@ const archiveBudget = async (budget: BudgetWithRelations) => {
   try {
     await updateBudgetMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
   } catch (error) {
-    console.error('Failed to archive budget:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -1053,7 +1052,7 @@ const bulkDeleteBudgets = async (budgetsList: BudgetWithRelations[]) => {
   try {
     await bulkDeleteBudgetsMutation.mutateAsync({ ids: budgetsList.map((b) => b.id) });
   } catch (error) {
-    console.error('Failed to bulk delete budgets:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -1061,7 +1060,7 @@ const bulkArchiveBudgets = async (budgetsList: BudgetWithRelations[]) => {
   try {
     await bulkArchiveBudgetsMutation.mutateAsync(budgetsList.map((b) => b.id));
   } catch (error) {
-    console.error('Failed to bulk archive budgets:', error);
+    // Error handled by mutation's error toast
   }
 };
 
@@ -1078,6 +1077,11 @@ $effect(() => {
 });
 </script>
 
+<svelte:head>
+  <title>{accountData?.name ?? 'Account'} - Budget App</title>
+  <meta name="description" content="Manage transactions and details for {accountData?.name ?? 'this account'}" />
+</svelte:head>
+
 <div class="space-y-6">
   <!-- Header -->
   <div
@@ -1091,65 +1095,41 @@ $effect(() => {
           {account?.name || `Account ${accountId}`}
         </h1>
         {#if !isAccountNotFound}
-          <div class="h-3 w-3 rounded-full bg-green-500" title="Active account"></div>
+          <div class="h-3 w-3 rounded-full bg-success" title="Active account"></div>
         {/if}
         {#if isDemoView}
-          <Badge variant="outline" class="border-amber-300 text-amber-600">Demo</Badge>
+          <Badge variant="outline" class="border-amber-300 text-warning">Demo</Badge>
         {/if}
       </div>
     </div>
 
-    <!-- Action Buttons (only show on transactions tab) -->
-    {#if !isAccountNotFound && activeTab === 'transactions'}
-      <div class="flex items-center space-x-2">
-        {#if isHsaAccount}
-          <Button
-            onclick={handleAddExpense}
-            data-help-id="add-expense-button"
-            data-help-title="Add Medical Expense">
-            <HeartPulse class="mr-2 h-4 w-4" />
-            Add Expense
-          </Button>
-        {:else}
-          <Button
-            onclick={() => (addTransactionDialogOpen = true)}
-            data-help-id="add-transaction-button"
-            data-help-title="Add Transaction"
-            data-help-modal="add-transaction"
-            data-tour-id="add-transaction-button">
-            <Plus class="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
-        {/if}
-      </div>
-    {/if}
   </div>
 
   <!-- Error State -->
   {#if isAccountNotFound}
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+    <div class="bg-danger-bg rounded-lg border border-destructive/20 p-4">
       <div class="flex items-center space-x-2">
-        <div class="text-red-600">🔍</div>
-        <div class="font-medium text-red-800">Account Not Found</div>
+        <div class="text-destructive">🔍</div>
+        <div class="text-danger-fg font-medium">Account Not Found</div>
       </div>
-      <p class="mt-2 text-red-700">The account with ID {accountId} doesn't exist.</p>
+      <p class="text-danger-fg mt-2">The account with ID {accountId} doesn't exist.</p>
       <div class="mt-4 flex items-center gap-3">
-        <Button href="/accounts/new" class="bg-blue-600 hover:bg-blue-700">
+        <Button href="/accounts/new" class="bg-primary hover:bg-primary/90">
           <Plus class="mr-2 h-4 w-4" />
           Create Account
         </Button>
-        <a href="/accounts" class="text-blue-600 underline hover:text-blue-800">
+        <a href="/accounts" class="text-info underline hover:text-info/80">
           ← Go back to accounts list
         </a>
       </div>
     </div>
   {:else if error}
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+    <div class="bg-danger-bg rounded-lg border border-destructive/20 p-4">
       <div class="flex items-center space-x-2">
-        <div class="text-red-600">⚠️</div>
-        <div class="font-medium text-red-800">Error loading account data</div>
+        <div class="text-destructive">⚠️</div>
+        <div class="text-danger-fg font-medium">Error loading account data</div>
       </div>
-      <p class="mt-2 text-red-700">{error}</p>
+      <p class="text-danger-fg mt-2">{error}</p>
     </div>
   {/if}
 
@@ -1160,15 +1140,17 @@ $effect(() => {
       <Tabs.Root
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as TabValue)}
-        class="tabs-connected w-full">
+        class="w-full">
 
-        <!-- Mobile tab dropdown -->
-        <div class="md:hidden mb-1">
+        <div class="mb-3 flex items-center justify-between gap-2">
           <Select.Root
             type="single"
             value={activeTab}
             onValueChange={(value) => { if (value) setActiveTab(value as TabValue); }}>
-            <Select.Trigger class="w-full">
+            <Select.Trigger
+              class="w-full sm:w-64"
+              data-help-id="account-tabs"
+              data-help-title="Account Sections">
               {mobileTabOptions.find((opt) => opt.value === activeTab)?.label ?? 'Select section'}
             </Select.Trigger>
             <Select.Content>
@@ -1177,128 +1159,36 @@ $effect(() => {
               {/each}
             </Select.Content>
           </Select.Root>
-        </div>
-
-        <!-- Desktop tab list -->
-        <div class="hidden md:block">
-          <Tabs.List class="tabs-connected-list">
-          <Tabs.Trigger
-            value="transactions"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-transactions"
-            data-help-title="Transactions Tab"
-            data-tour-id="transactions-tab">
-            <List class="mr-2 h-4 w-4" />
-            Transactions
-          </Tabs.Trigger>
-          {#if isHsaAccount}
-            <Tabs.Trigger
-              value="hsa-expenses"
-              class="tabs-connected-trigger px-6 font-medium"
-              data-help-id="account-tab-hsa-expenses"
-              data-help-title="Medical Expenses Tab">Medical Expenses</Tabs.Trigger>
-            <Tabs.Trigger
-              value="hsa-dashboard"
-              class="tabs-connected-trigger px-6 font-medium"
-              data-help-id="account-tab-hsa-dashboard"
-              data-help-title="HSA Dashboard Tab">HSA Dashboard</Tabs.Trigger>
+          {#if activeTab === 'transactions'}
+            {#if isHsaAccount}
+              <Button
+                onclick={handleAddExpense}
+                data-help-id="add-expense-button"
+                data-help-title="Add Medical Expense">
+                <HeartPulse class="mr-2 h-4 w-4" />
+                Add Expense
+              </Button>
+            {:else}
+              <Button
+                onclick={() => (addTransactionDialogOpen = true)}
+                data-help-id="add-transaction-button"
+                data-help-title="Add Transaction"
+                data-help-modal="add-transaction"
+                data-tour-id="add-transaction-button">
+                <Plus class="mr-2 h-4 w-4" />
+                Add Transaction
+              </Button>
+            {/if}
           {/if}
-          {#if isUtilityAccount}
-            <Tabs.Trigger
-              value="utility-dashboard"
-              class="tabs-connected-trigger px-6 font-medium"
-              data-help-id="account-tab-utility-dashboard"
-              data-help-title="Utility Usage Tab">
-              <Zap class="mr-2 h-4 w-4" />
-              Usage
-            </Tabs.Trigger>
-          {/if}
-          <Tabs.Trigger
-            value="analytics"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-analytics"
-            data-help-title="Analytics Tab"
-            data-tour-id="analytics-tab">
-            <ChartLine class="mr-2 h-4 w-4" />
-            Analytics
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="subscriptions"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-subscriptions"
-            data-help-title="Subscriptions Tab"
-            data-tour-id="subscriptions-tab">
-            <RefreshCw class="mr-2 h-4 w-4" />
-            Subscriptions
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="intelligence"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-intelligence"
-            data-help-title="Intelligence Tab"
-            data-tour-id="intelligence-tab">
-            <Brain class="mr-2 h-4 w-4" />
-            Intelligence
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="automation"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-automation"
-            data-help-title="Automation Tab"
-            data-tour-id="automation-tab">
-            <Zap class="mr-2 h-4 w-4" />
-            Automation
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="schedules"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-schedules"
-            data-help-title="Schedules Tab"
-            data-tour-id="schedules-tab">
-            <Calendar class="mr-2 h-4 w-4" />
-            Schedules
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="budgets"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-budgets"
-            data-help-title="Budgets Tab"
-            data-tour-id="budgets-tab">
-            <Wallet class="mr-2 h-4 w-4" />
-            Budgets
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="documents"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-documents"
-            data-help-title="Documents Tab"
-            data-tour-id="documents-tab">
-            <FolderOpen class="mr-2 h-4 w-4" />
-            Documents
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="import"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-import"
-            data-help-title="Import Tab"
-            data-tour-id="import-tab">
-            <Upload class="mr-2 h-4 w-4" />
-            Import
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="settings"
-            class="tabs-connected-trigger px-6 font-medium"
-            data-help-id="account-tab-settings"
-            data-help-title="Settings Tab"
-            data-tour-id="settings-tab">
-            <SlidersHorizontal class="mr-2 h-4 w-4" />
-            Settings
-          </Tabs.Trigger>
-          </Tabs.List>
         </div>
 
         <!-- Transactions Tab Content -->
-        <Tabs.Content value="transactions" class="tabs-connected-content space-y-4">
+        <Tabs.Content
+          value="transactions"
+          class="space-y-4"
+          data-help-id="account-tab-transactions"
+          data-help-title="Transactions Tab"
+          data-tour-id="transactions-tab">
           <TransactionTableContainer
             {isLoading}
             transactions={Array.isArray(transactions) ? transactions : []}
@@ -1327,7 +1217,7 @@ $effect(() => {
 
         <!-- HSA Medical Expenses Tab Content -->
         {#if isHsaAccount}
-          <Tabs.Content value="hsa-expenses" class="tabs-connected-content space-y-4">
+          <Tabs.Content value="hsa-expenses" class="space-y-4">
             {#if accountData}
               <ExpenseTableContainer
                 hsaAccountId={accountData.id}
@@ -1337,7 +1227,7 @@ $effect(() => {
           </Tabs.Content>
 
           <!-- HSA Dashboard Tab Content -->
-          <Tabs.Content value="hsa-dashboard" class="tabs-connected-content space-y-4">
+          <Tabs.Content value="hsa-dashboard" class="space-y-4">
             {#if accountData}
               <HsaDashboard account={accountData} />
             {/if}
@@ -1346,7 +1236,7 @@ $effect(() => {
 
         <!-- Utility Dashboard Tab Content -->
         {#if isUtilityAccount}
-          <Tabs.Content value="utility-dashboard" class="tabs-connected-content space-y-4">
+          <Tabs.Content value="utility-dashboard" class="space-y-4">
             {#if accountData}
               <UtilityDashboard account={accountData} />
             {/if}
@@ -1356,9 +1246,10 @@ $effect(() => {
         <!-- Analytics Tab Content -->
         <Tabs.Content
           value="analytics"
-          class="tabs-connected-content space-y-4"
+          class="space-y-4"
           data-help-id="analytics-tab"
-          data-help-title="Analytics Tab">
+          data-help-title="Analytics Tab"
+          data-tour-id="analytics-tab">
           {#if transactions && !isLoading && activeTab === 'analytics'}
             <AnalyticsDashboard
               transactions={formattedTransactions}
@@ -1379,7 +1270,7 @@ $effect(() => {
         <!-- Subscriptions Tab Content -->
         <Tabs.Content
           value="subscriptions"
-          class="tabs-connected-content space-y-4"
+          class="space-y-4"
           data-help-id="subscriptions-tab"
           data-help-title="Subscriptions Tab">
           {#if accountId && accountSlug && activeTab === 'subscriptions'}
@@ -1390,9 +1281,10 @@ $effect(() => {
         <!-- Schedules Tab Content -->
         <Tabs.Content
           value="schedules"
-          class="tabs-connected-content space-y-4"
+          class="space-y-4"
           data-help-id="schedules-tab"
-          data-help-title="Schedules Tab">
+          data-help-title="Schedules Tab"
+          data-tour-id="schedules-tab">
           {#if schedules && !isLoading && activeTab === 'schedules'}
             <div class="flex items-center justify-between" data-tour-id="schedules-upcoming">
               <div></div>
@@ -1426,9 +1318,10 @@ $effect(() => {
         <!-- Budgets Tab Content -->
         <Tabs.Content
           value="budgets"
-          class="tabs-connected-content space-y-4"
+          class="space-y-4"
           data-help-id="budgets-tab"
-          data-help-title="Budgets Tab">
+          data-help-title="Budgets Tab"
+          data-tour-id="budgets-tab">
           {#if groupedBudgets && !isLoading && activeTab === 'budgets'}
             <div class="flex items-center justify-between" data-tour-id="budgets-progress">
               <div></div>
@@ -1465,9 +1358,10 @@ $effect(() => {
         <!-- Import Tab Content -->
         <Tabs.Content
           value="import"
-          class="tabs-connected-content"
+          class=""
           data-help-id="import-tab"
-          data-help-title="Import Tab">
+          data-help-title="Import Tab"
+          data-tour-id="import-tab">
           {#if accountData && accountId && activeTab === 'import'}
             <ImportTab
               accountId={Number(accountId)}
@@ -1479,9 +1373,10 @@ $effect(() => {
         <!-- Intelligence Tab Content -->
         <Tabs.Content
           value="intelligence"
-          class="tabs-connected-content"
+          class=""
           data-help-id="intelligence-tab"
-          data-help-title="Intelligence Tab">
+          data-help-title="Intelligence Tab"
+          data-tour-id="intelligence-tab">
           {#if accountId && accountSlug && activeTab === 'intelligence'}
             <IntelligenceTab {accountId} {accountSlug} />
           {/if}
@@ -1490,7 +1385,7 @@ $effect(() => {
         <!-- Automation Tab Content -->
         <Tabs.Content
           value="automation"
-          class="tabs-connected-content"
+          class=""
           data-help-id="automation-tab"
           data-help-title="Automation Tab">
           {#if accountId && accountSlug && activeTab === 'automation'}
@@ -1501,7 +1396,7 @@ $effect(() => {
         <!-- Documents Tab Content -->
         <Tabs.Content
           value="documents"
-          class="tabs-connected-content"
+          class=""
           data-help-id="account-documents-tab"
           data-help-title="Documents Tab">
           {#if accountId && accountData && activeTab === 'documents'}
@@ -1514,9 +1409,10 @@ $effect(() => {
         <!-- Settings Tab Content -->
         <Tabs.Content
           value="settings"
-          class="tabs-connected-content"
+          class=""
           data-help-id="account-settings-tab"
-          data-help-title="Account Settings">
+          data-help-title="Account Settings"
+          data-tour-id="settings-tab">
           {#if accountData && activeTab === 'settings'}
             <SettingsTab account={accountData} />
           {/if}

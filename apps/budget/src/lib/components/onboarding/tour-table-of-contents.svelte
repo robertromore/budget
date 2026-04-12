@@ -236,7 +236,7 @@ function getCurrentSteps(node: ChapterNode): number {
       <span class="flex-1 truncate">{node.chapter.title}</span>
 
       {#if completed}
-        <Check class="h-4 w-4 text-green-500" />
+        <Check class="h-4 w-4 text-success" />
       {:else if totalSteps > 0}
         <span class="text-muted-foreground text-xs">
           {currentCount}/{totalSteps}
@@ -261,7 +261,7 @@ function getCurrentSteps(node: ChapterNode): number {
             onclick={() => goToStep(index)}
             disabled={isSettingUp}>
             {#if visitedSteps.has(index) && status !== 'current'}
-              <Check class="h-3 w-3 text-green-500" />
+              <Check class="h-3 w-3 text-success" />
             {:else if status === 'current'}
               <Circle class="fill-primary text-primary h-3 w-3" />
             {:else}
@@ -284,7 +284,7 @@ function getCurrentSteps(node: ChapterNode): number {
                   onclick={() => goToStep(childStep.index)}
                   disabled={isSettingUp}>
                   {#if visitedSteps.has(childStep.index) && childStatus !== 'current'}
-                    <Check class="h-3 w-3 text-green-500" />
+                    <Check class="h-3 w-3 text-success" />
                   {:else if childStatus === 'current'}
                     <Circle class="fill-primary text-primary h-3 w-3" />
                   {:else}

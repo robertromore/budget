@@ -172,7 +172,7 @@ const isEmergencyFund = $derived.by(() => (envelope.metadata as any)?.isEmergenc
     {#if envelope.rolloverAmount > 0}
       <div class="flex items-center justify-between">
         <span class="text-sm font-medium">Rollover</span>
-        <span class="font-mono text-sm text-blue-600">
+        <span class="font-mono text-sm text-info">
           {currencyFormatter.format(envelope.rolloverAmount)}
         </span>
       </div>

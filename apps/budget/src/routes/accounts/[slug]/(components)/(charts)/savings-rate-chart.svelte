@@ -682,8 +682,8 @@ function handleBrushClick(_x: number, clickValue: Date | number) {
                   </p>
                   <p
                     class={point.savingsRate >= 0
-                      ? 'font-semibold text-green-600'
-                      : 'font-semibold text-red-600'}>
+                      ? 'font-semibold text-amount-positive'
+                      : 'font-semibold text-amount-negative'}>
                     {formatPercentRaw(point.savingsRate, 1)} savings rate
                   </p>
                   <div class="text-muted-foreground mt-1 text-xs">
@@ -695,21 +695,21 @@ function handleBrushClick(_x: number, clickValue: Date | number) {
                   <!-- Overlay comparisons -->
                   <div class="mt-2 space-y-1 border-t pt-2 text-xs">
                     <!-- Target comparison -->
-                    <p class={targetDiff >= 0 ? 'text-green-600' : 'text-amber-600'}>
+                    <p class={targetDiff >= 0 ? 'text-amount-positive' : 'text-warning'}>
                       {targetDiff >= 0 ? '+' : ''}{targetDiff.toFixed(1)}pp vs {savingsTarget}%
                       target
                     </p>
 
                     <!-- Historical average comparison -->
                     {#if showHistoricalAvg && histAvgDiff !== null}
-                      <p class={histAvgDiff >= 0 ? 'text-green-600' : 'text-amber-600'}>
+                      <p class={histAvgDiff >= 0 ? 'text-amount-positive' : 'text-warning'}>
                         {histAvgDiff >= 0 ? '+' : ''}{histAvgDiff.toFixed(1)}pp vs historical avg
                       </p>
                     {/if}
 
                     <!-- Trend comparison -->
                     {#if showLinearTrend && trendDiff !== null}
-                      <p class={trendDiff >= 0 ? 'text-green-600' : 'text-amber-600'}>
+                      <p class={trendDiff >= 0 ? 'text-amount-positive' : 'text-warning'}>
                         {trendDiff >= 0 ? '+' : ''}{trendDiff.toFixed(1)}pp vs trend
                       </p>
                     {/if}
@@ -723,7 +723,7 @@ function handleBrushClick(_x: number, clickValue: Date | number) {
 
                     <!-- Year-over-Year comparison -->
                     {#if showYoYComparison && yoyInfo}
-                      <p class={yoyInfo.yoyChange >= 0 ? 'text-green-600' : 'text-amber-600'}>
+                      <p class={yoyInfo.yoyChange >= 0 ? 'text-amount-positive' : 'text-warning'}>
                         {yoyInfo.yoyChange >= 0 ? '+' : ''}{yoyInfo.yoyChange.toFixed(1)}pp vs last
                         year
                         <span class="text-muted-foreground"
@@ -753,10 +753,10 @@ function handleBrushClick(_x: number, clickValue: Date | number) {
   {#snippet belowChart()}
     <!-- Reference benchmarks -->
     <div class="text-muted-foreground mt-3 shrink-0 text-center text-xs">
-      <span class="text-green-600">●</span>
+      <span class="text-success">●</span>
       {savingsTarget}%+ On target |
-      <span class="text-yellow-600">●</span> 0-{savingsTarget}% Below target |
-      <span class="text-red-600">●</span> Below 0% Overspending
+      <span class="text-warning">●</span> 0-{savingsTarget}% Below target |
+      <span class="text-destructive">●</span> Below 0% Overspending
     </div>
 
     <!-- Active overlays legend -->

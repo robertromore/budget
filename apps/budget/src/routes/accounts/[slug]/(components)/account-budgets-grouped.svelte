@@ -42,14 +42,14 @@ const sections = [
     title: 'Spending Limits',
     icon: Wallet,
     description: 'Monthly spending caps for this account',
-    iconClass: 'text-blue-500',
+    iconClass: 'text-info',
   },
   {
     key: 'savingsGoals' as const,
     title: 'Savings Goals',
     icon: Target,
     description: 'Savings targets using this account',
-    iconClass: 'text-green-500',
+    iconClass: 'text-success',
   },
   {
     key: 'recurringExpenses' as const,

@@ -42,8 +42,8 @@ const isLoading = $derived(txQuery.isLoading);
         </div>
         <span
           class="shrink-0 text-sm font-medium"
-          class:text-green-600={tx.amount > 0}
-          class:text-red-600={tx.amount < 0}>
+          class:text-amount-positive={tx.amount > 0}
+          class:text-amount-negative={tx.amount < 0}>
           {currencyFormatter.format(tx.amount)}
         </span>
       </div>

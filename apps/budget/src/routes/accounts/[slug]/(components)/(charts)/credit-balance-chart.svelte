@@ -582,14 +582,14 @@ const chartData = $derived(
                       {#if showHistoricalAvg && histAvgDiff !== null}
                         {@const isBetter =
                           viewMode === 'balance' ? histAvgDiff <= 0 : histAvgDiff >= 0}
-                        <p class={isBetter ? 'text-green-600' : 'text-amber-600'}>
+                        <p class={isBetter ? 'text-amount-positive' : 'text-warning'}>
                           {histAvgDiff >= 0 ? '+' : ''}{currencyFormatter.format(histAvgDiff)} vs avg
                         </p>
                       {/if}
 
                       {#if showLinearTrend && trendDiff !== null}
                         {@const isBetter = viewMode === 'balance' ? trendDiff <= 0 : trendDiff >= 0}
-                        <p class={isBetter ? 'text-green-600' : 'text-amber-600'}>
+                        <p class={isBetter ? 'text-amount-positive' : 'text-warning'}>
                           {trendDiff >= 0 ? '+' : ''}{currencyFormatter.format(trendDiff)} vs trend
                         </p>
                       {/if}

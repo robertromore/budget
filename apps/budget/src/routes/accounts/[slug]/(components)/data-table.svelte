@@ -639,14 +639,14 @@ const canRender = $derived(isContextReady && isViewsInitialized);
                     row.original.status !== 'scheduled' &&
                     'cursor-pointer',
                   'data-[state=selected]:border-l-primary data-[state=selected]:border-l-4',
-                  isTransfer && 'border-l-2 border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20',
+                  isTransfer && 'border-l-2 border-l-info bg-info-bg/30',
                   isArchived &&
                     'border-l-2 border-l-gray-400 bg-gray-100/50 opacity-60 dark:bg-gray-800/30',
                   isAdjustment &&
                     'border-l-2 border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20',
                   isReconciliationMarker &&
                     markerType === 'reconciliation' &&
-                    'border-l-4 border-l-green-500 bg-green-50/50 font-medium dark:bg-green-950/30',
+                    'border-l-4 border-l-success bg-success-bg/50 font-medium',
                   isReconciliationMarker &&
                     markerType === 'balance-reset' &&
                     'border-l-4 border-l-purple-500 bg-purple-50/50 font-medium dark:bg-purple-950/30'

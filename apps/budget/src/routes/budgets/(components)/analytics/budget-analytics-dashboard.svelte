@@ -150,10 +150,10 @@ const categoryBreakdown = $derived.by(() => {
 
 function getStatusColor(status: string): string {
   const colors = {
-    excellent: 'text-green-600',
-    good: 'text-blue-600',
+    excellent: 'text-success',
+    good: 'text-info',
     warning: 'text-orange-600',
-    danger: 'text-red-600',
+    danger: 'text-destructive',
   };
   return colors[status as keyof typeof colors] || colors.excellent;
 }
@@ -233,7 +233,7 @@ const pieChartConfig = $derived.by(() => {
       </Card.Header>
       <Card.Content>
         <div
-          class="text-2xl font-bold {totalRemaining < 0 ? 'text-destructive' : 'text-green-600'}">
+          class="text-2xl font-bold {totalRemaining < 0 ? 'text-destructive' : 'text-amount-positive'}">
           {currencyFormatter.format(Math.abs(totalRemaining))}
         </div>
         <p class="text-muted-foreground text-xs">
@@ -399,8 +399,8 @@ const pieChartConfig = $derived.by(() => {
         <div class="space-y-2">
           {#if overdraftBudgets.length > 0}
             <div class="flex items-center gap-2 text-sm">
-              <TrendingUp class="h-4 w-4 text-red-600" />
-              <span class="text-red-800 dark:text-red-200">
+              <TrendingUp class="h-4 w-4 text-destructive" />
+              <span class="text-danger-fg">
                 {overdraftBudgets.length} budget{overdraftBudgets.length !== 1 ? 's are' : ' is'} over
                 limit
               </span>

@@ -119,9 +119,9 @@ const handleOpenChange = (newOpen: boolean) => {
 // Get confidence badge variant
 const getConfidenceBadge = (confidence: number) => {
   if (confidence >= 0.7)
-    return { variant: 'default' as const, label: 'High', class: 'bg-green-500' };
+    return { variant: 'default' as const, label: 'High', class: 'bg-success' };
   if (confidence >= 0.4)
-    return { variant: 'secondary' as const, label: 'Medium', class: 'bg-yellow-500' };
+    return { variant: 'secondary' as const, label: 'Medium', class: 'bg-warning' };
   return { variant: 'outline' as const, label: 'Low', class: 'bg-orange-500' };
 };
 
@@ -188,7 +188,7 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
             <!-- Empty state -->
             <div class="py-12 text-center">
               {#if acceptedPayeeIds.size > 0}
-                <Check class="mx-auto mb-4 h-12 w-12 text-green-500" />
+                <Check class="mx-auto mb-4 h-12 w-12 text-success" />
                 <h3 class="mb-2 text-lg font-semibold">All Done!</h3>
                 <p class="text-muted-foreground text-sm">
                   You've reviewed all recommendations. {acceptedPayeeIds.size}
@@ -208,7 +208,7 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
                   Create Categories
                 </Button>
               {:else}
-                <Check class="mx-auto mb-4 h-12 w-12 text-green-500" />
+                <Check class="mx-auto mb-4 h-12 w-12 text-success" />
                 <h3 class="mb-2 text-lg font-semibold">All Done!</h3>
                 <p class="text-muted-foreground text-sm">No uncategorized payees found.</p>
               {/if}

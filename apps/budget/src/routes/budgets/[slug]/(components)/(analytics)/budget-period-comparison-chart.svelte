@@ -63,23 +63,23 @@ function getTrendIcon(change: number): Component<any> {
 }
 
 function getTrendColor(change: number): string {
-  if (change > 5) return 'text-red-500';
-  if (change < -5) return 'text-green-500';
+  if (change > 5) return 'text-destructive';
+  if (change < -5) return 'text-success';
   return 'text-muted-foreground';
 }
 
 // Get utilization color
 function getUtilizationColor(rate: number): string {
-  if (rate > 100) return 'text-red-500';
-  if (rate > 80) return 'text-yellow-500';
-  return 'text-green-500';
+  if (rate > 100) return 'text-destructive';
+  if (rate > 80) return 'text-warning';
+  return 'text-success';
 }
 
 // Get performance score color
 function getPerformanceColor(score: number): string {
-  if (score >= 80) return 'bg-green-500';
-  if (score >= 60) return 'bg-yellow-500';
-  return 'bg-red-500';
+  if (score >= 80) return 'bg-success';
+  if (score >= 60) return 'bg-warning';
+  return 'bg-destructive';
 }
 </script>
 
@@ -201,9 +201,9 @@ function getPerformanceColor(score: number): string {
           <div class="flex flex-wrap gap-2">
             <Badge variant="outline" class="gap-1">
               {#if comparison.currentPeriod.trends.spendingTrend === 'increasing'}
-                <TrendingUp class="h-3 w-3 text-red-500" />
+                <TrendingUp class="h-3 w-3 text-destructive" />
               {:else if comparison.currentPeriod.trends.spendingTrend === 'decreasing'}
-                <TrendingDown class="h-3 w-3 text-green-500" />
+                <TrendingDown class="h-3 w-3 text-success" />
               {:else}
                 <Minus class="h-3 w-3" />
               {/if}
@@ -211,9 +211,9 @@ function getPerformanceColor(score: number): string {
             </Badge>
             <Badge variant="outline" class="gap-1">
               {#if comparison.currentPeriod.trends.efficiencyTrend === 'improving'}
-                <TrendingUp class="h-3 w-3 text-green-500" />
+                <TrendingUp class="h-3 w-3 text-success" />
               {:else if comparison.currentPeriod.trends.efficiencyTrend === 'declining'}
-                <TrendingDown class="h-3 w-3 text-red-500" />
+                <TrendingDown class="h-3 w-3 text-destructive" />
               {:else}
                 <Minus class="h-3 w-3" />
               {/if}

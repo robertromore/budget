@@ -306,8 +306,8 @@ function handleClearTransfer() {
             variant="outline"
             class={cn(
               'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
-              isTransfer && 'border-blue-200 text-blue-600',
-              hasSuggestion && 'border-amber-200 text-amber-600',
+              isTransfer && 'border-blue-200 text-info',
+              hasSuggestion && 'border-amber-200 text-warning',
               !isTransfer &&
                 !hasSuggestion &&
                 !selectedPayee &&
@@ -380,7 +380,7 @@ function handleClearTransfer() {
                         <Command.Item
                           value={tempPayee}
                           onSelect={() => handleSelectTemporary(tempPayee)}
-                          class="text-blue-600">
+                          class="text-info">
                           <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
                           {tempPayee}
                         </Command.Item>
@@ -406,7 +406,7 @@ function handleClearTransfer() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  class="mt-1 h-6 text-xs text-amber-600 hover:bg-amber-100 hover:text-amber-700"
+                  class="mt-1 h-6 text-xs text-warning hover:bg-amber-100 hover:text-amber-700"
                   onclick={() =>
                     handleSelectAccount(
                       suggestedTransferAccountId!,

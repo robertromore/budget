@@ -437,7 +437,7 @@ function handleDateValue2Update(value: DateValue | undefined) {
 
   <!-- Negate indicator -->
   {#if condition.negate}
-    <span class="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700"> NOT </span>
+    <span class="bg-danger-bg text-danger-fg rounded px-1.5 py-0.5 text-xs font-medium"> NOT </span>
   {/if}
 
   <!-- Remove button -->

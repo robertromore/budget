@@ -258,15 +258,15 @@ const suggestionConfidence = $derived(suggestions?.confidence ?? 0);
       <!-- Smart Defaults Suggestion -->
       {#if hasSuggestions}
         <div
-          class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+          class="bg-info-bg rounded-lg border border-info/20 p-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-3">
-              <div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900/50">
-                <Sparkles class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div class="rounded-full bg-info-bg p-2">
+                <Sparkles class="h-4 w-4 text-info" />
               </div>
               <div class="space-y-1">
-                <p class="font-medium text-blue-900 dark:text-blue-100">Smart Defaults Available</p>
-                <p class="text-sm text-blue-700 dark:text-blue-300">
+                <p class="text-info-fg font-medium">Smart Defaults Available</p>
+                <p class="text-info-fg text-sm">
                   Based on payee type and transaction history.
                 </p>
                 <Badge variant="secondary" class="mt-1">

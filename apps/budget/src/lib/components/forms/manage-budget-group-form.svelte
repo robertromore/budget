@@ -96,8 +96,8 @@ async function handleSubmit() {
       await createMutation.mutateAsync(input);
     }
     onSuccess?.();
-  } catch (error) {
-    console.error('Failed to save budget group:', error);
+  } catch {
+    // Error is handled by the mutation's errorMessage toast
   }
 }
 </script>

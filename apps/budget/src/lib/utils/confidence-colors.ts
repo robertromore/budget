@@ -67,9 +67,9 @@ export function getConfidenceLevel(
  * Text-only confidence colors (for use with badges, inline text)
  */
 const textOnlyColors: Record<ConfidenceLevel, string> = {
-  high: "text-green-600 dark:text-green-400",
-  "medium-high": "text-blue-600 dark:text-blue-400",
-  medium: "text-yellow-600 dark:text-yellow-400",
+  high: "text-success",
+  "medium-high": "text-info",
+  medium: "text-warning",
   low: "text-orange-600 dark:text-orange-400",
   none: "text-muted-foreground",
 };
@@ -78,11 +78,11 @@ const textOnlyColors: Record<ConfidenceLevel, string> = {
  * Background + text confidence colors (for use with cards, badges with bg)
  */
 const backgroundColors: Record<ConfidenceLevel, string> = {
-  high: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  "medium-high": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  high: "bg-success-bg text-success-fg",
+  "medium-high": "bg-info-bg text-info-fg",
+  medium: "bg-warning-bg text-warning-fg",
   low: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  none: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  none: "bg-muted text-muted-foreground",
 };
 
 /**

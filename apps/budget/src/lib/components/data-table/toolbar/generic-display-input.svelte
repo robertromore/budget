@@ -403,7 +403,6 @@ const useSheet = $derived(displayPreferences.tableDisplayMode === 'sheet');
         onCheckedChange={(checked) => {
           onExpandedChange?.(checked ? true : {});
         }}
-        aria-labelledby="Expand all rows"
         disabled={grouping.length === 0} />
       <Label
         for="expand-all"
@@ -440,7 +439,7 @@ const useSheet = $derived(displayPreferences.tableDisplayMode === 'sheet');
       onCheckedChange={(checked) => {
         onStickyHeaderChange?.(checked);
       }}
-      aria-labelledby="Sticky header" />
+    />
     <Label
       for="sticky-header"
       class="ml-1 text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

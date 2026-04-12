@@ -329,14 +329,14 @@ function getBarColor(payee: (typeof payeeData)[0]): string {
                       Total: {currencyFormatter.format(hoveredItem.total)}
                       {#if hoveredItem.change !== null}
                         <span
-                          class={hoveredItem.change >= 0 ? 'text-destructive' : 'text-green-600'}>
+                          class={hoveredItem.change >= 0 ? 'text-destructive' : 'text-amount-positive'}>
                           ({hoveredItem.change >= 0 ? '+' : ''}{formatPercentRaw(
                             hoveredItem.change,
                             0
                           )})
                         </span>
                       {:else if hoveredItem.isNew}
-                        <span class="text-blue-600">(new)</span>
+                        <span class="text-info">(new)</span>
                       {/if}
                     </p>
                     <p class="text-muted-foreground">
@@ -409,13 +409,13 @@ function getBarColor(payee: (typeof payeeData)[0]): string {
           </div>
         {/if}
         {#if decreasing.length > 0}
-          <div class="flex items-center gap-1.5 text-green-600">
+          <div class="flex items-center gap-1.5 text-amount-positive">
             <span class="font-medium">{decreasing.length} spending less</span>
             <span class="text-muted-foreground">vs prev period</span>
           </div>
         {/if}
         {#if newPayees.length > 0}
-          <div class="flex items-center gap-1.5 text-blue-600">
+          <div class="flex items-center gap-1.5 text-info">
             <span class="font-medium">{newPayees.length} new</span>
             <span class="text-muted-foreground">this period</span>
           </div>

@@ -343,7 +343,7 @@ function handleClear() {
                     <Command.Item
                       value={tempCategory}
                       onSelect={() => handleSelectTemporary(tempCategory)}
-                      class="text-blue-600">
+                      class="text-info">
                       <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
                       {tempCategory}
                     </Command.Item>

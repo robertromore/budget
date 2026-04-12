@@ -141,7 +141,7 @@ function handleAllocationChanged() {
           <span>Unallocated: {currencyFormatter.format(allocationSummary.remainingAmount)}</span>
         </div>
       {:else if allocationSummary && allocationSummary.remainingAmount < -0.01}
-        <div class="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+        <div class="flex items-center gap-1 text-xs text-destructive">
           <TriangleAlert class="h-3 w-3" />
           <span
             >Over-allocated: {currencyFormatter.format(
@@ -152,7 +152,7 @@ function handleAllocationChanged() {
 
       <!-- Status indicator -->
       <!-- {#if allocationStatus === 'full'}
-        <div class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+        <div class="flex items-center gap-1 text-xs text-success">
           <CircleDollarSign class="h-3 w-3" />
           <span>Fully allocated</span>
         </div>

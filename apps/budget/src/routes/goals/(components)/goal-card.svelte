@@ -39,9 +39,9 @@ const GOAL_TYPE_ICONS: Record<string, any> = {
 };
 
 const GOAL_TYPE_COLORS: Record<string, string> = {
-  savings_target: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  debt_payoff: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  contribution_ramp: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  savings_target: 'bg-success-bg text-success-fg',
+  debt_payoff: 'bg-danger-bg text-danger-fg',
+  contribution_ramp: 'bg-info-bg text-info-fg',
   balance_target: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
   custom: 'bg-muted text-muted-foreground',
 };
@@ -84,7 +84,7 @@ async function handleMarkComplete() {
       <div class="flex items-center gap-2">
         <p class="truncate font-medium">{goal.name}</p>
         {#if goal.isCompleted}
-          <Badge variant="outline" class="shrink-0 border-green-400 text-green-600">
+          <Badge variant="outline" class="shrink-0 border-success text-success">
             Completed
           </Badge>
         {/if}
@@ -127,17 +127,17 @@ async function handleMarkComplete() {
     <Progress value={goal.percentComplete} class="h-2" />
     <div class="flex items-center justify-between text-xs">
       <span
-        class:text-green-600={goal.isOnTrack && !goal.isCompleted}
-        class:text-red-500={!goal.isOnTrack && !goal.isCompleted}
+        class:text-success={goal.isOnTrack && !goal.isCompleted}
+        class:text-destructive={!goal.isOnTrack && !goal.isCompleted}
         class:text-muted-foreground={goal.isCompleted}>
         {goal.isCompleted
           ? '100% complete'
           : `${goal.percentComplete.toFixed(1)}% — ${currencyFormatter.format(goal.remaining)} to go`}
       </span>
       {#if !goal.isOnTrack && !goal.isCompleted && goal.targetDate}
-        <span class="text-red-500 text-xs">Behind pace</span>
+        <span class="text-destructive text-xs">Behind pace</span>
       {:else if goal.isOnTrack && !goal.isCompleted && goal.targetDate}
-        <span class="text-green-600 text-xs">On track</span>
+        <span class="text-success text-xs">On track</span>
       {/if}
     </div>
   </div>
@@ -157,7 +157,7 @@ async function handleMarkComplete() {
         <Button
           variant="ghost"
           size="sm"
-          class="h-6 gap-1 px-2 text-xs text-green-600 hover:text-green-700"
+          class="h-6 gap-1 px-2 text-xs text-success hover:text-success/80"
           disabled={completeMutation.isPending}
           onclick={handleMarkComplete}>
           <CheckCircle class="h-3 w-3"></CheckCircle>

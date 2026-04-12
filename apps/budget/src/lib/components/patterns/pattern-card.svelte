@@ -25,8 +25,8 @@ const convertMutation = convertPatternToSchedule.options();
 const dismissMutation = dismissPattern.options();
 
 const patternTypeColors = {
-  daily: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  weekly: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+  daily: 'bg-info/10 text-info-fg border-info/20',
+  weekly: 'bg-success/10 text-success-fg border-success/20',
   monthly: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
   yearly: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
 } as const;

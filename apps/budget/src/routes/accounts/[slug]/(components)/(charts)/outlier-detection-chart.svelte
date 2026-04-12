@@ -600,7 +600,7 @@ const chartPadding = $derived.by(() => {
                       <span
                         class="rounded px-1.5 py-0.5 text-xs {isExpense
                           ? 'bg-destructive/10 text-destructive'
-                          : 'bg-green-500/10 text-green-600'}">
+                          : 'bg-success/10 text-success'}">
                         {isExpense ? 'Expense' : 'Income'}
                       </span>
                     </div>
@@ -663,7 +663,7 @@ const chartPadding = $derived.by(() => {
                       <span
                         class="rounded px-1.5 py-0.5 text-xs {isExpense
                           ? 'bg-destructive/10 text-destructive'
-                          : 'bg-green-500/10 text-green-600'}">
+                          : 'bg-success/10 text-success'}">
                         {isExpense ? 'Expense' : 'Income'}
                       </span>
                     </div>
@@ -841,7 +841,7 @@ const chartPadding = $derived.by(() => {
                         <span
                           class="shrink-0 rounded px-1 py-0.5 text-[10px] {isExpense
                             ? 'bg-destructive/10 text-destructive'
-                            : 'bg-green-500/10 text-green-600'}">
+                            : 'bg-success/10 text-success'}">
                           {isExpense ? 'E' : 'I'}
                         </span>
                       </div>
