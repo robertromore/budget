@@ -99,15 +99,15 @@ function handleAllocationChanged() {
             <Tooltip.Trigger>
               <button
                 type="button"
-                class="group flex max-w-35 cursor-pointer items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50/80 px-2 py-1 text-xs transition-all hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
+                class="group flex max-w-35 cursor-pointer items-center gap-1.5 rounded-md border border-success/20 bg-success-bg px-2 py-1 text-xs transition-all hover:border-success/40"
                 onclick={handleManageClick}>
                 <div
-                  class="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 transition-colors group-hover:bg-emerald-200 dark:bg-emerald-800 dark:group-hover:bg-emerald-700">
-                  <CircleDollarSign class="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" />
+                  class="flex h-4 w-4 items-center justify-center rounded-full bg-success/10 transition-colors group-hover:bg-success/20">
+                  <CircleDollarSign class="h-2.5 w-2.5 text-success" />
                 </div>
-                <span class="truncate font-medium text-emerald-800 dark:text-emerald-100"
+                <span class="text-success-fg truncate font-medium"
                   >{allocation.budgetName}</span>
-                <span class="shrink-0 font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                <span class="shrink-0 font-mono font-medium text-success">
                   {currencyFormatter.format(Math.abs(allocation.allocatedAmount))}
                 </span>
               </button>
@@ -159,17 +159,16 @@ function handleAllocationChanged() {
       {/if} -->
     {:else if availableBudgets.length > 0}
       <!-- No allocation yet, show add button -->
-      <Button
-        size="sm"
-        variant="ghost"
+      <button
+        type="button"
         onclick={handleManageClick}
-        class="group hover:bg-primary/10 h-6 justify-start px-2 text-xs transition-all">
+        class="group flex max-w-35 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/30 bg-muted/50 px-2 py-1 text-xs transition-all hover:border-primary/50 hover:bg-primary/10">
         <div
-          class="bg-primary/10 group-hover:bg-primary/20 mr-1.5 flex h-4 w-4 items-center justify-center rounded-full transition-colors">
+          class="flex h-4 w-4 items-center justify-center rounded bg-primary/10 transition-colors group-hover:bg-primary/20">
           <Plus class="text-primary h-2.5 w-2.5" />
         </div>
-        <span class="text-primary group-hover:text-primary font-medium">Allocate to budget</span>
-      </Button>
+        <span class="text-muted-foreground group-hover:text-primary font-medium">Allocate to budget</span>
+      </button>
     {:else}
       <!-- No budgets available -->
       <div class="text-muted-foreground flex items-center gap-1 text-xs">

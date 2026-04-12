@@ -271,7 +271,10 @@ function handleOpenChange(newOpen: boolean) {
         </div>
         <span class="truncate">{selectedCategory.name}</span>
       {:else}
-        <Tag class="mr-2 h-4 w-4 shrink-0" />
+        <div
+          class="mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted">
+          <Tag class="h-2.5 w-2.5" />
+        </div>
         <span class="truncate">{placeholder}</span>
       {/if}
     {/snippet}

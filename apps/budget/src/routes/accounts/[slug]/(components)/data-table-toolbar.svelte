@@ -197,7 +197,7 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
   <div class="grow"></div>
 
   <!-- Search input -->
-  <div class="relative w-full sm:w-48 lg:w-64">
+  <div class="relative w-full sm:w-56 lg:w-72">
     <Search
       class="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
     <Input

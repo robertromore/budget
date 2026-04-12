@@ -2,9 +2,7 @@
 import type { Table } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/types';
 import { Button } from '$lib/components/ui/button';
-import * as Popover from '$lib/components/ui/popover/index.js';
-import * as Command from '$lib/components/ui/command/index.js';
-import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { EnhancedCategorySelector } from '$lib/components/categories/enhanced-category-selector';
 import { bulkUpdateStatus, bulkUpdateCategoryByIds } from '$lib/query/transactions';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
 import Tag from '@lucide/svelte/icons/tag';
@@ -61,15 +59,8 @@ const selectedIds = $derived(
     .filter((id): id is number => typeof id === 'number')
 );
 
-// Category picker state
-let categoryPopoverOpen = $state(false);
-let categorySearch = $state('');
-const categoriesState = CategoriesState.get();
-const categories = $derived(
-  Array.from(categoriesState.categories.values()).filter((c) =>
-    categorySearch ? (c.name ?? '').toLowerCase().includes(categorySearch.toLowerCase()) : true
-  )
-);
+// Category selector state
+let bulkCategoryValue = $state<number | null>(null);
 
 // Mutations
 const bulkStatusMutation = bulkUpdateStatus.options();
@@ -82,20 +73,20 @@ async function handleMarkCleared() {
   selectingAll = false;
 }
 
-async function handleSetCategory(categoryId: number | null) {
+function handleBulkCategoryChange(categoryId: number | null) {
   if (selectedIds.length === 0 || !accountId) return;
-  categoryPopoverOpen = false;
-  categorySearch = '';
-  await bulkCategoryMutation.mutateAsync({ ids: selectedIds, categoryId, accountId });
-  table.resetRowSelection();
-  selectingAll = false;
+  bulkCategoryValue = categoryId;
+  bulkCategoryMutation.mutateAsync({ ids: selectedIds, categoryId, accountId }).then(() => {
+    table.resetRowSelection();
+    selectingAll = false;
+  });
 }
 
 const isVisible = $derived(selectedCount > 0 && displayCount > 0);
 </script>
 
 <div
-  class="pointer-events-none relative h-0"
+  class="pointer-events-none relative {isVisible ? 'mb-12' : 'h-0'}"
   aria-hidden={!isVisible}>
   <div
     class="pointer-events-auto absolute inset-x-0 bottom-0 z-10 flex items-center gap-2 rounded-md border border-b-2 border-border bg-muted px-4 py-2 shadow-sm transition-all duration-150 {isVisible
@@ -131,41 +122,13 @@ const isVisible = $derived(selectedCount > 0 && displayCount > 0);
     <!-- Right side: action buttons -->
     <div class="ml-auto flex items-center gap-1.5">
       <!-- Edit Category -->
-      <Popover.Root bind:open={categoryPopoverOpen}>
-        <Popover.Trigger>
-          {#snippet child({ props })}
-            <Button {...props} variant="outline" size="sm">
-              <Tag class="mr-2 h-4 w-4" />
-              Set Category
-            </Button>
-          {/snippet}
-        </Popover.Trigger>
-        <Popover.Content class="w-56 p-0" align="end">
-          <Command.Root>
-            <Command.Input placeholder="Search categories..." bind:value={categorySearch} />
-            <Command.List>
-              <Command.Empty>No categories found</Command.Empty>
-              <Command.Group>
-                <Command.Item value="__none__" onSelect={() => handleSetCategory(null)}>
-                  <span class="text-muted-foreground italic">No category</span>
-                </Command.Item>
-                {#each categories as category (category.id)}
-                  <Command.Item
-                    value={category.name ?? undefined}
-                    onSelect={() => handleSetCategory(category.id)}>
-                    {#if category.categoryColor}
-                      <span
-                        class="mr-2 inline-block h-2.5 w-2.5 rounded-full"
-                        style="background-color: {category.categoryColor}"></span>
-                    {/if}
-                    {category.name}
-                  </Command.Item>
-                {/each}
-              </Command.Group>
-            </Command.List>
-          </Command.Root>
-        </Popover.Content>
-      </Popover.Root>
+      <EnhancedCategorySelector
+        value={bulkCategoryValue}
+        onValueChange={handleBulkCategoryChange}
+        placeholder="Set Category"
+        allowCreate={false}
+        allowEdit={false}
+        buttonClass="h-8 gap-1.5 rounded-md px-3 text-sm font-medium shadow-xs text-foreground!" />
 
       <!-- Mark as Cleared -->
       <Button onclick={handleMarkCleared} variant="outline" size="sm">

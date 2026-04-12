@@ -28,20 +28,23 @@ const isOverAllocated = $derived(value > max);
 </script>
 
 <div
-  class={cn('bg-primary/20 relative h-2 w-full overflow-hidden rounded-full', className)}
+  class={cn('relative h-2 w-full overflow-hidden rounded-full bg-muted', className)}
   {...restProps}>
   {#if isOverAllocated}
     <div class="bg-destructive h-full w-full rounded-full"></div>
   {:else}
     <!-- Solid segment: current allocation -->
     <div
-      class="bg-primary absolute top-0 left-0 h-full transition-all duration-300"
+      class={cn(
+        'absolute top-0 left-0 h-full transition-all duration-300',
+        valuePercent >= 100 ? 'bg-success' : 'bg-info'
+      )}
       style="width: {valuePercent}%; border-radius: inherit;">
     </div>
     <!-- Projected segment: proposed amount -->
     {#if projectedPercent > 0}
       <div
-        class="bg-primary/40 absolute top-0 h-full transition-all duration-300"
+        class="bg-info/40 absolute top-0 h-full transition-all duration-300"
         style="left: {valuePercent}%; width: {projectedPercent}%">
       </div>
     {/if}

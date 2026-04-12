@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { Label } from '$lib/components/ui/label';
 import { AllocationProgress } from '$lib/components/ui/progress';
@@ -27,7 +28,6 @@ import {
   Target,
   Trash2,
   TriangleAlert,
-  Wallet,
 } from '@lucide/svelte/icons';
 
 interface Props {
@@ -51,7 +51,7 @@ const budgetSuggestionsQuery = $derived(
     categoryId: transaction?.categoryId || null,
     payeeId: transaction?.payeeId || null,
     amount: transaction?.amount || 0,
-    date: transaction?.date ? toISOString(transaction.date) : '', // Convert DateValue to ISO string
+    date: transaction?.date ? toISOString(transaction.date) : '',
   })
 );
 
@@ -66,6 +66,7 @@ const topSuggestion = $derived.by((): BudgetSuggestion | null => {
 let selectedBudgetId = $state('');
 let allocationAmount = $state<number | undefined>(undefined);
 let isSubmitting = $state(false);
+let budgetSearchQuery = $state('');
 
 // Validation state
 let validationError = $state('');
@@ -90,6 +91,11 @@ const totalAllocated = $derived.by(() =>
 const remainingAmount = $derived.by(() => Math.abs(transactionAmount) - totalAllocated);
 const isFullyAllocated = $derived.by(() => Math.abs(remainingAmount) < 0.01);
 const hasUnallocatedAmount = $derived.by(() => Math.abs(remainingAmount) > 0.01);
+const allocationPercent = $derived.by(() => {
+  const total = Math.abs(transactionAmount);
+  if (total === 0) return 0;
+  return Math.round((totalAllocated / total) * 100);
+});
 
 // Real-time validation for allocation amount
 const proposedAmount = $derived.by(() => {
@@ -157,6 +163,7 @@ function resetForm() {
   selectedBudgetId = '';
   allocationAmount = Math.abs(remainingAmount);
   isSubmitting = false;
+  budgetSearchQuery = '';
 }
 
 async function handleAddAllocation() {
@@ -171,11 +178,9 @@ async function handleAddAllocation() {
   try {
     isSubmitting = true;
 
-    // Ensure allocation has the same sign as the transaction
     const signedAmount =
       transactionAmount >= 0 ? Math.abs(allocationAmount) : -Math.abs(allocationAmount);
 
-    // Create the allocation using the real API
     await createAllocationMutation.mutateAsync({
       transactionId: transaction.id,
       budgetId: Number(selectedBudgetId),
@@ -186,8 +191,8 @@ async function handleAddAllocation() {
 
     resetForm();
     onAllocationChanged?.();
-  } catch (error) {
-    console.error('Failed to add budget allocation:', error);
+  } catch {
+    // Error handled by mutation's error toast
   } finally {
     isSubmitting = false;
   }
@@ -195,18 +200,11 @@ async function handleAddAllocation() {
 
 async function handleRemoveAllocation(allocationId: number) {
   try {
-    // Delete the allocation using the real API
     await deleteAllocationMutation.mutateAsync(allocationId);
-
     onAllocationChanged?.();
-  } catch (error) {
-    console.error('Failed to remove budget allocation:', error);
+  } catch {
+    // Error handled by mutation's error toast
   }
-}
-
-function getBudgetName(budgetId: number): string {
-  const budget = availableBudgets.find((b) => b.id === budgetId);
-  return budget?.name ?? `Budget ${budgetId}`;
 }
 
 function handleOpenChange(newOpen: boolean) {
@@ -218,10 +216,17 @@ function handleOpenChange(newOpen: boolean) {
 }
 
 // Filter out already allocated budgets from the dropdown
+const allocatedBudgetIds = $derived(new Set(actualAllocations.map((a) => a.budgetId)));
 const availableBudgetOptions = $derived.by(() => {
-  const allocatedBudgetIds = new Set(actualAllocations.map((a) => a.budgetId));
-  return availableBudgets.filter((budget) => !allocatedBudgetIds.has(budget.id));
+  let filtered = availableBudgets.filter((budget) => !allocatedBudgetIds.has(budget.id));
+  if (budgetSearchQuery) {
+    const q = budgetSearchQuery.toLowerCase();
+    filtered = filtered.filter((b) => b.name.toLowerCase().includes(q));
+  }
+  return filtered;
 });
+
+const hasBudgets = $derived(availableBudgets.length > 0);
 </script>
 
 <ResponsiveSheet bind:open onOpenChange={handleOpenChange}>
@@ -235,74 +240,54 @@ const availableBudgetOptions = $derived.by(() => {
   {#snippet content()}
     {#if transaction}
       <div class="space-y-4">
-        <!-- Transaction Info -->
-        <div class="from-muted/50 to-muted/30 rounded-lg border bg-linear-to-r p-4">
-          <div class="mb-3 flex items-center gap-3">
-            <div class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
-              <Wallet class="text-primary h-5 w-5" />
-            </div>
-            <div>
-              <h3 class="font-medium">Transaction Allocation</h3>
-              <p class="text-muted-foreground text-sm">Distribute funds across budgets</p>
-            </div>
+        <!-- Allocation Summary -->
+        <div class="rounded-lg border p-4">
+          <div class="flex items-baseline justify-between">
+            <span class="text-sm font-medium">Total Amount</span>
+            <span class="font-mono text-lg font-bold">
+              {currencyFormatter.format(Math.abs(transactionAmount))}
+            </span>
           </div>
 
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-medium">Total Amount</span>
-              <span class="font-mono text-lg font-bold"
-                >{currencyFormatter.format(Math.abs(transactionAmount))}</span>
+          <div class="mt-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-muted-foreground">Allocated ({allocationPercent}%)</span>
+              <span class="font-mono">{currencyFormatter.format(totalAllocated)}</span>
             </div>
 
-            <div class="space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-muted-foreground">Allocated</span>
-                <span class="font-mono">{currencyFormatter.format(totalAllocated)}</span>
-              </div>
+            <AllocationProgress
+              value={totalAllocated}
+              projected={proposedAmount}
+              max={Math.abs(transactionAmount)}
+              class="h-2" />
 
-              <!-- Progress bar showing allocation progress -->
-              <AllocationProgress
-                value={totalAllocated}
-                projected={proposedAmount}
-                max={Math.abs(transactionAmount)}
-                class="h-2" />
-
-              <div class="flex items-center justify-between text-xs">
-                <span
-                  class={cn(
-                    'font-medium',
-                    remainingAmount < 0
-                      ? 'text-destructive'
-                      : remainingAmount > 0.01
-                        ? 'text-orange-600'
-                        : 'text-emerald-600'
-                  )}>
-                  {remainingAmount < 0
-                    ? 'Over-allocated'
+            <div class="flex items-center justify-between text-xs">
+              <span
+                class={cn(
+                  'font-medium',
+                  remainingAmount < 0
+                    ? 'text-destructive'
                     : remainingAmount > 0.01
-                      ? 'Remaining'
-                      : 'Fully allocated'}
-                </span>
-                <span
-                  class={cn(
-                    'font-mono font-medium',
-                    remainingAmount < 0
-                      ? 'text-destructive'
-                      : remainingAmount > 0.01
-                        ? 'text-orange-600'
-                        : 'text-emerald-600'
-                  )}>
-                  {currencyFormatter.format(Math.abs(remainingAmount))}
-                </span>
-              </div>
-              {#if proposedAmount > 0 && !wouldBeOverAllocated}
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-primary/70 font-medium">Projected</span>
-                  <span class="text-primary/70 font-mono font-medium">
-                    +{currencyFormatter.format(proposedAmount)}
-                  </span>
-                </div>
-              {/if}
+                      ? 'text-warning'
+                      : 'text-success'
+                )}>
+                {remainingAmount < 0
+                  ? 'Over-allocated'
+                  : remainingAmount > 0.01
+                    ? 'Remaining'
+                    : 'Fully allocated'}
+              </span>
+              <span
+                class={cn(
+                  'font-mono font-medium',
+                  remainingAmount < 0
+                    ? 'text-destructive'
+                    : remainingAmount > 0.01
+                      ? 'text-warning'
+                      : 'text-success'
+                )}>
+                {currencyFormatter.format(Math.abs(remainingAmount))}
+              </span>
             </div>
           </div>
         </div>
@@ -311,69 +296,48 @@ const availableBudgetOptions = $derived.by(() => {
         {#if actualAllocations.length > 0}
           <div class="space-y-3">
             <div class="flex items-center gap-2">
-              <Target class="h-4 w-4 text-emerald-600" />
+              <Target class="text-success h-4 w-4" />
               <Label class="text-sm font-medium">Current Allocations</Label>
               <Badge variant="secondary" class="text-xs">
-                {actualAllocations.length} budget{actualAllocations.length !== 1 ? 's' : ''}
+                {actualAllocations.length}
               </Badge>
             </div>
-            <div class="grid gap-3 md:grid-cols-1">
+            <div class="space-y-2">
               {#each actualAllocations as allocation (allocation.id)}
                 <div
-                  class="group relative rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 transition-all hover:border-emerald-300 hover:shadow-md dark:border-emerald-800 dark:bg-emerald-950/20 dark:hover:border-emerald-700">
-                  <div class="flex items-start justify-between">
-                    <div class="flex flex-1 items-center gap-3">
-                      <div
-                        class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 transition-colors group-hover:bg-emerald-200 dark:bg-emerald-800 dark:group-hover:bg-emerald-700">
-                        <PieChart class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <div class="truncate font-medium text-emerald-900 dark:text-emerald-100">
-                          {allocation.budgetName}
-                        </div>
-                        <div class="mt-1 flex items-center gap-2">
-                          <span
-                            class="font-mono text-lg font-bold text-emerald-700 dark:text-emerald-300">
-                            {currencyFormatter.format(allocation.allocatedAmount)}
-                          </span>
-                          <div
-                            class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                            <span>•</span>
-                            <span
-                              >{formatPercent(
-                                allocation.allocatedAmount / Math.abs(transactionAmount),
-                                1
-                              )}</span>
-                          </div>
-                        </div>
-                        <div class="mt-2">
-                          <div
-                            class="h-1.5 overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-900">
-                            <div
-                              class="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                              style="width: {Math.min(
-                                100,
-                                (allocation.allocatedAmount / Math.abs(transactionAmount)) * 100
-                              )}%">
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <Tooltip.Root>
-                      <Tooltip.Trigger>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onclick={() => handleRemoveAllocation(allocation.id)}
-                          aria-label="Remove allocation from {allocation.budgetName}"
-                          class="hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 text-emerald-600 opacity-50 transition-opacity group-hover:opacity-100 hover:opacity-100 focus:opacity-100">
-                          <Trash2 class="h-4 w-4" />
-                        </Button>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content>Remove allocation</Tooltip.Content>
-                    </Tooltip.Root>
+                  class="group flex items-center gap-3 rounded-lg border bg-success-bg p-3">
+                  <div
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10">
+                    <PieChart class="h-4 w-4 text-success" />
                   </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="truncate text-sm font-medium">{allocation.budgetName}</div>
+                    <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                      <span class="font-mono font-medium">
+                        {currencyFormatter.format(allocation.allocatedAmount)}
+                      </span>
+                      <span>·</span>
+                      <span>
+                        {formatPercent(
+                          allocation.allocatedAmount / Math.abs(transactionAmount),
+                          1
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onclick={() => handleRemoveAllocation(allocation.id)}
+                        aria-label="Remove allocation from {allocation.budgetName}"
+                        class="hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100">
+                        <Trash2 class="h-4 w-4" />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Remove allocation</Tooltip.Content>
+                  </Tooltip.Root>
                 </div>
               {/each}
             </div>
@@ -385,14 +349,20 @@ const availableBudgetOptions = $derived.by(() => {
           <div class="space-y-3">
             <div class="flex items-center gap-2">
               <Plus class="text-primary h-4 w-4" />
-              <Label class="text-sm font-medium">Add New Allocation</Label>
+              <Label class="text-sm font-medium">
+                {actualAllocations.length === 0 ? 'Allocate to Budget' : 'Add Another Allocation'}
+              </Label>
               <Badge variant="outline" class="text-xs">
                 {currencyFormatter.format(Math.abs(remainingAmount))} available
               </Badge>
             </div>
+            {#if actualAllocations.length === 0}
+              <p class="text-muted-foreground text-xs">
+                Distribute this transaction across one or more budgets.
+              </p>
+            {/if}
 
-            <div
-              class="border-primary/30 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 space-y-4 rounded-lg border-2 border-dashed p-4 transition-all">
+            <div class="space-y-4 rounded-lg border p-4">
               {#if topSuggestion}
                 <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Lightbulb class="h-3.5 w-3.5 shrink-0" />
@@ -408,24 +378,14 @@ const availableBudgetOptions = $derived.by(() => {
               <div class="space-y-2">
                 <Label for="budget-select" class="text-xs">Budget</Label>
                 <Select.Root type="single" bind:value={selectedBudgetId}>
-                  <Select.Trigger
-                    id="budget-select"
-                    class="border-primary/40 bg-card hover:border-primary/60 hover:bg-accent/50 h-auto! w-full border-2 whitespace-normal shadow-sm">
-                    <div class="flex items-center gap-2 py-1.5">
-                      <div
-                        class="bg-primary/10 flex h-6 w-6 shrink-0 items-center justify-center rounded-md">
-                        <Target class="text-primary h-4 w-4" />
-                      </div>
+                  <Select.Trigger id="budget-select" class="h-auto! w-full whitespace-normal">
+                    <div class="flex items-center gap-2 py-0.5">
+                      <Target class="text-muted-foreground h-4 w-4 shrink-0" />
                       {#if selectedBudgetId && selectedBudget}
                         <div class="flex min-w-0 flex-col items-start">
                           <span class="truncate text-sm font-medium">{selectedBudget.name}</span>
-                          <span class="text-muted-foreground text-xs">
-                            <span class="capitalize">{selectedBudget.type.replace('-', ' ')}</span>
-                            {#if selectedBudget.metadata?.allocatedAmount}
-                              · {currencyFormatter.format(
-                                selectedBudget.metadata.allocatedAmount as number
-                              )} budgeted
-                            {/if}
+                          <span class="text-muted-foreground text-xs capitalize">
+                            {selectedBudget.type.replace('-', ' ')}
                           </span>
                         </div>
                       {:else}
@@ -434,62 +394,35 @@ const availableBudgetOptions = $derived.by(() => {
                     </div>
                   </Select.Trigger>
                   <Select.Content>
+                    {#if availableBudgets.length > 5}
+                      <div class="p-2">
+                        <Input
+                          type="text"
+                          placeholder="Search budgets..."
+                          class="h-8 text-sm"
+                          bind:value={budgetSearchQuery} />
+                      </div>
+                    {/if}
                     {#each availableBudgetOptions as budget (budget.id)}
                       <Select.Item value={String(budget.id)} class="cursor-pointer py-2">
                         <div class="flex w-full items-center gap-3">
-                          <div
-                            class={cn(
-                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                              budget.type === 'account-monthly' &&
-                                'bg-info-bg',
-                              budget.type === 'category-envelope' &&
-                                'bg-emerald-100 dark:bg-emerald-900/30',
-                              budget.type === 'goal-based' && 'bg-purple-100 dark:bg-purple-900/30',
-                              budget.type === 'scheduled-expense' &&
-                                'bg-amber-100 dark:bg-amber-900/30',
-                              ![
-                                'account-monthly',
-                                'category-envelope',
-                                'goal-based',
-                                'scheduled-expense',
-                              ].includes(budget.type) && 'bg-primary/10'
-                            )}>
-                            <Target
-                              class={cn(
-                                'h-4 w-4',
-                                budget.type === 'account-monthly' &&
-                                  'text-info',
-                                budget.type === 'category-envelope' &&
-                                  'text-emerald-600 dark:text-emerald-400',
-                                budget.type === 'goal-based' &&
-                                  'text-purple-600 dark:text-purple-400',
-                                budget.type === 'scheduled-expense' &&
-                                  'text-warning',
-                                ![
-                                  'account-monthly',
-                                  'category-envelope',
-                                  'goal-based',
-                                  'scheduled-expense',
-                                ].includes(budget.type) && 'text-primary'
-                              )} />
-                          </div>
                           <div class="min-w-0 flex-1">
                             <div class="truncate font-medium">{budget.name}</div>
-                            <div class="text-muted-foreground flex items-center gap-2 text-xs">
-                              <Badge variant="outline" class="h-4 px-1 text-[10px] capitalize">
-                                {budget.type}
-                              </Badge>
-                              <span class="capitalize">{budget.status}</span>
+                            <div class="text-muted-foreground text-xs capitalize">
+                              {budget.type.replace('-', ' ')}
                               {#if budget.metadata?.allocatedAmount}
-                                <span>•</span>
-                                <span class="font-mono">
-                                  {currencyFormatter.format(budget.metadata.allocatedAmount)}
-                                </span>
+                                · {currencyFormatter.format(
+                                  budget.metadata.allocatedAmount as number
+                                )} budgeted
                               {/if}
                             </div>
                           </div>
                         </div>
                       </Select.Item>
+                    {:else}
+                      <div class="text-muted-foreground px-2 py-4 text-center text-sm">
+                        No budgets match "{budgetSearchQuery}"
+                      </div>
                     {/each}
                   </Select.Content>
                 </Select.Root>
@@ -500,9 +433,8 @@ const availableBudgetOptions = $derived.by(() => {
                 <NumericInput
                   bind:value={allocationAmount}
                   onSubmit={handleAddAllocation}
-                  buttonClass={cn('w-full h-9', validationError ? 'border-red-500' : '')} />
+                  buttonClass={cn('w-full h-9', validationError ? 'border-destructive' : '')} />
 
-                <!-- Real-time validation feedback -->
                 {#if validationError}
                   <div
                     id="amount-error"
@@ -515,7 +447,7 @@ const availableBudgetOptions = $derived.by(() => {
                   <div
                     id="amount-warning"
                     role="status"
-                    class="flex items-center gap-1 text-xs text-orange-600">
+                    class="flex items-center gap-1 text-xs text-warning">
                     <TriangleAlert class="h-3 w-3" aria-hidden="true" />
                     <span>{validationWarning}</span>
                   </div>
@@ -554,39 +486,6 @@ const availableBudgetOptions = $derived.by(() => {
                       </Button>
                     {/if}
                   </div>
-                  {#if selectedBudget?.metadata?.allocatedAmount}
-                    {@const budgetTotal = selectedBudget.metadata.allocatedAmount as number}
-                    {@const cap = Math.abs(remainingAmount)}
-                    <div class="flex flex-wrap gap-2">
-                      {#if budgetTotal <= cap}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onclick={() => (allocationAmount = budgetTotal)}
-                          class="text-xs">
-                          Full Budget ({currencyFormatter.format(budgetTotal)})
-                        </Button>
-                      {/if}
-                      {#if budgetTotal / 2 >= 0.01 && budgetTotal / 2 <= cap}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onclick={() => (allocationAmount = budgetTotal / 2)}
-                          class="text-xs">
-                          Half Budget ({currencyFormatter.format(budgetTotal / 2)})
-                        </Button>
-                      {/if}
-                      {#if budgetTotal / 4 >= 0.01 && budgetTotal / 4 <= cap}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onclick={() => (allocationAmount = budgetTotal / 4)}
-                          class="text-xs">
-                          Quarter Budget ({currencyFormatter.format(budgetTotal / 4)})
-                        </Button>
-                      {/if}
-                    </div>
-                  {/if}
                 </div>
               {/if}
 
@@ -598,35 +497,43 @@ const availableBudgetOptions = $derived.by(() => {
                 {#if isSubmitting}
                   <div class="flex items-center gap-2">
                     <div
-                      class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent">
+                      class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent">
                     </div>
-                    Adding to Budget...
+                    Adding...
                   </div>
                 {:else}
-                  <div class="flex items-center gap-2">
-                    <Plus class="h-4 w-4" />
-                    Add to Budget ({currencyFormatter.format(proposedAmount)})
-                  </div>
+                  <Plus class="mr-1.5 h-4 w-4" />
+                  Add to Budget ({currencyFormatter.format(proposedAmount)})
                 {/if}
               </Button>
             </div>
           </div>
         {:else if !hasUnallocatedAmount}
-          <div class="bg-success-bg rounded-lg border p-3 text-center">
-            <CircleDollarSign class="mx-auto h-8 w-8 text-success" />
-            <p class="text-success-fg mt-2 text-sm font-medium">
-              Transaction Fully Allocated
-            </p>
-            <p class="text-xs text-success">
-              All funds have been allocated to budgets
+          <div class="rounded-lg border bg-success-bg p-4 text-center">
+            <CircleDollarSign class="text-success mx-auto h-8 w-8" />
+            <p class="text-success-fg mt-2 text-sm font-medium">Fully Allocated</p>
+            <p class="text-muted-foreground mt-1 text-xs">
+              All funds have been distributed to budgets
             </p>
           </div>
-        {:else if availableBudgetOptions.length === 0}
-          <div class="bg-muted/50 rounded-lg border p-3 text-center">
+        {:else if !hasBudgets}
+          <div class="rounded-lg border p-4 text-center">
+            <Target class="text-muted-foreground mx-auto h-8 w-8" />
+            <p class="mt-2 text-sm font-medium">No Budgets</p>
+            <p class="text-muted-foreground mt-1 text-xs">
+              Create a budget to start allocating transactions
+            </p>
+            <Button variant="outline" size="sm" href="/budgets/new" class="mt-3">
+              <Plus class="mr-1.5 h-3.5 w-3.5" />
+              Create Budget
+            </Button>
+          </div>
+        {:else}
+          <div class="rounded-lg border p-4 text-center">
             <TriangleAlert class="text-muted-foreground mx-auto h-8 w-8" />
-            <p class="mt-2 text-sm font-medium">No Available Budgets</p>
-            <p class="text-muted-foreground text-xs">
-              All budgets have been allocated or no budgets exist
+            <p class="mt-2 text-sm font-medium">All Budgets Allocated</p>
+            <p class="text-muted-foreground mt-1 text-xs">
+              This transaction is already allocated to all available budgets
             </p>
           </div>
         {/if}
@@ -642,8 +549,19 @@ const availableBudgetOptions = $derived.by(() => {
   {/snippet}
 
   {#snippet footer()}
-    <div class="flex justify-end">
-      <Button variant="outline" onclick={() => handleOpenChange(false)}>Done</Button>
+    <div class="flex items-center justify-between">
+      {#if hasUnallocatedAmount && actualAllocations.length > 0}
+        <p class="text-muted-foreground text-xs">
+          {currencyFormatter.format(Math.abs(remainingAmount))} remains unallocated
+        </p>
+      {:else}
+        <div></div>
+      {/if}
+      <Button
+        variant={isFullyAllocated ? 'default' : 'outline'}
+        onclick={() => handleOpenChange(false)}>
+        Done
+      </Button>
     </div>
   {/snippet}
 </ResponsiveSheet>

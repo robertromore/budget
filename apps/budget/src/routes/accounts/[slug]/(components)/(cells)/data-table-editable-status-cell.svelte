@@ -2,8 +2,8 @@
 import Button from '$lib/components/ui/button/button.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
-import Square from '@lucide/svelte/icons/square';
-import SquareCheck from '@lucide/svelte/icons/square-check';
+import Check from '@lucide/svelte/icons/check';
+import Circle from '@lucide/svelte/icons/circle';
 
 let {
   value = $bindable(),
@@ -26,17 +26,15 @@ const handleSubmit = (new_value: string) => {
   <Button
     onclick={() => handleSubmit(value == 'cleared' ? 'pending' : 'cleared')}
     variant="ghost"
-    class="hover:bg-muted-foreground/20 h-10 w-10 p-1 transition-colors [&_svg]:size-auto">
+    class="group/status hover:bg-muted h-10 w-10 p-1 transition-colors">
     {#if value === 'cleared'}
-      <SquareCheck
-        class="fill-primary text-primary-foreground hover:fill-primary/90 size-2 transition-colors"
-        strokeWidth={1.2}
-        size={32} />
+      <Check
+        class="text-success size-5 transition-colors"
+        strokeWidth={2.5} />
     {:else}
-      <Square
-        strokeWidth={1.2}
-        size={32}
-        class="text-muted-foreground hover:text-foreground size-2 transition-colors" />
+      <Circle
+        strokeWidth={1.5}
+        class="text-muted-foreground/40 group-hover/status:text-muted-foreground size-5 transition-colors" />
     {/if}
   </Button>
 {:else if value === 'scheduled' && onScheduleClick}
