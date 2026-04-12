@@ -19,6 +19,7 @@ interface Props {
   curved?: boolean;
   curve?: CurveFactory;
   opacity?: number;
+  strokeDasharray?: string;
   class?: string;
 }
 
@@ -29,6 +30,7 @@ let {
   curved = true,
   curve = curveMonotoneX,
   opacity = 1,
+  strokeDasharray = undefined,
   class: className = '',
 }: Props = $props();
 
@@ -45,4 +47,4 @@ const path = $derived.by(() => {
 });
 </script>
 
-<path d={path} fill="none" {stroke} stroke-width={strokeWidth} {opacity} class={className} />
+<path d={path} fill="none" {stroke} stroke-width={strokeWidth} {opacity} stroke-dasharray={strokeDasharray} class={className} />

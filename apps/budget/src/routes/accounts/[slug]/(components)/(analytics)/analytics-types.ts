@@ -1,4 +1,6 @@
 import Activity from "@lucide/svelte/icons/activity";
+import Landmark from "@lucide/svelte/icons/landmark";
+import BarChart2 from "@lucide/svelte/icons/bar-chart-2";
 import Calendar from "@lucide/svelte/icons/calendar";
 import ChartBar from "@lucide/svelte/icons/chart-bar";
 import ChartPie from "@lucide/svelte/icons/chart-pie";
@@ -17,12 +19,74 @@ import BarChart3 from "@lucide/svelte/icons/bar-chart-3";
 import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
 import Repeat from "@lucide/svelte/icons/repeat";
 import PiggyBank from "@lucide/svelte/icons/piggy-bank";
+import Wallet from "@lucide/svelte/icons/wallet";
+import Network from "@lucide/svelte/icons/network";
 import ArrowLeftRight from "@lucide/svelte/icons/arrow-left-right";
 import GitCompare from "@lucide/svelte/icons/git-compare";
 import Clock from "@lucide/svelte/icons/clock";
 import UserPlus from "@lucide/svelte/icons/user-plus";
 
 export const analyticsTypes = [
+  // Loan Analytics
+  {
+    id: "loan-amortization",
+    title: "Amortization Schedule",
+    description: "Principal vs. interest payment split over the loan life",
+    icon: BarChart2,
+    category: "Loan",
+    accountTypes: ["loan"],
+  },
+  {
+    id: "loan-equity",
+    title: "Equity Growth",
+    description: "Principal paid off vs. remaining balance over time",
+    icon: Landmark,
+    category: "Loan",
+    accountTypes: ["loan"],
+  },
+  {
+    id: "loan-payoff",
+    title: "Payoff Scenarios",
+    description: "How extra payments reduce interest and time to payoff",
+    icon: TrendingDown,
+    category: "Loan",
+    accountTypes: ["loan"],
+  },
+
+  // Investment Analytics
+  {
+    id: "contribution-progress",
+    title: "Contribution Progress",
+    description: "YTD contributions vs. annual limit",
+    icon: Wallet,
+    category: "Investment",
+    accountTypes: ["investment"],
+  },
+  {
+    id: "net-worth-history",
+    title: "Net Worth History",
+    description: "12-month net worth trend across all accounts",
+    icon: Network,
+    category: "Investment",
+    accountTypes: ["investment", "savings", "checking"],
+  },
+  {
+    id: "investment-performance",
+    title: "Portfolio Performance",
+    description: "Cumulative return from manually recorded value snapshots",
+    icon: TrendingUp,
+    category: "Investment",
+    accountTypes: ["investment"],
+  },
+  {
+    id: "fee-drag",
+    title: "Fee Drag Analysis",
+    description: "Cumulative fees paid vs. what the portfolio could have been",
+    icon: TrendingDown,
+    category: "Investment",
+    accountTypes: ["investment"],
+  },
+
   // Credit Card Analytics
   {
     id: "credit-utilization",

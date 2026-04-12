@@ -27,6 +27,33 @@ export const accountTypeEnum = [
 
 export type AccountType = (typeof accountTypeEnum)[number];
 
+// Investment subtype enum for investment accounts
+export const investmentSubtypeEnum = [
+  "roth_ira",
+  "traditional_ira",
+  "401k",
+  "403b",
+  "simple_ira",
+  "sep_ira",
+  "brokerage",
+  "crypto",
+  "other_investment",
+] as const;
+
+export type InvestmentSubtype = (typeof investmentSubtypeEnum)[number];
+
+export const INVESTMENT_SUBTYPE_LABELS: Record<InvestmentSubtype, string> = {
+  roth_ira: "Roth IRA",
+  traditional_ira: "Traditional IRA",
+  "401k": "401(k)",
+  "403b": "403(b)",
+  simple_ira: "SIMPLE IRA",
+  sep_ira: "SEP-IRA",
+  brokerage: "Brokerage",
+  crypto: "Crypto",
+  other_investment: "Other Investment",
+};
+
 // Utility subtype enum for utility accounts
 export const utilitySubtypeEnum = [
   "electric",
@@ -72,6 +99,15 @@ export const accounts = sqliteTable(
     minimumPayment: real("minimum_payment"), // Minimum monthly payment
     paymentDueDay: integer("payment_due_day"), // Day of month payment is due (1-31)
     interestRate: real("interest_rate"), // APR for credit cards or loan interest rate
+
+    // Investment account-specific fields
+    investmentSubtype: text("investment_subtype", { enum: investmentSubtypeEnum }), // roth_ira, 401k, brokerage, etc.
+    annualContributionLimit: real("annual_contribution_limit"), // User-set annual contribution limit
+    expenseRatio: real("expense_ratio"), // Annual expense ratio as a percentage (e.g., 0.03 for 0.03%)
+    benchmarkSymbol: text("benchmark_symbol"), // Ticker symbol for benchmark comparison (e.g., "SPY")
+
+    // Cash flow management fields (checking, savings, cash)
+    targetBalance: real("target_balance"), // Ideal buffer balance; surplus above this is considered idle
 
     // Utility account-specific fields
     utilitySubtype: text("utility_subtype", { enum: utilitySubtypeEnum }), // electric, gas, water, internet, etc.
@@ -207,6 +243,24 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .pipe(z.number().min(0).max(100, "Interest rate must be between 0 and 100"))
       .optional()
       .nullable(),
+  // Investment performance tracking fields
+  expenseRatio: (schema) =>
+    schema
+      .pipe(z.number().min(0).max(5, "Expense ratios above 5% are unusual — double-check your value"))
+      .optional()
+      .nullable(),
+  benchmarkSymbol: (schema) =>
+    schema
+      .transform((val) => val?.trim()?.toUpperCase())
+      .pipe(z.string().max(10, "Benchmark symbol must be less than 10 characters"))
+      .optional()
+      .nullable(),
+  // Cash flow management fields
+  targetBalance: (schema) =>
+    schema
+      .pipe(z.number().min(0).max(100_000_000))
+      .optional()
+      .nullable(),
   // Utility account fields
   utilitySubtype: (schema) =>
     schema
@@ -322,6 +376,13 @@ export const formUpdateAccountSchema = z.object({
     .max(100, "Interest rate must be between 0 and 100")
     .optional()
     .nullable(),
+  // Investment account fields
+  investmentSubtype: z.enum(investmentSubtypeEnum).optional().nullable(),
+  annualContributionLimit: z.number().positive("Contribution limit must be a positive number").optional().nullable(),
+  expenseRatio: z.number().min(0).max(5, "Expense ratios above 5% are unusual — double-check your value").optional().nullable(),
+  benchmarkSymbol: z.string().max(10, "Benchmark symbol must be less than 10 characters").optional().nullable(),
+  // Cash flow management fields
+  targetBalance: z.number().min(0).max(100_000_000).optional().nullable(),
   // Utility account fields
   utilitySubtype: z.enum(utilitySubtypeEnum).optional().nullable(),
   utilityProvider: z
@@ -374,6 +435,10 @@ export type RemoveAccountData = z.infer<typeof removeAccountSchema>;
 // Helper functions for account classification
 export function isDebtAccount(accountType: AccountType): boolean {
   return accountType === "credit_card" || accountType === "loan";
+}
+
+export function isInvestmentAccount(accountType: AccountType): boolean {
+  return accountType === "investment";
 }
 
 export function isHealthSavingsAccount(accountType: AccountType): boolean {

@@ -157,6 +157,11 @@ function generateDemoAccount(): Account {
     balanceAtResetDate: null,
     reconciledBalance: null,
     reconciledDate: null,
+    investmentSubtype: null,
+    annualContributionLimit: null,
+    expenseRatio: null,
+    benchmarkSymbol: null,
+    targetBalance: null,
   };
 }
 

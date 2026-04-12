@@ -1,10 +1,11 @@
 <script lang="ts">
 import type { DashboardWidget } from '$core/schema/dashboards';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { rpc } from '$lib/query';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { LayerCake, Svg } from 'layercake';
-import { Bar, AxisX } from '$lib/components/layercake';
-import { scaleBand, scaleLinear } from 'd3-scale';
+import { Line, AxisX } from '$lib/components/layercake';
+import { scaleTime, scaleLinear } from 'd3-scale';
 import LineChart from '@lucide/svelte/icons/line-chart';
 
 let { config }: { config: DashboardWidget } = $props();
@@ -24,24 +25,30 @@ const offBudget = $derived(
     .reduce((s, a) => s + (a.balance ?? 0), 0)
 );
 
-// Group by account type for bar chart
-const byType = $derived.by(() => {
-  const types = new Map<string, number>();
-  for (const a of accounts.filter((a) => !a.closed)) {
-    const key = a.accountType ?? 'other';
-    types.set(key, (types.get(key) ?? 0) + (a.balance ?? 0));
-  }
-  return Array.from(types.entries())
-    .map(([type, balance]) => ({
-      label: type.replace('_', ' '),
-      value: balance,
-    }))
-    .sort((a, b) => b.value - a.value);
-});
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const yMax = $derived(
-  byType.length > 0 ? Math.max(...byType.map((d) => Math.abs(d.value))) * 1.15 : 100
+function formatMonthShort(isoDate: string): string {
+  const d = new Date(isoDate + 'T00:00:00');
+  return SHORT_MONTHS[d.getMonth()]!;
+}
+
+// svelte-ignore state_referenced_locally
+const historyQuery = $derived(rpc.netWorth.getNetWorthHistory(12).options());
+const history = $derived(historyQuery.data ?? []);
+const isLoadingHistory = $derived(historyQuery.isLoading);
+
+const chartData = $derived(
+  history.map((s) => ({
+    date: new Date(s.snapshotDate + 'T00:00:00'),
+    value: s.totalNetWorth,
+  }))
 );
+
+const yValues = $derived(chartData.map((d) => d.value));
+const rawMin = $derived(yValues.length > 0 ? Math.min(...yValues) : 0);
+const rawMax = $derived(yValues.length > 0 ? Math.max(...yValues) : 100);
+const yMin = $derived(rawMin < 0 ? rawMin * 1.05 : rawMin * 0.97);
+const yMax = $derived(rawMax > 0 ? rawMax * 1.05 : rawMax * 0.97);
 </script>
 
 {#if accounts.length === 0}
@@ -73,25 +80,36 @@ const yMax = $derived(
       </div>
     </div>
 
-    {#if byType.length > 1}
-      <div class="h-28">
+    <!-- 12-month net worth history line chart -->
+    {#if isLoadingHistory}
+      <div class="bg-muted h-24 animate-pulse rounded"></div>
+    {:else if chartData.length >= 2}
+      <div class="h-24">
         <LayerCake
-          data={byType}
-          x="label"
+          data={chartData}
+          x="date"
           y="value"
-          xScale={scaleBand().padding(0.3)}
+          xScale={scaleTime()}
           yScale={scaleLinear()}
-          yDomain={[0, yMax]}
-          padding={{ top: 5, right: 5, bottom: 24, left: 5 }}>
+          yDomain={[yMin, yMax]}
+          padding={{ top: 4, right: 4, bottom: 20, left: 4 }}>
           <Svg>
-            <AxisX gridlines={false} tickMarks={false} />
-            <Bar
-              fill={(d) => (d.value >= 0 ? 'var(--chart-1)' : 'var(--chart-2)')}
-              opacity={0.8}
-              radius={3} />
+            <AxisX
+              ticks={Math.min(chartData.length, 4)}
+              gridlines={false}
+              tickMarks={false}
+              format={(d) => formatMonthShort(d.toISOString().slice(0, 10))} />
+            <Line
+              stroke={netWorth >= 0 ? 'var(--chart-2)' : 'var(--chart-1)'}
+              strokeWidth={2} />
           </Svg>
         </LayerCake>
       </div>
+      <p class="text-muted-foreground text-center text-xs">12-month trend</p>
+    {:else}
+      <p class="text-muted-foreground text-center text-xs">
+        History accumulates daily — check back tomorrow for your first trend
+      </p>
     {/if}
   </div>
 {/if}

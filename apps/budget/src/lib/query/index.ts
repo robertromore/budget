@@ -31,6 +31,9 @@ import * as subscriptions from "$core/query/subscriptions";
 import * as settings from "$core/query/settings";
 import * as transactions from "$core/query/transactions";
 import * as transferMappings from "$core/query/transfer-mappings";
+import * as financialGoals from "$core/query/financial-goals";
+import * as investmentSnapshots from "$core/query/investment-snapshots";
+import * as netWorth from "$core/query/net-worth";
 import * as utility from "$core/query/utility";
 import * as views from "$core/query/views";
 import * as workspaceInvitations from "$core/query/workspace-invitations";
@@ -66,6 +69,9 @@ export const rpc = {
   subscriptions,
   transactions,
   transferMappings,
+  financialGoals,
+  investmentSnapshots,
+  netWorth,
   utility,
   views,
   workspaceInvitations,
@@ -106,6 +112,9 @@ export { securityKeys } from "$core/query/security";
 export { subscriptionKeys } from "$core/query/subscriptions";
 export { transactionKeys } from "$core/query/transactions";
 export { transferMappingKeys } from "$core/query/transfer-mappings";
+export { financialGoalKeys } from "$core/query/financial-goals";
+export { investmentSnapshotKeys } from "$core/query/investment-snapshots";
+export { netWorthKeys } from "$core/query/net-worth";
 export { utilityKeys } from "$core/query/utility";
 export { viewKeys } from "$core/query/views";
 export { workspaceInvitationKeys } from "$core/query/workspace-invitations";

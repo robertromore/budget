@@ -47,6 +47,15 @@ export * from "./medical-expenses";
 // Utility-related schemas
 export * from "./utility-usage";
 
+// Net worth history schemas
+export * from "./net-worth-snapshots";
+
+// Investment value snapshot schemas
+export * from "./investment-value-snapshots";
+
+// Financial goals schemas
+export * from "./financial-goals";
+
 // Subscription-related schemas
 export * from "./subscriptions-table";
 

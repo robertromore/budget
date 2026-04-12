@@ -105,6 +105,28 @@ export const saveAccount = defineMutation({
   importance: "important",
 });
 
+// ==================== Investment / Contribution Queries ====================
+
+/**
+ * Get YTD contribution summary for an investment account.
+ * Returns contributed amount, annual limit, remaining room, and percent used.
+ */
+export const getContributionSummary = (accountId: number, year?: number) =>
+  defineQuery<{
+    contributed: number;
+    limit: number | null;
+    remaining: number | null;
+    percentUsed: number | null;
+    year: number;
+  }>({
+    queryKey: [...accountKeys.detail(accountId), "contributions", year ?? "current"] as const,
+    queryFn: () =>
+      trpc().accountRoutes.getContributionSummary.query({ accountId, year }),
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 min — contributions change infrequently
+    },
+  });
+
 // ==================== Balance Management Queries ====================
 
 /**

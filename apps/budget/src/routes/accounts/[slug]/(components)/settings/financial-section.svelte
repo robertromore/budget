@@ -8,7 +8,15 @@ import { toast } from '$lib/utils/toast-interceptor';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import type { Account } from '$core/schema';
-import { isDebtAccount } from '$core/schema/accounts';
+import {
+  isDebtAccount,
+  isInvestmentAccount,
+  investmentSubtypeEnum,
+  INVESTMENT_SUBTYPE_LABELS,
+  type InvestmentSubtype,
+} from '$core/schema/accounts';
+import { accountKeys, transactionKeys } from '$lib/query';
+import * as Select from '$lib/components/ui/select';
 import Info from '@lucide/svelte/icons/info';
 
 interface Props {
@@ -20,20 +28,30 @@ let { account, onAccountUpdated }: Props = $props();
 
 const queryClient = useQueryClient();
 
-// Determine if this is a debt account (credit card or loan)
 const isDebt = $derived(isDebtAccount(account.accountType || 'checking'));
+const isInvestment = $derived(isInvestmentAccount(account.accountType || 'checking'));
 
-// Form state
+// Form state — initial values captured from prop at mount time
 // svelte-ignore state_referenced_locally
-let initialBalance = $state(account.initialBalance || 0);
+let initialBalance = $state(account.initialBalance ?? 0);
 // svelte-ignore state_referenced_locally
-let debtLimit = $state((account as any).debtLimit || null);
+let debtLimit = $state<number | undefined>(account.debtLimit ?? undefined);
 // svelte-ignore state_referenced_locally
-let minimumPayment = $state((account as any).minimumPayment || null);
+let minimumPayment = $state<number | undefined>(account.minimumPayment ?? undefined);
 // svelte-ignore state_referenced_locally
-let paymentDueDay = $state((account as any).paymentDueDay || null);
+let paymentDueDay = $state<number | undefined>(account.paymentDueDay ?? undefined);
 // svelte-ignore state_referenced_locally
-let interestRate = $state((account as any).interestRate || null);
+let interestRate = $state<number | null>(account.interestRate ?? null);
+// svelte-ignore state_referenced_locally
+let investmentSubtype = $state<InvestmentSubtype | null>(account.investmentSubtype ?? null);
+// svelte-ignore state_referenced_locally
+let annualContributionLimit = $state<number | undefined>(account.annualContributionLimit ?? undefined);
+// svelte-ignore state_referenced_locally
+let expenseRatio = $state<number | null>(account.expenseRatio ?? null);
+// svelte-ignore state_referenced_locally
+let benchmarkSymbol = $state<string | null>(account.benchmarkSymbol ?? null);
+// svelte-ignore state_referenced_locally
+let targetBalance = $state<number | undefined>(account.targetBalance ?? undefined);
 
 let isSaving = $state(false);
 
@@ -43,17 +61,28 @@ async function handleSave() {
     await trpc().accountRoutes.save.mutate({
       id: account.id,
       initialBalance,
-      debtLimit: isDebt ? debtLimit : null,
-      minimumPayment: isDebt ? minimumPayment : null,
-      paymentDueDay: isDebt ? paymentDueDay : null,
+      debtLimit: isDebt ? (debtLimit ?? null) : null,
+      minimumPayment: isDebt ? (minimumPayment ?? null) : null,
+      paymentDueDay: isDebt ? (paymentDueDay ?? null) : null,
       interestRate: isDebt ? interestRate : null,
+      investmentSubtype: isInvestment ? investmentSubtype : null,
+      annualContributionLimit: isInvestment ? (annualContributionLimit ?? null) : null,
+      expenseRatio: isInvestment ? expenseRatio : null,
+      benchmarkSymbol: isInvestment ? benchmarkSymbol : null,
+      // targetBalance is intentionally cleared for debt and investment accounts;
+      // the field is only meaningful for cash-flow types (checking, savings, cash).
+      targetBalance: (!isDebt && !isInvestment) ? (targetBalance ?? null) : null,
     });
 
     toast.success('Financial settings updated');
-    await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+
+    // Invalidate account data (covers account detail + contribution summary keys)
+    await queryClient.invalidateQueries({ queryKey: accountKeys.detail(account.id) });
+    await queryClient.invalidateQueries({ queryKey: accountKeys.list() });
     // Invalidate transactions to recalculate running balances with new initial balance
-    await queryClient.invalidateQueries({ queryKey: ['transactions', 'account', account.id] });
-    await queryClient.invalidateQueries({ queryKey: ['transactions', 'all', account.id] });
+    await queryClient.invalidateQueries({ queryKey: transactionKeys.byAccount(account.id) });
+    await queryClient.invalidateQueries({ queryKey: transactionKeys.allByAccount(account.id) });
+
     onAccountUpdated?.();
   } catch (error) {
     console.error('Failed to update financial settings:', error);
@@ -158,19 +187,100 @@ async function handleSave() {
         </div>
       </Card.Content>
     </Card.Root>
-  {:else}
+  {:else if isInvestment}
+    <!-- Investment Account Details -->
     <Card.Root>
       <Card.Header>
-        <Card.Title>Account Balance Information</Card.Title>
+        <Card.Title>Investment Account Details</Card.Title>
         <Card.Description>
-          This account type doesn't have additional debt-related settings.
+          Track your account type and annual contribution limit for tax-advantaged accounts.
         </Card.Description>
       </Card.Header>
       <Card.Content>
-        <p class="text-muted-foreground text-sm">
-          For credit cards and loans, additional settings like credit limit, interest rate, and
-          payment due dates are available.
-        </p>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Account Subtype -->
+          <div class="space-y-2">
+            <Label for="investment-subtype">Account Type</Label>
+            <Select.Root
+              type="single"
+              value={investmentSubtype ?? ''}
+              onValueChange={(v) => { investmentSubtype = (v as InvestmentSubtype) || null; }}>
+              <Select.Trigger id="investment-subtype" class="w-full">
+                {#if investmentSubtype}
+                  {INVESTMENT_SUBTYPE_LABELS[investmentSubtype] ?? investmentSubtype}
+                {:else}
+                  Select account type...
+                {/if}
+              </Select.Trigger>
+              <Select.Content>
+                {#each investmentSubtypeEnum as subtype}
+                  <Select.Item value={subtype}>{INVESTMENT_SUBTYPE_LABELS[subtype]}</Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
+            <p class="text-muted-foreground text-xs">Roth IRA, 401k, brokerage, etc.</p>
+          </div>
+
+          <!-- Annual Contribution Limit -->
+          <div class="space-y-2">
+            <Label for="contribution-limit">Annual Contribution Limit</Label>
+            <NumericInput bind:value={annualContributionLimit} buttonClass="w-full" />
+            <p class="text-muted-foreground text-xs">
+              IRS limit for tax-advantaged accounts (optional)
+            </p>
+          </div>
+
+          <!-- Expense Ratio -->
+          <div class="space-y-2">
+            <Label for="expense-ratio">
+              Expense Ratio (%) <span class="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="expense-ratio"
+              type="number"
+              step="0.001"
+              min="0"
+              max="5"
+              bind:value={expenseRatio}
+              placeholder="e.g., 0.03" />
+            <p class="text-muted-foreground text-xs">Annual fund expense ratio for fee drag analysis</p>
+          </div>
+
+          <!-- Benchmark Symbol -->
+          <div class="space-y-2">
+            <Label for="benchmark-symbol">
+              Benchmark Symbol <span class="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="benchmark-symbol"
+              type="text"
+              maxlength={10}
+              bind:value={benchmarkSymbol}
+              placeholder="e.g., SPY" />
+            <p class="text-muted-foreground text-xs">Ticker symbol for performance comparison (e.g., SPY, QQQ)</p>
+          </div>
+        </div>
+      </Card.Content>
+    </Card.Root>
+  {:else}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title>Cash Flow Settings</Card.Title>
+        <Card.Description>
+          Set a target buffer balance to identify idle cash above your desired reserve.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <div class="max-w-xs space-y-2">
+          <Label for="target-balance">
+            Target balance <span class="text-muted-foreground">(optional)</span>
+          </Label>
+          <NumericInput bind:value={targetBalance} buttonClass="w-full" />
+          <p class="text-muted-foreground text-xs">
+            The ideal buffer to keep in this account. Any amount above this is considered idle
+            cash and will appear in the Cash Flow Optimizer widget.
+          </p>
+        </div>
       </Card.Content>
     </Card.Root>
   {/if}

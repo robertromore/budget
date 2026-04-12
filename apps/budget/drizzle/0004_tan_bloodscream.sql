@@ -1,0 +1,1 @@
+ALTER TABLE `account` ADD `target_balance` real;

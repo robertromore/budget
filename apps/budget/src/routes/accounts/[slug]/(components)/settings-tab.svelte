@@ -11,6 +11,7 @@ import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import Link from '@lucide/svelte/icons/link';
 import type { Account } from '$core/schema';
 import * as Select from '$lib/components/ui/select';
+import { page } from '$app/state';
 
 import GeneralSection from './settings/general-section.svelte';
 import FinancialSection from './settings/financial-section.svelte';
@@ -21,8 +22,10 @@ import BalanceManagementSection from './settings/balance-management-section.svel
 import TransferMappingsSection from './settings/transfer-mappings-section.svelte';
 import ConnectionSection from './settings/connection-section.svelte';
 import RateTiersSection from './settings/rate-tiers-section.svelte';
+import InvestmentSnapshotsSection from './settings/investment-snapshots-section.svelte';
 import DangerSection from './settings/danger-section.svelte';
 import Layers from '@lucide/svelte/icons/layers';
+import LineChart from '@lucide/svelte/icons/line-chart';
 
 interface Props {
   account: Account;
@@ -31,8 +34,9 @@ interface Props {
 
 let { account, onAccountUpdated }: Props = $props();
 
-// Check if this is a utility account
+// Check account type for conditional sections
 const isUtilityAccount = $derived(account.accountType === 'utility');
+const isInvestmentAccount = $derived(account.accountType === 'investment');
 
 // Settings navigation items
 const settingsNav = $derived([
@@ -52,6 +56,7 @@ const settingsNav = $derived([
       { id: 'balance', label: 'Balance Management', icon: Scale },
       { id: 'transfer-mappings', label: 'Transfer Mappings', icon: ArrowRightLeft },
       ...(isUtilityAccount ? [{ id: 'rate-tiers', label: 'Rate Tiers', icon: Layers }] : []),
+      ...(isInvestmentAccount ? [{ id: 'investment-snapshots', label: 'Value Snapshots', icon: LineChart }] : []),
       { id: 'security', label: 'Security', icon: Shield },
     ],
   },
@@ -61,8 +66,8 @@ const settingsNav = $derived([
   },
 ]);
 
-// Active section state
-let activeSection = $state<string>('general');
+// Active section state — initialised from ?section= URL param if present
+let activeSection = $state<string>(page.url.searchParams.get('section') ?? 'general');
 
 function setActiveSection(id: string) {
   activeSection = id;
@@ -153,6 +158,8 @@ function isActive(id: string): boolean {
       <TransferMappingsSection {account} />
     {:else if activeSection === 'rate-tiers'}
       <RateTiersSection {account} />
+    {:else if activeSection === 'investment-snapshots'}
+      <InvestmentSnapshotsSection {account} />
     {:else if activeSection === 'security'}
       <SecuritySection {account} />
     {:else if activeSection === 'danger'}

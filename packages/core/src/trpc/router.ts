@@ -51,6 +51,9 @@ import { settingsRoutes } from "./routes/settings";
 import { utilityRoutes } from "./routes/utility";
 import { viewsRoutes } from "./routes/views";
 import { workspaceRoutes } from "./routes/workspaces";
+import { netWorthRoutes } from "./routes/net-worth";
+import { financialGoalsRoutes } from "./routes/financial-goals";
+import { investmentSnapshotsRoutes } from "./routes/investment-snapshots";
 
 export const router = t.router({
   // Authentication and workspace management
@@ -94,6 +97,9 @@ export const router = t.router({
   settingsRoutes,
   forecastingRoutes,
   metricAlertRoutes,
+  netWorthRoutes,
+  financialGoalsRoutes,
+  investmentSnapshotsRoutes,
 
   // ML routes
   anomalyDetectionRoutes,

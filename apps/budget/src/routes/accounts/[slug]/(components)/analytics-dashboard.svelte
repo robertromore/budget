@@ -10,6 +10,17 @@ import { chartSelection } from '$lib/states/ui/chart-selection.svelte';
 // Interactive components
 import ChartDrillDownSheet from './chart-drill-down-sheet.svelte';
 
+// Investment charts
+import ContributionProgressChart from './(charts)/contribution-progress-chart.svelte';
+import NetWorthHistoryChart from './(charts)/net-worth-history-chart.svelte';
+import InvestmentPerformanceChart from './(charts)/investment-performance-chart.svelte';
+import FeeDragChart from './(charts)/fee-drag-chart.svelte';
+
+// Loan charts
+import LoanAmortizationChart from './(charts)/loan-amortization-chart.svelte';
+import LoanEquityChart from './(charts)/loan-equity-chart.svelte';
+import LoanPayoffChart from './(charts)/loan-payoff-chart.svelte';
+
 // Credit Card charts
 import CreditUtilizationChart from './(charts)/credit-utilization-chart.svelte';
 import CreditBalanceChart from './(charts)/credit-balance-chart.svelte';
@@ -61,9 +72,15 @@ const filteredAnalyticsTypes = $derived.by(() => {
   });
 });
 
-// Current selection - default to credit-utilization for credit cards, otherwise monthly-spending
+// Current selection - default to type-appropriate chart
 const defaultAnalytic = $derived(
-  accountType === 'credit_card' ? 'credit-utilization' : 'monthly-spending'
+  accountType === 'credit_card'
+    ? 'credit-utilization'
+    : accountType === 'loan'
+      ? 'loan-amortization'
+      : accountType === 'investment'
+        ? 'contribution-progress'
+        : 'monthly-spending'
 );
 let selectedAnalytic = $state<string | null>(null);
 const effectiveSelectedAnalytic = $derived(selectedAnalytic ?? defaultAnalytic);
@@ -162,8 +179,26 @@ const groupedAnalytics = $derived.by(() => {
     <!-- Chart Content -->
     <div class="min-w-0 flex-1">
       {#if currentAnalytic}
-        <!-- Credit Card Analytics - pass ALL transactions since these charts have their own ChartPeriodBadge -->
-        {#if effectiveSelectedAnalytic === 'credit-utilization'}
+        <!-- Investment Analytics -->
+        {#if effectiveSelectedAnalytic === 'contribution-progress'}
+          <ContributionProgressChart {account} />
+        {:else if effectiveSelectedAnalytic === 'net-worth-history'}
+          <NetWorthHistoryChart {account} />
+        {:else if effectiveSelectedAnalytic === 'investment-performance'}
+          <InvestmentPerformanceChart {account} />
+        {:else if effectiveSelectedAnalytic === 'fee-drag'}
+          <FeeDragChart {account} />
+
+          <!-- Loan Analytics -->
+        {:else if effectiveSelectedAnalytic === 'loan-amortization'}
+          <LoanAmortizationChart {account} />
+        {:else if effectiveSelectedAnalytic === 'loan-equity'}
+          <LoanEquityChart {account} />
+        {:else if effectiveSelectedAnalytic === 'loan-payoff'}
+          <LoanPayoffChart {account} />
+
+          <!-- Credit Card Analytics - pass ALL transactions since these charts have their own ChartPeriodBadge -->
+        {:else if effectiveSelectedAnalytic === 'credit-utilization'}
           <CreditUtilizationChart {account} {transactions} />
         {:else if effectiveSelectedAnalytic === 'credit-balance'}
           <CreditBalanceChart {account} {transactions} />

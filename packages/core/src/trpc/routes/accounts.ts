@@ -1,6 +1,7 @@
 import {
   accounts,
   accountTypeEnum,
+  investmentSubtypeEnum,
   removeAccountSchema,
   transactions,
   type Account,
@@ -126,6 +127,13 @@ const accountSaveSchema = z
     hsaCurrentTaxYear: z.number().optional().nullable(),
     hsaAdministrator: z.string().max(100).optional().nullable(),
     hsaHighDeductiblePlan: z.string().max(200).optional().nullable(),
+    // Investment account-specific fields
+    investmentSubtype: z.enum(investmentSubtypeEnum).optional().nullable(),
+    annualContributionLimit: z.number().positive("Contribution limit must be a positive number").optional().nullable(),
+    expenseRatio: z.number().min(0).max(100, "Expense ratio must be between 0 and 100").optional().nullable(),
+    benchmarkSymbol: z.string().max(10).optional().nullable(),
+    // Cash flow management fields
+    targetBalance: z.number().min(0).max(100_000_000).optional().nullable(),
   })
   .refine(
     (data) => {
@@ -451,6 +459,34 @@ export const accountRoutes = t.router({
         updateData.hsaHighDeductiblePlan = input.hsaHighDeductiblePlan;
       }
 
+      // Investment account-specific fields (only written for investment accounts)
+      const effectiveAccountType = input.accountType ?? existingAccount.accountType;
+      if (effectiveAccountType === "investment") {
+        if (input.investmentSubtype !== undefined) {
+          updateData.investmentSubtype = input.investmentSubtype;
+        }
+        if (input.annualContributionLimit !== undefined) {
+          updateData.annualContributionLimit = input.annualContributionLimit;
+        }
+        if (input.expenseRatio !== undefined) {
+          updateData.expenseRatio = input.expenseRatio;
+        }
+        if (input.benchmarkSymbol !== undefined) {
+          updateData.benchmarkSymbol = input.benchmarkSymbol;
+        }
+      } else if (input.accountType !== undefined && input.accountType !== "investment") {
+        // Account type is changing away from investment — clear investment-specific fields
+        updateData.investmentSubtype = null;
+        updateData.annualContributionLimit = null;
+        updateData.expenseRatio = null;
+        updateData.benchmarkSymbol = null;
+      }
+
+      // Cash flow management fields
+      if (input.targetBalance !== undefined) {
+        updateData.targetBalance = input.targetBalance;
+      }
+
       // Only update if there's something to update
       if (isEmptyObject(updateData)) {
         return existingAccount;
@@ -520,7 +556,12 @@ export const accountRoutes = t.router({
         input.hsaType ||
         input.hsaCurrentTaxYear !== undefined ||
         input.hsaAdministrator ||
-        input.hsaHighDeductiblePlan
+        input.hsaHighDeductiblePlan ||
+        input.investmentSubtype ||
+        input.annualContributionLimit !== undefined ||
+        input.expenseRatio !== undefined ||
+        input.benchmarkSymbol !== undefined ||
+        input.targetBalance !== undefined
       ) {
         const updateData: any = {};
 
@@ -552,6 +593,21 @@ export const accountRoutes = t.router({
         if (input.hsaAdministrator) updateData.hsaAdministrator = input.hsaAdministrator;
         if (input.hsaHighDeductiblePlan)
           updateData.hsaHighDeductiblePlan = input.hsaHighDeductiblePlan;
+
+        // Investment account-specific fields (only for investment accounts)
+        if (input.accountType === "investment") {
+          if (input.investmentSubtype !== undefined)
+            updateData.investmentSubtype = input.investmentSubtype;
+          if (input.annualContributionLimit !== undefined)
+            updateData.annualContributionLimit = input.annualContributionLimit;
+          if (input.expenseRatio !== undefined)
+            updateData.expenseRatio = input.expenseRatio;
+          if (input.benchmarkSymbol !== undefined)
+            updateData.benchmarkSymbol = input.benchmarkSymbol;
+        }
+
+        // Cash flow management fields
+        if (input.targetBalance !== undefined) updateData.targetBalance = input.targetBalance;
 
         updateData.updatedAt = now(getLocalTimeZone()).toDate().toISOString();
 
@@ -1474,6 +1530,66 @@ export const accountRoutes = t.router({
       }
 
       return result[0];
+    }),
+
+  // Get YTD contribution summary for an investment account
+  getContributionSummary: publicProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        year: z.number().int().min(2000).max(2100).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const year = input.year ?? new Date().getFullYear();
+
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Account not found" });
+      }
+
+      if (account.accountType !== "investment") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Contribution summary is only available for investment accounts",
+        });
+      }
+
+      // Sum all positive (inbound) non-transfer transactions in the given calendar year.
+      // Transfers are excluded because moving money from checking into an investment account
+      // is recorded as a positive transaction on the destination, but is not a contribution.
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year}-12-31`;
+
+      const rows = await ctx.db.query.transactions.findMany({
+        where: (t, { eq, and, gte, lte, isNull, gt, ne, or }) =>
+          and(
+            eq(t.accountId, input.accountId),
+            isNull(t.deletedAt),
+            gt(t.amount, 0),
+            gte(t.date, yearStart),
+            lte(t.date, yearEnd),
+            // Exclude transfers: they represent money movement between accounts, not contributions
+            or(eq(t.isTransfer, false), isNull(t.isTransfer))
+          ),
+        columns: { amount: true },
+      });
+
+      const contributed = rows.reduce((sum, r) => sum + r.amount, 0);
+      const limit = account.annualContributionLimit ?? null;
+      const remaining = limit !== null ? Math.max(0, limit - contributed) : null;
+      const percentUsed = limit !== null && limit > 0 ? (contributed / limit) * 100 : null;
+
+      return { contributed, limit, remaining, percentUsed, year };
     }),
 
   // Clear reconciled balance
