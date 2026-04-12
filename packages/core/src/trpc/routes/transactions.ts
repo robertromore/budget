@@ -763,4 +763,44 @@ export const transactionRoutes = t.router({
         return { count };
       })
     ),
+
+  // Split a transaction into multiple child transactions
+  splitTransaction: rateLimitedProcedure
+    .input(
+      z.object({
+        parentId: z.number().positive(),
+        splits: z
+          .array(
+            z.object({
+              amount: z.number(),
+              categoryId: z.number().positive().nullable().optional(),
+              notes: z.string().max(500).nullable().optional(),
+            })
+          )
+          .min(2, "At least 2 splits required"),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.splitTransaction(input.parentId, input.splits, ctx.workspaceId)
+      )
+    ),
+
+  // Get child transactions for a split parent
+  getSplits: publicProcedure
+    .input(z.object({ parentId: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.getSplitChildren(input.parentId, ctx.workspaceId)
+      )
+    ),
+
+  // Remove all child transactions (unsplit)
+  unsplitTransaction: rateLimitedProcedure
+    .input(z.object({ parentId: z.number().positive() }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.unsplitTransaction(input.parentId, ctx.workspaceId)
+      )
+    ),
 });

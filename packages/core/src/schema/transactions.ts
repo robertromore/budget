@@ -105,6 +105,10 @@ export const transactionsRelations = relations(transactions, ({ many, one }) => 
   parent: one(transactions, {
     fields: [transactions.parentId],
     references: [transactions.id],
+    relationName: "parentChild",
+  }),
+  children: many(transactions, {
+    relationName: "parentChild",
   }),
   account: one(accounts, {
     fields: [transactions.accountId],

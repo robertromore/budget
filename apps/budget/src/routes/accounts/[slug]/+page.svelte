@@ -493,7 +493,7 @@ const formattedTransactions = $derived.by(() => {
       payee: t.payee || null,
       categoryId: t.category?.id || null,
       category: t.category || null,
-      parentId: null,
+      parentId: t.parentId ?? null,
       balance: t.balance,
       // Budget allocations
       budgetAllocations: t.budgetAllocations || [],
@@ -519,6 +519,19 @@ const formattedTransactions = $derived.by(() => {
 
     return formatted;
   });
+
+  // Compute split metadata: mark parents and filter out children
+  const childParentIds = new Set(
+    result.filter((t) => t.parentId !== null).map((t) => t.parentId as number)
+  );
+  for (const t of result) {
+    if (typeof t.id === 'number' && childParentIds.has(t.id)) {
+      t.isSplit = true;
+      t.splitCount = result.filter((c) => c.parentId === t.id).length;
+    }
+  }
+  // Remove child transactions from the main list (they display via the split detail view)
+  const filtered = result.filter((t) => t.parentId === null || t.parentId === undefined);
 
   // Inject reconciliation marker row if account has reconciliation checkpoint set
   const account = accountData;
@@ -548,17 +561,17 @@ const formattedTransactions = $derived.by(() => {
     // Find the correct position to insert the marker
     // Transactions are sorted by date descending, so we find the first transaction
     // that is ON or BEFORE the reconciled date
-    const insertIndex = result.findIndex((t) => {
+    const insertIndex = filtered.findIndex((t) => {
       const txnDateStr = t.date.toString();
       return txnDateStr <= reconciledDateStr;
     });
 
     if (insertIndex === -1) {
       // All transactions are after the reconciled date, add at end
-      result.push(reconciliationMarker);
+      filtered.push(reconciliationMarker);
     } else {
       // Insert before the first transaction that is on or before the reconciled date
-      result.splice(insertIndex, 0, reconciliationMarker);
+      filtered.splice(insertIndex, 0, reconciliationMarker);
     }
   }
 
@@ -585,19 +598,19 @@ const formattedTransactions = $derived.by(() => {
       markerType: 'balance-reset',
     };
 
-    const insertIndex = result.findIndex((t) => {
+    const insertIndex = filtered.findIndex((t) => {
       const txnDateStr = t.date.toString();
       return txnDateStr <= resetDateStr;
     });
 
     if (insertIndex === -1) {
-      result.push(resetMarker);
+      filtered.push(resetMarker);
     } else {
-      result.splice(insertIndex, 0, resetMarker);
+      filtered.splice(insertIndex, 0, resetMarker);
     }
   }
 
-  return result;
+  return filtered;
 });
 
 // Initialize server account state (skip in demo mode - no real API calls needed)

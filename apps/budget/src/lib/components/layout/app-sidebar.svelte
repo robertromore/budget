@@ -418,15 +418,15 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
                     {/snippet}
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content side="right" align="start">
-                    <DropdownMenu.Item>
-                      <a href="/accounts/{account.slug}/edit" class="w-full">Edit</a>
+                    <DropdownMenu.Item onclick={() => goto(`/accounts/${account.slug}/edit`)}>
+                      Edit
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       onclick={() => {
                         _deleteAccountId.current = account.id;
                         _deleteAccountDialog.setTrue();
                       }}>
-                      <span>Delete</span>
+                      Delete
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>
                 </DropdownMenu.Root>

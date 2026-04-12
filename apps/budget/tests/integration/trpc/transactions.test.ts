@@ -888,4 +888,197 @@ describe("Transactions tRPC Integration Tests", () => {
       ).rejects.toThrow();
     });
   });
+
+  describe("Split Transaction", () => {
+    let secondCategory: any;
+
+    beforeEach(async () => {
+      [secondCategory] = await db
+        .insert(categories)
+        .values({
+          workspaceId,
+          name: "Second Category",
+          slug: "second-category",
+          notes: null,
+        })
+        .returning();
+    });
+
+    test("should split a transaction into multiple children", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      const children = await caller.transactionRoutes.splitTransaction({
+        parentId: parent.id,
+        splits: [
+          { amount: -60.0, categoryId: testCategory.id },
+          { amount: -40.0, categoryId: secondCategory.id },
+        ],
+      });
+
+      expect(children).toHaveLength(2);
+      expect(children[0].parentId).toBe(parent.id);
+      expect(children[0].amount).toBe(-60.0);
+      expect(children[0].categoryId).toBe(testCategory.id);
+      expect(children[1].parentId).toBe(parent.id);
+      expect(children[1].amount).toBe(-40.0);
+      expect(children[1].categoryId).toBe(secondCategory.id);
+    });
+
+    test("should retrieve split children", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      await caller.transactionRoutes.splitTransaction({
+        parentId: parent.id,
+        splits: [
+          { amount: -60.0, categoryId: testCategory.id },
+          { amount: -40.0, categoryId: secondCategory.id },
+        ],
+      });
+
+      const splits = await caller.transactionRoutes.getSplits({ parentId: parent.id });
+      expect(splits).toHaveLength(2);
+      expect(splits.map((s: any) => s.amount).sort()).toEqual([-60.0, -40.0].sort());
+    });
+
+    test("should reject split with amounts not summing to parent", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      await expect(
+        caller.transactionRoutes.splitTransaction({
+          parentId: parent.id,
+          splits: [
+            { amount: -60.0 },
+            { amount: -30.0 },
+          ],
+        })
+      ).rejects.toThrow("Split amounts");
+    });
+
+    test("should reject split with fewer than 2 rows", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      await expect(
+        caller.transactionRoutes.splitTransaction({
+          parentId: parent.id,
+          splits: [{ amount: -100.0 }],
+        })
+      ).rejects.toThrow();
+    });
+
+    test("should reject splitting an already-split transaction", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      await caller.transactionRoutes.splitTransaction({
+        parentId: parent.id,
+        splits: [
+          { amount: -60.0 },
+          { amount: -40.0 },
+        ],
+      });
+
+      await expect(
+        caller.transactionRoutes.splitTransaction({
+          parentId: parent.id,
+          splits: [
+            { amount: -50.0 },
+            { amount: -50.0 },
+          ],
+        })
+      ).rejects.toThrow("already split");
+    });
+
+    test("should unsplit a transaction", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      await caller.transactionRoutes.splitTransaction({
+        parentId: parent.id,
+        splits: [
+          { amount: -60.0 },
+          { amount: -40.0 },
+        ],
+      });
+
+      // Verify children exist
+      const before = await caller.transactionRoutes.getSplits({ parentId: parent.id });
+      expect(before).toHaveLength(2);
+
+      // Unsplit
+      await caller.transactionRoutes.unsplitTransaction({ parentId: parent.id });
+
+      // Verify children are removed
+      const after = await caller.transactionRoutes.getSplits({ parentId: parent.id });
+      expect(after).toHaveLength(0);
+    });
+
+    test("should allow splitting with notes on children", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -100.0,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      const children = await caller.transactionRoutes.splitTransaction({
+        parentId: parent.id,
+        splits: [
+          { amount: -60.0, categoryId: testCategory.id, notes: "Groceries portion" },
+          { amount: -40.0, categoryId: secondCategory.id, notes: "Household portion" },
+        ],
+      });
+
+      expect(children[0].notes).toBe("Groceries portion");
+      expect(children[1].notes).toBe("Household portion");
+    });
+
+    test("should allow splitting with floating-point tolerance", async () => {
+      const parent = await caller.transactionRoutes.save({
+        accountId: testAccount.id,
+        amount: -99.99,
+        date: "2023-01-15",
+        status: "cleared" as const,
+      });
+
+      // Amounts sum to -99.99 but via floating-point addition
+      const children = await caller.transactionRoutes.splitTransaction({
+        parentId: parent.id,
+        splits: [
+          { amount: -33.33 },
+          { amount: -33.33 },
+          { amount: -33.33 },
+        ],
+      });
+
+      expect(children).toHaveLength(3);
+    });
+  });
 });

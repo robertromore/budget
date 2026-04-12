@@ -431,6 +431,7 @@ export const columns = (
       enableGrouping: false,
       meta: {
         label: "Notes",
+        hiddenByDefault: true,
         tabletHidden: true,
         mobileHidden: true,
       },

@@ -987,3 +987,61 @@ export const getArchivedTransactionCount = (accountId: number) =>
       staleTime: 30 * 1000,
     },
   });
+
+// ─── Split Transaction Operations ─────────────────────────────────
+
+/**
+ * Get child transactions for a split parent
+ */
+export const getSplitChildren = (parentId: number) =>
+  defineQuery<Transaction[]>({
+    queryKey: ["transactions", "splits", parentId] as const,
+    queryFn: () => trpc().transactionRoutes.getSplits.query({ parentId }),
+  });
+
+/**
+ * Split a transaction into multiple child transactions
+ */
+export const splitTransaction = defineMutation<
+  {
+    parentId: number;
+    splits: Array<{ amount: number; categoryId?: number | null; notes?: string | null }>;
+    accountId: number;
+  },
+  Transaction[]
+>({
+  mutationFn: (params) =>
+    trpc().transactionRoutes.splitTransaction.mutate({
+      parentId: params.parentId,
+      splits: params.splits,
+    }),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "splits", variables.parentId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: "Transaction split successfully",
+  errorMessage: "Failed to split transaction",
+});
+
+/**
+ * Remove all child transactions (unsplit)
+ */
+export const unsplitTransaction = defineMutation<
+  { parentId: number; accountId: number },
+  void
+>({
+  mutationFn: (params) =>
+    trpc().transactionRoutes.unsplitTransaction.mutate({ parentId: params.parentId }),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "splits", variables.parentId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: "Transaction unsplit successfully",
+  errorMessage: "Failed to unsplit transaction",
+});

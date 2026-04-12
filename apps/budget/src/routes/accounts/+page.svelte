@@ -1,4 +1,5 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
@@ -108,11 +109,11 @@ const deleteAccount = (id: number) => {
                   </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content align="end">
-                  <DropdownMenu.Item>
-                    <a href="/accounts/{slug}/edit" class="w-full">Edit</a>
+                  <DropdownMenu.Item onclick={() => goto(`/accounts/${slug}/edit`)}>
+                    Edit
                   </DropdownMenu.Item>
                   <DropdownMenu.Item onclick={() => deleteAccount(id)}>
-                    <span>Delete</span>
+                    Delete
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Root>

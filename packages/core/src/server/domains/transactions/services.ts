@@ -2424,4 +2424,97 @@ export class TransactionService {
       transfers: results,
     };
   }
+
+  // ─── Split Transaction Methods ─────────────────────────────────
+
+  /**
+   * Split a parent transaction into multiple child transactions
+   */
+  async splitTransaction(
+    parentId: number,
+    splits: Array<{ amount: number; categoryId?: number | null; notes?: string | null }>,
+    workspaceId: number
+  ): Promise<Transaction[]> {
+    if (splits.length < 2) {
+      throw new ValidationError("A split requires at least 2 child transactions");
+    }
+
+    const parent = await this.repository.findByIdOrThrow(parentId, workspaceId);
+
+    if (parent.parentId) {
+      throw new ValidationError("Cannot split a child transaction");
+    }
+
+    // Check if already split
+    const existingChildren = await this.getSplitChildren(parentId, workspaceId);
+    if (existingChildren.length > 0) {
+      throw new ValidationError("Transaction is already split. Unsplit first to re-split.");
+    }
+
+    // Validate amounts sum to parent
+    const childSum = splits.reduce((sum, s) => sum + s.amount, 0);
+    if (Math.abs(childSum - parent.amount) > 0.01) {
+      throw new ValidationError(
+        `Split amounts (${childSum}) must equal the parent amount (${parent.amount})`
+      );
+    }
+
+    const children: Transaction[] = [];
+    for (const split of splits) {
+      const child = await this.repository.create(
+        {
+          workspaceId,
+          accountId: parent.accountId,
+          parentId: parent.id,
+          payeeId: parent.payeeId,
+          categoryId: split.categoryId ?? null,
+          amount: split.amount,
+          date: parent.date,
+          status: parent.status as "cleared" | "pending" | "scheduled" | null,
+          notes: split.notes ?? null,
+        },
+        workspaceId
+      );
+      children.push(child);
+    }
+
+    return children;
+  }
+
+  /**
+   * Get all child transactions for a parent
+   */
+  async getSplitChildren(parentId: number, workspaceId: number) {
+    const children = await db.query.transactions.findMany({
+      where: and(
+        eq(transactions.parentId, parentId),
+        isNull(transactions.deletedAt)
+      ),
+      with: {
+        payee: true,
+        category: true,
+      },
+    });
+    return children.map((c) => ({ ...c, balance: null as number | null })) as Transaction[];
+  }
+
+  /**
+   * Delete all child transactions (unsplit)
+   */
+  async unsplitTransaction(parentId: number, workspaceId: number): Promise<void> {
+    const parent = await this.repository.findByIdOrThrow(parentId, workspaceId);
+    const children = await this.getSplitChildren(parentId, workspaceId);
+
+    for (const child of children) {
+      await this.repository.softDelete(child.id, workspaceId);
+    }
+  }
+
+  /**
+   * Check if a transaction has children (is a split parent)
+   */
+  async isSplitParent(transactionId: number, workspaceId: number): Promise<boolean> {
+    const children = await this.getSplitChildren(transactionId, workspaceId);
+    return children.length > 0;
+  }
 }

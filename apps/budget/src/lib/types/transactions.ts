@@ -19,6 +19,9 @@ export type TransactionsFormat = {
   accountId: number;
   parentId: number | null;
   balance: number | null;
+  // Split metadata
+  isSplit?: boolean; // True if this transaction has child splits
+  splitCount?: number; // Number of child transactions
   // Transfer metadata
   isTransfer?: boolean | null;
   transferId?: string | null;
