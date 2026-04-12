@@ -14,6 +14,7 @@ import fontSizeToggle from "./font-size-toggle.md?raw";
 import themeButton from "./theme-button.md?raw";
 import aiAssistant from "./ai-assistant.md?raw";
 import intelligenceInputButton from "./intelligence-input-button.md?raw";
+import notificationBell from "./notification-bell.md?raw";
 import helpButton from "./help-button.md?raw";
 import settingsButton from "./settings-button.md?raw";
 import headerPageActions from "./header-page-actions.md?raw";
@@ -156,6 +157,20 @@ import budgetCategoryField from "./budget-category-field.md?raw";
 import budgetGoalTargetField from "./budget-goal-target-field.md?raw";
 import budgetGoalDateField from "./budget-goal-date-field.md?raw";
 import budgetEnforcementField from "./budget-enforcement-field.md?raw";
+// Guides — App walkthroughs
+import guideGettingStarted from "./guide-getting-started.md?raw";
+import guideImportingTransactions from "./guide-importing-transactions.md?raw";
+import guideSettingUpBudgets from "./guide-setting-up-budgets.md?raw";
+import guideRecurringTransactions from "./guide-recurring-transactions.md?raw";
+import guideOrganizingCategories from "./guide-organizing-categories.md?raw";
+import guideReconciliation from "./guide-reconciliation.md?raw";
+import guideTrackingSubscriptions from "./guide-tracking-subscriptions.md?raw";
+import guideInvestmentTracking from "./guide-investment-tracking.md?raw";
+// Guides — Budgeting & finance
+import guideEnvelopeBudgeting from "./guide-envelope-budgeting.md?raw";
+import guide503020Rule from "./guide-50-30-20-rule.md?raw";
+import guideEmergencyFund from "./guide-emergency-fund.md?raw";
+import guideDebtPayoff from "./guide-debt-payoff.md?raw";
 
 // Content registry mapping help IDs to markdown content
 export const helpContent: Record<string, string> = {
@@ -167,6 +182,7 @@ export const helpContent: Record<string, string> = {
   "theme-button": themeButton,
   "ai-assistant": aiAssistant,
   "intelligence-input-button": intelligenceInputButton,
+  "notification-bell": notificationBell,
   "help-button": helpButton,
   "settings-button": settingsButton,
   "header-page-actions": headerPageActions,
@@ -309,6 +325,20 @@ export const helpContent: Record<string, string> = {
   "budget-goal-target-field": budgetGoalTargetField,
   "budget-goal-date-field": budgetGoalDateField,
   "budget-enforcement-field": budgetEnforcementField,
+  // Guides — App walkthroughs
+  "guide-getting-started": guideGettingStarted,
+  "guide-importing-transactions": guideImportingTransactions,
+  "guide-setting-up-budgets": guideSettingUpBudgets,
+  "guide-recurring-transactions": guideRecurringTransactions,
+  "guide-organizing-categories": guideOrganizingCategories,
+  "guide-reconciliation": guideReconciliation,
+  "guide-tracking-subscriptions": guideTrackingSubscriptions,
+  "guide-investment-tracking": guideInvestmentTracking,
+  // Guides — Budgeting & finance
+  "guide-envelope-budgeting": guideEnvelopeBudgeting,
+  "guide-50-30-20-rule": guide503020Rule,
+  "guide-emergency-fund": guideEmergencyFund,
+  "guide-debt-payoff": guideDebtPayoff,
 };
 
 /**

@@ -4,17 +4,24 @@ description: Navigate between different sections of the app
 related: [accounts-list, budgets-list, payees-list]
 ---
 
-# Sidebar Navigation
-
-The sidebar provides quick access to all major sections of your budget
-application.
+The sidebar provides quick access to all major sections of your budget application.
 
 ## Main Sections
 
-- **Accounts** - View and manage your financial accounts
+- **Dashboard** - Overview of your finances with customizable widgets
 - **Budgets** - Track spending against your budget categories
+- **Schedules** - Manage recurring transactions
 - **Payees** - Manage merchants and vendors you transact with
-- **Settings** - Configure your preferences and app settings
+- **Categories** - Organize transactions by income and expense categories
+- **Import** - Import transactions from bank files
+- **Documents** - Store and manage financial documents
+- **Intelligence** - AI-powered insights and predictions
+- **Automation** - Rule-based transaction categorization and actions
+- **Subscriptions** - Track recurring charges across accounts
+
+## Accounts
+
+Below the main sections, the sidebar lists all your accounts grouped by type, with on-budget and total balances displayed at the top. Click any account to view its transactions and details.
 
 ## Keyboard Shortcuts
 
