@@ -144,6 +144,7 @@ export const columns = (
           disabled: !row.getCanSelect(),
         }),
       enableColumnFilter: false,
+      enableGlobalFilter: false,
       enableGrouping: false,
       enableSorting: false,
       enableHiding: false,
@@ -174,6 +175,7 @@ export const columns = (
             })
           : "",
       enableColumnFilter: false,
+      enableGlobalFilter: false,
       enableGrouping: false,
       enableSorting: false,
       enableHiding: false,
@@ -204,6 +206,7 @@ export const columns = (
         }),
       sortingFn: "alphanumeric",
       enableColumnFilter: false,
+      enableGlobalFilter: false,
       enableGrouping: false,
       meta: {
         label: "#",
@@ -254,6 +257,7 @@ export const columns = (
         if (!dateA || !dateB) return 0;
         return dateA.compare(dateB);
       },
+      enableGlobalFilter: false,
       filterFn: "dateIn" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Date",
@@ -514,6 +518,7 @@ export const columns = (
         }),
       size: 120,
       enableSorting: false,
+      enableGlobalFilter: false,
       enableColumnFilter: false,
       enableHiding: true,
       meta: {
@@ -554,6 +559,7 @@ export const columns = (
         }),
       sortingFn: (rowA, rowB) =>
         ((rowA.getValue("amount") as number) || 0) - ((rowB.getValue("amount") as number) || 0),
+      enableGlobalFilter: false,
       enableGrouping: false,
       enableColumnFilter: true,
       filterFn: "amountFilter" as FilterFnOption<TransactionsFormat>,
@@ -604,6 +610,7 @@ export const columns = (
         return currencyFormatter.format(isNaN(value) ? 0 : value);
       },
       enableColumnFilter: false,
+      enableGlobalFilter: false,
       enableGrouping: false,
       enableSorting: false,
       meta: {
@@ -619,6 +626,7 @@ export const columns = (
       cell: () => {},
       aggregatedCell: () => {},
       enableSorting: false,
+      enableGlobalFilter: false,
       enableGrouping: false,
       enableHiding: true,
       filterFn: "typeFilter" as FilterFnOption<TransactionsFormat>,
@@ -695,6 +703,7 @@ export const columns = (
       accessorFn: (row) => row.id,
       aggregatedCell: () => {},
       header: "",
+      enableGlobalFilter: false,
       cell: (info) => {
         const transaction = info.row.original;
 

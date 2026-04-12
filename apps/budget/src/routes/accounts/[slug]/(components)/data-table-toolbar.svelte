@@ -2,12 +2,15 @@
 import type { Table } from '@tanstack/table-core';
 import type { FilterInputOption, TransactionsFormat } from '$lib/types';
 import { Separator } from '$lib/components/ui/separator';
+import { Input } from '$lib/components/ui/input';
 import CirclePlus from '@lucide/svelte/icons/circle-plus';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import ChevronUp from '@lucide/svelte/icons/chevron-up';
 import Filter from '@lucide/svelte/icons/filter';
 import Layers from '@lucide/svelte/icons/layers';
 import PencilLine from '@lucide/svelte/icons/pencil-line';
+import Search from '@lucide/svelte/icons/search';
+import X from '@lucide/svelte/icons/x';
 import Toggle from '$lib/components/ui/toggle/toggle.svelte';
 import ManageViewForm from './manage-view-form.svelte';
 import { FilterInput, DisplayInput } from '$lib/components/input';
@@ -190,6 +193,28 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
       <CirclePlus class="size-4" /> New view
     {/if}
   </Toggle>
+
+  <div class="grow"></div>
+
+  <!-- Search input -->
+  <div class="relative w-full sm:w-48 lg:w-64">
+    <Search
+      class="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+    <Input
+      type="text"
+      placeholder="Search transactions..."
+      class="h-8 pl-8 pr-8 text-sm"
+      value={table.getState().globalFilter ?? ''}
+      oninput={(e) => table.setGlobalFilter(e.currentTarget.value)} />
+    {#if table.getState().globalFilter}
+      <button
+        class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2"
+        onclick={() => table.setGlobalFilter('')}
+        aria-label="Clear search">
+        <X class="h-3.5 w-3.5" />
+      </button>
+    {/if}
+  </div>
 </div>
 
 {#if manageViewForm}

@@ -43,7 +43,13 @@ import { untrack } from 'svelte';
 import type { ExtendedColumnMeta } from '$lib/components/data-table/state/types';
 import { DataTablePagination } from '.';
 import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
-import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
+import {
+  filtering,
+  filters,
+  globalFilter,
+  setFiltering,
+  setGlobalFilter,
+} from '../(data)/filters.svelte';
 import { pagination, setPagination } from '../(data)/pagination.svelte';
 import { selection, setSelection } from '../(data)/selection.svelte';
 import { setVisibility, visibility } from '../(data)/visibility.svelte';
@@ -258,6 +264,9 @@ table = createSvelteTable<TransactionsFormat>({
     get rowSelection() {
       return selection();
     },
+    get globalFilter() {
+      return globalFilter();
+    },
     get columnFilters() {
       return filtering();
     },
@@ -324,7 +333,16 @@ table = createSvelteTable<TransactionsFormat>({
 
     return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
   },
-  // globalFilterFn: fuzzyFilter,
+  globalFilterFn: (row, _columnId, filterValue) => {
+    const search = (filterValue as string).toLowerCase();
+    const data = row.original;
+    return (
+      (data.payee?.name ?? '').toLowerCase().includes(search) ||
+      (data.category?.name ?? '').toLowerCase().includes(search) ||
+      (data.notes ?? '').toLowerCase().includes(search) ||
+      (data.status ?? '').toLowerCase().includes(search)
+    );
+  },
   filterFns: { ...filters },
   groupedColumnMode: 'reorder',
   autoResetPageIndex: false,
