@@ -70,7 +70,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="cursor-pointer select-none" onclick={handleClick} onkeydown={handleKeyDown}>
+<div class="-m-2 cursor-pointer select-none p-2" onclick={handleClick} onkeydown={handleKeyDown}>
   <Checkbox
     checked={row.getIsSelected()}
     {disabled}

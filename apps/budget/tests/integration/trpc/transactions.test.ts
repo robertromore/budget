@@ -776,4 +776,116 @@ describe("Transactions tRPC Integration Tests", () => {
       expect(result.status).toBe("cleared"); // Today should not be auto-scheduled
     });
   });
+
+  describe("Bulk Update Status", () => {
+    test("should mark multiple transactions as cleared", async () => {
+      const created = await db
+        .insert(transactions)
+        .values([
+          { accountId: testAccount.id, amount: 100.0, date: "2023-01-15", status: "pending" },
+          { accountId: testAccount.id, amount: 50.0, date: "2023-01-16", status: "pending" },
+          { accountId: testAccount.id, amount: 25.0, date: "2023-01-17", status: "pending" },
+        ])
+        .returning();
+
+      const idsToUpdate = [created[0].id, created[2].id];
+      const result = await caller.transactionRoutes.bulkUpdateStatus({
+        ids: idsToUpdate,
+        status: "cleared",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.updatedCount).toBe(2);
+
+      // Verify status changes in database
+      const dbCheck = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.accountId, testAccount.id));
+      const updated = dbCheck.filter((t) => idsToUpdate.includes(t.id));
+      expect(updated.every((t) => t.status === "cleared")).toBe(true);
+
+      // Verify untouched transaction kept its status
+      const untouched = dbCheck.find((t) => t.id === created[1].id);
+      expect(untouched?.status).toBe("pending");
+    });
+
+    test("should reject empty ID array", async () => {
+      await expect(
+        caller.transactionRoutes.bulkUpdateStatus({ ids: [], status: "cleared" })
+      ).rejects.toThrow();
+    });
+
+    test("should reject invalid status values", async () => {
+      await expect(
+        caller.transactionRoutes.bulkUpdateStatus({ ids: [1], status: "scheduled" as any })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("Bulk Update Category By IDs", () => {
+    test("should update category for multiple transactions", async () => {
+      const created = await db
+        .insert(transactions)
+        .values([
+          { accountId: testAccount.id, amount: 100.0, date: "2023-01-15" },
+          { accountId: testAccount.id, amount: 50.0, date: "2023-01-16" },
+          { accountId: testAccount.id, amount: 25.0, date: "2023-01-17" },
+        ])
+        .returning();
+
+      const idsToUpdate = [created[0].id, created[1].id];
+      const result = await caller.transactionRoutes.bulkUpdateCategoryByIds({
+        ids: idsToUpdate,
+        categoryId: testCategory.id,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.updatedCount).toBe(2);
+
+      // Verify category changes in database
+      const dbCheck = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.accountId, testAccount.id));
+      const updated = dbCheck.filter((t) => idsToUpdate.includes(t.id));
+      expect(updated.every((t) => t.categoryId === testCategory.id)).toBe(true);
+
+      // Verify untouched transaction has no category
+      const untouched = dbCheck.find((t) => t.id === created[2].id);
+      expect(untouched?.categoryId).toBeNull();
+    });
+
+    test("should clear category when null is passed", async () => {
+      const [created] = await db
+        .insert(transactions)
+        .values({
+          accountId: testAccount.id,
+          amount: 100.0,
+          date: "2023-01-15",
+          categoryId: testCategory.id,
+        })
+        .returning();
+
+      const result = await caller.transactionRoutes.bulkUpdateCategoryByIds({
+        ids: [created.id],
+        categoryId: null,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.updatedCount).toBe(1);
+
+      const dbCheck = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.id, created.id));
+      expect(dbCheck[0].categoryId).toBeNull();
+    });
+
+    test("should reject empty ID array", async () => {
+      await expect(
+        caller.transactionRoutes.bulkUpdateCategoryByIds({ ids: [], categoryId: testCategory.id })
+      ).rejects.toThrow();
+    });
+  });
 });

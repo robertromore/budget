@@ -657,6 +657,44 @@ export const transactionRoutes = t.router({
       })
     ),
 
+  // Bulk update transaction status (e.g., mark as cleared)
+  bulkUpdateStatus: bulkOperationProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number().positive()).min(1, "At least one transaction ID required"),
+        status: z.enum(["cleared", "pending"]),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        let updatedCount = 0;
+        for (const id of input.ids) {
+          await transactionService.updateTransaction(id, { status: input.status }, ctx.workspaceId);
+          updatedCount++;
+        }
+        return { success: true, updatedCount };
+      })
+    ),
+
+  // Bulk update category by transaction IDs
+  bulkUpdateCategoryByIds: bulkOperationProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number().positive()).min(1, "At least one transaction ID required"),
+        categoryId: z.number().positive().nullable(),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        let updatedCount = 0;
+        for (const id of input.ids) {
+          await transactionService.updateTransaction(id, { categoryId: input.categoryId }, ctx.workspaceId);
+          updatedCount++;
+        }
+        return { success: true, updatedCount };
+      })
+    ),
+
   // Archive all transactions before a specific date
   archiveBeforeDate: rateLimitedProcedure
     .input(

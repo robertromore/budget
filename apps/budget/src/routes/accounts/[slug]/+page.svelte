@@ -1200,6 +1200,7 @@ $effect(() => {
             {updateTransactionData}
             {searchTransactions}
             {budgetCount}
+            accountId={accountId ?? 0}
             onScheduleClick={handleScheduleClick}
             onBulkDelete={handleBulkDelete}
             {transferAccounts}
@@ -1433,6 +1434,7 @@ $effect(() => {
             {updateTransactionData}
             {searchTransactions}
             {budgetCount}
+            accountId={accountId ?? 0}
             onScheduleClick={handleScheduleClick}
             onBulkDelete={handleBulkDelete}
             {transferAccounts}

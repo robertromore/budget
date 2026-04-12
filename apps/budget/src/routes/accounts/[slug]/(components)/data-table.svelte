@@ -70,6 +70,7 @@ interface Props {
   serverPagination?: { page: number; pageSize: number; totalCount?: number; totalPages?: number };
   updatePagination?: (pageIndex: number, pageSize: number) => void;
   budgetCount?: number;
+  accountId?: number;
   onBulkDelete?: (transactions: TransactionsFormat[]) => void;
 }
 
@@ -81,6 +82,7 @@ let {
   serverPagination,
   updatePagination,
   budgetCount = 0,
+  accountId = 0,
   onBulkDelete,
 }: Props = $props();
 
@@ -580,7 +582,7 @@ const canRender = $derived(isContextReady && isViewsInitialized);
 
     <!-- Bulk Actions -->
     {#if onBulkDelete}
-      <TransactionBulkActions {table} allTransactions={transactions || []} {onBulkDelete} />
+      <TransactionBulkActions {table} allTransactions={transactions || []} {accountId} {onBulkDelete} />
     {/if}
 
     <div

@@ -23,6 +23,7 @@ import HeaderPageTabs from '$lib/components/layout/header-page-tabs.svelte';
 import SettingsButton from '$lib/components/layout/settings-button.svelte';
 import ThemeButton from '$lib/components/layout/theme-button.svelte';
 import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
+import GlobalSearch from '$lib/components/layout/global-search.svelte';
 import { SpotlightOverlay, TourContinuationDialog } from '$lib/components/onboarding';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import { LLMSettings, queryClient, rpc } from '$lib/query';
@@ -181,8 +182,8 @@ onMount(() => {
           <AppSidebar user={data.user} />
           <Sidebar.Inset>
             <header
-              class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b p-2">
-              <div class="flex items-center gap-2 px-4">
+              class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-2">
+              <div class="flex shrink-0 items-center gap-2 pl-2">
                 {#if headerControlsReady}
                   <Tooltip.Root>
                     <Tooltip.Trigger>
@@ -206,6 +207,13 @@ onMount(() => {
                   <ThemeToggle />
                   <FontSizeToggle />
                   <ThemeButton />
+                {/if}
+              </div>
+              {#if headerControlsReady}
+                <div class="min-w-0 flex-1 px-2">
+                  <GlobalSearch />
+                </div>
+                <div class="flex shrink-0 items-center gap-2 pr-2">
                   {#if isLLMEnabled}
                     <ChatTrigger />
                   {/if}
@@ -215,8 +223,8 @@ onMount(() => {
                   <SettingsButton />
                   <HeaderPageActions />
                   <HeaderPageTabs />
-                {/if}
-              </div>
+                </div>
+              {/if}
             </header>
             <div class="col-span-3 lg:col-span-4">
               <div class="h-full py-6 pr-4 pl-4 lg:pr-6 lg:pl-6">

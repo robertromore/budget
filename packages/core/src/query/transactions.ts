@@ -716,6 +716,54 @@ export const bulkUpdateCategory = defineMutation<
 });
 
 /**
+ * Bulk update transaction status (e.g., mark as cleared)
+ */
+export const bulkUpdateStatus = defineMutation<
+  {
+    ids: number[];
+    status: "cleared" | "pending";
+    accountId: number;
+  },
+  { success: boolean; updatedCount: number }
+>({
+  mutationFn: (params) => trpc().transactionRoutes.bulkUpdateStatus.mutate(params),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: (result) =>
+    `Marked ${result.updatedCount} transaction${result.updatedCount === 1 ? "" : "s"} as cleared`,
+  errorMessage: "Failed to update transaction status",
+});
+
+/**
+ * Bulk update category by specific transaction IDs
+ */
+export const bulkUpdateCategoryByIds = defineMutation<
+  {
+    ids: number[];
+    categoryId: number | null;
+    accountId: number;
+  },
+  { success: boolean; updatedCount: number }
+>({
+  mutationFn: (params) => trpc().transactionRoutes.bulkUpdateCategoryByIds.mutate(params),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: (result) =>
+    `Updated category for ${result.updatedCount} transaction${result.updatedCount === 1 ? "" : "s"}`,
+  errorMessage: "Failed to update category",
+});
+
+/**
  * Get top payees by transaction count and amount for an account
  */
 export const getTopPayees = (

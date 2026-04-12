@@ -25,6 +25,7 @@ let {
   searchTransactions,
   onScheduleClick,
   budgetCount = 0,
+  accountId = 0,
   onBulkDelete,
   transferAccounts = [],
   onTransferSelect,
@@ -45,6 +46,7 @@ let {
   searchTransactions?: (query: string) => void;
   onScheduleClick?: (transaction: any) => void;
   budgetCount?: number;
+  accountId?: number;
   onBulkDelete?: (transactions: any[]) => void;
   transferAccounts?: TransferAccount[];
   onTransferSelect?: (transactionId: number, targetAccountId: number) => void;
@@ -76,6 +78,7 @@ const showCardView = $derived(isMobile.current && displayPreferences.mobileTable
       transactions={formattedTransactions}
       {views}
       {budgetCount}
+      {accountId}
       {onBulkDelete}
       bind:table />
   </div>
