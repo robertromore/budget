@@ -24,6 +24,7 @@ import SettingsButton from '$lib/components/layout/settings-button.svelte';
 import ThemeButton from '$lib/components/layout/theme-button.svelte';
 import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
 import GlobalSearch from '$lib/components/layout/global-search.svelte';
+import AppRail from '$lib/components/layout/app-rail.svelte';
 import { SpotlightOverlay, TourContinuationDialog } from '$lib/components/onboarding';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import { LLMSettings, queryClient, rpc } from '$lib/query';
@@ -176,7 +177,8 @@ onMount(() => {
   <EncryptionUnlockDialog />
 
   <NuqsAdapter>
-    <div class="bg-background">
+    <div class="bg-background md:pl-(--app-rail-width)">
+      <AppRail />
       <div class="grid">
         <Sidebar.Provider>
           <AppSidebar user={data.user} />

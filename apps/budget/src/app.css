@@ -8,6 +8,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --app-rail-width: 3rem;
   --app-font-size: 16px;
   --radius: 0.625rem;
   --theme-preview-color: hsl(240 5.9% 10%);
