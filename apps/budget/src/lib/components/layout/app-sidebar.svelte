@@ -40,7 +40,7 @@ import Wallet from '@lucide/svelte/icons/wallet';
 import BookOpen from '@lucide/svelte/icons/book-open';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Zap from '@lucide/svelte/icons/zap';
-import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
+import WorkspaceSwitcher from '../../../routes/(budget)/workspaces/(components)/workspace-switcher.svelte';
 import type { LayoutData } from '../../../routes/$types';
 
 interface Props {

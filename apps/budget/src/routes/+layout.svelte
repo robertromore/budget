@@ -17,6 +17,7 @@ import {
   IntelligenceInputOverlay,
 } from '$lib/components/intelligence-input';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
+import PriceWatcherSidebar from '$lib/components/layout/price-watcher-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
 import HeaderPageTabs from '$lib/components/layout/header-page-tabs.svelte';
@@ -60,6 +61,9 @@ let headerControlsReady = $state(false);
 // Check if we're on a public/auth route that shouldn't show the full app chrome
 const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password', '/invite'];
 const isPublicRoute = $derived(PUBLIC_ROUTES.some((route) => page.url.pathname.startsWith(route)));
+
+// Determine which app is active based on URL
+const activeApp = $derived(page.url.pathname.startsWith('/price-watcher') ? 'price-watcher' : 'budget');
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
@@ -181,7 +185,11 @@ onMount(() => {
       <AppRail />
       <div class="grid">
         <Sidebar.Provider>
-          <AppSidebar user={data.user} />
+          {#if activeApp === 'price-watcher'}
+            <PriceWatcherSidebar user={data.user} />
+          {:else}
+            <AppSidebar user={data.user} />
+          {/if}
           <Sidebar.Inset>
             <header
               class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-2">
