@@ -54,6 +54,7 @@ import { workspaceRoutes } from "./routes/workspaces";
 import { netWorthRoutes } from "./routes/net-worth";
 import { financialGoalsRoutes } from "./routes/financial-goals";
 import { investmentSnapshotsRoutes } from "./routes/investment-snapshots";
+import { priceWatcherRoutes } from "./routes/price-watcher";
 
 export const router = t.router({
   // Authentication and workspace management
@@ -100,6 +101,9 @@ export const router = t.router({
   netWorthRoutes,
   financialGoalsRoutes,
   investmentSnapshotsRoutes,
+
+  // Price Watcher routes
+  priceWatcherRoutes,
 
   // ML routes
   anomalyDetectionRoutes,

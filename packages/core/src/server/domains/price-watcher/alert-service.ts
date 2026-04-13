@@ -120,7 +120,7 @@ export class AlertService {
 
   async updateAlert(
     id: number,
-    data: { type?: string; threshold?: number | null; enabled?: boolean }
+    data: { type?: "price_drop" | "target_reached" | "back_in_stock" | "any_change"; threshold?: number | null; enabled?: boolean }
   ): Promise<PriceAlert> {
     return this.alertRepo.update(id, data);
   }
