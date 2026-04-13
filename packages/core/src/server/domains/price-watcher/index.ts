@@ -12,3 +12,4 @@ export {
   type ProductInfo,
 } from "./price-checker";
 export { processOverdueChecks, type SchedulerResult } from "./scheduler";
+export { isBrowserAvailable, fetchPageWithBrowser } from "./browser-provider";

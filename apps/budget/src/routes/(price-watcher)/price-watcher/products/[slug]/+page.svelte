@@ -10,6 +10,7 @@ import * as Select from '$lib/components/ui/select';
 import {
   getProduct,
   checkPriceNow,
+  checkPriceWithBrowser,
   deleteProduct,
   logManualPrice,
   listAlerts,
@@ -37,6 +38,7 @@ const alertsQuery = $derived(product ? listAlerts(product.id).options() : undefi
 const alerts = $derived(alertsQuery?.data ?? []);
 
 const checkMutation = checkPriceNow.options();
+const browserCheckMutation = checkPriceWithBrowser.options();
 const deleteMutation = deleteProduct.options();
 const manualPriceMutation = logManualPrice.options();
 const createAlertMutation = createAlert.options();
@@ -54,6 +56,11 @@ let period = $state<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
 async function handleCheck() {
   if (!product) return;
   await checkMutation.mutateAsync({ productId: product.id });
+}
+
+async function handleBrowserCheck() {
+  if (!product) return;
+  await browserCheckMutation.mutateAsync({ productId: product.id });
 }
 
 async function handleLogManualPrice() {
@@ -130,7 +137,24 @@ async function handleDeleteAlert(alertId: number) {
           {/if}
         </div>
         {#if product.status === 'error' && product.errorMessage}
-          <p class="mt-1 text-sm text-destructive">{product.errorMessage}</p>
+          <div class="mt-2 flex items-center gap-2">
+            <p class="text-sm text-destructive">{product.errorMessage}</p>
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={handleBrowserCheck}
+              disabled={browserCheckMutation.isPending}>
+              {browserCheckMutation.isPending ? 'Retrying...' : 'Retry with Browser'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={() => { manualPriceValue = ''; manualPriceOpen = true; }}>
+              Log Price Manually
+            </Button>
+          </div>
         {/if}
       </div>
       <div class="flex items-center gap-2">

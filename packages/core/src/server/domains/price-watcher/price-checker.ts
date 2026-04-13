@@ -271,23 +271,39 @@ function mergeResults(primary: ProductInfo, ...fallbacks: (ProductInfo | null)[]
 }
 
 /**
- * Fetch a URL and extract product information using layered extraction
+ * Fetch a URL and extract product information using layered extraction.
+ * When useBrowser is true, uses headless Chromium for JS-rendered pages.
  */
-export async function fetchProductInfo(url: string): Promise<ProductInfo> {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": getRandomUserAgent(),
-      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-    },
-    redirect: "follow",
-  });
+export async function fetchProductInfo(
+  url: string,
+  options?: { useBrowser?: boolean }
+): Promise<ProductInfo> {
+  let html: string;
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+  if (options?.useBrowser) {
+    const { isBrowserAvailable, fetchPageWithBrowser } = await import("./browser-provider");
+    const available = await isBrowserAvailable();
+    if (!available) {
+      throw new Error("Headless browser not available. Install Chromium: bunx playwright install chromium");
+    }
+    html = await fetchPageWithBrowser(url);
+  } else {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": getRandomUserAgent(),
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      redirect: "follow",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+    }
+
+    html = await response.text();
   }
 
-  const html = await response.text();
   return extractProductInfoFromHtml(html);
 }
 

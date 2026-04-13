@@ -82,11 +82,20 @@ export const deleteProduct = defineMutation<{ id: number }, void>({
 
 export const checkPriceNow = defineMutation<{ productId: number }, PriceProduct>({
   mutationFn: (params) => trpc().priceWatcherRoutes.checkPriceNow.mutate(params),
-  onSuccess: (_result, variables) => {
+  onSuccess: () => {
     cachePatterns.invalidatePrefix(["price-watcher"]);
   },
   successMessage: "Price checked",
   errorMessage: "Failed to check price",
+});
+
+export const checkPriceWithBrowser = defineMutation<{ productId: number }, PriceProduct>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.checkPriceWithBrowser.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(["price-watcher"]);
+  },
+  successMessage: "Price checked with browser",
+  errorMessage: "Failed to check price with browser",
 });
 
 // ─── Alert Queries ─────────────────────────────────

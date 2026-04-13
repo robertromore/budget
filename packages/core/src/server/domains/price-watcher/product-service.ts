@@ -69,7 +69,7 @@ export class ProductService {
    * Check the current price of a product
    * Flow: get previous → fetch → store → update stats → evaluate alerts → handle errors
    */
-  async checkPrice(productId: number, workspaceId: number): Promise<PriceProduct> {
+  async checkPrice(productId: number, workspaceId: number, options?: { useBrowser?: boolean }): Promise<PriceProduct> {
     const product = await this.productRepo.findByIdOrThrow(productId, workspaceId);
 
     // 1. Get previous price
@@ -79,7 +79,7 @@ export class ProductService {
 
     try {
       // 2. Fetch current price
-      const info = await fetchProductInfo(product.url);
+      const info = await fetchProductInfo(product.url, { useBrowser: options?.useBrowser });
 
       if (info.price === null) {
         throw new Error("Could not extract price from page");

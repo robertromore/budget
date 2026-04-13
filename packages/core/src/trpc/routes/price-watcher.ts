@@ -147,6 +147,14 @@ export const priceWatcherRoutes = t.router({
       )
     ),
 
+  checkPriceWithBrowser: rateLimitedProcedure
+    .input(z.object({ productId: z.number().positive() }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getProductService().checkPrice(input.productId, ctx.workspaceId, { useBrowser: true })
+      )
+    ),
+
   // Alerts
   listAlerts: publicProcedure
     .input(z.object({ productId: z.number().positive().optional() }).optional())
