@@ -136,3 +136,17 @@ export const deleteAlert = defineMutation<{ id: number }, void>({
   successMessage: "Alert deleted",
   errorMessage: "Failed to delete alert",
 });
+
+// ─── Manual Price Entry ─────────────────────────────────
+
+export const logManualPrice = defineMutation<
+  { productId: number; price: number; inStock?: boolean },
+  PriceProduct
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.logManualPrice.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(["price-watcher"]);
+  },
+  successMessage: "Price logged",
+  errorMessage: "Failed to log price",
+});

@@ -11,6 +11,7 @@ import {
   getProduct,
   checkPriceNow,
   deleteProduct,
+  logManualPrice,
   listAlerts,
   createAlert,
   deleteAlert as deleteAlertMutation,
@@ -37,12 +38,15 @@ const alerts = $derived(alertsQuery?.data ?? []);
 
 const checkMutation = checkPriceNow.options();
 const deleteMutation = deleteProduct.options();
+const manualPriceMutation = logManualPrice.options();
 const createAlertMutation = createAlert.options();
 const deleteAlertMut = deleteAlertMutation.options();
 const updateAlertMut = updateAlert.options();
 
 let deleteOpen = $state(false);
 let addAlertOpen = $state(false);
+let manualPriceOpen = $state(false);
+let manualPriceValue = $state('');
 let newAlertType = $state('price_drop');
 let newAlertThreshold = $state('10');
 let period = $state<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
@@ -50,6 +54,15 @@ let period = $state<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
 async function handleCheck() {
   if (!product) return;
   await checkMutation.mutateAsync({ productId: product.id });
+}
+
+async function handleLogManualPrice() {
+  if (!product || !manualPriceValue) return;
+  const price = parseFloat(manualPriceValue);
+  if (isNaN(price) || price <= 0) return;
+  await manualPriceMutation.mutateAsync({ productId: product.id, price });
+  manualPriceOpen = false;
+  manualPriceValue = '';
 }
 
 async function handleDelete() {
@@ -121,6 +134,12 @@ async function handleDeleteAlert(alertId: number) {
         {/if}
       </div>
       <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => { manualPriceValue = ''; manualPriceOpen = true; }}>
+          Log Price
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -309,6 +328,36 @@ async function handleDeleteAlert(alertId: number) {
         <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
         <AlertDialog.Action onclick={handleCreateAlert}>
           Create Alert
+        </AlertDialog.Action>
+      </AlertDialog.Footer>
+    </AlertDialog.Content>
+  </AlertDialog.Root>
+
+  <!-- Manual Price Dialog -->
+  <AlertDialog.Root bind:open={manualPriceOpen}>
+    <AlertDialog.Content class="max-w-sm">
+      <AlertDialog.Header>
+        <AlertDialog.Title>Log Price Manually</AlertDialog.Title>
+        <AlertDialog.Description>
+          Enter the current price you see on the product page.
+        </AlertDialog.Description>
+      </AlertDialog.Header>
+      <div class="space-y-2">
+        <Label for="manual-price">Price</Label>
+        <Input
+          id="manual-price"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          bind:value={manualPriceValue} />
+      </div>
+      <AlertDialog.Footer>
+        <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+        <AlertDialog.Action
+          onclick={handleLogManualPrice}
+          disabled={!manualPriceValue || manualPriceMutation.isPending}>
+          {manualPriceMutation.isPending ? 'Saving...' : 'Save Price'}
         </AlertDialog.Action>
       </AlertDialog.Footer>
     </AlertDialog.Content>

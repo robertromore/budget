@@ -3,6 +3,7 @@ import {
   extractProductInfoFromHtml,
   parsePrice,
   detectRetailer,
+  getRandomUserAgent,
 } from "$core/server/domains/price-watcher/price-checker";
 
 describe("Price Checker", () => {
@@ -196,6 +197,121 @@ describe("Price Checker", () => {
       const info = extractProductInfoFromHtml(html);
       expect(info.name).toBe("JSON-LD Title");
       expect(info.price).toBe(20.0);
+    });
+  });
+
+  describe("DOM selector fallbacks (Layer 3)", () => {
+    test("extracts price from itemprop attribute", () => {
+      const html = `
+        <html><head><title>Widget</title></head>
+        <body>
+          <span itemprop="price" content="34.99">$34.99</span>
+        </body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.price).toBe(34.99);
+    });
+
+    test("extracts price from meta itemprop", () => {
+      const html = `
+        <html><head>
+          <title>Widget</title>
+          <meta itemprop="price" content="29.99" />
+        </head><body></body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.price).toBe(29.99);
+    });
+
+    test("extracts price from .price class", () => {
+      const html = `
+        <html><head><title>Widget</title></head>
+        <body>
+          <span class="price">$19.99</span>
+        </body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.price).toBe(19.99);
+    });
+
+    test("extracts price from data-price attribute", () => {
+      const html = `
+        <html><head><title>Widget</title></head>
+        <body>
+          <div data-price="44.99">Forty-four ninety-nine</div>
+        </body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.price).toBe(44.99);
+    });
+
+    test("extracts name from itemprop", () => {
+      const html = `
+        <html><head><title>Page</title></head>
+        <body>
+          <h1 itemprop="name">Product Name From Microdata</h1>
+          <span class="price">$10.00</span>
+        </body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.name).toBe("Product Name From Microdata");
+    });
+
+    test("selectors don't override valid JSON-LD", () => {
+      const html = `
+        <html><head>
+          <script type="application/ld+json">
+          {"@type": "Product", "name": "JSON Name", "offers": {"price": 50.00}}
+          </script>
+        </head>
+        <body>
+          <span class="price">$99.99</span>
+          <h1>HTML Name</h1>
+        </body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.name).toBe("JSON Name");
+      expect(info.price).toBe(50.0);
+    });
+
+    test("selectors fill gaps when JSON-LD is partial", () => {
+      const html = `
+        <html><head>
+          <script type="application/ld+json">
+          {"@type": "Product", "name": "JSON Name", "offers": {}}
+          </script>
+        </head>
+        <body>
+          <span class="price">$25.00</span>
+        </body></html>
+      `;
+
+      const info = extractProductInfoFromHtml(html);
+      expect(info.name).toBe("JSON Name");
+      expect(info.price).toBe(25.0);
+    });
+  });
+
+  describe("User-Agent rotation", () => {
+    test("returns a string from the pool", () => {
+      const ua = getRandomUserAgent();
+      expect(typeof ua).toBe("string");
+      expect(ua.length).toBeGreaterThan(10);
+      expect(ua).toContain("Mozilla");
+    });
+
+    test("returns varying values", () => {
+      const results = new Set<string>();
+      for (let i = 0; i < 50; i++) {
+        results.add(getRandomUserAgent());
+      }
+      expect(results.size).toBeGreaterThan(1);
     });
   });
 });

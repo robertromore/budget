@@ -188,4 +188,25 @@ export const priceWatcherRoutes = t.router({
         getAlertService().deleteAlert(input.id)
       )
     ),
+
+  // Manual price entry
+  logManualPrice: rateLimitedProcedure
+    .input(
+      z.object({
+        productId: z.number().positive(),
+        price: z.number().positive("Price must be positive"),
+        inStock: z.boolean().optional(),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const productService = getProductService();
+        return productService.logManualPrice(
+          input.productId,
+          input.price,
+          ctx.workspaceId,
+          input.inStock
+        );
+      })
+    ),
 });

@@ -1,11 +1,14 @@
 /**
- * Price checker: fetches product information from URLs using structured data extraction.
+ * Price checker: fetches product information from URLs using layered extraction.
  *
  * Extraction priority:
  * 1. JSON-LD (application/ld+json) — most reliable
  * 2. Open Graph meta tags (og:title, product:price:amount)
- * 3. Standard meta tags and title element
+ * 3. DOM CSS selector fallbacks (node-html-parser)
+ * 4. Manual entry (handled by UI, not this module)
  */
+
+import { parse as parseHtml } from "node-html-parser";
 
 export interface ProductInfo {
   name: string | null;
@@ -15,12 +18,21 @@ export interface ProductInfo {
   inStock: boolean;
 }
 
-const BROWSER_HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-  "Accept-Language": "en-US,en;q=0.9",
-};
+// ─── User-Agent Rotation ─────────────────────────────────
+
+const USER_AGENTS = [
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+];
+
+export function getRandomUserAgent(): string {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
+// ─── Retailer Detection ─────────────────────────────────
 
 /**
  * Detect retailer from URL hostname
@@ -47,6 +59,8 @@ export function detectRetailer(url: string): string {
     return "unknown";
   }
 }
+
+// ─── Price Parsing ─────────────────────────────────
 
 /**
  * Parse a price value from string or number input.
@@ -82,9 +96,8 @@ export function parsePrice(input: string | number | null | undefined): number | 
   return isFinite(value) && value >= 0 ? value : null;
 }
 
-/**
- * Extract JSON-LD structured data from HTML
- */
+// ─── Layer 1: JSON-LD Extraction ─────────────────────────────────
+
 function extractJsonLd(html: string): ProductInfo | null {
   const scriptRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let match;
@@ -95,7 +108,6 @@ function extractJsonLd(html: string): ProductInfo | null {
       const items = Array.isArray(data) ? data : [data];
 
       for (const item of items) {
-        // Handle @graph arrays
         const candidates = item["@graph"] ? [...item["@graph"], item] : [item];
 
         for (const candidate of candidates) {
@@ -127,9 +139,8 @@ function extractJsonLd(html: string): ProductInfo | null {
   return null;
 }
 
-/**
- * Extract Open Graph and meta tag data from HTML
- */
+// ─── Layer 2: Open Graph / Meta Tag Extraction ─────────────────────────────────
+
 function extractMetaTags(html: string): ProductInfo {
   const getMeta = (property: string): string | null => {
     const regex = new RegExp(
@@ -140,7 +151,6 @@ function extractMetaTags(html: string): ProductInfo {
     return match?.[1] ?? null;
   };
 
-  // Also check reverse attribute order: content before property
   const getMetaReverse = (property: string): string | null => {
     const regex = new RegExp(
       `<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${property}["']`,
@@ -163,16 +173,113 @@ function extractMetaTags(html: string): ProductInfo {
     currency:
       getAnyMeta("product:price:currency") ?? getAnyMeta("og:price:currency") ?? null,
     imageUrl: getAnyMeta("og:image") ?? null,
-    inStock: true, // Can't reliably determine from meta tags alone
+    inStock: true,
   };
 }
 
+// ─── Layer 3: DOM CSS Selector Fallbacks ─────────────────────────────────
+
+const PRICE_SELECTORS = [
+  '[itemprop="price"]',
+  'meta[itemprop="price"]',
+  ".price",
+  "#price",
+  ".product-price",
+  ".current-price",
+  "[data-price]",
+  ".offer-price",
+  ".sale-price",
+];
+
+const NAME_SELECTORS = [
+  '[itemprop="name"]',
+  "#productTitle",
+  "h1",
+];
+
+const IMAGE_SELECTORS = [
+  '[itemprop="image"]',
+  "#landingImage",
+  "#main-image",
+  'img.product-image',
+];
+
+function extractWithSelectors(html: string): ProductInfo | null {
+  const root = parseHtml(html);
+
+  // Extract price
+  let price: number | null = null;
+  for (const selector of PRICE_SELECTORS) {
+    const el = root.querySelector(selector);
+    if (!el) continue;
+    const raw = el.getAttribute("content") ?? el.getAttribute("data-price") ?? el.textContent;
+    price = parsePrice(raw);
+    if (price !== null) break;
+  }
+
+  // Extract name
+  let name: string | null = null;
+  for (const selector of NAME_SELECTORS) {
+    const el = root.querySelector(selector);
+    if (!el) continue;
+    const text = (el.getAttribute("content") ?? el.textContent).trim();
+    if (text) {
+      name = text;
+      break;
+    }
+  }
+
+  // Extract image
+  let imageUrl: string | null = null;
+  for (const selector of IMAGE_SELECTORS) {
+    const el = root.querySelector(selector);
+    if (!el) continue;
+    const src = el.getAttribute("src") ?? el.getAttribute("content") ?? el.getAttribute("href");
+    if (src) {
+      imageUrl = src;
+      break;
+    }
+  }
+
+  if (!price && !name) return null;
+
+  return {
+    name,
+    price,
+    currency: null,
+    imageUrl,
+    inStock: true,
+  };
+}
+
+// ─── Public API ─────────────────────────────────
+
 /**
- * Fetch a URL and extract product information
+ * Combine results from multiple extraction layers, filling gaps from lower layers
+ */
+function mergeResults(primary: ProductInfo, ...fallbacks: (ProductInfo | null)[]): ProductInfo {
+  const result = { ...primary };
+  for (const fb of fallbacks) {
+    if (!fb) continue;
+    if (!result.name && fb.name) result.name = fb.name;
+    if (result.price === null && fb.price !== null) result.price = fb.price;
+    if (!result.currency && fb.currency) result.currency = fb.currency;
+    if (!result.imageUrl && fb.imageUrl) result.imageUrl = fb.imageUrl;
+  }
+  result.currency = result.currency ?? "USD";
+  return result;
+}
+
+/**
+ * Fetch a URL and extract product information using layered extraction
  */
 export async function fetchProductInfo(url: string): Promise<ProductInfo> {
   const response = await fetch(url, {
-    headers: BROWSER_HEADERS,
+    headers: {
+      "User-Agent": getRandomUserAgent(),
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
     redirect: "follow",
   });
 
@@ -181,45 +288,42 @@ export async function fetchProductInfo(url: string): Promise<ProductInfo> {
   }
 
   const html = await response.text();
-
-  // Try JSON-LD first (most reliable)
-  const jsonLd = extractJsonLd(html);
-  if (jsonLd && (jsonLd.name || jsonLd.price !== null)) {
-    // Fill in gaps from meta tags if JSON-LD is partial
-    const meta = extractMetaTags(html);
-    return {
-      name: jsonLd.name ?? meta.name,
-      price: jsonLd.price ?? meta.price,
-      currency: jsonLd.currency ?? meta.currency ?? "USD",
-      imageUrl: jsonLd.imageUrl ?? meta.imageUrl,
-      inStock: jsonLd.inStock,
-    };
-  }
-
-  // Fall back to meta tags
-  const meta = extractMetaTags(html);
-  return {
-    ...meta,
-    currency: meta.currency ?? "USD",
-  };
+  return extractProductInfoFromHtml(html);
 }
 
 /**
  * Extract product info from raw HTML (for testing without network)
  */
 export function extractProductInfoFromHtml(html: string): ProductInfo {
+  // Layer 1: JSON-LD
   const jsonLd = extractJsonLd(html);
-  if (jsonLd && (jsonLd.name || jsonLd.price !== null)) {
-    const meta = extractMetaTags(html);
-    return {
-      name: jsonLd.name ?? meta.name,
-      price: jsonLd.price ?? meta.price,
-      currency: jsonLd.currency ?? meta.currency ?? "USD",
-      imageUrl: jsonLd.imageUrl ?? meta.imageUrl,
-      inStock: jsonLd.inStock,
-    };
+
+  // Layer 2: Meta tags
+  const meta = extractMetaTags(html);
+
+  // If JSON-LD found complete data, no need for DOM parsing
+  if (jsonLd && jsonLd.name && jsonLd.price !== null) {
+    return mergeResults(jsonLd, meta);
   }
 
-  const meta = extractMetaTags(html);
+  // Layer 3: DOM selectors (only if earlier layers have gaps)
+  const selectors = extractWithSelectors(html);
+
+  // If JSON-LD found partial data, fill gaps from meta + selectors
+  if (jsonLd && (jsonLd.name || jsonLd.price !== null)) {
+    return mergeResults(jsonLd, meta, selectors);
+  }
+
+  // If meta tags found price, fill gaps from selectors
+  if (meta.price !== null) {
+    return mergeResults(meta, selectors);
+  }
+
+  // If selectors found anything, fill gaps from meta
+  if (selectors) {
+    return mergeResults(selectors, meta);
+  }
+
+  // Nothing found — return meta (at least has name from title tag)
   return { ...meta, currency: meta.currency ?? "USD" };
 }

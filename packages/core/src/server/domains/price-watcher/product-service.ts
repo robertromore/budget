@@ -185,4 +185,44 @@ export class ProductService {
   ): Promise<PriceProduct[]> {
     return this.productRepo.findAll(workspaceId, filters);
   }
+
+  /**
+   * Log a manually entered price — always-available fallback when extraction fails
+   */
+  async logManualPrice(
+    productId: number,
+    price: number,
+    workspaceId: number,
+    inStock?: boolean
+  ): Promise<PriceProduct> {
+    const product = await this.productRepo.findByIdOrThrow(productId, workspaceId);
+
+    await this.historyRepo.addSnapshot({
+      productId: product.id,
+      price,
+      inStock: inStock ?? true,
+      source: "manual",
+      checkedAt: nowISOString(),
+    });
+
+    return this.productRepo.update(
+      product.id,
+      {
+        currentPrice: price,
+        lowestPrice:
+          product.lowestPrice === null || price < product.lowestPrice
+            ? price
+            : product.lowestPrice,
+        highestPrice:
+          product.highestPrice === null || price > product.highestPrice
+            ? price
+            : product.highestPrice,
+        lastCheckedAt: nowISOString(),
+        status: "active",
+        errorMessage: null,
+        errorCount: 0,
+      },
+      workspaceId
+    );
+  }
 }
