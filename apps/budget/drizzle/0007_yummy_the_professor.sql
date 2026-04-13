@@ -1,0 +1,1 @@
+ALTER TABLE `price_product` ADD `error_count` integer DEFAULT 0 NOT NULL;

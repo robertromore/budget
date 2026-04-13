@@ -11,3 +11,4 @@ export {
   parsePrice,
   type ProductInfo,
 } from "./price-checker";
+export { processOverdueChecks, type SchedulerResult } from "./scheduler";

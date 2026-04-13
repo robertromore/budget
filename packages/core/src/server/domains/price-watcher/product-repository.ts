@@ -2,7 +2,7 @@ import { priceProducts } from "$core/schema/price-products";
 import type { NewPriceProduct, PriceProduct } from "$core/schema/price-products";
 import { db } from "$core/server/db";
 import { NotFoundError } from "$core/server/shared/types/errors";
-import { getCurrentTimestamp } from "$core/utils/dates-core";
+import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
 export class ProductRepository {
@@ -97,7 +97,7 @@ export class ProductRepository {
   }
 
   async findDueForCheck(workspaceId: number): Promise<PriceProduct[]> {
-    const now = getCurrentTimestamp();
+    const now = nowISOString();
     return db.query.priceProducts.findMany({
       where: and(
         eq(priceProducts.workspaceId, workspaceId),

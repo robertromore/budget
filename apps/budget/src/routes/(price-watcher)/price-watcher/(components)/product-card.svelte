@@ -42,7 +42,7 @@ const isAtTarget = $derived(
     <Card.Header class="pb-2">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0 flex-1">
-          <Card.Title class="truncate text-sm">{product.name}</Card.Title>
+          <Card.Title class="max-w-full truncate text-sm" title={product.name}>{product.name}</Card.Title>
           <Card.Description class="flex items-center gap-1 text-xs">
             <span class="capitalize">{product.retailer}</span>
           </Card.Description>

@@ -2,7 +2,7 @@ import type { PriceProduct } from "$core/schema/price-products";
 import type { PriceHistoryEntry } from "$core/schema/price-history";
 import { ValidationError } from "$core/server/shared/types/errors";
 import { slugify } from "$core/utils/string-utilities";
-import { getCurrentTimestamp } from "$core/utils/dates-core";
+import { nowISOString } from "$core/utils/dates-core";
 import { createId } from "@paralleldrive/cuid2";
 import { ProductRepository } from "./product-repository";
 import { HistoryRepository } from "./history-repository";
@@ -48,7 +48,7 @@ export class ProductService {
       currency: info.currency ?? "USD",
       checkInterval: options?.checkInterval ?? 6,
       status: "active",
-      lastCheckedAt: getCurrentTimestamp(),
+      lastCheckedAt: nowISOString(),
     });
 
     // Store initial price snapshot
@@ -58,7 +58,7 @@ export class ProductService {
         price: info.price,
         inStock: info.inStock,
         source: "scrape",
-        checkedAt: getCurrentTimestamp(),
+        checkedAt: nowISOString(),
       });
     }
 
@@ -91,7 +91,7 @@ export class ProductService {
         price: info.price,
         inStock: info.inStock,
         source: "scrape",
-        checkedAt: getCurrentTimestamp(),
+        checkedAt: nowISOString(),
       });
 
       // 4. Update product stats
@@ -107,9 +107,10 @@ export class ProductService {
             product.highestPrice === null || info.price > product.highestPrice
               ? info.price
               : product.highestPrice,
-          lastCheckedAt: getCurrentTimestamp(),
+          lastCheckedAt: nowISOString(),
           status: "active",
           errorMessage: null,
+          errorCount: 0,
         },
         workspaceId
       );
@@ -128,14 +129,16 @@ export class ProductService {
 
       return updatedProduct;
     } catch (error) {
-      // 6. Handle errors
+      // 6. Handle errors — increment error count, pause after 3 consecutive failures
       const message = error instanceof Error ? error.message : "Unknown error";
+      const newErrorCount = (product.errorCount ?? 0) + 1;
       return this.productRepo.update(
         product.id,
         {
-          status: "error",
+          status: newErrorCount >= 3 ? "error" : "active",
           errorMessage: message,
-          lastCheckedAt: getCurrentTimestamp(),
+          errorCount: newErrorCount,
+          lastCheckedAt: nowISOString(),
         },
         workspaceId
       );

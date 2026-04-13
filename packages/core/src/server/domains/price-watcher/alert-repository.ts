@@ -2,7 +2,7 @@ import { priceAlerts } from "$core/schema/price-alerts";
 import type { NewPriceAlert, PriceAlert } from "$core/schema/price-alerts";
 import { db } from "$core/server/db";
 import { NotFoundError } from "$core/server/shared/types/errors";
-import { getCurrentTimestamp } from "$core/utils/dates-core";
+import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
 import { and, eq } from "drizzle-orm";
 
 export class AlertRepository {
@@ -63,7 +63,7 @@ export class AlertRepository {
   async markTriggered(id: number): Promise<void> {
     await db
       .update(priceAlerts)
-      .set({ lastTriggeredAt: getCurrentTimestamp(), updatedAt: getCurrentTimestamp() })
+      .set({ lastTriggeredAt: nowISOString(), updatedAt: getCurrentTimestamp() })
       .where(eq(priceAlerts.id, id));
   }
 }

@@ -30,6 +30,7 @@ export const priceProducts = sqliteTable(
     lastCheckedAt: text("last_checked_at"),
     status: text("status", { enum: priceProductStatusEnum }).notNull().default("active"),
     errorMessage: text("error_message"),
+    errorCount: integer("error_count").notNull().default(0),
     checkInterval: integer("check_interval").notNull().default(6),
     slug: text("slug").notNull().unique(),
     notes: text("notes"),

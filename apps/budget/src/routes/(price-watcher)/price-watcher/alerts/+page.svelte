@@ -5,6 +5,7 @@ import * as Empty from '$lib/components/ui/empty';
 import { listAlerts, updateAlert, deleteAlert as deleteAlertMutation } from '$lib/query/price-watcher';
 import Bell from '@lucide/svelte/icons/bell';
 import Trash2 from '@lucide/svelte/icons/trash-2';
+import { getAlertTypeLabel } from '../(data)/alert-utils';
 
 const alertsQuery = listAlerts().options();
 const alerts = $derived(alertsQuery.data ?? []);
@@ -19,16 +20,6 @@ async function handleToggle(alertId: number, enabled: boolean) {
 
 async function handleDelete(alertId: number) {
   await deleteMutation.mutateAsync({ id: alertId });
-}
-
-function getTypeLabel(type: string): string {
-  switch (type) {
-    case 'price_drop': return 'Price Drop';
-    case 'target_reached': return 'Target Reached';
-    case 'back_in_stock': return 'Back in Stock';
-    case 'any_change': return 'Any Change';
-    default: return type;
-  }
 }
 
 function getTypeVariant(type: string) {
@@ -89,7 +80,7 @@ function getTypeVariant(type: string) {
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <Badge variant="outline" class="text-xs">{getTypeLabel(alert.type)}</Badge>
+                <Badge variant="outline" class="text-xs">{getAlertTypeLabel(alert.type)}</Badge>
                 {#if alert.type === 'price_drop' && alert.threshold}
                   <span class="text-muted-foreground text-xs">{alert.threshold}% threshold</span>
                 {/if}

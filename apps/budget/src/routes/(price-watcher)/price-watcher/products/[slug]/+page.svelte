@@ -26,6 +26,7 @@ import Bell from '@lucide/svelte/icons/bell';
 import Plus from '@lucide/svelte/icons/plus';
 import type { PageData } from './$types';
 import PriceHistoryChart from '../../(components)/price-history-chart.svelte';
+import { getAlertTypeLabel } from '../../(data)/alert-utils';
 
 let { data }: { data: PageData } = $props();
 
@@ -78,15 +79,6 @@ async function handleDeleteAlert(alertId: number) {
   await deleteAlertMut.mutateAsync({ id: alertId });
 }
 
-function getAlertTypeLabel(type: string): string {
-  switch (type) {
-    case 'price_drop': return 'Price Drop';
-    case 'target_reached': return 'Target Reached';
-    case 'back_in_stock': return 'Back in Stock';
-    case 'any_change': return 'Any Change';
-    default: return type;
-  }
-}
 </script>
 
 <svelte:head>
@@ -102,13 +94,13 @@ function getAlertTypeLabel(type: string): string {
         Products
       </Button>
       <span>/</span>
-      <span class="text-foreground">{product.name}</span>
+      <span class="text-foreground max-w-xs truncate" title={product.name}>{product.name}</span>
     </div>
 
     <!-- Header -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 class="text-2xl font-bold">{product.name}</h1>
+        <h1 class="max-w-xl truncate text-2xl font-bold" title={product.name}>{product.name}</h1>
         <div class="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
           <span class="capitalize">{product.retailer}</span>
           <a
@@ -124,6 +116,9 @@ function getAlertTypeLabel(type: string): string {
             <Badge variant="secondary">Paused</Badge>
           {/if}
         </div>
+        {#if product.status === 'error' && product.errorMessage}
+          <p class="mt-1 text-sm text-destructive">{product.errorMessage}</p>
+        {/if}
       </div>
       <div class="flex items-center gap-2">
         <Button
