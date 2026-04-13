@@ -7,87 +7,115 @@ Build the user-facing pages and components for the price watcher app.
 ## Done When
 
 - Users can add a product by pasting a URL
-- Product list shows all tracked products with current prices and trends
+- Product list shows all tracked products with current prices
 - Product detail page shows price history chart
-- Alert management page lets users configure notifications
-- Dashboard shows summary of tracked products and recent activity
+- Alert management lets users configure notifications
+- Dashboard shows summary of tracked products
 
-## Changes
+## Route Structure
 
-### Pages
+All pages live under `(price-watcher)/price-watcher/` so URLs are prefixed with `/price-watcher/`:
 
-**`src/routes/(price-watcher)/+page.svelte`** — Dashboard:
+```text
+src/routes/(price-watcher)/price-watcher/
+├── +page.svelte                          → /price-watcher (dashboard)
+├── products/
+│   ├── +page.svelte                      → /price-watcher/products
+│   └── [slug]/
+│       ├── +page.svelte                  → /price-watcher/products/acme-widget-abc123
+│       └── +page.server.ts               → slug validation
+├── alerts/
+│   └── +page.svelte                      → /price-watcher/alerts
+└── (components)/
+    ├── add-product-dialog.svelte
+    ├── product-card.svelte
+    ├── price-history-chart.svelte
+    └── alert-rule-card.svelte
+```
 
-- Summary cards: products tracked, active alerts, price drops this week
-- Recent price changes list (product name, old price, new price, time)
-- Quick "Add Product" button
+## Implementation Steps
 
-**`src/routes/(price-watcher)/products/+page.svelte`** — Product list:
+### Step 1: Product List + Add Dialog
 
-- Grid/list toggle view
-- Each card: product image, name, retailer icon, current price, price trend arrow (up/down/flat), target price indicator
-- Status badge (active, paused, error)
-- "Add Product" button in header
-- Filters: retailer, status, price range
-- Sort: name, price, last checked, date added
+**`(price-watcher)/price-watcher/products/+page.svelte`** — Product list:
+
+- Grid of product cards
+- Each card: product name, retailer, current price, target price, status badge
+- "Add Product" button in header opens add dialog
 - Empty state with guidance
+- Uses `listProducts()` query
 
-**`src/routes/(price-watcher)/products/[slug]/+page.svelte`** — Product detail:
-
-- Product header: image, name, retailer, URL link
-- Price overview: current, lowest, highest, target
-- Price history chart (LayerChart line chart, reuse existing chart infrastructure)
-- Period filter (7d, 30d, 90d, 1y, all)
-- Alert configuration section for this product
-- "Check Now" button for manual refresh
-- Price statistics: average, volatility, days since last drop
-
-**`src/routes/(price-watcher)/products/[slug]/+page.server.ts`** — Slug validation:
-
-- Validate product exists, throw 404 if not found (same pattern as budget/account detail pages)
-
-**`src/routes/(price-watcher)/alerts/+page.svelte`** — Alert management:
-
-- List of all alert rules grouped by product
-- Toggle enabled/disabled per alert
-- Recent trigger history with timestamps
-- Create alert from this page (select product + configure)
-
-### Components
-
-**`src/routes/(price-watcher)/(components)/add-product-dialog.svelte`**:
+**`(price-watcher)/price-watcher/(components)/add-product-dialog.svelte`**:
 
 - Input: paste product URL
-- Auto-detect: retailer, product name, image, current price (loading state while fetching)
-- Configure: target price, check interval, enable alerts
-- Preview card before confirming
-- Error handling for unsupported URLs or fetch failures
+- On submit: calls `addProduct` mutation (fetches name/image/price server-side)
+- Loading state while fetching
+- Optional: target price, check interval
+- Error handling for invalid URLs or fetch failures
+- On success: close dialog, product appears in list
 
-**`src/routes/(price-watcher)/(components)/product-card.svelte`**:
+**`(price-watcher)/price-watcher/(components)/product-card.svelte`**:
 
-- Compact card for grid view: image, name, price, trend
-- Click navigates to detail page
+- Card showing: name, retailer, current price, target price (if set), status badge (active/paused/error)
+- Error products show error message
+- Click navigates to `/price-watcher/products/{slug}`
 
-**`src/routes/(price-watcher)/(components)/price-history-chart.svelte`**:
+### Step 2: Product Detail + Chart
 
-- LayerChart line chart wrapping existing chart infrastructure
+**`(price-watcher)/price-watcher/products/[slug]/+page.svelte`**:
+
+- Product header: name, retailer, URL link (external), status
+- Price overview cards: current, lowest, highest, target
+- Price history chart (LayerChart line chart, reuse existing chart wrapper)
+- Period filter (7d, 30d, 90d, 1y, all)
+- "Check Now" button for manual refresh
+- "Edit" button for target price/interval/status
+- "Delete" button with confirmation
+- Alert section: list alerts for this product, create new alert inline
+
+**`(price-watcher)/price-watcher/products/[slug]/+page.server.ts`**:
+
+- Validate product exists via tRPC caller, throw 404 if not found (same pattern as budget account/payee detail pages)
+
+**`(price-watcher)/price-watcher/(components)/price-history-chart.svelte`**:
+
+- LayerChart line chart
 - X-axis: dates, Y-axis: price
-- Target price horizontal reference line
-- Lowest price annotation
-- Period filtering
+- Target price as horizontal reference line (dashed)
+- Uses `getPriceHistory()` query
 
-**`src/routes/(price-watcher)/(components)/alert-rule-card.svelte`**:
+### Step 3: Alerts Page
 
-- Alert type badge, threshold display, enabled toggle
+**`(price-watcher)/price-watcher/alerts/+page.svelte`**:
+
+- List of all alert rules grouped by product
+- Each alert shows: type badge, threshold, enabled toggle, lastTriggeredAt
+- Create alert: select product + type + threshold
+- Edit/delete inline
+- Empty state when no alerts
+
+**`(price-watcher)/price-watcher/(components)/alert-rule-card.svelte`**:
+
+- Alert type badge (color-coded by type)
+- Threshold display (percentage for price_drop)
+- Enabled/disabled toggle (calls `updateAlert` mutation)
 - Last triggered timestamp
-- Edit/delete actions
+- Delete button
 
-### Sidebar
+### Step 4: Dashboard + Sidebar
 
-**`src/lib/components/layout/price-watcher-sidebar.svelte`** (created in Phase 2):
+**`(price-watcher)/price-watcher/+page.svelte`** — Dashboard (replaces placeholder):
 
-- Update with actual navigation links and product count badges
-- Show active alert count
+- Summary cards: products tracked, active alerts, products with errors
+- Recent price changes (query last N history entries across all products)
+- Quick "Add Product" button
+- Link to products list
+
+**Update `price-watcher-sidebar.svelte`**:
+
+- Add product count badge next to "Products" nav item
+- Add active alert count badge next to "Alerts" nav item
+- Uses `listProducts()` and `listAlerts()` queries for counts
 
 ## Dependencies
 
@@ -97,7 +125,9 @@ Phase 2 (Route Groups) and Phase 5 (tRPC + Query) must be complete.
 
 1. `bun run check` — type check
 2. `bun run dev` — navigate to price watcher via app rail
-3. Add a product URL — verify it fetches name/price
-4. View product detail — chart renders with price history
-5. Create an alert — appears in alert list
-6. Mobile: pages are responsive
+3. `/price-watcher/products` — empty state shows, add a product URL
+4. `/price-watcher/products/{slug}` — detail page with chart renders
+5. `/price-watcher/alerts` — create and toggle alerts
+6. `/price-watcher` — dashboard shows summary
+7. Sidebar shows product/alert counts
+8. Mobile: pages are responsive

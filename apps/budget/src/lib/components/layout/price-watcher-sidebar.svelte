@@ -1,5 +1,7 @@
 <script lang="ts">
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import { Badge } from '$lib/components/ui/badge';
+import { listProducts, listAlerts } from '$lib/query/price-watcher';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Package from '@lucide/svelte/icons/package';
 import Bell from '@lucide/svelte/icons/bell';
@@ -12,6 +14,12 @@ interface Props {
 }
 
 let { user: _user = null }: Props = $props();
+
+const productsQuery = listProducts().options();
+const alertsQuery = listAlerts().options();
+
+const productCount = $derived(productsQuery.data?.length ?? 0);
+const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ?? 0);
 </script>
 
 <Sidebar.Root>
@@ -39,7 +47,12 @@ let { user: _user = null }: Props = $props();
               {#snippet child({ props })}
                 <a href="/price-watcher/products" {...props} class="flex items-center gap-3">
                   <Package class="h-4 w-4"></Package>
-                  <span class="font-medium">Products</span>
+                  <span class="flex-1 font-medium">Products</span>
+                  {#if productCount > 0}
+                    <Badge variant="secondary" class="ml-auto h-5 min-w-5 px-1.5 text-xs">
+                      {productCount}
+                    </Badge>
+                  {/if}
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
@@ -49,7 +62,12 @@ let { user: _user = null }: Props = $props();
               {#snippet child({ props })}
                 <a href="/price-watcher/alerts" {...props} class="flex items-center gap-3">
                   <Bell class="h-4 w-4"></Bell>
-                  <span class="font-medium">Alerts</span>
+                  <span class="flex-1 font-medium">Alerts</span>
+                  {#if alertCount > 0}
+                    <Badge variant="secondary" class="ml-auto h-5 min-w-5 px-1.5 text-xs">
+                      {alertCount}
+                    </Badge>
+                  {/if}
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
