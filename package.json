@@ -2,9 +2,9 @@
   "name": "budget-monorepo",
   "version": "0.0.1",
   "devDependencies": {
-    "@turbo/gen": "^2.8.21",
-    "prettier": "^3.8.1",
-    "turbo": "^2.8.21"
+    "@turbo/gen": "^2.9.6",
+    "prettier": "^3.8.2",
+    "turbo": "^2.9.6"
   },
   "packageManager": "bun@1.2.23",
   "private": true,

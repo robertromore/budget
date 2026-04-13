@@ -14,22 +14,22 @@
   "dependencies": {
     "@budget/core": "workspace:*",
     "@budget/ui": "workspace:*",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.5.0",
     "@lucide/svelte": "^0.526.0",
-    "bits-ui": "2.15.5",
+    "@tanstack/svelte-query": "^6.1.16",
     "@trpc/client": "^11.16.0",
-    "@tanstack/svelte-query": "^6.1.10",
-    "electrobun": "1.16.0"
+    "bits-ui": "2.15.5",
+    "clsx": "^2.1.1",
+    "electrobun": "1.16.0",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^5.0.1",
+    "@sveltejs/vite-plugin-svelte": "^5.1.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/bun": "latest",
-    "concurrently": "^9.1.0",
-    "svelte": "^5.14.1",
+    "concurrently": "^9.2.1",
+    "svelte": "^5.55.3",
     "tailwindcss": "^4.2.2",
-    "typescript": "^5.8.3",
-    "vite": "^6.0.3"
+    "typescript": "^5.9.3",
+    "vite": "^6.4.2"
   }
 }
