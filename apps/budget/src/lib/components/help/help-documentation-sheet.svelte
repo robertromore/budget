@@ -167,7 +167,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   adjacent={!hasModalContext}
   hideOverlay={hasModalContext}
   interactOutsideBehavior={hasModalContext ? 'ignore' : undefined}
-  class="z-50">
+  class="z-50 **:data-[slot=sheet-close]:hidden">
   {#snippet header()}
     {#if isSearchMode}
       <!-- Search mode header -->
