@@ -44,7 +44,7 @@ const productFiltersSchema = z.object({
 });
 
 const addProductSchema = z.object({
-  url: z.string().url("A valid URL is required"),
+  url: z.string().min(1, "URL is required"),
   targetPrice: z.number().positive().optional(),
   checkInterval: z.number().int().min(1).max(168).optional(), // 1 hour to 1 week
 });

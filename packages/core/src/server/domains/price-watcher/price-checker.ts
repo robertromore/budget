@@ -15,6 +15,8 @@ export interface ProductInfo {
   price: number | null;
   currency: string | null;
   imageUrl: string | null;
+  images: string[];
+  description: string | null;
   inStock: boolean;
 }
 
@@ -123,13 +125,15 @@ function extractJsonLd(html: string): ProductInfo | null {
             const offers = candidate.offers;
             const offer = Array.isArray(offers) ? offers[0] : offers;
 
+            const imageArr = Array.isArray(candidate.image) ? candidate.image : candidate.image ? [candidate.image] : [];
+
             return {
               name: candidate.name ?? null,
               price: parsePrice(offer?.price ?? offer?.lowPrice ?? null),
               currency: offer?.priceCurrency ?? null,
-              imageUrl: Array.isArray(candidate.image)
-                ? candidate.image[0]
-                : candidate.image ?? null,
+              imageUrl: imageArr[0] ?? null,
+              images: imageArr.filter((img: unknown): img is string => typeof img === "string"),
+              description: candidate.description ?? null,
               inStock:
                 offer?.availability !== "https://schema.org/OutOfStock" &&
                 offer?.availability !== "OutOfStock",
@@ -178,6 +182,8 @@ function extractMetaTags(html: string): ProductInfo {
     currency:
       getAnyMeta("product:price:currency") ?? getAnyMeta("og:price:currency") ?? null,
     imageUrl: getAnyMeta("og:image") ?? null,
+    images: [],
+    description: getAnyMeta("og:description") ?? getAnyMeta("description") ?? null,
     inStock: true,
   };
 }
@@ -265,6 +271,20 @@ function extractWithSelectors(html: string): ProductInfo | null {
     }
   }
 
+  // Extract additional images
+  const images: string[] = [];
+  const imgEls = root.querySelectorAll("#altImages img, .imageThumbnail img, img[data-old-hires], img.product-image");
+  for (const img of imgEls) {
+    const src = img.getAttribute("data-old-hires") ?? img.getAttribute("src");
+    if (src && !src.includes("grey-pixel") && !src.includes("sprite") && !images.includes(src)) {
+      images.push(src);
+    }
+  }
+
+  // Extract description
+  const descEl = root.querySelector("#productDescription p, [itemprop=\"description\"], .product-description, #feature-bullets");
+  const description = descEl?.textContent?.trim()?.substring(0, 500) ?? null;
+
   if (!price && !name) return null;
 
   return {
@@ -272,6 +292,8 @@ function extractWithSelectors(html: string): ProductInfo | null {
     price,
     currency: null,
     imageUrl,
+    images,
+    description,
     inStock: true,
   };
 }
@@ -289,6 +311,8 @@ function mergeResults(primary: ProductInfo, ...fallbacks: (ProductInfo | null)[]
     if (result.price === null && fb.price !== null) result.price = fb.price;
     if (!result.currency && fb.currency) result.currency = fb.currency;
     if (!result.imageUrl && fb.imageUrl) result.imageUrl = fb.imageUrl;
+    if (result.images.length === 0 && fb.images.length > 0) result.images = fb.images;
+    if (!result.description && fb.description) result.description = fb.description;
   }
   result.currency = result.currency ?? "USD";
   return result;

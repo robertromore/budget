@@ -3,6 +3,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { listProducts, listAlerts } from '$lib/query/price-watcher';
 import { currencyFormatter } from '$lib/utils/formatters';
+import ProductImage from './(components)/product-image.svelte';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Bell from '@lucide/svelte/icons/bell';
 import Package from '@lucide/svelte/icons/package';
@@ -98,8 +99,9 @@ const productsAtTarget = $derived(
           <a
             href="/price-watcher/products/{product.slug}"
             class="flex items-center justify-between rounded-lg border bg-success-bg p-3 transition-shadow hover:shadow-md">
+            <ProductImage imageUrl={product.imageUrl} alt={product.name} size="sm" />
             <div class="min-w-0 flex-1 pr-4">
-              <div class="truncate font-medium" title={product.name}>{product.name}</div>
+              <div class="max-w-sm truncate font-medium sm:max-w-md lg:max-w-lg" title={product.name}>{product.name}</div>
               <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
             </div>
             <div class="shrink-0 text-right">
@@ -127,9 +129,10 @@ const productsAtTarget = $derived(
         {#each products.slice(0, 10) as product (product.id)}
           <a
             href="/price-watcher/products/{product.slug}"
-            class="flex items-center justify-between rounded-lg border p-3 transition-shadow hover:shadow-md">
+            class="flex items-center justify-between overflow-hidden rounded-lg border p-3 transition-shadow hover:shadow-md">
+            <ProductImage imageUrl={product.imageUrl} alt={product.name} size="sm" />
             <div class="min-w-0 flex-1 pr-4">
-              <div class="truncate font-medium" title={product.name}>{product.name}</div>
+              <div class="max-w-sm truncate font-medium sm:max-w-md lg:max-w-lg" title={product.name}>{product.name}</div>
               <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
             </div>
             <div class="shrink-0 text-right">

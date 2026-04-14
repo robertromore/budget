@@ -28,6 +28,7 @@ import Bell from '@lucide/svelte/icons/bell';
 import Plus from '@lucide/svelte/icons/plus';
 import type { PageData } from './$types';
 import PriceHistoryChart from '../../(components)/price-history-chart.svelte';
+import ProductImage from '../../(components)/product-image.svelte';
 import { getAlertTypeLabel } from '../../(data)/alert-utils';
 
 let { data }: { data: PageData } = $props();
@@ -119,7 +120,14 @@ async function handleDeleteAlert(alertId: number) {
 
     <!-- Header -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
+      <div class="flex gap-4">
+        {#if product.imageUrl}
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            class="hidden h-24 w-24 shrink-0 rounded-lg border object-cover sm:block" />
+        {/if}
+        <div>
         <h1 class="max-w-xl truncate text-2xl font-bold" title={product.name}>{product.name}</h1>
         <div class="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
           <span class="capitalize">{product.retailer}</span>
@@ -158,6 +166,7 @@ async function handleDeleteAlert(alertId: number) {
             </Button>
           </div>
         {/if}
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <Button
@@ -227,6 +236,35 @@ async function handleDeleteAlert(alertId: number) {
         </Card.Content>
       </Card.Root>
     </div>
+
+    <!-- Description + Images -->
+    {#if product.description || (product.images && product.images !== '[]')}
+      <div class="space-y-4 rounded-lg border p-4">
+        {#if product.description}
+          <div>
+            <h3 class="mb-1 text-sm font-medium">Description</h3>
+            <p class="text-muted-foreground text-sm leading-relaxed">{product.description}</p>
+          </div>
+        {/if}
+        {#if product.images && product.images !== '[]'}
+          {@const imageList = JSON.parse(product.images) as string[]}
+          {#if imageList.length > 0}
+            <div>
+              <h3 class="mb-2 text-sm font-medium">Images</h3>
+              <div class="flex gap-2 overflow-x-auto pb-2">
+                {#each imageList.slice(0, 8) as imgUrl}
+                  <img
+                    src={imgUrl}
+                    alt={product.name}
+                    loading="lazy"
+                    class="h-20 w-20 shrink-0 rounded-md border object-cover" />
+                {/each}
+              </div>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    {/if}
 
     <!-- Price History Chart -->
     <div class="space-y-3">

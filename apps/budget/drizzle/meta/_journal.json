@@ -57,6 +57,13 @@
       "when": 1776052179667,
       "tag": "0007_yummy_the_professor",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1776134008591,
+      "tag": "0008_majestic_mordo",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { listProducts, getPriceHistory } from '$lib/query/price-watcher';
 import type { PriceProduct } from '$core/schema/price-products';
 import { currencyFormatter } from '$lib/utils/formatters';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
+import ProductImage from '../(components)/product-image.svelte';
 
 const productsQuery = listProducts().options();
 const products = $derived(productsQuery.data ?? []);
@@ -61,9 +62,10 @@ const recentChanges = $derived.by(() => {
       {#each recentChanges as product (product.id)}
         <a
           href="/price-watcher/products/{product.slug}"
-          class="flex items-center justify-between rounded-lg border p-3 transition-shadow hover:shadow-md">
+          class="flex items-center justify-between overflow-hidden rounded-lg border p-3 transition-shadow hover:shadow-md">
+          <ProductImage imageUrl={product.imageUrl} alt={product.name} size="sm" />
           <div class="min-w-0 flex-1 pr-4">
-            <div class="truncate font-medium" title={product.name}>{product.name}</div>
+            <div class="max-w-sm truncate font-medium sm:max-w-md lg:max-w-lg" title={product.name}>{product.name}</div>
             <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
           </div>
           <div class="shrink-0 text-right">

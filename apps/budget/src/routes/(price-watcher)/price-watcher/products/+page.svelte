@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
-import { listProducts } from '$lib/query/price-watcher';
+import { listProducts, listAlerts } from '$lib/query/price-watcher';
 import { cn } from '$lib/utils';
 import Grid3x3 from '@lucide/svelte/icons/grid-3x3';
 import List from '@lucide/svelte/icons/list';
@@ -12,8 +12,21 @@ import ProductDataTable from '../(components)/product-data-table.svelte';
 import AddProductDialog from '../(components)/add-product-dialog.svelte';
 
 const productsQuery = listProducts().options();
+const alertsQuery = listAlerts().options();
 const products = $derived(productsQuery.data ?? []);
+const alerts = $derived(alertsQuery.data ?? []);
 const isLoading = $derived(productsQuery.isLoading);
+
+// Count alerts per product
+const alertCountByProduct = $derived.by(() => {
+  const counts = new Map<number, number>();
+  for (const alert of alerts) {
+    if (alert.enabled) {
+      counts.set(alert.productId, (counts.get(alert.productId) ?? 0) + 1);
+    }
+  }
+  return counts;
+});
 
 let addDialogOpen = $state(false);
 let viewMode = $state<'grid' | 'table'>('table');
@@ -91,7 +104,7 @@ let viewMode = $state<'grid' | 'table'>('table');
   {:else if viewMode === 'grid'}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {#each products as product (product.id)}
-        <ProductCard {product} />
+        <ProductCard {product} alertCount={alertCountByProduct.get(product.id) ?? 0} />
       {/each}
     </div>
   {:else}

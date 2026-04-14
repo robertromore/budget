@@ -22,6 +22,8 @@ export const priceProducts = sqliteTable(
     url: text("url").notNull(),
     retailer: text("retailer").notNull(),
     imageUrl: text("image_url"),
+    images: text("images"), // JSON array of additional image URLs
+    description: text("description"),
     currentPrice: real("current_price"),
     lowestPrice: real("lowest_price"),
     highestPrice: real("highest_price"),

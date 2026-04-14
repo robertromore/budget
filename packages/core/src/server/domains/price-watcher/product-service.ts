@@ -24,12 +24,24 @@ export class ProductService {
     workspaceId: number,
     options?: { targetPrice?: number; checkInterval?: number }
   ): Promise<PriceProduct> {
-    if (!url || !url.startsWith("http")) {
-      throw new ValidationError("A valid URL is required");
+    if (!url) {
+      throw new ValidationError("A URL is required");
     }
 
-    const retailer = detectRetailer(url);
-    const info = await fetchProductInfo(url);
+    // Normalize URL: trim whitespace, add https:// if missing
+    let normalizedUrl = url.trim();
+    if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+
+    try {
+      new URL(normalizedUrl);
+    } catch {
+      throw new ValidationError(`Invalid URL format: "${normalizedUrl}"`);
+    }
+
+    const retailer = detectRetailer(normalizedUrl);
+    const info = await fetchProductInfo(normalizedUrl);
 
     const fullName = info.name || new URL(url).hostname;
     // Truncate long product names (common with Amazon) to first ~80 chars at a word boundary
@@ -43,10 +55,12 @@ export class ProductService {
     const product = await this.productRepo.create({
       workspaceId,
       name,
-      url,
+      url: normalizedUrl,
       retailer,
       slug,
       imageUrl: info.imageUrl,
+      images: info.images.length > 0 ? JSON.stringify(info.images) : null,
+      description: info.description,
       currentPrice: info.price,
       lowestPrice: info.price,
       highestPrice: info.price,

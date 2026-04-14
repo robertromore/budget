@@ -8,6 +8,7 @@ import type { Column, ColumnDef } from "@tanstack/table-core";
 import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
 import CircleCheck from "@lucide/svelte/icons/circle-check";
 import Pause from "@lucide/svelte/icons/pause";
+import ProductImage from "../(components)/product-image.svelte";
 
 const statusOptions: FacetedFilterOption[] = [
   { label: "Active", value: "active", icon: CircleCheck },
@@ -32,6 +33,22 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
 
 export function getProductColumns(): ColumnDef<PriceProduct>[] {
   return [
+    {
+      id: "image",
+      header: "",
+      cell: (info) =>
+        renderComponent(ProductImage, {
+          imageUrl: info.row.original.imageUrl,
+          alt: info.row.original.name,
+          size: "sm",
+        }),
+      enableSorting: false,
+      enableGlobalFilter: false,
+      size: 56,
+      meta: {
+        label: "Image",
+      },
+    },
     {
       accessorKey: "name",
       header: "Product",
