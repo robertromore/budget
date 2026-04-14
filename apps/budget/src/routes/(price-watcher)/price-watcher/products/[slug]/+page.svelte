@@ -136,10 +136,12 @@ async function handleDeleteAlert(alertId: number) {
             <Badge variant="secondary">Paused</Badge>
           {/if}
         </div>
-        {#if product.status === 'error' && product.errorMessage}
-          <div class="mt-2 flex items-center gap-2">
-            <p class="text-sm text-destructive">{product.errorMessage}</p>
-          </div>
+        {#if product.status === 'error'}
+          {#if product.errorMessage}
+            <p class="mt-1 text-sm text-destructive">{product.errorMessage}</p>
+          {:else}
+            <p class="mt-1 text-sm text-destructive">Price extraction failed</p>
+          {/if}
           <div class="mt-2 flex items-center gap-2">
             <Button
               variant="outline"

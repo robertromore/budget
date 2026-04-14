@@ -182,6 +182,12 @@ function extractMetaTags(html: string): ProductInfo {
 const PRICE_SELECTORS = [
   '[itemprop="price"]',
   'meta[itemprop="price"]',
+  // Amazon-specific
+  "#corePrice_feature_div .a-price-whole",
+  "#corePriceDisplay_desktop_feature_div .a-price-whole",
+  "#apex_offerDisplay_desktop .a-price-whole",
+  ".a-price-whole",
+  // Generic
   ".price",
   "#price",
   ".product-price",
@@ -214,7 +220,20 @@ function extractWithSelectors(html: string): ProductInfo | null {
     if (!el) continue;
     const raw = el.getAttribute("content") ?? el.getAttribute("data-price") ?? el.textContent;
     price = parsePrice(raw);
-    if (price !== null) break;
+    if (price !== null) {
+      // Amazon-specific: combine whole + fraction (e.g., "649." + "99" → 649.99)
+      if (selector.includes("a-price-whole")) {
+        const fractionEl = el.parentNode?.querySelector(".a-price-fraction");
+        if (fractionEl) {
+          const fraction = fractionEl.textContent.trim();
+          if (fraction) {
+            const wholeClean = raw.trim().replace(/\.$/, "");
+            price = parsePrice(`${wholeClean}.${fraction}`);
+          }
+        }
+      }
+      break;
+    }
   }
 
   // Extract name
