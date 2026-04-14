@@ -1,4 +1,6 @@
 import type { PriceAlert } from "$core/schema/price-alerts";
+import { notifications } from "$core/schema/notifications";
+import { db } from "$core/server/db";
 import { AlertRepository } from "./alert-repository";
 
 export interface AlertTriggerResult {
@@ -20,7 +22,8 @@ export class AlertService {
     newPrice: number,
     inStock: boolean,
     wasInStock: boolean,
-    targetPrice?: number | null
+    targetPrice?: number | null,
+    productName?: string
   ): Promise<AlertTriggerResult[]> {
     const alerts = await this.alertRepo.findEnabled(productId);
     const results: AlertTriggerResult[] = [];
@@ -30,13 +33,38 @@ export class AlertService {
 
       if (triggered.triggered) {
         await this.alertRepo.markTriggered(alert.id);
-        // Notification creation can be added here once integrated with the notification system
+        await this.createNotification(alert, triggered.reason, productName);
       }
 
       results.push(triggered);
     }
 
     return results;
+  }
+
+  private async createNotification(
+    alert: PriceAlert,
+    reason?: string,
+    productName?: string
+  ): Promise<void> {
+    try {
+      const title = productName
+        ? `Price Alert: ${productName}`
+        : "Price Alert";
+
+      await db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        workspaceId: alert.workspaceId,
+        type: alert.type === "back_in_stock" ? "success" : "warning",
+        title,
+        description: reason ?? null,
+        createdAt: new Date(),
+        read: false,
+        persistent: true,
+      });
+    } catch {
+      // Don't fail the price check if notification creation fails
+    }
   }
 
   private shouldTrigger(

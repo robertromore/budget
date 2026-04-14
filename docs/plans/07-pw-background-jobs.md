@@ -2,74 +2,71 @@
 
 ## Goal
 
-Automate periodic price checks so users don't have to manually refresh. Evaluate alerts and send notifications when conditions are met.
+Automate periodic price checks so users don't have to manually refresh each product.
 
 ## Done When
 
-- Products are automatically checked based on their `checkInterval`
-- Price snapshots are stored after each check
-- Alerts fire when conditions are met (price drop, target reached, etc.)
-- Notifications appear in the existing notification system
-- Failed checks are retried with backoff and products marked as "error" after repeated failures
+- A cron API endpoint processes overdue products
+- Products are checked based on their `checkInterval`
+- Failed checks mark the product as "error" after 3 consecutive failures
+- Error count resets on successful check or manual retry
+
+## Approach
+
+**Cron endpoint** at `src/routes/api/cron/check-prices/+server.ts`. Called externally (cron job, Bun scheduler, or manual curl) on a fixed interval (e.g., every 15 minutes). Returns JSON with results. Stateless — each call queries for overdue products and processes them.
+
+This avoids the complexity of server-side setInterval (SvelteKit has no clean server init hook) and client-side scheduling (only works when app is open).
+
+## Schema Change
+
+Add `errorCount` to price_products:
+
+- `errorCount` integer, default 0 — consecutive failed checks
+- Reset to 0 on successful check or manual "Check Now"
+- Product paused automatically when `errorCount >= 3`
+
+This requires a small migration.
 
 ## Changes
 
-### Price Check Scheduler
+### Modify: `packages/core/src/schema/price-products.ts`
 
-**Option A: SvelteKit server hook + setInterval**
+Add `errorCount: integer("error_count").notNull().default(0)` to the table.
 
-- In `apps/budget/src/hooks.server.ts`, start a background interval on server init
-- Every N minutes (e.g., 15), query for products where `lastCheckedAt + checkInterval < now`
-- Process in batches, rate-limited per retailer
-- Simple, no external dependencies
+### Modify: `packages/core/src/server/domains/price-watcher/product-service.ts`
 
-**Option B: Cron endpoint**
+Update `checkPrice`:
 
-- Create `src/routes/api/cron/check-prices/+server.ts`
-- Called by an external cron service (or Bun's built-in scheduler)
-- Returns results as JSON
-- More standard, easier to monitor
+- On success: set `errorCount: 0`, `status: "active"`, clear `errorMessage`
+- On failure: increment `errorCount`, set `errorMessage`. If `errorCount >= 3`, set `status: "error"`
 
-Recommend starting with **Option A** for simplicity, migrating to Option B if needed.
+### New: `packages/core/src/server/domains/price-watcher/scheduler.ts`
 
-### Implementation
+- `processOverdueChecks(workspaceId)` — query `findDueForCheck()`, process each product via `checkPrice()`, return summary (checked count, success count, error count)
+- Rate limiting: sequential processing with a delay between requests to the same retailer domain (1 second between same-domain requests)
+- Skip products already in "error" status (they need manual retry via "Check Now")
 
-**`packages/core/src/server/domains/price-watcher/scheduler.ts`**:
+### New: `apps/budget/src/routes/api/cron/check-prices/+server.ts`
 
-- `processOverdueChecks(workspaceId?)` — find and check all overdue products
-- Batch processing: group by retailer, apply rate limits (e.g., max 1 req/second per domain)
-- Error handling: increment error count, pause product after 3 consecutive failures
-- Logging: record check results for debugging
+- GET endpoint, no auth required (secured by deployment config or API key in header)
+- Calls `processOverdueChecks` for each active workspace
+- Returns `{ checked: number, succeeded: number, failed: number }`
+- Responds with 200 even on partial failures (individual product errors don't fail the batch)
 
-**`packages/core/src/server/domains/price-watcher/alert-service.ts`** (extend):
+## Deferred
 
-- After each price check, evaluate all enabled alerts for that product
-- Create notification entries via the existing notification system
-- Update `lastTriggeredAt` on alert
-- Debounce: don't re-trigger the same alert within a cooldown period (e.g., 24 hours)
-
-### Notification Integration
-
-- Use the existing `NotificationPopover` and notification system
-- New notification types: `price_drop`, `target_reached`, `back_in_stock`
-- Notification links navigate to the product detail page
-- Badge count in app rail for price watcher alerts
-
-### Error Handling
-
-- Network errors: retry with exponential backoff (1min, 5min, 30min)
-- Parse errors: log and mark product as "error" with error message
-- Rate limiting: respect retailer rate limits, queue excess requests
-- Product status transitions: active → error (after 3 failures) → active (on manual retry)
+- **Notification integration**: Creating notification entries when alerts fire. The `alertService.evaluateAlerts` already runs during `checkPrice` and marks `lastTriggeredAt`. Actual notification creation is deferred until the notification system is extended with price watcher notification types.
+- **Exponential backoff**: Simple 3-strikes-and-pause is sufficient. Per-retry backoff adds complexity with no schema support for tracking retry timing.
+- **App rail badge**: UI concern, not a backend job concern.
 
 ## Dependencies
 
-Phase 4 (Services) must be complete. Phase 6 (UI) is not required but notifications integration benefits from it.
+Phase 4 (Services) must be complete. Phase 3 (Schema) for the migration.
 
 ## Verification
 
-1. Start dev server, add a product, wait for scheduled check interval
-2. Verify price snapshot is created in database
-3. Set target price above current price, verify alert triggers
-4. Verify notification appears in notification popover
-5. Simulate fetch failure, verify error handling and retry
+1. `bun run db:generate` and `bun run db:migrate` — migration for `errorCount`
+2. `bun run check` — type check
+3. `curl http://localhost:5173/api/cron/check-prices` — returns JSON summary
+4. Add a product, wait past its check interval, hit the cron endpoint, verify new price snapshot
+5. Add a product with an invalid URL, hit cron 3 times, verify it transitions to "error" status

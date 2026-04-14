@@ -129,7 +129,8 @@ export class ProductService {
           info.price,
           info.inStock,
           wasInStock,
-          product.targetPrice
+          product.targetPrice,
+          product.name
         );
       }
 
