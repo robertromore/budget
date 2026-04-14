@@ -1,6 +1,7 @@
 import "$lib/server/env-sveltekit";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { auth } from "$core/server/auth";
+import { startPriceCheckScheduler } from "$core/server/domains/price-watcher/auto-check";
 import { building } from "$app/environment";
 import { env } from "$env/dynamic/private";
 import type { Handle } from "@sveltejs/kit";
@@ -14,6 +15,9 @@ import type { Handle } from "@sveltejs/kit";
  * - Better Auth routes (/api/auth/*)
  */
 export const handle: Handle = async ({ event, resolve }) => {
+  // Start the price check scheduler (no-op after first call)
+  startPriceCheckScheduler();
+
   // Desktop auto-login: runs before every request (page loads AND /api/trpc/ calls)
   // so all server-side code receives authenticated context via event.locals.preAuth.
   if (env.DESKTOP_MODE === "true" && !event.url.pathname.startsWith("/api/auth")) {
