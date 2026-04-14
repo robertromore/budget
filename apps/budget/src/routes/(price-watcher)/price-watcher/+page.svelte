@@ -98,11 +98,11 @@ const productsAtTarget = $derived(
           <a
             href="/price-watcher/products/{product.slug}"
             class="flex items-center justify-between rounded-lg border bg-success-bg p-3 transition-shadow hover:shadow-md">
-            <div>
-              <div class="font-medium">{product.name}</div>
+            <div class="min-w-0 flex-1 pr-4">
+              <div class="truncate font-medium" title={product.name}>{product.name}</div>
               <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
             </div>
-            <div class="text-right">
+            <div class="shrink-0 text-right">
               <div class="text-success font-bold">
                 {product.currentPrice !== null ? currencyFormatter.format(product.currentPrice) : '—'}
               </div>
@@ -128,11 +128,11 @@ const productsAtTarget = $derived(
           <a
             href="/price-watcher/products/{product.slug}"
             class="flex items-center justify-between rounded-lg border p-3 transition-shadow hover:shadow-md">
-            <div>
-              <div class="font-medium">{product.name}</div>
+            <div class="min-w-0 flex-1 pr-4">
+              <div class="truncate font-medium" title={product.name}>{product.name}</div>
               <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
             </div>
-            <div class="text-right">
+            <div class="shrink-0 text-right">
               <div class="font-bold">
                 {product.currentPrice !== null ? currencyFormatter.format(product.currentPrice) : '—'}
               </div>

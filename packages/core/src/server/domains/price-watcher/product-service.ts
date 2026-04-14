@@ -31,8 +31,14 @@ export class ProductService {
     const retailer = detectRetailer(url);
     const info = await fetchProductInfo(url);
 
-    const name = info.name || new URL(url).hostname;
-    const slug = slugify(name) + "-" + createId().slice(0, 8);
+    const fullName = info.name || new URL(url).hostname;
+    // Truncate long product names (common with Amazon) to first ~80 chars at a word boundary
+    const name = fullName.length > 80
+      ? fullName.substring(0, 80).replace(/[\s,\-]+$/, "").replace(/\s\S*$/, "") + "…"
+      : fullName;
+    // Slug from truncated name, max ~60 chars + 8 char unique suffix
+    const slugBase = slugify(name).substring(0, 60).replace(/-$/, "");
+    const slug = slugBase + "-" + createId().slice(0, 8);
 
     const product = await this.productRepo.create({
       workspaceId,

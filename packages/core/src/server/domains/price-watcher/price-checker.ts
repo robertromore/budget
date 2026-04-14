@@ -53,6 +53,11 @@ export function detectRetailer(url: string): string {
       "costco.com": "costco",
       "homedepot.com": "homedepot",
       "lowes.com": "lowes",
+      "adorama.com": "adorama",
+      "bhphotovideo.com": "bhphoto",
+      "dwr.com": "dwr",
+      "lumens.com": "lumens",
+      "2modern.com": "2modern",
     };
     return domainMap[hostname] ?? hostname.split(".").slice(-2, -1)[0] ?? "unknown";
   } catch {

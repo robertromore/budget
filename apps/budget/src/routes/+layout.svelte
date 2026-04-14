@@ -45,7 +45,7 @@ import { setPageActionsContext } from '$lib/stores/page-actions.svelte';
 import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { setNotificationContext } from '$lib/stores/notifications.svelte';
 import { themePreferences } from '$lib/stores/theme-preferences.svelte';
-import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
+import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { setQueryClientContext } from '@tanstack/svelte-query';
 import { mode, ModeWatcher } from 'mode-watcher';
 import { NuqsAdapter } from 'nuqs-svelte/adapters/svelte-kit';
