@@ -4,6 +4,18 @@ import type { PriceAlert } from "$core/schema/price-alerts";
 import { trpc } from "$core/trpc/client-factory";
 import { cachePatterns } from "./_client";
 import { defineMutation, defineQuery } from "./_factory";
+import { toast } from "./_toast";
+
+interface ProductPreview {
+  url: string;
+  retailer: string;
+  name: string | null;
+  price: number | null;
+  currency: string | null;
+  imageUrl: string | null;
+  description: string | null;
+  inStock: boolean;
+}
 
 /**
  * Query Keys for price watcher operations
@@ -47,6 +59,11 @@ export const getPriceHistory = (
 
 // ─── Product Mutations ─────────────────────────────────
 
+export const previewUrl = defineMutation<{ url: string }, ProductPreview>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.previewUrl.mutate(params),
+  errorMessage: "Failed to fetch product info",
+});
+
 export const addProduct = defineMutation<
   { url: string; targetPrice?: number; checkInterval?: number },
   PriceProduct
@@ -80,21 +97,84 @@ export const deleteProduct = defineMutation<{ id: number }, void>({
   errorMessage: "Failed to delete product",
 });
 
-export const checkPriceNow = defineMutation<{ productId: number }, PriceProduct>({
-  mutationFn: (params) => trpc().priceWatcherRoutes.checkPriceNow.mutate(params),
+export const bulkDeleteProducts = defineMutation<{ ids: number[] }, { count: number }>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.bulkDeleteProducts.mutate(params),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(["price-watcher"]);
   },
-  successMessage: "Price checked",
+  successMessage: (result) => `${result.count} products deleted`,
+  errorMessage: "Failed to delete products",
+  importance: "critical",
+});
+
+export const bulkUpdateStatus = defineMutation<
+  { ids: number[]; status: "active" | "paused" },
+  { count: number }
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.bulkUpdateStatus.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(["price-watcher"]);
+  },
+  successMessage: (result, variables) =>
+    `${result.count} products ${variables.status === "paused" ? "paused" : "activated"}`,
+  errorMessage: "Failed to update products",
+});
+
+export const bulkCheckPrices = defineMutation<
+  { ids: number[] },
+  { checked: number; errors: number }
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.bulkCheckPrices.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(["price-watcher"]);
+  },
+  successMessage: (result) =>
+    result.errors > 0
+      ? `${result.checked} checked, ${result.errors} failed`
+      : `${result.checked} prices checked`,
+  errorMessage: "Failed to check prices",
+});
+
+export const checkPriceNow = defineMutation<{ productId: number }, PriceProduct>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.checkPriceNow.mutate(params),
+  onSuccess: (result) => {
+    cachePatterns.invalidatePrefix(["price-watcher"]);
+    if (result.status === "error") {
+      toast.error(`Check failed: ${result.errorMessage ?? "could not extract price"}`);
+    } else {
+      toast.success(
+        result.currentPrice !== null
+          ? `Price checked: $${result.currentPrice}`
+          : "Price checked"
+      );
+    }
+  },
   errorMessage: "Failed to check price",
+});
+
+export const refreshProductInfo = defineMutation<{ productId: number }, PriceProduct>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.refreshProductInfo.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(["price-watcher"]);
+  },
+  successMessage: "Product info refreshed",
+  errorMessage: "Failed to refresh product info",
 });
 
 export const checkPriceWithBrowser = defineMutation<{ productId: number }, PriceProduct>({
   mutationFn: (params) => trpc().priceWatcherRoutes.checkPriceWithBrowser.mutate(params),
-  onSuccess: () => {
+  onSuccess: (result) => {
     cachePatterns.invalidatePrefix(["price-watcher"]);
+    if (result.status === "error") {
+      toast.error(`Browser check failed: ${result.errorMessage ?? "could not extract price"}`);
+    } else {
+      toast.success(
+        result.currentPrice !== null
+          ? `Price checked: $${result.currentPrice}`
+          : "Price checked with browser"
+      );
+    }
   },
-  successMessage: "Price checked with browser",
   errorMessage: "Failed to check price with browser",
 });
 
@@ -158,4 +238,133 @@ export const logManualPrice = defineMutation<
   },
   successMessage: "Price logged",
   errorMessage: "Failed to log price",
+});
+
+// ─── Tags ─────────────────────────────────
+
+const tagKeys = {
+  all: () => ["price-watcher", "tags"] as const,
+  product: (productId: number) => ["price-watcher", "tags", productId] as const,
+};
+
+export const getAllTags = () =>
+  defineQuery<Array<{ tag: string; count: number }>>({
+    queryKey: tagKeys.all(),
+    queryFn: () => trpc().priceWatcherRoutes.getAllTags.query(),
+    options: { staleTime: 30_000 },
+  });
+
+export const getProductTags = (productId: number) =>
+  defineQuery<string[]>({
+    queryKey: tagKeys.product(productId),
+    queryFn: () => trpc().priceWatcherRoutes.getProductTags.query({ productId }),
+  });
+
+export const getProductIdsByTags = (tags: string[]) =>
+  defineQuery<number[]>({
+    queryKey: [...tagKeys.all(), "byTags", tags] as const,
+    queryFn: () => trpc().priceWatcherRoutes.getProductIdsByTags.query({ tags }),
+    options: { enabled: tags.length > 0 },
+  });
+
+export const addTag = defineMutation<{ productId: number; tag: string }, void>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.addTag.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(tagKeys.all());
+  },
+  successMessage: "Tag added",
+  errorMessage: "Failed to add tag",
+});
+
+export const removeTag = defineMutation<{ productId: number; tag: string }, void>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.removeTag.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(tagKeys.all());
+  },
+  successMessage: "Tag removed",
+  errorMessage: "Failed to remove tag",
+});
+
+// ─── Lists ─────────────────────────────────
+
+import type { PriceProductList } from "$core/schema/price-product-lists";
+
+const listKeys = {
+  all: () => ["price-watcher", "lists"] as const,
+  products: (listId: number) => ["price-watcher", "lists", listId, "products"] as const,
+  productLists: (productId: number) => ["price-watcher", "product-lists", productId] as const,
+};
+
+export const getAllLists = () =>
+  defineQuery<Array<PriceProductList & { itemCount: number }>>({
+    queryKey: listKeys.all(),
+    queryFn: () => trpc().priceWatcherRoutes.getAllLists.query(),
+    options: { staleTime: 30_000 },
+  });
+
+export const getProductLists = (productId: number) =>
+  defineQuery<PriceProductList[]>({
+    queryKey: listKeys.productLists(productId),
+    queryFn: () => trpc().priceWatcherRoutes.getProductLists.query({ productId }),
+  });
+
+export const getListProducts = (listId: number) =>
+  defineQuery<PriceProduct[]>({
+    queryKey: listKeys.products(listId),
+    queryFn: () => trpc().priceWatcherRoutes.getListProducts.query({ listId }),
+  });
+
+export const createList = defineMutation<
+  { name: string; description?: string | null },
+  PriceProductList
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.createList.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+  },
+  successMessage: "List created",
+  errorMessage: "Failed to create list",
+});
+
+export const updateList = defineMutation<
+  { id: number; data: { name?: string; description?: string | null } },
+  PriceProductList
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.updateList.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+  },
+  successMessage: "List updated",
+  errorMessage: "Failed to update list",
+});
+
+export const deleteList = defineMutation<{ id: number }, void>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.deleteList.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+  },
+  successMessage: "List deleted",
+  errorMessage: "Failed to delete list",
+});
+
+export const addToList = defineMutation<{ listId: number; productId: number }, void>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.addToList.mutate(params),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+    cachePatterns.invalidatePrefix(listKeys.products(variables.listId));
+    cachePatterns.invalidatePrefix(["price-watcher", "product-lists"]);
+  },
+  successMessage: "Added to list",
+  errorMessage: "Failed to add to list",
+});
+
+export const removeFromList = defineMutation<{ listId: number; productId: number }, void>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.removeFromList.mutate(params),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+    cachePatterns.invalidatePrefix(listKeys.products(variables.listId));
+    cachePatterns.invalidatePrefix(["price-watcher", "product-lists"]);
+  },
+  successMessage: "Removed from list",
+  errorMessage: "Failed to remove from list",
 });

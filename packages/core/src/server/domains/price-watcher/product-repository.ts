@@ -3,7 +3,7 @@ import type { NewPriceProduct, PriceProduct } from "$core/schema/price-products"
 import { db } from "$core/server/db";
 import { NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp, nowISOString } from "$core/utils/dates-core";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export class ProductRepository {
   async create(data: NewPriceProduct): Promise<PriceProduct> {
@@ -94,6 +94,40 @@ export class ProductRepository {
       .update(priceProducts)
       .set({ deletedAt: getCurrentTimestamp() })
       .where(eq(priceProducts.id, id));
+  }
+
+  async bulkSoftDelete(ids: number[], workspaceId: number): Promise<number> {
+    if (ids.length === 0) return 0;
+    const result = await db
+      .update(priceProducts)
+      .set({ deletedAt: getCurrentTimestamp() })
+      .where(
+        and(
+          inArray(priceProducts.id, ids),
+          eq(priceProducts.workspaceId, workspaceId),
+          isNull(priceProducts.deletedAt)
+        )
+      );
+    return result.rowsAffected || 0;
+  }
+
+  async bulkUpdateStatus(
+    ids: number[],
+    status: "active" | "paused",
+    workspaceId: number
+  ): Promise<number> {
+    if (ids.length === 0) return 0;
+    const result = await db
+      .update(priceProducts)
+      .set({ status, updatedAt: getCurrentTimestamp() })
+      .where(
+        and(
+          inArray(priceProducts.id, ids),
+          eq(priceProducts.workspaceId, workspaceId),
+          isNull(priceProducts.deletedAt)
+        )
+      );
+    return result.rowsAffected || 0;
   }
 
   async findDueForCheck(workspaceId: number): Promise<PriceProduct[]> {

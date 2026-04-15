@@ -283,7 +283,19 @@ function extractWithSelectors(html: string): ProductInfo | null {
 
   // Extract description
   const descEl = root.querySelector("#productDescription p, [itemprop=\"description\"], .product-description, #feature-bullets");
-  const description = descEl?.textContent?.trim()?.substring(0, 500) ?? null;
+  let description = descEl?.textContent?.trim()?.substring(0, 500) ?? null;
+  if (description) {
+    // Clean out CTA / expander text commonly embedded in product descriptions
+    description = description
+      .replace(/›\s*See more[^.]*\.?/gi, "")
+      .replace(/See more product details/gi, "")
+      .replace(/Read more/gi, "")
+      .replace(/Show more/gi, "")
+      .replace(/Click here for more/gi, "")
+      .replace(/Learn more/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim() || null;
+  }
 
   if (!price && !name) return null;
 

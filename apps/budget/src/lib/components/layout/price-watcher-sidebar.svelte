@@ -5,7 +5,10 @@ import { listProducts, listAlerts } from '$lib/query/price-watcher';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Package from '@lucide/svelte/icons/package';
 import Bell from '@lucide/svelte/icons/bell';
+import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Settings from '@lucide/svelte/icons/settings';
+import WorkspaceSwitcher from '../../../routes/(budget)/workspaces/(components)/workspace-switcher.svelte';
 
 import type { LayoutData } from '../../../routes/$types';
 
@@ -24,9 +27,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
 
 <Sidebar.Root>
   <Sidebar.Header class="border-sidebar-border h-16 border-b">
-    <div class="flex h-full items-center px-4">
-      <span class="text-lg font-semibold">Price Watcher</span>
-    </div>
+    <WorkspaceSwitcher />
   </Sidebar.Header>
   <Sidebar.Content>
     <Sidebar.Group>
@@ -60,6 +61,16 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
+                <a href="/price-watcher/compare" {...props} class="flex items-center gap-3">
+                  <ArrowLeftRight class="h-4 w-4"></ArrowLeftRight>
+                  <span class="font-medium">Compare</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
                 <a href="/price-watcher/alerts" {...props} class="flex items-center gap-3">
                   <Bell class="h-4 w-4"></Bell>
                   <span class="flex-1 font-medium">Alerts</span>
@@ -78,6 +89,16 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
                 <a href="/price-watcher/history" {...props} class="flex items-center gap-3">
                   <TrendingUp class="h-4 w-4"></TrendingUp>
                   <span class="font-medium">Price History</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
+                <a href="/price-watcher/settings" {...props} class="flex items-center gap-3">
+                  <Settings class="h-4 w-4"></Settings>
+                  <span class="font-medium">Settings</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>

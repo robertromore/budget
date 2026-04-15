@@ -2,7 +2,9 @@
 import { getPriceHistory } from '$lib/query/price-watcher';
 import type { PriceProduct } from '$core/schema/price-products';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { cn } from '$lib/utils';
+import { LayerCake, Svg } from 'layercake';
+import { Line, Area, AxisX, AxisY, HorizontalLine, Tooltip, Scatter } from '$lib/components/layercake';
+import { scaleTime, scaleLinear } from 'd3-scale';
 
 interface Props {
   product: PriceProduct;
@@ -23,92 +25,122 @@ const historyQuery = $derived(getPriceHistory(product.id, dateRange).options());
 const history = $derived(historyQuery.data ?? []);
 const isLoading = $derived(historyQuery.isLoading);
 
-// Chart dimensions
-const chartHeight = 200;
-const chartPadding = { top: 10, right: 10, bottom: 30, left: 60 };
-
 const chartData = $derived.by(() => {
-  if (history.length === 0) return null;
-
-  const prices = history.map((h) => h.price);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const priceRange = maxPrice - minPrice || 1;
-
-  const width = 100; // percentage-based
-  const xStep = history.length > 1 ? width / (history.length - 1) : 0;
-
-  const points = history.map((h, i) => ({
-    x: i * xStep,
-    y: ((maxPrice - h.price) / priceRange) * 100,
-    price: h.price,
-    date: new Date(h.checkedAt).toLocaleDateString(),
+  if (history.length === 0) return [];
+  return history.map((h) => ({
+    date: new Date(h.checkedAt),
+    value: h.price,
+    source: h.source,
   }));
+});
 
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+const hasManualEntries = $derived(chartData.some((d) => d.source === 'manual'));
 
-  return { points, pathD, minPrice, maxPrice };
+const sourceLabel: Record<string, string> = {
+  scrape: 'Scraped',
+  api: 'API',
+  manual: 'Manual',
+};
+
+const yMin = $derived.by(() => {
+  if (chartData.length === 0) return 0;
+  const prices = chartData.map((d) => d.value);
+  const min = Math.min(...prices);
+  // Include target price in range if set
+  if (product.targetPrice !== null) {
+    return Math.min(min, product.targetPrice) * 0.95;
+  }
+  return min * 0.95;
+});
+
+const yMax = $derived.by(() => {
+  if (chartData.length === 0) return 100;
+  const prices = chartData.map((d) => d.value);
+  return Math.max(...prices) * 1.05;
 });
 </script>
 
 {#if isLoading}
-  <div class="bg-muted h-[240px] animate-pulse rounded-lg"></div>
-{:else if history.length === 0}
-  <div class="text-muted-foreground flex h-[240px] items-center justify-center rounded-lg border border-dashed text-sm">
+  <div class="bg-muted h-[260px] animate-pulse rounded-lg"></div>
+{:else if chartData.length === 0}
+  <div class="text-muted-foreground flex h-[260px] items-center justify-center rounded-lg border border-dashed text-sm">
     No price history yet
   </div>
-{:else if chartData}
+{:else}
   <div class="rounded-lg border p-4">
     <div class="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-      <span>{currencyFormatter.format(chartData.maxPrice)}</span>
-      <span>{history.length} data points</span>
+      <span>{chartData.length} data points</span>
+      <span>
+        {chartData[0]?.date.toLocaleDateString()} — {chartData[chartData.length - 1]?.date.toLocaleDateString()}
+      </span>
     </div>
-    <svg
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      class="h-[200px] w-full"
-      role="img"
-      aria-label="Price history chart">
-      <!-- Grid lines -->
-      <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" stroke-width="0.2" class="text-border" />
-      <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-width="0.2" class="text-border" />
-      <line x1="0" y1="100" x2="100" y2="100" stroke="currentColor" stroke-width="0.2" class="text-border" />
-
-      <!-- Target price line -->
-      {#if product.targetPrice !== null && chartData.maxPrice !== chartData.minPrice}
-        {@const targetY = ((chartData.maxPrice - product.targetPrice) / (chartData.maxPrice - chartData.minPrice)) * 100}
-        {#if targetY >= 0 && targetY <= 100}
-          <line
-            x1="0" y1={targetY} x2="100" y2={targetY}
-            stroke="currentColor"
-            stroke-width="0.3"
-            stroke-dasharray="2,2"
-            class="text-success" />
-        {/if}
-      {/if}
-
-      <!-- Price line -->
-      <path
-        d={chartData.pathD}
-        fill="none"
-        stroke="currentColor"
-        stroke-width="0.8"
-        class="text-info"
-        vector-effect="non-scaling-stroke" />
-
-      <!-- Data points -->
-      {#each chartData.points as point}
-        <circle
-          cx={point.x}
-          cy={point.y}
-          r="1"
-          fill="currentColor"
-          class="text-info" />
-      {/each}
-    </svg>
-    <div class="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-      <span>{currencyFormatter.format(chartData.minPrice)}</span>
-      <span>{history[0]?.checkedAt ? new Date(history[0].checkedAt).toLocaleDateString() : ''} — {history[history.length - 1]?.checkedAt ? new Date(history[history.length - 1].checkedAt).toLocaleDateString() : ''}</span>
+    <div class="h-[220px]">
+      <LayerCake
+        data={chartData}
+        x="date"
+        y="value"
+        xScale={scaleTime()}
+        yScale={scaleLinear()}
+        yDomain={[yMin, yMax]}
+        padding={{ top: 8, right: 8, bottom: 24, left: 48 }}>
+        <Svg>
+          <AxisX
+            ticks={Math.min(chartData.length, 6)}
+            gridlines={false}
+            tickMarks={false}
+            format={(d) => d instanceof Date ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} />
+          <AxisY
+            ticks={5}
+            gridlines
+            format={(d) => currencyFormatter.format(d)} />
+          <Area
+            fill="var(--chart-2)"
+            opacity={0.1} />
+          <Line
+            stroke="var(--chart-2)"
+            strokeWidth={2} />
+          {#if hasManualEntries}
+            <Scatter
+              fill={(d) => d.source === 'manual' ? 'var(--chart-4)' : 'transparent'}
+              stroke={(d) => d.source === 'manual' ? 'var(--background)' : 'transparent'}
+              strokeWidth={2}
+              radius={(d) => d.source === 'manual' ? 4 : 0}
+              opacity={(d) => d.source === 'manual' ? 1 : 0} />
+          {/if}
+          {#if product.targetPrice !== null}
+            <HorizontalLine
+              value={product.targetPrice}
+              stroke="var(--color-success)"
+              strokeWidth={1}
+              strokeDasharray="4,4"
+              label="Target: {currencyFormatter.format(product.targetPrice)}" />
+          {/if}
+          <Tooltip>
+            {#snippet children({ point, x, y }: { point: any; x: number; y: number })}
+              {@const tooltipLeft = x > 150}
+              <foreignObject
+                x={tooltipLeft ? x - 155 : x + 12}
+                y={Math.max(0, y - 28)}
+                width={150}
+                height={64}
+                style="overflow: visible; pointer-events: none;">
+                <div class="bg-popover border-border rounded-md border px-2.5 py-1.5 shadow-md">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-medium">{currencyFormatter.format(point.value)}</span>
+                    {#if point.source === 'manual'}
+                      <span class="rounded bg-chart-4/15 px-1 text-[10px] text-chart-4 font-medium">Manual</span>
+                    {/if}
+                  </div>
+                  <div class="text-muted-foreground text-[10px]">
+                    {point.date instanceof Date ? point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                    {#if point.source !== 'manual'} · {sourceLabel[point.source] ?? point.source}{/if}
+                  </div>
+                </div>
+              </foreignObject>
+            {/snippet}
+          </Tooltip>
+        </Svg>
+      </LayerCake>
     </div>
   </div>
 {/if}

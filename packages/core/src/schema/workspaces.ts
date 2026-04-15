@@ -281,6 +281,20 @@ export interface WorkspacePreferences {
   encryption?: WorkspaceEncryptionPreferences; // Encryption settings for this workspace
   connectionProviders?: ConnectionProviderPreferences; // Bank connection provider settings
   documentExtraction?: DocumentExtractionPreferences; // Document text extraction settings
+  priceWatcher?: PriceWatcherPreferences; // Price watcher settings
+}
+
+export interface PriceWatcherPreferences {
+  defaultCheckInterval?: number; // Hours (default: 6)
+  defaultCheckUnit?: "minutes" | "hours" | "days" | "weeks";
+  pauseOnConsecutiveErrors?: number; // Pause after N failures (default: 3)
+  notifications?: {
+    priceDrop?: boolean;
+    targetReached?: boolean;
+    backInStock?: boolean;
+    anyChange?: boolean;
+    errors?: boolean;
+  };
 }
 
 // Zod schemas

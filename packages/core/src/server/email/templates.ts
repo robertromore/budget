@@ -296,3 +296,92 @@ If you have any questions, feel free to reach out. We're here to help!
     `.trim(),
   };
 }
+
+/**
+ * Email template for price watcher alerts
+ */
+export function priceAlertEmail(options: {
+  productName: string;
+  reason: string;
+  alertType: string;
+  currentPrice?: number | null;
+  productUrl?: string;
+  appUrl?: string;
+}): { subject: string; html: string; text: string } {
+  const { productName, reason, alertType, currentPrice, productUrl, appUrl } = options;
+
+  const typeLabel: Record<string, string> = {
+    price_drop: "Price Drop",
+    target_reached: "Target Reached",
+    back_in_stock: "Back in Stock",
+    any_change: "Price Change",
+  };
+
+  const subject = `${typeLabel[alertType] ?? "Price Alert"}: ${productName}`;
+
+  const priceHtml = currentPrice !== null && currentPrice !== undefined
+    ? `<p style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: #18181b;">$${currentPrice.toFixed(2)}</p>`
+    : "";
+
+  const productLink = productUrl
+    ? `<a href="${productUrl}" style="display: inline-block; padding: 10px 20px; font-size: 14px; font-weight: 500; color: #ffffff; background-color: #18181b; border-radius: 6px; text-decoration: none; margin-right: 8px;">View Product</a>`
+    : "";
+
+  const dashboardLink = appUrl
+    ? `<a href="${appUrl}/price-watcher" style="display: inline-block; padding: 10px 20px; font-size: 14px; font-weight: 500; color: #18181b; background-color: #f4f4f5; border-radius: 6px; text-decoration: none; border: 1px solid #e4e4e7;">Open Dashboard</a>`
+    : "";
+
+  return {
+    subject,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <tr>
+      <td style="background-color: #ffffff; border-radius: 8px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a1aa;">${typeLabel[alertType] ?? "Price Alert"}</p>
+
+        <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 600; color: #18181b;">${productName}</h1>
+
+        ${priceHtml}
+
+        <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #3f3f46;">
+          ${reason}
+        </p>
+
+        <table cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 0 0 24px;">
+              ${productLink}
+              ${dashboardLink}
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+          You received this because you have a price alert configured for this product.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+    text: `
+${typeLabel[alertType] ?? "Price Alert"}: ${productName}
+
+${currentPrice !== null && currentPrice !== undefined ? `Current Price: $${currentPrice.toFixed(2)}` : ""}
+
+${reason}
+
+${productUrl ? `View Product: ${productUrl}` : ""}
+${appUrl ? `Dashboard: ${appUrl}/price-watcher` : ""}
+    `.trim(),
+  };
+}

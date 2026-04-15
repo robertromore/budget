@@ -5,6 +5,8 @@ import { HistoryRepository } from "$core/server/domains/price-watcher/history-re
 import { AlertRepository } from "$core/server/domains/price-watcher/alert-repository";
 import { ProductService } from "$core/server/domains/price-watcher/product-service";
 import { AlertService } from "$core/server/domains/price-watcher/alert-service";
+import { TagService } from "$core/server/domains/price-watcher/tag-service";
+import { ListService } from "$core/server/domains/price-watcher/list-service";
 import { z } from "zod";
 
 // Lazy service instantiation (singletons, consistent with serviceFactory pattern)
@@ -35,6 +37,19 @@ function getAlertService(): AlertService {
 function getHistoryRepo(): HistoryRepository {
   init();
   return _historyRepo!;
+}
+
+let _tagService: TagService | null = null;
+let _listService: ListService | null = null;
+
+function getTagService(): TagService {
+  if (!_tagService) _tagService = new TagService();
+  return _tagService;
+}
+
+function getListService(): ListService {
+  if (!_listService) _listService = new ListService();
+  return _listService;
 }
 
 // Zod schemas
@@ -100,6 +115,14 @@ export const priceWatcherRoutes = t.router({
       )
     ),
 
+  previewUrl: rateLimitedProcedure
+    .input(z.object({ url: z.string().min(1) }))
+    .mutation(
+      withErrorHandler(async ({ input }) =>
+        getProductService().previewUrl(input.url)
+      )
+    ),
+
   addProduct: rateLimitedProcedure
     .input(addProductSchema)
     .mutation(
@@ -124,6 +147,30 @@ export const priceWatcherRoutes = t.router({
     .mutation(
       withErrorHandler(async ({ input, ctx }) =>
         getProductService().deleteProduct(input.id, ctx.workspaceId)
+      )
+    ),
+
+  bulkDeleteProducts: rateLimitedProcedure
+    .input(z.object({ ids: z.array(z.number().positive()).min(1).max(100) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getProductService().bulkDeleteProducts(input.ids, ctx.workspaceId)
+      )
+    ),
+
+  bulkUpdateStatus: rateLimitedProcedure
+    .input(z.object({ ids: z.array(z.number().positive()).min(1).max(100), status: z.enum(["active", "paused"]) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getProductService().bulkUpdateStatus(input.ids, input.status, ctx.workspaceId)
+      )
+    ),
+
+  bulkCheckPrices: rateLimitedProcedure
+    .input(z.object({ ids: z.array(z.number().positive()).min(1).max(20) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getProductService().bulkCheckPrices(input.ids, ctx.workspaceId)
       )
     ),
 
@@ -152,6 +199,14 @@ export const priceWatcherRoutes = t.router({
     .mutation(
       withErrorHandler(async ({ input, ctx }) =>
         getProductService().checkPrice(input.productId, ctx.workspaceId, { useBrowser: true })
+      )
+    ),
+
+  refreshProductInfo: rateLimitedProcedure
+    .input(z.object({ productId: z.number().positive() }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getProductService().refreshMetadata(input.productId, ctx.workspaceId)
       )
     ),
 
@@ -216,5 +271,109 @@ export const priceWatcherRoutes = t.router({
           input.inStock
         );
       })
+    ),
+
+  // Tags
+  addTag: rateLimitedProcedure
+    .input(z.object({ productId: z.number().positive(), tag: z.string().min(1).max(50) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getTagService().addTag(input.productId, input.tag, ctx.workspaceId)
+      )
+    ),
+
+  removeTag: rateLimitedProcedure
+    .input(z.object({ productId: z.number().positive(), tag: z.string().min(1) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getTagService().removeTag(input.productId, input.tag, ctx.workspaceId)
+      )
+    ),
+
+  getProductTags: publicProcedure
+    .input(z.object({ productId: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input }) =>
+        getTagService().getProductTags(input.productId)
+      )
+    ),
+
+  getAllTags: publicProcedure
+    .query(
+      withErrorHandler(async ({ ctx }) =>
+        getTagService().getAllTags(ctx.workspaceId)
+      )
+    ),
+
+  getProductIdsByTags: publicProcedure
+    .input(z.object({ tags: z.array(z.string().min(1)).min(1) }))
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        getTagService().getProductIdsByTags(input.tags, ctx.workspaceId)
+      )
+    ),
+
+  // Lists
+  createList: rateLimitedProcedure
+    .input(z.object({ name: z.string().min(1).max(100), description: z.string().max(500).nullable().optional() }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().createList(input.name, ctx.workspaceId, input.description)
+      )
+    ),
+
+  updateList: rateLimitedProcedure
+    .input(z.object({ id: z.number().positive(), data: z.object({ name: z.string().min(1).max(100).optional(), description: z.string().max(500).nullable().optional() }) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().updateList(input.id, input.data, ctx.workspaceId)
+      )
+    ),
+
+  deleteList: rateLimitedProcedure
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().deleteList(input.id, ctx.workspaceId)
+      )
+    ),
+
+  addToList: rateLimitedProcedure
+    .input(z.object({ listId: z.number().positive(), productId: z.number().positive() }))
+    .mutation(
+      withErrorHandler(async ({ input }) =>
+        getListService().addToList(input.listId, input.productId)
+      )
+    ),
+
+  removeFromList: rateLimitedProcedure
+    .input(z.object({ listId: z.number().positive(), productId: z.number().positive() }))
+    .mutation(
+      withErrorHandler(async ({ input }) =>
+        getListService().removeFromList(input.listId, input.productId)
+      )
+    ),
+
+  getListProducts: publicProcedure
+    .input(z.object({ listId: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input }) =>
+        getListService().getListProducts(input.listId)
+      )
+    ),
+
+  getProductLists: publicProcedure
+    .input(z.object({ productId: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input }) =>
+        getListService().getProductLists(input.productId)
+      )
+    ),
+
+  getAllLists: publicProcedure
+    .query(
+      withErrorHandler(async ({ ctx }) =>
+        getListService().getAllLists(ctx.workspaceId)
+      )
     ),
 });

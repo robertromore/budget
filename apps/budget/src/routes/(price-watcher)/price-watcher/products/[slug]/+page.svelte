@@ -11,6 +11,7 @@ import {
   getProduct,
   checkPriceNow,
   checkPriceWithBrowser,
+  refreshProductInfo,
   deleteProduct,
   logManualPrice,
   listAlerts,
@@ -28,8 +29,12 @@ import Bell from '@lucide/svelte/icons/bell';
 import Plus from '@lucide/svelte/icons/plus';
 import type { PageData } from './$types';
 import PriceHistoryChart from '../../(components)/price-history-chart.svelte';
-import ProductImage from '../../(components)/product-image.svelte';
+import ProductGallery from '../../(components)/product-gallery.svelte';
+import ProductTags from '../../(components)/product-tags.svelte';
+import ProductLists from '../../(components)/product-lists.svelte';
+import EditProductDialog from '../../(components)/edit-product-dialog.svelte';
 import { getAlertTypeLabel } from '../../(data)/alert-utils';
+import Pencil from '@lucide/svelte/icons/pencil';
 
 let { data }: { data: PageData } = $props();
 
@@ -40,6 +45,7 @@ const alerts = $derived(alertsQuery?.data ?? []);
 
 const checkMutation = checkPriceNow.options();
 const browserCheckMutation = checkPriceWithBrowser.options();
+const refreshMutation = refreshProductInfo.options();
 const deleteMutation = deleteProduct.options();
 const manualPriceMutation = logManualPrice.options();
 const createAlertMutation = createAlert.options();
@@ -49,8 +55,12 @@ const updateAlertMut = updateAlert.options();
 let deleteOpen = $state(false);
 let addAlertOpen = $state(false);
 let manualPriceOpen = $state(false);
+let editOpen = $state(false);
 let manualPriceValue = $state('');
 let newAlertType = $state('price_drop');
+let editingAlertId = $state<number | null>(null);
+let editAlertType = $state('');
+let editAlertThreshold = $state('');
 let newAlertThreshold = $state('10');
 let period = $state<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
 
@@ -100,6 +110,28 @@ async function handleDeleteAlert(alertId: number) {
   await deleteAlertMut.mutateAsync({ id: alertId });
 }
 
+function startEditAlert(alert: { id: number; type: string; threshold: number | null }) {
+  editingAlertId = alert.id;
+  editAlertType = alert.type;
+  editAlertThreshold = alert.threshold !== null ? String(alert.threshold) : '10';
+}
+
+async function handleSaveAlert() {
+  if (editingAlertId === null) return;
+  await updateAlertMut.mutateAsync({
+    id: editingAlertId,
+    data: {
+      type: editAlertType as any,
+      threshold: editAlertType === 'price_drop' ? parseFloat(editAlertThreshold) || 10 : null,
+    },
+  });
+  editingAlertId = null;
+}
+
+function cancelEditAlert() {
+  editingAlertId = null;
+}
+
 </script>
 
 <svelte:head>
@@ -118,153 +150,139 @@ async function handleDeleteAlert(alertId: number) {
       <span class="text-foreground max-w-xs truncate" title={product.name}>{product.name}</span>
     </div>
 
-    <!-- Header -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div class="flex gap-4">
-        {#if product.imageUrl}
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            class="hidden h-24 w-24 shrink-0 rounded-lg border object-cover sm:block" />
-        {/if}
-        <div>
-        <h1 class="max-w-xl truncate text-2xl font-bold" title={product.name}>{product.name}</h1>
-        <div class="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-          <span class="capitalize">{product.retailer}</span>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-info inline-flex items-center gap-1 hover:underline">
-            Visit page <ExternalLink class="h-3 w-3" />
-          </a>
-          {#if product.status === 'error'}
-            <Badge variant="destructive">Error</Badge>
-          {:else if product.status === 'paused'}
-            <Badge variant="secondary">Paused</Badge>
-          {/if}
-        </div>
-        {#if product.status === 'error'}
-          {#if product.errorMessage}
-            <p class="mt-1 text-sm text-destructive">{product.errorMessage}</p>
-          {:else}
-            <p class="mt-1 text-sm text-destructive">Price extraction failed</p>
-          {/if}
-          <div class="mt-2 flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={handleBrowserCheck}
-              disabled={browserCheckMutation.isPending}>
-              {browserCheckMutation.isPending ? 'Retrying...' : 'Retry with Browser'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={() => { manualPriceValue = ''; manualPriceOpen = true; }}>
-              Log Price Manually
-            </Button>
-          </div>
-        {/if}
-        </div>
+    <!-- Two-Column Layout: Image left, Details right -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(280px,400px)_1fr]">
+      <!-- Left: Image Gallery -->
+      <div>
+        <ProductGallery
+          imageUrl={product.imageUrl}
+          images={product.images}
+          alt={product.name} />
       </div>
-      <div class="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={() => { manualPriceValue = ''; manualPriceOpen = true; }}>
-          Log Price
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={handleCheck}
-          disabled={checkMutation.isPending}>
-          <RefreshCw class={cn('mr-2 h-4 w-4', checkMutation.isPending && 'animate-spin')} />
-          {checkMutation.isPending ? 'Checking...' : 'Check Now'}
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onclick={() => (deleteOpen = true)}>
-          <Trash2 class="mr-2 h-4 w-4" />
-          Delete
-        </Button>
-      </div>
-    </div>
 
-    <!-- Price Cards -->
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Card.Root>
-        <Card.Header class="pb-2">
-          <Card.Title class="text-muted-foreground text-xs font-medium">Current</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-2xl font-bold">
+      <!-- Right: Product Details -->
+      <div class="space-y-4">
+        <!-- Title + Meta -->
+        <div>
+          <h1 class="text-2xl font-bold" title={product.name}>{product.name}</h1>
+          <div class="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-sm">
+            <span class="capitalize">{product.retailer}</span>
+            <a
+              href={product.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-info inline-flex items-center gap-1 hover:underline">
+              Visit page <ExternalLink class="h-3 w-3" />
+            </a>
+            {#if product.status === 'error'}
+              <Badge variant="destructive">Error</Badge>
+            {:else if product.status === 'paused'}
+              <Badge variant="secondary">Paused</Badge>
+            {/if}
+          </div>
+        </div>
+
+        <!-- Price -->
+        <div class="rounded-lg border p-4">
+          <div class="text-3xl font-bold">
             {product.currentPrice !== null ? currencyFormatter.format(product.currentPrice) : '—'}
           </div>
-        </Card.Content>
-      </Card.Root>
-      <Card.Root>
-        <Card.Header class="pb-2">
-          <Card.Title class="text-muted-foreground text-xs font-medium">Lowest</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-success text-2xl font-bold">
-            {product.lowestPrice !== null ? currencyFormatter.format(product.lowestPrice) : '—'}
+          <div class="text-muted-foreground mt-1 flex items-center gap-3 text-sm">
+            {#if product.lowestPrice !== null}
+              <span>Low: <span class="text-success font-medium">{currencyFormatter.format(product.lowestPrice)}</span></span>
+            {/if}
+            {#if product.highestPrice !== null}
+              <span>High: <span class="text-destructive font-medium">{currencyFormatter.format(product.highestPrice)}</span></span>
+            {/if}
+            {#if product.targetPrice !== null}
+              <span>Target: <span class="text-info font-medium">{currencyFormatter.format(product.targetPrice)}</span></span>
+            {/if}
           </div>
-        </Card.Content>
-      </Card.Root>
-      <Card.Root>
-        <Card.Header class="pb-2">
-          <Card.Title class="text-muted-foreground text-xs font-medium">Highest</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-destructive text-2xl font-bold">
-            {product.highestPrice !== null ? currencyFormatter.format(product.highestPrice) : '—'}
-          </div>
-        </Card.Content>
-      </Card.Root>
-      <Card.Root>
-        <Card.Header class="pb-2">
-          <Card.Title class="text-muted-foreground text-xs font-medium">Target</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-info text-2xl font-bold">
-            {product.targetPrice !== null ? currencyFormatter.format(product.targetPrice) : '—'}
-          </div>
-        </Card.Content>
-      </Card.Root>
-    </div>
+        </div>
 
-    <!-- Description + Images -->
-    {#if product.description || (product.images && product.images !== '[]')}
-      <div class="space-y-4 rounded-lg border p-4">
+        <!-- Description -->
         {#if product.description}
           <div>
-            <h3 class="mb-1 text-sm font-medium">Description</h3>
             <p class="text-muted-foreground text-sm leading-relaxed">{product.description}</p>
           </div>
         {/if}
-        {#if product.images && product.images !== '[]'}
-          {@const imageList = JSON.parse(product.images) as string[]}
-          {#if imageList.length > 0}
-            <div>
-              <h3 class="mb-2 text-sm font-medium">Images</h3>
-              <div class="flex gap-2 overflow-x-auto pb-2">
-                {#each imageList.slice(0, 8) as imgUrl}
-                  <img
-                    src={imgUrl}
-                    alt={product.name}
-                    loading="lazy"
-                    class="h-20 w-20 shrink-0 rounded-md border object-cover" />
-                {/each}
-              </div>
+
+        <!-- Tags & Lists -->
+        <div class="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:gap-6">
+          <div class="flex-1">
+            <ProductTags productId={product.id} />
+          </div>
+          <div class="border-border sm:border-l"></div>
+          <div class="flex-1">
+            <ProductLists productId={product.id} />
+          </div>
+        </div>
+
+        <!-- Error State -->
+        {#if product.status === 'error'}
+          <div class="rounded-lg border border-destructive/20 bg-danger-bg p-3">
+            <p class="text-sm text-destructive">
+              {product.errorMessage ?? 'Price extraction failed'}
+            </p>
+            <div class="mt-2 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={handleBrowserCheck}
+                disabled={browserCheckMutation.isPending}>
+                {browserCheckMutation.isPending ? 'Retrying...' : 'Retry with Browser'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={() => { manualPriceValue = ''; manualPriceOpen = true; }}>
+                Log Price Manually
+              </Button>
             </div>
-          {/if}
+          </div>
         {/if}
+
+        <!-- Actions -->
+        <div class="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => (editOpen = true)}>
+            <Pencil class="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => product && refreshMutation.mutateAsync({ productId: product.id })}
+            disabled={refreshMutation.isPending}>
+            <RefreshCw class={cn('mr-2 h-4 w-4', refreshMutation.isPending && 'animate-spin')} />
+            {refreshMutation.isPending ? 'Refreshing...' : 'Refresh Info'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => { manualPriceValue = ''; manualPriceOpen = true; }}>
+            Log Price
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={handleCheck}
+            disabled={checkMutation.isPending}>
+            <RefreshCw class={cn('mr-2 h-4 w-4', checkMutation.isPending && 'animate-spin')} />
+            {checkMutation.isPending ? 'Checking...' : 'Check Now'}
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onclick={() => (deleteOpen = true)}>
+            <Trash2 class="mr-2 h-4 w-4" />
+            Delete
+          </Button>
+        </div>
       </div>
-    {/if}
+    </div>
 
     <!-- Price History Chart -->
     <div class="space-y-3">
@@ -306,35 +324,75 @@ async function handleDeleteAlert(alertId: number) {
       {:else}
         <div class="space-y-2">
           {#each alerts as alert (alert.id)}
-            <div class="flex items-center justify-between rounded-lg border p-3">
-              <div class="flex items-center gap-3">
-                <Badge variant="outline" class="text-xs">{getAlertTypeLabel(alert.type)}</Badge>
-                {#if alert.type === 'price_drop' && alert.threshold}
-                  <span class="text-muted-foreground text-xs">{alert.threshold}% drop</span>
-                {/if}
-                {#if alert.lastTriggeredAt}
-                  <span class="text-muted-foreground text-xs">
-                    Last: {new Date(alert.lastTriggeredAt).toLocaleDateString()}
-                  </span>
-                {/if}
+            {#if editingAlertId === alert.id}
+              <!-- Inline edit mode -->
+              <div class="rounded-lg border p-3">
+                <div class="flex flex-wrap items-center gap-2">
+                  <Select.Root type="single" bind:value={editAlertType}>
+                    <Select.Trigger class="h-8 w-40 text-xs">{getAlertTypeLabel(editAlertType)}</Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="price_drop">Price Drop</Select.Item>
+                      <Select.Item value="target_reached">Target Reached</Select.Item>
+                      <Select.Item value="back_in_stock">Back in Stock</Select.Item>
+                      <Select.Item value="any_change">Any Change</Select.Item>
+                    </Select.Content>
+                  </Select.Root>
+                  {#if editAlertType === 'price_drop'}
+                    <div class="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        class="h-8 w-16 text-xs"
+                        bind:value={editAlertThreshold} />
+                      <span class="text-muted-foreground text-xs">% drop</span>
+                    </div>
+                  {/if}
+                  <div class="ml-auto flex items-center gap-1">
+                    <Button variant="ghost" size="sm" class="h-7 text-xs" onclick={cancelEditAlert}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" class="h-7 text-xs" onclick={handleSaveAlert}>
+                      Save
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <Button
-                  variant={alert.enabled ? 'default' : 'outline'}
-                  size="sm"
-                  class="h-7 text-xs"
-                  onclick={() => handleToggleAlert(alert.id, alert.enabled)}>
-                  {alert.enabled ? 'Enabled' : 'Disabled'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="h-7 w-7 p-0"
-                  onclick={() => handleDeleteAlert(alert.id)}>
-                  <Trash2 class="h-3.5 w-3.5" />
-                </Button>
+            {:else}
+              <!-- Display mode -->
+              <div class="group flex items-center justify-between rounded-lg border p-3">
+                <button
+                  class="flex items-center gap-3 text-left"
+                  onclick={() => startEditAlert(alert)}>
+                  <Badge variant="outline" class="text-xs">{getAlertTypeLabel(alert.type)}</Badge>
+                  {#if alert.type === 'price_drop' && alert.threshold}
+                    <span class="text-muted-foreground text-xs">{alert.threshold}% drop</span>
+                  {/if}
+                  {#if alert.lastTriggeredAt}
+                    <span class="text-muted-foreground text-xs">
+                      Last: {new Date(alert.lastTriggeredAt).toLocaleDateString()}
+                    </span>
+                  {/if}
+                  <span class="text-muted-foreground text-xs opacity-0 transition-opacity group-hover:opacity-100">Edit</span>
+                </button>
+                <div class="flex items-center gap-2">
+                  <Button
+                    variant={alert.enabled ? 'default' : 'outline'}
+                    size="sm"
+                    class="h-7 text-xs"
+                    onclick={() => handleToggleAlert(alert.id, alert.enabled)}>
+                    {alert.enabled ? 'Enabled' : 'Disabled'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-7 w-7 p-0"
+                    onclick={() => handleDeleteAlert(alert.id)}>
+                    <Trash2 class="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            {/if}
           {/each}
         </div>
       {/if}
@@ -426,4 +484,6 @@ async function handleDeleteAlert(alertId: number) {
       </AlertDialog.Footer>
     </AlertDialog.Content>
   </AlertDialog.Root>
+
+  <EditProductDialog bind:open={editOpen} {product} />
 {/if}

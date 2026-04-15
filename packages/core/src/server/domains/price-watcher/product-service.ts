@@ -7,7 +7,18 @@ import { createId } from "@paralleldrive/cuid2";
 import { ProductRepository } from "./product-repository";
 import { HistoryRepository } from "./history-repository";
 import { AlertService } from "./alert-service";
-import { detectRetailer, fetchProductInfo } from "./price-checker";
+import { detectRetailer, fetchProductInfo, type ProductInfo } from "./price-checker";
+
+export interface ProductPreview {
+  url: string;
+  retailer: string;
+  name: string | null;
+  price: number | null;
+  currency: string | null;
+  imageUrl: string | null;
+  description: string | null;
+  inStock: boolean;
+}
 
 export class ProductService {
   constructor(
@@ -15,6 +26,36 @@ export class ProductService {
     private historyRepo: HistoryRepository,
     private alertService: AlertService
   ) {}
+
+  static normalizeUrl(url: string): string {
+    let normalized = url.trim();
+    if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+      normalized = `https://${normalized}`;
+    }
+    try {
+      new URL(normalized);
+    } catch {
+      throw new ValidationError(`Invalid URL format: "${normalized}"`);
+    }
+    return normalized;
+  }
+
+  async previewUrl(url: string): Promise<ProductPreview> {
+    if (!url) throw new ValidationError("A URL is required");
+    const normalizedUrl = ProductService.normalizeUrl(url);
+    const retailer = detectRetailer(normalizedUrl);
+    const info = await fetchProductInfo(normalizedUrl);
+    return {
+      url: normalizedUrl,
+      retailer,
+      name: info.name,
+      price: info.price,
+      currency: info.currency,
+      imageUrl: info.imageUrl,
+      description: info.description,
+      inStock: info.inStock,
+    };
+  }
 
   /**
    * Add a product by URL: detect retailer, fetch info, create record + initial snapshot
@@ -182,6 +223,56 @@ export class ProductService {
 
   async deleteProduct(id: number, workspaceId: number): Promise<void> {
     await this.productRepo.softDelete(id, workspaceId);
+  }
+
+  async bulkDeleteProducts(ids: number[], workspaceId: number): Promise<{ count: number }> {
+    const count = await this.productRepo.bulkSoftDelete(ids, workspaceId);
+    return { count };
+  }
+
+  async bulkUpdateStatus(
+    ids: number[],
+    status: "active" | "paused",
+    workspaceId: number
+  ): Promise<{ count: number }> {
+    const count = await this.productRepo.bulkUpdateStatus(ids, status, workspaceId);
+    return { count };
+  }
+
+  async bulkCheckPrices(ids: number[], workspaceId: number): Promise<{ checked: number; errors: number }> {
+    let checked = 0;
+    let errors = 0;
+    for (const id of ids) {
+      try {
+        await this.checkPrice(id, workspaceId);
+        checked++;
+      } catch {
+        errors++;
+      }
+    }
+    return { checked, errors };
+  }
+
+  /**
+   * Re-fetch product page and update metadata (name, images, description) without changing price fields
+   */
+  async refreshMetadata(productId: number, workspaceId: number): Promise<PriceProduct> {
+    const product = await this.productRepo.findByIdOrThrow(productId, workspaceId);
+    const info = await fetchProductInfo(product.url);
+
+    const updates: Record<string, unknown> = {};
+    if (info.name) updates.name = info.name.length > 80
+      ? info.name.substring(0, 80).replace(/[\s,\-]+$/, "").replace(/\s\S*$/, "") + "…"
+      : info.name;
+    if (info.imageUrl) updates.imageUrl = info.imageUrl;
+    if (info.images.length > 0) updates.images = JSON.stringify(info.images);
+    if (info.description) updates.description = info.description;
+
+    if (Object.keys(updates).length === 0) {
+      return product;
+    }
+
+    return this.productRepo.update(product.id, updates, workspaceId);
   }
 
   async getProduct(slug: string, workspaceId: number): Promise<PriceProduct | null> {

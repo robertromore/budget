@@ -17,6 +17,8 @@ export * from "./payee-category-corrections";
 export * from "./payees";
 export * from "./price-alerts";
 export * from "./price-history";
+export * from "./price-product-lists";
+export * from "./price-product-tags";
 export * from "./price-products";
 export * from "./recommendations";
 export * from "./report-templates";

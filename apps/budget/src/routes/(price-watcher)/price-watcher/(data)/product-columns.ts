@@ -1,6 +1,7 @@
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { Badge } from "$lib/components/ui/badge";
+import { Checkbox } from "$lib/components/ui/checkbox";
 import type { PriceProduct } from "$core/schema/price-products";
 import { capitalize } from "$core/utils/string-utilities";
 import { currencyFormatter } from "$lib/utils/formatters";
@@ -33,6 +34,34 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
 
 export function getProductColumns(): ColumnDef<PriceProduct>[] {
   return [
+    {
+      id: "select-col",
+      header: ({ table }) => {
+        const allSelected = table.getIsAllPageRowsSelected();
+        const someSelected = table.getIsSomePageRowsSelected();
+        return renderComponent(Checkbox, {
+          checked: allSelected,
+          indeterminate: someSelected && !allSelected,
+          onCheckedChange: (value: boolean) => {
+            if (value) {
+              table.toggleAllPageRowsSelected(true);
+            } else {
+              table.toggleAllRowsSelected(false);
+            }
+          },
+          controlledChecked: true,
+        });
+      },
+      cell: ({ row }) =>
+        renderComponent(Checkbox, {
+          checked: row.getIsSelected(),
+          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
+          controlledChecked: true,
+        }),
+      enableSorting: false,
+      enableGlobalFilter: false,
+      size: 40,
+    },
     {
       id: "image",
       header: "",

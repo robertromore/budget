@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import * as Select from '$lib/components/ui/select';
 import { listProducts, listAlerts } from '$lib/query/price-watcher';
 import { currencyFormatter } from '$lib/utils/formatters';
 import ProductImage from './(components)/product-image.svelte';
@@ -15,6 +16,42 @@ const alertsQuery = listAlerts().options();
 
 const products = $derived(productsQuery.data ?? []);
 const alerts = $derived(alertsQuery.data ?? []);
+
+type SortOption = 'recent' | 'name' | 'price-low' | 'price-high' | 'biggest-drop';
+let sortBy = $state<SortOption>('recent');
+
+const sortLabels: Record<SortOption, string> = {
+  'recent': 'Recently Checked',
+  'name': 'Name',
+  'price-low': 'Price: Low to High',
+  'price-high': 'Price: High to Low',
+  'biggest-drop': 'Biggest Drop',
+};
+
+const sortedProducts = $derived.by(() => {
+  const sorted = [...products];
+  switch (sortBy) {
+    case 'name':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    case 'price-low':
+      return sorted.sort((a, b) => (a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity));
+    case 'price-high':
+      return sorted.sort((a, b) => (b.currentPrice ?? -Infinity) - (a.currentPrice ?? -Infinity));
+    case 'biggest-drop':
+      return sorted.sort((a, b) => {
+        const dropA = a.highestPrice && a.currentPrice ? (a.highestPrice - a.currentPrice) / a.highestPrice : 0;
+        const dropB = b.highestPrice && b.currentPrice ? (b.highestPrice - b.currentPrice) / b.highestPrice : 0;
+        return dropB - dropA;
+      });
+    case 'recent':
+    default:
+      return sorted.sort((a, b) => {
+        if (!a.lastCheckedAt) return 1;
+        if (!b.lastCheckedAt) return -1;
+        return b.lastCheckedAt.localeCompare(a.lastCheckedAt);
+      });
+  }
+});
 
 const productCount = $derived(products.length);
 const activeAlerts = $derived(alerts.filter((a) => a.enabled).length);
@@ -123,10 +160,22 @@ const productsAtTarget = $derived(
     <div class="space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold">All Products</h2>
-        <Button variant="ghost" size="sm" href="/price-watcher/products">View all</Button>
+        <div class="flex items-center gap-2">
+          <Select.Root type="single" value={sortBy} onValueChange={(v) => (sortBy = v as SortOption)}>
+            <Select.Trigger class="h-8 w-44 text-xs">{sortLabels[sortBy]}</Select.Trigger>
+            <Select.Content>
+              <Select.Item value="recent">Recently Checked</Select.Item>
+              <Select.Item value="name">Name</Select.Item>
+              <Select.Item value="price-low">Price: Low to High</Select.Item>
+              <Select.Item value="price-high">Price: High to Low</Select.Item>
+              <Select.Item value="biggest-drop">Biggest Drop</Select.Item>
+            </Select.Content>
+          </Select.Root>
+          <Button variant="ghost" size="sm" href="/price-watcher/products">View all</Button>
+        </div>
       </div>
       <div class="space-y-2">
-        {#each products.slice(0, 10) as product (product.id)}
+        {#each sortedProducts.slice(0, 10) as product (product.id)}
           <a
             href="/price-watcher/products/{product.slug}"
             class="flex items-center justify-between overflow-hidden rounded-lg border p-3 transition-shadow hover:shadow-md">
