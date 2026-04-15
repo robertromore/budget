@@ -1,31 +1,35 @@
 <script lang="ts">
 import { page } from '$app/stores';
 import { cn } from '$lib/utils';
-import Tag from '@lucide/svelte/icons/tag';
-import Wallet from '@lucide/svelte/icons/wallet';
 
 interface AppDef {
   id: string;
   label: string;
-  icon: typeof Wallet;
+  letter: string;
   href: string;
   match: (pathname: string) => boolean;
+  activeClass: string;
+  inactiveClass: string;
 }
 
 const apps: AppDef[] = [
   {
     id: 'budget',
-    label: 'Budget',
-    icon: Wallet,
+    label: 'Finances',
+    letter: 'F',
     href: '/',
     match: (p) => !p.startsWith('/price-watcher'),
+    activeClass: 'bg-emerald-600 text-white dark:bg-emerald-500',
+    inactiveClass: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
   },
   {
     id: 'price-watcher',
     label: 'Price Watcher',
-    icon: Tag,
+    letter: 'P',
     href: '/price-watcher',
     match: (p) => p.startsWith('/price-watcher'),
+    activeClass: 'bg-violet-600 text-white dark:bg-violet-500',
+    inactiveClass: 'bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400',
   },
 ];
 
@@ -35,7 +39,7 @@ const activeAppId = $derived(
 </script>
 
 <nav
-  class="bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-20 hidden w-(--app-rail-width) flex-col items-center gap-1 border-r px-1.5 py-3 md:flex"
+  class="bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-20 hidden w-(--app-rail-width) flex-col items-center gap-3 border-r px-1.5 py-3 md:flex"
   aria-label="App switcher">
   {#each apps as app (app.id)}
     {@const isActive = activeAppId === app.id}
@@ -43,14 +47,12 @@ const activeAppId = $derived(
       href={app.href}
       title={app.label}
       class={cn(
-        'flex h-9 w-9 items-center justify-center rounded-md transition-colors',
-        isActive
-          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-          : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+        'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition-all',
+        isActive ? app.activeClass : app.inactiveClass
       )}
       aria-current={isActive ? 'page' : undefined}
       aria-label={app.label}>
-      <app.icon class="h-5 w-5" />
+      {app.letter}
     </a>
   {/each}
 </nav>

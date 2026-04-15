@@ -102,6 +102,7 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
     <WorkspaceSwitcher />
   </Sidebar.Header>
   <Sidebar.Content>
+    <!-- Dashboard -->
     <Sidebar.Group data-tour-id="main-navigation">
       <Sidebar.GroupContent>
         <Sidebar.Menu>
@@ -144,6 +145,194 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
               {/if}
             </Sidebar.MenuItem>
           </Collapsible.Root>
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <!-- Accounts -->
+    <Sidebar.Group data-help-id="accounts-list" data-help-title="Accounts List">
+      <Sidebar.GroupLabel>
+        <div class="flex w-full flex-col">
+          <a href="/accounts">Accounts</a>
+        </div>
+      </Sidebar.GroupLabel>
+      <div class="flex items-center justify-between px-2 text-xs">
+        <span
+          class="font-medium"
+          class:text-amount-positive={onBudgetBalance > 0}
+          class:text-amount-negative={onBudgetBalance < 0}
+          class:text-muted-foreground={onBudgetBalance === 0}
+          title="On-Budget Balance">
+          {currencyFormatter.format(onBudgetBalance)}
+        </span>
+        <span
+          class="text-muted-foreground text-[10px]"
+          title="Total Balance (including off-budget accounts)">
+          {currencyFormatter.format(totalBalance)} total
+        </span>
+      </div>
+      <Sidebar.GroupAction
+        title="Add Account"
+        onclick={() => goto('/accounts/new')}
+        data-tour-id="add-account-button">
+        <Plus /> <span class="sr-only">Add Account</span>
+      </Sidebar.GroupAction>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          {#each accounts as account}
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({ props })}
+                  {@const formattedBalance = formatAccountBalance(account)}
+                  <a href="/accounts/{account.slug}" {...props} class="flex min-w-0 gap-3 py-2">
+                    <div
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                      style="background-color: {(account as any).accountColor
+                        ? `${(account as any).accountColor}15`
+                        : 'hsl(var(--muted))'}">
+                      {#if (account as any).accountIcon}
+                        {@const iconData = getIconByName((account as any).accountIcon)}
+                        {#if iconData?.icon}
+                          <iconData.icon
+                            class="h-4 w-4"
+                            style={(account as any).accountColor
+                              ? `color: ${(account as any).accountColor}`
+                              : 'color: hsl(var(--muted-foreground))'} />
+                        {:else}
+                          <CreditCard
+                            class="h-4 w-4"
+                            style={(account as any).accountColor
+                              ? `color: ${(account as any).accountColor}`
+                              : 'color: hsl(var(--muted-foreground))'} />
+                        {/if}
+                      {:else}
+                        <CreditCard
+                          class="h-4 w-4"
+                          style={(account as any).accountColor
+                            ? `color: ${(account as any).accountColor}`
+                            : 'color: hsl(var(--muted-foreground))'} />
+                      {/if}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2">
+                            <span data-testid="account-name" class="truncate text-sm font-medium">
+                              {account.name}
+                            </span>
+                            {#if account.slug === 'demo-checking'}
+                              <Badge
+                                variant="outline"
+                                class="border-amber-500/50 bg-amber-50 px-1.5 py-0 text-xs text-amber-700 dark:bg-amber-950/20 dark:text-amber-400"
+                                >Demo</Badge>
+                            {/if}
+                            {#if account.closed}
+                              <Badge variant="secondary" class="px-1.5 py-0 text-xs">Closed</Badge>
+                            {/if}
+                          </div>
+                          <div class="mt-0.5 flex items-center gap-2">
+                            {#if (account as any).accountType}
+                              <span class="text-muted-foreground text-xs capitalize">
+                                {(account as any).accountType.replace('_', ' ')}
+                              </span>
+                            {/if}
+                            {#if account.onBudget === false}
+                              <Badge
+                                variant="outline"
+                                class="border-muted-foreground/30 text-muted-foreground px-1.5 py-0 text-xs"
+                                >Off Budget</Badge>
+                            {/if}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="text-muted-foreground flex items-center gap-1 truncate text-xs">
+                        {#if (account as any).accountNumber}
+                          <span class="font-mono">
+                            ••{(account as any).accountNumber.slice(-4)}
+                          </span>
+                        {/if}
+                        {#if (account as any).institution}
+                          {#if (account as any).accountNumber}
+                            <span>•</span>
+                          {/if}
+                          <span class="truncate">{(account as any).institution}</span>
+                        {/if}
+                      </div>
+                      <div class="text-right text-xs font-medium">
+                        {#if account.accountType === 'credit_card' && account.debtLimit}
+                          {@const metrics = calculateDebtMetrics(account)}
+                          {#if metrics}
+                            <div class="flex flex-col gap-0.5">
+                              <div class={getBalanceColorClass(formattedBalance.color)}>
+                                {currencyFormatter.format(metrics.availableCredit ?? 0)}
+                                <span class="text-[10px] opacity-70">available</span>
+                              </div>
+                              <div class="text-muted-foreground text-[10px]">
+                                {currencyFormatter.format(
+                                  account.balance && account.balance < 0
+                                    ? Math.abs(account.balance)
+                                    : 0
+                                )} / {currencyFormatter.format(account.debtLimit)}
+                              </div>
+                            </div>
+                          {:else}
+                            <div class={getBalanceColorClass(formattedBalance.color)}>
+                              {currencyFormatter.format(formattedBalance.displayAmount)}
+                              <span class="ml-1 text-[10px] opacity-70"
+                                >{formattedBalance.label}</span>
+                            </div>
+                          {/if}
+                        {:else}
+                          <div class={getBalanceColorClass(formattedBalance.color)}>
+                            {currencyFormatter.format(formattedBalance.displayAmount)}
+                            {#if account.accountType && isDebtAccount(account.accountType)}
+                              <span class="ml-1 text-[10px] opacity-70"
+                                >{formattedBalance.label}</span>
+                            {/if}
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+                    {#if account.name === 'Test Account'}
+                      <Receipt class="text-destructive ml-2 h-4 w-4 shrink-0" />
+                    {/if}
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              {#if account.slug !== 'demo-checking'}
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    {#snippet child({ props })}
+                      <Sidebar.MenuAction {...props}>
+                        <Ellipsis />
+                      </Sidebar.MenuAction>
+                    {/snippet}
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content side="right" align="start">
+                    <DropdownMenu.Item onclick={() => goto(`/accounts/${account.slug}/edit`)}>
+                      Edit
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onclick={() => {
+                        _deleteAccountId.current = account.id;
+                        _deleteAccountDialog.setTrue();
+                      }}>
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              {/if}
+            </Sidebar.MenuItem>
+          {/each}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <!-- Manage -->
+    <Sidebar.Group>
+      <Sidebar.GroupLabel>Manage</Sidebar.GroupLabel>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
@@ -187,6 +376,25 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
+                <a href="/subscriptions" {...props} class="flex items-center gap-3">
+                  <RefreshCw class="h-4 w-4"></RefreshCw>
+                  <span class="font-medium">Subscriptions</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <!-- Data -->
+    <Sidebar.Group>
+      <Sidebar.GroupLabel>Data</Sidebar.GroupLabel>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
                 <a href="/import" {...props} class="flex items-center gap-3">
                   <Download class="h-4 w-4"></Download>
                   <span class="font-medium">Import</span>
@@ -204,6 +412,15 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <!-- Advanced -->
+    <Sidebar.Group>
+      <Sidebar.GroupLabel>Advanced</Sidebar.GroupLabel>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
@@ -227,16 +444,6 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
-                <a href="/subscriptions" {...props} class="flex items-center gap-3">
-                  <RefreshCw class="h-4 w-4"></RefreshCw>
-                  <span class="font-medium">Subscriptions</span>
-                </a>
-              {/snippet}
-            </Sidebar.MenuButton>
-          </Sidebar.MenuItem>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
-              {#snippet child({ props })}
                 <a href="/help" {...props} class="flex items-center gap-3">
                   <BookOpen class="h-4 w-4"></BookOpen>
                   <span class="font-medium">Help</span>
@@ -244,195 +451,6 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
-        </Sidebar.Menu>
-      </Sidebar.GroupContent>
-    </Sidebar.Group>
-
-    <Sidebar.Group data-help-id="accounts-list" data-help-title="Accounts List">
-      <Sidebar.GroupLabel>
-        <div class="flex w-full flex-col">
-          <a href="/accounts">Accounts</a>
-        </div>
-      </Sidebar.GroupLabel>
-      <div class="flex items-center justify-between px-2 text-xs">
-        <span
-          class="font-medium"
-          class:text-amount-positive={onBudgetBalance > 0}
-          class:text-amount-negative={onBudgetBalance < 0}
-          class:text-muted-foreground={onBudgetBalance === 0}
-          title="On-Budget Balance">
-          {currencyFormatter.format(onBudgetBalance)}
-        </span>
-        <span
-          class="text-muted-foreground text-[10px]"
-          title="Total Balance (including off-budget accounts)">
-          {currencyFormatter.format(totalBalance)} total
-        </span>
-      </div>
-      <!-- <div class="mt-2 px-2 w-full">
-        <AccountSortDropdown variant="outline" />
-      </div> -->
-      <Sidebar.GroupAction
-        title="Add Account"
-        onclick={() => goto('/accounts/new')}
-        data-tour-id="add-account-button">
-        <Plus /> <span class="sr-only">Add Account</span>
-      </Sidebar.GroupAction>
-      <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          {#each accounts as account}
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                {#snippet child({ props })}
-                  {@const formattedBalance = formatAccountBalance(account)}
-                  <a href="/accounts/{account.slug}" {...props} class="flex min-w-0 gap-3 py-2">
-                    <!-- Account Icon with colored background -->
-                    <div
-                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style="background-color: {(account as any).accountColor
-                        ? `${(account as any).accountColor}15`
-                        : 'hsl(var(--muted))'}">
-                      {#if (account as any).accountIcon}
-                        {@const iconData = getIconByName((account as any).accountIcon)}
-                        {#if iconData?.icon}
-                          <iconData.icon
-                            class="h-4 w-4"
-                            style={(account as any).accountColor
-                              ? `color: ${(account as any).accountColor}`
-                              : 'color: hsl(var(--muted-foreground))'} />
-                        {:else}
-                          <CreditCard
-                            class="h-4 w-4"
-                            style={(account as any).accountColor
-                              ? `color: ${(account as any).accountColor}`
-                              : 'color: hsl(var(--muted-foreground))'} />
-                        {/if}
-                      {:else}
-                        <CreditCard
-                          class="h-4 w-4"
-                          style={(account as any).accountColor
-                            ? `color: ${(account as any).accountColor}`
-                            : 'color: hsl(var(--muted-foreground))'} />
-                      {/if}
-                    </div>
-
-                    <!-- Account Info -->
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center justify-between gap-2">
-                        <div class="min-w-0 flex-1">
-                          <div class="flex items-center gap-2">
-                            <span data-testid="account-name" class="truncate text-sm font-medium">
-                              {account.name}
-                            </span>
-                            {#if account.slug === 'demo-checking'}
-                              <Badge
-                                variant="outline"
-                                class="border-amber-500/50 bg-amber-50 px-1.5 py-0 text-xs text-amber-700 dark:bg-amber-950/20 dark:text-amber-400"
-                                >Demo</Badge>
-                            {/if}
-                            {#if account.closed}
-                              <Badge variant="secondary" class="px-1.5 py-0 text-xs">Closed</Badge>
-                            {/if}
-                          </div>
-                          <div class="mt-0.5 flex items-center gap-2">
-                            {#if (account as any).accountType}
-                              <span class="text-muted-foreground text-xs capitalize">
-                                {(account as any).accountType.replace('_', ' ')}
-                              </span>
-                            {/if}
-                            {#if account.onBudget === false}
-                              <Badge
-                                variant="outline"
-                                class="border-muted-foreground/30 text-muted-foreground px-1.5 py-0 text-xs"
-                                >Off Budget</Badge>
-                            {/if}
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Account Details -->
-                      <div class="text-muted-foreground flex items-center gap-1 truncate text-xs">
-                        {#if (account as any).accountNumber}
-                          <span class="font-mono">
-                            ••{(account as any).accountNumber.slice(-4)}
-                          </span>
-                        {/if}
-                        {#if (account as any).institution}
-                          {#if (account as any).accountNumber}
-                            <span>•</span>
-                          {/if}
-                          <span class="truncate">{(account as any).institution}</span>
-                        {/if}
-                      </div>
-
-                      <!-- Account Balance -->
-                      <div class="text-right text-xs font-medium">
-                        {#if account.accountType === 'credit_card' && account.debtLimit}
-                          {@const metrics = calculateDebtMetrics(account)}
-                          {#if metrics}
-                            <div class="flex flex-col gap-0.5">
-                              <div class={getBalanceColorClass(formattedBalance.color)}>
-                                {currencyFormatter.format(metrics.availableCredit ?? 0)}
-                                <span class="text-[10px] opacity-70">available</span>
-                              </div>
-                              <div class="text-muted-foreground text-[10px]">
-                                {currencyFormatter.format(
-                                  account.balance && account.balance < 0
-                                    ? Math.abs(account.balance)
-                                    : 0
-                                )} / {currencyFormatter.format(account.debtLimit)}
-                              </div>
-                            </div>
-                          {:else}
-                            <div class={getBalanceColorClass(formattedBalance.color)}>
-                              {currencyFormatter.format(formattedBalance.displayAmount)}
-                              <span class="ml-1 text-[10px] opacity-70"
-                                >{formattedBalance.label}</span>
-                            </div>
-                          {/if}
-                        {:else}
-                          <div class={getBalanceColorClass(formattedBalance.color)}>
-                            {currencyFormatter.format(formattedBalance.displayAmount)}
-                            {#if account.accountType && isDebtAccount(account.accountType)}
-                              <span class="ml-1 text-[10px] opacity-70"
-                                >{formattedBalance.label}</span>
-                            {/if}
-                          </div>
-                        {/if}
-                      </div>
-                    </div>
-
-                    {#if account.name === 'Test Account'}
-                      <Receipt class="text-destructive ml-2 h-4 w-4 shrink-0" />
-                    {/if}
-                  </a>
-                {/snippet}
-              </Sidebar.MenuButton>
-              {#if account.slug !== 'demo-checking'}
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger>
-                    {#snippet child({ props })}
-                      <Sidebar.MenuAction {...props}>
-                        <Ellipsis />
-                      </Sidebar.MenuAction>
-                    {/snippet}
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Content side="right" align="start">
-                    <DropdownMenu.Item onclick={() => goto(`/accounts/${account.slug}/edit`)}>
-                      Edit
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onclick={() => {
-                        _deleteAccountId.current = account.id;
-                        _deleteAccountDialog.setTrue();
-                      }}>
-                      Delete
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-              {/if}
-            </Sidebar.MenuItem>
-          {/each}
         </Sidebar.Menu>
       </Sidebar.GroupContent>
     </Sidebar.Group>
