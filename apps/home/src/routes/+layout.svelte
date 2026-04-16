@@ -5,6 +5,7 @@
   import { queryClient } from "$core/query/_client";
   import { Toaster } from "svelte-sonner";
   import { ModeWatcher } from "mode-watcher";
+  import AppRail from "$lib/components/layout/app-rail.svelte";
 
   let { children, data } = $props();
 </script>
@@ -13,5 +14,8 @@
 <Toaster richColors position="bottom-right" />
 
 <QueryClientProvider client={queryClient}>
-  {@render children?.()}
+  <AppRail />
+  <div class="md:pl-12">
+    {@render children?.()}
+  </div>
 </QueryClientProvider>
