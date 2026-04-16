@@ -1,16 +1,20 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { Plus, Tags } from "@lucide/svelte";
-  import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+  const homeSlug = $derived($page.params.homeSlug);
+  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived($homeQuery.data);
+  const homeId = $derived(home?.id ?? 0);
 
-  const labelsQuery = createQuery(
-    rpc.homeLabels.listHomeLabelsWithCounts(data.home.id).options()
-  );
+  const labelsQuery = createQuery(() => ({
+    ...rpc.homeLabels.listHomeLabelsWithCounts(homeId).options(),
+    enabled: !!home,
+  }));
   const createMut = createMutation(rpc.homeLabels.createHomeLabel.options());
 
   const labels = $derived($labelsQuery.data ?? []);
@@ -22,7 +26,7 @@
   async function handleCreate() {
     if (!newLabelName.trim()) return;
     await $createMut.mutateAsync({
-      homeId: data.home.id,
+      homeId,
       name: newLabelName.trim(),
       color: newLabelColor,
     });

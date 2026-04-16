@@ -4,9 +4,6 @@
   import { Home, Plus, MapPin, Package, Tags } from "@lucide/svelte";
   import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
-  import type { PageData } from "./$types";
-
-  let { data }: { data: PageData } = $props();
 
   let showCreateDialog = $state(false);
   let newHomeName = $state("");
@@ -16,7 +13,7 @@
   const homesQuery = createQuery(rpc.homes.listHomes().options());
   const createHomeMutation = createMutation(rpc.homes.createHome.options());
 
-  const homes = $derived($homesQuery.data ?? data.homes ?? []);
+  const homes = $derived($homesQuery.data ?? []);
 
   async function handleCreateHome() {
     if (!newHomeName.trim()) return;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import {
@@ -17,21 +18,31 @@
   } from "@lucide/svelte";
   import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
-  import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+  const homeSlug = $derived($page.params.homeSlug);
+  const itemCuid = $derived($page.params.itemCuid);
 
-  const item = $derived(data.item);
+  const itemQuery = createQuery(rpc.homeItems.getHomeItemByCuid(itemCuid).options());
+  const item = $derived($itemQuery.data);
+  const itemId = $derived(item?.id ?? 0);
+
+  // Labels
+  const labelsQuery = createQuery(() => ({
+    ...rpc.homeItems.getHomeItemLabels(itemId).options(),
+    enabled: !!item,
+  }));
+  const itemLabels = $derived($labelsQuery.data ?? []);
 
   // Maintenance
-  const maintenanceQuery = createQuery(
-    rpc.homeMaintenance.listMaintenanceByItem(item.id).options()
-  );
+  const maintenanceQuery = createQuery(() => ({
+    ...rpc.homeMaintenance.listMaintenanceByItem(itemId).options(),
+    enabled: !!item,
+  }));
   const createMaintenanceMut = createMutation(rpc.homeMaintenance.createMaintenance.options());
   const completeMaintenanceMut = createMutation(rpc.homeMaintenance.completeMaintenance.options());
   const deleteMaintenanceMut = createMutation(rpc.homeMaintenance.deleteMaintenance.options());
 
-  const maintenanceRecords = $derived($maintenanceQuery.data ?? data.maintenanceRecords ?? []);
+  const maintenanceRecords = $derived($maintenanceQuery.data ?? []);
 
   let showMaintenanceForm = $state(false);
   let maintenanceName = $state("");
@@ -41,7 +52,7 @@
   let maintenanceNotes = $state("");
 
   async function handleCreateMaintenance() {
-    if (!maintenanceName.trim()) return;
+    if (!maintenanceName.trim() || !item) return;
     await $createMaintenanceMut.mutateAsync({
       itemId: item.id,
       name: maintenanceName.trim(),
@@ -59,19 +70,21 @@
   }
 
   // Attachments
-  const attachmentsQuery = createQuery(
-    rpc.homeAttachments.listAttachmentsByItem(item.id).options()
-  );
+  const attachmentsQuery = createQuery(() => ({
+    ...rpc.homeAttachments.listAttachmentsByItem(itemId).options(),
+    enabled: !!item,
+  }));
   const deleteAttachmentMut = createMutation(rpc.homeAttachments.deleteAttachment.options());
   const setPrimaryMut = createMutation(rpc.homeAttachments.setPrimaryAttachment.options());
 
-  const itemAttachments = $derived($attachmentsQuery.data ?? data.itemAttachments ?? []);
+  const itemAttachments = $derived($attachmentsQuery.data ?? []);
 </script>
 
+{#if item}
 <div class="p-6">
   <div class="mb-6">
     <a
-      href="/home/{data.home.slug}/items"
+      href="/home/{homeSlug}/items"
       class="text-muted-foreground mb-2 inline-flex items-center gap-1 text-sm hover:underline"
     >
       <ArrowLeft class="h-4 w-4" />
@@ -401,14 +414,14 @@
         </Card.Content>
       </Card.Root>
 
-      {#if data.itemLabels && data.itemLabels.length > 0}
+      {#if itemLabels.length > 0}
         <Card.Root>
           <Card.Header>
             <Card.Title>Labels</Card.Title>
           </Card.Header>
           <Card.Content>
             <div class="flex flex-wrap gap-2">
-              {#each data.itemLabels as label}
+              {#each itemLabels as label}
                 <span
                   class="rounded-full border px-3 py-1 text-xs font-medium"
                   style={label.color ? `border-color: ${label.color}; color: ${label.color}` : ""}
@@ -434,3 +447,4 @@
     </div>
   </div>
 </div>
+{/if}

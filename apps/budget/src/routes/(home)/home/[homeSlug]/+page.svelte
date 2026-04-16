@@ -1,15 +1,33 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import * as Card from "$lib/components/ui/card";
   import { MapPin, Package, Tags } from "@lucide/svelte";
-  import type { PageData } from "./$types";
+  import { createQuery } from "@tanstack/svelte-query";
+  import { rpc } from "$lib/query";
 
-  let { data }: { data: PageData } = $props();
+  const homeSlug = $derived($page.params.homeSlug);
+  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived($homeQuery.data);
 
-  const itemCount = $derived(data.items?.length ?? 0);
-  const locationCount = $derived(data.locations?.length ?? 0);
-  const labelCount = $derived(data.labels?.length ?? 0);
+  const itemsQuery = createQuery(() => ({
+    ...rpc.homeItems.listHomeItems(home?.id ?? 0).options(),
+    enabled: !!home,
+  }));
+  const locationsQuery = createQuery(() => ({
+    ...rpc.homeLocations.listHomeLocations(home?.id ?? 0).options(),
+    enabled: !!home,
+  }));
+  const labelsQuery = createQuery(() => ({
+    ...rpc.homeLabels.listHomeLabels(home?.id ?? 0).options(),
+    enabled: !!home,
+  }));
+
+  const items = $derived($itemsQuery.data ?? []);
+  const itemCount = $derived(items.length);
+  const locationCount = $derived($locationsQuery.data?.length ?? 0);
+  const labelCount = $derived($labelsQuery.data?.length ?? 0);
   const totalValue = $derived(
-    (data.items ?? []).reduce((sum, item) => sum + (item.currentValue ?? 0), 0)
+    items.reduce((sum, item) => sum + (item.currentValue ?? 0), 0)
   );
 </script>
 
@@ -59,27 +77,27 @@
     </Card.Root>
   </div>
 
-  {#if data.home.description}
+  {#if home?.description}
     <Card.Root class="mb-6">
       <Card.Header>
         <Card.Title>About</Card.Title>
       </Card.Header>
       <Card.Content>
-        <p class="text-muted-foreground text-sm">{data.home.description}</p>
+        <p class="text-muted-foreground text-sm">{home.description}</p>
       </Card.Content>
     </Card.Root>
   {/if}
 
-  {#if data.items && data.items.length > 0}
+  {#if items.length > 0}
     <Card.Root>
       <Card.Header>
         <Card.Title>Recent Items</Card.Title>
       </Card.Header>
       <Card.Content>
         <div class="divide-y">
-          {#each data.items.slice(0, 5) as item}
+          {#each items.slice(0, 5) as item}
             <a
-              href="/home/{data.home.slug}/items/{item.cuid}"
+              href="/home/{homeSlug}/items/{item.cuid}"
               class="flex items-center justify-between py-3 hover:underline"
             >
               <div>

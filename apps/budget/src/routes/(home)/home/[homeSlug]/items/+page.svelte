@@ -1,32 +1,34 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { Plus, Package, Search } from "@lucide/svelte";
-  import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+  const homeSlug = $derived($page.params.homeSlug);
+  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived($homeQuery.data);
+  const homeId = $derived(home?.id ?? 0);
 
   let searchTerm = $state("");
   let showCreateForm = $state(false);
   let newItemName = $state("");
   let newItemDescription = $state("");
 
-  const itemsQuery = createQuery(
-    rpc.items
-      .listHomeItems(data.home.id, { search: searchTerm || undefined })
-      .options()
-  );
+  const itemsQuery = createQuery(() => ({
+    ...rpc.homeItems.listHomeItems(homeId, { search: searchTerm || undefined }).options(),
+    enabled: !!home,
+  }));
 
   const createMut = createMutation(rpc.homeItems.createHomeItem.options());
 
-  const items = $derived($itemsQuery.data ?? data.items ?? []);
+  const items = $derived($itemsQuery.data ?? []);
 
   async function handleCreate() {
     if (!newItemName.trim()) return;
     await $createMut.mutateAsync({
-      homeId: data.home.id,
+      homeId,
       name: newItemName.trim(),
       description: newItemDescription.trim() || null,
     });
@@ -108,7 +110,7 @@
   {:else}
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {#each items as item}
-        <a href="/home/{data.home.slug}/items/{item.cuid}">
+        <a href="/home/{homeSlug}/items/{item.cuid}">
           <Card.Root class="transition-shadow hover:shadow-md">
             <Card.Header class="pb-2">
               <Card.Title class="text-sm">{item.name}</Card.Title>

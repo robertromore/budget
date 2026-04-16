@@ -1,17 +1,23 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { Plus, MapPin, ChevronRight, FolderOpen } from "@lucide/svelte";
-  import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+  const homeSlug = $derived($page.params.homeSlug);
+  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived($homeQuery.data);
+  const homeId = $derived(home?.id ?? 0);
 
-  const treeQuery = createQuery(rpc.homeLocations.getHomeLocationTree(data.home.id).options());
+  const treeQuery = createQuery(() => ({
+    ...rpc.homeLocations.getHomeLocationTree(homeId).options(),
+    enabled: !!home,
+  }));
   const createMut = createMutation(rpc.homeLocations.createHomeLocation.options());
 
-  const tree = $derived($treeQuery.data ?? data.locations ?? []);
+  const tree = $derived($treeQuery.data ?? []);
 
   let showCreateForm = $state(false);
   let newLocationName = $state("");
@@ -21,7 +27,7 @@
   async function handleCreate() {
     if (!newLocationName.trim()) return;
     await $createMut.mutateAsync({
-      homeId: data.home.id,
+      homeId,
       name: newLocationName.trim(),
       locationType: newLocationType,
       parentId: newLocationParentId,

@@ -1,24 +1,29 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
   import FloorPlanCanvas from "$lib/components/floor-plan/floor-plan-canvas.svelte";
   import FloorPlanToolbar from "$lib/components/floor-plan/floor-plan-toolbar.svelte";
   import PropertiesPanel from "$lib/components/floor-plan/panels/properties-panel.svelte";
-  import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+  const homeSlug = $derived($page.params.homeSlug);
+  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived($homeQuery.data);
+  const homeId = $derived(home?.id ?? 0);
 
   const store = new FloorPlanStore();
 
   let currentFloor = $state(0);
 
-  const floorPlanQuery = createQuery(
-    rpc.homeFloorPlans.getFloorPlan(data.home.id, currentFloor).options()
-  );
-  const floorLevelsQuery = createQuery(
-    rpc.homeFloorPlans.getFloorLevels(data.home.id).options()
-  );
+  const floorPlanQuery = createQuery(() => ({
+    ...rpc.homeFloorPlans.getFloorPlan(homeId, currentFloor).options(),
+    enabled: !!home,
+  }));
+  const floorLevelsQuery = createQuery(() => ({
+    ...rpc.homeFloorPlans.getFloorLevels(homeId).options(),
+    enabled: !!home,
+  }));
   const saveMutation = createMutation(rpc.homeFloorPlans.saveFloorPlan.options());
 
   const floorLevels = $derived($floorLevelsQuery.data ?? [0]);
@@ -26,13 +31,13 @@
   // Load nodes when query data arrives
   $effect(() => {
     if ($floorPlanQuery.data) {
-      store.loadNodes($floorPlanQuery.data, data.home.id, currentFloor);
+      store.loadNodes($floorPlanQuery.data, homeId, currentFloor);
     }
   });
 
   async function handleSave() {
     await $saveMutation.mutateAsync({
-      homeId: data.home.id,
+      homeId,
       floorLevel: currentFloor,
       nodes: store.getNodesForSave(),
       deletedNodeIds: store.deletedNodeIds,

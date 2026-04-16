@@ -1,48 +1,55 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { Button } from "$lib/components/ui/button";
   import {
     Home,
     MapPin,
     Package,
     Tags,
     LayoutDashboard,
-    Settings,
     ChevronLeft,
     PenTool,
   } from "@lucide/svelte";
-  import type { LayoutData } from "./$types";
+  import { createQuery } from "@tanstack/svelte-query";
+  import { rpc } from "$lib/query";
 
-  let { children, data }: { children: any; data: LayoutData } = $props();
+  let { children } = $props();
 
-  const navItems = $derived([
-    {
-      href: `/${data.home.slug}`,
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      exact: true,
-    },
-    {
-      href: `/${data.home.slug}/locations`,
-      label: "Locations",
-      icon: MapPin,
-    },
-    {
-      href: `/${data.home.slug}/items`,
-      label: "Items",
-      icon: Package,
-    },
-    {
-      href: `/${data.home.slug}/labels`,
-      label: "Labels",
-      icon: Tags,
-    },
-    {
-      href: `/${data.home.slug}/floor-plan`,
-      label: "Floor Plan",
-      icon: PenTool,
-    },
-  ]);
+  const homeSlug = $derived($page.params.homeSlug);
+  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived($homeQuery.data);
+
+  const navItems = $derived(
+    home
+      ? [
+          {
+            href: `/home/${home.slug}`,
+            label: "Dashboard",
+            icon: LayoutDashboard,
+            exact: true,
+          },
+          {
+            href: `/home/${home.slug}/locations`,
+            label: "Locations",
+            icon: MapPin,
+          },
+          {
+            href: `/home/${home.slug}/items`,
+            label: "Items",
+            icon: Package,
+          },
+          {
+            href: `/home/${home.slug}/labels`,
+            label: "Labels",
+            icon: Tags,
+          },
+          {
+            href: `/home/${home.slug}/floor-plan`,
+            label: "Floor Plan",
+            icon: PenTool,
+          },
+        ]
+      : []
+  );
 
   function isActive(href: string, exact: boolean = false) {
     if (exact) return $page.url.pathname === href;
@@ -58,12 +65,16 @@
           <ChevronLeft class="h-3 w-3" />
           All Homes
         </a>
-        <div class="flex items-center gap-2">
-          <Home class="h-5 w-5" />
-          <h2 class="truncate font-semibold">{data.home.name}</h2>
-        </div>
-        {#if data.home.address}
-          <p class="text-muted-foreground mt-1 truncate text-xs">{data.home.address}</p>
+        {#if home}
+          <div class="flex items-center gap-2">
+            <Home class="h-5 w-5" />
+            <h2 class="truncate font-semibold">{home.name}</h2>
+          </div>
+          {#if home.address}
+            <p class="text-muted-foreground mt-1 truncate text-xs">{home.address}</p>
+          {/if}
+        {:else}
+          <div class="bg-muted h-5 w-32 animate-pulse rounded"></div>
         {/if}
       </div>
 
