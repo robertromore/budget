@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Canvas, T } from "@threlte/core";
-  import { OrbitControls, interactivity } from "@threlte/extras";
+  import { OrbitControls } from "@threlte/extras";
   import { onDestroy } from "svelte";
   import * as THREE from "three";
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
@@ -9,8 +9,6 @@
   import SceneContent from "./scene-content.svelte";
 
   let { store }: { store: FloorPlanStore } = $props();
-
-  interactivity();
 
   onDestroy(() => disposeMaterials());
 

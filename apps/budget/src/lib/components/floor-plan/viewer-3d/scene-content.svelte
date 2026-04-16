@@ -1,6 +1,8 @@
 <script lang="ts">
   import { T } from "@threlte/core";
-  import { Grid } from "@threlte/extras";
+  import { Grid, interactivity } from "@threlte/extras";
+
+  interactivity();
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
   import { SCALE } from "$lib/utils/wall-csg";
   import WallMesh from "./wall-mesh.svelte";
