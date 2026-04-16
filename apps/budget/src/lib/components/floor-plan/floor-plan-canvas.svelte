@@ -29,6 +29,7 @@
   }
 
   function svgPoint(e: MouseEvent): { x: number; y: number } {
+    if (!svgEl) return { x: 0, y: 0 };
     const rect = svgEl.getBoundingClientRect();
     const scaleX = store.viewBoxWidth / rect.width;
     const scaleY = store.viewBoxHeight / rect.height;
@@ -133,6 +134,7 @@
   }
 
   function handleWheel(e: WheelEvent) {
+    if (!svgEl) return;
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const pt = svgPoint(e);
