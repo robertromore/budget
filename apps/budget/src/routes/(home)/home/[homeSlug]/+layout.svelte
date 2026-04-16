@@ -9,14 +9,13 @@
     ChevronLeft,
     PenTool,
   } from "@lucide/svelte";
-  import { createQuery } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
 
   let { children } = $props();
 
   const homeSlug = $derived($page.params.homeSlug);
-  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
-  const home = $derived($homeQuery.data);
+  const homeQuery = $derived(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived(homeQuery.data);
 
   const navItems = $derived(
     home

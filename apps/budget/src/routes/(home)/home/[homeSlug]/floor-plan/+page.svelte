@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
   import FloorPlanCanvas from "$lib/components/floor-plan/floor-plan-canvas.svelte";
@@ -8,35 +7,29 @@
   import PropertiesPanel from "$lib/components/floor-plan/panels/properties-panel.svelte";
 
   const homeSlug = $derived($page.params.homeSlug);
-  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
-  const home = $derived($homeQuery.data);
+  const homeQuery = $derived(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived(homeQuery.data);
   const homeId = $derived(home?.id ?? 0);
 
   const store = new FloorPlanStore();
 
   let currentFloor = $state(0);
 
-  const floorPlanQuery = createQuery(() => ({
-    ...rpc.homeFloorPlans.getFloorPlan(homeId, currentFloor).options(),
-    enabled: !!home,
-  }));
-  const floorLevelsQuery = createQuery(() => ({
-    ...rpc.homeFloorPlans.getFloorLevels(homeId).options(),
-    enabled: !!home,
-  }));
-  const saveMutation = createMutation(rpc.homeFloorPlans.saveFloorPlan.options());
+  const floorPlanQuery = $derived(home ? rpc.homeFloorPlans.getFloorPlan(homeId, currentFloor).options() : undefined);
+  const floorLevelsQuery = $derived(home ? rpc.homeFloorPlans.getFloorLevels(homeId).options() : undefined);
+  const saveMutation = rpc.homeFloorPlans.saveFloorPlan.options();
 
-  const floorLevels = $derived($floorLevelsQuery.data ?? [0]);
+  const floorLevels = $derived(floorLevelsQuery?.data ?? [0]);
 
   // Load nodes when query data arrives
   $effect(() => {
-    if ($floorPlanQuery.data) {
-      store.loadNodes($floorPlanQuery.data, homeId, currentFloor);
+    if (floorPlanQuery?.data) {
+      store.loadNodes(floorPlanQuery.data, homeId, currentFloor);
     }
   });
 
   async function handleSave() {
-    await $saveMutation.mutateAsync({
+    await saveMutation.mutateAsync({
       homeId,
       floorLevel: currentFloor,
       nodes: store.getNodesForSave(),

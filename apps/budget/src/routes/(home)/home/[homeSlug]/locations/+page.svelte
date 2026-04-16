@@ -2,22 +2,18 @@
   import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { Plus, MapPin, ChevronRight, FolderOpen } from "@lucide/svelte";
 
   const homeSlug = $derived($page.params.homeSlug);
-  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
-  const home = $derived($homeQuery.data);
+  const homeQuery = $derived(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived(homeQuery.data);
   const homeId = $derived(home?.id ?? 0);
 
-  const treeQuery = createQuery(() => ({
-    ...rpc.homeLocations.getHomeLocationTree(homeId).options(),
-    enabled: !!home,
-  }));
-  const createMut = createMutation(rpc.homeLocations.createHomeLocation.options());
+  const treeQuery = $derived(home ? rpc.homeLocations.getHomeLocationTree(homeId).options() : undefined);
+  const createMut = rpc.homeLocations.createHomeLocation.options();
 
-  const tree = $derived($treeQuery.data ?? []);
+  const tree = $derived(treeQuery?.data ?? []);
 
   let showCreateForm = $state(false);
   let newLocationName = $state("");
@@ -26,7 +22,7 @@
 
   async function handleCreate() {
     if (!newLocationName.trim()) return;
-    await $createMut.mutateAsync({
+    await createMut.mutateAsync({
       homeId,
       name: newLocationName.trim(),
       locationType: newLocationType,

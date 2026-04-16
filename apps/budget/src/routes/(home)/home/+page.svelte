@@ -2,7 +2,6 @@
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { Home, Plus, MapPin, Package, Tags } from "@lucide/svelte";
-  import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
 
   let showCreateDialog = $state(false);
@@ -10,15 +9,15 @@
   let newHomeDescription = $state("");
   let newHomeAddress = $state("");
 
-  const homesQuery = createQuery(rpc.homes.listHomes().options());
-  const createHomeMutation = createMutation(rpc.homes.createHome.options());
+  const homesQuery = rpc.homes.listHomes().options();
+  const createHomeMutation = rpc.homes.createHome.options();
 
-  const homes = $derived($homesQuery.data ?? []);
+  const homes = $derived(homesQuery.data ?? []);
 
   async function handleCreateHome() {
     if (!newHomeName.trim()) return;
 
-    await $createHomeMutation.mutateAsync({
+    await createHomeMutation.mutateAsync({
       name: newHomeName.trim(),
       description: newHomeDescription.trim() || null,
       address: newHomeAddress.trim() || null,

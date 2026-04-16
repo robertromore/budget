@@ -16,33 +16,26 @@
     FileText,
     Image,
   } from "@lucide/svelte";
-  import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
 
   const homeSlug = $derived($page.params.homeSlug);
   const itemCuid = $derived($page.params.itemCuid);
 
-  const itemQuery = createQuery(rpc.homeItems.getHomeItemByCuid(itemCuid).options());
-  const item = $derived($itemQuery.data);
+  const itemQuery = $derived(rpc.homeItems.getHomeItemByCuid(itemCuid).options());
+  const item = $derived(itemQuery.data);
   const itemId = $derived(item?.id ?? 0);
 
   // Labels
-  const labelsQuery = createQuery(() => ({
-    ...rpc.homeItems.getHomeItemLabels(itemId).options(),
-    enabled: !!item,
-  }));
-  const itemLabels = $derived($labelsQuery.data ?? []);
+  const labelsQuery = $derived(item ? rpc.homeItems.getHomeItemLabels(itemId).options() : undefined);
+  const itemLabels = $derived(labelsQuery?.data ?? []);
 
   // Maintenance
-  const maintenanceQuery = createQuery(() => ({
-    ...rpc.homeMaintenance.listMaintenanceByItem(itemId).options(),
-    enabled: !!item,
-  }));
-  const createMaintenanceMut = createMutation(rpc.homeMaintenance.createMaintenance.options());
-  const completeMaintenanceMut = createMutation(rpc.homeMaintenance.completeMaintenance.options());
-  const deleteMaintenanceMut = createMutation(rpc.homeMaintenance.deleteMaintenance.options());
+  const maintenanceQuery = $derived(item ? rpc.homeMaintenance.listMaintenanceByItem(itemId).options() : undefined);
+  const createMaintenanceMut = rpc.homeMaintenance.createMaintenance.options();
+  const completeMaintenanceMut = rpc.homeMaintenance.completeMaintenance.options();
+  const deleteMaintenanceMut = rpc.homeMaintenance.deleteMaintenance.options();
 
-  const maintenanceRecords = $derived($maintenanceQuery.data ?? []);
+  const maintenanceRecords = $derived(maintenanceQuery?.data ?? []);
 
   let showMaintenanceForm = $state(false);
   let maintenanceName = $state("");
@@ -53,7 +46,7 @@
 
   async function handleCreateMaintenance() {
     if (!maintenanceName.trim() || !item) return;
-    await $createMaintenanceMut.mutateAsync({
+    await createMaintenanceMut.mutateAsync({
       itemId: item.id,
       name: maintenanceName.trim(),
       maintenanceType,
@@ -70,14 +63,11 @@
   }
 
   // Attachments
-  const attachmentsQuery = createQuery(() => ({
-    ...rpc.homeAttachments.listAttachmentsByItem(itemId).options(),
-    enabled: !!item,
-  }));
-  const deleteAttachmentMut = createMutation(rpc.homeAttachments.deleteAttachment.options());
-  const setPrimaryMut = createMutation(rpc.homeAttachments.setPrimaryAttachment.options());
+  const attachmentsQuery = $derived(item ? rpc.homeAttachments.listAttachmentsByItem(itemId).options() : undefined);
+  const deleteAttachmentMut = rpc.homeAttachments.deleteAttachment.options();
+  const setPrimaryMut = rpc.homeAttachments.setPrimaryAttachment.options();
 
-  const itemAttachments = $derived($attachmentsQuery.data ?? []);
+  const itemAttachments = $derived(attachmentsQuery?.data ?? []);
 </script>
 
 {#if item}
@@ -310,7 +300,7 @@
                       <button
                         class="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                         title="Mark Complete"
-                        onclick={() => $completeMaintenanceMut.mutateAsync({ id: record.id })}
+                        onclick={() => completeMaintenanceMut.mutateAsync({ id: record.id })}
                       >
                         <Check class="h-3.5 w-3.5" />
                       </button>
@@ -318,7 +308,7 @@
                     <button
                       class="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
                       title="Delete"
-                      onclick={() => $deleteMaintenanceMut.mutateAsync({ id: record.id })}
+                      onclick={() => deleteMaintenanceMut.mutateAsync({ id: record.id })}
                     >
                       <span class="text-xs">x</span>
                     </button>
@@ -366,7 +356,7 @@
                       <button
                         class="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
                         title="Set as Primary"
-                        onclick={() => $setPrimaryMut.mutateAsync({ id: attachment.id })}
+                        onclick={() => setPrimaryMut.mutateAsync({ id: attachment.id })}
                       >
                         <Image class="h-3.5 w-3.5" />
                       </button>
@@ -374,7 +364,7 @@
                     <button
                       class="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
                       title="Delete"
-                      onclick={() => $deleteAttachmentMut.mutateAsync({ id: attachment.id })}
+                      onclick={() => deleteAttachmentMut.mutateAsync({ id: attachment.id })}
                     >
                       <span class="text-xs">x</span>
                     </button>

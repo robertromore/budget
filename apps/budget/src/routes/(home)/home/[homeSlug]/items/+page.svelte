@@ -2,13 +2,12 @@
   import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import { createQuery, createMutation } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
   import { Plus, Package, Search } from "@lucide/svelte";
 
   const homeSlug = $derived($page.params.homeSlug);
-  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
-  const home = $derived($homeQuery.data);
+  const homeQuery = $derived(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived(homeQuery.data);
   const homeId = $derived(home?.id ?? 0);
 
   let searchTerm = $state("");
@@ -16,18 +15,19 @@
   let newItemName = $state("");
   let newItemDescription = $state("");
 
-  const itemsQuery = createQuery(() => ({
-    ...rpc.homeItems.listHomeItems(homeId, { search: searchTerm || undefined }).options(),
-    enabled: !!home,
-  }));
+  const itemsQuery = $derived(
+    home
+      ? rpc.homeItems.listHomeItems(homeId, { search: searchTerm || undefined }).options()
+      : undefined
+  );
 
-  const createMut = createMutation(rpc.homeItems.createHomeItem.options());
+  const createMut = rpc.homeItems.createHomeItem.options();
 
-  const items = $derived($itemsQuery.data ?? []);
+  const items = $derived(itemsQuery?.data ?? []);
 
   async function handleCreate() {
     if (!newItemName.trim()) return;
-    await $createMut.mutateAsync({
+    await createMut.mutateAsync({
       homeId,
       name: newItemName.trim(),
       description: newItemDescription.trim() || null,

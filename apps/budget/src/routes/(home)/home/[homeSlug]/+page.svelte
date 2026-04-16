@@ -2,30 +2,20 @@
   import { page } from "$app/stores";
   import * as Card from "$lib/components/ui/card";
   import { MapPin, Package, Tags } from "@lucide/svelte";
-  import { createQuery } from "@tanstack/svelte-query";
   import { rpc } from "$lib/query";
 
   const homeSlug = $derived($page.params.homeSlug);
-  const homeQuery = createQuery(rpc.homes.getHomeBySlug(homeSlug).options());
-  const home = $derived($homeQuery.data);
+  const homeQuery = $derived(rpc.homes.getHomeBySlug(homeSlug).options());
+  const home = $derived(homeQuery.data);
 
-  const itemsQuery = createQuery(() => ({
-    ...rpc.homeItems.listHomeItems(home?.id ?? 0).options(),
-    enabled: !!home,
-  }));
-  const locationsQuery = createQuery(() => ({
-    ...rpc.homeLocations.listHomeLocations(home?.id ?? 0).options(),
-    enabled: !!home,
-  }));
-  const labelsQuery = createQuery(() => ({
-    ...rpc.homeLabels.listHomeLabels(home?.id ?? 0).options(),
-    enabled: !!home,
-  }));
+  const itemsQuery = $derived(home ? rpc.homeItems.listHomeItems(home.id).options() : undefined);
+  const locationsQuery = $derived(home ? rpc.homeLocations.listHomeLocations(home.id).options() : undefined);
+  const labelsQuery = $derived(home ? rpc.homeLabels.listHomeLabels(home.id).options() : undefined);
 
-  const items = $derived($itemsQuery.data ?? []);
+  const items = $derived(itemsQuery?.data ?? []);
   const itemCount = $derived(items.length);
-  const locationCount = $derived($locationsQuery.data?.length ?? 0);
-  const labelCount = $derived($labelsQuery.data?.length ?? 0);
+  const locationCount = $derived(locationsQuery?.data?.length ?? 0);
+  const labelCount = $derived(labelsQuery?.data?.length ?? 0);
   const totalValue = $derived(
     items.reduce((sum, item) => sum + (item.currentValue ?? 0), 0)
   );
