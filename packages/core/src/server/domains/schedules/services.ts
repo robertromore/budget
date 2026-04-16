@@ -76,17 +76,19 @@ export class ScheduleService {
   ) {}
 
   /**
-   * Execute auto-add for all active schedules
+   * Execute auto-add for every active schedule in a specific workspace.
+   * The `workspaceId` filter is required — iterating schedules without it
+   * would fire transaction creation across every tenant on the instance.
    */
-  async executeAutoAddForAllSchedules(): Promise<AutoAddSummary> {
-    const schedules = await this.repository.getActiveAutoAddSchedules();
+  async executeAutoAddForAllSchedules(workspaceId: number): Promise<AutoAddSummary> {
+    const schedules = await this.repository.getActiveAutoAddSchedules(workspaceId);
     const results: AutoAddResult[] = [];
     const globalErrors: string[] = [];
     let totalTransactionsCreated = 0;
 
     for (const schedule of schedules) {
       try {
-        const result = await this.executeAutoAddForSchedule(schedule.id);
+        const result = await this.executeAutoAddForSchedule(schedule.id, workspaceId);
         results.push(result);
         totalTransactionsCreated += result.transactionsCreated;
       } catch (error) {
@@ -111,11 +113,17 @@ export class ScheduleService {
   }
 
   /**
-   * Execute auto-add for a specific schedule
+   * Execute auto-add for a specific schedule.
+   * The schedule's own `workspaceId` is verified against the caller's — this
+   * prevents a cross-tenant caller from forcing transaction creation in an
+   * unrelated workspace by supplying a guessed numeric id.
    */
-  async executeAutoAddForSchedule(scheduleId: number): Promise<AutoAddResult> {
+  async executeAutoAddForSchedule(
+    scheduleId: number,
+    workspaceId: number
+  ): Promise<AutoAddResult> {
     const schedule = await this.repository.getScheduleById(scheduleId);
-    if (!schedule) {
+    if (!schedule || schedule.workspaceId !== workspaceId) {
       throw new NotFoundError("Schedule not found");
     }
 
@@ -275,27 +283,33 @@ export class ScheduleService {
   }
 
   /**
-   * Get schedule by ID with details
+   * Get schedule by ID with details (workspace-verified).
    */
-  async getScheduleById(scheduleId: number): Promise<ScheduleWithDetails> {
+  async getScheduleById(
+    scheduleId: number,
+    workspaceId: number
+  ): Promise<ScheduleWithDetails> {
     const schedule = await this.repository.getScheduleById(scheduleId);
-    if (!schedule) {
+    if (!schedule || schedule.workspaceId !== workspaceId) {
       throw new NotFoundError("Schedule not found");
     }
     return schedule;
   }
 
   /**
-   * Preview what transactions would be created for a schedule
+   * Preview what transactions would be created for a schedule (workspace-verified).
    */
-  async previewAutoAddForSchedule(scheduleId: number): Promise<{
+  async previewAutoAddForSchedule(
+    scheduleId: number,
+    workspaceId: number
+  ): Promise<{
     schedule: ScheduleWithDetails;
     dueDates: string[];
     nextDueDate: string | null;
     estimatedTransactions: number;
   }> {
     const schedule = await this.repository.getScheduleById(scheduleId);
-    if (!schedule) {
+    if (!schedule || schedule.workspaceId !== workspaceId) {
       throw new NotFoundError("Schedule not found");
     }
 
@@ -320,16 +334,18 @@ export class ScheduleService {
   }
 
   /**
-   * Get upcoming scheduled transactions for an account
-   * Shows transactions that will be created in the near future with intelligent frequency-based limits
-   * Only includes schedules with auto_add enabled
+   * Get upcoming scheduled transactions for an account.
+   * Scoped to the caller's workspace — the account filter alone is not
+   * enough because numeric accountIds are not globally unique across
+   * instances (and previously the schedule fetch pulled from every tenant).
    */
   async getUpcomingScheduledTransactionsForAccount(
     accountId: number,
+    workspaceId: number,
     useSmartLimits: boolean = true
   ): Promise<UpcomingScheduledTransaction[]> {
-    // Get all active schedules with auto_add enabled for this account
-    const schedules = await this.repository.getActiveAutoAddSchedules();
+    // Get all active schedules with auto_add enabled in this workspace
+    const schedules = await this.repository.getActiveAutoAddSchedules(workspaceId);
     const accountSchedules = schedules.filter((schedule) => schedule.accountId === accountId);
 
     const upcomingTransactions: UpcomingScheduledTransaction[] = [];
@@ -642,7 +658,7 @@ export class ScheduleService {
     reason?: string
   ): Promise<ScheduleSkip> {
     const schedule = await this.repository.getScheduleById(scheduleId);
-    if (!schedule) {
+    if (!schedule || schedule.workspaceId !== workspaceId) {
       throw new NotFoundError("Schedule not found");
     }
 
@@ -672,7 +688,7 @@ export class ScheduleService {
     reason?: string
   ): Promise<ScheduleSkip> {
     const schedule = await this.repository.getScheduleById(scheduleId);
-    if (!schedule) {
+    if (!schedule || schedule.workspaceId !== workspaceId) {
       throw new NotFoundError("Schedule not found");
     }
 

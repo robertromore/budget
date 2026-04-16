@@ -75,6 +75,9 @@ export const homeFloorPlanNodes = sqliteTable(
     updatedAt: text("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
+    // Soft-delete tombstone: rows remain on disk so a mistaken bulk delete
+    // can be reversed. Reads filter on `IS NULL` by default.
+    deletedAt: text("deleted_at"),
   },
   (table) => [
     index("floor_plan_node_workspace_id_idx").on(table.workspaceId),
@@ -82,6 +85,15 @@ export const homeFloorPlanNodes = sqliteTable(
     index("floor_plan_node_floor_level_idx").on(table.homeId, table.floorLevel),
     index("floor_plan_node_parent_id_idx").on(table.parentId),
     index("floor_plan_node_type_idx").on(table.nodeType),
+    // Composite index aligning with every read path: findAllByHome filters
+    // on (workspaceId, homeId, floorLevel?) and findIdsInHome filters on
+    // (workspaceId, homeId). Avoids full scans on large multi-tenant DBs.
+    index("floor_plan_node_lookup_idx").on(
+      table.workspaceId,
+      table.homeId,
+      table.floorLevel
+    ),
+    index("floor_plan_node_deleted_at_idx").on(table.deletedAt),
   ]
 );
 

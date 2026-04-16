@@ -1,4 +1,5 @@
-import type { FloorPlanNode, NewFloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
+import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
+import type { FloorPlanNodeInput } from "$core/server/domains/home/floor-plans/services";
 import { trpc } from "$core/trpc/client-factory";
 import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
@@ -26,7 +27,8 @@ export const getFloorLevels = (homeId: number) =>
 interface SaveFloorPlanInput {
   homeId: number;
   floorLevel: number;
-  nodes: NewFloorPlanNode[];
+  // Nodes omit `workspaceId` — the server injects it from the auth context.
+  nodes: FloorPlanNodeInput[];
   deletedNodeIds: string[];
 }
 

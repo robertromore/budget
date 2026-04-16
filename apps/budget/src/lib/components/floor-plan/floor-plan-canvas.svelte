@@ -59,14 +59,21 @@
       isDrawing = true;
       drawStart = pt;
       drawCurrent = pt;
-    } else if (store.activeTool === "furniture" || store.activeTool === "door" || store.activeTool === "window") {
-      const type = store.activeTool === "furniture" ? "furniture" : store.activeTool;
-      store.addNode(type, {
+    } else if (store.activeTool === "door" || store.activeTool === "window") {
+      // Doors/windows snap onto the nearest wall so they render consistently
+      // in 2D (rectangle aligned with wall) and 3D (hole in wall + mesh).
+      store.placeOpening(store.activeTool, pt.x, pt.y, {
+        defaultWidth: store.activeTool === "door" ? 40 : 60,
+        defaultHeight: 10,
+        name: store.activeTool === "door" ? "Door" : "Window",
+      });
+    } else if (store.activeTool === "furniture") {
+      store.addNode("furniture", {
         posX: pt.x,
         posY: pt.y,
-        width: store.activeTool === "door" ? 40 : store.activeTool === "window" ? 60 : 60,
-        height: store.activeTool === "door" ? 10 : store.activeTool === "window" ? 10 : 60,
-        name: store.activeTool === "door" ? "Door" : store.activeTool === "window" ? "Window" : "Furniture",
+        width: 60,
+        height: 60,
+        name: "Furniture",
         color: null,
       });
     } else if (store.activeTool === "select") {
@@ -135,16 +142,57 @@
 
   function handleWheel(e: WheelEvent) {
     if (!svgEl) return;
+    // preventDefault is ignored silently when the listener is attached passively.
+    // We attach via addEventListener({ passive: false }) below so preventDefault
+    // actually cancels the default scroll.
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const pt = svgPoint(e);
     store.zoomTo(store.zoom * delta, pt.x, pt.y);
   }
 
+  // Svelte 5's `onwheel={...}` binding attaches the handler passively, which
+  // makes `preventDefault()` inside the handler silently no-op and produces
+  // a browser warning. Attach a non-passive listener imperatively so zoom
+  // actually suppresses the page's default scroll.
+  $effect(() => {
+    if (!svgEl) return;
+    const el = svgEl;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  });
+
   function handleNodeClick(id: string, e: MouseEvent) {
     if (store.activeTool !== "select") return;
     e.stopPropagation();
     store.selectNode(id, e.shiftKey);
+  }
+
+  /**
+   * Arrow-key handler bound per-node via `onkeydown`. Nudges the current
+   * selection by one grid cell (Shift+arrow = 10 cells). Non-arrow keys
+   * fall through so the page-level shortcuts (undo, delete, etc.) still run.
+   */
+  function handleNodeKeyDown(e: KeyboardEvent) {
+    const step = store.gridSize * (e.shiftKey ? 10 : 1);
+    switch (e.key) {
+      case "ArrowLeft":
+        e.preventDefault();
+        store.nudgeSelection(-step, 0);
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        store.nudgeSelection(step, 0);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        store.nudgeSelection(0, -step);
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        store.nudgeSelection(0, step);
+        break;
+    }
   }
 
   let dragNodeId = $state<string | null>(null);
@@ -180,6 +228,14 @@
   function handleCanvasMouseUp(e: MouseEvent) {
     handleMouseUp(e);
     if (dragNodeId) {
+      // Re-snap doors/windows onto whichever wall they were dropped on. If
+      // dragged away from every wall they become unparented (and won't cut
+      // an opening in 3D) — the mesh still renders so the user can pick
+      // them back up and drop them onto a wall.
+      const dragged = store.nodes[dragNodeId];
+      if (dragged && (dragged.nodeType === "door" || dragged.nodeType === "window")) {
+        store.reparentOpeningToNearestWall(dragNodeId);
+      }
       store.commitChange();
       dragNodeId = null;
       dragOffset = null;
@@ -211,7 +267,6 @@
   onmousedown={handleMouseDown}
   onmousemove={handleCanvasMouseMove}
   onmouseup={handleCanvasMouseUp}
-  onwheel={handleWheel}
   onkeydown={handleKeyDown}
   onkeyup={handleKeyUp}
 >
@@ -263,6 +318,7 @@
       selected={store.selectedNodeIds.has(node.id)}
       onmousedown={(e) => handleNodeMouseDown(node.id, e)}
       onclick={(e) => handleNodeClick(node.id, e)}
+      onkeydown={handleNodeKeyDown}
     />
   {/each}
 
@@ -273,6 +329,7 @@
       selected={store.selectedNodeIds.has(node.id)}
       onmousedown={(e) => handleNodeMouseDown(node.id, e)}
       onclick={(e) => handleNodeClick(node.id, e)}
+      onkeydown={handleNodeKeyDown}
     />
   {/each}
 
@@ -283,6 +340,7 @@
       selected={store.selectedNodeIds.has(node.id)}
       onmousedown={(e) => handleNodeMouseDown(node.id, e)}
       onclick={(e) => handleNodeClick(node.id, e)}
+      onkeydown={handleNodeKeyDown}
     />
   {/each}
 
@@ -293,6 +351,7 @@
       selected={store.selectedNodeIds.has(node.id)}
       onmousedown={(e) => handleNodeMouseDown(node.id, e)}
       onclick={(e) => handleNodeClick(node.id, e)}
+      onkeydown={handleNodeKeyDown}
     />
   {/each}
 
@@ -303,6 +362,7 @@
       selected={store.selectedNodeIds.has(node.id)}
       onmousedown={(e) => handleNodeMouseDown(node.id, e)}
       onclick={(e) => handleNodeClick(node.id, e)}
+      onkeydown={handleNodeKeyDown}
     />
   {/each}
 

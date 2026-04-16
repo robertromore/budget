@@ -882,7 +882,13 @@ export class CategoryRepository extends BaseRepository<
     await db
       .update(transactions)
       .set({ categoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
-      .where(and(eq(transactions.categoryId, sourceCategoryId), isNull(transactions.deletedAt)));
+      .where(
+        and(
+          eq(transactions.categoryId, sourceCategoryId),
+          eq(transactions.workspaceId, workspaceId),
+          isNull(transactions.deletedAt)
+        )
+      );
   }
 
   /**
@@ -896,7 +902,12 @@ export class CategoryRepository extends BaseRepository<
     await db
       .update(schedules)
       .set({ categoryId: targetCategoryId, updatedAt: getCurrentTimestamp() })
-      .where(eq(schedules.categoryId, sourceCategoryId));
+      .where(
+        and(
+          eq(schedules.categoryId, sourceCategoryId),
+          eq(schedules.workspaceId, workspaceId)
+        )
+      );
   }
 
   /**

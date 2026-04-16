@@ -1,5 +1,4 @@
 <script lang="ts">
-import { page } from '$app/stores';
 import { cn } from '$lib/utils';
 
 interface AppDef {
@@ -42,9 +41,7 @@ const apps: AppDef[] = [
   },
 ];
 
-const activeAppId = $derived(
-  apps.find((app) => app.match($page.url.pathname))?.id ?? 'budget'
-);
+let { activeAppId = "budget" }: { activeAppId?: string } = $props();
 </script>
 
 <nav

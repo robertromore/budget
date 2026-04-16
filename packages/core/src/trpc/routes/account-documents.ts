@@ -21,7 +21,7 @@ const updateDocumentSchema = z.object({
 // ============================================================================
 
 export const accountDocumentsRouter = t.router({
-  // Get all documents (optionally filtered by tax year)
+  // Get all documents within the caller's workspace (optionally filtered by tax year)
   getAll: publicProcedure
     .input(
       z
@@ -30,18 +30,17 @@ export const accountDocumentsRouter = t.router({
         })
         .optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
         if (input?.taxYear) {
-          return await service.getDocumentsByTaxYear(input.taxYear);
+          return await service.getDocumentsByTaxYear(input.taxYear, ctx.workspaceId);
         }
-        // Get all documents by calling getDocumentsByTaxYear without year filter
-        // This returns all non-deleted documents
-        const years = await service.getAvailableTaxYears();
+        // Aggregate across all workspace tax years
+        const years = await service.getAvailableTaxYears(ctx.workspaceId);
         const allDocs = [];
         for (const year of years) {
-          const docs = await service.getDocumentsByTaxYear(year);
+          const docs = await service.getDocumentsByTaxYear(year, ctx.workspaceId);
           allDocs.push(...docs);
         }
         return allDocs;
@@ -53,7 +52,7 @@ export const accountDocumentsRouter = t.router({
       }
     }),
 
-  // Get documents by account
+  // Get documents by account (workspace-verified)
   getByAccount: publicProcedure
     .input(
       z.object({
@@ -61,32 +60,36 @@ export const accountDocumentsRouter = t.router({
         taxYear: z.number().min(2000).max(2100).optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
         if (input.taxYear) {
-          return await service.getDocumentsByAccountAndTaxYear(input.accountId, input.taxYear);
+          return await service.getDocumentsByAccountAndTaxYear(
+            input.accountId,
+            input.taxYear,
+            ctx.workspaceId
+          );
         }
-        return await service.getDocumentsByAccount(input.accountId);
+        return await service.getDocumentsByAccount(input.accountId, ctx.workspaceId);
       } catch (error: any) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",
           message: error.message || "Failed to fetch documents",
         });
       }
     }),
 
-  // Get documents by tax year
+  // Get documents by tax year (workspace-scoped)
   getByTaxYear: publicProcedure
     .input(
       z.object({
         taxYear: z.number().min(2000).max(2100),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
-        return await service.getDocumentsByTaxYear(input.taxYear);
+        return await service.getDocumentsByTaxYear(input.taxYear, ctx.workspaceId);
       } catch (error: any) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -95,13 +98,13 @@ export const accountDocumentsRouter = t.router({
       }
     }),
 
-  // Get single document by ID
+  // Get single document by ID (workspace-verified)
   getById: publicProcedure
     .input(z.object({ id: z.number().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
-        const document = await service.getDocument(input.id);
+        const document = await service.getDocument(input.id, ctx.workspaceId);
         if (!document) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -117,11 +120,11 @@ export const accountDocumentsRouter = t.router({
       }
     }),
 
-  // Get available tax years
-  getAvailableTaxYears: publicProcedure.query(async () => {
+  // Get available tax years within the caller's workspace
+  getAvailableTaxYears: publicProcedure.query(async ({ ctx }) => {
     try {
       const service = serviceFactory.getAccountDocumentService();
-      return await service.getAvailableTaxYears();
+      return await service.getAvailableTaxYears(ctx.workspaceId);
     } catch (error: any) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -130,22 +133,22 @@ export const accountDocumentsRouter = t.router({
     }
   }),
 
-  // Get available tax years for a specific account
+  // Get available tax years for a specific account (workspace-verified)
   getAvailableTaxYearsForAccount: publicProcedure
     .input(z.object({ accountId: z.number().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
-        return await service.getAvailableTaxYearsForAccount(input.accountId);
+        return await service.getAvailableTaxYearsForAccount(input.accountId, ctx.workspaceId);
       } catch (error: any) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",
           message: error.message || "Failed to fetch available tax years for account",
         });
       }
     }),
 
-  // Get document counts
+  // Get document counts (workspace-scoped)
   getCounts: publicProcedure
     .input(
       z
@@ -154,12 +157,12 @@ export const accountDocumentsRouter = t.router({
         })
         .optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
         const taxYear = input?.taxYear;
-        const total = await service.countDocuments(taxYear);
-        const byType = await service.getCountByType(taxYear);
+        const total = await service.countDocuments(ctx.workspaceId, taxYear);
+        const byType = await service.getCountByType(ctx.workspaceId, taxYear);
         return { total, byType };
       } catch (error: any) {
         throw new TRPCError({
@@ -169,8 +172,8 @@ export const accountDocumentsRouter = t.router({
       }
     }),
 
-  // Update document metadata
-  update: publicProcedure.input(updateDocumentSchema).mutation(async ({ input }) => {
+  // Update document metadata (workspace-verified)
+  update: publicProcedure.input(updateDocumentSchema).mutation(async ({ ctx, input }) => {
     try {
       const service = serviceFactory.getAccountDocumentService();
       const { id, ...data } = input;
@@ -182,7 +185,7 @@ export const accountDocumentsRouter = t.router({
       if (data.description !== undefined) updateData.description = data.description;
       if (data.taxYear !== undefined) updateData.taxYear = data.taxYear;
 
-      const document = await service.updateDocument(id, updateData);
+      const document = await service.updateDocument(id, updateData, ctx.workspaceId);
       return document;
     } catch (error: any) {
       throw new TRPCError({
@@ -192,13 +195,13 @@ export const accountDocumentsRouter = t.router({
     }
   }),
 
-  // Delete document (soft delete)
+  // Delete document (soft delete, workspace-verified)
   delete: publicProcedure
     .input(z.object({ id: z.number().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
-        await service.deleteDocument(input.id);
+        await service.deleteDocument(input.id, ctx.workspaceId);
         return { success: true };
       } catch (error: any) {
         throw new TRPCError({
@@ -208,10 +211,10 @@ export const accountDocumentsRouter = t.router({
       }
     }),
 
-  // Bulk delete documents
+  // Bulk delete documents (each id verified against the caller's workspace)
   bulkDelete: publicProcedure
     .input(z.object({ ids: z.array(z.number().positive()) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         const service = serviceFactory.getAccountDocumentService();
         let deletedCount = 0;
@@ -219,7 +222,7 @@ export const accountDocumentsRouter = t.router({
 
         for (const id of input.ids) {
           try {
-            await service.deleteDocument(id);
+            await service.deleteDocument(id, ctx.workspaceId);
             deletedCount++;
           } catch (error: any) {
             errors.push(`Failed to delete document ${id}: ${error.message}`);

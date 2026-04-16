@@ -1,4 +1,5 @@
 import { accounts } from "$core/schema/accounts";
+import { expenseReceipts } from "$core/schema/expense-receipts";
 import { medicalExpenses } from "$core/schema/medical-expenses";
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { auth } from "$core/server/auth";
@@ -30,27 +31,25 @@ export const GET: RequestHandler = async ({ params, request }) => {
       throw error(400, "Invalid receipt ID");
     }
 
-    // Get receipt metadata from database
-    const receipt = await receiptService.getReceipt(receiptId);
-
-    if (!receipt) {
-      throw error(404, "Receipt not found");
-    }
-
-    const [expense] = await db
+    // Resolve the owning workspace via the receipt → medical expense → account
+    // chain BEFORE calling the service (the service requires workspaceId), then
+    // verify the caller is a member.
+    const [owner] = await db
       .select({ workspaceId: accounts.workspaceId })
-      .from(medicalExpenses)
+      .from(expenseReceipts)
+      .innerJoin(medicalExpenses, eq(expenseReceipts.medicalExpenseId, medicalExpenses.id))
       .innerJoin(accounts, eq(medicalExpenses.hsaAccountId, accounts.id))
       .where(
         and(
-          eq(medicalExpenses.id, receipt.medicalExpenseId),
+          eq(expenseReceipts.id, receiptId),
+          isNull(expenseReceipts.deletedAt),
           isNull(medicalExpenses.deletedAt),
           isNull(accounts.deletedAt)
         )
       )
       .limit(1);
-    if (!expense) {
-      throw error(404, "Medical expense not found");
+    if (!owner) {
+      throw error(404, "Receipt not found");
     }
 
     const [membership] = await db
@@ -59,13 +58,16 @@ export const GET: RequestHandler = async ({ params, request }) => {
       .where(
         and(
           eq(workspaceMembers.userId, userId),
-          eq(workspaceMembers.workspaceId, expense.workspaceId)
+          eq(workspaceMembers.workspaceId, owner.workspaceId)
         )
       )
       .limit(1);
     if (!membership) {
       throw error(403, "You do not have access to this receipt");
     }
+
+    // Load receipt through the workspace-scoped service path (defense in depth).
+    const receipt = await receiptService.getReceipt(receiptId, owner.workspaceId);
 
     // Get file path
     const filePath = receiptService.getReceiptFilePath(receipt);

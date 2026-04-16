@@ -1,8 +1,9 @@
 import { accounts, isUtilityAccount } from "$core/schema/accounts";
 import type { UtilityUsage, UtilityRateTier, UsageUnit } from "$core/schema/utility-usage";
+import { utilityUsage } from "$core/schema/utility-usage";
 import { db } from "$core/server/shared/database";
-import { ValidationError } from "$core/server/shared/types";
-import { eq } from "drizzle-orm";
+import { NotFoundError, ValidationError } from "$core/server/shared/types";
+import { and, eq } from "drizzle-orm";
 import {
   utilityUsageRepository,
   utilityRateTierRepository,
@@ -69,8 +70,8 @@ export class UtilityUsageService {
    * Create a new usage record with validation
    */
   async createUsageRecord(input: CreateUsageRecordInput): Promise<UtilityUsage> {
-    // Validate account is a utility account
-    await this.validateUtilityAccount(input.accountId);
+    // Validate account is a utility account in the caller's workspace
+    await this.validateUtilityAccount(input.accountId, input.workspaceId);
 
     // Validate period dates
     if (new Date(input.periodEnd) < new Date(input.periodStart)) {
@@ -149,41 +150,57 @@ export class UtilityUsageService {
   }
 
   /**
-   * Get usage record by ID
+   * Get usage record by ID, scoped to the caller's workspace.
+   * Returns null if the record does not exist OR belongs to another tenant
+   * (uniform response avoids cross-tenant id enumeration).
    */
-  async getUsageRecord(id: number): Promise<UtilityUsage | null> {
-    return await utilityUsageRepository.findById(id);
+  async getUsageRecord(id: number, workspaceId: number): Promise<UtilityUsage | null> {
+    const [row] = await db
+      .select()
+      .from(utilityUsage)
+      .where(and(eq(utilityUsage.id, id), eq(utilityUsage.workspaceId, workspaceId)))
+      .limit(1);
+    return row ?? null;
   }
 
   /**
-   * Get all usage records for an account
+   * Get all usage records for an account (workspace-verified).
    */
-  async getUsageRecords(accountId: number): Promise<UtilityUsage[]> {
+  async getUsageRecords(accountId: number, workspaceId: number): Promise<UtilityUsage[]> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await utilityUsageRepository.findByAccountId(accountId);
   }
 
   /**
-   * Get usage records by date range
+   * Get usage records by date range (workspace-verified).
    */
   async getUsageRecordsByDateRange(
     accountId: number,
+    workspaceId: number,
     startDate: string,
     endDate: string
   ): Promise<UtilityUsage[]> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await utilityUsageRepository.findByDateRange(accountId, startDate, endDate);
   }
 
   /**
-   * Get usage record linked to a transaction
+   * Get usage record linked to a transaction (workspace-verified).
    */
-  async getUsageByTransactionId(transactionId: number): Promise<UtilityUsage | null> {
-    return await utilityUsageRepository.findByTransactionId(transactionId);
+  async getUsageByTransactionId(
+    transactionId: number,
+    workspaceId: number
+  ): Promise<UtilityUsage | null> {
+    const record = await utilityUsageRepository.findByTransactionId(transactionId);
+    if (!record || record.workspaceId !== workspaceId) return null;
+    return record;
   }
 
   /**
-   * Get comprehensive usage analytics for an account
+   * Get comprehensive usage analytics for an account (workspace-verified).
    */
-  async getUsageAnalytics(accountId: number): Promise<UsageAnalytics> {
+  async getUsageAnalytics(accountId: number, workspaceId: number): Promise<UsageAnalytics> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     const currentYear = new Date().getFullYear();
     const previousYear = currentYear - 1;
 
@@ -244,20 +261,22 @@ export class UtilityUsageService {
   }
 
   /**
-   * Get year-over-year comparison data
+   * Get year-over-year comparison data (workspace-verified).
    */
-  async getYearOverYearData(accountId: number) {
+  async getYearOverYearData(accountId: number, workspaceId: number) {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await utilityUsageRepository.getYearOverYearComparison(accountId);
   }
 
   /**
-   * Create rate tiers for an account
+   * Create rate tiers for an account (workspace-verified).
    */
   async createRateTiers(
     accountId: number,
+    workspaceId: number,
     tiers: Omit<CreateRateTierInput, "accountId">[]
   ): Promise<UtilityRateTier[]> {
-    await this.validateUtilityAccount(accountId);
+    await this.validateUtilityAccount(accountId, workspaceId);
 
     const createdTiers: UtilityRateTier[] = [];
 
@@ -273,33 +292,39 @@ export class UtilityUsageService {
   }
 
   /**
-   * Get current rate tiers for an account
+   * Get current rate tiers for an account (workspace-verified).
    */
-  async getCurrentRateTiers(accountId: number): Promise<UtilityRateTier[]> {
+  async getCurrentRateTiers(
+    accountId: number,
+    workspaceId: number
+  ): Promise<UtilityRateTier[]> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await utilityRateTierRepository.findCurrentTiers(accountId);
   }
 
   /**
-   * Replace all rate tiers for an account
+   * Replace all rate tiers for an account (workspace-verified).
    */
   async replaceRateTiers(
     accountId: number,
+    workspaceId: number,
     tiers: Omit<CreateRateTierInput, "accountId">[]
   ): Promise<UtilityRateTier[]> {
-    await this.validateUtilityAccount(accountId);
+    await this.validateUtilityAccount(accountId, workspaceId);
 
     // Delete existing tiers
     await utilityRateTierRepository.deleteByAccountId(accountId);
 
     // Create new tiers
-    return await this.createRateTiers(accountId, tiers);
+    return await this.createRateTiers(accountId, workspaceId, tiers);
   }
 
   /**
-   * Calculate cost breakdown by tier for a usage amount
+   * Calculate cost breakdown by tier for a usage amount (workspace-verified).
    */
   async calculateTieredCost(
     accountId: number,
+    workspaceId: number,
     usageAmount: number
   ): Promise<
     Array<{
@@ -309,6 +334,7 @@ export class UtilityUsageService {
       cost: number;
     }>
   > {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     const tiers = await utilityRateTierRepository.findCurrentTiers(accountId);
 
     if (tiers.length === 0) {
@@ -347,21 +373,43 @@ export class UtilityUsageService {
   }
 
   /**
-   * Validate that an account is a utility account
+   * Verify an account belongs to the given workspace (does not require it
+   * to be a utility account — some read paths need any account in the tenant).
+   * Throws NotFoundError for missing or cross-tenant ids.
    */
-  private async validateUtilityAccount(accountId: number): Promise<void> {
-    const account = await db
-      .select({ accountType: accounts.accountType })
+  private async assertAccountInWorkspace(
+    accountId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const [row] = await db
+      .select({ id: accounts.id })
+      .from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.workspaceId, workspaceId)))
+      .limit(1);
+    if (!row) {
+      throw new NotFoundError("Account", accountId.toString());
+    }
+  }
+
+  /**
+   * Validate that an account is a utility account within the caller's workspace.
+   */
+  private async validateUtilityAccount(
+    accountId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const [account] = await db
+      .select({ accountType: accounts.accountType, workspaceId: accounts.workspaceId })
       .from(accounts)
       .where(eq(accounts.id, accountId))
       .limit(1)
       .execute();
 
-    if (!account[0]) {
-      throw new ValidationError("Account not found");
+    if (!account || account.workspaceId !== workspaceId) {
+      throw new NotFoundError("Account", accountId.toString());
     }
 
-    if (!account[0].accountType || !isUtilityAccount(account[0].accountType)) {
+    if (!account.accountType || !isUtilityAccount(account.accountType)) {
       throw new ValidationError("Usage records can only be added to utility accounts");
     }
   }

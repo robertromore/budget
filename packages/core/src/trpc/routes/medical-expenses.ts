@@ -362,14 +362,17 @@ export const medicalExpensesRouter = t.router({
   // Get receipts for a medical expense
   getReceipts: publicProcedure
     .input(z.object({ medicalExpenseId: z.number().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
-        const receipts = await receiptService.getReceiptsByExpense(input.medicalExpenseId);
+        const receipts = await receiptService.getReceiptsByExpense(
+          input.medicalExpenseId,
+          ctx.workspaceId
+        );
         return receipts;
       } catch (error: any) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",
           message: error.message || "Failed to fetch receipts",
         });
       }
@@ -378,10 +381,10 @@ export const medicalExpensesRouter = t.router({
   // Get receipt by ID
   getReceipt: publicProcedure
     .input(z.object({ id: z.number().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
-        const receipt = await receiptService.getReceipt(input.id);
+        const receipt = await receiptService.getReceipt(input.id, ctx.workspaceId);
         return receipt;
       } catch (error: any) {
         throw new TRPCError({
@@ -392,7 +395,7 @@ export const medicalExpensesRouter = t.router({
     }),
 
   // Update receipt
-  updateReceipt: publicProcedure.input(updateReceiptSchema).mutation(async ({ input }) => {
+  updateReceipt: publicProcedure.input(updateReceiptSchema).mutation(async ({ ctx, input }) => {
     try {
       const receiptService = serviceFactory.getReceiptService();
       const { id, ...inputData } = input;
@@ -402,7 +405,7 @@ export const medicalExpensesRouter = t.router({
       if (inputData.receiptType) data.receiptType = inputData.receiptType;
       if (inputData.description) data.description = inputData.description;
 
-      const receipt = await receiptService.updateReceipt(id, data);
+      const receipt = await receiptService.updateReceipt(id, data, ctx.workspaceId);
       return receipt;
     } catch (error: any) {
       throw new TRPCError({
@@ -415,10 +418,10 @@ export const medicalExpensesRouter = t.router({
   // Delete receipt
   deleteReceipt: publicProcedure
     .input(z.object({ id: z.number().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
-        await receiptService.deleteReceipt(input.id);
+        await receiptService.deleteReceipt(input.id, ctx.workspaceId);
         return { success: true };
       } catch (error: any) {
         throw new TRPCError({
@@ -431,10 +434,13 @@ export const medicalExpensesRouter = t.router({
   // Count receipts for an expense
   countReceipts: publicProcedure
     .input(z.object({ medicalExpenseId: z.number().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
-        const count = await receiptService.countReceipts(input.medicalExpenseId);
+        const count = await receiptService.countReceipts(
+          input.medicalExpenseId,
+          ctx.workspaceId
+        );
         return { count };
       } catch (error: any) {
         throw new TRPCError({

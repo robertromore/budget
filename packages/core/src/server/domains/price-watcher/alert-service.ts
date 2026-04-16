@@ -26,6 +26,7 @@ export class AlertService {
    */
   async evaluateAlerts(
     productId: number,
+    workspaceId: number,
     oldPrice: number,
     newPrice: number,
     inStock: boolean,
@@ -33,7 +34,7 @@ export class AlertService {
     targetPrice?: number | null,
     productName?: string
   ): Promise<AlertTriggerResult[]> {
-    const alerts = await this.alertRepo.findEnabled(productId);
+    const alerts = await this.alertRepo.findEnabled(productId, workspaceId);
     const results: AlertTriggerResult[] = [];
 
     for (const alert of alerts) {
@@ -236,17 +237,22 @@ export class AlertService {
 
   async updateAlert(
     id: number,
-    data: { type?: "price_drop" | "target_reached" | "back_in_stock" | "any_change"; threshold?: number | null; enabled?: boolean }
+    data: {
+      type?: "price_drop" | "target_reached" | "back_in_stock" | "any_change";
+      threshold?: number | null;
+      enabled?: boolean;
+    },
+    workspaceId: number
   ): Promise<PriceAlert> {
-    return this.alertRepo.update(id, data);
+    return this.alertRepo.update(id, data, workspaceId);
   }
 
-  async deleteAlert(id: number): Promise<void> {
-    await this.alertRepo.delete(id);
+  async deleteAlert(id: number, workspaceId: number): Promise<void> {
+    await this.alertRepo.delete(id, workspaceId);
   }
 
-  async getAlertsByProduct(productId: number): Promise<PriceAlert[]> {
-    return this.alertRepo.findByProduct(productId);
+  async getAlertsByProduct(productId: number, workspaceId: number): Promise<PriceAlert[]> {
+    return this.alertRepo.findByProduct(productId, workspaceId);
   }
 
   async getAllAlerts(workspaceId: number): Promise<PriceAlert[]> {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { T } from "@threlte/core";
   import { Grid, interactivity } from "@threlte/extras";
+  import type * as THREE from "three";
 
   interactivity();
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
@@ -10,14 +11,28 @@
   import FurnitureMesh from "./furniture-mesh.svelte";
   import SceneLights from "./scene-lights.svelte";
 
+  /**
+   * Shape of pointer events we forward from child meshes. Threlte's event
+   * payload contains `point`, but the generic `onclick`/`onpointerdown`
+   * handlers on mesh components don't declare it in their prop type
+   * (they're typed permissively as a generic handler). Keep `point`
+   * optional here so both the child-forwarded events and the ground-plane
+   * events that do carry a point can flow through the same callback type.
+   */
+  type ThreltePointerEvent = {
+    point?: THREE.Vector3;
+    stopPropagation?: () => void;
+    nativeEvent?: PointerEvent;
+  };
+
   let {
     store,
     onselect,
     ondragstart,
   }: {
     store: FloorPlanStore;
-    onselect?: (id: string, e: any) => void;
-    ondragstart?: (id: string, e: any) => void;
+    onselect?: (id: string, e: ThreltePointerEvent) => void;
+    ondragstart?: (id: string, e: ThreltePointerEvent) => void;
   } = $props();
 
   const wallOpenings = $derived.by(() => {
@@ -67,6 +82,33 @@
   />
 {/each}
 
+<!--
+  Doors and windows render as standalone meshes in 3D in addition to cutting
+  openings in their parent wall. Without this pass:
+    - Unparented openings (placed away from any wall) would be invisible in
+      3D even though the 2D canvas shows them as rectangles.
+    - Parented openings would show only as a hole in the wall; nothing in
+      the hole.
+  FurnitureMesh already handles door/window geometry, orientation, and the
+  right materials (door: solid; window: translucent glass).
+-->
+{#each store.doors as node (node.id)}
+  <FurnitureMesh
+    {node}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
+{/each}
+{#each store.windows as node (node.id)}
+  <FurnitureMesh
+    {node}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
+{/each}
+
 {#each store.furniture as node (node.id)}
   <FurnitureMesh
     {node}
@@ -79,11 +121,17 @@
 {#each store.annotations as node (node.id)}
   {@const x = node.posX * SCALE}
   {@const z = node.posY * SCALE}
+  <!--
+    FP-L6: `T.SphereGeometry` and `T.MeshStandardMaterial` are declaratively
+    owned by Threlte here — it tracks and disposes them when this `{#each}`
+    iteration unmounts. The values are not wrapped in `$derived.by` clones,
+    so there is no leak path.
+  -->
   <T.Mesh
     position.x={x}
     position.y={1.5}
     position.z={z}
-    onclick={(e) => onselect?.(node.id, e)}
+    onclick={(e: ThreltePointerEvent) => onselect?.(node.id, e)}
   >
     <T.SphereGeometry args={[0.15, 16, 16]} />
     <T.MeshStandardMaterial

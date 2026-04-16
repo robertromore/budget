@@ -2,6 +2,7 @@ import { AuthService } from "$core/server/domains/auth";
 import { sendEmail } from "$core/server/email";
 import { passwordResetEmail } from "$core/server/email/templates";
 import {
+  authOpenProcedure,
   openProcedure,
   protectedProcedure,
   publicProcedure,
@@ -29,7 +30,7 @@ export const authRoutes = t.router({
   /**
    * Validate password strength
    */
-  validatePassword: openProcedure
+  validatePassword: authOpenProcedure
     .input(z.object({ password: z.string() }))
     .mutation(async ({ input }) => {
       return authService.validatePassword(input.password);
@@ -38,7 +39,7 @@ export const authRoutes = t.router({
   /**
    * Check if email is available for registration
    */
-  checkEmailAvailable: openProcedure
+  checkEmailAvailable: authOpenProcedure
     .input(z.object({ email: z.string().email() }))
     .query(async ({ input }) => {
       const isRegistered = await authService.isEmailRegistered(input.email);
@@ -48,7 +49,7 @@ export const authRoutes = t.router({
   /**
    * Initiate password reset
    */
-  forgotPassword: openProcedure
+  forgotPassword: authOpenProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ input }) => {
       const result = await authService.initiatePasswordReset(input.email);
@@ -75,7 +76,7 @@ export const authRoutes = t.router({
   /**
    * Reset password with token
    */
-  resetPassword: openProcedure
+  resetPassword: authOpenProcedure
     .input(
       z.object({
         token: z.string(),
@@ -138,7 +139,18 @@ export const authRoutes = t.router({
       z.object({
         // Display preferences
         dateFormat: z.enum(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]).optional(),
-        currencySymbol: z.string().max(5).optional(),
+        // Currency symbol: a few characters of printable Unicode (letters,
+        // digits, and common symbol characters). Explicitly excludes `<`,
+        // `>`, `&`, `"`, `'`, and control characters so this value can never
+        // become an XSS payload when echoed into HTML (e.g. email templates).
+        currencySymbol: z
+          .string()
+          .max(5)
+          .regex(
+            /^[\p{L}\p{N}$€£¥¢₹₽₩₺₪₫฿.,\- ]*$/u,
+            "Currency symbol contains invalid characters"
+          )
+          .optional(),
         numberFormat: z.enum(["en-US", "de-DE", "fr-FR"]).optional(),
         showCents: z.boolean().optional(),
         tableDisplayMode: z.enum(["popover", "sheet"]).optional(),
@@ -271,7 +283,7 @@ export const authRoutes = t.router({
   /**
    * Verify email with token
    */
-  verifyEmail: openProcedure.input(z.object({ token: z.string() })).mutation(async ({ input }) => {
+  verifyEmail: authOpenProcedure.input(z.object({ token: z.string() })).mutation(async ({ input }) => {
     try {
       await authService.verifyEmail(input.token);
       return { success: true };

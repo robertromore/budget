@@ -17,6 +17,31 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOllama } from "ai-sdk-ollama";
 
+/**
+ * Hosts the server is permitted to contact as an Ollama endpoint.
+ * Matches the allowlist enforced on write in `llm-settings.ts:normalizeOllamaEndpoint`.
+ */
+const OLLAMA_LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "::1"]);
+
+/**
+ * Validate a stored Ollama endpoint and return a normalised origin string, or
+ * `null` if the endpoint is malformed or points outside the loopback allowlist.
+ */
+function validateOllamaEndpoint(rawEndpoint: string): string | null {
+  const raw = rawEndpoint.trim().replace(/\/+$/, "");
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  if (parsed.username || parsed.password) return null;
+  const host = parsed.hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
+  if (!OLLAMA_LOOPBACK_HOSTS.has(host)) return null;
+  return parsed.origin;
+}
+
 // Provider instance with model configuration
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ProviderInstance {
@@ -80,11 +105,24 @@ export function createProvider(
         };
 
       case "ollama": {
-        // Ollama is local, no API key needed
-        // Use native ai-sdk-ollama provider for reliable tool calling support
+        // Ollama is local, no API key needed.
+        // Use native ai-sdk-ollama provider for reliable tool calling support.
         // Models with tool support: https://ollama.com/search?c=tools
         // Popular options: llama3.1, llama3.2, llama3.3, qwen2.5, qwen3, mistral, mistral-nemo
-        const ollamaEndpoint = config.endpoint || "http://localhost:11434";
+        //
+        // The endpoint is user-supplied (stored in workspace preferences) and
+        // used as an outbound fetch target by the Ollama SDK. Validate here
+        // as defense-in-depth: `updateProvider` also validates on write, but
+        // a workspace may contain a stale/attacker-injected endpoint from
+        // before this check was in place. Restrict to loopback.
+        const rawEndpoint = config.endpoint || "http://localhost:11434";
+        const ollamaEndpoint = validateOllamaEndpoint(rawEndpoint);
+        if (!ollamaEndpoint) {
+          console.error(
+            `Refusing to create Ollama provider: endpoint "${rawEndpoint}" is not a loopback URL`
+          );
+          return null;
+        }
         return {
           // Use native Ollama provider for better tool calling support
           provider: createOllama({

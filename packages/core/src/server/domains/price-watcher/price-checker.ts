@@ -340,6 +340,13 @@ export async function fetchProductInfo(
 ): Promise<ProductInfo> {
   let html: string;
 
+  // Validate the URL against the SSRF allowlist before any network call,
+  // and re-validate on every redirect hop via `safeFetch`.
+  const { assertSafeOutboundUrl, safeFetch } = await import(
+    "$core/server/shared/security/ssrf-guard"
+  );
+  assertSafeOutboundUrl(url);
+
   if (options?.useBrowser) {
     const { isBrowserAvailable, fetchPageWithBrowser } = await import("./browser-provider");
     const available = await isBrowserAvailable();
@@ -348,13 +355,12 @@ export async function fetchProductInfo(
     }
     html = await fetchPageWithBrowser(url);
   } else {
-    const response = await fetch(url, {
+    const response = await safeFetch(url, {
       headers: {
         "User-Agent": getRandomUserAgent(),
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
       },
-      redirect: "follow",
     });
 
     if (!response.ok) {

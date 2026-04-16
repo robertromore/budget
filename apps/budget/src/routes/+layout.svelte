@@ -1,5 +1,4 @@
 <script lang="ts">
-import { page } from '$app/state';
 import { ChatPanel, ChatTrigger } from '$lib/components/ai';
 import { NotificationPopover } from '$lib/components/notifications';
 import { DemoModeBanner } from '$lib/components/demo';
@@ -57,16 +56,11 @@ import type { LayoutData } from './$types';
 
 let { data, children }: { data: LayoutData; children: Snippet } = $props();
 let headerControlsReady = $state(false);
+let hydrated = $state(false);
 
-// Check if we're on a public/auth route that shouldn't show the full app chrome
-const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password', '/invite'];
-const isPublicRoute = $derived(PUBLIC_ROUTES.some((route) => page.url.pathname.startsWith(route)));
+const isPublicRoute = $derived(data.isPublicRoute ?? false);
 
-// Determine which app is active based on URL
-const activeApp = $derived(
-  page.url.pathname.startsWith('/price-watcher') ? 'price-watcher' :
-  page.url.pathname.startsWith('/home') ? 'home' : 'budget'
-);
+const activeApp = $derived(data.activeApp ?? "budget");
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
@@ -88,7 +82,7 @@ const schedulesQuery = rpc.schedules.getAll().options();
 const llmPreferencesQuery = LLMSettings.getPreferences().options();
 
 // Check if LLM features are enabled
-const isLLMEnabled = $derived(llmPreferencesQuery.data?.enabled ?? false);
+const isLLMEnabled = $derived(hydrated ? (llmPreferencesQuery.data?.enabled ?? false) : false);
 
 // Set up state contexts (populated reactively by effects below)
 const accountsState = AccountsState.set([]);
@@ -148,6 +142,7 @@ $effect(() => {
 
 // Auto-scheduler: Automatically create scheduled transactions when app loads
 onMount(() => {
+  hydrated = true;
   fontSize.initialize();
   themePreferences.initialize();
   headerActionsMode.initialize();
@@ -186,6 +181,7 @@ onMount(() => {
   <NuqsAdapter>
     <div class="bg-background md:pl-(--app-rail-width)">
       <AppRail />
+      <AppRail activeAppId={activeApp} />
       {#if activeApp === 'home'}
         {@render children?.()}
       {:else}

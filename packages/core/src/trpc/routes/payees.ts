@@ -36,6 +36,25 @@ import { z } from "zod";
 
 const payeeService = lazyService(() => serviceFactory.getPayeeService());
 
+/**
+ * Typed schema for PayeeAddress used across contact / enrichment routes.
+ * Mirrors the `PayeeAddress` interface in the payees schema file — keep in
+ * sync. All fields are optional so partial addresses still validate, but
+ * every field has an explicit type and a bounded length so `z.any()` is no
+ * longer a free write surface.
+ */
+const payeeAddressSchema = z
+  .object({
+    street: z.string().max(200).optional(),
+    street2: z.string().max(200).optional(),
+    city: z.string().max(100).optional(),
+    state: z.string().max(100).optional(),
+    postalCode: z.string().max(20).optional(),
+    country: z.string().max(100).optional(),
+    formatted: z.string().max(500).optional(),
+  })
+  .strict();
+
 export const payeeRoutes = t.router({
   all: publicProcedure.query(
     withErrorHandler(async ({ ctx }) => payeeService.getAllPayees(ctx.workspaceId))
@@ -592,7 +611,7 @@ export const payeeRoutes = t.router({
             name: z.string(),
             description: z.string(),
             type: z.enum(["conservative", "optimistic", "realistic", "stress_test"]),
-            assumptions: z.record(z.string(), z.any()),
+            assumptions: z.record(z.string(), z.unknown()),
           })
         ),
       })
@@ -638,7 +657,7 @@ export const payeeRoutes = t.router({
           .object({
             transactionAmount: z.number().optional(),
             transactionDate: z.string().optional(),
-            userPreferences: z.record(z.string(), z.any()).optional(),
+            userPreferences: z.record(z.string(), z.unknown()).optional(),
             riskTolerance: z.number().min(0).max(1).optional(),
           })
           .optional(),
@@ -828,7 +847,7 @@ export const payeeRoutes = t.router({
             phone: z.string().optional(),
             email: z.string().optional(),
             website: z.string().optional(),
-            address: z.any().optional(),
+            address: payeeAddressSchema.optional(),
           })
           .optional(),
       })
@@ -873,7 +892,7 @@ export const payeeRoutes = t.router({
     .input(
       z.object({
         payeeId: z.number().positive(),
-        address: z.any().optional(),
+        address: payeeAddressSchema.optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -944,7 +963,7 @@ export const payeeRoutes = t.router({
             phone: z.string().optional(),
             email: z.string().optional(),
             website: z.string().optional(),
-            address: z.any().optional(),
+            address: payeeAddressSchema.optional(),
           })
           .optional(),
       })

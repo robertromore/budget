@@ -760,10 +760,10 @@ export const aiRoutes = t.router({
           });
         }
 
-        // Fetch the document
+        // Fetch the document (workspace-scoped to prevent cross-tenant access)
         const { serviceFactory } = await import("$core/server/shared/container/service-factory");
         const documentService = serviceFactory.getAccountDocumentService();
-        const document = await documentService.getDocument(input.documentId);
+        const document = await documentService.getDocument(input.documentId, ctx.workspaceId);
 
         if (!document) {
           throw new TRPCError({

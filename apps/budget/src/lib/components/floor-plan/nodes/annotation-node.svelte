@@ -6,21 +6,34 @@
     selected = false,
     onmousedown,
     onclick,
+    onkeydown,
   }: {
     node: FloorPlanNode;
     selected?: boolean;
     onmousedown?: (e: MouseEvent) => void;
     onclick?: (e: MouseEvent) => void;
+    onkeydown?: (e: KeyboardEvent) => void;
   } = $props();
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onclick?.(new MouseEvent("click", { bubbles: true }));
+      return;
+    }
+    onkeydown?.(e);
+  }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
 <g
-  class="annotation-node cursor-pointer"
+  class="annotation-node cursor-pointer outline-none focus-visible:[&_circle]:stroke-primary"
   role="button"
-  tabindex="-1"
+  aria-label={node.name ? `Annotation: ${node.name}` : "Annotation"}
+  aria-pressed={selected}
+  tabindex={selected ? 0 : -1}
   onmousedown={onmousedown}
   onclick={onclick}
+  onkeydown={handleKeydown}
 >
   <circle
     cx={node.posX}

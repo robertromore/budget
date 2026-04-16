@@ -796,11 +796,20 @@ export function createAITools(workspaceId: number) {
 
         const category = matchingCategories[0]!;
 
-        // Update the transaction
+        // Update the transaction — defense in depth: even though the preceding
+        // SELECT confirmed the transaction belongs to this workspace, the
+        // UPDATE scopes its own WHERE clause by workspaceId so any future
+        // refactor that changes or skips the SELECT can never cross tenants.
         await db
           .update(transactions)
           .set({ categoryId: category.id })
-          .where(eq(transactions.id, transactionId));
+          .where(
+            and(
+              eq(transactions.id, transactionId),
+              eq(transactions.workspaceId, workspaceId),
+              isNull(transactions.deletedAt)
+            )
+          );
 
         return {
           success: true as const,

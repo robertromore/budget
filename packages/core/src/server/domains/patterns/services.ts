@@ -571,15 +571,18 @@ export class PatternDetectionService {
   }
 
   /**
-   * Match existing transactions to the newly created schedule
+   * Match existing transactions to the newly created schedule.
+   * Scoped by workspaceId as a defense-in-depth check even though the
+   * pattern's `sampleTransactionIds` should already be workspace-local.
    */
   private async matchTransactionsToSchedule(
     pattern: DetectedPattern,
-    scheduleId: number
+    scheduleId: number,
+    workspaceId: number
   ): Promise<number> {
     const { db } = await import("$core/server/db");
     const { transactions } = await import("$core/schema");
-    const { inArray, eq } = await import("drizzle-orm");
+    const { inArray, eq, and } = await import("drizzle-orm");
 
     // Get sample transaction IDs from pattern
     const transactionIds = pattern.sampleTransactionIds || [];
@@ -592,7 +595,12 @@ export class PatternDetectionService {
     const updated = await db
       .update(transactions)
       .set({ scheduleId })
-      .where(inArray(transactions.id, transactionIds))
+      .where(
+        and(
+          inArray(transactions.id, transactionIds),
+          eq(transactions.workspaceId, workspaceId)
+        )
+      )
       .returning({ id: transactions.id });
 
     return updated.length;
@@ -680,7 +688,7 @@ export class PatternDetectionService {
     }
 
     // Match existing transactions to this schedule
-    await this.matchTransactionsToSchedule(pattern, scheduleId);
+    await this.matchTransactionsToSchedule(pattern, scheduleId, workspaceId);
 
     // Mark pattern as converted and store the scheduleId
     const { eq } = await import("drizzle-orm");

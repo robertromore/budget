@@ -38,6 +38,14 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
+type ActiveApp = "budget" | "price-watcher" | "home";
+
+function getActiveApp(pathname: string): ActiveApp {
+  if (pathname.startsWith("/price-watcher")) return "price-watcher";
+  if (pathname.startsWith("/home")) return "home";
+  return "budget";
+}
+
 /**
  * Check if user needs to complete onboarding
  */
@@ -67,6 +75,7 @@ export const load: LayoutServerLoad = async (event) => {
 
   // Check if this is a public route
   const isPublic = isPublicRoute(url.pathname);
+  const activeApp = getActiveApp(url.pathname);
 
   // Desktop auto-login: the hook (hooks.server.ts) handles sign-in for every
   // request and stores the user in event.locals.desktopUser. Use it here to
@@ -111,6 +120,9 @@ export const load: LayoutServerLoad = async (event) => {
   // For public routes without auth, return minimal data
   if (!session?.user && isPublic) {
     return {
+      pathname: url.pathname,
+      isPublicRoute: isPublic,
+      activeApp,
       user: null,
       currentWorkspace: null,
       accounts: [],
@@ -128,6 +140,9 @@ export const load: LayoutServerLoad = async (event) => {
   const caller = createCaller(ctx);
 
   return {
+    pathname: url.pathname,
+    isPublicRoute: isPublic,
+    activeApp,
     user: session?.user ?? null,
     currentWorkspace: await caller.workspaceRoutes.getCurrent(),
     accounts: await caller.accountRoutes.all(),

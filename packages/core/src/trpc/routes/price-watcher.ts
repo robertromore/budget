@@ -178,8 +178,8 @@ export const priceWatcherRoutes = t.router({
   getPriceHistory: publicProcedure
     .input(priceHistorySchema)
     .query(
-      withErrorHandler(async ({ input }) =>
-        getHistoryRepo().getHistory(input.productId, {
+      withErrorHandler(async ({ input, ctx }) =>
+        getHistoryRepo().getHistory(input.productId, ctx.workspaceId, {
           from: input.dateFrom,
           to: input.dateTo,
         })
@@ -216,7 +216,7 @@ export const priceWatcherRoutes = t.router({
     .query(
       withErrorHandler(async ({ input, ctx }) => {
         if (input?.productId) {
-          return getAlertService().getAlertsByProduct(input.productId);
+          return getAlertService().getAlertsByProduct(input.productId, ctx.workspaceId);
         }
         return getAlertService().getAllAlerts(ctx.workspaceId);
       })
@@ -239,16 +239,16 @@ export const priceWatcherRoutes = t.router({
   updateAlert: rateLimitedProcedure
     .input(updateAlertSchema)
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        getAlertService().updateAlert(input.id, input.data)
+      withErrorHandler(async ({ input, ctx }) =>
+        getAlertService().updateAlert(input.id, input.data, ctx.workspaceId)
       )
     ),
 
   deleteAlert: rateLimitedProcedure
     .input(z.object({ id: z.number().positive() }))
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        getAlertService().deleteAlert(input.id)
+      withErrorHandler(async ({ input, ctx }) =>
+        getAlertService().deleteAlert(input.id, ctx.workspaceId)
       )
     ),
 
@@ -293,8 +293,8 @@ export const priceWatcherRoutes = t.router({
   getProductTags: publicProcedure
     .input(z.object({ productId: z.number().positive() }))
     .query(
-      withErrorHandler(async ({ input }) =>
-        getTagService().getProductTags(input.productId)
+      withErrorHandler(async ({ input, ctx }) =>
+        getTagService().getProductTags(input.productId, ctx.workspaceId)
       )
     ),
 
@@ -341,32 +341,32 @@ export const priceWatcherRoutes = t.router({
   addToList: rateLimitedProcedure
     .input(z.object({ listId: z.number().positive(), productId: z.number().positive() }))
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        getListService().addToList(input.listId, input.productId)
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().addToList(input.listId, input.productId, ctx.workspaceId)
       )
     ),
 
   removeFromList: rateLimitedProcedure
     .input(z.object({ listId: z.number().positive(), productId: z.number().positive() }))
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        getListService().removeFromList(input.listId, input.productId)
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().removeFromList(input.listId, input.productId, ctx.workspaceId)
       )
     ),
 
   getListProducts: publicProcedure
     .input(z.object({ listId: z.number().positive() }))
     .query(
-      withErrorHandler(async ({ input }) =>
-        getListService().getListProducts(input.listId)
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().getListProducts(input.listId, ctx.workspaceId)
       )
     ),
 
   getProductLists: publicProcedure
     .input(z.object({ productId: z.number().positive() }))
     .query(
-      withErrorHandler(async ({ input }) =>
-        getListService().getProductLists(input.productId)
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().getProductLists(input.productId, ctx.workspaceId)
       )
     ),
 

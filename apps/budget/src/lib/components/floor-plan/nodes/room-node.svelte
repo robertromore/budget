@@ -6,21 +6,43 @@
     selected = false,
     onmousedown,
     onclick,
+    onkeydown,
   }: {
     node: FloorPlanNode;
     selected?: boolean;
     onmousedown?: (e: MouseEvent) => void;
     onclick?: (e: MouseEvent) => void;
+    onkeydown?: (e: KeyboardEvent) => void;
   } = $props();
+
+  /**
+   * Internal keyboard adapter: Enter/Space synthesize a click (so the canvas
+   * selection handler can run unmodified). Arrow keys are forwarded to the
+   * parent so it can nudge the selection via the store.
+   */
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onclick?.(new MouseEvent("click", { bubbles: true }));
+      return;
+    }
+    onkeydown?.(e);
+  }
 </script>
 
+<!-- Selected nodes are reachable by keyboard (Tab); unselected stay out of
+     the tab order so a large plan doesn't force the user to tab through
+     every rectangle. Arrow keys on a focused selected node nudge it. -->
 <g
-  class="room-node cursor-pointer"
+  class="room-node cursor-pointer outline-none focus-visible:[&_rect:first-of-type]:stroke-primary"
   role="button"
-  tabindex="-1"
+  aria-label={node.name ? `Room: ${node.name}` : "Room"}
+  aria-pressed={selected}
+  tabindex={selected ? 0 : -1}
   transform="rotate({node.rotation} {node.posX + node.width / 2} {node.posY + node.height / 2})"
   onmousedown={onmousedown}
   onclick={onclick}
+  onkeydown={handleKeydown}
 >
   <rect
     x={node.posX}

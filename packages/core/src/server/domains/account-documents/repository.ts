@@ -1,3 +1,4 @@
+import { accounts } from "$core/schema/accounts";
 import {
   accountDocuments,
   type AccountDocument,
@@ -46,6 +47,120 @@ export class AccountDocumentRepository extends BaseRepository<
 > {
   constructor() {
     super(db, accountDocuments, "AccountDocument");
+  }
+
+  /**
+   * Find a single document by ID, scoped to a workspace via its account.
+   * Returns null if the document does not exist OR lives in another tenant.
+   */
+  async findByIdInWorkspace(id: number, workspaceId: number): Promise<AccountDocument | null> {
+    const [row] = await db
+      .select({ doc: accountDocuments })
+      .from(accountDocuments)
+      .innerJoin(accounts, eq(accountDocuments.accountId, accounts.id))
+      .where(
+        and(
+          eq(accountDocuments.id, id),
+          eq(accounts.workspaceId, workspaceId),
+          isNull(accountDocuments.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
+      .limit(1);
+    return row?.doc ?? null;
+  }
+
+  /**
+   * Find documents by tax year, scoped to a workspace.
+   */
+  async findByTaxYearInWorkspace(
+    taxYear: number,
+    workspaceId: number
+  ): Promise<AccountDocument[]> {
+    const rows = await db
+      .select({ doc: accountDocuments })
+      .from(accountDocuments)
+      .innerJoin(accounts, eq(accountDocuments.accountId, accounts.id))
+      .where(
+        and(
+          eq(accountDocuments.taxYear, taxYear),
+          eq(accounts.workspaceId, workspaceId),
+          isNull(accountDocuments.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
+      .orderBy(desc(accountDocuments.uploadedAt))
+      .execute();
+    return rows.map((r) => r.doc);
+  }
+
+  /**
+   * Distinct tax years that have documents in the given workspace.
+   */
+  async getAvailableTaxYearsInWorkspace(workspaceId: number): Promise<number[]> {
+    const result = await db
+      .selectDistinct({ taxYear: accountDocuments.taxYear })
+      .from(accountDocuments)
+      .innerJoin(accounts, eq(accountDocuments.accountId, accounts.id))
+      .where(
+        and(
+          eq(accounts.workspaceId, workspaceId),
+          isNull(accountDocuments.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
+      .orderBy(desc(accountDocuments.taxYear))
+      .execute();
+    return result.map((r) => r.taxYear);
+  }
+
+  /**
+   * Count documents in a workspace, optionally filtered by tax year.
+   */
+  async countInWorkspace(workspaceId: number, taxYear?: number): Promise<number> {
+    const conditions = [
+      eq(accounts.workspaceId, workspaceId),
+      isNull(accountDocuments.deletedAt),
+      isNull(accounts.deletedAt),
+    ];
+    if (taxYear !== undefined) {
+      conditions.push(eq(accountDocuments.taxYear, taxYear));
+    }
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(accountDocuments)
+      .innerJoin(accounts, eq(accountDocuments.accountId, accounts.id))
+      .where(and(...conditions))
+      .execute();
+    return result[0]?.count || 0;
+  }
+
+  /**
+   * Document count grouped by type, scoped to a workspace.
+   */
+  async getCountByTypeInWorkspace(
+    workspaceId: number,
+    taxYear?: number
+  ): Promise<Array<{ documentType: string; count: number }>> {
+    const conditions = [
+      eq(accounts.workspaceId, workspaceId),
+      isNull(accountDocuments.deletedAt),
+      isNull(accounts.deletedAt),
+    ];
+    if (taxYear !== undefined) {
+      conditions.push(eq(accountDocuments.taxYear, taxYear));
+    }
+    const result = await db
+      .select({
+        documentType: accountDocuments.documentType,
+        count: sql<number>`count(*)`,
+      })
+      .from(accountDocuments)
+      .innerJoin(accounts, eq(accountDocuments.accountId, accounts.id))
+      .where(and(...conditions))
+      .groupBy(accountDocuments.documentType)
+      .execute();
+    return result.map((r) => ({ documentType: r.documentType || "other", count: r.count }));
   }
 
   /**

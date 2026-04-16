@@ -33,44 +33,117 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-// Schemas for input validation
+// Schemas for input validation.
+//
+// The automation system intentionally supports polymorphic condition values
+// (a `amount > 100` condition uses a number, `payee contains X` uses a string,
+// etc.), so the value types cannot be fully enumerated here. The shape is
+// still tightened to:
+//   - string/number/boolean/null scalars, or arrays of the same,
+//   - bounded string lengths,
+//   - bounded arrays and nesting depth on condition groups and action params,
+//   - prototype-pollution key rejection on action params.
+//
+// A future pass could discriminate by field type (see conditionFields) for
+// the strongest possible validation, but that requires threading the field
+// metadata through zod and is out of scope here.
+
+const AUTOMATION_ID_MAX = 100;
+const AUTOMATION_STRING_VALUE_MAX = 1_000;
+const AUTOMATION_VALUE_ARRAY_MAX = 100;
+const AUTOMATION_PARAMS_KEY_MAX = 100;
+const AUTOMATION_PARAMS_ENTRIES_MAX = 50;
+const AUTOMATION_CONDITION_DEPTH_MAX = 10;
+const AUTOMATION_CONDITION_GROUP_SIZE_MAX = 50;
+const AUTOMATION_ACTIONS_MAX = 20;
+
+/** Scalar values acceptable in condition.value / value2. Complex objects are
+ * rejected — automation conditions never compare structured objects. */
+const conditionScalarSchema = z.union([
+  z.string().max(AUTOMATION_STRING_VALUE_MAX),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
+const conditionValueSchema = z.union([
+  conditionScalarSchema,
+  z.array(conditionScalarSchema).max(AUTOMATION_VALUE_ARRAY_MAX),
+]);
+
+/**
+ * Reject prototype-pollution keys and cap the number of entries on an
+ * action params record so a malicious rule author cannot hide an
+ * arbitrary-depth payload behind `z.unknown()`.
+ */
+const paramsSchema = z
+  .record(z.string().max(AUTOMATION_PARAMS_KEY_MAX), z.unknown())
+  .refine(
+    (obj) => {
+      if (Object.keys(obj).length > AUTOMATION_PARAMS_ENTRIES_MAX) return false;
+      for (const key of Object.keys(obj)) {
+        if (key === "__proto__" || key === "constructor" || key === "prototype") {
+          return false;
+        }
+      }
+      return true;
+    },
+    { message: "Invalid params (too many keys or contains reserved names)" }
+  );
+
 const triggerConfigSchema = z.object({
   entityType: z.enum(["transaction", "account", "payee", "category", "schedule", "budget"]),
-  event: z.string().min(1),
-  debounceMs: z.number().optional(),
+  event: z.string().min(1).max(100),
+  debounceMs: z.number().int().min(0).max(60_000).optional(),
 });
 
-const conditionSchema: z.ZodType<any> = z.lazy(() =>
-  z.object({
-    id: z.string(),
-    field: z.string(),
-    operator: z.string(),
-    value: z.unknown(),
-    value2: z.unknown().optional(),
-    negate: z.boolean().optional(),
-  })
-);
+const conditionSchema = z.object({
+  id: z.string().max(AUTOMATION_ID_MAX),
+  field: z.string().min(1).max(100),
+  operator: z.string().min(1).max(50),
+  value: conditionValueSchema,
+  value2: conditionValueSchema.optional(),
+  negate: z.boolean().optional(),
+});
 
-const conditionGroupSchema: z.ZodType<any> = z.lazy(() =>
-  z.object({
-    id: z.string(),
+type ConditionGroupShape = {
+  id: string;
+  operator: "AND" | "OR";
+  conditions: Array<z.infer<typeof conditionSchema> | ConditionGroupShape>;
+};
+
+function makeConditionGroupSchema(depth: number): z.ZodType<ConditionGroupShape> {
+  if (depth <= 0) {
+    return z.object({
+      id: z.string().max(AUTOMATION_ID_MAX),
+      operator: z.enum(["AND", "OR"]),
+      // At max depth, only leaf conditions are accepted.
+      conditions: z.array(conditionSchema).max(AUTOMATION_CONDITION_GROUP_SIZE_MAX),
+    }) as unknown as z.ZodType<ConditionGroupShape>;
+  }
+  return z.object({
+    id: z.string().max(AUTOMATION_ID_MAX),
     operator: z.enum(["AND", "OR"]),
-    conditions: z.array(z.union([conditionSchema, conditionGroupSchema])),
-  })
-);
+    conditions: z
+      .array(z.union([conditionSchema, makeConditionGroupSchema(depth - 1)]))
+      .max(AUTOMATION_CONDITION_GROUP_SIZE_MAX),
+  }) as unknown as z.ZodType<ConditionGroupShape>;
+}
+
+const conditionGroupSchema = makeConditionGroupSchema(AUTOMATION_CONDITION_DEPTH_MAX);
 
 const actionConfigSchema = z.object({
-  id: z.string(),
-  type: z.string().min(1),
-  params: z.record(z.string(), z.unknown()),
+  id: z.string().max(AUTOMATION_ID_MAX),
+  type: z.string().min(1).max(100),
+  params: paramsSchema,
   continueOnError: z.boolean().optional(),
 });
 
 const flowNodeSchema = z.object({
-  id: z.string(),
+  id: z.string().max(AUTOMATION_ID_MAX),
   type: z.enum(["trigger", "condition", "action", "group"]),
   position: z.object({ x: z.number(), y: z.number() }),
-  data: z.record(z.string(), z.unknown()),
+  data: paramsSchema,
 });
 
 const flowEdgeSchema = z.object({
@@ -94,7 +167,7 @@ const createRuleSchema = z.object({
   priority: z.number().min(-1000).max(1000).optional(),
   trigger: triggerConfigSchema,
   conditions: conditionGroupSchema,
-  actions: z.array(actionConfigSchema).min(1),
+  actions: z.array(actionConfigSchema).min(1).max(AUTOMATION_ACTIONS_MAX),
   flowState: flowStateSchema.optional(),
   stopOnMatch: z.boolean().optional(),
   runOnce: z.boolean().optional(),
@@ -108,7 +181,7 @@ const updateRuleSchema = z.object({
   priority: z.number().min(-1000).max(1000).optional(),
   trigger: triggerConfigSchema.optional(),
   conditions: conditionGroupSchema.optional(),
-  actions: z.array(actionConfigSchema).min(1).optional(),
+  actions: z.array(actionConfigSchema).min(1).max(AUTOMATION_ACTIONS_MAX).optional(),
   flowState: flowStateSchema.optional().nullable(),
   stopOnMatch: z.boolean().optional(),
   runOnce: z.boolean().optional(),
@@ -242,7 +315,11 @@ export const automationRoutes = t.router({
    * Create a new rule
    */
   create: rateLimitedProcedure.input(createRuleSchema).mutation(async ({ ctx, input }) => {
-    return createRule(input, {
+    // The zod schema is narrower than the domain types (it restricts
+    // operator and condition values at the wire boundary). The service
+    // types use `unknown` for value / a string union for operator, which
+    // our inferred types satisfy at runtime.
+    return createRule(input as unknown as Parameters<typeof createRule>[0], {
       db: ctx.db,
       workspaceId: ctx.workspaceId,
       userId: ctx.userId,
@@ -254,7 +331,7 @@ export const automationRoutes = t.router({
    */
   update: rateLimitedProcedure.input(updateRuleSchema).mutation(async ({ ctx, input }) => {
     const { id, ...data } = input;
-    const rule = await updateRule(id, data, {
+    const rule = await updateRule(id, data as unknown as Parameters<typeof updateRule>[1], {
       db: ctx.db,
       workspaceId: ctx.workspaceId,
       userId: ctx.userId,
@@ -439,7 +516,7 @@ export const automationRoutes = t.router({
     .input(
       z.object({
         ruleId: z.number(),
-        testEntity: z.record(z.string(), z.unknown()),
+        testEntity: paramsSchema,
       })
     )
     .mutation(async ({ ctx, input }) => {

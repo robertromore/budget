@@ -2,12 +2,37 @@ import * as THREE from "three";
 import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
 
-const evaluator = new Evaluator();
-
+/**
+ * `three-bvh-csg`'s `Evaluator` holds internal scratch buffers that are not
+ * safe to share across interleaved evaluations. The previous implementation
+ * used a module-level singleton — that was fine sequentially, but Svelte
+ * reactivity can fire effects from multiple walls on the same tick, which
+ * could corrupt the scratch state mid-evaluation.
+ *
+ * A per-invocation Evaluator is trivial to construct (no heavy init) and
+ * eliminates the re-entrancy hazard. We still dispose intermediate geometry
+ * at the end of each call so the new Evaluator doesn't leak.
+ *
+ * UNIT CONVENTIONS INSIDE THIS FUNCTION (important — these differ between
+ * arguments):
+ *   - `wall.posX, wall.posY, wall.x2, wall.y2` are in METRES. Callers
+ *     (see `wall-mesh.svelte`) pre-multiply the store's pixel values by
+ *     SCALE before calling this function.
+ *   - `wall.wallHeight, wall.thickness, wall.elevation` are in METRES
+ *     natively (stored that way in the schema).
+ *   - `opening.posX, opening.posY, opening.width, opening.height` are in
+ *     PIXELS (raw store values). This function only scales width; vertical
+ *     cut height is derived from node type to match 3D mesh sizing.
+ *   - `opening.posX, opening.posY` represent the CENTRE of the opening
+ *     on the wall (matches `FloorPlanStore.placeOpening` output and the
+ *     2D/3D anchor convention). The CSG projects that point onto the
+ *     wall segment to find where to cut the hole.
+ */
 export function createWallGeometry(
   wall: FloorPlanNode,
   openings: FloorPlanNode[]
 ): THREE.BufferGeometry {
+  const evaluator = new Evaluator();
   const x1 = wall.posX;
   const z1 = wall.posY;
   const x2 = wall.x2 ?? x1;
@@ -49,11 +74,7 @@ export function createWallGeometry(
 
   for (const opening of openings) {
     const ow = (opening.width || 0.9) * SCALE;
-    const oh = opening.height
-      ? opening.height * SCALE
-      : opening.nodeType === "door"
-        ? 2.1
-        : 1.2;
+    const oh = opening.nodeType === "door" ? (opening.wallHeight ?? 2.1) : 1.2;
 
     // Project opening position onto the wall segment to get parametric t
     const opx = (opening.posX ?? 0) * SCALE - x1;
@@ -72,7 +93,7 @@ export function createWallGeometry(
     const cutBrush = new Brush(cutGeom);
 
     cutBrush.rotation.y = -wallAngle;
-    cutBrush.position.set(ox, oy + (wall.elevation ?? 0), oz);
+    cutBrush.position.set(ox, oy + (wall.elevation ?? 0) + (opening.elevation ?? 0), oz);
     cutBrush.updateMatrixWorld();
 
     const prevGeom = wallBrush.geometry;
@@ -91,5 +112,17 @@ export function createWallGeometry(
   return wallBrush.geometry;
 }
 
-// Scale factor: 2D coordinates use pixels (~20px grid), 3D uses meters
+/**
+ * Scale factor bridging the two coordinate systems used by the floor plan.
+ *
+ * Node geometry fields have mixed units:
+ *   - `posX`, `posY`, `width`, `height`, `x2`, `y2` are stored in **pixels**
+ *     to match the 2D SVG canvas (~20 pixels per grid cell).
+ *   - `wallHeight`, `thickness`, `elevation` are stored in **metres** because
+ *     they only have meaning in the 3D view.
+ *
+ * Multiply a pixel value by `SCALE` to convert to metres; divide by `SCALE`
+ * to go the other way. Callers in the 3D viewer must NOT multiply the
+ * already-metric fields by `SCALE`, and the 2D view must NOT divide them.
+ */
 export const SCALE = 1 / 20;

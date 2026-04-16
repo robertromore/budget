@@ -47,6 +47,13 @@ export function resetBrowserAvailabilityCache(): void {
  * @throws Error if Chromium is not available or page fails to load
  */
 export async function fetchPageWithBrowser(url: string): Promise<string> {
+  // Even though the caller already validates once, re-run the SSRF guard here
+  // so this function is safe regardless of who calls it.
+  const { assertSafeOutboundUrl } = await import(
+    "$core/server/shared/security/ssrf-guard"
+  );
+  assertSafeOutboundUrl(url);
+
   const { chromium } = await import("playwright-core");
 
   let browser: Browser | null = null;

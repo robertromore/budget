@@ -562,11 +562,13 @@ async function handleCreateDeficitPlan() {
 
 const executeDeficitRecoveryMutation = executeDeficitRecovery.options();
 
-async function handleExecuteDeficitPlan(plan: any) {
+async function handleExecuteDeficitPlan(plan: { targetEnvelopeId: number }) {
   isExecutingDeficitPlan = true;
   try {
+    // The server regenerates the plan from the target envelope id; we only
+    // pass the id so a tampered preview cannot trigger arbitrary transfers.
     await executeDeficitRecoveryMutation.mutateAsync({
-      plan,
+      targetEnvelopeId: plan.targetEnvelopeId,
       executedBy: 'user', // TODO: Get from auth context
     });
     deficitRecoveryDialogOpen = false;

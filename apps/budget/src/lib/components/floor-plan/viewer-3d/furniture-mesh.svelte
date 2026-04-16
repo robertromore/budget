@@ -1,9 +1,12 @@
 <script lang="ts">
   import { T } from "@threlte/core";
+  import { onDestroy, untrack } from "svelte";
   import * as THREE from "three";
   import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
   import { furnitureMaterial, doorMaterial, glassMaterial } from "$lib/utils/material-presets";
   import { SCALE } from "$lib/utils/wall-csg";
+
+  type PointerHandler = (e: { stopPropagation: () => void; nativeEvent?: PointerEvent }) => void;
 
   let {
     node,
@@ -13,8 +16,8 @@
   }: {
     node: FloorPlanNode;
     selected?: boolean;
-    onclick?: (e: any) => void;
-    onpointerdown?: (e: any) => void;
+    onclick?: PointerHandler;
+    onpointerdown?: PointerHandler;
   } = $props();
 
   const w = $derived((node.width || 60) * SCALE);
@@ -24,8 +27,21 @@
     node.nodeType === "window" ? 1.2 :
     Math.max(w, h) * 0.8
   );
-  const posX = $derived((node.posX + (node.width || 60) / 2) * SCALE);
-  const posZ = $derived((node.posY + (node.height || 60) / 2) * SCALE);
+  /**
+   * Centre convention (must match `nodes/furniture-node.svelte` and the
+   * wall-CSG projection):
+   *   - Doors / windows: (posX, posY) is the CENTRE on the wall. No offset.
+   *   - Everything else (furniture, appliances): (posX, posY) is the
+   *     TOP-LEFT in store space; offset by width/2, height/2 to find the
+   *     3D centre.
+   */
+  const isOpening = $derived(node.nodeType === "door" || node.nodeType === "window");
+  const posX = $derived(
+    (isOpening ? node.posX : node.posX + (node.width || 60) / 2) * SCALE
+  );
+  const posZ = $derived(
+    (isOpening ? node.posY : node.posY + (node.height || 60) / 2) * SCALE
+  );
   const posY = $derived(
     node.nodeType === "window" ? 1.0 + boxH / 2 + (node.elevation ?? 0) :
     boxH / 2 + (node.elevation ?? 0)
@@ -43,6 +59,22 @@
     mat.emissiveIntensity = 0.3;
     return mat;
   });
+
+  // Track cloned materials so selection churn doesn't leak GPU memory.
+  // Shared base materials (returned un-cloned when not selected) are owned
+  // by `material-presets.ts` and must never be disposed here.
+  let prevOwnedMaterial: THREE.Material | null = null;
+  $effect(() => {
+    const current = material;
+    const isOwnedClone = selected;
+    untrack(() => {
+      if (prevOwnedMaterial && prevOwnedMaterial !== current) {
+        prevOwnedMaterial.dispose();
+      }
+      prevOwnedMaterial = isOwnedClone ? current : null;
+    });
+  });
+  onDestroy(() => prevOwnedMaterial?.dispose());
 </script>
 
 <T.Mesh

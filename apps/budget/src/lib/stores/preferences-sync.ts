@@ -5,6 +5,7 @@
 
 import { browser } from "$app/environment";
 import type { UserPreferences } from "$core/schema/users";
+import { whenTrpcClientReady } from "$core/trpc/client-factory";
 import { updatePreferences, getPreferences, authKeys } from "$lib/query/auth";
 import { queryClient } from "$lib/query/_client";
 
@@ -35,6 +36,11 @@ export function queuePreferencesSync(preferences: Partial<UserPreferences>): voi
     const prefsToSync = { ...pendingSync };
     pendingSync = {};
 
+    // Wait for the tRPC client factory to be wired. This store's sync can
+    // race the layout's startup code; without the await the `trpc()` call
+    // inside `updatePreferences.execute` would throw.
+    await whenTrpcClientReady();
+
     try {
       await updatePreferences.execute(prefsToSync);
     } catch (error) {
@@ -45,12 +51,17 @@ export function queuePreferencesSync(preferences: Partial<UserPreferences>): voi
 }
 
 /**
- * Load preferences from backend
- * Returns only explicitly saved preferences (not merged with defaults)
- * Returns null if not authenticated or on server
+ * Load preferences from backend.
+ * Returns only explicitly saved preferences (not merged with defaults).
+ * Returns null if not authenticated or on the server.
+ *
+ * Awaits tRPC client readiness so a startup-time race (this helper called
+ * from a module constructor's `setTimeout` before the layout wires the
+ * client factory) doesn't throw "tRPC client not initialized".
  */
 export async function loadPreferencesFromBackend(): Promise<Partial<UserPreferences> | null> {
   if (!browser) return null;
+  await whenTrpcClientReady();
 
   try {
     const query = getPreferences();

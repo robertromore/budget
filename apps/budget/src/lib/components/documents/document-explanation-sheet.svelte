@@ -79,10 +79,25 @@ function handleRetry() {
 const docType = $derived(doc?.documentType as DocumentType | undefined);
 const docTypeLabel = $derived(docType ? documentTypeEnum[docType] : 'Document');
 
-// Simple markdown to HTML conversion for common patterns
+// Escape HTML entities so LLM-generated text cannot inject live markup
+// (e.g. `<script>` or `<img onerror=...>`). The markdown rewrites below only
+// introduce tags we explicitly author; everything else is rendered as text.
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Simple markdown to HTML conversion for common patterns.
+// CRITICAL: the input is untrusted (LLM output). We HTML-escape first so the
+// regex rewrites below can safely re-introduce known-good tags without
+// permitting raw HTML in the original text.
 function formatMarkdown(text: string): string {
   return (
-    text
+    escapeHtml(text)
       // Headers
       .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
       .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')

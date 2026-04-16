@@ -44,14 +44,93 @@ export class ListService {
       .where(and(eq(priceProductLists.id, id), eq(priceProductLists.workspaceId, workspaceId)));
   }
 
-  async addToList(listId: number, productId: number): Promise<void> {
+  /**
+   * Verify both the list and the product belong to the caller's workspace
+   * before allowing membership changes. The junction table itself has no
+   * workspaceId column, so tenancy is enforced via the owning rows.
+   */
+  private async assertListAndProductInWorkspace(
+    listId: number,
+    productId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const [list] = await db
+      .select({ id: priceProductLists.id })
+      .from(priceProductLists)
+      .where(
+        and(
+          eq(priceProductLists.id, listId),
+          eq(priceProductLists.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+    if (!list) throw new NotFoundError("List", listId);
+
+    const [product] = await db
+      .select({ id: priceProducts.id })
+      .from(priceProducts)
+      .where(
+        and(
+          eq(priceProducts.id, productId),
+          eq(priceProducts.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+    if (!product) throw new NotFoundError("Product", productId);
+  }
+
+  private async assertListInWorkspace(
+    listId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const [list] = await db
+      .select({ id: priceProductLists.id })
+      .from(priceProductLists)
+      .where(
+        and(
+          eq(priceProductLists.id, listId),
+          eq(priceProductLists.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+    if (!list) throw new NotFoundError("List", listId);
+  }
+
+  private async assertProductInWorkspace(
+    productId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const [product] = await db
+      .select({ id: priceProducts.id })
+      .from(priceProducts)
+      .where(
+        and(
+          eq(priceProducts.id, productId),
+          eq(priceProducts.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+    if (!product) throw new NotFoundError("Product", productId);
+  }
+
+  async addToList(
+    listId: number,
+    productId: number,
+    workspaceId: number
+  ): Promise<void> {
+    await this.assertListAndProductInWorkspace(listId, productId, workspaceId);
     await db
       .insert(priceProductListItems)
       .values({ listId, productId })
       .onConflictDoNothing();
   }
 
-  async removeFromList(listId: number, productId: number): Promise<void> {
+  async removeFromList(
+    listId: number,
+    productId: number,
+    workspaceId: number
+  ): Promise<void> {
+    await this.assertListAndProductInWorkspace(listId, productId, workspaceId);
     await db
       .delete(priceProductListItems)
       .where(
@@ -62,7 +141,8 @@ export class ListService {
       );
   }
 
-  async getListProducts(listId: number): Promise<PriceProduct[]> {
+  async getListProducts(listId: number, workspaceId: number): Promise<PriceProduct[]> {
+    await this.assertListInWorkspace(listId, workspaceId);
     const items = await db.query.priceProductListItems.findMany({
       where: eq(priceProductListItems.listId, listId),
       with: { product: true },
@@ -72,7 +152,11 @@ export class ListService {
       .filter((p): p is PriceProduct => p !== null && p !== undefined);
   }
 
-  async getProductLists(productId: number): Promise<PriceProductList[]> {
+  async getProductLists(
+    productId: number,
+    workspaceId: number
+  ): Promise<PriceProductList[]> {
+    await this.assertProductInWorkspace(productId, workspaceId);
     const items = await db.query.priceProductListItems.findMany({
       where: eq(priceProductListItems.productId, productId),
       with: { list: true },

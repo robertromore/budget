@@ -9,13 +9,33 @@
     ChevronLeft,
     PenTool,
   } from "@lucide/svelte";
+  import { onMount } from "svelte";
   import { rpc } from "$lib/query";
 
   let { children } = $props();
 
   const homeSlug = $derived($page.params.homeSlug);
   const homeQuery = $derived(rpc.homes.getHomeBySlug(homeSlug).options());
-  const home = $derived(homeQuery.data);
+  /**
+   * Hydration gate.
+   *
+   * TanStack Query caches results across client-side navigations. On a
+   * fresh SSR, the home query is disabled (`enabled: browser`) so
+   * `homeQuery.data` is `undefined` — the server renders the skeleton.
+   * But if the user was already on another page under this slug before
+   * hitting reload, the queryClient's in-memory cache survives HMR and
+   * supplies data on the very first client render. The resulting HTML
+   * doesn't match the SSR skeleton, so Svelte fires `hydration_mismatch`.
+   *
+   * Gate the real data behind an `onMount`-set flag so the first client
+   * render produces the same DOM as SSR, then swap to the real data
+   * after hydration completes.
+   */
+  let hydrated = $state(false);
+  onMount(() => {
+    hydrated = true;
+  });
+  const home = $derived(hydrated ? homeQuery.data : undefined);
 
   const navItems = $derived(
     home

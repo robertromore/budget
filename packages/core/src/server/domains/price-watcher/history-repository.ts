@@ -1,6 +1,8 @@
 import { priceHistory } from "$core/schema/price-history";
 import type { NewPriceHistoryEntry, PriceHistoryEntry } from "$core/schema/price-history";
+import { priceProducts } from "$core/schema/price-products";
 import { db } from "$core/server/db";
+import { NotFoundError } from "$core/server/shared/types/errors";
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 
 export class HistoryRepository {
@@ -12,10 +14,34 @@ export class HistoryRepository {
     return entry;
   }
 
+  /**
+   * Verify a product belongs to the given workspace. Used by read paths
+   * (price history has no workspaceId column; tenancy flows through the
+   * product record).
+   */
+  private async assertProductInWorkspace(
+    productId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const [row] = await db
+      .select({ id: priceProducts.id })
+      .from(priceProducts)
+      .where(
+        and(
+          eq(priceProducts.id, productId),
+          eq(priceProducts.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+    if (!row) throw new NotFoundError("Product", productId);
+  }
+
   async getHistory(
     productId: number,
+    workspaceId: number,
     dateRange?: { from?: string; to?: string }
   ): Promise<PriceHistoryEntry[]> {
+    await this.assertProductInWorkspace(productId, workspaceId);
     const conditions = [eq(priceHistory.productId, productId)];
 
     if (dateRange?.from) {

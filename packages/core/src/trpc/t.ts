@@ -2,6 +2,7 @@ import type { Context } from "$core/trpc/context";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { inputSanitization, strictInputSanitization } from "./middleware/input-sanitization";
 import {
+  authRateLimit,
   bulkOperationRateLimit,
   mutationRateLimit,
   strictRateLimit,
@@ -39,6 +40,14 @@ const baseProcedure = t.procedure.use(securityLogging);
 // Open procedures that do not require authentication
 // Use sparingly for flows like password reset and invitation token lookup.
 export const openProcedure = baseProcedure.use(standardLimits).use(inputSanitization);
+
+// Rate-limited open procedure for unauthenticated auth-sensitive endpoints
+// (email availability, forgot password, password reset, email verify, etc.).
+// Prevents enumeration and reset-email spam from unauthenticated clients.
+export const authOpenProcedure = baseProcedure
+  .use(authRateLimit)
+  .use(standardLimits)
+  .use(inputSanitization);
 
 // Authenticated procedures with input sanitization and standard limits
 export const publicProcedure = baseProcedure

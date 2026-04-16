@@ -7,6 +7,8 @@ import {
   budgetTypes,
   periodTemplateTypes,
 } from "$core/schema/budgets";
+import { budgets } from "$core/schema/budgets";
+import { envelopeAllocations } from "$core/schema/budgets/envelope-allocations";
 import { scheduleDates } from "$core/schema/schedule-dates";
 import { schedules } from "$core/schema/schedules";
 import { transactions } from "$core/schema/transactions";
@@ -845,7 +847,7 @@ export const budgetRoutes = t.router({
         periodInstanceId: z.number().int().positive(),
         allocatedAmount: z.number(),
         rolloverMode: z.enum(["unlimited", "reset", "limited"]).optional(),
-        metadata: z.record(z.string(), z.any()).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -1006,17 +1008,51 @@ export const budgetRoutes = t.router({
       }
     }),
 
+  /**
+   * Execute deficit recovery for an envelope.
+   *
+   * The client passes only the `targetEnvelopeId` — the recovery plan is
+   * regenerated server-side from the live envelope analysis. The previous
+   * API accepted a client-authored plan, which meant a malicious caller
+   * could hand-craft arbitrary transfers between envelopes regardless of
+   * the analysis output. Regenerating the plan here prevents that.
+   *
+   * The envelope is also verified to belong to the caller's workspace
+   * before any recovery runs.
+   */
   executeDeficitRecovery: publicProcedure
     .input(
       z.object({
-        plan: z.any(),
-        executedBy: z.string().optional(),
+        targetEnvelopeId: z.number().int().positive(),
+        executedBy: z.string().max(100).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        return await budgetService.executeEnvelopeDeficitRecovery(input.plan, input.executedBy);
+        // Verify the envelope belongs to a budget in the caller's workspace.
+        const [owner] = await ctx.db
+          .select({ workspaceId: budgets.workspaceId })
+          .from(envelopeAllocations)
+          .innerJoin(budgets, eq(envelopeAllocations.budgetId, budgets.id))
+          .where(eq(envelopeAllocations.id, input.targetEnvelopeId))
+          .limit(1);
+        if (!owner || owner.workspaceId !== ctx.workspaceId) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Envelope not found",
+          });
+        }
+
+        // Regenerate the plan server-side and execute it.
+        const plan = await budgetService.createEnvelopeDeficitRecoveryPlan(
+          input.targetEnvelopeId
+        );
+        return await budgetService.executeEnvelopeDeficitRecovery(
+          plan,
+          input.executedBy
+        );
       } catch (error) {
+        if (error instanceof TRPCError) throw error;
         throw translateDomainError(error);
       }
     }),

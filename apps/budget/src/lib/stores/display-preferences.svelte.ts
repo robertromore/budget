@@ -61,7 +61,9 @@ class DisplayPreferencesStore {
   constructor() {
     if (shouldPersistToLocalStorage()) {
       this.loadFromStorage();
-      this.loadFromBackend();
+      // Defer backend load to next macrotask so all module-level code
+      // (including setTrpcClientFactory) finishes evaluating first
+      setTimeout(() => this.loadFromBackend(), 0);
     }
   }
 

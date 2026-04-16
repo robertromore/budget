@@ -215,6 +215,19 @@ export const llmSettingsRoutes = t.router({
           }
         }
 
+        // Ollama's endpoint is user-supplied and later used as an outbound
+        // fetch target. Restrict to loopback so a tenant cannot point the
+        // server at an internal address (AWS IMDS, RFC1918 hosts, etc.).
+        // Other providers' endpoints are either unused or hard-coded inside
+        // the SDK, so their `endpoint` field is ignored for them.
+        if (provider === "ollama" && config.endpoint) {
+          const normalized = normalizeOllamaEndpoint(config.endpoint);
+          if (!normalized.ok) {
+            throw new Error(normalized.error);
+          }
+          config.endpoint = normalized.endpoint;
+        }
+
         // Get current preferences
         const [workspace] = await db
           .select({ preferences: workspaces.preferences })

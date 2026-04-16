@@ -180,6 +180,7 @@ export class ProductService {
       if (oldPrice !== null) {
         await this.alertService.evaluateAlerts(
           productId,
+          workspaceId,
           oldPrice,
           info.price,
           info.inStock,
@@ -287,7 +288,7 @@ export class ProductService {
     const product = await this.productRepo.findBySlug(slug, workspaceId);
     if (!product) return null;
 
-    const history = await this.historyRepo.getHistory(product.id, dateRange);
+    const history = await this.historyRepo.getHistory(product.id, workspaceId, dateRange);
     return { product, history };
   }
 

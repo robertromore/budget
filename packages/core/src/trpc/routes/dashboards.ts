@@ -12,7 +12,7 @@ import { getTemplate, DASHBOARD_TEMPLATES } from "$core/server/domains/dashboard
 import { publicProcedure, rateLimitedProcedure, t } from "$core/trpc";
 import { slugify } from "$core/utils/string-utilities";
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 async function loadDashboardWithWidgets(
@@ -312,7 +312,12 @@ export const dashboardRoutes = t.router({
       const [updated] = await ctx.db
         .update(dashboards)
         .set({ isEnabled: !current.isEnabled, updatedAt: now })
-        .where(eq(dashboards.id, input.id))
+        .where(
+          and(
+            eq(dashboards.id, input.id),
+            eq(dashboards.workspaceId, ctx.workspaceId)
+          )
+        )
         .returning();
 
       return updated!;
@@ -555,11 +560,26 @@ export const dashboardRoutes = t.router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
       }
 
+      // Defense in depth: even though the SELECT above proved the widget
+      // belongs to a dashboard in this workspace, scope the UPDATE itself
+      // via a subquery on dashboards. That way a future refactor that skips
+      // or reorders the SELECT cannot produce a cross-tenant write.
       const now = new Date().toISOString();
       const [updated] = await ctx.db
         .update(dashboardWidgets)
         .set({ ...data, updatedAt: now })
-        .where(eq(dashboardWidgets.id, id))
+        .where(
+          and(
+            eq(dashboardWidgets.id, id),
+            inArray(
+              dashboardWidgets.dashboardId,
+              ctx.db
+                .select({ id: dashboards.id })
+                .from(dashboards)
+                .where(eq(dashboards.workspaceId, ctx.workspaceId))
+            )
+          )
+        )
         .returning();
 
       return updated!;
@@ -594,9 +614,22 @@ export const dashboardRoutes = t.router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
       }
 
+      // Defense-in-depth: DELETE is re-scoped via a subquery so the tenancy
+      // check is enforced at the SQL level, not just by the preceding SELECTs.
       const [deleted] = await ctx.db
         .delete(dashboardWidgets)
-        .where(eq(dashboardWidgets.id, input.id))
+        .where(
+          and(
+            eq(dashboardWidgets.id, input.id),
+            inArray(
+              dashboardWidgets.dashboardId,
+              ctx.db
+                .select({ id: dashboards.id })
+                .from(dashboards)
+                .where(eq(dashboards.workspaceId, ctx.workspaceId))
+            )
+          )
+        )
         .returning();
 
       return deleted!;

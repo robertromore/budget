@@ -14,19 +14,23 @@ export class AlertRepository {
     return alert;
   }
 
-  async findById(id: number): Promise<PriceAlert | null> {
+  async findById(id: number, workspaceId: number): Promise<PriceAlert | null> {
     return (
       (await db.query.priceAlerts.findFirst({
-        where: eq(priceAlerts.id, id),
+        where: and(eq(priceAlerts.id, id), eq(priceAlerts.workspaceId, workspaceId)),
       })) ?? null
     );
   }
 
-  async update(id: number, data: Partial<NewPriceAlert>): Promise<PriceAlert> {
+  async update(
+    id: number,
+    data: Partial<NewPriceAlert>,
+    workspaceId: number
+  ): Promise<PriceAlert> {
     const [updated] = await db
       .update(priceAlerts)
       .set({ ...data, updatedAt: getCurrentTimestamp() })
-      .where(eq(priceAlerts.id, id))
+      .where(and(eq(priceAlerts.id, id), eq(priceAlerts.workspaceId, workspaceId)))
       .returning();
 
     if (!updated) {
@@ -35,20 +39,26 @@ export class AlertRepository {
     return updated;
   }
 
-  async delete(id: number): Promise<void> {
-    await db.delete(priceAlerts).where(eq(priceAlerts.id, id));
+  async delete(id: number, workspaceId: number): Promise<void> {
+    await db
+      .delete(priceAlerts)
+      .where(and(eq(priceAlerts.id, id), eq(priceAlerts.workspaceId, workspaceId)));
   }
 
-  async findByProduct(productId: number): Promise<PriceAlert[]> {
-    return db.query.priceAlerts.findMany({
-      where: eq(priceAlerts.productId, productId),
-    });
-  }
-
-  async findEnabled(productId: number): Promise<PriceAlert[]> {
+  async findByProduct(productId: number, workspaceId: number): Promise<PriceAlert[]> {
     return db.query.priceAlerts.findMany({
       where: and(
         eq(priceAlerts.productId, productId),
+        eq(priceAlerts.workspaceId, workspaceId)
+      ),
+    });
+  }
+
+  async findEnabled(productId: number, workspaceId: number): Promise<PriceAlert[]> {
+    return db.query.priceAlerts.findMany({
+      where: and(
+        eq(priceAlerts.productId, productId),
+        eq(priceAlerts.workspaceId, workspaceId),
         eq(priceAlerts.enabled, true)
       ),
     });

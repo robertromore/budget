@@ -1004,7 +1004,10 @@ export class TransactionService {
         if (t.scheduleId) {
           // Fetch schedule details for this transaction
           try {
-            const schedule = await this.scheduleService.getScheduleById(t.scheduleId);
+            const schedule = await this.scheduleService.getScheduleById(
+              t.scheduleId,
+              workspaceId
+            );
             return {
               ...t,
               scheduleId: schedule.id,
@@ -1028,9 +1031,12 @@ export class TransactionService {
       })
     );
 
-    // Get upcoming scheduled transactions
+    // Get upcoming scheduled transactions (workspace-scoped)
     const upcomingTransactions =
-      await this.scheduleService.getUpcomingScheduledTransactionsForAccount(accountId);
+      await this.scheduleService.getUpcomingScheduledTransactionsForAccount(
+        accountId,
+        workspaceId
+      );
     logger.debug("Found upcoming scheduled transactions for account", {
       count: upcomingTransactions.length,
       accountId,

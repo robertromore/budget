@@ -7,20 +7,61 @@ import { env } from "$env/dynamic/private";
 import type { Handle } from "@sveltejs/kit";
 
 /**
+ * A request is considered "local" (safe for desktop auto-login) only when:
+ *   - the client address resolves to a loopback interface, AND
+ *   - the Host header names localhost / 127.0.0.1 / ::1
+ *
+ * Both checks matter. The client-address guard blocks remote TCP connections
+ * even if DESKTOP_MODE is accidentally enabled in a networked deployment. The
+ * Host-header guard blocks DNS-rebinding style attacks where a remote browser
+ * is tricked into resolving an attacker-controlled hostname to 127.0.0.1.
+ */
+function isLocalRequest(event: Parameters<Handle>[0]["event"]): boolean {
+  let clientAddress: string;
+  try {
+    clientAddress = event.getClientAddress();
+  } catch {
+    // Adapter may not support it — fail closed.
+    return false;
+  }
+  const normalizedClient = clientAddress.replace(/^::ffff:/, "");
+  const isLoopbackClient =
+    normalizedClient === "127.0.0.1" ||
+    normalizedClient === "::1" ||
+    normalizedClient.startsWith("127.");
+  if (!isLoopbackClient) return false;
+
+  const host = event.url.hostname;
+  const isLoopbackHost =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "[::1]" ||
+    host === "::1";
+  return isLoopbackHost;
+}
+
+/**
  * SvelteKit server hooks
  *
  * Handles:
- * - Desktop auto-login (DESKTOP_MODE=true): establishes a session for every
- *   request so tRPC procedures and page loaders all receive authenticated context
+ * - Desktop auto-login (DESKTOP_MODE=true AND request is local): establishes
+ *   a session for every local request so tRPC procedures and page loaders
+ *   receive authenticated context.
  * - Better Auth routes (/api/auth/*)
  */
 export const handle: Handle = async ({ event, resolve }) => {
   // Start the price check scheduler (no-op after first call)
   startPriceCheckScheduler();
 
-  // Desktop auto-login: runs before every request (page loads AND /api/trpc/ calls)
-  // so all server-side code receives authenticated context via event.locals.preAuth.
-  if (env.DESKTOP_MODE === "true" && !event.url.pathname.startsWith("/api/auth")) {
+  // Desktop auto-login is ONLY safe for strictly-local requests. If the env
+  // flag leaks to a networked deployment, or a remote client connects to an
+  // instance that happens to have it set, the auto-login path is skipped and
+  // the user lands on the standard sign-in flow.
+  if (
+    env.DESKTOP_MODE === "true" &&
+    !event.url.pathname.startsWith("/api/auth") &&
+    isLocalRequest(event)
+  ) {
     const session = await auth.api.getSession({ headers: event.request.headers });
 
     if (!session?.user) {

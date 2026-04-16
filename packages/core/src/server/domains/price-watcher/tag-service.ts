@@ -26,9 +26,12 @@ export class TagService {
       );
   }
 
-  async getProductTags(productId: number): Promise<string[]> {
+  async getProductTags(productId: number, workspaceId: number): Promise<string[]> {
     const rows = await db.query.priceProductTags.findMany({
-      where: eq(priceProductTags.productId, productId),
+      where: and(
+        eq(priceProductTags.productId, productId),
+        eq(priceProductTags.workspaceId, workspaceId)
+      ),
     });
     return rows.map((r) => r.tag);
   }

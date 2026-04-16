@@ -4,6 +4,7 @@ import { workspaces } from "$core/schema/workspaces";
 import { users } from "$core/schema/users";
 import { db } from "$core/server/shared/database";
 import { DatabaseError, NotFoundError } from "$core/server/shared/types/errors";
+import { invalidateWorkspaceCacheForUser } from "$core/trpc/context";
 import { and, eq, isNull, desc } from "drizzle-orm";
 
 export interface CreateMemberInput {
@@ -248,6 +249,10 @@ export class WorkspaceMemberRepository {
         })
         .returning();
 
+      // Drop the workspace-resolution cache for this user so the next
+      // request sees the new membership immediately.
+      invalidateWorkspaceCacheForUser(data.userId);
+
       return membership;
     } catch (error: any) {
       // Handle unique constraint violation
@@ -279,6 +284,8 @@ export class WorkspaceMemberRepository {
         throw new NotFoundError("Workspace membership");
       }
 
+      invalidateWorkspaceCacheForUser(userId);
+
       return membership;
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
@@ -309,6 +316,8 @@ export class WorkspaceMemberRepository {
       if (!updated) {
         throw new NotFoundError("Workspace membership");
       }
+
+      invalidateWorkspaceCacheForUser(userId);
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new DatabaseError("Failed to set default workspace", "setDefaultWorkspace");
@@ -328,6 +337,10 @@ export class WorkspaceMemberRepository {
         .where(
           and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId))
         );
+
+      // Invalidate the cache so the removed user immediately loses access
+      // instead of retaining it for the TTL window.
+      invalidateWorkspaceCacheForUser(userId);
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new DatabaseError("Failed to delete membership", "delete");

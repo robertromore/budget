@@ -4,19 +4,43 @@
  */
 
 /**
- * Highlights search query matches in text by wrapping them in <mark> tags
- * @param text - The text to search within
- * @param query - The search query to highlight
- * @returns HTML string with highlighted matches
+ * Escape a string so it can be safely emitted inside HTML text content.
+ * We cannot rely on Svelte's template auto-escaping when the consumer uses
+ * `{@html}` — which is required to render the <mark> tags produced here.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Highlights search query matches in text by wrapping them in <mark> tags.
+ * The input `text` is HTML-escaped before any markup is inserted so it is
+ * safe to render the result via Svelte's `{@html}`. Callers pass untrusted
+ * data here (payee names, category notes, etc.) and previously a payee
+ * named `<img src=x onerror=alert(1)>` would execute as live HTML.
+ *
+ * @param text - The untrusted text to search within
+ * @param query - The search query to highlight (also HTML-escaped)
+ * @returns HTML string with escaped content and highlighted matches
  */
 export function highlightMatches(text: string, query: string): string {
-  if (!query || !text) return text;
+  if (!text) return "";
+  const safeText = escapeHtml(text);
+  if (!query) return safeText;
 
-  // Escape special regex characters in the query
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`(${escapedQuery})`, "gi");
+  const safeQuery = escapeHtml(query);
+  // Escape regex metacharacters from the already-HTML-escaped query so the
+  // regex matches the string literally against the escaped text.
+  const regexSafeQuery = safeQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (!regexSafeQuery) return safeText;
 
-  return text.replace(
+  const regex = new RegExp(`(${regexSafeQuery})`, "gi");
+  return safeText.replace(
     regex,
     '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-1">$1</mark>'
   );

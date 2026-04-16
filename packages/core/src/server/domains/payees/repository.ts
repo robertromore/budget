@@ -184,14 +184,25 @@ export class PayeeRepository extends BaseRepository<
   }
 
   /**
-   * Update transactions from one payee to another (for merging duplicates)
-   * Note: Workspace filtering is implicit since payees are already workspace-scoped
+   * Update transactions from one payee to another (for merging duplicates).
+   * Scoped to a workspace — the implicit-scoping assumption in the prior
+   * implementation was wrong because the `transactions.payeeId` foreign
+   * key alone does not tie back to a workspace.
    */
-  async updateTransactionPayee(fromPayeeId: number, toPayeeId: number): Promise<number> {
+  async updateTransactionPayee(
+    fromPayeeId: number,
+    toPayeeId: number,
+    workspaceId: number
+  ): Promise<number> {
     const result = await db
       .update(transactions)
       .set({ payeeId: toPayeeId })
-      .where(eq(transactions.payeeId, fromPayeeId));
+      .where(
+        and(
+          eq(transactions.payeeId, fromPayeeId),
+          eq(transactions.workspaceId, workspaceId)
+        )
+      );
     return result.rowsAffected ?? 0;
   }
 
@@ -961,14 +972,24 @@ export class PayeeRepository extends BaseRepository<
         payeeId: targetPayeeId,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(eq(transactions.payeeId, sourcePayeeId));
+      .where(
+        and(
+          eq(transactions.payeeId, sourcePayeeId),
+          eq(transactions.workspaceId, workspaceId)
+        )
+      );
 
     // Return count of updated transactions
     // Note: Drizzle doesn't return affected rows count directly, so we query after update
     const transactionCount = await db
       .select({ count: count() })
       .from(transactions)
-      .where(eq(transactions.payeeId, targetPayeeId));
+      .where(
+        and(
+          eq(transactions.payeeId, targetPayeeId),
+          eq(transactions.workspaceId, workspaceId)
+        )
+      );
 
     logger.info("Transactions reassigned", {
       sourcePayeeId,

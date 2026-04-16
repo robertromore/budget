@@ -45,11 +45,18 @@ export class ScheduleRepository {
   }
 
   /**
-   * Get all active schedules with auto_add enabled
+   * Get all active schedules with auto_add enabled.
+   * Optional `workspaceId` argument restricts the result to a single tenant —
+   * callers that iterate schedules for batch operations MUST pass it, otherwise
+   * they'd fire operations across every workspace on the instance.
    */
-  async getActiveAutoAddSchedules(): Promise<ScheduleWithDetails[]> {
+  async getActiveAutoAddSchedules(workspaceId?: number): Promise<ScheduleWithDetails[]> {
+    const conditions = [eq(schedules.status, "active"), eq(schedules.auto_add, true)];
+    if (workspaceId !== undefined) {
+      conditions.push(eq(schedules.workspaceId, workspaceId));
+    }
     return await db.query.schedules.findMany({
-      where: and(eq(schedules.status, "active"), eq(schedules.auto_add, true)),
+      where: and(...conditions),
       with: {
         account: true,
         payee: true,

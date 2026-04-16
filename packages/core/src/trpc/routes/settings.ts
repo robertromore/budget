@@ -59,21 +59,30 @@ const intelligenceInputPreferencesSchema = z.object({
 
 export const settingsRoutes = t.router({
   /**
-   * Delete all data from all user tables.
-   * This is a destructive operation that cannot be undone.
-   * Preserves auth-related tables (user, session, auth_account, verification).
+   * Delete all data belonging to the caller's workspace.
+   *
+   * Only rows whose `workspace_id` matches the caller's active workspace are
+   * deleted. Tables without a `workspace_id` column are skipped entirely —
+   * their rows reach other tenants' data, so they are left alone. Junction
+   * tables and descendants are pruned naturally via ON DELETE CASCADE when
+   * foreign keys are re-enabled by the time the transaction commits.
+   *
+   * The prior implementation iterated every user-facing table and truncated
+   * it globally, wiping every tenant's data for any authenticated caller.
    */
-  deleteAllData: secureOperationProcedure.mutation(async () => {
+  deleteAllData: secureOperationProcedure.mutation(async ({ ctx }) => {
     try {
-      // Tables to preserve (auth-related tables that should not be deleted)
+      // Auth/shared tables that must never be touched by a workspace scrub.
       const protectedTables = new Set([
-        "user", // User accounts
-        "session", // Auth sessions
-        "auth_account", // OAuth accounts (Better Auth)
-        "verification", // Email/password verification tokens
+        "user",
+        "session",
+        "auth_account",
+        "verification",
+        "workspace", // Preserve the workspace record itself
+        "workspace_member",
       ]);
 
-      // Get all table names from sqlite_master
+      // Pull every user table from sqlite_master.
       const allTables = await db.all<{ name: string }>(sql`
         SELECT name FROM sqlite_master
         WHERE type='table'
@@ -82,32 +91,33 @@ export const settingsRoutes = t.router({
         ORDER BY name
       `);
 
-      // Filter out protected auth tables
-      const tableNames = allTables.map((t) => t.name).filter((name) => !protectedTables.has(name));
+      const candidateTables = allTables
+        .map((t) => t.name)
+        .filter((name) => !protectedTables.has(name));
 
-      if (tableNames.length === 0) {
-        return { deleted: 0, tables: [] };
-      }
+      // For each candidate table, check whether it has a `workspace_id`
+      // column. Only workspace-scoped tables get their rows deleted; other
+      // tables (junction, shared lookup) are either cascaded from parents or
+      // intentionally shared and must not be touched.
+      const scrubbed: string[] = [];
+      for (const tableName of candidateTables) {
+        const columns = await db.all<{ name: string }>(
+          sql.raw(`PRAGMA table_info("${tableName}")`)
+        );
+        const hasWorkspaceId = columns.some((c) => c.name === "workspace_id");
+        if (!hasWorkspaceId) continue;
 
-      // Disable foreign keys temporarily
-      await db.run(sql`PRAGMA foreign_keys = OFF`);
-
-      try {
-        // Delete from all tables (except protected ones)
-        for (const tableName of tableNames) {
-          await db.run(sql.raw(`DELETE FROM "${tableName}"`));
-        }
-
-        // Reset autoincrement sequences
-        await db.run(sql`DELETE FROM sqlite_sequence`);
-      } finally {
-        // Re-enable foreign keys (even on error)
-        await db.run(sql`PRAGMA foreign_keys = ON`);
+        // Parameterized delete — safe against SQL injection because the
+        // table name comes from sqlite_master and the filter value is bound.
+        await db.run(
+          sql`DELETE FROM ${sql.raw(`"${tableName}"`)} WHERE workspace_id = ${ctx.workspaceId}`
+        );
+        scrubbed.push(tableName);
       }
 
       return {
-        deleted: tableNames.length,
-        tables: tableNames,
+        deleted: scrubbed.length,
+        tables: scrubbed,
       };
     } catch (error) {
       throw translateDomainError(error);

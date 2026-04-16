@@ -116,7 +116,13 @@ export class TransactionRepository {
     const [updated] = await db
       .update(transactions)
       .set(data)
-      .where(and(eq(transactions.id, id), isNull(transactions.deletedAt)))
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.workspaceId, workspaceId),
+          isNull(transactions.deletedAt)
+        )
+      )
       .returning();
 
     if (!updated) {
@@ -507,7 +513,13 @@ export class TransactionRepository {
     const [deleted] = await db
       .update(transactions)
       .set({ deletedAt: getCurrentTimestamp() })
-      .where(and(eq(transactions.id, id), isNull(transactions.deletedAt)))
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.workspaceId, workspaceId),
+          isNull(transactions.deletedAt)
+        )
+      )
       .returning();
 
     if (!deleted) {
@@ -532,7 +544,13 @@ export class TransactionRepository {
     await db
       .update(transactions)
       .set({ deletedAt: getCurrentTimestamp() })
-      .where(and(inArray(transactions.id, ids), isNull(transactions.deletedAt)));
+      .where(
+        and(
+          inArray(transactions.id, ids),
+          eq(transactions.workspaceId, workspaceId),
+          isNull(transactions.deletedAt)
+        )
+      );
   }
 
   /**

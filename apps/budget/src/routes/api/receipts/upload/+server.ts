@@ -88,13 +88,17 @@ export const POST: RequestHandler = async ({ request }) => {
       throw error(400, `File size must be less than ${formatFileSize(MAX_RECEIPT_SIZE)}`);
     }
 
-    // Upload receipt
-    const receipt = await receiptService.uploadReceipt({
-      medicalExpenseId: expenseId,
-      receiptType: receiptType?.toString() as any,
-      file,
-      description: description?.toString(),
-    });
+    // Upload receipt — pass the workspace id resolved from the membership
+    // check above so the service can re-verify ownership at the data layer.
+    const receipt = await receiptService.uploadReceipt(
+      {
+        medicalExpenseId: expenseId,
+        receiptType: receiptType?.toString() as any,
+        file,
+        description: description?.toString(),
+      },
+      expense.workspaceId
+    );
 
     return json(
       {

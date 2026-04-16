@@ -179,34 +179,56 @@ export class AccountDocumentService {
   }
 
   /**
-   * Get all documents for a tax year
+   * Verify an account belongs to the given workspace or throw NotFound.
    */
-  async getDocumentsByTaxYear(taxYear: number): Promise<AccountDocument[]> {
-    return await this.documentRepository.findByTaxYear(taxYear);
+  private async assertAccountInWorkspace(
+    accountId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const account = await this.accountRepository.findById(accountId);
+    if (!account || account.workspaceId !== workspaceId) {
+      throw new NotFoundError("Account", accountId.toString());
+    }
   }
 
   /**
-   * Get all documents for an account
+   * Get all documents for a tax year within a workspace.
    */
-  async getDocumentsByAccount(accountId: number): Promise<AccountDocument[]> {
+  async getDocumentsByTaxYear(
+    taxYear: number,
+    workspaceId: number
+  ): Promise<AccountDocument[]> {
+    return await this.documentRepository.findByTaxYearInWorkspace(taxYear, workspaceId);
+  }
+
+  /**
+   * Get all documents for an account (workspace-verified).
+   */
+  async getDocumentsByAccount(
+    accountId: number,
+    workspaceId: number
+  ): Promise<AccountDocument[]> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await this.documentRepository.findByAccountId(accountId);
   }
 
   /**
-   * Get documents for an account and tax year
+   * Get documents for an account and tax year (workspace-verified).
    */
   async getDocumentsByAccountAndTaxYear(
     accountId: number,
-    taxYear: number
+    taxYear: number,
+    workspaceId: number
   ): Promise<AccountDocument[]> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await this.documentRepository.findByAccountAndTaxYear(accountId, taxYear);
   }
 
   /**
-   * Get a single document by ID
+   * Get a single document by ID, verifying workspace ownership via its account.
    */
-  async getDocument(id: number): Promise<AccountDocument> {
-    const document = await this.documentRepository.findById(id);
+  async getDocument(id: number, workspaceId: number): Promise<AccountDocument> {
+    const document = await this.documentRepository.findByIdInWorkspace(id, workspaceId);
     if (!document) {
       throw new NotFoundError("AccountDocument", id.toString());
     }
@@ -223,11 +245,13 @@ export class AccountDocumentService {
   /**
    * Update document metadata
    */
-  async updateDocument(id: number, data: UpdateDocumentData): Promise<AccountDocument> {
-    const existing = await this.documentRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundError("AccountDocument", id.toString());
-    }
+  async updateDocument(
+    id: number,
+    data: UpdateDocumentData,
+    workspaceId: number
+  ): Promise<AccountDocument> {
+    // Workspace-scoped lookup — throws if the document belongs to another tenant.
+    await this.getDocument(id, workspaceId);
 
     // Sanitize inputs
     const sanitizedTitle = data.title ? InputSanitizer.sanitizeName(data.title) : undefined;
@@ -254,13 +278,11 @@ export class AccountDocumentService {
   }
 
   /**
-   * Delete a document (soft delete in DB, hard delete file)
+   * Delete a document (soft delete in DB, hard delete file).
+   * Verifies workspace ownership before doing either.
    */
-  async deleteDocument(id: number): Promise<void> {
-    const document = await this.documentRepository.findById(id);
-    if (!document) {
-      throw new NotFoundError("AccountDocument", id.toString());
-    }
+  async deleteDocument(id: number, workspaceId: number): Promise<void> {
+    const document = await this.getDocument(id, workspaceId);
 
     // Soft delete from database
     await this.documentRepository.delete(id);
@@ -275,60 +297,45 @@ export class AccountDocumentService {
   }
 
   /**
-   * Get available tax years with documents
+   * Get available tax years with documents within a workspace.
    */
-  async getAvailableTaxYears(): Promise<number[]> {
-    return await this.documentRepository.getAvailableTaxYears();
+  async getAvailableTaxYears(workspaceId: number): Promise<number[]> {
+    return await this.documentRepository.getAvailableTaxYearsInWorkspace(workspaceId);
   }
 
   /**
-   * Get available tax years for an account
+   * Get available tax years for an account (workspace-verified).
    */
-  async getAvailableTaxYearsForAccount(accountId: number): Promise<number[]> {
+  async getAvailableTaxYearsForAccount(
+    accountId: number,
+    workspaceId: number
+  ): Promise<number[]> {
+    await this.assertAccountInWorkspace(accountId, workspaceId);
     return await this.documentRepository.getAvailableTaxYearsForAccount(accountId);
   }
 
   /**
-   * Count documents for a tax year (or all documents if no year specified)
+   * Count documents in a workspace, optionally filtered by tax year.
    */
-  async countDocuments(taxYear?: number): Promise<number> {
-    if (taxYear) {
-      return await this.documentRepository.countByTaxYear(taxYear);
-    }
-    // Count all documents across all years
-    const years = await this.documentRepository.getAvailableTaxYears();
-    let total = 0;
-    for (const year of years) {
-      total += await this.documentRepository.countByTaxYear(year);
-    }
-    return total;
+  async countDocuments(workspaceId: number, taxYear?: number): Promise<number> {
+    return await this.documentRepository.countInWorkspace(workspaceId, taxYear);
   }
 
   /**
-   * Get document count grouped by type (for a specific year or all documents)
+   * Document count grouped by type, scoped to a workspace.
    */
-  async getCountByType(taxYear?: number): Promise<Record<string, number>> {
-    if (taxYear) {
-      const results = await this.documentRepository.getCountByTypeForTaxYear(taxYear);
-      // Convert array to record
-      const byType: Record<string, number> = {};
-      for (const { documentType, count } of results) {
-        byType[documentType] = count;
-      }
-      return byType;
-    }
-
-    // Aggregate counts across all years
-    const years = await this.documentRepository.getAvailableTaxYears();
+  async getCountByType(
+    workspaceId: number,
+    taxYear?: number
+  ): Promise<Record<string, number>> {
+    const results = await this.documentRepository.getCountByTypeInWorkspace(
+      workspaceId,
+      taxYear
+    );
     const byType: Record<string, number> = {};
-
-    for (const year of years) {
-      const results = await this.documentRepository.getCountByTypeForTaxYear(year);
-      for (const { documentType, count } of results) {
-        byType[documentType] = (byType[documentType] || 0) + count;
-      }
+    for (const { documentType, count } of results) {
+      byType[documentType] = (byType[documentType] || 0) + count;
     }
-
     return byType;
   }
 }

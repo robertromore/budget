@@ -6,15 +6,35 @@
     selected = false,
     onmousedown,
     onclick,
+    onkeydown,
   }: {
     node: FloorPlanNode;
     selected?: boolean;
     onmousedown?: (e: MouseEvent) => void;
     onclick?: (e: MouseEvent) => void;
+    onkeydown?: (e: KeyboardEvent) => void;
   } = $props();
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onclick?.(new MouseEvent("click", { bubbles: true }));
+      return;
+    }
+    onkeydown?.(e);
+  }
 </script>
 
-<g class="wall-node" role="button" tabindex="-1">
+<!-- Selected wall is reachable by keyboard (Tab). The transparent hit-line
+     stays pointer-only; the visible stroke carries the role + aria. -->
+<g
+  class="wall-node outline-none focus-visible:[&_line:nth-of-type(2)]:stroke-primary"
+  role="button"
+  aria-label={node.name ? `Wall: ${node.name}` : "Wall"}
+  aria-pressed={selected}
+  tabindex={selected ? 0 : -1}
+  onkeydown={handleKeydown}
+>
   <line
     x1={node.posX}
     y1={node.posY}

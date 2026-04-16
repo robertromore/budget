@@ -1,4 +1,5 @@
 import type { FloorPlanNode, FloorPlanNodeType } from "$core/schema/home/home-floor-plan-nodes";
+import type { FloorPlanNodeInput } from "$core/server/domains/home/floor-plans/services";
 import { nanoid } from "$lib/utils/nanoid";
 
 export type EditorTool = "select" | "wall" | "room" | "door" | "window" | "furniture" | "pan";
@@ -8,12 +9,25 @@ const MAX_HISTORY = 50;
 interface HistorySnapshot {
   nodes: string;
   deletedNodeIds: string[];
+  selectedNodeIds: string[];
+  viewBoxX: number;
+  viewBoxY: number;
+  viewBoxWidth: number;
+  viewBoxHeight: number;
+  zoom: number;
 }
 
 export class FloorPlanStore {
   // Reactive state
   nodes = $state<Record<string, FloorPlanNode>>({});
-  selectedNodeIds = $state<Set<string>>(new Set());
+  /**
+   * `$state.raw` avoids deep-proxying the Set on every read and signals
+   * reactivity only on reassignment. All selection mutations below already
+   * produce a new Set (copy-on-write), so subscribers still see a fresh
+   * value whenever the selection changes — we just skip Svelte's
+   * per-element proxy wrapping, which is O(n) on large selections.
+   */
+  selectedNodeIds = $state.raw<Set<string>>(new Set());
   activeTool = $state<EditorTool>("select");
   floorLevel = $state(0);
   homeId = $state(0);
@@ -91,7 +105,7 @@ export class FloorPlanStore {
       workspaceId: 0,
       homeId: this.homeId,
       floorLevel: this.floorLevel,
-      parentId: null,
+      parentId: props.parentId ?? null,
       nodeType: type,
       name: props.name ?? null,
       posX: this.snap(props.posX),
@@ -111,12 +125,139 @@ export class FloorPlanStore {
       properties: props.properties ?? null,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
 
     this.nodes[id] = node;
     this.isDirty = true;
     this.pushHistory();
     return id;
+  }
+
+  /**
+   * Place a door or window. Snaps onto the nearest wall within `maxDistance`
+   * and inherits the wall's orientation so the 3D mesh aligns with the CSG
+   * opening. Falls back to an unparented placement if no wall is near — the
+   * user can still see the node in both views, but it won't cut an opening.
+   *
+   * Used by both the 2D canvas and the 3D scene creation handlers so the
+   * placement behaviour is identical regardless of which view the user is in.
+   */
+  placeOpening(
+    type: "door" | "window",
+    x: number,
+    y: number,
+    options: {
+      defaultWidth: number;
+      defaultHeight: number;
+      name: string;
+      maxDistance?: number;
+    }
+  ): string {
+    const snap = this.findNearestWall(x, y, options.maxDistance);
+    const wall = snap ? this.nodes[snap.wallId] : null;
+
+    let posX = x;
+    let posY = y;
+    let rotation = 0;
+    let parentId: string | null = null;
+
+    if (snap && wall) {
+      posX = snap.projectedX;
+      posY = snap.projectedY;
+      parentId = snap.wallId;
+      // Match the wall's orientation so the 3D mesh aligns with the CSG
+      // opening. The 2D view centres the rectangle on `posX,posY`, so the
+      // visual stays tidy even when rotated.
+      const wx1 = wall.posX;
+      const wy1 = wall.posY;
+      const wx2 = wall.x2 ?? wx1;
+      const wy2 = wall.y2 ?? wy1;
+      rotation = (Math.atan2(wy2 - wy1, wx2 - wx1) * 180) / Math.PI;
+    }
+
+    return this.addNode(type, {
+      posX,
+      posY,
+      parentId,
+      rotation,
+      width: options.defaultWidth,
+      height: options.defaultHeight,
+      name: options.name,
+      color: null,
+    });
+  }
+
+  /**
+   * Return the wall whose segment is closest to `(x, y)` within `maxDistance`
+   * pixels, and the projected point on that wall. Used to snap doors/windows
+   * onto walls at creation time and on drag.
+   */
+  findNearestWall(
+    x: number,
+    y: number,
+    maxDistance = 30
+  ): { wallId: string; projectedX: number; projectedY: number } | null {
+    let best: {
+      wallId: string;
+      projectedX: number;
+      projectedY: number;
+      distance: number;
+    } | null = null;
+    for (const wall of this.walls) {
+      const x1 = wall.posX;
+      const y1 = wall.posY;
+      const x2 = wall.x2 ?? x1;
+      const y2 = wall.y2 ?? y1;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq < 1) continue; // zero-length wall segment
+      let t = ((x - x1) * dx + (y - y1) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      const px = x1 + dx * t;
+      const py = y1 + dy * t;
+      const distance = Math.hypot(x - px, y - py);
+      if (distance <= maxDistance && (!best || distance < best.distance)) {
+        best = { wallId: wall.id, projectedX: px, projectedY: py, distance };
+      }
+    }
+    if (!best) return null;
+    return {
+      wallId: best.wallId,
+      projectedX: best.projectedX,
+      projectedY: best.projectedY,
+    };
+  }
+
+  /**
+   * After dragging a door/window, re-attach it to whatever wall it's now
+   * closest to. Removes the parent + resets rotation if no wall is near.
+   * Called after drag-end so moving a door across the plan re-parents it.
+   */
+  reparentOpeningToNearestWall(id: string, maxDistance = 30): void {
+    const node = this.nodes[id];
+    if (!node) return;
+    if (node.nodeType !== "door" && node.nodeType !== "window") return;
+
+    const snap = this.findNearestWall(node.posX, node.posY, maxDistance);
+    if (snap) {
+      const wall = this.nodes[snap.wallId];
+      if (!wall) return;
+      const wx1 = wall.posX;
+      const wy1 = wall.posY;
+      const wx2 = wall.x2 ?? wx1;
+      const wy2 = wall.y2 ?? wy1;
+      const rotation = (Math.atan2(wy2 - wy1, wx2 - wx1) * 180) / Math.PI;
+      this.updateNode(id, {
+        parentId: snap.wallId,
+        posX: snap.projectedX,
+        posY: snap.projectedY,
+        rotation,
+      });
+    } else if (node.parentId !== null) {
+      this.updateNode(id, { parentId: null, rotation: 0 });
+    }
   }
 
   updateNode(id: string, updates: Partial<FloorPlanNode>) {
@@ -130,6 +271,32 @@ export class FloorPlanStore {
 
   commitChange() {
     this.pushHistory();
+  }
+
+  /**
+   * Nudge every selected node by the given pixel delta. Used by the
+   * keyboard handler on individual node components: pressing an arrow key
+   * while a node is selected shifts it one grid cell (Shift+arrow = 10x).
+   * Walls update both endpoints so the node moves rigidly.
+   *
+   * History is committed lazily via a trailing timer so rapid arrow-key
+   * presses collapse into a single undo step. Without coalescing, holding
+   * an arrow would evict the entire 50-entry undo ring within seconds.
+   */
+  private nudgeCommitTimer: ReturnType<typeof setTimeout> | null = null;
+
+  nudgeSelection(dx: number, dy: number): void {
+    if (this.selectedNodeIds.size === 0) return;
+    for (const id of this.selectedNodeIds) {
+      this.moveNode(id, dx, dy);
+    }
+    if (this.nudgeCommitTimer !== null) {
+      clearTimeout(this.nudgeCommitTimer);
+    }
+    this.nudgeCommitTimer = setTimeout(() => {
+      this.nudgeCommitTimer = null;
+      this.commitChange();
+    }, 250);
   }
 
   moveNode(id: string, dx: number, dy: number) {
@@ -155,8 +322,13 @@ export class FloorPlanStore {
 
     this.deletedNodeIds = [...this.deletedNodeIds, id];
     delete this.nodes[id];
-    this.selectedNodeIds.delete(id);
-    this.selectedNodeIds = new Set(this.selectedNodeIds);
+    // `selectedNodeIds` is `$state.raw` — reassign with a fresh Set rather
+    // than mutate in place so subscribers see the change.
+    if (this.selectedNodeIds.has(id)) {
+      const next = new Set(this.selectedNodeIds);
+      next.delete(id);
+      this.selectedNodeIds = next;
+    }
     this.isDirty = true;
     this.pushHistory();
   }
@@ -238,11 +410,22 @@ export class FloorPlanStore {
     return Math.round(value / this.gridSize) * this.gridSize;
   }
 
-  // Undo/Redo — snapshots include both nodes and deletedNodeIds
+  /**
+   * Capture the current editor state — nodes + deletions + selection +
+   * viewport — as a single snapshot. Selection and viewport are included
+   * so an undo doesn't yank the user somewhere unexpected after a drag or
+   * zoom, which used to happen because only `nodes` was snapshotted.
+   */
   pushHistory() {
     const snapshot: HistorySnapshot = {
       nodes: JSON.stringify(this.nodes),
       deletedNodeIds: [...this.deletedNodeIds],
+      selectedNodeIds: [...this.selectedNodeIds],
+      viewBoxX: this.viewBoxX,
+      viewBoxY: this.viewBoxY,
+      viewBoxWidth: this.viewBoxWidth,
+      viewBoxHeight: this.viewBoxHeight,
+      zoom: this.zoom,
     };
 
     if (this.historyIndex < this.history.length - 1) {
@@ -260,12 +443,21 @@ export class FloorPlanStore {
     this.canRedo = false;
   }
 
+  private applySnapshot(snapshot: HistorySnapshot) {
+    this.nodes = JSON.parse(snapshot.nodes);
+    this.deletedNodeIds = [...snapshot.deletedNodeIds];
+    this.selectedNodeIds = new Set(snapshot.selectedNodeIds);
+    this.viewBoxX = snapshot.viewBoxX;
+    this.viewBoxY = snapshot.viewBoxY;
+    this.viewBoxWidth = snapshot.viewBoxWidth;
+    this.viewBoxHeight = snapshot.viewBoxHeight;
+    this.zoom = snapshot.zoom;
+  }
+
   undo() {
     if (this.historyIndex <= 0) return;
     this.historyIndex--;
-    const snapshot = this.history[this.historyIndex];
-    this.nodes = JSON.parse(snapshot.nodes);
-    this.deletedNodeIds = [...snapshot.deletedNodeIds];
+    this.applySnapshot(this.history[this.historyIndex]);
     this.isDirty = true;
     this.canUndo = this.historyIndex > 0;
     this.canRedo = true;
@@ -274,17 +466,16 @@ export class FloorPlanStore {
   redo() {
     if (this.historyIndex >= this.history.length - 1) return;
     this.historyIndex++;
-    const snapshot = this.history[this.historyIndex];
-    this.nodes = JSON.parse(snapshot.nodes);
-    this.deletedNodeIds = [...snapshot.deletedNodeIds];
+    this.applySnapshot(this.history[this.historyIndex]);
     this.isDirty = true;
     this.canUndo = true;
     this.canRedo = this.historyIndex < this.history.length - 1;
   }
 
-  // Serialization for saving — strip workspaceId (set server-side)
-  getNodesForSave() {
-    return Object.values(this.nodes).map(({ workspaceId, ...n }) => ({
+  // Serialization for saving — strip workspaceId (set server-side from the
+  // authenticated context, never trusted from the client).
+  getNodesForSave(): FloorPlanNodeInput[] {
+    return Object.values(this.nodes).map(({ workspaceId: _workspaceId, ...n }) => ({
       ...n,
       homeId: this.homeId,
       floorLevel: this.floorLevel,

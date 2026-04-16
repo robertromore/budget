@@ -383,24 +383,26 @@ export const scheduleRoutes = t.router({
       return newSchedule;
     }),
 
-  // Auto-add functionality
+  // Auto-add functionality (workspace-scoped — see service comments)
   executeAutoAdd: rateLimitedProcedure
     .input(z.object({ scheduleId: z.number() }))
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        scheduleService.executeAutoAddForSchedule(input.scheduleId)
+      withErrorHandler(async ({ ctx, input }) =>
+        scheduleService.executeAutoAddForSchedule(input.scheduleId, ctx.workspaceId)
       )
     ),
 
   executeAutoAddAll: rateLimitedProcedure.mutation(
-    withErrorHandler(async () => scheduleService.executeAutoAddForAllSchedules())
+    withErrorHandler(async ({ ctx }) =>
+      scheduleService.executeAutoAddForAllSchedules(ctx.workspaceId)
+    )
   ),
 
   previewAutoAdd: publicProcedure
     .input(z.object({ scheduleId: z.number() }))
     .query(
-      withErrorHandler(async ({ input }) =>
-        scheduleService.previewAutoAddForSchedule(input.scheduleId)
+      withErrorHandler(async ({ ctx, input }) =>
+        scheduleService.previewAutoAddForSchedule(input.scheduleId, ctx.workspaceId)
       )
     ),
 

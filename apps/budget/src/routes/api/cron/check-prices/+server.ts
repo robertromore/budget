@@ -7,13 +7,19 @@ import { isNull } from "drizzle-orm";
 import { env } from "$env/dynamic/private";
 
 export const GET: RequestHandler = async ({ request }) => {
-  // Authenticate with CRON_SECRET env var
+  // Fail closed: a missing CRON_SECRET previously left the endpoint fully
+  // open to the internet. Require the secret to be configured AND the header
+  // to match — otherwise reject.
   const cronSecret = env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return json(
+      { ok: false, error: "Cron endpoint is not configured" },
+      { status: 503 }
+    );
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
   try {

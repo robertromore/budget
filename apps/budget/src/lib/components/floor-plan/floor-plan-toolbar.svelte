@@ -36,6 +36,7 @@
     { id: "wall", icon: Minus, label: "Wall" },
     { id: "room", icon: Square, label: "Room" },
     { id: "door", icon: DoorOpen, label: "Door" },
+    { id: "window", icon: Box, label: "Window" },
     { id: "furniture", icon: Sofa, label: "Furniture" },
   ];
 </script>

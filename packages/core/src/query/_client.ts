@@ -13,7 +13,12 @@ export const queryClient = new QueryClient({
       enabled: browser,
       staleTime: 30 * 1000, // 30 seconds
       gcTime: 5 * 60 * 1000, // 5 minutes (was cacheTime)
-      retry: 3,
+      // Retry once. Higher values amplify every failure into N+1 requests,
+      // which multiplies pressure on the server-side rate limiter and can
+      // flip transient errors into rate-limit exhaustion for the user.
+      // Per-query overrides can still raise this where it is genuinely
+      // worth retrying (e.g. long-polling), via queryPresets.
+      retry: 1,
       refetchOnWindowFocus: false,
       // Disable refetch on reconnect for better UX in offline scenarios
       refetchOnReconnect: true,
@@ -21,7 +26,11 @@ export const queryClient = new QueryClient({
       networkMode: "online",
     },
     mutations: {
-      retry: 1,
+      // Never auto-retry mutations. Retries on non-idempotent writes cause
+      // duplicate side effects (double-submit transactions, double-email,
+      // etc.). Callers that need retry semantics should implement them
+      // explicitly around specific mutations.
+      retry: 0,
       // Network mode for mutations
       networkMode: "online",
     },

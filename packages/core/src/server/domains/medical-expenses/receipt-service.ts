@@ -1,7 +1,11 @@
+import { accounts } from "$core/schema/accounts";
 import type { ExpenseReceipt, ReceiptType } from "$core/schema/expense-receipts";
 import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$core/schema/expense-receipts";
+import { medicalExpenses } from "$core/schema/medical-expenses";
+import { db } from "$core/server/db";
 import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { InputSanitizer } from "$core/server/shared/validation";
+import { and, eq, isNull } from "drizzle-orm";
 import { existsSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -109,10 +113,76 @@ export class ReceiptService {
   }
 
   /**
+   * Resolve the workspace that owns a medical expense (via its HSA account).
+   * Returns null if the expense does not exist or has been soft-deleted.
+   */
+  private async getMedicalExpenseWorkspaceId(
+    medicalExpenseId: number
+  ): Promise<number | null> {
+    const [row] = await db
+      .select({ workspaceId: accounts.workspaceId })
+      .from(medicalExpenses)
+      .innerJoin(accounts, eq(medicalExpenses.hsaAccountId, accounts.id))
+      .where(
+        and(
+          eq(medicalExpenses.id, medicalExpenseId),
+          isNull(medicalExpenses.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
+      .limit(1);
+    return row?.workspaceId ?? null;
+  }
+
+  /**
+   * Load a receipt by id and verify that it belongs to the given workspace.
+   * Throws NotFoundError rather than revealing that the id exists in another
+   * tenant, so callers can propagate the error directly.
+   */
+  private async loadReceiptInWorkspace(
+    id: number,
+    workspaceId: number
+  ): Promise<ExpenseReceipt> {
+    const receipt = await this.receiptRepository.findById(id);
+    if (!receipt) {
+      throw new NotFoundError("ExpenseReceipt", id.toString());
+    }
+    const owner = await this.getMedicalExpenseWorkspaceId(receipt.medicalExpenseId);
+    if (owner !== workspaceId) {
+      throw new NotFoundError("ExpenseReceipt", id.toString());
+    }
+    return receipt;
+  }
+
+  /**
+   * Verify a medical expense belongs to the given workspace.
+   * Throws NotFoundError otherwise (uniform error avoids tenant enumeration).
+   */
+  private async assertMedicalExpenseInWorkspace(
+    medicalExpenseId: number,
+    workspaceId: number
+  ): Promise<void> {
+    const owner = await this.getMedicalExpenseWorkspaceId(medicalExpenseId);
+    if (owner !== workspaceId) {
+      throw new NotFoundError("MedicalExpense", medicalExpenseId.toString());
+    }
+  }
+
+  /**
    * Upload a receipt file
    */
-  async uploadReceipt(data: UploadReceiptData): Promise<ExpenseReceipt> {
-    // Validate medical expense exists
+  async uploadReceipt(
+    data: UploadReceiptData,
+    workspaceId: number
+  ): Promise<ExpenseReceipt> {
+    // Validate medical expense exists and belongs to the caller's workspace.
+    const owner = await this.getMedicalExpenseWorkspaceId(data.medicalExpenseId);
+    if (owner === null) {
+      throw new NotFoundError("MedicalExpense", data.medicalExpenseId.toString());
+    }
+    if (owner !== workspaceId) {
+      throw new NotFoundError("MedicalExpense", data.medicalExpenseId.toString());
+    }
     const expense = await this.medicalExpenseRepository.findById(data.medicalExpenseId);
     if (!expense) {
       throw new NotFoundError("MedicalExpense", data.medicalExpenseId.toString());
@@ -160,19 +230,19 @@ export class ReceiptService {
   /**
    * Get all receipts for a medical expense
    */
-  async getReceiptsByExpense(medicalExpenseId: number): Promise<ExpenseReceipt[]> {
+  async getReceiptsByExpense(
+    medicalExpenseId: number,
+    workspaceId: number
+  ): Promise<ExpenseReceipt[]> {
+    await this.assertMedicalExpenseInWorkspace(medicalExpenseId, workspaceId);
     return await this.receiptRepository.findByMedicalExpenseId(medicalExpenseId);
   }
 
   /**
-   * Get a single receipt by ID
+   * Get a single receipt by ID, verifying workspace ownership.
    */
-  async getReceipt(id: number): Promise<ExpenseReceipt> {
-    const receipt = await this.receiptRepository.findById(id);
-    if (!receipt) {
-      throw new NotFoundError("ExpenseReceipt", id.toString());
-    }
-    return receipt;
+  async getReceipt(id: number, workspaceId: number): Promise<ExpenseReceipt> {
+    return await this.loadReceiptInWorkspace(id, workspaceId);
   }
 
   /**
@@ -185,11 +255,12 @@ export class ReceiptService {
   /**
    * Update receipt metadata
    */
-  async updateReceipt(id: number, data: UpdateReceiptData): Promise<ExpenseReceipt> {
-    const existing = await this.receiptRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundError("ExpenseReceipt", id.toString());
-    }
+  async updateReceipt(
+    id: number,
+    data: UpdateReceiptData,
+    workspaceId: number
+  ): Promise<ExpenseReceipt> {
+    await this.loadReceiptInWorkspace(id, workspaceId);
 
     // Sanitize description
     const sanitizedDescription = data.description
@@ -214,11 +285,8 @@ export class ReceiptService {
   /**
    * Delete a receipt (soft delete in DB, hard delete file)
    */
-  async deleteReceipt(id: number): Promise<void> {
-    const receipt = await this.receiptRepository.findById(id);
-    if (!receipt) {
-      throw new NotFoundError("ExpenseReceipt", id.toString());
-    }
+  async deleteReceipt(id: number, workspaceId: number): Promise<void> {
+    const receipt = await this.loadReceiptInWorkspace(id, workspaceId);
 
     // Soft delete from database
     await this.receiptRepository.delete(id);
@@ -235,7 +303,8 @@ export class ReceiptService {
   /**
    * Count receipts for an expense
    */
-  async countReceipts(medicalExpenseId: number): Promise<number> {
+  async countReceipts(medicalExpenseId: number, workspaceId: number): Promise<number> {
+    await this.assertMedicalExpenseInWorkspace(medicalExpenseId, workspaceId);
     return await this.receiptRepository.countByMedicalExpenseId(medicalExpenseId);
   }
 }

@@ -5810,7 +5810,11 @@ Respond in JSON format only:
     // Update transactions to point to primary payee (if preserving history)
     if (mergeStrategy.preserveTransactionHistory) {
       for (const dupId of duplicatePayeeIds) {
-        const updated = await this.repository.updateTransactionPayee(dupId, primaryPayeeId);
+        const updated = await this.repository.updateTransactionPayee(
+          dupId,
+          primaryPayeeId,
+          workspaceId
+        );
         transactionsUpdated += updated;
       }
     }

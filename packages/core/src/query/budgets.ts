@@ -636,7 +636,10 @@ export const createDeficitRecoveryPlan = (envelopeId: number) =>
     },
   });
 
-export const executeDeficitRecovery = defineMutation<{ plan: any; executedBy?: string }, any>({
+export const executeDeficitRecovery = defineMutation<
+  { targetEnvelopeId: number; executedBy?: string },
+  any
+>({
   mutationFn: (input) => trpc().budgetRoutes.executeDeficitRecovery.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);

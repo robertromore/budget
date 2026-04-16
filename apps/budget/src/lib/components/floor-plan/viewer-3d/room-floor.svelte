@@ -6,6 +6,8 @@
   import { floorMaterial } from "$lib/utils/material-presets";
   import { SCALE } from "$lib/utils/wall-csg";
 
+  type PointerHandler = (e: { stopPropagation: () => void; nativeEvent?: PointerEvent }) => void;
+
   let {
     node,
     selected = false,
@@ -14,8 +16,8 @@
   }: {
     node: FloorPlanNode;
     selected?: boolean;
-    onclick?: (e: any) => void;
-    onpointerdown?: (e: any) => void;
+    onclick?: PointerHandler;
+    onpointerdown?: PointerHandler;
   } = $props();
 
   function createGeom() {
@@ -63,6 +65,20 @@
     }
     return mat;
   });
+
+  // Dispose the prior material clone whenever the derived value changes so
+  // color/selection churn doesn't leak GPU memory.
+  let prevMaterial: THREE.Material | null = null;
+  $effect(() => {
+    const current = material;
+    untrack(() => {
+      if (prevMaterial && prevMaterial !== current) {
+        prevMaterial.dispose();
+      }
+      prevMaterial = current;
+    });
+  });
+  onDestroy(() => prevMaterial?.dispose());
 </script>
 
 <T.Mesh

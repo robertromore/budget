@@ -1,3 +1,4 @@
+import { accountDocuments } from "$core/schema/account-documents";
 import { accounts } from "$core/schema/accounts";
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { auth } from "$core/server/auth";
@@ -26,21 +27,23 @@ export const GET: RequestHandler = async ({ params, request }) => {
       throw error(400, "Invalid document ID");
     }
 
-    // Get document metadata from database
-    const documentService = serviceFactory.getAccountDocumentService();
-    const document = await documentService.getDocument(documentId);
-
-    if (!document) {
-      throw error(404, "Document not found");
-    }
-
-    const [account] = await db
+    // Resolve the owning workspace via the document → account chain BEFORE
+    // calling the service, then verify the caller is a member. The service
+    // workspace check runs again as defense in depth.
+    const [owner] = await db
       .select({ workspaceId: accounts.workspaceId })
-      .from(accounts)
-      .where(and(eq(accounts.id, document.accountId), isNull(accounts.deletedAt)))
+      .from(accountDocuments)
+      .innerJoin(accounts, eq(accountDocuments.accountId, accounts.id))
+      .where(
+        and(
+          eq(accountDocuments.id, documentId),
+          isNull(accountDocuments.deletedAt),
+          isNull(accounts.deletedAt)
+        )
+      )
       .limit(1);
-    if (!account) {
-      throw error(404, "Account not found");
+    if (!owner) {
+      throw error(404, "Document not found");
     }
 
     const [membership] = await db
@@ -49,12 +52,19 @@ export const GET: RequestHandler = async ({ params, request }) => {
       .where(
         and(
           eq(workspaceMembers.userId, userId),
-          eq(workspaceMembers.workspaceId, account.workspaceId)
+          eq(workspaceMembers.workspaceId, owner.workspaceId)
         )
       )
       .limit(1);
     if (!membership) {
       throw error(403, "You do not have access to this document");
+    }
+
+    // Load document via the workspace-scoped service path.
+    const documentService = serviceFactory.getAccountDocumentService();
+    const document = await documentService.getDocument(documentId, owner.workspaceId);
+    if (!document) {
+      throw error(404, "Document not found");
     }
 
     // Get file path

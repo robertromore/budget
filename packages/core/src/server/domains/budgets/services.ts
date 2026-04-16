@@ -421,11 +421,18 @@ export class BudgetService {
       return; // Schedule not found, nothing to delete
     }
 
-    // Clear scheduleId from transactions
+    // Clear scheduleId from transactions (workspace-scoped defense-in-depth:
+    // transaction.scheduleId alone isn't enough — always pair with workspaceId
+    // so a collision in numeric schedule IDs cannot leak into another tenant).
     await db
       .update(transactions)
       .set({ scheduleId: null })
-      .where(eq(transactions.scheduleId, scheduleId));
+      .where(
+        and(
+          eq(transactions.scheduleId, scheduleId),
+          eq(transactions.workspaceId, workspaceId)
+        )
+      );
 
     // Delete schedule dates
     const dateIdToDelete = schedule.dateId;
@@ -1217,18 +1224,29 @@ export class BudgetService {
       // Step 6: Link related transactions to the schedule and budget
       if (transactionIds?.length) {
         try {
-          // Update transactions to link to the new schedule
-          // Note: Transaction IDs are already workspace-scoped from recommendation analysis
+          // Update transactions to link to the new schedule — scope by
+          // workspaceId defensively so a stray/forged id in transactionIds
+          // cannot reach another tenant's rows.
           await db
             .update(transactions)
             .set({ scheduleId: createdSchedule.id })
-            .where(inArray(transactions.id, transactionIds));
+            .where(
+              and(
+                inArray(transactions.id, transactionIds),
+                eq(transactions.workspaceId, workspaceId)
+              )
+            );
 
           // Get transaction amounts for budget allocations
           const txnData = await db
             .select({ id: transactions.id, amount: transactions.amount })
             .from(transactions)
-            .where(inArray(transactions.id, transactionIds));
+            .where(
+              and(
+                inArray(transactions.id, transactionIds),
+                eq(transactions.workspaceId, workspaceId)
+              )
+            );
 
           // Create budget allocations for each transaction
           if (txnData.length > 0) {

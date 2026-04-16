@@ -1,6 +1,7 @@
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { formInsertWorkspaceSchema, workspaces } from "$core/schema/workspaces";
 import { publicProcedure, t } from "$core/trpc";
+import { invalidateWorkspaceCacheForUser } from "$core/trpc/context";
 import { nowISOString } from "$core/utils/dates-core";
 import { TRPCError } from "@trpc/server";
 import { and, eq, isNull } from "drizzle-orm";
@@ -144,20 +145,87 @@ export const workspaceRoutes = t.router({
         secure: process.env.NODE_ENV === "production",
       });
 
+      // Drop any cached resolutions for this user so the next request picks
+      // up the new cookie immediately.
+      if (ctx.userId) invalidateWorkspaceCacheForUser(ctx.userId);
+
       return workspace;
     }),
 
   /**
-   * Update workspace preferences
+   * Update workspace preferences.
+   *
+   * The caller must be a member of the target workspace. Only the known
+   * top-level preference keys defined by `WorkspacePreferences` are
+   * accepted — unknown keys are rejected (`.strict()`). Per-domain
+   * payloads (ml, llm, webSearch, intelligenceInput, etc.) are validated
+   * by their own typed routes in settings.ts / llm-settings.ts; here we
+   * only ensure no additional keys can be planted in the JSON and that
+   * the overall payload size is bounded.
    */
   updatePreferences: publicProcedure
     .input(
       z.object({
-        workspaceId: z.number(),
-        preferences: z.record(z.string(), z.any()),
+        workspaceId: z.number().int().positive(),
+        preferences: z
+          .object({
+            // Display / locale
+            locale: z.string().max(35).optional(),
+            dateFormat: z.enum(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]).optional(),
+            currency: z.string().max(10).optional(),
+            theme: z.string().max(50).optional(),
+            timezone: z.string().max(100).optional(),
+            // Per-domain payloads — shape is validated by dedicated routes.
+            // Accepted as `z.unknown()` here so this general-purpose
+            // preferences endpoint does not duplicate those schemas.
+            ml: z.unknown().optional(),
+            llm: z.unknown().optional(),
+            webSearch: z.unknown().optional(),
+            intelligenceInput: z.unknown().optional(),
+            onboarding: z.unknown().optional(),
+            onboardingData: z.unknown().optional(),
+            encryption: z.unknown().optional(),
+            connectionProviders: z.unknown().optional(),
+            documentExtraction: z.unknown().optional(),
+            priceWatcher: z.unknown().optional(),
+          })
+          .strict()
+          .refine(
+            (obj) => {
+              try {
+                return JSON.stringify(obj).length <= 32_000;
+              } catch {
+                return false;
+              }
+            },
+            { message: "Preferences payload is too large" }
+          ),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Sign-in required" });
+      }
+      // Verify the caller is a member of the target workspace. Without this
+      // check any authenticated user could rewrite another tenant's
+      // preferences by supplying an arbitrary workspaceId.
+      const [membership] = await ctx.db
+        .select({ id: workspaceMembers.id })
+        .from(workspaceMembers)
+        .where(
+          and(
+            eq(workspaceMembers.userId, ctx.userId),
+            eq(workspaceMembers.workspaceId, input.workspaceId)
+          )
+        )
+        .limit(1);
+      if (!membership) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
+
       const [updated] = await ctx.db
         .update(workspaces)
         .set({

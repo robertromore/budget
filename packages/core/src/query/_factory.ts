@@ -138,7 +138,19 @@ export interface MutationWrapper<TVariables, TData, TError = Error> {
 }
 
 /**
- * Transforms service errors into TRPCError format for consistent error handling
+ * Transforms service errors into TRPCError format for consistent error handling.
+ *
+ * `TRPCError` instances are preserved (they're already intentional, caller-
+ * facing messages). Unknown `Error`s are NOT forwarded verbatim — their
+ * messages can contain raw SQL, Drizzle internals, file paths, and other
+ * server details that should never reach a client toast. We wrap them with
+ * a generic user-facing message and attach the original as `cause` so
+ * callers that care can inspect or log it themselves.
+ *
+ * This function does NOT log — callers already have `try/catch` paths that
+ * decide what (and whether) to report. Logging here produced noisy console
+ * errors for initialization-time best-effort calls that the caller handles
+ * quietly.
  */
 function transformError(error: unknown): TRPCError {
   if (error instanceof TRPCError) {
@@ -148,7 +160,7 @@ function transformError(error: unknown): TRPCError {
   if (error instanceof Error) {
     return new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: error.message,
+      message: "An unexpected error occurred",
       cause: error,
     });
   }
@@ -212,9 +224,10 @@ export function defineQuery<TParams, TData, TError = Error>(
       async execute(params: TParams) {
         const queryKey = paramConfig.queryKey(params);
         try {
-          // Try to get from cache first
+          // Try to get from cache first. Check `!== undefined` so truthy-
+          // falsy values like `0`, `""`, or `[]` still hit the cache.
           const cachedData = queryClient.getQueryData<TData>(queryKey);
-          if (cachedData) {
+          if (cachedData !== undefined) {
             return cachedData;
           }
 
@@ -258,9 +271,10 @@ export function defineQuery<TParams, TData, TError = Error>(
 
     async execute() {
       try {
-        // Try to get from cache first
+        // Try to get from cache first. Check `!== undefined` so truthy-
+        // falsy values like `0`, `""`, or `[]` still hit the cache.
         const cachedData = queryClient.getQueryData<TData>(queryKey);
-        if (cachedData) {
+        if (cachedData !== undefined) {
           return cachedData;
         }
 

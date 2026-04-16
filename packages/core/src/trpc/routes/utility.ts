@@ -114,7 +114,7 @@ export const utilityRoutes = t.router({
   // Get all usage records for an account
   getUsageRecords: publicProcedure.input(accountIdSchema).query(async ({ input, ctx }) => {
     try {
-      return await utilityUsageService.getUsageRecords(input.accountId);
+      return await utilityUsageService.getUsageRecords(input.accountId, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -123,7 +123,7 @@ export const utilityRoutes = t.router({
   // Get a single usage record by ID
   getUsageRecord: publicProcedure.input(usageIdSchema).query(async ({ input, ctx }) => {
     try {
-      return await utilityUsageService.getUsageRecord(input.id);
+      return await utilityUsageService.getUsageRecord(input.id, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -134,6 +134,7 @@ export const utilityRoutes = t.router({
     try {
       return await utilityUsageService.getUsageRecordsByDateRange(
         input.accountId,
+        ctx.workspaceId,
         input.startDate,
         input.endDate
       );
@@ -145,7 +146,7 @@ export const utilityRoutes = t.router({
   // Get usage analytics for an account
   getUsageAnalytics: publicProcedure.input(accountIdSchema).query(async ({ input, ctx }) => {
     try {
-      return await utilityUsageService.getUsageAnalytics(input.accountId);
+      return await utilityUsageService.getUsageAnalytics(input.accountId, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -154,7 +155,7 @@ export const utilityRoutes = t.router({
   // Get year-over-year comparison data
   getYearOverYearData: publicProcedure.input(accountIdSchema).query(async ({ input, ctx }) => {
     try {
-      return await utilityUsageService.getYearOverYearData(input.accountId);
+      return await utilityUsageService.getYearOverYearData(input.accountId, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -199,7 +200,7 @@ export const utilityRoutes = t.router({
   // Get current rate tiers for an account
   getRateTiers: publicProcedure.input(accountIdSchema).query(async ({ input, ctx }) => {
     try {
-      return await utilityUsageService.getCurrentRateTiers(input.accountId);
+      return await utilityUsageService.getCurrentRateTiers(input.accountId, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -208,7 +209,11 @@ export const utilityRoutes = t.router({
   // Set rate tiers for an account (replaces existing)
   setRateTiers: publicProcedure.input(setRateTiersSchema).mutation(async ({ input, ctx }) => {
     try {
-      return await utilityUsageService.replaceRateTiers(input.accountId, input.tiers);
+      return await utilityUsageService.replaceRateTiers(
+        input.accountId,
+        ctx.workspaceId,
+        input.tiers
+      );
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -219,7 +224,11 @@ export const utilityRoutes = t.router({
     .input(calculateTieredCostSchema)
     .query(async ({ input, ctx }) => {
       try {
-        return await utilityUsageService.calculateTieredCost(input.accountId, input.usageAmount);
+        return await utilityUsageService.calculateTieredCost(
+          input.accountId,
+          ctx.workspaceId,
+          input.usageAmount
+        );
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -245,7 +254,10 @@ export const utilityRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       try {
-        const records = await utilityUsageService.getUsageRecords(input.accountId);
+        const records = await utilityUsageService.getUsageRecords(
+          input.accountId,
+          ctx.workspaceId
+        );
         return detectAnomalies(records, {
           zsScoreThreshold: input.options?.zScoreThreshold,
           monthOverMonthThreshold: input.options?.monthOverMonthThreshold,
@@ -267,7 +279,10 @@ export const utilityRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       try {
-        const records = await utilityUsageService.getUsageRecords(input.accountId);
+        const records = await utilityUsageService.getUsageRecords(
+          input.accountId,
+          ctx.workspaceId
+        );
         return forecastUsage(records, {
           targetMonth: input.targetMonth,
           useSeasonal: input.useSeasonal,
@@ -288,7 +303,10 @@ export const utilityRoutes = t.router({
     )
     .query(async ({ input, ctx }) => {
       try {
-        const records = await utilityUsageService.getUsageRecords(input.accountId);
+        const records = await utilityUsageService.getUsageRecords(
+          input.accountId,
+          ctx.workspaceId
+        );
         return projectBill(records, {
           projectedUsage: input.projectedUsage,
           targetMonth: input.targetMonth,
@@ -301,7 +319,10 @@ export const utilityRoutes = t.router({
   // Get comprehensive utility statistics
   getStats: publicProcedure.input(accountIdSchema).query(async ({ input, ctx }) => {
     try {
-      const records = await utilityUsageService.getUsageRecords(input.accountId);
+      const records = await utilityUsageService.getUsageRecords(
+        input.accountId,
+        ctx.workspaceId
+      );
       return calculateUtilityStats(records);
     } catch (error) {
       throw translateDomainError(error);

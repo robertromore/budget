@@ -1,6 +1,7 @@
 import { db } from "$core/server/db";
 import { workspaces } from "$core/schema/workspaces";
 import { workspaceMembers } from "$core/schema/workspace-members";
+import { invalidateWorkspaceCacheForUser } from "$core/trpc/context";
 
 /**
  * Creates a default "Personal" workspace for a new user
@@ -30,6 +31,10 @@ export async function createDefaultWorkspaceForUser(userId: string): Promise<num
     role: "owner",
     isDefault: true,
   });
+  // The repository invalidates automatically; this direct-insert path does not,
+  // so clear the cache explicitly to avoid a brief window where the new user's
+  // workspace is invisible to subsequent requests.
+  invalidateWorkspaceCacheForUser(userId);
 
   return workspace!.id;
 }

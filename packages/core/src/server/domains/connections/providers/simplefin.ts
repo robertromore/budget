@@ -47,6 +47,7 @@ export class SimpleFINProvider implements ConnectionProviderInterface {
     since?: Date
   ): Promise<ImportRow[]> {
     const { accessUrl } = credentials as SimplefinCredentials;
+    assertSimplefinAccessUrl(accessUrl);
 
     // Default to 90 days if no since date provided
     const startDate = since || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
@@ -110,10 +111,7 @@ export class SimpleFINProvider implements ConnectionProviderInterface {
    * Fetch accounts from SimpleFIN API
    */
   private async fetchAccounts(accessUrl: string): Promise<SimpleFIN.AccountsResponse> {
-    // Validate access URL format
-    if (!accessUrl.includes("simplefin.org")) {
-      throw new Error("Invalid SimpleFIN access URL");
-    }
+    assertSimplefinAccessUrl(accessUrl);
 
     const url = `${accessUrl}/accounts`;
     const response = await fetch(url);
@@ -122,6 +120,8 @@ export class SimpleFINProvider implements ConnectionProviderInterface {
       if (response.status === 401) {
         throw new Error("Invalid or expired SimpleFIN access token");
       }
+      // Do NOT include the response body or full URL in the error — the URL
+      // carries a credential (HTTP basic auth token) and must never surface.
       throw new Error(`SimpleFIN API error: ${response.status} ${response.statusText}`);
     }
 
@@ -180,4 +180,44 @@ function formatDateYMD(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * Hostnames the server is permitted to contact as SimpleFIN endpoints.
+ * A prefix match on `.simplefin.org` would allow `evil.simplefin.org` set up
+ * by an attacker on a throwaway subdomain; we explicitly allowlist the known
+ * bridge hosts instead.
+ */
+const SIMPLEFIN_ALLOWED_HOSTS: ReadonlySet<string> = new Set([
+  "bridge.simplefin.org",
+  "beta-bridge.simplefin.org",
+]);
+
+/**
+ * Validate a SimpleFIN access URL before issuing an outbound HTTP request.
+ *
+ * Rejects the URL (by throwing) when:
+ *   - it fails to parse as a URL,
+ *   - the protocol is not HTTPS (the URL carries HTTP basic auth credentials
+ *     and must not travel over plaintext HTTP),
+ *   - the hostname is not in the SimpleFIN bridge allowlist.
+ *
+ * The previous check — `accessUrl.includes("simplefin.org")` — matched hosts
+ * like `evil.com/.simplefin.org` and permitted SSRF into internal networks
+ * (e.g. `http://169.254.169.254/...?q=simplefin.org`). This replaces that
+ * substring check with a parsed-URL allowlist.
+ */
+function assertSimplefinAccessUrl(accessUrl: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(accessUrl);
+  } catch {
+    throw new Error("Invalid SimpleFIN access URL");
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error("SimpleFIN access URL must use https");
+  }
+  if (!SIMPLEFIN_ALLOWED_HOSTS.has(parsed.hostname.toLowerCase())) {
+    throw new Error("SimpleFIN access URL host is not allowed");
+  }
 }
