@@ -56,6 +56,12 @@ import { financialGoalsRoutes } from "./routes/financial-goals";
 import { investmentSnapshotsRoutes } from "./routes/investment-snapshots";
 import { priceWatcherRoutes } from "./routes/price-watcher";
 
+// Home management routes
+import { homeHomesRoutes } from "./routes/home-homes";
+import { homeLocationsRoutes } from "./routes/home-locations";
+import { homeItemsRoutes } from "./routes/home-items";
+import { homeLabelsRoutes } from "./routes/home-labels";
+
 export const router = t.router({
   // Authentication and workspace management
   authRoutes,
@@ -104,6 +110,12 @@ export const router = t.router({
 
   // Price Watcher routes
   priceWatcherRoutes,
+
+  // Home management routes
+  homeHomesRoutes,
+  homeLocationsRoutes,
+  homeItemsRoutes,
+  homeLabelsRoutes,
 
   // ML routes
   anomalyDetectionRoutes,

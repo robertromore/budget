@@ -77,6 +77,9 @@ export * from "./metric-alerts";
 export * from "./ml-models";
 export * from "./prediction-feedback";
 
+// Home management schemas
+export * from "./home";
+
 // Import table definitions for relations that need to be defined here
 // to avoid circular dependencies between schema files
 import { relations } from "drizzle-orm";

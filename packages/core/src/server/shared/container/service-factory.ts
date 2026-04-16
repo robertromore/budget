@@ -83,6 +83,16 @@ import { ScheduleService } from "$core/server/domains/schedules/services";
 import { SequenceService } from "$core/server/domains/sequences/services";
 import { TransactionService } from "$core/server/domains/transactions/services";
 
+// Home management domains
+import { HomeRepository } from "$core/server/domains/home/homes/repository";
+import { HomeService } from "$core/server/domains/home/homes/services";
+import { HomeLocationRepository } from "$core/server/domains/home/locations/repository";
+import { HomeLocationService } from "$core/server/domains/home/locations/services";
+import { HomeItemRepository } from "$core/server/domains/home/items/repository";
+import { HomeItemService } from "$core/server/domains/home/items/services";
+import { HomeLabelRepository } from "$core/server/domains/home/labels/repository";
+import { HomeLabelService } from "$core/server/domains/home/labels/services";
+
 export class ServiceFactory {
   private instances = new Map<string, unknown>();
 
@@ -719,6 +729,72 @@ export class ServiceFactory {
       this.instances.set(key, new MetricAlertService(this.getMetricAlertRepository()));
     }
     return this.instances.get(key) as MetricAlertService;
+  }
+
+  // ==================== Home Management ====================
+
+  getHomeRepository(): HomeRepository {
+    const key = "HomeRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeRepository());
+    }
+    return this.instances.get(key) as HomeRepository;
+  }
+
+  getHomeService(): HomeService {
+    const key = "HomeService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeService(this.getHomeRepository()));
+    }
+    return this.instances.get(key) as HomeService;
+  }
+
+  getHomeLocationRepository(): HomeLocationRepository {
+    const key = "HomeLocationRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeLocationRepository());
+    }
+    return this.instances.get(key) as HomeLocationRepository;
+  }
+
+  getHomeLocationService(): HomeLocationService {
+    const key = "HomeLocationService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeLocationService(this.getHomeLocationRepository()));
+    }
+    return this.instances.get(key) as HomeLocationService;
+  }
+
+  getHomeItemRepository(): HomeItemRepository {
+    const key = "HomeItemRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeItemRepository());
+    }
+    return this.instances.get(key) as HomeItemRepository;
+  }
+
+  getHomeItemService(): HomeItemService {
+    const key = "HomeItemService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeItemService(this.getHomeItemRepository()));
+    }
+    return this.instances.get(key) as HomeItemService;
+  }
+
+  getHomeLabelRepository(): HomeLabelRepository {
+    const key = "HomeLabelRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeLabelRepository());
+    }
+    return this.instances.get(key) as HomeLabelRepository;
+  }
+
+  getHomeLabelService(): HomeLabelService {
+    const key = "HomeLabelService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeLabelService(this.getHomeLabelRepository()));
+    }
+    return this.instances.get(key) as HomeLabelService;
   }
 
   // ==================== Testing Utilities ====================
