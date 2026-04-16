@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Canvas } from "@threlte/core";
   import { T } from "@threlte/core";
-  import { OrbitControls, interactivity } from "@threlte/extras";
+  import { OrbitControls } from "@threlte/extras";
+  import * as THREE from "three";
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
   import SceneContent from "./scene-content.svelte";
 
@@ -27,6 +28,11 @@
           minDistance={1}
           maxDistance={50}
           target={[0, 0, 0]}
+          mouseButtons={{
+            LEFT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.ROTATE,
+          }}
         />
       {/if}
     </T.PerspectiveCamera>
