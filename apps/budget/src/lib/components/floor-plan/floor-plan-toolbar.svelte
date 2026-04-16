@@ -15,9 +15,21 @@
     Hand,
     Sofa,
     StickyNote,
+    Box,
+    Layers2,
   } from "@lucide/svelte";
 
-  let { store, onsave }: { store: FloorPlanStore; onsave: () => void } = $props();
+  let {
+    store,
+    onsave,
+    viewMode = "2d",
+    onviewmodechange,
+  }: {
+    store: FloorPlanStore;
+    onsave: () => void;
+    viewMode?: "2d" | "3d";
+    onviewmodechange?: (mode: "2d" | "3d") => void;
+  } = $props();
 
   const tools: { id: EditorTool; icon: any; label: string }[] = [
     { id: "select", icon: MousePointer, label: "Select" },
@@ -103,6 +115,30 @@
   >
     <Grid3x3 class="h-4 w-4" />
   </button>
+
+  <div class="bg-border mx-2 h-6 w-px"></div>
+
+  <!-- 2D/3D toggle -->
+  <div class="flex items-center gap-0.5 rounded-md border p-0.5">
+    <button
+      class="rounded px-2 py-1.5 text-xs font-medium transition-colors {viewMode === '2d'
+        ? 'bg-primary text-primary-foreground'
+        : 'hover:bg-accent'}"
+      title="2D View"
+      onclick={() => onviewmodechange?.("2d")}
+    >
+      <Layers2 class="h-4 w-4" />
+    </button>
+    <button
+      class="rounded px-2 py-1.5 text-xs font-medium transition-colors {viewMode === '3d'
+        ? 'bg-primary text-primary-foreground'
+        : 'hover:bg-accent'}"
+      title="3D View"
+      onclick={() => onviewmodechange?.("3d")}
+    >
+      <Box class="h-4 w-4" />
+    </button>
+  </div>
 
   <!-- Spacer -->
   <div class="flex-1"></div>

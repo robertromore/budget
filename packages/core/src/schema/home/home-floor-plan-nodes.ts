@@ -49,6 +49,11 @@ export const homeFloorPlanNodes = sqliteTable(
     x2: real("x2"),
     y2: real("y2"),
 
+    // 3D properties
+    wallHeight: real("wall_height").notNull().default(2.5),
+    thickness: real("thickness").notNull().default(0.15),
+    elevation: real("elevation").notNull().default(0),
+
     // Visual
     color: text("color"),
     opacity: real("opacity").notNull().default(1),

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import { page } from "$app/stores";
   import { untrack } from "svelte";
   import { rpc } from "$lib/query";
@@ -15,6 +16,7 @@
   const store = new FloorPlanStore();
 
   let currentFloor = $state(0);
+  let viewMode = $state<"2d" | "3d">("2d");
 
   const floorPlanQuery = $derived(home ? rpc.homeFloorPlans.getFloorPlan(homeId, currentFloor).options() : undefined);
   const floorLevelsQuery = $derived(home ? rpc.homeFloorPlans.getFloorLevels(homeId).options() : undefined);
@@ -29,6 +31,16 @@
     if (data && data !== lastLoadedData) {
       lastLoadedData = data;
       untrack(() => store.loadNodes(data, homeId, currentFloor));
+    }
+  });
+
+  // Lazy import 3D scene to avoid SSR issues with Three.js
+  let Scene3D: any = $state(null);
+  $effect(() => {
+    if (browser && viewMode === "3d" && !Scene3D) {
+      import("$lib/components/floor-plan/viewer-3d/scene-3d.svelte").then((mod) => {
+        Scene3D = mod.default;
+      });
     }
   });
 
@@ -82,7 +94,12 @@
 
 <div class="flex h-[calc(100vh)] flex-col">
   <!-- Toolbar -->
-  <FloorPlanToolbar {store} onsave={handleSave} />
+  <FloorPlanToolbar
+    {store}
+    onsave={handleSave}
+    {viewMode}
+    onviewmodechange={(mode) => (viewMode = mode)}
+  />
 
   <!-- Floor level selector -->
   {#if floorLevels.length > 1}
@@ -113,8 +130,14 @@
   <!-- Canvas + Properties -->
   <div class="flex flex-1 overflow-hidden">
     <div class="flex-1">
-      <FloorPlanCanvas {store} />
+      {#if viewMode === "3d" && Scene3D}
+        <Scene3D {store} />
+      {:else}
+        <FloorPlanCanvas {store} />
+      {/if}
     </div>
-    <PropertiesPanel {store} />
+    {#if viewMode === "2d"}
+      <PropertiesPanel {store} />
+    {/if}
   </div>
 </div>
