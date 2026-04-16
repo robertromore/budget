@@ -53,9 +53,7 @@ const activeAppId = $derived(
         isActive ? app.activeClass : app.inactiveClass
       )}
       aria-current={isActive ? 'page' : undefined}
-      aria-label={app.label}
-      target={app.external ? '_blank' : undefined}
-      rel={app.external ? 'noopener' : undefined}>
+      aria-label={app.label}>
       {app.letter}
     </a>
   {/each}

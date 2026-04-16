@@ -49,7 +49,10 @@ export const auth = betterAuth({
 
   secret: getEnv("BETTER_AUTH_SECRET"),
   baseURL: getEnv("BETTER_AUTH_URL") || "http://localhost:5173",
-  trustedOrigins: getEnv("BETTER_AUTH_TRUSTED_ORIGINS")?.split(",").filter(Boolean) || [],
+  trustedOrigins: [
+    ...(getEnv("BETTER_AUTH_TRUSTED_ORIGINS")?.split(",").filter(Boolean) || []),
+    "http://localhost:5174",
+  ],
 
   user: {
     additionalFields: {
