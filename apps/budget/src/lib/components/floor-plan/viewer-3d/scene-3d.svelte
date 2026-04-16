@@ -11,7 +11,7 @@
 </script>
 
 <div class="h-full w-full">
-  <Canvas shadows>
+  <Canvas shadows="pcf">
     <T.PerspectiveCamera
       makeDefault
       position={[8, 10, 8]}
