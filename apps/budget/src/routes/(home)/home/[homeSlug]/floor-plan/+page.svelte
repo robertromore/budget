@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { untrack } from "svelte";
   import { rpc } from "$lib/query";
   import { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
   import FloorPlanCanvas from "$lib/components/floor-plan/floor-plan-canvas.svelte";
@@ -21,10 +22,13 @@
 
   const floorLevels = $derived(floorLevelsQuery?.data ?? [0]);
 
-  // Load nodes when query data arrives
+  // Load nodes when query data arrives (untrack store writes to prevent infinite loop)
+  let lastLoadedData: unknown = null;
   $effect(() => {
-    if (floorPlanQuery?.data) {
-      store.loadNodes(floorPlanQuery.data, homeId, currentFloor);
+    const data = floorPlanQuery?.data;
+    if (data && data !== lastLoadedData) {
+      lastLoadedData = data;
+      untrack(() => store.loadNodes(data, homeId, currentFloor));
     }
   });
 
