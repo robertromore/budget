@@ -8,9 +8,16 @@
   import FurnitureMesh from "./furniture-mesh.svelte";
   import SceneLights from "./scene-lights.svelte";
 
-  let { store }: { store: FloorPlanStore } = $props();
+  let {
+    store,
+    onselect,
+    ondragstart,
+  }: {
+    store: FloorPlanStore;
+    onselect?: (id: string, e: any) => void;
+    ondragstart?: (id: string, e: any) => void;
+  } = $props();
 
-  // Group openings by parent wall for CSG
   const wallOpenings = $derived.by(() => {
     const map = new Map<string, typeof store.nodeList>();
     for (const node of store.nodeList) {
@@ -25,7 +32,6 @@
 
 <SceneLights />
 
-<!-- Ground grid -->
 <Grid
   cellColor="#9ca3af"
   sectionColor="#6b7280"
@@ -35,33 +41,51 @@
   infiniteGrid
 />
 
-<!-- Ground plane for shadows -->
 <T.Mesh rotation.x={-Math.PI / 2} position.y={-0.01} receiveShadow>
   <T.PlaneGeometry args={[100, 100]} />
   <T.ShadowMaterial opacity={0.15} />
 </T.Mesh>
 
-<!-- Rooms (floor planes) -->
 {#each store.rooms as node (node.id)}
-  <RoomFloor {node} />
+  <RoomFloor
+    {node}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
 {/each}
 
-<!-- Walls with CSG openings -->
 {#each store.walls as node (node.id)}
-  <WallMesh {node} openings={wallOpenings.get(node.id) ?? []} />
+  <WallMesh
+    {node}
+    openings={wallOpenings.get(node.id) ?? []}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
 {/each}
 
-<!-- Furniture, doors, windows (standalone -- not CSG'd into walls) -->
 {#each store.furniture as node (node.id)}
-  <FurnitureMesh {node} />
+  <FurnitureMesh
+    {node}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
 {/each}
 
-<!-- Annotations as simple markers -->
 {#each store.annotations as node (node.id)}
   {@const x = node.posX * SCALE}
   {@const z = node.posY * SCALE}
-  <T.Mesh position.x={x} position.y={1.5} position.z={z}>
+  <T.Mesh
+    position.x={x}
+    position.y={1.5}
+    position.z={z}
+    onclick={(e) => onselect?.(node.id, e)}
+  >
     <T.SphereGeometry args={[0.15, 16, 16]} />
-    <T.MeshStandardMaterial color="#f59e0b" />
+    <T.MeshStandardMaterial
+      color={store.selectedNodeIds.has(node.id) ? "#3b82f6" : "#f59e0b"}
+    />
   </T.Mesh>
 {/each}

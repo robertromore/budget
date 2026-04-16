@@ -6,7 +6,17 @@
   import { floorMaterial } from "$lib/utils/material-presets";
   import { SCALE } from "$lib/utils/wall-csg";
 
-  let { node }: { node: FloorPlanNode } = $props();
+  let {
+    node,
+    selected = false,
+    onclick,
+    onpointerdown,
+  }: {
+    node: FloorPlanNode;
+    selected?: boolean;
+    onclick?: (e: any) => void;
+    onpointerdown?: (e: any) => void;
+  } = $props();
 
   function createGeom() {
     const x = node.posX * SCALE;
@@ -45,11 +55,20 @@
 
   onDestroy(() => geometry?.dispose());
 
-  const material = $derived(floorMaterial(node.color ?? undefined));
+  const material = $derived.by(() => {
+    const mat = floorMaterial(node.color ?? undefined).clone();
+    if (selected) {
+      mat.emissive = new THREE.Color("#3b82f6");
+      mat.emissiveIntensity = 0.3;
+    }
+    return mat;
+  });
 </script>
 
 <T.Mesh
   {geometry}
   {material}
   receiveShadow
+  {onclick}
+  {onpointerdown}
 />

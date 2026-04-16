@@ -4,13 +4,20 @@
   import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
   import { createWallGeometry, SCALE } from "$lib/utils/wall-csg";
   import { wallMaterial } from "$lib/utils/material-presets";
+  import * as THREE from "three";
 
   let {
     node,
     openings = [],
+    selected = false,
+    onclick,
+    onpointerdown,
   }: {
     node: FloorPlanNode;
     openings?: FloorPlanNode[];
+    selected?: boolean;
+    onclick?: (e: any) => void;
+    onpointerdown?: (e: any) => void;
   } = $props();
 
   let geometry = $state(createGeom());
@@ -23,7 +30,6 @@
   }
 
   $effect(() => {
-    // Re-read reactive deps
     void [node.posX, node.posY, node.x2, node.y2, node.wallHeight, node.thickness, node.elevation, node.color, openings.length];
     const newGeom = createGeom();
     untrack(() => {
@@ -35,7 +41,14 @@
 
   onDestroy(() => geometry?.dispose());
 
-  const material = $derived(wallMaterial(node.color ?? undefined));
+  const material = $derived.by(() => {
+    const mat = wallMaterial(node.color ?? undefined).clone();
+    if (selected) {
+      mat.emissive = new THREE.Color("#3b82f6");
+      mat.emissiveIntensity = 0.3;
+    }
+    return mat;
+  });
 </script>
 
 <T.Mesh
@@ -43,4 +56,6 @@
   {material}
   castShadow
   receiveShadow
+  {onclick}
+  {onpointerdown}
 />

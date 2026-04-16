@@ -1,10 +1,21 @@
 <script lang="ts">
   import { T } from "@threlte/core";
+  import * as THREE from "three";
   import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
   import { furnitureMaterial, doorMaterial, glassMaterial } from "$lib/utils/material-presets";
   import { SCALE } from "$lib/utils/wall-csg";
 
-  let { node }: { node: FloorPlanNode } = $props();
+  let {
+    node,
+    selected = false,
+    onclick,
+    onpointerdown,
+  }: {
+    node: FloorPlanNode;
+    selected?: boolean;
+    onclick?: (e: any) => void;
+    onpointerdown?: (e: any) => void;
+  } = $props();
 
   const w = $derived((node.width || 60) * SCALE);
   const h = $derived((node.height || 60) * SCALE);
@@ -21,11 +32,17 @@
   );
   const rotY = $derived(-(node.rotation ?? 0) * Math.PI / 180);
 
-  const material = $derived(
-    node.nodeType === "door" ? doorMaterial(node.color ?? undefined) :
-    node.nodeType === "window" ? glassMaterial() :
-    furnitureMaterial(node.color ?? undefined)
-  );
+  const material = $derived.by(() => {
+    const baseMat =
+      node.nodeType === "door" ? doorMaterial(node.color ?? undefined) :
+      node.nodeType === "window" ? glassMaterial() :
+      furnitureMaterial(node.color ?? undefined);
+    if (!selected) return baseMat;
+    const mat = baseMat.clone();
+    mat.emissive = new THREE.Color("#3b82f6");
+    mat.emissiveIntensity = 0.3;
+    return mat;
+  });
 </script>
 
 <T.Mesh
@@ -35,6 +52,8 @@
   rotation.y={rotY}
   castShadow
   receiveShadow
+  {onclick}
+  {onpointerdown}
 >
   <T.BoxGeometry args={[w, boxH, h]} />
   <T is={material} />
