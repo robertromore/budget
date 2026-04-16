@@ -63,7 +63,10 @@ const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password
 const isPublicRoute = $derived(PUBLIC_ROUTES.some((route) => page.url.pathname.startsWith(route)));
 
 // Determine which app is active based on URL
-const activeApp = $derived(page.url.pathname.startsWith('/price-watcher') ? 'price-watcher' : 'budget');
+const activeApp = $derived(
+  page.url.pathname.startsWith('/price-watcher') ? 'price-watcher' :
+  page.url.pathname.startsWith('/home') ? 'home' : 'budget'
+);
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
@@ -183,6 +186,9 @@ onMount(() => {
   <NuqsAdapter>
     <div class="bg-background md:pl-(--app-rail-width)">
       <AppRail />
+      {#if activeApp === 'home'}
+        {@render children?.()}
+      {:else}
       <div class="grid">
         <Sidebar.Provider>
           {#if activeApp === 'price-watcher'}
@@ -244,6 +250,7 @@ onMount(() => {
           </Sidebar.Inset>
         </Sidebar.Provider>
       </div>
+      {/if}
     </div>
   </NuqsAdapter>
 
