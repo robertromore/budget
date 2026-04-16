@@ -14,6 +14,7 @@
   } = $props();
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <g
   class="annotation-node cursor-pointer"
   role="button"
