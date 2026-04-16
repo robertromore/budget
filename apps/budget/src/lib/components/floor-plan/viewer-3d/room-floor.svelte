@@ -1,6 +1,6 @@
 <script lang="ts">
   import { T } from "@threlte/core";
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import * as THREE from "three";
   import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
   import { floorMaterial } from "$lib/utils/material-presets";
@@ -36,9 +36,11 @@
   $effect(() => {
     void [node.posX, node.posY, node.width, node.height, node.elevation];
     const newGeom = createGeom();
-    const oldGeom = geometry;
-    geometry = newGeom;
-    if (oldGeom && oldGeom !== newGeom) oldGeom.dispose();
+    untrack(() => {
+      const oldGeom = geometry;
+      geometry = newGeom;
+      if (oldGeom && oldGeom !== newGeom) oldGeom.dispose();
+    });
   });
 
   onDestroy(() => geometry?.dispose());

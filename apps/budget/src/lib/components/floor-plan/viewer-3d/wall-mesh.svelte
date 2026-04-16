@@ -1,6 +1,6 @@
 <script lang="ts">
   import { T } from "@threlte/core";
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
   import { createWallGeometry, SCALE } from "$lib/utils/wall-csg";
   import { wallMaterial } from "$lib/utils/material-presets";
@@ -26,9 +26,11 @@
     // Re-read reactive deps
     void [node.posX, node.posY, node.x2, node.y2, node.wallHeight, node.thickness, node.elevation, node.color, openings.length];
     const newGeom = createGeom();
-    const oldGeom = geometry;
-    geometry = newGeom;
-    if (oldGeom && oldGeom !== newGeom) oldGeom.dispose();
+    untrack(() => {
+      const oldGeom = geometry;
+      geometry = newGeom;
+      if (oldGeom && oldGeom !== newGeom) oldGeom.dispose();
+    });
   });
 
   onDestroy(() => geometry?.dispose());
