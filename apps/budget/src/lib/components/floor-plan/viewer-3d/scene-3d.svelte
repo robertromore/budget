@@ -22,21 +22,19 @@
       near={0.1}
       far={500}
     >
-      {#if !walkthrough}
-        <OrbitControls
-          enableDamping
-          dampingFactor={0.1}
-          maxPolarAngle={Math.PI / 2.1}
-          minDistance={1}
-          maxDistance={50}
-          target={[0, 0, 0]}
-          mouseButtons={{
-            LEFT: THREE.MOUSE.PAN,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.ROTATE,
-          }}
-        />
-      {/if}
+      <OrbitControls
+        enableDamping
+        dampingFactor={0.1}
+        maxPolarAngle={Math.PI / 2.1}
+        minDistance={1}
+        maxDistance={50}
+        target={[0, 0, 0]}
+        mouseButtons={{
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE,
+        }}
+      />
     </T.PerspectiveCamera>
 
     <SceneContent {store} />
