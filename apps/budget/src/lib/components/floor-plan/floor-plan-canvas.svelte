@@ -197,8 +197,9 @@
   );
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <svg
+  role="application"
+  aria-label="Floor plan editor canvas"
   bind:this={svgEl}
   class="h-full w-full bg-white outline-none dark:bg-zinc-900 {cursorClass}"
   {viewBox}
