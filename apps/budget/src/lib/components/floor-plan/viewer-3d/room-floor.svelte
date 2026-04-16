@@ -1,5 +1,6 @@
 <script lang="ts">
   import { T } from "@threlte/core";
+  import { onDestroy } from "svelte";
   import * as THREE from "three";
   import type { FloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
   import { floorMaterial } from "$lib/utils/material-presets";
@@ -7,7 +8,7 @@
 
   let { node }: { node: FloorPlanNode } = $props();
 
-  const geometry = $derived.by(() => {
+  function createGeom() {
     const x = node.posX * SCALE;
     const z = node.posY * SCALE;
     const w = node.width * SCALE;
@@ -28,7 +29,19 @@
     geom.rotateX(-Math.PI / 2);
     geom.translate(0, (node.elevation ?? 0) - floorThickness, 0);
     return geom;
+  }
+
+  let geometry = $state(createGeom());
+
+  $effect(() => {
+    void [node.posX, node.posY, node.width, node.height, node.elevation];
+    const newGeom = createGeom();
+    const oldGeom = geometry;
+    geometry = newGeom;
+    if (oldGeom && oldGeom !== newGeom) oldGeom.dispose();
   });
+
+  onDestroy(() => geometry?.dispose());
 
   const material = $derived(floorMaterial(node.color ?? undefined));
 </script>

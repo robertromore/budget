@@ -14,7 +14,6 @@
     Save,
     Hand,
     Sofa,
-    StickyNote,
     Box,
     Layers2,
   } from "@lucide/svelte";
@@ -87,7 +86,7 @@
   >
     <ZoomIn class="h-4 w-4" />
   </button>
-  <span class="text-muted-foreground min-w-[3rem] text-center text-xs">
+  <span class="text-muted-foreground min-w-12 text-center text-xs">
     {Math.round(store.zoom * 100)}%
   </span>
   <button

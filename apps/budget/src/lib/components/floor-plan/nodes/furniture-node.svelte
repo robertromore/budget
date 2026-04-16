@@ -27,8 +27,8 @@
     y={node.posY}
     width={node.width}
     height={node.height}
-    fill={node.color ?? "#D97706"}
-    stroke={selected ? "#3B82F6" : "#92400E"}
+    fill={node.color ?? "hsl(var(--accent))"}
+    stroke={selected ? "hsl(var(--primary))" : "hsl(var(--accent-foreground) / 0.3)"}
     stroke-width={selected ? 2 : 1}
     opacity={node.opacity}
     rx="3"
@@ -40,7 +40,7 @@
       text-anchor="middle"
       dominant-baseline="central"
       font-size="10"
-      fill="white"
+      fill="hsl(var(--accent-foreground))"
       class="pointer-events-none select-none"
     >
       {node.name}
@@ -53,7 +53,7 @@
       width={node.width + 2}
       height={node.height + 2}
       fill="none"
-      stroke="#3B82F6"
+      stroke="hsl(var(--primary))"
       stroke-width="1.5"
       stroke-dasharray="4 2"
     />

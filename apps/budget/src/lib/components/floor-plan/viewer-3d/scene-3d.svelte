@@ -2,13 +2,15 @@
   import { Canvas } from "@threlte/core";
   import { T } from "@threlte/core";
   import { OrbitControls } from "@threlte/extras";
+  import { onDestroy } from "svelte";
   import * as THREE from "three";
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
+  import { disposeMaterials } from "$lib/utils/material-presets";
   import SceneContent from "./scene-content.svelte";
 
   let { store }: { store: FloorPlanStore } = $props();
 
-  let walkthrough = $state(false);
+  onDestroy(() => disposeMaterials());
 </script>
 
 <div class="h-full w-full">

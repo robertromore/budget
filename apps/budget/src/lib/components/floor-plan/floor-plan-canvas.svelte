@@ -67,7 +67,7 @@
         width: store.activeTool === "door" ? 40 : store.activeTool === "window" ? 60 : 60,
         height: store.activeTool === "door" ? 10 : store.activeTool === "window" ? 10 : 60,
         name: store.activeTool === "door" ? "Door" : store.activeTool === "window" ? "Window" : "Furniture",
-        color: store.activeTool === "door" ? "#8B4513" : store.activeTool === "window" ? "#87CEEB" : "#A0522D",
+        color: null,
       });
     } else if (store.activeTool === "select") {
       // Click on empty space clears selection
@@ -107,7 +107,7 @@
             posY: store.snap(drawStart.y),
             x2: store.snap(drawCurrent.x),
             y2: store.snap(drawCurrent.y),
-            color: "#374151",
+            color: null,
           });
         }
       } else if (store.activeTool === "room") {
@@ -122,7 +122,7 @@
             width: store.snap(w),
             height: store.snap(h),
             name: "Room",
-            color: "#E5E7EB",
+            color: null,
           });
         }
       }
@@ -180,7 +180,7 @@
   function handleCanvasMouseUp(e: MouseEvent) {
     handleMouseUp(e);
     if (dragNodeId) {
-      store.pushHistory?.();
+      store.commitChange();
       dragNodeId = null;
       dragOffset = null;
     }
@@ -226,7 +226,7 @@
         <path
           d="M {store.gridSize} 0 L 0 0 0 {store.gridSize}"
           fill="none"
-          stroke="#E5E7EB"
+          stroke="hsl(var(--border))"
           stroke-width="0.5"
           class="dark:stroke-zinc-700"
         />
@@ -315,7 +315,7 @@
         y1={store.snap(drawStart.y)}
         x2={store.snap(drawCurrent.x)}
         y2={store.snap(drawCurrent.y)}
-        stroke="#374151"
+        stroke="hsl(var(--foreground) / 0.7)"
         stroke-width="6"
         stroke-linecap="round"
         opacity="0.5"
@@ -326,8 +326,8 @@
         y={Math.min(drawStart.y, drawCurrent.y)}
         width={Math.abs(drawCurrent.x - drawStart.x)}
         height={Math.abs(drawCurrent.y - drawStart.y)}
-        fill="#E5E7EB"
-        stroke="#9CA3AF"
+        fill="hsl(var(--muted))"
+        stroke="hsl(var(--muted-foreground))"
         stroke-width="2"
         stroke-dasharray="8 4"
         opacity="0.5"

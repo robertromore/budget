@@ -27,13 +27,12 @@
     y={node.posY}
     width={node.width}
     height={node.height}
-    fill={node.color ?? "#F3F4F6"}
-    stroke={selected ? "#3B82F6" : "#9CA3AF"}
+    fill={node.color ?? "hsl(var(--muted))"}
+    stroke={selected ? "hsl(var(--primary))" : "hsl(var(--border))"}
     stroke-width={selected ? 2.5 : 1.5}
     opacity={node.opacity}
     rx="2"
   />
-  <!-- Room label -->
   {#if node.name}
     <text
       x={node.posX + node.width / 2}
@@ -41,49 +40,15 @@
       text-anchor="middle"
       dominant-baseline="central"
       font-size="14"
-      fill="#4B5563"
+      fill="hsl(var(--muted-foreground))"
       class="pointer-events-none select-none"
     >
       {node.name}
     </text>
   {/if}
-  <!-- Selection handles -->
   {#if selected}
-    <rect
-      x={node.posX - 4}
-      y={node.posY - 4}
-      width="8"
-      height="8"
-      fill="#3B82F6"
-      stroke="white"
-      stroke-width="1"
-    />
-    <rect
-      x={node.posX + node.width - 4}
-      y={node.posY - 4}
-      width="8"
-      height="8"
-      fill="#3B82F6"
-      stroke="white"
-      stroke-width="1"
-    />
-    <rect
-      x={node.posX - 4}
-      y={node.posY + node.height - 4}
-      width="8"
-      height="8"
-      fill="#3B82F6"
-      stroke="white"
-      stroke-width="1"
-    />
-    <rect
-      x={node.posX + node.width - 4}
-      y={node.posY + node.height - 4}
-      width="8"
-      height="8"
-      fill="#3B82F6"
-      stroke="white"
-      stroke-width="1"
-    />
+    {#each [[node.posX, node.posY], [node.posX + node.width, node.posY], [node.posX, node.posY + node.height], [node.posX + node.width, node.posY + node.height]] as [cx, cy]}
+      <rect x={cx - 4} y={cy - 4} width="8" height="8" fill="hsl(var(--primary))" stroke="white" stroke-width="1" />
+    {/each}
   {/if}
 </g>

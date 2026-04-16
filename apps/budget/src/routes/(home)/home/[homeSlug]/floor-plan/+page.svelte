@@ -45,13 +45,17 @@
   });
 
   async function handleSave() {
-    await saveMutation.mutateAsync({
-      homeId,
-      floorLevel: currentFloor,
-      nodes: store.getNodesForSave(),
-      deletedNodeIds: store.deletedNodeIds,
-    });
-    store.markSaved();
+    try {
+      await saveMutation.mutateAsync({
+        homeId,
+        floorLevel: currentFloor,
+        nodes: store.getNodesForSave(),
+        deletedNodeIds: store.deletedNodeIds,
+      });
+      store.markSaved();
+    } catch {
+      // Error toast handled by defineMutation's errorMessage
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent) {

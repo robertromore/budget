@@ -3,21 +3,12 @@ import { nanoid } from "$lib/utils/nanoid";
 
 export type EditorTool = "select" | "wall" | "room" | "door" | "window" | "furniture" | "pan";
 
-export interface FloorPlanState {
-  nodes: Record<string, FloorPlanNode>;
-  selectedNodeIds: Set<string>;
-  activeTool: EditorTool;
-  floorLevel: number;
-  homeId: number;
-  // Viewport
-  viewBox: { x: number; y: number; width: number; height: number };
-  zoom: number;
-  // Dirty tracking
-  deletedNodeIds: string[];
-  isDirty: boolean;
-}
-
 const MAX_HISTORY = 50;
+
+interface HistorySnapshot {
+  nodes: string;
+  deletedNodeIds: string[];
+}
 
 export class FloorPlanStore {
   // Reactive state
@@ -39,7 +30,7 @@ export class FloorPlanStore {
   isDirty = $state(false);
 
   // Undo/redo
-  private history: string[] = [];
+  private history: HistorySnapshot[] = [];
   private historyIndex = -1;
   canUndo = $state(false);
   canRedo = $state(false);
@@ -97,7 +88,7 @@ export class FloorPlanStore {
 
     const node: FloorPlanNode = {
       id,
-      workspaceId: 0, // Set on save
+      workspaceId: 0,
       homeId: this.homeId,
       floorLevel: this.floorLevel,
       parentId: null,
@@ -134,6 +125,10 @@ export class FloorPlanStore {
 
     this.nodes[id] = { ...node, ...updates, updatedAt: new Date().toISOString() };
     this.isDirty = true;
+    // No pushHistory here — call commitChange() after a batch of updates (e.g. drag end)
+  }
+
+  commitChange() {
     this.pushHistory();
   }
 
@@ -146,7 +141,6 @@ export class FloorPlanStore {
 
     const updates: Partial<FloorPlanNode> = { posX: newX, posY: newY };
 
-    // For walls, also move the end point
     if (node.nodeType === "wall" && node.x2 !== null && node.y2 !== null) {
       updates.x2 = this.snap((node.x2 ?? 0) + dx);
       updates.y2 = this.snap((node.y2 ?? 0) + dy);
@@ -159,8 +153,7 @@ export class FloorPlanStore {
   deleteNode(id: string) {
     if (!this.nodes[id]) return;
 
-    // Track for server-side deletion
-    this.deletedNodeIds.push(id);
+    this.deletedNodeIds = [...this.deletedNodeIds, id];
     delete this.nodes[id];
     this.selectedNodeIds.delete(id);
     this.selectedNodeIds = new Set(this.selectedNodeIds);
@@ -169,8 +162,10 @@ export class FloorPlanStore {
   }
 
   deleteSelected() {
-    for (const id of this.selectedNodeIds) {
-      this.deletedNodeIds.push(id);
+    const ids = [...this.selectedNodeIds];
+    if (ids.length === 0) return;
+    this.deletedNodeIds = [...this.deletedNodeIds, ...ids];
+    for (const id of ids) {
       delete this.nodes[id];
     }
     this.selectedNodeIds = new Set();
@@ -212,13 +207,9 @@ export class FloorPlanStore {
     const cx = centerX ?? this.viewBoxX + this.viewBoxWidth / 2;
     const cy = centerY ?? this.viewBoxY + this.viewBoxHeight / 2;
 
-    const oldWidth = this.viewBoxWidth;
-    const oldHeight = this.viewBoxHeight;
-
     this.viewBoxWidth = 1200 / clampedZoom;
     this.viewBoxHeight = 800 / clampedZoom;
 
-    // Keep the center point stable
     this.viewBoxX = cx - this.viewBoxWidth / 2;
     this.viewBoxY = cy - this.viewBoxHeight / 2;
 
@@ -247,18 +238,19 @@ export class FloorPlanStore {
     return Math.round(value / this.gridSize) * this.gridSize;
   }
 
-  // Undo/Redo
-  private pushHistory() {
-    const snapshot = JSON.stringify(this.nodes);
+  // Undo/Redo — snapshots include both nodes and deletedNodeIds
+  pushHistory() {
+    const snapshot: HistorySnapshot = {
+      nodes: JSON.stringify(this.nodes),
+      deletedNodeIds: [...this.deletedNodeIds],
+    };
 
-    // Remove future history if we're in the middle
     if (this.historyIndex < this.history.length - 1) {
       this.history = this.history.slice(0, this.historyIndex + 1);
     }
 
     this.history.push(snapshot);
 
-    // Limit history size
     if (this.history.length > MAX_HISTORY) {
       this.history.shift();
     }
@@ -271,7 +263,9 @@ export class FloorPlanStore {
   undo() {
     if (this.historyIndex <= 0) return;
     this.historyIndex--;
-    this.nodes = JSON.parse(this.history[this.historyIndex]);
+    const snapshot = this.history[this.historyIndex];
+    this.nodes = JSON.parse(snapshot.nodes);
+    this.deletedNodeIds = [...snapshot.deletedNodeIds];
     this.isDirty = true;
     this.canUndo = this.historyIndex > 0;
     this.canRedo = true;
@@ -280,15 +274,17 @@ export class FloorPlanStore {
   redo() {
     if (this.historyIndex >= this.history.length - 1) return;
     this.historyIndex++;
-    this.nodes = JSON.parse(this.history[this.historyIndex]);
+    const snapshot = this.history[this.historyIndex];
+    this.nodes = JSON.parse(snapshot.nodes);
+    this.deletedNodeIds = [...snapshot.deletedNodeIds];
     this.isDirty = true;
     this.canUndo = true;
     this.canRedo = this.historyIndex < this.history.length - 1;
   }
 
-  // Serialization for saving
+  // Serialization for saving — strip workspaceId (set server-side)
   getNodesForSave() {
-    return Object.values(this.nodes).map((n) => ({
+    return Object.values(this.nodes).map(({ workspaceId, ...n }) => ({
       ...n,
       homeId: this.homeId,
       floorLevel: this.floorLevel,

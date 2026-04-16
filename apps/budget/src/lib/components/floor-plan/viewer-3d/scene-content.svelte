@@ -2,6 +2,7 @@
   import { T } from "@threlte/core";
   import { Grid } from "@threlte/extras";
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
+  import { SCALE } from "$lib/utils/wall-csg";
   import WallMesh from "./wall-mesh.svelte";
   import RoomFloor from "./room-floor.svelte";
   import FurnitureMesh from "./furniture-mesh.svelte";
@@ -57,8 +58,8 @@
 
 <!-- Annotations as simple markers -->
 {#each store.annotations as node (node.id)}
-  {@const x = node.posX / 20}
-  {@const z = node.posY / 20}
+  {@const x = node.posX * SCALE}
+  {@const z = node.posY * SCALE}
   <T.Mesh position.x={x} position.y={1.5} position.z={z}>
     <T.SphereGeometry args={[0.15, 16, 16]} />
     <T.MeshStandardMaterial color="#f59e0b" />

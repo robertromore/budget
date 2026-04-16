@@ -48,3 +48,10 @@ export function doorMaterial(color?: string): THREE.MeshStandardMaterial {
     new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, metalness: 0 })
   );
 }
+
+export function disposeMaterials(): void {
+  for (const mat of cache.values()) {
+    mat.dispose();
+  }
+  cache.clear();
+}
