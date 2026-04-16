@@ -40,6 +40,15 @@ import * as workspaceInvitations from "$core/query/workspace-invitations";
 import * as workspaceMembers from "$core/query/workspace-members";
 import * as workspaces from "$core/query/workspaces";
 
+// Home management
+import * as homes from "$core/query/home-homes";
+import * as homeLocations from "$core/query/home-locations";
+import * as homeItems from "$core/query/home-items";
+import * as homeLabels from "$core/query/home-labels";
+import * as homeFloorPlans from "$core/query/home-floor-plans";
+import * as homeMaintenance from "$core/query/home-maintenance";
+import * as homeAttachments from "$core/query/home-attachments";
+
 export const rpc = {
   accountDocuments,
   accounts,
@@ -77,6 +86,15 @@ export const rpc = {
   workspaceInvitations,
   workspaceMembers,
   workspaces,
+
+  // Home management
+  homes,
+  homeLocations,
+  homeItems,
+  homeLabels,
+  homeFloorPlans,
+  homeMaintenance,
+  homeAttachments,
 } as const;
 
 export { cachePatterns, queryClient, queryPresets } from "$core/query/_client";

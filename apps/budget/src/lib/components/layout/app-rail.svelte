@@ -7,7 +7,6 @@ interface AppDef {
   label: string;
   letter: string;
   href: string;
-  external?: boolean;
   match: (pathname: string) => boolean;
   activeClass: string;
   inactiveClass: string;
@@ -19,7 +18,7 @@ const apps: AppDef[] = [
     label: 'Finances',
     letter: 'F',
     href: '/',
-    match: (p) => !p.startsWith('/price-watcher'),
+    match: (p) => !p.startsWith('/price-watcher') && !p.startsWith('/home'),
     activeClass: 'bg-emerald-600 text-white dark:bg-emerald-500',
     inactiveClass: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
   },
@@ -36,9 +35,8 @@ const apps: AppDef[] = [
     id: 'home',
     label: 'Home Manager',
     letter: 'H',
-    href: 'http://localhost:5174',
-    external: true,
-    match: () => false,
+    href: '/home',
+    match: (p) => p.startsWith('/home'),
     activeClass: 'bg-sky-600 text-white dark:bg-sky-500',
     inactiveClass: 'bg-sky-500/10 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400',
   },
