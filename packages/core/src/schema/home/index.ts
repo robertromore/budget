@@ -5,3 +5,4 @@ export * from "./home-items";
 export * from "./home-item-labels";
 export * from "./home-attachments";
 export * from "./home-maintenance";
+export * from "./home-floor-plan-nodes";

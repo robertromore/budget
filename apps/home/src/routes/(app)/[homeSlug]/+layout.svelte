@@ -9,6 +9,7 @@
     LayoutDashboard,
     Settings,
     ChevronLeft,
+    PenTool,
   } from "@lucide/svelte";
   import type { LayoutData } from "./$types";
 
@@ -35,6 +36,11 @@
       href: `/${data.home.slug}/labels`,
       label: "Labels",
       icon: Tags,
+    },
+    {
+      href: `/${data.home.slug}/floor-plan`,
+      label: "Floor Plan",
+      icon: PenTool,
     },
   ]);
 

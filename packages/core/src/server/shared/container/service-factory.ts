@@ -92,6 +92,8 @@ import { HomeItemRepository } from "$core/server/domains/home/items/repository";
 import { HomeItemService } from "$core/server/domains/home/items/services";
 import { HomeLabelRepository } from "$core/server/domains/home/labels/repository";
 import { HomeLabelService } from "$core/server/domains/home/labels/services";
+import { FloorPlanRepository } from "$core/server/domains/home/floor-plans/repository";
+import { FloorPlanService } from "$core/server/domains/home/floor-plans/services";
 
 export class ServiceFactory {
   private instances = new Map<string, unknown>();
@@ -795,6 +797,22 @@ export class ServiceFactory {
       this.instances.set(key, new HomeLabelService(this.getHomeLabelRepository()));
     }
     return this.instances.get(key) as HomeLabelService;
+  }
+
+  getFloorPlanRepository(): FloorPlanRepository {
+    const key = "FloorPlanRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new FloorPlanRepository());
+    }
+    return this.instances.get(key) as FloorPlanRepository;
+  }
+
+  getFloorPlanService(): FloorPlanService {
+    const key = "FloorPlanService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new FloorPlanService(this.getFloorPlanRepository()));
+    }
+    return this.instances.get(key) as FloorPlanService;
   }
 
   // ==================== Testing Utilities ====================
