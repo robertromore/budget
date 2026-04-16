@@ -227,9 +227,8 @@
         <path
           d="M {store.gridSize} 0 L 0 0 0 {store.gridSize}"
           fill="none"
-          stroke="hsl(var(--border))"
+          class="stroke-border"
           stroke-width="0.5"
-          class="dark:stroke-zinc-700"
         />
       </pattern>
       <pattern
@@ -242,9 +241,8 @@
         <path
           d="M {store.gridSize * 5} 0 L 0 0 0 {store.gridSize * 5}"
           fill="none"
-          stroke="#D1D5DB"
+          class="stroke-muted-foreground/40"
           stroke-width="1"
-          class="dark:stroke-zinc-600"
         />
       </pattern>
     </defs>
@@ -316,10 +314,9 @@
         y1={store.snap(drawStart.y)}
         x2={store.snap(drawCurrent.x)}
         y2={store.snap(drawCurrent.y)}
-        stroke="hsl(var(--foreground) / 0.7)"
+        class="stroke-foreground/50"
         stroke-width="6"
         stroke-linecap="round"
-        opacity="0.5"
       />
     {:else if store.activeTool === "room"}
       <rect
@@ -327,11 +324,9 @@
         y={Math.min(drawStart.y, drawCurrent.y)}
         width={Math.abs(drawCurrent.x - drawStart.x)}
         height={Math.abs(drawCurrent.y - drawStart.y)}
-        fill="hsl(var(--muted))"
-        stroke="hsl(var(--muted-foreground))"
+        class="fill-muted/50 stroke-muted-foreground"
         stroke-width="2"
         stroke-dasharray="8 4"
-        opacity="0.5"
       />
     {/if}
   {/if}

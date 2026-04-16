@@ -28,11 +28,11 @@
     y={node.posY}
     width={node.width}
     height={node.height}
-    fill={node.color ?? "hsl(var(--accent))"}
-    stroke={selected ? "hsl(var(--primary))" : "hsl(var(--accent-foreground) / 0.3)"}
+    class={selected ? 'fill-accent stroke-primary' : 'fill-accent stroke-accent-foreground/30'}
     stroke-width={selected ? 2 : 1}
     opacity={node.opacity}
     rx="3"
+    style={node.color ? `fill: ${node.color}` : ''}
   />
   {#if node.name}
     <text
@@ -41,8 +41,7 @@
       text-anchor="middle"
       dominant-baseline="central"
       font-size="10"
-      fill="hsl(var(--accent-foreground))"
-      class="pointer-events-none select-none"
+      class="fill-accent-foreground pointer-events-none select-none"
     >
       {node.name}
     </text>
@@ -54,7 +53,7 @@
       width={node.width + 2}
       height={node.height + 2}
       fill="none"
-      stroke="hsl(var(--primary))"
+      class="stroke-primary"
       stroke-width="1.5"
       stroke-dasharray="4 2"
     />

@@ -31,18 +31,19 @@
     y1={node.posY}
     x2={node.x2 ?? node.posX}
     y2={node.y2 ?? node.posY}
-    stroke={node.color ?? "hsl(var(--foreground) / 0.7)"}
+    class="stroke-foreground/70"
     stroke-width="6"
     stroke-linecap="round"
     opacity={node.opacity}
+    style={node.color ? `stroke: ${node.color}` : ''}
   />
   {#if selected}
-    <circle cx={node.posX} cy={node.posY} r="5" fill="hsl(var(--primary))" stroke="white" stroke-width="1.5" />
+    <circle cx={node.posX} cy={node.posY} r="5" class="fill-primary" stroke="white" stroke-width="1.5" />
     <circle
       cx={node.x2 ?? node.posX}
       cy={node.y2 ?? node.posY}
       r="5"
-      fill="hsl(var(--primary))"
+      class="fill-primary"
       stroke="white"
       stroke-width="1.5"
     />

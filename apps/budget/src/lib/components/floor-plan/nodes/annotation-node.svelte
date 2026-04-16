@@ -26,7 +26,7 @@
     cx={node.posX}
     cy={node.posY}
     r="12"
-    fill={selected ? "hsl(var(--primary))" : "hsl(var(--ring))"}
+    class={selected ? 'fill-primary' : 'fill-ring'}
     stroke="white"
     stroke-width="2"
     opacity={node.opacity}
@@ -37,8 +37,7 @@
       y={node.posY + 24}
       text-anchor="middle"
       font-size="11"
-      fill="hsl(var(--muted-foreground))"
-      class="pointer-events-none select-none"
+      class="fill-muted-foreground pointer-events-none select-none"
     >
       {node.name}
     </text>
