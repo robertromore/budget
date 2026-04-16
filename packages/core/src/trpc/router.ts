@@ -62,6 +62,8 @@ import { homeLocationsRoutes } from "./routes/home-locations";
 import { homeItemsRoutes } from "./routes/home-items";
 import { homeLabelsRoutes } from "./routes/home-labels";
 import { homeFloorPlansRoutes } from "./routes/home-floor-plans";
+import { homeMaintenanceRoutes } from "./routes/home-maintenance";
+import { homeAttachmentsRoutes } from "./routes/home-attachments";
 
 export const router = t.router({
   // Authentication and workspace management
@@ -118,6 +120,8 @@ export const router = t.router({
   homeItemsRoutes,
   homeLabelsRoutes,
   homeFloorPlansRoutes,
+  homeMaintenanceRoutes,
+  homeAttachmentsRoutes,
 
   // ML routes
   anomalyDetectionRoutes,

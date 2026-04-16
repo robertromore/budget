@@ -94,6 +94,10 @@ import { HomeLabelRepository } from "$core/server/domains/home/labels/repository
 import { HomeLabelService } from "$core/server/domains/home/labels/services";
 import { FloorPlanRepository } from "$core/server/domains/home/floor-plans/repository";
 import { FloorPlanService } from "$core/server/domains/home/floor-plans/services";
+import { HomeMaintenanceRepository } from "$core/server/domains/home/maintenance/repository";
+import { HomeMaintenanceService } from "$core/server/domains/home/maintenance/services";
+import { HomeAttachmentRepository } from "$core/server/domains/home/attachments/repository";
+import { HomeAttachmentService } from "$core/server/domains/home/attachments/services";
 
 export class ServiceFactory {
   private instances = new Map<string, unknown>();
@@ -813,6 +817,38 @@ export class ServiceFactory {
       this.instances.set(key, new FloorPlanService(this.getFloorPlanRepository()));
     }
     return this.instances.get(key) as FloorPlanService;
+  }
+
+  getHomeMaintenanceRepository(): HomeMaintenanceRepository {
+    const key = "HomeMaintenanceRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeMaintenanceRepository());
+    }
+    return this.instances.get(key) as HomeMaintenanceRepository;
+  }
+
+  getHomeMaintenanceService(): HomeMaintenanceService {
+    const key = "HomeMaintenanceService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeMaintenanceService(this.getHomeMaintenanceRepository()));
+    }
+    return this.instances.get(key) as HomeMaintenanceService;
+  }
+
+  getHomeAttachmentRepository(): HomeAttachmentRepository {
+    const key = "HomeAttachmentRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeAttachmentRepository());
+    }
+    return this.instances.get(key) as HomeAttachmentRepository;
+  }
+
+  getHomeAttachmentService(): HomeAttachmentService {
+    const key = "HomeAttachmentService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new HomeAttachmentService(this.getHomeAttachmentRepository()));
+    }
+    return this.instances.get(key) as HomeAttachmentService;
   }
 
   // ==================== Testing Utilities ====================

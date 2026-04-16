@@ -10,9 +10,13 @@ export const load: PageServerLoad = async (event) => {
 
   try {
     const item = await caller.homeItemsRoutes.getByCuid({ cuid: event.params.itemCuid });
-    const labels = await caller.homeItemsRoutes.getLabels({ itemId: item.id });
+    const [labels, maintenanceRecords, itemAttachments] = await Promise.all([
+      caller.homeItemsRoutes.getLabels({ itemId: item.id }),
+      caller.homeMaintenanceRoutes.listByItem({ itemId: item.id }),
+      caller.homeAttachmentsRoutes.listByItem({ itemId: item.id }),
+    ]);
 
-    return { item, itemLabels: labels };
+    return { item, itemLabels: labels, maintenanceRecords, itemAttachments };
   } catch {
     error(404, "Item not found");
   }
