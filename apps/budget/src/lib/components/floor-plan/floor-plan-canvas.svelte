@@ -13,6 +13,20 @@
   let drawStart = $state<{ x: number; y: number } | null>(null);
   let drawCurrent = $state<{ x: number; y: number } | null>(null);
   let panStart = $state<{ x: number; y: number } | null>(null);
+  let spaceHeld = $state(false);
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.code === "Space" && !spaceHeld) {
+      spaceHeld = true;
+      e.preventDefault();
+    }
+  }
+
+  function handleKeyUp(e: KeyboardEvent) {
+    if (e.code === "Space") {
+      spaceHeld = false;
+    }
+  }
 
   function svgPoint(e: MouseEvent): { x: number; y: number } {
     const rect = svgEl.getBoundingClientRect();
@@ -25,7 +39,7 @@
   }
 
   function handleMouseDown(e: MouseEvent) {
-    if (e.button === 1 || (e.button === 0 && store.activeTool === "pan")) {
+    if (e.button === 1 || (e.button === 0 && (store.activeTool === "pan" || spaceHeld))) {
       isPanning = true;
       panStart = { x: e.clientX, y: e.clientY };
       e.preventDefault();
@@ -175,7 +189,7 @@
   );
 
   const cursorClass = $derived(
-    store.activeTool === "pan" || isPanning
+    store.activeTool === "pan" || isPanning || spaceHeld
       ? "cursor-grab"
       : store.activeTool === "select"
         ? "cursor-default"
@@ -183,14 +197,18 @@
   );
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <svg
   bind:this={svgEl}
-  class="h-full w-full bg-white dark:bg-zinc-900 {cursorClass}"
+  class="h-full w-full bg-white outline-none dark:bg-zinc-900 {cursorClass}"
   {viewBox}
+  tabindex="0"
   onmousedown={handleMouseDown}
   onmousemove={handleCanvasMouseMove}
   onmouseup={handleCanvasMouseUp}
   onwheel={handleWheel}
+  onkeydown={handleKeyDown}
+  onkeyup={handleKeyUp}
 >
   <!-- Grid -->
   {#if store.showGrid}
