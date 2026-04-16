@@ -206,6 +206,7 @@
   bind:this={svgEl}
   class="h-full w-full bg-white outline-none dark:bg-zinc-900 {cursorClass}"
   {viewBox}
+  preserveAspectRatio="none"
   tabindex="0"
   onmousedown={handleMouseDown}
   onmousemove={handleCanvasMouseMove}
