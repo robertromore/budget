@@ -26,8 +26,9 @@
 
     <div class="space-y-3">
       <div>
-        <label class="text-muted-foreground text-xs">Name</label>
+        <label for="fp-name" class="text-muted-foreground text-xs">Name</label>
         <input
+          id="fp-name"
           type="text"
           value={node.name ?? ""}
           oninput={(e) => handleUpdate("name", e.currentTarget.value || null)}
@@ -37,8 +38,9 @@
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="text-muted-foreground text-xs">X</label>
+          <label for="fp-x" class="text-muted-foreground text-xs">X</label>
           <input
+            id="fp-x"
             type="number"
             value={Math.round(node.posX)}
             onchange={(e) => handleUpdate("posX", Number(e.currentTarget.value))}
@@ -46,8 +48,9 @@
           />
         </div>
         <div>
-          <label class="text-muted-foreground text-xs">Y</label>
+          <label for="fp-y" class="text-muted-foreground text-xs">Y</label>
           <input
+            id="fp-y"
             type="number"
             value={Math.round(node.posY)}
             onchange={(e) => handleUpdate("posY", Number(e.currentTarget.value))}
@@ -59,8 +62,9 @@
       {#if node.nodeType !== "wall" && node.nodeType !== "annotation"}
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-muted-foreground text-xs">Width</label>
+            <label for="fp-width" class="text-muted-foreground text-xs">Width</label>
             <input
+              id="fp-width"
               type="number"
               value={Math.round(node.width)}
               onchange={(e) => handleUpdate("width", Number(e.currentTarget.value))}
@@ -68,8 +72,9 @@
             />
           </div>
           <div>
-            <label class="text-muted-foreground text-xs">Height</label>
+            <label for="fp-height" class="text-muted-foreground text-xs">Height</label>
             <input
+              id="fp-height"
               type="number"
               value={Math.round(node.height)}
               onchange={(e) => handleUpdate("height", Number(e.currentTarget.value))}
@@ -79,8 +84,9 @@
         </div>
 
         <div>
-          <label class="text-muted-foreground text-xs">Rotation</label>
+          <label for="fp-rotation" class="text-muted-foreground text-xs">Rotation</label>
           <input
+            id="fp-rotation"
             type="number"
             value={Math.round(node.rotation)}
             step="15"
@@ -91,8 +97,9 @@
       {/if}
 
       <div>
-        <label class="text-muted-foreground text-xs">Color</label>
+        <label for="fp-color" class="text-muted-foreground text-xs">Color</label>
         <input
+          id="fp-color"
           type="color"
           value={node.color ?? "#374151"}
           oninput={(e) => handleUpdate("color", e.currentTarget.value)}
@@ -101,8 +108,9 @@
       </div>
 
       <div>
-        <label class="text-muted-foreground text-xs">Opacity</label>
+        <label for="fp-opacity" class="text-muted-foreground text-xs">Opacity</label>
         <input
+          id="fp-opacity"
           type="range"
           min="0"
           max="1"
