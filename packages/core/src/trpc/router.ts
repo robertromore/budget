@@ -33,6 +33,7 @@ import { runWithDbForTesting } from "$core/server/db";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
 import { dashboardRoutes } from "./routes/dashboards";
+import { widgetGroupRoutes } from "./routes/widget-groups";
 import { forecastingRoutes } from "./routes/forecasting";
 import { metricAlertRoutes } from "./routes/metric-alerts";
 import { importCleanupRoutes } from "./routes/import-cleanup";
@@ -86,6 +87,7 @@ export const router = t.router({
   categoryAliasRoutes,
   connectionRoutes,
   dashboardRoutes,
+  widgetGroupRoutes,
   categoryGroupsRoutes,
   payeeAliasRoutes,
   payeeCategoriesRoutes,

@@ -13,6 +13,7 @@ import * as categoryAliases from "$core/query/category-aliases";
 import * as categoryGroups from "$core/query/category-groups";
 import * as connections from "$core/query/connections";
 import * as dashboards from "$core/query/dashboards";
+import * as widgetGroups from "$core/query/widget-groups";
 import * as documentExtraction from "$core/query/document-extraction";
 import * as importProfiles from "$core/query/import-profiles";
 import * as llmSettings from "$core/query/llm-settings";
@@ -60,6 +61,7 @@ export const rpc = {
   categoryGroups,
   connections,
   dashboards,
+  widgetGroups,
   documentExtraction,
   importProfiles,
   llmSettings,
@@ -138,6 +140,7 @@ export { viewKeys } from "$core/query/views";
 export { workspaceInvitationKeys } from "$core/query/workspace-invitations";
 export { workspaceMemberKeys } from "$core/query/workspace-members";
 export { workspaceKeys } from "$core/query/workspaces";
+export { widgetGroupKeys } from "$core/query/widget-groups";
 
 export const devTools = {
   clearAllCaches: () => queryClient.clear(),

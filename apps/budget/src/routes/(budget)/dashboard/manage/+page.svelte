@@ -24,6 +24,7 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Copy from '@lucide/svelte/icons/copy';
 import GripVertical from '@lucide/svelte/icons/grip-vertical';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import Plus from '@lucide/svelte/icons/plus';
 import Star from '@lucide/svelte/icons/star';
 import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -108,10 +109,16 @@ async function handleCreateBlank() {
         <p class="text-muted-foreground text-sm">Create, configure, and organize your dashboards</p>
       </div>
     </div>
-    <Button onclick={() => (showTemplates = !showTemplates)}>
-      <Plus class="mr-1.5 h-4 w-4" />
-      New Dashboard
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button variant="outline" href="/dashboard/groups">
+        <LayoutGrid class="mr-1.5 h-4 w-4" />
+        Widget Groups
+      </Button>
+      <Button onclick={() => (showTemplates = !showTemplates)}>
+        <Plus class="mr-1.5 h-4 w-4" />
+        New Dashboard
+      </Button>
+    </div>
   </div>
 
   {#if showTemplates}

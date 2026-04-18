@@ -127,6 +127,20 @@
       "when": 1776481206480,
       "tag": "0017_past_thaddeus_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1776521499984,
+      "tag": "0018_talented_scarlet_spider",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1776522491508,
+      "tag": "0019_happy_stark_industries",
+      "breakpoints": true
     }
   ]
 }

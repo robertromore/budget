@@ -3,11 +3,14 @@ import { rpc } from '$lib/query';
 import type { DashboardWithWidgets, DashboardWidget } from '$core/schema/dashboards';
 import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 import DashboardToolbar from './dashboard-toolbar.svelte';
-import WidgetGrid from './widget-grid.svelte';
+import GroupedDashboardGrid from './grouped-dashboard-grid.svelte';
 import WidgetCatalogSheet from './widget-catalog-sheet.svelte';
 import DashboardSettingsDialog from './dashboard-settings-dialog.svelte';
 import WidgetSettingsDialog from './widget-settings-dialog.svelte';
 import ConfirmDialog from './confirm-dialog.svelte';
+import PickGroupDialog from './pick-group-dialog.svelte';
+import ReorderSlotsSheet from './reorder-slots-sheet.svelte';
+import SaveAsGroupDialog from './save-as-group-dialog.svelte';
 
 let {
   dashboard,
@@ -22,6 +25,11 @@ let widgetSettingsOpen = $state(false);
 let selectedWidget = $state<DashboardWidget | null>(null);
 let removeDialogOpen = $state(false);
 let pendingRemoveWidgetId = $state<number | null>(null);
+let pickGroupOpen = $state(false);
+let saveAsGroupOpen = $state(false);
+let removeGroupOpen = $state(false);
+let pendingRemoveGroupId = $state<number | null>(null);
+let reorderSheetOpen = $state(false);
 
 async function handleAddWidget(widgetType: string) {
   const definition = getWidgetDefinition(widgetType);
@@ -53,11 +61,35 @@ function handleWidgetSettings(widget: DashboardWidget) {
   widgetSettingsOpen = true;
 }
 
-async function handleReorder(widgetIds: number[]) {
-  await rpc.dashboards.reorderWidgets.execute({
+async function handleReorderSlots(
+  slots: Array<{ kind: 'widget' | 'group'; id: number }>
+) {
+  await rpc.dashboards.reorderDashboardSlots.execute({
     dashboardId: dashboard.id,
+    slots,
+  });
+}
+
+async function handleReorderInstance(instanceId: number, widgetIds: number[]) {
+  await rpc.widgetGroups.reorderGroupInstanceWidgets.execute({
+    instanceId,
     widgetIds,
   });
+}
+
+async function handleRenameInstance(instanceId: number, name: string) {
+  await rpc.widgetGroups.renameGroupInstance.execute({ id: instanceId, name });
+}
+
+function handleRemoveInstance(instanceId: number) {
+  pendingRemoveGroupId = instanceId;
+  removeGroupOpen = true;
+}
+
+async function confirmRemoveInstance() {
+  if (pendingRemoveGroupId === null) return;
+  await rpc.widgetGroups.removeGroupInstance.execute({ id: pendingRemoveGroupId });
+  pendingRemoveGroupId = null;
 }
 </script>
 
@@ -67,18 +99,25 @@ async function handleReorder(widgetIds: number[]) {
     {editMode}
     onToggleEdit={() => (editMode = !editMode)}
     onAddWidget={() => (catalogOpen = true)}
+    onAddGroup={() => (pickGroupOpen = true)}
+    onReorder={() => (reorderSheetOpen = true)}
+    onSaveAsGroup={() => (saveAsGroupOpen = true)}
     onSettings={() => (settingsOpen = true)} />
 
-  <WidgetGrid
+  <GroupedDashboardGrid
     widgets={dashboard.widgets}
+    groupInstances={dashboard.groupInstances}
     layout={dashboard.layout}
     {editMode}
     onRemoveWidget={handleRemoveWidget}
     onWidgetSettings={handleWidgetSettings}
-    onReorder={handleReorder}
+    onReorderSlots={handleReorderSlots}
+    onReorderInstance={handleReorderInstance}
+    onRenameInstance={handleRenameInstance}
+    onRemoveInstance={handleRemoveInstance}
     onAddWidget={() => (catalogOpen = true)} />
 
-  {#if dashboard.widgets.length === 0}
+  {#if dashboard.widgets.length === 0 && dashboard.groupInstances.length === 0}
     <div class="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed py-16">
       <p class="text-muted-foreground text-lg">This dashboard has no widgets yet</p>
       <button
@@ -101,4 +140,20 @@ async function handleReorder(widgetIds: number[]) {
     description="This widget will be removed from the dashboard."
     confirmLabel="Remove"
     onConfirm={confirmRemoveWidget} />
+  <PickGroupDialog bind:open={pickGroupOpen} dashboardId={dashboard.id} />
+  <SaveAsGroupDialog
+    bind:open={saveAsGroupOpen}
+    dashboardId={dashboard.id}
+    defaultName={`${dashboard.name} set`} />
+  <ConfirmDialog
+    bind:open={removeGroupOpen}
+    title="Remove group"
+    description="This removes the group container and all widgets inside it from the dashboard. The saved group itself is unaffected."
+    confirmLabel="Remove group"
+    onConfirm={confirmRemoveInstance} />
+  <ReorderSlotsSheet
+    bind:open={reorderSheetOpen}
+    dashboardId={dashboard.id}
+    widgets={dashboard.widgets}
+    groupInstances={dashboard.groupInstances} />
 </div>

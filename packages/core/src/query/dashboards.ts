@@ -148,6 +148,17 @@ export const reorderWidgets = defineMutation<any, { success: boolean }>({
   onSuccess: () => invalidateAll(),
 });
 
+export const reorderDashboardSlots = defineMutation<
+  {
+    dashboardId: number;
+    slots: Array<{ kind: "widget" | "group"; id: number }>;
+  },
+  { success: boolean }
+>({
+  mutationFn: (variables) => trpc().dashboardRoutes.reorderSlots.mutate(variables),
+  onSuccess: () => invalidateAll(),
+});
+
 export const reorderDashboards = defineMutation<any, { success: boolean }>({
   mutationFn: (variables) => trpc().dashboardRoutes.reorderDashboards.mutate(variables),
   onSuccess: () => invalidateAll(),

@@ -4,6 +4,7 @@ export * from "./budget-automation-settings";
 export * from "./budgets";
 export * from "./categories";
 export * from "./dashboards";
+export * from "./dashboard-widget-groups";
 export * from "./category-aliases";
 export * from "./category-groups";
 export * from "./detected-patterns";

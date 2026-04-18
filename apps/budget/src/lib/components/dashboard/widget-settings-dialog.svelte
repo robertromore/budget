@@ -12,9 +12,17 @@ import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 let {
   open = $bindable(false),
   widget,
+  onSave,
 }: {
   open?: boolean;
   widget: DashboardWidget | null;
+  onSave?: (update: {
+    id: number;
+    title: string | null;
+    size: DashboardWidget['size'];
+    columnSpan: number;
+    settings: Record<string, unknown>;
+  }) => Promise<void>;
 } = $props();
 
 let title = $state('');
@@ -46,13 +54,18 @@ async function handleSave() {
     if (limit && Number(limit) > 0) settings.limit = Number(limit);
     else delete settings.limit;
 
-    await rpc.dashboards.updateWidget.execute({
+    const update = {
       id: widget.id,
       title: title.trim() || null,
-      size: size as any,
+      size: size as DashboardWidget['size'],
       columnSpan: Number(columnSpan),
       settings,
-    });
+    };
+    if (onSave) {
+      await onSave(update);
+    } else {
+      await rpc.dashboards.updateWidget.execute(update);
+    }
     open = false;
   } finally {
     saving = false;

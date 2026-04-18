@@ -60,6 +60,31 @@ export const dashboards = sqliteTable(
   ]
 );
 
+export const dashboardGroupInstances = sqliteTable(
+  "dashboard_group_instance",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    dashboardId: integer("dashboard_id")
+      .notNull()
+      .references(() => dashboards.id, { onDelete: "cascade" }),
+    sourceGroupId: integer("source_group_id"),
+    name: text("name").notNull(),
+    icon: text("icon"),
+    description: text("description"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("dashboard_group_instance_dashboard_id_idx").on(table.dashboardId),
+    index("dashboard_group_instance_sort_idx").on(table.dashboardId, table.sortOrder),
+  ]
+);
+
 export const dashboardWidgets = sqliteTable(
   "dashboard_widget",
   {
@@ -67,6 +92,10 @@ export const dashboardWidgets = sqliteTable(
     dashboardId: integer("dashboard_id")
       .notNull()
       .references(() => dashboards.id, { onDelete: "cascade" }),
+    groupInstanceId: integer("group_instance_id").references(
+      () => dashboardGroupInstances.id,
+      { onDelete: "cascade" }
+    ),
     widgetType: text("widget_type").notNull(),
     title: text("title"),
     size: text("size", { enum: widgetSizeEnum }).notNull().default("medium"),
@@ -83,6 +112,7 @@ export const dashboardWidgets = sqliteTable(
   (table) => [
     index("dashboard_widget_dashboard_id_idx").on(table.dashboardId),
     index("dashboard_widget_sort_idx").on(table.dashboardId, table.sortOrder),
+    index("dashboard_widget_group_instance_idx").on(table.groupInstanceId),
   ]
 );
 
@@ -94,6 +124,7 @@ export const dashboardsRelations = relations(dashboards, ({ one, many }) => ({
     references: [workspaces.id],
   }),
   widgets: many(dashboardWidgets),
+  groupInstances: many(dashboardGroupInstances),
 }));
 
 export const dashboardWidgetsRelations = relations(dashboardWidgets, ({ one }) => ({
@@ -101,7 +132,22 @@ export const dashboardWidgetsRelations = relations(dashboardWidgets, ({ one }) =
     fields: [dashboardWidgets.dashboardId],
     references: [dashboards.id],
   }),
+  groupInstance: one(dashboardGroupInstances, {
+    fields: [dashboardWidgets.groupInstanceId],
+    references: [dashboardGroupInstances.id],
+  }),
 }));
+
+export const dashboardGroupInstancesRelations = relations(
+  dashboardGroupInstances,
+  ({ one, many }) => ({
+    dashboard: one(dashboards, {
+      fields: [dashboardGroupInstances.dashboardId],
+      references: [dashboards.id],
+    }),
+    widgets: many(dashboardWidgets),
+  })
+);
 
 // --- Zod schemas ---
 
@@ -159,4 +205,12 @@ export type Dashboard = typeof dashboards.$inferSelect;
 export type NewDashboard = typeof dashboards.$inferInsert;
 export type DashboardWidget = typeof dashboardWidgets.$inferSelect;
 export type NewDashboardWidget = typeof dashboardWidgets.$inferInsert;
-export type DashboardWithWidgets = Dashboard & { widgets: DashboardWidget[] };
+export type DashboardGroupInstance = typeof dashboardGroupInstances.$inferSelect;
+export type NewDashboardGroupInstance = typeof dashboardGroupInstances.$inferInsert;
+export type DashboardGroupInstanceWithWidgets = DashboardGroupInstance & {
+  widgets: DashboardWidget[];
+};
+export type DashboardWithWidgets = Dashboard & {
+  widgets: DashboardWidget[];
+  groupInstances: DashboardGroupInstanceWithWidgets[];
+};

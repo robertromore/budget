@@ -1,4 +1,5 @@
 import {
+  dashboardGroupInstances,
   dashboards,
   dashboardWidgets,
   insertDashboardSchema,
@@ -6,6 +7,9 @@ import {
   removeDashboardSchema,
   removeDashboardWidgetSchema,
   reorderWidgetsSchema,
+  type DashboardGroupInstance,
+  type DashboardGroupInstanceWithWidgets,
+  type DashboardWidget,
   type DashboardWithWidgets,
 } from "$core/schema/dashboards";
 import { getTemplate, DASHBOARD_TEMPLATES } from "$core/server/domains/dashboards";
@@ -14,6 +18,47 @@ import { slugify } from "$core/utils/string-utilities";
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
+
+async function loadWidgetsAndInstances(
+  db: any,
+  dashboardId: number
+): Promise<{
+  widgets: DashboardWidget[];
+  groupInstances: DashboardGroupInstanceWithWidgets[];
+}> {
+  const allWidgets: DashboardWidget[] = await db
+    .select()
+    .from(dashboardWidgets)
+    .where(eq(dashboardWidgets.dashboardId, dashboardId))
+    .orderBy(asc(dashboardWidgets.sortOrder));
+
+  const instances: DashboardGroupInstance[] = await db
+    .select()
+    .from(dashboardGroupInstances)
+    .where(eq(dashboardGroupInstances.dashboardId, dashboardId))
+    .orderBy(asc(dashboardGroupInstances.sortOrder));
+
+  const instanceWidgets = new Map<number, DashboardWidget[]>();
+  const standalone: DashboardWidget[] = [];
+  for (const w of allWidgets) {
+    if (w.groupInstanceId !== null && w.groupInstanceId !== undefined) {
+      const bucket = instanceWidgets.get(w.groupInstanceId) ?? [];
+      bucket.push(w);
+      instanceWidgets.set(w.groupInstanceId, bucket);
+    } else {
+      standalone.push(w);
+    }
+  }
+
+  const groupInstances: DashboardGroupInstanceWithWidgets[] = instances.map(
+    (inst) => ({
+      ...inst,
+      widgets: instanceWidgets.get(inst.id) ?? [],
+    })
+  );
+
+  return { widgets: standalone, groupInstances };
+}
 
 async function loadDashboardWithWidgets(
   db: any,
@@ -27,13 +72,8 @@ async function loadDashboardWithWidgets(
 
   if (!dashboard) return null;
 
-  const widgets = await db
-    .select()
-    .from(dashboardWidgets)
-    .where(eq(dashboardWidgets.dashboardId, dashboardId))
-    .orderBy(asc(dashboardWidgets.sortOrder));
-
-  return { ...dashboard, widgets };
+  const { widgets, groupInstances } = await loadWidgetsAndInstances(db, dashboardId);
+  return { ...dashboard, widgets, groupInstances };
 }
 
 async function generateUniqueSlug(db: any, baseSlug: string, workspaceId: number): Promise<string> {
@@ -69,12 +109,8 @@ export const dashboardRoutes = t.router({
 
     const withWidgets: DashboardWithWidgets[] = [];
     for (const d of results) {
-      const widgets = await ctx.db
-        .select()
-        .from(dashboardWidgets)
-        .where(eq(dashboardWidgets.dashboardId, d.id))
-        .orderBy(asc(dashboardWidgets.sortOrder));
-      withWidgets.push({ ...d, widgets });
+      const { widgets, groupInstances } = await loadWidgetsAndInstances(ctx.db, d.id);
+      withWidgets.push({ ...d, widgets, groupInstances });
     }
     return withWidgets;
   }),
@@ -90,12 +126,8 @@ export const dashboardRoutes = t.router({
 
     const withWidgets: DashboardWithWidgets[] = [];
     for (const d of results) {
-      const widgets = await ctx.db
-        .select()
-        .from(dashboardWidgets)
-        .where(eq(dashboardWidgets.dashboardId, d.id))
-        .orderBy(asc(dashboardWidgets.sortOrder));
-      withWidgets.push({ ...d, widgets });
+      const { widgets, groupInstances } = await loadWidgetsAndInstances(ctx.db, d.id);
+      withWidgets.push({ ...d, widgets, groupInstances });
     }
     return withWidgets;
   }),
@@ -125,13 +157,11 @@ export const dashboardRoutes = t.router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
       }
 
-      const widgets = await ctx.db
-        .select()
-        .from(dashboardWidgets)
-        .where(eq(dashboardWidgets.dashboardId, dashboard.id))
-        .orderBy(asc(dashboardWidgets.sortOrder));
-
-      return { ...dashboard, widgets } as DashboardWithWidgets;
+      const { widgets, groupInstances } = await loadWidgetsAndInstances(
+        ctx.db,
+        dashboard.id
+      );
+      return { ...dashboard, widgets, groupInstances } as DashboardWithWidgets;
     }),
 
   default: publicProcedure.query(async ({ ctx }) => {
@@ -149,13 +179,11 @@ export const dashboardRoutes = t.router({
 
     if (!dashboard) return null;
 
-    const widgets = await ctx.db
-      .select()
-      .from(dashboardWidgets)
-      .where(eq(dashboardWidgets.dashboardId, dashboard.id))
-      .orderBy(asc(dashboardWidgets.sortOrder));
-
-    return { ...dashboard, widgets } as DashboardWithWidgets;
+    const { widgets, groupInstances } = await loadWidgetsAndInstances(
+      ctx.db,
+      dashboard.id
+    );
+    return { ...dashboard, widgets, groupInstances } as DashboardWithWidgets;
   }),
 
   save: rateLimitedProcedure.input(insertDashboardSchema).mutation(async ({ ctx, input }) => {
@@ -439,6 +467,67 @@ export const dashboardRoutes = t.router({
       return await loadDashboardWithWidgets(ctx.db, created.id);
     }),
 
+  reorderSlots: rateLimitedProcedure
+    .input(
+      z.object({
+        dashboardId: z.number().nonnegative(),
+        slots: z.array(
+          z.object({
+            kind: z.enum(["widget", "group"]),
+            id: z.number().nonnegative(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [dashboard] = await ctx.db
+        .select()
+        .from(dashboards)
+        .where(
+          and(
+            eq(dashboards.id, input.dashboardId),
+            eq(dashboards.workspaceId, ctx.workspaceId),
+            isNull(dashboards.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (!dashboard) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
+      }
+
+      const now = new Date().toISOString();
+      for (let i = 0; i < input.slots.length; i++) {
+        const slot = input.slots[i]!;
+        if (slot.kind === "widget") {
+          // Widget reorder only targets standalone widgets — grouped widgets
+          // reorder via widgetGroupRoutes.reorderInstanceWidgets.
+          await ctx.db
+            .update(dashboardWidgets)
+            .set({ sortOrder: i, updatedAt: now })
+            .where(
+              and(
+                eq(dashboardWidgets.id, slot.id),
+                eq(dashboardWidgets.dashboardId, input.dashboardId),
+                isNull(dashboardWidgets.groupInstanceId)
+              )
+            );
+        } else {
+          await ctx.db
+            .update(dashboardGroupInstances)
+            .set({ sortOrder: i, updatedAt: now })
+            .where(
+              and(
+                eq(dashboardGroupInstances.id, slot.id),
+                eq(dashboardGroupInstances.dashboardId, input.dashboardId)
+              )
+            );
+        }
+      }
+
+      return { success: true };
+    }),
+
   reorderDashboards: rateLimitedProcedure
     .input(z.object({ dashboardIds: z.array(z.number().nonnegative()) }))
     .mutation(async ({ ctx, input }) => {
@@ -489,14 +578,25 @@ export const dashboardRoutes = t.router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
       }
 
-      // Get max sort order
-      const existing = await ctx.db
+      // Max slot order across standalone widgets + group instances, so the
+      // new widget lands at the end of the visible top-level sequence.
+      const standaloneOrders = await ctx.db
         .select({ sortOrder: dashboardWidgets.sortOrder })
         .from(dashboardWidgets)
-        .where(eq(dashboardWidgets.dashboardId, input.dashboardId))
-        .orderBy(asc(dashboardWidgets.sortOrder));
-
-      const maxSort = existing.length > 0 ? existing[existing.length - 1]!.sortOrder : -1;
+        .where(
+          and(
+            eq(dashboardWidgets.dashboardId, input.dashboardId),
+            isNull(dashboardWidgets.groupInstanceId)
+          )
+        );
+      const instanceOrders = await ctx.db
+        .select({ sortOrder: dashboardGroupInstances.sortOrder })
+        .from(dashboardGroupInstances)
+        .where(eq(dashboardGroupInstances.dashboardId, input.dashboardId));
+      const allOrders = [...standaloneOrders, ...instanceOrders].map(
+        (r: { sortOrder: number }) => r.sortOrder
+      );
+      const maxSort = allOrders.length > 0 ? Math.max(...allOrders) : -1;
 
       const [widget] = await ctx.db
         .insert(dashboardWidgets)
@@ -657,7 +757,8 @@ export const dashboardRoutes = t.router({
 
       const now = new Date().toISOString();
 
-      // Update sort order for each widget
+      // Scoped to standalone widgets only — widgets inside a group instance
+      // reorder via widgetGroupRoutes.reorderInstanceWidgets.
       for (let i = 0; i < input.widgetIds.length; i++) {
         await ctx.db
           .update(dashboardWidgets)
@@ -665,7 +766,8 @@ export const dashboardRoutes = t.router({
           .where(
             and(
               eq(dashboardWidgets.id, input.widgetIds[i]!),
-              eq(dashboardWidgets.dashboardId, input.dashboardId)
+              eq(dashboardWidgets.dashboardId, input.dashboardId),
+              isNull(dashboardWidgets.groupInstanceId)
             )
           );
       }
