@@ -11,7 +11,7 @@ import { NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { slugify } from "$core/utils/string-utilities";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 export type ListProductWithNotes = PriceProduct & { listNotes: string | null };
 
@@ -140,6 +140,53 @@ export class ListService {
       .insert(priceProductListItems)
       .values({ listId, productId })
       .onConflictDoNothing();
+  }
+
+  /**
+   * Bulk-add multiple products to a list in one transaction. Used by the
+   * "Save as comparison" flow on the compare page, which needs to
+   * associate 2-6 selected products with a newly-created list.
+   *
+   * Pre-flight is two queries regardless of input size:
+   *   1. Verify the list belongs to the workspace.
+   *   2. Filter the supplied productIds down to those that also live in
+   *      the workspace — an attacker supplying a cross-tenant productId
+   *      has that id silently dropped rather than poisoning the junction.
+   * Then a single multi-row INSERT with ON CONFLICT DO NOTHING makes
+   * repeated calls idempotent.
+   *
+   * Returns the number of rows actually inserted (duplicates skipped).
+   */
+  async addManyToList(
+    listId: number,
+    productIds: number[],
+    workspaceId: number
+  ): Promise<{ added: number }> {
+    if (productIds.length === 0) return { added: 0 };
+    await this.assertListInWorkspace(listId, workspaceId);
+
+    // Deduplicate + validate ownership in one round-trip.
+    const uniqueIds = Array.from(new Set(productIds));
+    const validRows = await db
+      .select({ id: priceProducts.id })
+      .from(priceProducts)
+      .where(
+        and(
+          inArray(priceProducts.id, uniqueIds),
+          eq(priceProducts.workspaceId, workspaceId)
+        )
+      );
+    const validIds = validRows.map((row) => row.id);
+    if (validIds.length === 0) return { added: 0 };
+
+    const rows = validIds.map((productId) => ({ listId, productId }));
+    const inserted = await db
+      .insert(priceProductListItems)
+      .values(rows)
+      .onConflictDoNothing()
+      .returning({ id: priceProductListItems.id });
+
+    return { added: inserted.length };
   }
 
   async removeFromList(

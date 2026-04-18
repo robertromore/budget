@@ -18,6 +18,7 @@ import {
   deleteList,
   removeFromList,
   setListItemNotes,
+  addManyToList,
 } from '$lib/query/price-watcher';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
@@ -319,6 +320,7 @@ const createMut = createComparison.options();
 const deleteMut = deleteList.options();
 const removeFromListMut = removeFromList.options();
 const setNotesMut = setListItemNotes.options();
+const addManyMut = addManyToList.options();
 
 let saveDialogOpen = $state(false);
 let saveName = $state('');
@@ -331,16 +333,16 @@ async function handleSaveAsComparison() {
     name,
     description: saveDescription.trim() || null,
   });
-  // Add every selected product to the new list. `addToList` is the
-  // existing mutation; we loop rather than introduce a bulk endpoint.
-  // Run in parallel — order within a comparison has no semantic meaning.
-  const { addToList } = await import('$lib/query/price-watcher');
-  const addMut = addToList.options();
-  await Promise.all(
-    selectedProductIds.map((productId) =>
-      addMut.mutateAsync({ listId: created.id, productId })
-    )
-  );
+  // Seed the new list with every currently-selected product in one
+  // round-trip. The server validates each id belongs to the workspace
+  // and silently drops strangers, so cross-tenant ids in the URL can't
+  // poison the junction.
+  if (selectedProductIds.length > 0) {
+    await addManyMut.mutateAsync({
+      listId: created.id,
+      productIds: selectedProductIds,
+    });
+  }
   saveDialogOpen = false;
   saveName = '';
   saveDescription = '';

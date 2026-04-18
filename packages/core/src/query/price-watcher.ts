@@ -431,6 +431,25 @@ export const addToList = defineMutation<{ listId: number; productId: number }, v
   errorMessage: "Failed to add to list",
 });
 
+/**
+ * Bulk-add multiple products to a list in one round-trip. Same cache
+ * invalidations as `addToList` — one call regardless of batch size.
+ * Silent on success (caller typically surfaces its own toast, e.g.
+ * "Comparison saved").
+ */
+export const addManyToList = defineMutation<
+  { listId: number; productIds: number[] },
+  { added: number }
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.addManyToList.mutate(params),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+    cachePatterns.invalidatePrefix(listKeys.products(variables.listId));
+    cachePatterns.invalidatePrefix(["price-watcher", "product-lists"]);
+  },
+  errorMessage: "Failed to add products to list",
+});
+
 export const removeFromList = defineMutation<{ listId: number; productId: number }, void>({
   mutationFn: (params) => trpc().priceWatcherRoutes.removeFromList.mutate(params),
   onSuccess: (_result, variables) => {

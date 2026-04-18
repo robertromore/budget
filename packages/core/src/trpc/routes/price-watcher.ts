@@ -367,6 +367,24 @@ export const priceWatcherRoutes = t.router({
       )
     ),
 
+  /**
+   * Bulk-add. Used by "Save as comparison" which needs to seed a newly
+   * created list with the current selection in one call — cuts a 6-item
+   * save from 6 round-trips + 6 cache invalidations down to 1 + 1.
+   */
+  addManyToList: rateLimitedProcedure
+    .input(
+      z.object({
+        listId: z.number().positive(),
+        productIds: z.array(z.number().positive()).min(1).max(50),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().addManyToList(input.listId, input.productIds, ctx.workspaceId)
+      )
+    ),
+
   removeFromList: rateLimitedProcedure
     .input(z.object({ listId: z.number().positive(), productId: z.number().positive() }))
     .mutation(
