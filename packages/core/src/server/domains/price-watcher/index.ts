@@ -13,5 +13,8 @@ export {
 } from "./price-checker";
 export { processOverdueChecks, type SchedulerResult } from "./scheduler";
 export { isBrowserAvailable, fetchPageWithBrowser } from "./browser-provider";
+export { RetailerRepository } from "./retailer-repository";
+export { RetailerService } from "./retailer-service";
+export type { RetailerUpdateData } from "./retailer-service";
 export { TagService } from "./tag-service";
 export { ListService } from "./list-service";

@@ -1,15 +1,18 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
-import { listProducts, getPriceHistory } from '$lib/query/price-watcher';
+import { listProducts, getPriceHistory, listRetailers } from '$lib/query/price-watcher';
 import type { PriceProduct } from '$core/schema/price-products';
 import { currencyFormatter } from '$lib/utils/formatters';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import ProductImage from '../(components)/product-image.svelte';
+import RetailerBadge from '../(components)/retailer-badge.svelte';
 
 const productsQuery = listProducts().options();
+const retailersQuery = listRetailers().options();
 const products = $derived(productsQuery.data ?? []);
 const isLoading = $derived(productsQuery.isLoading);
+const retailerMap = $derived(new Map((retailersQuery.data ?? []).map((r) => [r.id, r])));
 
 // Collect recent price changes across all products
 const recentChanges = $derived.by(() => {
@@ -60,13 +63,18 @@ const recentChanges = $derived.by(() => {
   {:else}
     <div class="space-y-2">
       {#each recentChanges as product (product.id)}
+        {@const retailer = product.retailerId ? retailerMap.get(product.retailerId) : undefined}
         <a
           href="/price-watcher/products/{product.slug}"
           class="flex items-center justify-between overflow-hidden rounded-lg border p-3 transition-shadow hover:shadow-md">
           <ProductImage imageUrl={product.imageUrl} alt={product.name} size="sm" />
           <div class="min-w-0 flex-1 pr-4">
             <div class="max-w-sm truncate font-medium sm:max-w-md lg:max-w-lg" title={product.name}>{product.name}</div>
-            <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
+            {#if retailer}
+              <RetailerBadge name={retailer.name} logoUrl={retailer.logoUrl} />
+            {:else}
+              <span class="text-muted-foreground text-xs capitalize">{product.retailer}</span>
+            {/if}
           </div>
           <div class="shrink-0 text-right">
             <div class="font-mono font-bold">

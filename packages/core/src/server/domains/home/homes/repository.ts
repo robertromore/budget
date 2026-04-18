@@ -4,6 +4,8 @@ import { BaseRepository } from "$core/server/shared/database/base-repository";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { and, eq, isNull } from "drizzle-orm";
 
+type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export interface UpdateHomeData {
   name?: string;
   slug?: string;
@@ -18,8 +20,8 @@ export class HomeRepository extends BaseRepository<typeof homes, Home, NewHome, 
     super(db, homes, "Home");
   }
 
-  override async create(data: NewHome, workspaceId: number): Promise<Home> {
-    const [home] = await db
+  async createTx(client: DbOrTx, data: NewHome, workspaceId: number): Promise<Home> {
+    const [home] = await client
       .insert(homes)
       .values({ ...data, workspaceId })
       .returning();
@@ -29,6 +31,10 @@ export class HomeRepository extends BaseRepository<typeof homes, Home, NewHome, 
     }
 
     return home;
+  }
+
+  override async create(data: NewHome, workspaceId: number): Promise<Home> {
+    return this.createTx(db, data, workspaceId);
   }
 
   override async findById(id: number, workspaceId: number): Promise<Home | null> {

@@ -23,11 +23,43 @@
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onclick?.(new MouseEvent("click", { bubbles: true }));
+      onclick?.(new MouseEvent("click", { bubbles: true, shiftKey: e.shiftKey }));
       return;
     }
     onkeydown?.(e);
   }
+
+  const nodeLabel = $derived.by(() => {
+    const base =
+      node.nodeType === "zone"
+        ? "Zone"
+        : node.nodeType === "site"
+          ? "Site"
+          : node.nodeType === "building"
+            ? "Building"
+            : node.nodeType === "level"
+              ? "Level"
+              : node.nodeType === "slab"
+                ? "Slab"
+                : node.nodeType === "ceiling"
+                  ? "Ceiling"
+                  : node.nodeType === "roof"
+                    ? "Roof"
+                    : "Room";
+    return node.name ? `${base}: ${node.name}` : base;
+  });
+
+  const nonSelectedRectClass = $derived.by(() => {
+    if (node.nodeType === "zone") return "fill-emerald-100 stroke-emerald-400";
+    if (node.nodeType === "site") return "fill-sky-100 stroke-sky-400";
+    if (node.nodeType === "building") return "fill-indigo-100 stroke-indigo-400";
+    if (node.nodeType === "level") return "fill-slate-100 stroke-slate-400";
+    if (node.nodeType === "slab") return "fill-zinc-200 stroke-zinc-500";
+    if (node.nodeType === "ceiling") return "fill-cyan-100 stroke-cyan-400";
+    if (node.nodeType === "roof") return "fill-rose-100 stroke-rose-400";
+    if (node.nodeType === "stair") return "fill-amber-100 stroke-amber-500";
+    return "fill-muted stroke-border";
+  });
 </script>
 
 <!-- Selected nodes are reachable by keyboard (Tab); unselected stay out of
@@ -36,7 +68,7 @@
 <g
   class="room-node cursor-pointer outline-none focus-visible:[&_rect:first-of-type]:stroke-primary"
   role="button"
-  aria-label={node.name ? `Room: ${node.name}` : "Room"}
+  aria-label={nodeLabel}
   aria-pressed={selected}
   tabindex={selected ? 0 : -1}
   transform="rotate({node.rotation} {node.posX + node.width / 2} {node.posY + node.height / 2})"
@@ -49,7 +81,7 @@
     y={node.posY}
     width={node.width}
     height={node.height}
-    class={selected ? 'fill-accent stroke-primary' : 'fill-muted stroke-border'}
+    class={selected ? 'fill-accent stroke-primary' : nonSelectedRectClass}
     stroke-width={selected ? 2.5 : 1.5}
     opacity={node.opacity}
     rx="2"

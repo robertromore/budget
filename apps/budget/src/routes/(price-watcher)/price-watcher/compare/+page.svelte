@@ -6,18 +6,34 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
+import * as Dialog from '$lib/components/ui/dialog';
 import { InteractiveLegend } from '$lib/components/layercake';
-import { listProducts, getPriceHistory } from '$lib/query/price-watcher';
+import {
+  listProducts,
+  getPriceHistory,
+  listRetailers,
+  getComparisons,
+  getListProducts,
+  createComparison,
+  deleteList,
+  removeFromList,
+  setListItemNotes,
+} from '$lib/query/price-watcher';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { chartInteractions } from '$lib/states/ui/chart-interactions.svelte';
 import type { PriceHistoryEntry } from '$core/schema/price-history';
 import type { PriceProduct } from '$core/schema/price-products';
 import PriceComparisonChart from '../(components)/price-comparison-chart.svelte';
 import type { ComparisonSeries } from '../(components)/price-comparison-chart.svelte';
+import ComparisonDetailRow from '../(components)/comparison-detail-row.svelte';
+import type { ComparisonProduct } from '../(components)/comparison-detail-row.svelte';
+import ComparisonSummary from '../(components)/comparison-summary.svelte';
 import Plus from '@lucide/svelte/icons/plus';
 import X from '@lucide/svelte/icons/x';
 import Check from '@lucide/svelte/icons/check';
 import Percent from '@lucide/svelte/icons/percent';
+import Save from '@lucide/svelte/icons/save';
+import Trash2 from '@lucide/svelte/icons/trash-2';
 
 const CHART_COLORS = [
   'var(--chart-1)',
@@ -28,8 +44,19 @@ const CHART_COLORS = [
   'var(--chart-6)',
 ];
 const MAX_PRODUCTS = 6;
+/** Debounce delay for per-item note saves (ms). Short enough to feel
+ *  responsive, long enough to coalesce rapid keystrokes into one
+ *  network write. */
+const NOTES_DEBOUNCE_MS = 400;
 
-// Read initial product IDs from URL
+// ─── URL params ──────────────────────────────
+// The page supports two modes:
+//   - ephemeral: `?products=1,2,3`  → chose products inline, no save
+//   - saved:     `?list=slug-abc12345` → open a saved comparison-kind
+//                list; products + per-item notes come from the server
+//
+// Ephemeral wins if both params are present (explicit user intent).
+
 const initialIds = $derived.by(() => {
   const param = $page.url.searchParams.get('products');
   if (!param) return [] as number[];
@@ -39,26 +66,97 @@ const initialIds = $derived.by(() => {
     .filter((n) => !isNaN(n));
 });
 
+const listSlug = $derived($page.url.searchParams.get('list'));
+
 let selectedProductIds = $state<number[]>([]);
 let period = $state<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
 let normalized = $state(false);
 let selectorOpen = $state(false);
 let searchQuery = $state('');
 
-// Sync from URL on first load
+// ─── Saved-comparison state ──────────────────
+//
+// When `?list=slug` resolves to a real comparison, we track:
+//   - `activeList`: the list row itself (id, name, slug, etc.)
+//   - `activeListProducts`: products with their per-item notes
+//   - `notesDraftMap`: in-flight edits keyed by productId, flushed via
+//      debounced mutations
+
+const comparisonsQuery = $derived(getComparisons().options());
+const comparisons = $derived(comparisonsQuery.data ?? []);
+
+const activeList = $derived(
+  listSlug ? comparisons.find((c) => c.slug === listSlug) ?? null : null
+);
+const isSavedComparison = $derived(activeList !== null);
+
+// Load the list's product snapshot with their per-item notes. Only
+// fetches when we actually have a list id — ephemeral mode skips it.
+const listProductsQuery = $derived(
+  activeList ? getListProducts(activeList.id).options() : null
+);
+const activeListProducts = $derived(listProductsQuery?.data ?? []);
+
+// If the URL names a list that doesn't exist (deleted, wrong workspace,
+// typo), we want a clear empty-state rather than silently defaulting
+// to an empty comparison.
+const listNotFound = $derived(
+  listSlug !== null &&
+    comparisonsQuery.isSuccess &&
+    activeList === null
+);
+
+// ─── Initial selection sync ──────────────────
+//
+// Two paths populate `selectedProductIds` on first load:
+//   - ephemeral: from `initialIds` once the URL parses
+//   - saved: from `activeListProducts` once the list query resolves
+// Whichever fires first wins; switching later between them is
+// intentional (user edited URL).
+
 let initialized = $state(false);
 $effect(() => {
-  if (!initialized && initialIds.length > 0) {
+  if (initialized) return;
+  if (listSlug) {
+    // Wait for the list query to resolve before initializing.
+    if (activeListProducts.length > 0) {
+      selectedProductIds = activeListProducts.map((p) => p.id);
+      initialized = true;
+    } else if (listNotFound) {
+      initialized = true;
+    }
+  } else if (initialIds.length > 0) {
     selectedProductIds = initialIds;
     initialized = true;
-  } else if (!initialized) {
+  } else {
     initialized = true;
   }
 });
 
-// Sync selected IDs to URL
+// Keep `selectedProductIds` in lockstep with the saved comparison's
+// product set when membership changes on the server (e.g. user removed
+// a product via the in-page remove button — the mutation invalidates
+// the list products query, which re-fetches).
+$effect(() => {
+  if (!isSavedComparison || !activeList) return;
+  const serverIds = activeListProducts.map((p) => p.id);
+  untrack(() => {
+    const current = selectedProductIds.join(',');
+    const next = serverIds.join(',');
+    if (current !== next) {
+      selectedProductIds = serverIds;
+    }
+  });
+});
+
+// ─── URL sync (ephemeral mode only) ──────────
+//
+// Saved comparisons never write to `?products=` — their canonical URL
+// is `?list=slug`. Ephemeral comparisons sync selection to the URL so
+// reloads / shares work.
 $effect(() => {
   if (!initialized) return;
+  if (isSavedComparison) return;
   const current = $page.url.searchParams.get('products') ?? '';
   const next = selectedProductIds.join(',');
   if (current !== next) {
@@ -78,15 +176,32 @@ $effect(() => {
   chartInteractions.reset();
 });
 
-// Product list
+// ─── Data for the chart / cards / summary ────
 const productsQuery = listProducts().options();
+const retailersQuery = listRetailers().options();
 const allProducts = $derived(productsQuery.data ?? []);
+const retailerMap = $derived(new Map((retailersQuery.data ?? []).map((r) => [r.id, r])));
 
-const selectedProducts = $derived(
-  selectedProductIds
-    .map((id) => allProducts.find((p) => p.id === id))
-    .filter((p): p is PriceProduct => p !== undefined)
-);
+/**
+ * Resolve selected product ids to full product objects, preferring the
+ * saved-comparison payload (which already carries per-item `listNotes`)
+ * and falling back to the global product list for ephemeral mode.
+ */
+const selectedProducts = $derived.by((): ComparisonProduct[] => {
+  const result: ComparisonProduct[] = [];
+  for (const id of selectedProductIds) {
+    if (isSavedComparison) {
+      const listed = activeListProducts.find((p) => p.id === id);
+      if (listed) {
+        result.push(listed);
+        continue;
+      }
+    }
+    const global = allProducts.find((p) => p.id === id);
+    if (global) result.push({ ...global, listNotes: null });
+  }
+  return result;
+});
 
 // Search filter for selector
 const filteredProducts = $derived.by(() => {
@@ -113,9 +228,7 @@ let historyMap = $state<Map<number, PriceHistoryEntry[]>>(new Map());
 let loadingIds = $state<Set<number>>(new Set());
 
 // Fetch history when selection or period changes
-// Uses untrack() to read historyMap/loadingIds without subscribing
 $effect(() => {
-  // These are the reactive dependencies — changes trigger re-fetch
   const ids = selectedProductIds;
   const range = dateRange;
 
@@ -200,20 +313,133 @@ function toggleProduct(id: number) {
 function removeProduct(id: number) {
   selectedProductIds = selectedProductIds.filter((x) => x !== id);
 }
+
+// ─── Save-as / delete comparison ─────────────
+const createMut = createComparison.options();
+const deleteMut = deleteList.options();
+const removeFromListMut = removeFromList.options();
+const setNotesMut = setListItemNotes.options();
+
+let saveDialogOpen = $state(false);
+let saveName = $state('');
+let saveDescription = $state('');
+
+async function handleSaveAsComparison() {
+  const name = saveName.trim();
+  if (!name) return;
+  const created = await createMut.mutateAsync({
+    name,
+    description: saveDescription.trim() || null,
+  });
+  // Add every selected product to the new list. `addToList` is the
+  // existing mutation; we loop rather than introduce a bulk endpoint.
+  // Run in parallel — order within a comparison has no semantic meaning.
+  const { addToList } = await import('$lib/query/price-watcher');
+  const addMut = addToList.options();
+  await Promise.all(
+    selectedProductIds.map((productId) =>
+      addMut.mutateAsync({ listId: created.id, productId })
+    )
+  );
+  saveDialogOpen = false;
+  saveName = '';
+  saveDescription = '';
+  // Canonical URL for a saved comparison drops `?products=` in favour
+  // of `?list=slug`.
+  const url = new URL($page.url);
+  url.searchParams.delete('products');
+  url.searchParams.set('list', created.slug);
+  goto(url.toString(), { replaceState: true });
+}
+
+async function handleDeleteComparison() {
+  if (!activeList) return;
+  if (!confirm(`Delete the comparison "${activeList.name}"? This cannot be undone.`)) {
+    return;
+  }
+  await deleteMut.mutateAsync({ id: activeList.id });
+  const url = new URL($page.url);
+  url.searchParams.delete('list');
+  goto(url.toString(), { replaceState: true });
+}
+
+async function handleRemoveFromComparison(productId: number) {
+  if (!activeList) {
+    removeProduct(productId);
+    return;
+  }
+  await removeFromListMut.mutateAsync({ listId: activeList.id, productId });
+  // `activeListProducts` will refresh via cache invalidation; the
+  // follow-up effect above keeps `selectedProductIds` in sync.
+}
+
+// ─── Notes editing (saved comparisons only) ──
+//
+// Each productId gets its own debounce timer; typing in one card
+// doesn't stall a save on another. We persist the LATEST value the user
+// typed — if three keystrokes land inside the window, the third wins.
+
+const notesDebounceTimers = new Map<number, ReturnType<typeof setTimeout>>();
+const notesDrafts = new Map<number, string>();
+
+function handleNotesChange(productId: number, notes: string): void {
+  if (!activeList) return;
+  notesDrafts.set(productId, notes);
+  const existing = notesDebounceTimers.get(productId);
+  if (existing) clearTimeout(existing);
+  const timer = setTimeout(() => {
+    notesDebounceTimers.delete(productId);
+    const latest = notesDrafts.get(productId) ?? '';
+    notesDrafts.delete(productId);
+    setNotesMut
+      .mutateAsync({
+        listId: activeList!.id,
+        productId,
+        notes: latest.trim() === '' ? null : latest,
+      })
+      .catch(() => {
+        // Toast handled by the mutation's errorMessage.
+      });
+  }, NOTES_DEBOUNCE_MS);
+  notesDebounceTimers.set(productId, timer);
+}
 </script>
 
 <svelte:head>
-  <title>Compare Prices - Price Watcher</title>
+  <title>{activeList?.name ?? 'Compare'} - Price Watcher</title>
 </svelte:head>
 
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">Compare Prices</h1>
-      <p class="text-muted-foreground text-sm">Overlay price histories to compare trends</p>
+      <h1 class="text-2xl font-bold tracking-tight">
+        {#if activeList}
+          {activeList.name}
+        {:else}
+          Compare Prices
+        {/if}
+      </h1>
+      <p class="text-muted-foreground text-sm">
+        {#if activeList}
+          {activeList.description ?? 'Saved comparison'}
+        {:else}
+          Overlay price histories to compare trends
+        {/if}
+      </p>
     </div>
     <div class="flex items-center gap-2">
+      {#if isSavedComparison}
+        <Button variant="outline" size="sm" onclick={handleDeleteComparison}>
+          <Trash2 class="mr-2 h-4 w-4" />
+          Delete
+        </Button>
+      {:else if selectedProductIds.length >= 2}
+        <Button variant="default" size="sm" onclick={() => (saveDialogOpen = true)}>
+          <Save class="mr-2 h-4 w-4" />
+          Save as comparison
+        </Button>
+      {/if}
       <!-- Normalize toggle -->
       <Button
         variant={normalized ? 'default' : 'outline'}
@@ -236,6 +462,21 @@ function removeProduct(id: number) {
       </div>
     </div>
   </div>
+
+  {#if listNotFound}
+    <div class="rounded-md border border-dashed p-6 text-center">
+      <p class="text-muted-foreground text-sm">
+        This comparison doesn't exist or was deleted.
+      </p>
+      <Button
+        variant="outline"
+        size="sm"
+        class="mt-3"
+        onclick={() => goto('/price-watcher/comparisons')}>
+        Back to comparisons
+      </Button>
+    </div>
+  {/if}
 
   <!-- Product Selector -->
   <div class="space-y-2">
@@ -265,6 +506,7 @@ function removeProduct(id: number) {
               {#each filteredProducts as product (product.id)}
                 {@const isSelected = selectedProductIds.includes(product.id)}
                 {@const isDisabled = !isSelected && selectedProductIds.length >= MAX_PRODUCTS}
+                {@const retailer = product.retailerId ? retailerMap.get(product.retailerId) : undefined}
                 <button
                   class="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors disabled:opacity-40"
                   disabled={isDisabled}
@@ -277,7 +519,7 @@ function removeProduct(id: number) {
                   <div class="min-w-0 flex-1">
                     <div class="truncate text-sm">{product.name}</div>
                     <div class="text-muted-foreground text-xs">
-                      {product.retailer}
+                      {retailer?.name ?? product.retailer}
                       {#if product.currentPrice !== null}
                         · {currencyFormatter.format(product.currentPrice)}
                       {/if}
@@ -290,14 +532,14 @@ function removeProduct(id: number) {
         </Popover.Content>
       </Popover.Root>
 
-      <!-- Selected product badges -->
+      <!-- Selected product badges (compact visual legend beside selector) -->
       {#each selectedProducts as product, idx (product.id)}
         <Badge variant="outline" class="gap-1.5 pr-1">
           <span class="inline-block h-2.5 w-2.5 rounded-sm" style="background-color: {CHART_COLORS[idx % CHART_COLORS.length]};"></span>
           <span class="max-w-32 truncate">{product.name}</span>
           <button
             class="hover:bg-muted-foreground/20 rounded-full p-0.5 transition-colors"
-            onclick={() => removeProduct(product.id)}>
+            onclick={() => (isSavedComparison ? handleRemoveFromComparison(product.id) : removeProduct(product.id))}>
             <X class="h-3 w-3" />
           </button>
         </Badge>
@@ -308,6 +550,23 @@ function removeProduct(id: number) {
       {/if}
     </div>
   </div>
+
+  {#if selectedProducts.length > 0}
+    <!-- Decision-helper stats -->
+    <ComparisonSummary
+      products={selectedProducts}
+      histories={historyMap}
+    />
+
+    <!-- Side-by-side product cards -->
+    <ComparisonDetailRow
+      products={selectedProducts}
+      retailersById={retailerMap}
+      editableNotes={isSavedComparison}
+      onRemove={(id) => (isSavedComparison ? handleRemoveFromComparison(id) : removeProduct(id))}
+      onNotesChange={handleNotesChange}
+    />
+  {/if}
 
   <!-- Chart -->
   <PriceComparisonChart series={chartSeries} {normalized} />
@@ -321,3 +580,52 @@ function removeProduct(id: number) {
       clickToToggle />
   {/if}
 </div>
+
+<!-- Save-as-comparison dialog -->
+<Dialog.Root bind:open={saveDialogOpen}>
+  <Dialog.Content class="sm:max-w-md">
+    <Dialog.Header>
+      <Dialog.Title>Save this comparison</Dialog.Title>
+      <Dialog.Description>
+        Name it so you can come back to it later. You can still add or remove
+        products, edit notes, or delete it at any time.
+      </Dialog.Description>
+    </Dialog.Header>
+    <form
+      class="space-y-4"
+      onsubmit={(event) => {
+        event.preventDefault();
+        void handleSaveAsComparison();
+      }}
+    >
+      <div class="space-y-1">
+        <label for="save-name" class="text-sm font-medium">Name</label>
+        <Input
+          id="save-name"
+          placeholder="e.g. Vacuum shortlist"
+          bind:value={saveName}
+          maxlength={100}
+          autofocus
+          required
+        />
+      </div>
+      <div class="space-y-1">
+        <label for="save-description" class="text-sm font-medium">
+          Description <span class="text-muted-foreground text-xs">(optional)</span>
+        </label>
+        <Input
+          id="save-description"
+          placeholder="What decision are you making?"
+          bind:value={saveDescription}
+          maxlength={500}
+        />
+      </div>
+      <Dialog.Footer>
+        <Button type="button" variant="outline" onclick={() => (saveDialogOpen = false)}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={!saveName.trim()}>Save</Button>
+      </Dialog.Footer>
+    </form>
+  </Dialog.Content>
+</Dialog.Root>

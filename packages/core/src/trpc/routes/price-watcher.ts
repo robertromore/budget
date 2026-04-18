@@ -7,20 +7,25 @@ import { ProductService } from "$core/server/domains/price-watcher/product-servi
 import { AlertService } from "$core/server/domains/price-watcher/alert-service";
 import { TagService } from "$core/server/domains/price-watcher/tag-service";
 import { ListService } from "$core/server/domains/price-watcher/list-service";
+import { RetailerRepository } from "$core/server/domains/price-watcher/retailer-repository";
+import { RetailerService } from "$core/server/domains/price-watcher/retailer-service";
 import { z } from "zod";
 
 // Lazy service instantiation (singletons, consistent with serviceFactory pattern)
 let _productService: ProductService | null = null;
 let _alertService: AlertService | null = null;
 let _historyRepo: HistoryRepository | null = null;
+let _retailerService: RetailerService | null = null;
 
 function init() {
   if (!_productService) {
     const productRepo = new ProductRepository();
     _historyRepo = new HistoryRepository();
     const alertRepo = new AlertRepository();
+    const retailerRepo = new RetailerRepository();
     _alertService = new AlertService(alertRepo);
-    _productService = new ProductService(productRepo, _historyRepo, _alertService);
+    _retailerService = new RetailerService(retailerRepo);
+    _productService = new ProductService(productRepo, _historyRepo, _alertService, _retailerService);
   }
 }
 
@@ -37,6 +42,11 @@ function getAlertService(): AlertService {
 function getHistoryRepo(): HistoryRepository {
   init();
   return _historyRepo!;
+}
+
+function getRetailerService(): RetailerService {
+  init();
+  return _retailerService!;
 }
 
 let _tagService: TagService | null = null;
@@ -56,6 +66,7 @@ function getListService(): ListService {
 const productFiltersSchema = z.object({
   status: z.enum(["active", "paused", "error"]).optional(),
   retailer: z.string().optional(),
+  retailerId: z.number().positive().optional(),
 });
 
 const addProductSchema = z.object({
@@ -313,12 +324,22 @@ export const priceWatcherRoutes = t.router({
       )
     ),
 
-  // Lists
+  // Lists (both "collection" wishlists and "comparison" shortlists share
+  // this surface; the `kind` discriminator switches UX downstream).
   createList: rateLimitedProcedure
-    .input(z.object({ name: z.string().min(1).max(100), description: z.string().max(500).nullable().optional() }))
+    .input(
+      z.object({
+        name: z.string().min(1).max(100),
+        description: z.string().max(500).nullable().optional(),
+        kind: z.enum(["collection", "comparison"]).optional(),
+      })
+    )
     .mutation(
       withErrorHandler(async ({ input, ctx }) =>
-        getListService().createList(input.name, ctx.workspaceId, input.description)
+        getListService().createList(input.name, ctx.workspaceId, {
+          description: input.description,
+          kind: input.kind,
+        })
       )
     ),
 
@@ -371,9 +392,64 @@ export const priceWatcherRoutes = t.router({
     ),
 
   getAllLists: publicProcedure
+    .input(
+      z.object({ kind: z.enum(["collection", "comparison"]).optional() }).optional()
+    )
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().getAllLists(ctx.workspaceId, { kind: input?.kind })
+      )
+    ),
+
+  setListItemNotes: rateLimitedProcedure
+    .input(
+      z.object({
+        listId: z.number().positive(),
+        productId: z.number().positive(),
+        notes: z.string().max(500).nullable(),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getListService().setListItemNotes(
+          input.listId,
+          input.productId,
+          input.notes,
+          ctx.workspaceId
+        )
+      )
+    ),
+
+  // Retailers
+  listRetailers: publicProcedure
     .query(
       withErrorHandler(async ({ ctx }) =>
-        getListService().getAllLists(ctx.workspaceId)
+        getRetailerService().listRetailers(ctx.workspaceId)
+      )
+    ),
+
+  getRetailer: publicProcedure
+    .input(z.object({ id: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        getRetailerService().getRetailer(input.id, ctx.workspaceId)
+      )
+    ),
+
+  updateRetailer: rateLimitedProcedure
+    .input(z.object({
+      id: z.number().positive(),
+      data: z.object({
+        name: z.string().min(1).max(100).optional(),
+        logoUrl: z.string().max(500).nullable().optional(),
+        website: z.string().max(500).nullable().optional(),
+        notes: z.string().max(500).nullable().optional(),
+        color: z.string().max(7).nullable().optional(),
+      }),
+    }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        getRetailerService().updateRetailer(input.id, input.data, ctx.workspaceId)
       )
     ),
 });

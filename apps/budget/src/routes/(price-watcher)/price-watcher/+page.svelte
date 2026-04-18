@@ -2,20 +2,24 @@
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
-import { listProducts, listAlerts } from '$lib/query/price-watcher';
+import { listProducts, listAlerts, listRetailers } from '$lib/query/price-watcher';
 import { currencyFormatter } from '$lib/utils/formatters';
 import ProductImage from './(components)/product-image.svelte';
+import RetailerBadge from './(components)/retailer-badge.svelte';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Bell from '@lucide/svelte/icons/bell';
 import Package from '@lucide/svelte/icons/package';
 import Plus from '@lucide/svelte/icons/plus';
+import Scale from '@lucide/svelte/icons/scale';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
 
 const productsQuery = listProducts().options();
 const alertsQuery = listAlerts().options();
+const retailersQuery = listRetailers().options();
 
 const products = $derived(productsQuery.data ?? []);
 const alerts = $derived(alertsQuery.data ?? []);
+const retailerMap = $derived(new Map((retailersQuery.data ?? []).map((r) => [r.id, r])));
 
 type SortOption = 'recent' | 'name' | 'price-low' | 'price-high' | 'biggest-drop';
 let sortBy = $state<SortOption>('recent');
@@ -75,10 +79,16 @@ const productsAtTarget = $derived(
       <h1 class="text-2xl font-bold tracking-tight">Price Watcher</h1>
       <p class="text-muted-foreground text-sm">Track prices and get notified on drops</p>
     </div>
-    <Button href="/price-watcher/products">
-      <Plus class="mr-2 h-4 w-4" />
-      Add Product
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button variant="outline" href="/price-watcher/comparisons">
+        <Scale class="mr-2 h-4 w-4" />
+        Comparisons
+      </Button>
+      <Button href="/price-watcher/products">
+        <Plus class="mr-2 h-4 w-4" />
+        Add Product
+      </Button>
+    </div>
   </div>
 
   <!-- Summary Cards -->
@@ -133,13 +143,18 @@ const productsAtTarget = $derived(
       <h2 class="text-lg font-semibold">Target Price Reached</h2>
       <div class="space-y-2">
         {#each productsAtTarget as product (product.id)}
+          {@const retailer = product.retailerId ? retailerMap.get(product.retailerId) : undefined}
           <a
             href="/price-watcher/products/{product.slug}"
             class="flex items-center justify-between rounded-lg border bg-success-bg p-3 transition-shadow hover:shadow-md">
             <ProductImage imageUrl={product.imageUrl} alt={product.name} size="sm" />
             <div class="min-w-0 flex-1 pr-4">
               <div class="max-w-sm truncate font-medium sm:max-w-md lg:max-w-lg" title={product.name}>{product.name}</div>
-              <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
+              {#if retailer}
+                <RetailerBadge name={retailer.name} logoUrl={retailer.logoUrl} />
+              {:else}
+                <span class="text-muted-foreground text-xs capitalize">{product.retailer}</span>
+              {/if}
             </div>
             <div class="shrink-0 text-right">
               <div class="text-success font-bold">
@@ -176,13 +191,18 @@ const productsAtTarget = $derived(
       </div>
       <div class="space-y-2">
         {#each sortedProducts.slice(0, 10) as product (product.id)}
+          {@const retailer = product.retailerId ? retailerMap.get(product.retailerId) : undefined}
           <a
             href="/price-watcher/products/{product.slug}"
             class="flex items-center justify-between overflow-hidden rounded-lg border p-3 transition-shadow hover:shadow-md">
             <ProductImage imageUrl={product.imageUrl} alt={product.name} size="sm" />
             <div class="min-w-0 flex-1 pr-4">
               <div class="max-w-sm truncate font-medium sm:max-w-md lg:max-w-lg" title={product.name}>{product.name}</div>
-              <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
+              {#if retailer}
+                <RetailerBadge name={retailer.name} logoUrl={retailer.logoUrl} />
+              {:else}
+                <span class="text-muted-foreground text-xs capitalize">{product.retailer}</span>
+              {/if}
             </div>
             <div class="shrink-0 text-right">
               <div class="font-bold">

@@ -48,7 +48,7 @@ export class ProductRepository {
 
   async findAll(
     workspaceId: number,
-    filters?: { status?: string; retailer?: string }
+    filters?: { status?: string; retailer?: string; retailerId?: number }
   ): Promise<PriceProduct[]> {
     const conditions = [
       eq(priceProducts.workspaceId, workspaceId),
@@ -58,7 +58,9 @@ export class ProductRepository {
     if (filters?.status) {
       conditions.push(eq(priceProducts.status, filters.status as any));
     }
-    if (filters?.retailer) {
+    if (filters?.retailerId) {
+      conditions.push(eq(priceProducts.retailerId, filters.retailerId));
+    } else if (filters?.retailer) {
       conditions.push(eq(priceProducts.retailer, filters.retailer));
     }
 

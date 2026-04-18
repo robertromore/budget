@@ -40,6 +40,7 @@ import { autoScheduler } from '$lib/stores/auto-scheduler.svelte';
 import { chartPalette } from '$lib/stores/chart-palette.svelte';
 import { fontSize } from '$lib/stores/font-size.svelte';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
+import { floorPlanToolbarLayout } from '$lib/stores/floor-plan-toolbar-layout.svelte';
 import { setPageActionsContext } from '$lib/stores/page-actions.svelte';
 import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { setNotificationContext } from '$lib/stores/notifications.svelte';
@@ -146,6 +147,7 @@ onMount(() => {
   fontSize.initialize();
   themePreferences.initialize();
   headerActionsMode.initialize();
+  floorPlanToolbarLayout.initialize();
   notificationStore.initialize();
   headerControlsReady = true;
 

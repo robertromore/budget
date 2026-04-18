@@ -18,7 +18,7 @@
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onclick?.(new MouseEvent("click", { bubbles: true }));
+      onclick?.(new MouseEvent("click", { bubbles: true, shiftKey: e.shiftKey }));
       return;
     }
     onkeydown?.(e);
@@ -28,6 +28,7 @@
     if (node.nodeType === "door") return `Door: ${node.name ?? "Door"}`;
     if (node.nodeType === "window") return `Window: ${node.name ?? "Window"}`;
     if (node.nodeType === "appliance") return `Appliance: ${node.name ?? "Appliance"}`;
+    if (node.nodeType === "item") return `Item: ${node.name ?? "Item"}`;
     return `Furniture: ${node.name ?? "Furniture"}`;
   });
 

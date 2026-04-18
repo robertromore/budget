@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Table } from '@tanstack/table-core';
 import type { PriceProduct } from '$core/schema/price-products';
+import { goto } from '$app/navigation';
 import { Button } from '$lib/components/ui/button';
 import {
   bulkDeleteProducts,
@@ -11,7 +12,16 @@ import Trash2 from '@lucide/svelte/icons/trash-2';
 import Pause from '@lucide/svelte/icons/pause';
 import Play from '@lucide/svelte/icons/play';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+import Scale from '@lucide/svelte/icons/scale';
 import X from '@lucide/svelte/icons/x';
+
+/**
+ * Hard cap on how many products can travel through the compare page
+ * at once. Matches the existing `MAX_PRODUCTS` in `compare/+page.svelte`
+ * — if the user has more selected, we truncate to the first N and
+ * surface a toast-like message via the status bar already above.
+ */
+const COMPARE_MAX_PRODUCTS = 6;
 
 interface Props {
   table: Table<PriceProduct>;
@@ -80,6 +90,21 @@ function clearSelection() {
   table.resetRowSelection();
   selectingAll = false;
 }
+
+/**
+ * Open the compare page with the selected products as an ephemeral
+ * compare (no save yet). The user can click "Save as comparison" on
+ * the resulting page if they want to persist the shortlist.
+ *
+ * Respects the compare page's 6-product ceiling — extras are quietly
+ * truncated. A future bulk-create endpoint could lift this.
+ */
+function handleCompareSelected() {
+  const ids = idsToActOn.slice(0, COMPARE_MAX_PRODUCTS);
+  if (ids.length === 0) return;
+  clearSelection();
+  goto(`/price-watcher/compare?products=${ids.join(',')}`);
+}
 </script>
 
 {#if selectedCount > 0}
@@ -100,6 +125,17 @@ function clearSelection() {
     {/if}
 
     <div class="ml-auto flex flex-wrap items-center gap-1.5">
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={handleCompareSelected}
+        disabled={isAnyPending || displayCount < 2}
+        title={displayCount > COMPARE_MAX_PRODUCTS
+          ? `First ${COMPARE_MAX_PRODUCTS} will be compared`
+          : undefined}>
+        <Scale class="mr-1.5 h-3.5 w-3.5" />
+        Compare
+      </Button>
       <Button
         variant="outline"
         size="sm"

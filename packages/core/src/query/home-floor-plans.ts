@@ -5,12 +5,12 @@ import { queryClient } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const floorPlanKeys = createQueryKeys("floorPlans", {
-  byHome: (homeId: number, floorLevel?: number) =>
+  byHome: (homeId: number, floorLevel: number) =>
     ["floorPlans", "byHome", homeId, floorLevel] as const,
   levels: (homeId: number) => ["floorPlans", "levels", homeId] as const,
 });
 
-export const getFloorPlan = (homeId: number, floorLevel?: number) =>
+export const getFloorPlan = (homeId: number, floorLevel: number) =>
   defineQuery<FloorPlanNode[]>({
     queryKey: floorPlanKeys["byHome"](homeId, floorLevel),
     queryFn: () => trpc().homeFloorPlansRoutes.get.query({ homeId, floorLevel }),

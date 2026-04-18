@@ -1,5 +1,9 @@
 import { priceProductLists, priceProductListItems } from "$core/schema/price-product-lists";
-import type { PriceProductList } from "$core/schema/price-product-lists";
+import type {
+  PriceProductList,
+  PriceProductListItem,
+  PriceProductListKind,
+} from "$core/schema/price-product-lists";
 import type { PriceProduct } from "$core/schema/price-products";
 import { priceProducts } from "$core/schema/price-products";
 import { db } from "$core/server/db";
@@ -7,18 +11,31 @@ import { NotFoundError } from "$core/server/shared/types/errors";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
 import { slugify } from "$core/utils/string-utilities";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+
+export type ListProductWithNotes = PriceProduct & { listNotes: string | null };
 
 export class ListService {
+  /**
+   * Create a list. `kind` defaults to `"collection"` so existing callers
+   * (wishlists UI) keep working unchanged. Comparison-kind lists get a
+   * dedicated UX surface at `/price-watcher/compare?list=<slug>`.
+   */
   async createList(
     name: string,
     workspaceId: number,
-    description?: string | null
+    options?: { description?: string | null; kind?: PriceProductListKind }
   ): Promise<PriceProductList> {
     const slug = slugify(name) + "-" + createId().slice(0, 8);
     const [list] = await db
       .insert(priceProductLists)
-      .values({ workspaceId, name, slug, description: description ?? null })
+      .values({
+        workspaceId,
+        name,
+        slug,
+        description: options?.description ?? null,
+        kind: options?.kind ?? "collection",
+      })
       .returning();
     if (!list) throw new Error("Failed to create list");
     return list;
@@ -141,15 +158,56 @@ export class ListService {
       );
   }
 
-  async getListProducts(listId: number, workspaceId: number): Promise<PriceProduct[]> {
+  async getListProducts(
+    listId: number,
+    workspaceId: number
+  ): Promise<ListProductWithNotes[]> {
     await this.assertListInWorkspace(listId, workspaceId);
     const items = await db.query.priceProductListItems.findMany({
       where: eq(priceProductListItems.listId, listId),
       with: { product: true },
     });
+    // Return the product joined with per-item `notes` so the comparison
+    // view gets everything it needs in one round-trip. Items whose
+    // product was soft-deleted are filtered out — they'd render as
+    // blank columns otherwise.
     return items
-      .map((item) => item.product)
-      .filter((p): p is PriceProduct => p !== null && p !== undefined);
+      .filter((item) => item.product !== null && item.product !== undefined)
+      .map((item) => ({
+        ...(item.product as PriceProduct),
+        listNotes: item.notes ?? null,
+      }));
+  }
+
+  /**
+   * Set per-item notes on a list membership. Used by comparison-kind
+   * lists to capture decision context ("noisy per reviews"). Workspace
+   * scope is enforced via `assertListAndProductInWorkspace`.
+   */
+  async setListItemNotes(
+    listId: number,
+    productId: number,
+    notes: string | null,
+    workspaceId: number
+  ): Promise<PriceProductListItem> {
+    await this.assertListAndProductInWorkspace(listId, productId, workspaceId);
+    const [updated] = await db
+      .update(priceProductListItems)
+      .set({ notes })
+      .where(
+        and(
+          eq(priceProductListItems.listId, listId),
+          eq(priceProductListItems.productId, productId)
+        )
+      )
+      .returning();
+    if (!updated) {
+      throw new NotFoundError(
+        "ListItem",
+        `${listId}:${productId}` as unknown as number
+      );
+    }
+    return updated;
   }
 
   async getProductLists(
@@ -166,11 +224,19 @@ export class ListService {
       .filter((l): l is PriceProductList => l !== null && l !== undefined);
   }
 
+  /**
+   * Return every list in the workspace, optionally filtered by kind.
+   * No kind filter = both collection and comparison lists, preserving
+   * behaviour for existing wishlist UI.
+   */
   async getAllLists(
-    workspaceId: number
+    workspaceId: number,
+    options?: { kind?: PriceProductListKind }
   ): Promise<Array<PriceProductList & { itemCount: number }>> {
+    const filters = [eq(priceProductLists.workspaceId, workspaceId)];
+    if (options?.kind) filters.push(eq(priceProductLists.kind, options.kind));
     const lists = await db.query.priceProductLists.findMany({
-      where: eq(priceProductLists.workspaceId, workspaceId),
+      where: and(...filters),
       with: { items: true },
     });
     return lists.map((list) => ({

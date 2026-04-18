@@ -5,6 +5,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { workspaces } from "./workspaces";
 import { priceHistory } from "./price-history";
 import { priceAlerts } from "./price-alerts";
+import { priceRetailers } from "./price-retailers";
 
 export const priceProductStatusEnum = ["active", "paused", "error"] as const;
 export type PriceProductStatus = (typeof priceProductStatusEnum)[number];
@@ -21,6 +22,7 @@ export const priceProducts = sqliteTable(
     name: text("name").notNull(),
     url: text("url").notNull(),
     retailer: text("retailer").notNull(),
+    retailerId: integer("retailer_id").references(() => priceRetailers.id, { onDelete: "set null" }),
     imageUrl: text("image_url"),
     images: text("images"), // JSON array of additional image URLs
     description: text("description"),
@@ -47,6 +49,7 @@ export const priceProducts = sqliteTable(
   (table) => [
     index("price_product_workspace_idx").on(table.workspaceId),
     index("price_product_retailer_idx").on(table.retailer),
+    index("price_product_retailer_id_idx").on(table.retailerId),
     index("price_product_status_idx").on(table.status),
     index("price_product_slug_idx").on(table.slug),
     index("price_product_deleted_at_idx").on(table.deletedAt),
@@ -57,6 +60,10 @@ export const priceProductsRelations = relations(priceProducts, ({ one, many }) =
   workspace: one(workspaces, {
     fields: [priceProducts.workspaceId],
     references: [workspaces.id],
+  }),
+  retailerEntity: one(priceRetailers, {
+    fields: [priceProducts.retailerId],
+    references: [priceRetailers.id],
   }),
   history: many(priceHistory),
   alerts: many(priceAlerts),

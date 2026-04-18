@@ -29,7 +29,7 @@ import type {
   ImportRow,
   TransferTargetMatch,
 } from "$core/types/import";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, or } from "drizzle-orm";
 import type { z } from "zod/v4";
 import { getCategoryAliasService } from "$core/server/domains/categories/alias-service";
 import { TransferMappingService } from "$core/server/domains/transfers/transfer-mapping-service";
@@ -39,6 +39,21 @@ import { PayeeMatcher } from "./matchers/payee-matcher";
 import { TransactionValidator } from "./validators/transaction-validator";
 import { isNotEmptyObject } from "$core/utils/object-utilities";
 import { normalize } from "$core/utils/string-utilities";
+
+/**
+ * Shift a YYYY-MM-DD (or prefix-ISO) string by N days. Used to bracket
+ * the date window for the duplicate-detection query. Positive and
+ * negative deltas are both supported.
+ */
+function shiftIsoDate(iso: string, days: number): string {
+  // Take just the YYYY-MM-DD prefix to handle rows that include a time
+  // component (e.g. from CURRENT_TIMESTAMP default).
+  const datePart = iso.slice(0, 10);
+  const d = new Date(datePart + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return datePart;
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export interface ImportProgress {
   stage: "validating" | "matching" | "creating" | "complete";
@@ -200,7 +215,7 @@ export class ImportOrchestrator {
       const isUtilityAccount = account.accountType === "utility";
 
       // Stage 1: Validation
-      const existingTransactions = await this.getExistingTransactions(accountId);
+      const existingTransactions = await this.getExistingTransactions(accountId, rows);
       const validatedRows = this.validator.validateRows(rows, existingTransactions);
 
       // Collect validation errors and warnings, track duplicates per file
@@ -1211,13 +1226,76 @@ export class ImportOrchestrator {
   }
 
   /**
-   * Get existing transactions for duplicate detection
+   * Get existing transactions for duplicate detection, scoped to the date
+   * window covered by the import (±7 days for reconciliation jitter) plus
+   * a direct fitid fast-path. Returns only the columns the validator
+   * actually reads so large `rawImportData`/`notes` blobs don't land in
+   * memory per row.
+   *
+   * Previous implementation loaded every transaction for the account with
+   * `SELECT *`, producing O(n·m) comparisons and a memory-blowup vector
+   * on accounts with long history (100k rows × 5k import = 500M compares).
    */
-  private async getExistingTransactions(accountId: number) {
-    return db
-      .select()
+  private async getExistingTransactions(
+    accountId: number,
+    rows: ImportRow[]
+  ): Promise<z.infer<typeof selectTransactionSchema>[]> {
+    // Collect normalized dates and fitids from the import batch.
+    const dates: string[] = [];
+    const fitids: string[] = [];
+    for (const row of rows) {
+      const d = row.normalizedData?.date;
+      if (typeof d === "string" && d.length > 0) dates.push(d);
+      const fitid = row.normalizedData?.fitid;
+      if (typeof fitid === "string" && fitid.length > 0) fitids.push(fitid);
+    }
+
+    if (dates.length === 0 && fitids.length === 0) {
+      return [];
+    }
+
+    // Date window: min−7d to max+7d, then +1 day exclusive upper bound so
+    // rows stored with a trailing time component (e.g. "2024-01-10 14:30:00"
+    // from the CURRENT_TIMESTAMP default) still match at the boundary.
+    let dateRange: ReturnType<typeof and> | undefined;
+    if (dates.length > 0) {
+      dates.sort();
+      const minIso = dates[0]!;
+      const maxIso = dates[dates.length - 1]!;
+      const minDate = shiftIsoDate(minIso, -7);
+      const maxDateExclusive = shiftIsoDate(maxIso, 8);
+      dateRange = and(
+        gte(transactionTable.date, minDate),
+        lt(transactionTable.date, maxDateExclusive)
+      );
+    }
+
+    // Batches can contain duplicate fitids; dedupe before IN-list query.
+    const uniqueFitids = fitids.length > 0 ? Array.from(new Set(fitids)) : [];
+    const fitidScope =
+      uniqueFitids.length > 0 ? inArray(transactionTable.fitid, uniqueFitids) : undefined;
+
+    // Combine: (date in window) OR (fitid in batch fitids). Either path is
+    // a candidate duplicate. If neither produced a predicate, return [].
+    const scope = dateRange && fitidScope ? or(dateRange, fitidScope) : dateRange || fitidScope;
+    if (!scope) return [];
+
+    const rowsOut = await db
+      .select({
+        id: transactionTable.id,
+        date: transactionTable.date,
+        amount: transactionTable.amount,
+        fitid: transactionTable.fitid,
+      })
       .from(transactionTable)
-      .where(and(eq(transactionTable.accountId, accountId), isNull(transactionTable.deletedAt)));
+      .where(
+        and(eq(transactionTable.accountId, accountId), isNull(transactionTable.deletedAt), scope)
+      );
+
+    // The validator only reads fitid/date/amount; casting the narrow
+    // projection to the full select-schema shape is safe because the
+    // validator never touches other columns.
+    return rowsOut as unknown as z.infer<typeof selectTransactionSchema>[];
   }
 
   /**
@@ -1436,7 +1514,7 @@ export class ImportOrchestrator {
     const workspaceId = account.workspaceId;
 
     // Validation
-    const existingTransactions = await this.getExistingTransactions(accountId);
+    const existingTransactions = await this.getExistingTransactions(accountId, rows);
     const validatedRows = this.validator.validateRows(rows, existingTransactions);
 
     const summary = this.validator.getValidationSummary(validatedRows);

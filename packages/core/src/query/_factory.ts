@@ -53,13 +53,46 @@ export interface DefineParameterizedQueryConfig<TParams, TData, TError = Error> 
 }
 
 /**
- * Configuration for defineMutation wrapper
+ * Configuration for defineMutation wrapper.
+ *
+ * `onMutate` runs BEFORE the mutation is sent to the server. Its return
+ * value is threaded as `context` into the downstream `onSuccess` / `onError`
+ * handlers, which is the correct place to snapshot cache entries that an
+ * optimistic update is about to overwrite. On failure, `onError` receives
+ * the context so the optimistic write can be rolled back without a
+ * round-trip refetch.
+ *
+ * Example:
+ *
+ *   defineMutation<Input, Result, Error, { previous: Budget }>({
+ *     mutationFn: (vars) => trpc().budgets.update.mutate(vars),
+ *     onMutate: (vars) => {
+ *       const previous = queryClient.getQueryData(budgetKeys.detail(vars.id));
+ *       queryClient.setQueryData(budgetKeys.detail(vars.id), optimistic);
+ *       return { previous };
+ *     },
+ *     onError: (err, vars, context) => {
+ *       if (context?.previous) {
+ *         queryClient.setQueryData(budgetKeys.detail(vars.id), context.previous);
+ *       }
+ *     },
+ *   });
  */
-export interface DefineMutationConfig<TVariables, TData, TError = Error> {
+export interface DefineMutationConfig<TVariables, TData, TError = Error, TContext = unknown> {
   mutationFn: (variables: TVariables) => Promise<TData>;
-  options?: CreateMutationOptions<TData, TError, TVariables>;
-  onSuccess?: (data: TData, variables: TVariables) => void | Promise<void>;
-  onError?: (error: TError, variables: TVariables) => void;
+  options?: CreateMutationOptions<TData, TError, TVariables, TContext>;
+  /**
+   * Runs before the mutation; return a context that will be threaded to
+   * `onSuccess` and `onError`. Use this for optimistic cache writes and
+   * capturing rollback state.
+   */
+  onMutate?: (variables: TVariables) => Promise<TContext> | TContext;
+  onSuccess?: (
+    data: TData,
+    variables: TVariables,
+    context: TContext | undefined
+  ) => void | Promise<void>;
+  onError?: (error: TError, variables: TVariables, context: TContext | undefined) => void;
   successMessage?: string | ((data: TData, variables: TVariables) => string);
   errorMessage?: string | ((error: TError, variables: TVariables) => string);
   /** Notification importance for verbosity filtering (defaults to "normal") */
@@ -290,14 +323,20 @@ export function defineQuery<TParams, TData, TError = Error>(
 }
 
 /**
- * Creates a mutation wrapper with dual interface pattern
+ * Creates a mutation wrapper with dual interface pattern.
+ *
+ * Both `.options()` (reactive, TanStack) and `.execute()` (imperative) run
+ * `onMutate → mutationFn → onSuccess | onError` with a shared `context`
+ * value, so the same optimistic-write + rollback pattern works regardless
+ * of which interface a caller picks.
  */
-export function defineMutation<TVariables, TData, TError = Error>(
-  config: DefineMutationConfig<TVariables, TData, TError>
+export function defineMutation<TVariables, TData, TError = Error, TContext = unknown>(
+  config: DefineMutationConfig<TVariables, TData, TError, TContext>
 ): MutationWrapper<TVariables, TData, TError> {
   const {
     mutationFn,
     options = {},
+    onMutate,
     onSuccess,
     onError,
     successMessage,
@@ -305,7 +344,10 @@ export function defineMutation<TVariables, TData, TError = Error>(
     importance = "normal",
   } = config;
 
-  // Create the mutation with enhanced error handling and notifications
+  // Create the mutation with enhanced error handling and notifications.
+  // The TanStack-native `onMutate → context → onError` path is wired here
+  // so callers can do optimistic cache writes and roll them back on error
+  // without losing the context across async hops.
   const createMutationWithConfig = () =>
     createMutation(() => ({
       mutationFn: async (variables: TVariables) => {
@@ -315,10 +357,22 @@ export function defineMutation<TVariables, TData, TError = Error>(
           throw transformError(error);
         }
       },
-      onSuccess: (data: TData, variables: TVariables, context: unknown, queryClient: any) => {
+      onMutate: onMutate
+        ? async (variables: TVariables) => {
+            const ctx = await onMutate(variables);
+            // If the caller also provided a passthrough onMutate on
+            // `options`, run it too — its return value is ignored so our
+            // context stays authoritative for rollback.
+            if (options.onMutate) {
+              await options.onMutate(variables);
+            }
+            return ctx;
+          }
+        : options.onMutate,
+      onSuccess: (data: TData, variables: TVariables, context: TContext, queryClient: any) => {
         // Call custom onSuccess if provided
         if (onSuccess) {
-          onSuccess(data, variables);
+          onSuccess(data, variables, context);
         }
 
         // Show success toast if message provided
@@ -333,10 +387,12 @@ export function defineMutation<TVariables, TData, TError = Error>(
           options.onSuccess(data, variables, context, queryClient);
         }
       },
-      onError: (error: TError, variables: TVariables, context: unknown, queryClient: any) => {
-        // Call custom onError if provided
+      onError: (error: TError, variables: TVariables, context: TContext, queryClient: any) => {
+        // Call custom onError first — this is the rollback site. Running
+        // before the toast/original-onError means rollback cache writes
+        // land before any subscriber reads the error state.
         if (onError) {
-          onError(error, variables);
+          onError(error, variables, context);
         }
 
         // Show error toast
@@ -364,14 +420,33 @@ export function defineMutation<TVariables, TData, TError = Error>(
     },
 
     async execute(variables: TVariables) {
-      // Directly call mutationFn without createMutation to avoid context issues
-      // This allows execute() to be called from event handlers outside component init
+      // Imperative path: call mutationFn directly (avoids needing a
+      // component-context `createMutation`). Still runs the same
+      // onMutate → onSuccess|onError sequence so rollback semantics stay
+      // identical across both interfaces.
+      let context: TContext | undefined;
+
+      if (onMutate) {
+        // Failures inside onMutate should NOT be swallowed — an
+        // optimistic-update error means the cache is in an indeterminate
+        // state; surface it to the caller before trying the network call.
+        try {
+          context = await onMutate(variables);
+        } catch (error) {
+          const transformedError = transformError(error) as TError;
+          if (onError) {
+            onError(transformedError, variables, undefined);
+          }
+          throw transformedError;
+        }
+      }
+
       try {
         const result = await mutationFn(variables);
 
         // Call custom onSuccess if provided
         if (onSuccess) {
-          await onSuccess(result, variables);
+          await onSuccess(result, variables, context);
         }
 
         // Show success toast if message provided
@@ -387,9 +462,10 @@ export function defineMutation<TVariables, TData, TError = Error>(
       } catch (error) {
         const transformedError = transformError(error) as TError;
 
-        // Call custom onError if provided
+        // Call custom onError if provided — receives the context captured
+        // during onMutate so rollback logic can restore pre-mutation state.
         if (onError) {
-          onError(transformedError, variables);
+          onError(transformedError, variables, context);
         }
 
         // Show error toast

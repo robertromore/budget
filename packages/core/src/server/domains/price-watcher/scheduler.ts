@@ -3,6 +3,8 @@ import { HistoryRepository } from "./history-repository";
 import { AlertRepository } from "./alert-repository";
 import { ProductService } from "./product-service";
 import { AlertService } from "./alert-service";
+import { RetailerRepository } from "./retailer-repository";
+import { RetailerService } from "./retailer-service";
 
 export interface SchedulerResult {
   checked: number;
@@ -26,8 +28,10 @@ export async function processOverdueChecks(workspaceId: number): Promise<Schedul
   const productRepo = new ProductRepository();
   const historyRepo = new HistoryRepository();
   const alertRepo = new AlertRepository();
+  const retailerRepo = new RetailerRepository();
   const alertService = new AlertService(alertRepo);
-  const productService = new ProductService(productRepo, historyRepo, alertService);
+  const retailerService = new RetailerService(retailerRepo);
+  const productService = new ProductService(productRepo, historyRepo, alertService, retailerService);
 
   const overdueProducts = await productRepo.findDueForCheck(workspaceId);
 

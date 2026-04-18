@@ -1,7 +1,11 @@
 import { homeItems } from "$core/schema/home/home-items";
 import { homeLocations } from "$core/schema/home/home-locations";
 import { homes } from "$core/schema/home/homes";
-import type { FloorPlanNode, NewFloorPlanNode } from "$core/schema/home/home-floor-plan-nodes";
+import type {
+  FloorPlanNode,
+  FloorPlanNodeType,
+  NewFloorPlanNode,
+} from "$core/schema/home/home-floor-plan-nodes";
 import { db } from "$core/server/db";
 import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { and, eq, inArray } from "drizzle-orm";
@@ -20,6 +24,29 @@ export interface SaveFloorPlanInput {
   nodes: FloorPlanNodeInput[];
   deletedNodeIds: string[];
 }
+
+const ALLOWED_PARENT_TYPES: Partial<Record<FloorPlanNodeType, FloorPlanNodeType[]>> = {
+  building: ["site"],
+  level: ["building"],
+  slab: ["level"],
+  ceiling: ["level"],
+  roof: ["level"],
+  stair: ["level"],
+  door: ["wall"],
+  window: ["wall"],
+  "roof-segment": ["roof"],
+  "stair-segment": ["stair"],
+};
+
+const REQUIRED_PARENT_TYPES = new Set<FloorPlanNodeType>([
+  "level",
+  "slab",
+  "ceiling",
+  "roof",
+  "stair",
+  "roof-segment",
+  "stair-segment",
+]);
 
 export class FloorPlanService {
   constructor(private repository: FloorPlanRepository) {}
@@ -109,30 +136,78 @@ export class FloorPlanService {
     homeId: number,
     workspaceId: number
   ): Promise<void> {
-    const submittedIds = new Set(nodes.map((n) => n.id));
-    const externalParents = Array.from(
+    const submittedById = new Map(nodes.map((n) => [n.id, n] as const));
+    const externalParentIds = Array.from(
       new Set(
         nodes
           .map((n) => n.parentId)
           .filter(
-            (v): v is string => typeof v === "string" && v.length > 0 && !submittedIds.has(v)
+            (v): v is string =>
+              typeof v === "string" && v.length > 0 && !submittedById.has(v)
           )
       )
     );
-    if (externalParents.length === 0) return;
 
-    const existing = await this.repository.findIdsInHome(
-      externalParents,
+    const externalParentTypes = await this.repository.findNodeTypesInHome(
+      externalParentIds,
       homeId,
       workspaceId
     );
-    if (existing.length !== externalParents.length) {
+    if (Object.keys(externalParentTypes).length !== externalParentIds.length) {
       throw new ValidationError(
         "One or more parent nodes are not part of this home"
       );
     }
+
+    const resolveParentType = (parentId: string): FloorPlanNodeType | undefined =>
+      submittedById.get(parentId)?.nodeType ?? externalParentTypes[parentId];
+
+    for (const node of nodes) {
+      if (node.parentId === node.id) {
+        throw new ValidationError(
+          `Node ${node.id} cannot use itself as parent`
+        );
+      }
+
+      if (node.nodeType === "site" && node.parentId) {
+        throw new ValidationError("Site nodes cannot have a parent");
+      }
+
+      if (!node.parentId) {
+        if (REQUIRED_PARENT_TYPES.has(node.nodeType)) {
+          throw new ValidationError(
+            `${node.nodeType} nodes require a parent`
+          );
+        }
+        continue;
+      }
+
+      const parentType = resolveParentType(node.parentId);
+      if (!parentType) {
+        throw new ValidationError(
+          `Parent node ${node.parentId} is not part of this home`
+        );
+      }
+
+      const allowedParentTypes = ALLOWED_PARENT_TYPES[node.nodeType];
+      if (
+        allowedParentTypes &&
+        !allowedParentTypes.includes(parentType)
+      ) {
+        throw new ValidationError(
+          `${node.nodeType} nodes must be parented by ${allowedParentTypes.join(" or ")}`
+        );
+      }
+    }
   }
 
+  /**
+   * Fetch a home's floor-plan nodes. A numeric `floorLevel` filters to that
+   * specific storey; passing `undefined` returns ALL floors across the home
+   * — supported for internal batch operations (e.g. export / audit flows),
+   * not exposed at the tRPC boundary where the route input makes
+   * `floorLevel` required to keep per-floor cache keys stable.
+   */
   async getFloorPlan(
     homeId: number,
     workspaceId: number,
@@ -154,6 +229,27 @@ export class FloorPlanService {
     data: SaveFloorPlanInput,
     workspaceId: number
   ): Promise<FloorPlanNode[]> {
+    // Reject contradictory payloads where the same node is submitted as both
+    // "upsert" and "delete" in one request.
+    const deletedSet = new Set(data.deletedNodeIds);
+    if (data.nodes.some((n) => deletedSet.has(n.id))) {
+      throw new ValidationError(
+        "A node cannot be saved and deleted in the same request"
+      );
+    }
+
+    // Reject nodes whose parent is being deleted in the same batch. Without
+    // this, a child could be upserted with a parentId pointing at a node
+    // the same transaction soft-deletes, leaving the child dangling (FKs
+    // are not enforced at the libsql layer, so no cascade nullification).
+    for (const node of data.nodes) {
+      if (node.parentId && deletedSet.has(node.parentId)) {
+        throw new ValidationError(
+          `Node ${node.id} cannot reference parent ${node.parentId} that is being deleted in the same request`
+        );
+      }
+    }
+
     // All authorization checks happen before any mutation so the transaction
     // below never has to roll back for security reasons.
     await this.assertHomeInWorkspace(data.homeId, workspaceId);
@@ -178,11 +274,11 @@ export class FloorPlanService {
       }
     });
 
-    // Clean up any doors/windows whose parent wall was just deleted.
+    // Clean up any opening nodes whose parent wall was just deleted.
     // The schema FK uses `onDelete: "set null"`, which would otherwise leave
     // "floating" openings rendered in the 2D and 3D scene.
     if (data.deletedNodeIds.length > 0) {
-      await this.repository.deleteOrphanOpenings(data.homeId, workspaceId);
+      await this.repository.deleteOrphanOpenings(data.homeId, workspaceId, data.floorLevel);
     }
 
     return await this.repository.findAllByHome(data.homeId, workspaceId, data.floorLevel);

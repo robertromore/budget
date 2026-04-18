@@ -1,15 +1,14 @@
 <script lang="ts">
-  import { T } from "@threlte/core";
-  import { Grid, interactivity } from "@threlte/extras";
-  import type * as THREE from "three";
-
-  interactivity();
   import type { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
   import { SCALE } from "$lib/utils/wall-csg";
-  import WallMesh from "./wall-mesh.svelte";
-  import RoomFloor from "./room-floor.svelte";
+  import { T } from "@threlte/core";
+  import { Grid } from "@threlte/extras";
+  import type * as THREE from "three";
+  import AssetPlane from "./asset-plane.svelte";
   import FurnitureMesh from "./furniture-mesh.svelte";
+  import RoomFloor from "./room-floor.svelte";
   import SceneLights from "./scene-lights.svelte";
+  import WallMesh from "./wall-mesh.svelte";
 
   /**
    * Shape of pointer events we forward from child meshes. Threlte's event
@@ -35,16 +34,56 @@
     ondragstart?: (id: string, e: ThreltePointerEvent) => void;
   } = $props();
 
+  // Drive off the typed `doors`/`windows` derivations instead of the full
+  // `nodeList` so the map doesn't rebuild when an unrelated furniture or
+  // annotation node moves. Walls whose openings didn't change still see
+  // the same per-parent array reference the wall-mesh fingerprint depends
+  // on, avoiding a wasted CSG refingerprint per unrelated mutation.
   const wallOpenings = $derived.by(() => {
     const map = new Map<string, typeof store.nodeList>();
-    for (const node of store.nodeList) {
-      if ((node.nodeType === "door" || node.nodeType === "window") && node.parentId) {
-        if (!map.has(node.parentId)) map.set(node.parentId, []);
-        map.get(node.parentId)!.push(node);
-      }
-    }
+    const collect = (node: (typeof store.nodeList)[number]) => {
+      if (!node.parentId) return;
+      if (!store.isNodeVisibleInLevelDisplayMode(node.id)) return;
+      const parent = store.nodes[node.parentId];
+      if (!parent || parent.nodeType !== "wall") return;
+      if (!store.isNodeVisibleInLevelDisplayMode(parent.id)) return;
+      const bucket = map.get(node.parentId);
+      if (bucket) bucket.push(node);
+      else map.set(node.parentId, [node]);
+    };
+    for (const node of store.doors) collect(node);
+    for (const node of store.windows) collect(node);
     return map;
   });
+
+  const visibleRooms3D = $derived(
+    store.rooms.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleWalls3D = $derived(
+    store.walls.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleDoors3D = $derived(
+    store.doors.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleWindows3D = $derived(
+    store.windows.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleFurniture3D = $derived(
+    store.furniture.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleScans3D = $derived(
+    store.scans.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleGuides3D = $derived(
+    store.guides.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+  const visibleAnnotations3D = $derived(
+    store.annotations.filter((node) => store.isNodeVisibleInLevelDisplayMode(node.id))
+  );
+
+  function getElevationOffset(nodeId: string): number {
+    return store.getNodeAncestorElevation(nodeId) + store.getNodeDisplayElevationOffset(nodeId);
+  }
 </script>
 
 <SceneLights />
@@ -54,7 +93,7 @@
   sectionColor="#6b7280"
   cellSize={1}
   sectionSize={5}
-  fadeDistance={30}
+  fadeDistance={70}
   infiniteGrid
 />
 
@@ -63,19 +102,31 @@
   <T.ShadowMaterial opacity={0.15} />
 </T.Mesh>
 
-{#each store.rooms as node (node.id)}
-  <RoomFloor
+{#each visibleScans3D as node (node.id)}
+  <AssetPlane
     {node}
+    elevationOffset={getElevationOffset(node.id)}
     selected={store.selectedNodeIds.has(node.id)}
     onclick={(e) => onselect?.(node.id, e)}
     onpointerdown={(e) => ondragstart?.(node.id, e)}
   />
 {/each}
 
-{#each store.walls as node (node.id)}
+{#each visibleRooms3D as node (node.id)}
+  <RoomFloor
+    {node}
+    elevationOffset={getElevationOffset(node.id)}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
+{/each}
+
+{#each visibleWalls3D as node (node.id)}
   <WallMesh
     {node}
     openings={wallOpenings.get(node.id) ?? []}
+    elevationOffset={getElevationOffset(node.id)}
     selected={store.selectedNodeIds.has(node.id)}
     onclick={(e) => onselect?.(node.id, e)}
     onpointerdown={(e) => ondragstart?.(node.id, e)}
@@ -92,33 +143,46 @@
   FurnitureMesh already handles door/window geometry, orientation, and the
   right materials (door: solid; window: translucent glass).
 -->
-{#each store.doors as node (node.id)}
+{#each visibleDoors3D as node (node.id)}
   <FurnitureMesh
     {node}
+    elevationOffset={getElevationOffset(node.id)}
     selected={store.selectedNodeIds.has(node.id)}
     onclick={(e) => onselect?.(node.id, e)}
     onpointerdown={(e) => ondragstart?.(node.id, e)}
   />
 {/each}
-{#each store.windows as node (node.id)}
+{#each visibleWindows3D as node (node.id)}
   <FurnitureMesh
     {node}
-    selected={store.selectedNodeIds.has(node.id)}
-    onclick={(e) => onselect?.(node.id, e)}
-    onpointerdown={(e) => ondragstart?.(node.id, e)}
-  />
-{/each}
-
-{#each store.furniture as node (node.id)}
-  <FurnitureMesh
-    {node}
+    elevationOffset={getElevationOffset(node.id)}
     selected={store.selectedNodeIds.has(node.id)}
     onclick={(e) => onselect?.(node.id, e)}
     onpointerdown={(e) => ondragstart?.(node.id, e)}
   />
 {/each}
 
-{#each store.annotations as node (node.id)}
+{#each visibleFurniture3D as node (node.id)}
+  <FurnitureMesh
+    {node}
+    elevationOffset={getElevationOffset(node.id)}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
+{/each}
+
+{#each visibleGuides3D as node (node.id)}
+  <AssetPlane
+    {node}
+    elevationOffset={getElevationOffset(node.id)}
+    selected={store.selectedNodeIds.has(node.id)}
+    onclick={(e) => onselect?.(node.id, e)}
+    onpointerdown={(e) => ondragstart?.(node.id, e)}
+  />
+{/each}
+
+{#each visibleAnnotations3D as node (node.id)}
   {@const x = node.posX * SCALE}
   {@const z = node.posY * SCALE}
   <!--
@@ -129,7 +193,7 @@
   -->
   <T.Mesh
     position.x={x}
-    position.y={1.5}
+    position.y={1.5 + store.getNodeWorldElevation(node.id) + store.getNodeDisplayElevationOffset(node.id)}
     position.z={z}
     onclick={(e: ThreltePointerEvent) => onselect?.(node.id, e)}
   >

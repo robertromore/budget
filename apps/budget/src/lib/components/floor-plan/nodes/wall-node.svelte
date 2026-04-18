@@ -18,7 +18,7 @@
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onclick?.(new MouseEvent("click", { bubbles: true }));
+      onclick?.(new MouseEvent("click", { bubbles: true, shiftKey: e.shiftKey }));
       return;
     }
     onkeydown?.(e);
@@ -35,7 +35,16 @@
   tabindex={selected ? 0 : -1}
   onkeydown={handleKeydown}
 >
+  <!--
+    Invisible pointer hit-target. Keyboard interactions are handled by the
+    outer `<g role="button">` wrapper (see its `onkeydown`); this line only
+    exists so mouse clicks anywhere near the wall register as a hit. Mark
+    it presentational so screen readers don't announce it as a second
+    interactive region.
+  -->
   <line
+    role="presentation"
+    aria-hidden="true"
     x1={node.posX}
     y1={node.posY}
     x2={node.x2 ?? node.posX}

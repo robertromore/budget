@@ -41,17 +41,21 @@
   let dragNodeId: string | null = null;
   let dragPointerStart: { x: number; z: number } | null = null;
   let dragNodeStart: {
-    nodeType: string;
     posX: number;
     posY: number;
-    x2: number | null;
-    y2: number | null;
   } | null = null;
+  let dragDidMove = false;
 
   /**
    * Reproject a pointer event's client coordinates onto the ground plane
    * at y=0 using the current camera. Returns null if the ray is parallel
    * to the plane or the canvas is detached from the DOM.
+   *
+   * IMPORTANT: returns the SHARED `worldPoint` scratch vector, not a
+   * fresh one — the sole caller reads `.x` / `.z` immediately and does
+   * not hold a reference past the next call. If you add a new caller
+   * that retains the result across pointer events, copy it via
+   * `new THREE.Vector3().copy(hit)` or take a local `{x, z}` snapshot.
    */
   function pointerToWorld(event: PointerEvent): THREE.Vector3 | null {
     const rect = canvas.getBoundingClientRect();
@@ -68,36 +72,40 @@
     const world = pointerToWorld(event);
     if (!world) return;
     if (!Number.isFinite(world.x) || !Number.isFinite(world.z)) return;
+    const node = store.nodes[dragNodeId];
+    if (!node) return;
     // Offset-from-start math — preserves fractional motion across snap
     // rounding so long slow drags stay pinned to the cursor.
     const dx = (world.x - dragPointerStart.x) / SCALE;
     const dz = (world.z - dragPointerStart.z) / SCALE;
     const posX = store.snap(dragNodeStart.posX + dx);
     const posY = store.snap(dragNodeStart.posY + dz);
-
-    if (
-      dragNodeStart.nodeType === "wall" &&
-      dragNodeStart.x2 !== null &&
-      dragNodeStart.y2 !== null
-    ) {
-      store.updateNode(dragNodeId, {
-        posX,
-        posY,
-        x2: store.snap(dragNodeStart.x2 + dx),
-        y2: store.snap(dragNodeStart.y2 + dz),
-      });
-      return;
-    }
-
-    store.updateNode(dragNodeId, { posX, posY });
+    const moveDx = posX - node.posX;
+    const moveDy = posY - node.posY;
+    if (moveDx === 0 && moveDy === 0) return;
+    // Route all drags through store.moveNode so wall/fence endpoint updates
+    // and wall-child opening translation stay consistent with 2D dragging.
+    dragDidMove = store.moveNode(dragNodeId, moveDx, moveDy) || dragDidMove;
   }
 
   function handleWindowPointerUp() {
     if (!dragNodeId) return;
+    if (!dragDidMove) {
+      detachListeners();
+      return;
+    }
+    // If the node disappeared mid-drag (e.g. deleted via the hierarchy
+    // panel while pointer was held), skip the commit entirely — otherwise
+    // we'd push an unrelated history snapshot for whatever state the store
+    // landed in after the deletion.
+    const dragged = store.nodes[dragNodeId];
+    if (!dragged) {
+      detachListeners();
+      return;
+    }
     // Mirror 2D behaviour: re-snap door/window onto whichever wall it's
     // now nearest, then commit a single history entry for the whole drag.
-    const dragged = store.nodes[dragNodeId];
-    if (dragged && (dragged.nodeType === "door" || dragged.nodeType === "window")) {
+    if (dragged.nodeType === "door" || dragged.nodeType === "window") {
       store.reparentOpeningToNearestWall(dragNodeId);
     }
     store.commitChange();
@@ -117,6 +125,7 @@
     dragNodeId = null;
     dragPointerStart = null;
     dragNodeStart = null;
+    dragDidMove = false;
   }
 
   /**
@@ -128,15 +137,14 @@
   export function start(id: string, anchor: THREE.Vector3): void {
     const node = store.nodes[id];
     if (!node) return;
+    if (store.isNodeLocked(id)) return;
     dragNodeId = id;
     dragPointerStart = { x: anchor.x, z: anchor.z };
     dragNodeStart = {
-      nodeType: node.nodeType,
       posX: node.posX,
       posY: node.posY,
-      x2: node.x2 ?? null,
-      y2: node.y2 ?? null,
     };
+    dragDidMove = false;
     attachListeners();
   }
 

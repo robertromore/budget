@@ -20,6 +20,7 @@ export * from "./price-history";
 export * from "./price-product-lists";
 export * from "./price-product-tags";
 export * from "./price-products";
+export * from "./price-retailers";
 export * from "./recommendations";
 export * from "./report-templates";
 export * from "./schedule-dates";

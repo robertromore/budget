@@ -2,6 +2,7 @@
 import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import type { PriceProduct } from '$core/schema/price-products';
+import type { PriceRetailer } from '$core/schema/price-retailers';
 import type { PriceAlert } from '$core/schema/price-alerts';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { cn } from '$lib/utils';
@@ -11,13 +12,15 @@ import Pause from '@lucide/svelte/icons/pause';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import ProductImage from './product-image.svelte';
+import RetailerBadge from './retailer-badge.svelte';
 
 interface Props {
   product: PriceProduct;
+  retailer?: PriceRetailer;
   alertCount?: number;
 }
 
-let { product, alertCount = 0 }: Props = $props();
+let { product, retailer, alertCount = 0 }: Props = $props();
 
 const priceChange = $derived.by(() => {
   if (product.currentPrice === null || product.highestPrice === null || product.highestPrice === 0) return null;
@@ -60,7 +63,11 @@ const targetPosition = $derived.by(() => {
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0 flex-1">
               <div class="truncate text-sm font-medium" title={product.name}>{product.name}</div>
-              <div class="text-muted-foreground text-xs capitalize">{product.retailer}</div>
+              {#if retailer}
+                <RetailerBadge name={retailer.name} logoUrl={retailer.logoUrl} />
+              {:else}
+                <span class="text-muted-foreground text-xs capitalize">{product.retailer}</span>
+              {/if}
             </div>
             <div class="flex shrink-0 items-center gap-1">
               {#if alertCount > 0}

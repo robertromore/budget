@@ -13,15 +13,30 @@ const KEY_LENGTH = 32;
 const IV_LENGTH = 16;
 
 /**
- * Get encryption key from environment or generate fallback for development.
- * In production, LLM_ENCRYPTION_KEY MUST be set.
+ * Get encryption key from environment.
+ *
+ * Throws in production if LLM_ENCRYPTION_KEY is missing — otherwise the
+ * module would silently encrypt every workspace's stored LLM API keys
+ * under a scrypt-derived key whose inputs ("development-fallback-key",
+ * "dev-salt") are committed to this repository. Env-config.ts also
+ * enforces this at startup; this is defense-in-depth so a misconfigured
+ * ad-hoc import that runs before env-config's parse (or runs in a worker
+ * without env validation) still fails safely.
+ *
+ * In development/test, a deterministic fallback is used so zero-config
+ * runs don't need any env setup. The fallback is intentionally never used
+ * in production.
  */
 function getEncryptionKey(): Buffer {
   const envKey = getEnv("LLM_ENCRYPTION_KEY");
 
   if (!envKey) {
+    if (getEnv("NODE_ENV") === "production") {
+      throw new Error(
+        "LLM_ENCRYPTION_KEY must be set in production. Refusing to fall back to a publicly-known key."
+      );
+    }
     console.warn("LLM_ENCRYPTION_KEY not set. Using fallback key. NOT SECURE FOR PRODUCTION.");
-    // Fallback for development only
     return scryptSync("development-fallback-key", "dev-salt", KEY_LENGTH);
   }
 

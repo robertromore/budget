@@ -1,4 +1,5 @@
 import type { PriceProduct } from "$core/schema/price-products";
+import type { PriceRetailer } from "$core/schema/price-retailers";
 import type { PriceHistoryEntry } from "$core/schema/price-history";
 import type { PriceAlert } from "$core/schema/price-alerts";
 import { trpc } from "$core/trpc/client-factory";
@@ -9,6 +10,7 @@ import { toast } from "./_toast";
 interface ProductPreview {
   url: string;
   retailer: string;
+  retailerLogoUrl: string | null;
   name: string | null;
   price: number | null;
   currency: string | null;
@@ -240,6 +242,32 @@ export const logManualPrice = defineMutation<
   errorMessage: "Failed to log price",
 });
 
+// ─── Retailers ─────────────────────────────────
+
+const retailerKeys = {
+  all: () => ["price-watcher", "retailers"] as const,
+};
+
+export const listRetailers = () =>
+  defineQuery<PriceRetailer[]>({
+    queryKey: retailerKeys.all(),
+    queryFn: () => trpc().priceWatcherRoutes.listRetailers.query(),
+    options: { staleTime: 60_000 },
+  });
+
+export const updateRetailer = defineMutation<
+  { id: number; data: { name?: string; logoUrl?: string | null; website?: string | null; notes?: string | null; color?: string | null } },
+  PriceRetailer
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.updateRetailer.mutate(params),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(retailerKeys.all());
+    cachePatterns.invalidatePrefix(priceWatcherKeys.products());
+  },
+  successMessage: "Retailer updated",
+  errorMessage: "Failed to update retailer",
+});
+
 // ─── Tags ─────────────────────────────────
 
 const tagKeys = {
@@ -287,20 +315,31 @@ export const removeTag = defineMutation<{ productId: number; tag: string }, void
 
 // ─── Lists ─────────────────────────────────
 
-import type { PriceProductList } from "$core/schema/price-product-lists";
+import type {
+  PriceProductList,
+  PriceProductListItem,
+  PriceProductListKind,
+} from "$core/schema/price-product-lists";
+import type { ListProductWithNotes } from "$core/server/domains/price-watcher/list-service";
 
 const listKeys = {
   all: () => ["price-watcher", "lists"] as const,
+  byKind: (kind: PriceProductListKind) =>
+    ["price-watcher", "lists", "by-kind", kind] as const,
   products: (listId: number) => ["price-watcher", "lists", listId, "products"] as const,
   productLists: (productId: number) => ["price-watcher", "product-lists", productId] as const,
 };
 
-export const getAllLists = () =>
+export const getAllLists = (kind?: PriceProductListKind) =>
   defineQuery<Array<PriceProductList & { itemCount: number }>>({
-    queryKey: listKeys.all(),
-    queryFn: () => trpc().priceWatcherRoutes.getAllLists.query(),
+    queryKey: kind ? listKeys.byKind(kind) : listKeys.all(),
+    queryFn: () =>
+      trpc().priceWatcherRoutes.getAllLists.query(kind ? { kind } : undefined),
     options: { staleTime: 30_000 },
   });
+
+/** Convenience wrapper — a saved product comparison is a `kind=comparison` list. */
+export const getComparisons = () => getAllLists("comparison");
 
 export const getProductLists = (productId: number) =>
   defineQuery<PriceProductList[]>({
@@ -309,13 +348,13 @@ export const getProductLists = (productId: number) =>
   });
 
 export const getListProducts = (listId: number) =>
-  defineQuery<PriceProduct[]>({
+  defineQuery<ListProductWithNotes[]>({
     queryKey: listKeys.products(listId),
     queryFn: () => trpc().priceWatcherRoutes.getListProducts.query({ listId }),
   });
 
 export const createList = defineMutation<
-  { name: string; description?: string | null },
+  { name: string; description?: string | null; kind?: PriceProductListKind },
   PriceProductList
 >({
   mutationFn: (params) => trpc().priceWatcherRoutes.createList.mutate(params),
@@ -324,6 +363,40 @@ export const createList = defineMutation<
   },
   successMessage: "List created",
   errorMessage: "Failed to create list",
+});
+
+/**
+ * Create a comparison-kind list. Thin wrapper around `createList` with
+ * `kind: "comparison"` baked in so the compare page doesn't have to
+ * remember the discriminator.
+ */
+export const createComparison = defineMutation<
+  { name: string; description?: string | null },
+  PriceProductList
+>({
+  mutationFn: (params) =>
+    trpc().priceWatcherRoutes.createList.mutate({ ...params, kind: "comparison" }),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(listKeys.all());
+  },
+  successMessage: "Comparison saved",
+  errorMessage: "Failed to save comparison",
+});
+
+/**
+ * Set the per-item notes on a list membership. Used by the comparison
+ * view to attach decision context ("noisy per reviews") to a specific
+ * product within a specific comparison.
+ */
+export const setListItemNotes = defineMutation<
+  { listId: number; productId: number; notes: string | null },
+  PriceProductListItem
+>({
+  mutationFn: (params) => trpc().priceWatcherRoutes.setListItemNotes.mutate(params),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(listKeys.products(variables.listId));
+  },
+  errorMessage: "Failed to save notes",
 });
 
 export const updateList = defineMutation<

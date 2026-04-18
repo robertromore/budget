@@ -3,7 +3,7 @@ import { budgetTransactions } from "$core/schema/budgets";
 import { categories } from "$core/schema/categories";
 import { payees } from "$core/schema/payees";
 import type { NewTransaction, Transaction } from "$core/schema/transactions";
-import { db } from "$core/server/db";
+import { db, runInTransaction } from "$core/server/db";
 import { logger } from "$core/server/shared/logging";
 import { NotFoundError, ValidationError } from "$core/server/shared/types/errors";
 import { InputSanitizer } from "$core/server/shared/validation";
@@ -1734,66 +1734,88 @@ export class TransactionService {
       toNotes = `Transfer from ${fromAccount?.name || "Unknown Account"}`;
     }
 
-    // Create FROM transaction (money out - negative amount)
-    const fromTransaction = await this.repository.create(
-      {
-        accountId: params.fromAccountId,
-        amount: -params.amount,
-        date: params.date,
-        notes: fromNotes,
-        categoryId: params.categoryId || null,
-        payeeId: params.payeeId || null,
+    // Create both transactions and link them atomically. Without the
+    // transaction wrapper a failure after the first INSERT leaves an orphan
+    // half-transfer (one row with transferId set but transferTransactionId
+    // never populated), breaking ledger invariants and balance math. The
+    // db-proxy automatically routes every call inside runInTransaction to
+    // the scoped tx via AsyncLocalStorage, so repository methods participate
+    // without plumbing a tx argument through.
+    const result = await runInTransaction(async () => {
+      // Create FROM transaction (money out - negative amount). workspaceId
+      // is set explicitly on insert so downstream transfer-lookup queries
+      // can filter by it even if the repository layer ever changes.
+      const fromTransaction = await this.repository.create(
+        {
+          workspaceId,
+          accountId: params.fromAccountId,
+          amount: -params.amount,
+          date: params.date,
+          notes: fromNotes,
+          categoryId: params.categoryId || null,
+          payeeId: params.payeeId || null,
+          transferId,
+          transferAccountId: params.toAccountId,
+          isTransfer: true,
+          status: "cleared", // Transfers are typically cleared immediately
+        },
+        workspaceId
+      );
+
+      // Create TO transaction (money in - positive amount)
+      const toTransaction = await this.repository.create(
+        {
+          workspaceId,
+          accountId: params.toAccountId,
+          amount: params.amount,
+          date: params.date,
+          notes: toNotes,
+          categoryId: params.categoryId || null,
+          payeeId: params.payeeId || null,
+          transferId,
+          transferAccountId: params.fromAccountId,
+          isTransfer: true,
+          status: "cleared",
+        },
+        workspaceId
+      );
+
+      // Link the transactions together
+      await this.repository.update(
+        fromTransaction.id,
+        {
+          transferTransactionId: toTransaction.id,
+        },
+        workspaceId
+      );
+
+      await this.repository.update(
+        toTransaction.id,
+        {
+          transferTransactionId: fromTransaction.id,
+        },
+        workspaceId
+      );
+
+      return {
         transferId,
-        transferAccountId: params.toAccountId,
-        isTransfer: true,
-        status: "cleared", // Transfers are typically cleared immediately
-      },
-      workspaceId
-    );
+        fromTransaction: await this.repository.findByIdWithRelations(
+          fromTransaction.id,
+          workspaceId
+        ),
+        toTransaction: await this.repository.findByIdWithRelations(
+          toTransaction.id,
+          workspaceId
+        ),
+      };
+    });
 
-    // Create TO transaction (money in - positive amount)
-    const toTransaction = await this.repository.create(
-      {
-        accountId: params.toAccountId,
-        amount: params.amount,
-        date: params.date,
-        notes: toNotes,
-        categoryId: params.categoryId || null,
-        payeeId: params.payeeId || null,
-        transferId,
-        transferAccountId: params.fromAccountId,
-        isTransfer: true,
-        status: "cleared",
-      },
-      workspaceId
-    );
-
-    // Link the transactions together
-    await this.repository.update(
-      fromTransaction.id,
-      {
-        transferTransactionId: toTransaction.id,
-      },
-      workspaceId
-    );
-
-    await this.repository.update(
-      toTransaction.id,
-      {
-        transferTransactionId: fromTransaction.id,
-      },
-      workspaceId
-    );
-
-    // Invalidate both account caches
+    // Cache invalidation runs after commit so it never advertises state
+    // that was rolled back.
     invalidateAccountCache(params.fromAccountId);
     invalidateAccountCache(params.toAccountId);
 
-    return {
-      transferId,
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
-    };
+    return result;
   }
 
   /**
@@ -1810,11 +1832,23 @@ export class TransactionService {
     },
     workspaceId: number
   ): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }> {
-    // Find both transactions using shared transferId
-    const transferTransactions = await db
+    // Find both transactions using shared transferId, scoped to the caller's
+    // workspace via the accounts join. Filtering by accounts.workspaceId
+    // (rather than transactions.workspaceId, which is still nullable on
+    // legacy rows — see H1) guarantees cross-tenant lookups can't return a
+    // row whose workspaceId column happens to be NULL.
+    const transferRows = await db
       .select()
       .from(transactions)
-      .where(and(eq(transactions.transferId, transferId), isNull(transactions.deletedAt)));
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(
+        and(
+          eq(transactions.transferId, transferId),
+          isNull(transactions.deletedAt),
+          eq(accounts.workspaceId, workspaceId)
+        )
+      );
+    const transferTransactions = transferRows.map((r) => r.transaction);
 
     if (transferTransactions.length !== 2) {
       throw new ValidationError(
@@ -1856,39 +1890,60 @@ export class TransactionService {
       updateData.payeeId = updates.payeeId;
     }
 
-    // Update FROM transaction
-    const fromUpdateData = { ...updateData };
-    if (updates.amount !== undefined) {
-      fromUpdateData.amount = -updates.amount; // Negative for outgoing
-    }
-    await this.repository.update(fromTransaction.id, fromUpdateData, workspaceId);
+    // Atomically update both sides of the transfer. A failure between the
+    // two updates would otherwise leave the pair with mismatched amounts
+    // (non-zero-sum), breaking the transfer invariant.
+    const result = await runInTransaction(async () => {
+      // Update FROM transaction
+      const fromUpdateData = { ...updateData };
+      if (updates.amount !== undefined) {
+        fromUpdateData.amount = -updates.amount; // Negative for outgoing
+      }
+      await this.repository.update(fromTransaction.id, fromUpdateData, workspaceId);
 
-    // Update TO transaction
-    const toUpdateData = { ...updateData };
-    if (updates.amount !== undefined) {
-      toUpdateData.amount = updates.amount; // Positive for incoming
-    }
-    await this.repository.update(toTransaction.id, toUpdateData, workspaceId);
+      // Update TO transaction
+      const toUpdateData = { ...updateData };
+      if (updates.amount !== undefined) {
+        toUpdateData.amount = updates.amount; // Positive for incoming
+      }
+      await this.repository.update(toTransaction.id, toUpdateData, workspaceId);
 
-    // Invalidate both account caches
+      return {
+        fromTransaction: await this.repository.findByIdWithRelations(
+          fromTransaction.id,
+          workspaceId
+        ),
+        toTransaction: await this.repository.findByIdWithRelations(
+          toTransaction.id,
+          workspaceId
+        ),
+      };
+    });
+
     invalidateAccountCache(fromTransaction.accountId);
     invalidateAccountCache(toTransaction.accountId);
 
-    return {
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
-    };
+    return result;
   }
 
   /**
    * Delete a transfer (soft deletes both transactions)
    */
   async deleteTransfer(transferId: string, workspaceId: number): Promise<void> {
-    // Find both transactions using shared transferId
-    const transferTransactions = await db
+    // Workspace-scoped lookup via the accounts join — otherwise a caller
+    // with a guessed transferId could probe across tenants.
+    const transferRows = await db
       .select()
       .from(transactions)
-      .where(and(eq(transactions.transferId, transferId), isNull(transactions.deletedAt)));
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(
+        and(
+          eq(transactions.transferId, transferId),
+          isNull(transactions.deletedAt),
+          eq(accounts.workspaceId, workspaceId)
+        )
+      );
+    const transferTransactions = transferRows.map((r) => r.transaction);
 
     if (transferTransactions.length !== 2) {
       throw new ValidationError(
@@ -1896,12 +1951,17 @@ export class TransactionService {
       );
     }
 
-    // Soft delete both transactions
+    // Soft-delete both sides atomically. Without the tx wrapper, a failure
+    // after the first softDelete leaves a one-sided transfer: one row live,
+    // one deleted, with the live row still referencing the deleted one via
+    // transferTransactionId.
     const accountIds = new Set<number>();
-    for (const transaction of transferTransactions) {
-      await this.repository.softDelete(transaction.id, workspaceId);
-      accountIds.add(transaction.accountId);
-    }
+    await runInTransaction(async () => {
+      for (const transaction of transferTransactions) {
+        await this.repository.softDelete(transaction.id, workspaceId);
+        accountIds.add(transaction.accountId);
+      }
+    });
 
     // Invalidate all affected account caches
     accountIds.forEach((accountId) => invalidateAccountCache(accountId));
@@ -2110,11 +2170,19 @@ export class TransactionService {
    * Unlink a transfer - converts two linked transfer transactions into independent transactions
    */
   async unlinkTransfer(transferId: string, workspaceId: number): Promise<void> {
-    // Find both transactions using shared transferId
-    const transferTransactions = await db
+    // Workspace-scoped lookup via the accounts join.
+    const transferRows = await db
       .select()
       .from(transactions)
-      .where(and(eq(transactions.transferId, transferId), isNull(transactions.deletedAt)));
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(
+        and(
+          eq(transactions.transferId, transferId),
+          isNull(transactions.deletedAt),
+          eq(accounts.workspaceId, workspaceId)
+        )
+      );
+    const transferTransactions = transferRows.map((r) => r.transaction);
 
     if (transferTransactions.length !== 2) {
       throw new ValidationError(
@@ -2124,20 +2192,24 @@ export class TransactionService {
 
     const accountIds = new Set<number>();
 
-    // Clear transfer fields on both transactions
-    for (const transaction of transferTransactions) {
-      await this.repository.update(
-        transaction.id,
-        {
-          isTransfer: false,
-          transferId: null,
-          transferAccountId: null,
-          transferTransactionId: null,
-        },
-        workspaceId
-      );
-      accountIds.add(transaction.accountId);
-    }
+    // Atomically clear transfer fields on both sides. A partial unlink
+    // would leave one transaction independent and one still referencing
+    // the (now-orphan) transferTransactionId.
+    await runInTransaction(async () => {
+      for (const transaction of transferTransactions) {
+        await this.repository.update(
+          transaction.id,
+          {
+            isTransfer: false,
+            transferId: null,
+            transferAccountId: null,
+            transferTransactionId: null,
+          },
+          workspaceId
+        );
+        accountIds.add(transaction.accountId);
+      }
+    });
 
     // Invalidate both account caches
     accountIds.forEach((accountId) => invalidateAccountCache(accountId));
@@ -2199,80 +2271,87 @@ export class TransactionService {
       .where(eq(accounts.id, targetAccountId))
       .limit(1);
 
-    // Update source transaction to be a transfer
-    await this.repository.update(
-      transactionId,
-      {
-        isTransfer: true,
+    // Atomic: mutate source → create target → link both. A failure midway
+    // would otherwise leave the source flagged isTransfer with no linked
+    // target, or a target row in the other account with no back-link.
+    const result = await runInTransaction(async () => {
+      // Update source transaction to be a transfer
+      await this.repository.update(
+        transactionId,
+        {
+          isTransfer: true,
+          transferId,
+          transferAccountId: targetAccountId,
+          notes:
+            existingTransaction.notes ||
+            (sourceAmount < 0
+              ? `Transfer to ${targetAccount?.name || "Unknown Account"}`
+              : `Transfer from ${targetAccount?.name || "Unknown Account"}`),
+        },
+        workspaceId
+      );
+
+      // Create paired transaction in target account
+      // Note: We don't copy categoryId or payeeId for transfers since:
+      // 1. Transfers between accounts aren't actual income/expenses, so categories don't apply
+      // 2. The payee context is specific to the source transaction's account
+      const targetTransaction = await this.repository.create(
+        {
+          workspaceId,
+          accountId: targetAccountId,
+          amount: targetAmount,
+          date: existingTransaction.date,
+          notes:
+            existingTransaction.notes ||
+            (targetAmount < 0
+              ? `Transfer to ${sourceAccount?.name || "Unknown Account"}`
+              : `Transfer from ${sourceAccount?.name || "Unknown Account"}`),
+          categoryId: null,
+          payeeId: null,
+          transferId,
+          transferAccountId: existingTransaction.accountId,
+          isTransfer: true,
+          status: existingTransaction.status || "cleared",
+        },
+        workspaceId
+      );
+
+      // Link transactions together
+      await this.repository.update(
+        transactionId,
+        {
+          transferTransactionId: targetTransaction.id,
+        },
+        workspaceId
+      );
+
+      await this.repository.update(
+        targetTransaction.id,
+        {
+          transferTransactionId: transactionId,
+        },
+        workspaceId
+      );
+
+      const updatedSourceTransaction = await this.repository.findByIdWithRelations(
+        transactionId,
+        workspaceId
+      );
+
+      return {
         transferId,
-        transferAccountId: targetAccountId,
-        notes:
-          existingTransaction.notes ||
-          (sourceAmount < 0
-            ? `Transfer to ${targetAccount?.name || "Unknown Account"}`
-            : `Transfer from ${targetAccount?.name || "Unknown Account"}`),
-      },
-      workspaceId
-    );
+        sourceTransaction: updatedSourceTransaction,
+        targetTransaction: await this.repository.findByIdWithRelations(
+          targetTransaction.id,
+          workspaceId
+        ),
+      };
+    });
 
-    // Create paired transaction in target account
-    // Note: We don't copy categoryId or payeeId for transfers since:
-    // 1. Transfers between accounts aren't actual income/expenses, so categories don't apply
-    // 2. The payee context is specific to the source transaction's account
-    const targetTransaction = await this.repository.create(
-      {
-        accountId: targetAccountId,
-        amount: targetAmount,
-        date: existingTransaction.date,
-        notes:
-          existingTransaction.notes ||
-          (targetAmount < 0
-            ? `Transfer to ${sourceAccount?.name || "Unknown Account"}`
-            : `Transfer from ${sourceAccount?.name || "Unknown Account"}`),
-        categoryId: null,
-        payeeId: null,
-        transferId,
-        transferAccountId: existingTransaction.accountId,
-        isTransfer: true,
-        status: existingTransaction.status || "cleared",
-      },
-      workspaceId
-    );
-
-    // Link transactions together
-    await this.repository.update(
-      transactionId,
-      {
-        transferTransactionId: targetTransaction.id,
-      },
-      workspaceId
-    );
-
-    await this.repository.update(
-      targetTransaction.id,
-      {
-        transferTransactionId: transactionId,
-      },
-      workspaceId
-    );
-
-    // Invalidate both account caches
     invalidateAccountCache(existingTransaction.accountId);
     invalidateAccountCache(targetAccountId);
 
-    const updatedSourceTransaction = await this.repository.findByIdWithRelations(
-      transactionId,
-      workspaceId
-    );
-
-    return {
-      transferId,
-      sourceTransaction: updatedSourceTransaction,
-      targetTransaction: await this.repository.findByIdWithRelations(
-        targetTransaction.id,
-        workspaceId
-      ),
-    };
+    return result;
   }
 
   /**

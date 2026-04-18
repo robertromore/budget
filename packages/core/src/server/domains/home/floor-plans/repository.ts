@@ -1,11 +1,13 @@
 import {
+  floorPlanOpeningNodeTypeEnum,
   homeFloorPlanNodes,
+  type FloorPlanNodeType,
   type FloorPlanNode,
   type NewFloorPlanNode,
 } from "$core/schema/home/home-floor-plan-nodes";
 import { db } from "$core/server/db";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 /**
  * Narrow helper type so repository methods can run against either the
@@ -82,6 +84,34 @@ export class FloorPlanRepository {
     return rows.map((r) => r.id);
   }
 
+  /**
+   * Return a node-type lookup for the given ids within a single home/workspace.
+   * Used by service-level scene-graph validation to verify parent/child type
+   * relationships without trusting client-supplied parent node types.
+   */
+  async findNodeTypesInHome(
+    ids: string[],
+    homeId: number,
+    workspaceId: number
+  ): Promise<Record<string, FloorPlanNodeType>> {
+    if (ids.length === 0) return {};
+    const rows = await db
+      .select({ id: homeFloorPlanNodes.id, nodeType: homeFloorPlanNodes.nodeType })
+      .from(homeFloorPlanNodes)
+      .where(
+        and(
+          inArray(homeFloorPlanNodes.id, ids),
+          eq(homeFloorPlanNodes.homeId, homeId),
+          eq(homeFloorPlanNodes.workspaceId, workspaceId),
+          isNull(homeFloorPlanNodes.deletedAt)
+        )
+      );
+
+    const byId: Record<string, FloorPlanNodeType> = {};
+    for (const row of rows) byId[row.id] = row.nodeType;
+    return byId;
+  }
+
   async create(data: NewFloorPlanNode): Promise<FloorPlanNode> {
     const [node] = await db.insert(homeFloorPlanNodes).values(data).returning();
 
@@ -107,32 +137,48 @@ export class FloorPlanRepository {
   ): Promise<void> {
     if (nodes.length === 0) return;
 
-    for (const node of nodes) {
+    // Batch into a single multi-row INSERT per chunk so a 2000-node save
+    // no longer pays a per-row round-trip inside the transaction. SQLite
+    // variable binding caps near 32k, and each row binds ~20 columns, so
+    // a chunk size of 100 (≈2000 bindings) is well clear of the ceiling
+    // and keeps individual statements small enough to stream.
+    const CHUNK_SIZE = 100;
+    const now = getCurrentTimestamp();
+    const payload = nodes.map((n) => ({ ...n, workspaceId }));
+
+    // Drizzle's `onConflictDoUpdate.set` accepts either literal values or
+    // `sql\`excluded.<col>\`` to copy from the proposed row. Copying from
+    // `excluded` lets a single statement apply per-row updates; literal
+    // values would force serial calls (the original loop).
+    const conflictSet = {
+      parentId: sql`excluded.parent_id`,
+      nodeType: sql`excluded.node_type`,
+      name: sql`excluded.name`,
+      posX: sql`excluded.pos_x`,
+      posY: sql`excluded.pos_y`,
+      width: sql`excluded.width`,
+      height: sql`excluded.height`,
+      rotation: sql`excluded.rotation`,
+      x2: sql`excluded.x2`,
+      y2: sql`excluded.y2`,
+      color: sql`excluded.color`,
+      opacity: sql`excluded.opacity`,
+      floorLevel: sql`excluded.floor_level`,
+      linkedLocationId: sql`excluded.linked_location_id`,
+      linkedItemId: sql`excluded.linked_item_id`,
+      properties: sql`excluded.properties`,
+      deletedAt: null,
+      updatedAt: now,
+    };
+
+    for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
+      const chunk = payload.slice(i, i + CHUNK_SIZE);
       await client
         .insert(homeFloorPlanNodes)
-        .values({ ...node, workspaceId })
+        .values(chunk)
         .onConflictDoUpdate({
           target: homeFloorPlanNodes.id,
-          set: {
-            parentId: node.parentId,
-            nodeType: node.nodeType,
-            name: node.name,
-            posX: node.posX,
-            posY: node.posY,
-            width: node.width,
-            height: node.height,
-            rotation: node.rotation,
-            x2: node.x2,
-            y2: node.y2,
-            color: node.color,
-            opacity: node.opacity,
-            floorLevel: node.floorLevel,
-            linkedLocationId: node.linkedLocationId,
-            linkedItemId: node.linkedItemId,
-            properties: node.properties,
-            deletedAt: null,
-            updatedAt: getCurrentTimestamp(),
-          },
+          set: conflictSet,
           // Defence in depth: the conflict-update only touches rows already
           // owned by this workspace. Without this, a pathological client
           // supplying an id colliding with another tenant's node would
@@ -208,8 +254,17 @@ export class FloorPlanRepository {
    * because their parent wall was deleted. Called by the service after
    * batch mutations so the scene doesn't render floating openings.
    * Soft-deletes to match the rest of the mutation surface.
+   *
+   * Scoped to a specific `floorLevel` — saving floor 0 must not delete
+   * a door that the user has temporarily unparented on floor 1 (e.g.
+   * mid-drag before re-attaching to another wall). Orphan cleanup fires
+   * once per saved floor, not across the whole home.
    */
-  async deleteOrphanOpenings(homeId: number, workspaceId: number): Promise<void> {
+  async deleteOrphanOpenings(
+    homeId: number,
+    workspaceId: number,
+    floorLevel: number
+  ): Promise<void> {
     const now = getCurrentTimestamp();
     await db
       .update(homeFloorPlanNodes)
@@ -218,9 +273,10 @@ export class FloorPlanRepository {
         and(
           eq(homeFloorPlanNodes.homeId, homeId),
           eq(homeFloorPlanNodes.workspaceId, workspaceId),
+          eq(homeFloorPlanNodes.floorLevel, floorLevel),
           isNull(homeFloorPlanNodes.parentId),
           isNull(homeFloorPlanNodes.deletedAt),
-          inArray(homeFloorPlanNodes.nodeType, ["door", "window"])
+          inArray(homeFloorPlanNodes.nodeType, floorPlanOpeningNodeTypeEnum)
         )
       );
   }

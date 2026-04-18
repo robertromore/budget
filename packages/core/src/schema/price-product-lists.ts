@@ -4,7 +4,23 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { priceProducts } from "./price-products";
 import { workspaces } from "./workspaces";
 
-// Named lists/wishlists
+/**
+ * Named product groupings. A single table powers two UX surfaces,
+ * distinguished by the `kind` column:
+ *
+ *   - `collection` (default): open-ended wishlists / tags that organise
+ *     products the user is tracking.
+ *   - `comparison`: a 2-to-6 product shortlist the user is actively
+ *     deciding between (e.g. "Vacuum shortlist"). The compare UI
+ *     renders side-by-side cards + a decision-helper summary on top of
+ *     the existing overlay chart.
+ *
+ * Keeping both kinds in one table avoids duplicating the CRUD + junction
+ * pattern; downstream UI filters by `kind` when it wants only one or
+ * the other.
+ */
+export type PriceProductListKind = "collection" | "comparison";
+
 export const priceProductLists = sqliteTable(
   "price_product_list",
   {
@@ -15,6 +31,9 @@ export const priceProductLists = sqliteTable(
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
+    kind: text("kind", { enum: ["collection", "comparison"] })
+      .notNull()
+      .default("collection"),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -24,6 +43,8 @@ export const priceProductLists = sqliteTable(
   },
   (table) => [
     index("price_product_list_workspace_idx").on(table.workspaceId),
+    // Speeds up the kind-scoped index pages (e.g. /comparisons).
+    index("price_product_list_kind_idx").on(table.workspaceId, table.kind),
   ]
 );
 
@@ -35,7 +56,12 @@ export const priceProductListsRelations = relations(priceProductLists, ({ one, m
   items: many(priceProductListItems),
 }));
 
-// List membership junction
+// List membership junction.
+//
+// `notes` is per-item freeform text used by comparison-kind lists (e.g.
+// "noisy per reviews", "includes HEPA"). Collections don't render it
+// today, but nothing blocks them from using the same field later. The
+// column is nullable so existing rows migrate cleanly.
 export const priceProductListItems = sqliteTable(
   "price_product_list_item",
   {
@@ -46,6 +72,7 @@ export const priceProductListItems = sqliteTable(
     productId: integer("product_id")
       .notNull()
       .references(() => priceProducts.id, { onDelete: "cascade" }),
+    notes: text("notes"),
     addedAt: text("added_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),

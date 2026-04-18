@@ -18,6 +18,7 @@ import {
   createAlert,
   deleteAlert as deleteAlertMutation,
   updateAlert,
+  listRetailers,
 } from '$lib/query/price-watcher';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { cn } from '$lib/utils';
@@ -32,7 +33,10 @@ import PriceHistoryChart from '../../(components)/price-history-chart.svelte';
 import ProductGallery from '../../(components)/product-gallery.svelte';
 import ProductTags from '../../(components)/product-tags.svelte';
 import ProductLists from '../../(components)/product-lists.svelte';
+import AddToComparisonButton from '../../(components)/add-to-comparison-button.svelte';
 import EditProductDialog from '../../(components)/edit-product-dialog.svelte';
+import RetailerBadge from '../../(components)/retailer-badge.svelte';
+import RetailerEditDialog from '../../(components)/retailer-edit-dialog.svelte';
 import { getAlertTypeLabel } from '../../(data)/alert-utils';
 import Pencil from '@lucide/svelte/icons/pencil';
 
@@ -42,6 +46,9 @@ const productQuery = $derived(getProduct(data.productSlug).options());
 const product = $derived(productQuery.data);
 const alertsQuery = $derived(product ? listAlerts(product.id).options() : undefined);
 const alerts = $derived(alertsQuery?.data ?? []);
+const retailersQuery = listRetailers().options();
+const retailerMap = $derived(new Map((retailersQuery.data ?? []).map((r) => [r.id, r])));
+const productRetailer = $derived(product?.retailerId ? retailerMap.get(product.retailerId) : undefined);
 
 const checkMutation = checkPriceNow.options();
 const browserCheckMutation = checkPriceWithBrowser.options();
@@ -56,6 +63,7 @@ let deleteOpen = $state(false);
 let addAlertOpen = $state(false);
 let manualPriceOpen = $state(false);
 let editOpen = $state(false);
+let retailerEditOpen = $state(false);
 let manualPriceValue = $state('');
 let newAlertType = $state('price_drop');
 let editingAlertId = $state<number | null>(null);
@@ -166,7 +174,14 @@ function cancelEditAlert() {
         <div>
           <h1 class="text-2xl font-bold" title={product.name}>{product.name}</h1>
           <div class="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-sm">
-            <span class="capitalize">{product.retailer}</span>
+            {#if productRetailer}
+              <RetailerBadge
+                name={productRetailer.name}
+                logoUrl={productRetailer.logoUrl}
+                onclick={() => (retailerEditOpen = true)} />
+            {:else}
+              <span class="capitalize">{product.retailer}</span>
+            {/if}
             <a
               href={product.url}
               target="_blank"
@@ -215,6 +230,13 @@ function cancelEditAlert() {
           <div class="border-border sm:border-l"></div>
           <div class="flex-1">
             <ProductLists productId={product.id} />
+          </div>
+          <div class="border-border sm:border-l"></div>
+          <div class="flex items-center">
+            <!-- Add to a named comparison (kind="comparison" list) —
+                 complements `ProductLists` which covers generic
+                 wishlists. Same underlying table, different UX. -->
+            <AddToComparisonButton productId={product.id} />
           </div>
         </div>
 
@@ -486,4 +508,8 @@ function cancelEditAlert() {
   </AlertDialog.Root>
 
   <EditProductDialog bind:open={editOpen} {product} />
+
+  {#if productRetailer}
+    <RetailerEditDialog bind:open={retailerEditOpen} retailer={productRetailer} />
+  {/if}
 {/if}

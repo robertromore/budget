@@ -278,4 +278,91 @@ describe("FloorPlanService — authorization runs before side effects", () => {
     expect(reloaded.find((n) => n.id === "survivor")).toBeTruthy();
     expect(reloaded.find((n) => n.id === "hostile-door")).toBeUndefined();
   });
+
+  it("deleteOrphanOpenings after save only touches the saved floor level", async () => {
+    // Regression: the post-save orphan cleanup previously ran across the
+    // whole home, so saving floor 0 would tombstone a door that the user
+    // had temporarily unparented on floor 1 (mid-drag, pre-reparent).
+    // Now scoped to `data.floorLevel`.
+    await ctx.service.saveFloorPlan(
+      {
+        homeId: ctx.homeId,
+        floorLevel: 0,
+        nodes: [node("wall-0", ctx.homeId, { floorLevel: 0 })],
+        deletedNodeIds: [],
+      },
+      ctx.workspaceId
+    );
+
+    // Seed a "floating" opening on floor 1 — parentId null, nodeType=door.
+    // This represents the mid-drag state we must not stomp on.
+    await ctx.service.saveFloorPlan(
+      {
+        homeId: ctx.homeId,
+        floorLevel: 1,
+        nodes: [
+          node("floating-door-1", ctx.homeId, {
+            floorLevel: 1,
+            nodeType: "door",
+            parentId: null,
+          }),
+        ],
+        deletedNodeIds: [],
+      },
+      ctx.workspaceId
+    );
+
+    // Trigger orphan cleanup by saving floor 0 with a wall deletion.
+    await ctx.service.saveFloorPlan(
+      {
+        homeId: ctx.homeId,
+        floorLevel: 0,
+        nodes: [],
+        deletedNodeIds: ["wall-0"],
+      },
+      ctx.workspaceId
+    );
+
+    // Floor 1's floating door must survive the floor-0 save.
+    const floor1 = await ctx.service.getFloorPlan(ctx.homeId, ctx.workspaceId, 1);
+    expect(floor1.find((n) => n.id === "floating-door-1")).toBeTruthy();
+  });
+
+  it("rejects a save whose child references a parent being deleted in the same batch", async () => {
+    // Seed a wall + door so the child has a real parent to reference.
+    await ctx.service.saveFloorPlan(
+      {
+        homeId: ctx.homeId,
+        floorLevel: 0,
+        nodes: [
+          node("wall-parent", ctx.homeId, { nodeType: "wall" }),
+        ],
+        deletedNodeIds: [],
+      },
+      ctx.workspaceId
+    );
+
+    // Attempt to upsert a door pointing at wall-parent while also deleting
+    // wall-parent in the same batch. Without the guard the child would
+    // dangle (the soft-delete doesn't cascade in libsql).
+    const conflicting: SaveFloorPlanInput = {
+      homeId: ctx.homeId,
+      floorLevel: 0,
+      nodes: [
+        node("dangling-door", ctx.homeId, {
+          nodeType: "door",
+          parentId: "wall-parent",
+        }),
+      ],
+      deletedNodeIds: ["wall-parent"],
+    };
+    await expect(
+      ctx.service.saveFloorPlan(conflicting, ctx.workspaceId)
+    ).rejects.toThrow(/deleted in the same request|cannot reference parent/i);
+
+    // Neither the delete nor the child upsert happened.
+    const reloaded = await ctx.service.getFloorPlan(ctx.homeId, ctx.workspaceId, 0);
+    expect(reloaded.find((n) => n.id === "wall-parent")).toBeTruthy();
+    expect(reloaded.find((n) => n.id === "dangling-door")).toBeUndefined();
+  });
 });

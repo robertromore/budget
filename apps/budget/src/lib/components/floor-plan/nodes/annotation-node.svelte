@@ -18,17 +18,22 @@
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onclick?.(new MouseEvent("click", { bubbles: true }));
+      onclick?.(new MouseEvent("click", { bubbles: true, shiftKey: e.shiftKey }));
       return;
     }
     onkeydown?.(e);
   }
+  const nodeLabel = $derived(
+    node.nodeType === "guide"
+      ? (node.name ? `Guide: ${node.name}` : "Guide")
+      : (node.name ? `Annotation: ${node.name}` : "Annotation")
+  );
 </script>
 
 <g
   class="annotation-node cursor-pointer outline-none focus-visible:[&_circle]:stroke-primary"
   role="button"
-  aria-label={node.name ? `Annotation: ${node.name}` : "Annotation"}
+  aria-label={nodeLabel}
   aria-pressed={selected}
   tabindex={selected ? 0 : -1}
   onmousedown={onmousedown}

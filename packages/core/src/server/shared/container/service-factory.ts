@@ -750,7 +750,10 @@ export class ServiceFactory {
   getHomeService(): HomeService {
     const key = "HomeService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new HomeService(this.getHomeRepository()));
+      this.instances.set(
+        key,
+        new HomeService(this.getHomeRepository(), this.getFloorPlanRepository())
+      );
     }
     return this.instances.get(key) as HomeService;
   }

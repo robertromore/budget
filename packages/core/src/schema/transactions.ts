@@ -9,6 +9,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
@@ -94,6 +95,17 @@ export const transactions = sqliteTable(
     index("transaction_is_archived_idx").on(table.isArchived),
     index("transaction_is_adjustment_idx").on(table.isAdjustment),
     index("transaction_fitid_idx").on(table.fitid),
+    // Partial unique index makes fitid-based deduplication authoritative at
+    // the database layer. Duplicate detection in the import orchestrator is
+    // otherwise a read-then-write race: two concurrent imports of the same
+    // OFX file (or a sync retry after a 500) can both pass the
+    // "no existing row with this fitid" check and then both insert. The
+    // WHERE clause limits uniqueness to live rows with a non-null fitid —
+    // user-entered transactions (fitid = NULL) and soft-deleted rows
+    // (deletedAt IS NOT NULL) are unaffected.
+    uniqueIndex("transaction_account_fitid_uq")
+      .on(table.accountId, table.fitid)
+      .where(sql`${table.fitid} IS NOT NULL AND ${table.deletedAt} IS NULL`),
   ]
 );
 

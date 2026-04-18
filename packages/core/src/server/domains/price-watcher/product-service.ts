@@ -8,10 +8,12 @@ import { ProductRepository } from "./product-repository";
 import { HistoryRepository } from "./history-repository";
 import { AlertService } from "./alert-service";
 import { detectRetailer, fetchProductInfo, type ProductInfo } from "./price-checker";
+import { RetailerService } from "./retailer-service";
 
 export interface ProductPreview {
   url: string;
   retailer: string;
+  retailerLogoUrl: string | null;
   name: string | null;
   price: number | null;
   currency: string | null;
@@ -24,7 +26,8 @@ export class ProductService {
   constructor(
     private productRepo: ProductRepository,
     private historyRepo: HistoryRepository,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private retailerService: RetailerService
   ) {}
 
   static normalizeUrl(url: string): string {
@@ -44,10 +47,12 @@ export class ProductService {
     if (!url) throw new ValidationError("A URL is required");
     const normalizedUrl = ProductService.normalizeUrl(url);
     const retailer = detectRetailer(normalizedUrl);
+    const domain = RetailerService.extractDomain(normalizedUrl);
     const info = await fetchProductInfo(normalizedUrl);
     return {
       url: normalizedUrl,
       retailer,
+      retailerLogoUrl: RetailerService.getFaviconUrl(domain),
       name: info.name,
       price: info.price,
       currency: info.currency,
@@ -81,7 +86,7 @@ export class ProductService {
       throw new ValidationError(`Invalid URL format: "${normalizedUrl}"`);
     }
 
-    const retailer = detectRetailer(normalizedUrl);
+    const retailerEntity = await this.retailerService.resolveRetailerForUrl(normalizedUrl, workspaceId);
     const info = await fetchProductInfo(normalizedUrl);
 
     const fullName = info.name || new URL(url).hostname;
@@ -97,7 +102,8 @@ export class ProductService {
       workspaceId,
       name,
       url: normalizedUrl,
-      retailer,
+      retailer: retailerEntity.slug,
+      retailerId: retailerEntity.id,
       slug,
       imageUrl: info.imageUrl,
       images: info.images.length > 0 ? JSON.stringify(info.images) : null,
@@ -294,7 +300,7 @@ export class ProductService {
 
   async listProducts(
     workspaceId: number,
-    filters?: { status?: string; retailer?: string }
+    filters?: { status?: string; retailer?: string; retailerId?: number }
   ): Promise<PriceProduct[]> {
     return this.productRepo.findAll(workspaceId, filters);
   }

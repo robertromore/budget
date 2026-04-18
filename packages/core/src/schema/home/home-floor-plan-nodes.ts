@@ -8,16 +8,34 @@ import { homeLocations } from "./home-locations";
 import { homeItems } from "./home-items";
 
 export const floorPlanNodeTypeEnum = [
+  // Pascal-style scene hierarchy + structure
+  "site",
+  "building",
+  "level",
   "wall",
+  "fence",
+  "zone",
+  "slab",
+  "ceiling",
+  "roof",
+  "roof-segment",
+  "stair",
+  "stair-segment",
+  // Existing floor-plan entities
   "room",
   "door",
   "window",
+  "item",
   "furniture",
   "appliance",
+  "scan",
+  "guide",
   "annotation",
 ] as const;
 
 export type FloorPlanNodeType = (typeof floorPlanNodeTypeEnum)[number];
+export const floorPlanOpeningNodeTypeEnum = ["door", "window"] as const;
+export type FloorPlanOpeningNodeType = (typeof floorPlanOpeningNodeTypeEnum)[number];
 
 export const homeFloorPlanNodes = sqliteTable(
   "home_floor_plan_node",

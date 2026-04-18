@@ -21,6 +21,10 @@ import {
   type HeaderTabsDisplay,
   type HeaderTabsMode,
 } from '$lib/stores/header-actions.svelte';
+import {
+  floorPlanToolbarLayout,
+  type FloorPlanToolbarLayout,
+} from '$lib/stores/floor-plan-toolbar-layout.svelte';
 
 // Reactive state for current values
 const currentDateFormat = $derived(displayPreferences.dateFormat);
@@ -34,6 +38,7 @@ const currentHeaderActionsMode = $derived(headerActionsMode.value);
 const currentHeaderActionsDisplay = $derived(headerActionsMode.displayMode);
 const currentHeaderTabsMode = $derived(headerActionsMode.tabsMode);
 const currentHeaderTabsDisplay = $derived(headerActionsMode.tabsDisplayMode);
+const currentFloorPlanToolbarLayout = $derived(floorPlanToolbarLayout.layout);
 
 // Local state for currency input
 let currencyInput = $state(displayPreferences.currencySymbol);
@@ -137,6 +142,26 @@ const notificationModeOptions = [
   },
 ] as const;
 
+// Floor-plan toolbar layout options. Purely a UI preference — persisted
+// to localStorage (no cross-device sync), mirrors the `headerActionsMode`
+// pattern. Users with narrow viewports or who prefer discoverability
+// pick `grouped`; users who want every tool one click away pick
+// `expanded`.
+const floorPlanToolbarLayoutOptions = [
+  {
+    value: 'grouped',
+    label: 'Grouped',
+    description:
+      'One button per tool group on the main toolbar; click the chevron to expand the rest of the group vertically.',
+  },
+  {
+    value: 'expanded',
+    label: 'Expanded',
+    description:
+      'Every tool visible inline with dividers between groups. Wider toolbar, no popovers.',
+  },
+] as const;
+
 // Notification verbosity options
 const notificationVerbosityOptions = [
   {
@@ -184,6 +209,10 @@ function handleHeaderTabsModeChange(value: string) {
 
 function handleHeaderTabsDisplayChange(value: string) {
   headerActionsMode.setTabsDisplay(value as HeaderTabsDisplay);
+}
+
+function handleFloorPlanToolbarLayoutChange(value: string) {
+  floorPlanToolbarLayout.setLayout(value as FloorPlanToolbarLayout);
 }
 
 function handleTableDisplayModeChange(value: string) {
@@ -511,6 +540,35 @@ const mobileTableViewOptions = [
             <Checkbox
               checked={currentTableDisplayMode === option.value}
               onCheckedChange={() => handleTableDisplayModeChange(option.value)}
+              class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
+            <div class="grid gap-1.5 font-normal">
+              <p class="text-sm leading-none font-medium">{option.label}</p>
+              <p class="text-muted-foreground text-sm">{option.description}</p>
+            </div>
+          </Label>
+        {/each}
+      </div>
+    </Card.Content>
+  </Card.Root>
+
+  <!-- Floor-Plan Toolbar Layout -->
+  <Card.Root
+    data-help-id="display-floor-plan-toolbar"
+    data-help-title="Floor-Plan Toolbar Layout">
+    <Card.Header>
+      <Card.Title>Floor-Plan Toolbar</Card.Title>
+      <Card.Description>
+        Choose how the floor-plan editor's tool buttons are laid out.
+      </Card.Description>
+    </Card.Header>
+    <Card.Content>
+      <div class="space-y-3">
+        {#each floorPlanToolbarLayoutOptions as option}
+          <Label
+            class="hover:bg-accent/50 has-aria-checked:border-primary has-aria-checked:bg-primary/10 flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+            <Checkbox
+              checked={currentFloorPlanToolbarLayout === option.value}
+              onCheckedChange={() => handleFloorPlanToolbarLayoutChange(option.value)}
               class="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
             <div class="grid gap-1.5 font-normal">
               <p class="text-sm leading-none font-medium">{option.label}</p>

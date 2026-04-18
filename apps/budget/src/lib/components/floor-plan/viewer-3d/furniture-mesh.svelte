@@ -11,11 +11,13 @@
   let {
     node,
     selected = false,
+    elevationOffset = 0,
     onclick,
     onpointerdown,
   }: {
     node: FloorPlanNode;
     selected?: boolean;
+    elevationOffset?: number;
     onclick?: PointerHandler;
     onpointerdown?: PointerHandler;
   } = $props();
@@ -42,9 +44,11 @@
   const posZ = $derived(
     (isOpening ? node.posY : node.posY + (node.height || 60) / 2) * SCALE
   );
+  const worldElevation = $derived((node.elevation ?? 0) + elevationOffset);
   const posY = $derived(
-    node.nodeType === "window" ? 1.0 + boxH / 2 + (node.elevation ?? 0) :
-    boxH / 2 + (node.elevation ?? 0)
+    node.nodeType === "window"
+      ? 1.0 + boxH / 2 + worldElevation
+      : boxH / 2 + worldElevation
   );
   const rotY = $derived(-(node.rotation ?? 0) * Math.PI / 180);
 

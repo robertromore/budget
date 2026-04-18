@@ -4,8 +4,11 @@
   import { onMount, untrack } from "svelte";
   import { rpc } from "$lib/query";
   import { FloorPlanStore } from "$lib/stores/floor-plan.svelte";
+  import type { EditorTool, FloorPlanWizardInput } from "$lib/stores/floor-plan.svelte";
   import FloorPlanCanvas from "$lib/components/floor-plan/floor-plan-canvas.svelte";
   import FloorPlanToolbar from "$lib/components/floor-plan/floor-plan-toolbar.svelte";
+  import FloorPlanDefaultWizard from "$lib/components/floor-plan/floor-plan-default-wizard.svelte";
+  import HierarchyPanel from "$lib/components/floor-plan/panels/hierarchy-panel.svelte";
   import PropertiesPanel from "$lib/components/floor-plan/panels/properties-panel.svelte";
 
   const homeSlug = $derived($page.params.homeSlug ?? "");
@@ -33,6 +36,8 @@
   let currentFloor = $state(0);
   let viewMode = $state<"2d" | "3d">("2d");
   let confirmDeleteOpen = $state(false);
+  let wizardOpen = $state(false);
+  let scene3DZoomPercent = $state(100);
 
   const floorPlanQuery = $derived(home ? rpc.homeFloorPlans.getFloorPlan(homeId, currentFloor).options() : undefined);
   const floorLevelsQuery = $derived(home ? rpc.homeFloorPlans.getFloorLevels(homeId).options() : undefined);
@@ -48,13 +53,21 @@
   );
 
   // Load nodes when query data arrives. Skip the load if the user has
-  // unsaved edits (isDirty) — otherwise a query refetch triggered during
-  // the save round-trip would clobber the in-flight changes. The load
-  // still fires once after markSaved() clears the dirty flag.
+  // unsaved edits (isDirty) for the SAME floor — otherwise a query refetch
+  // triggered during the save round-trip would clobber in-flight changes.
+  // Dedup by (homeId, floorLevel, data-ref) so switching floors always
+  // reloads even when referentially-equal cached payloads are in play.
+  let lastLoadedKey: string | null = null;
   let lastLoadedData: unknown = null;
   $effect(() => {
     const data = floorPlanQuery?.data;
-    if (data && data !== lastLoadedData && !untrack(() => store.isDirty)) {
+    if (!data) return;
+    const key = `${homeId}:${currentFloor}`;
+    const sameFloorSameData = key === lastLoadedKey && data === lastLoadedData;
+    if (sameFloorSameData) return;
+    const floorChanged = key !== lastLoadedKey;
+    if (floorChanged || !untrack(() => store.isDirty)) {
+      lastLoadedKey = key;
       lastLoadedData = data;
       untrack(() => store.loadNodes(data, homeId, currentFloor));
     }
@@ -62,8 +75,19 @@
 
   // Lazy-import the 3D scene to avoid SSR issues with Three.js.
   // Typed as the inferred default export so downstream usage isn't `any`.
+  //
+  // Svelte 5's `Component<Props, Exports, Bindings>` is a pure TYPE, not a
+  // constructor, so `InstanceType<>` on it errors. We declare the ref's
+  // shape explicitly — it must match scene-3d.svelte's `export function`
+  // declarations for `zoomIn` / `zoomOut` / `resetView`.
   type Scene3DModule = typeof import("$lib/components/floor-plan/viewer-3d/scene-3d.svelte");
+  type Scene3DExports = {
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetView: () => void;
+  };
   let Scene3D: Scene3DModule["default"] | null = $state(null);
+  let scene3DRef = $state<Scene3DExports | null>(null);
   $effect(() => {
     if (browser && viewMode === "3d" && !Scene3D) {
       import("$lib/components/floor-plan/viewer-3d/scene-3d.svelte").then((mod) => {
@@ -72,15 +96,53 @@
     }
   });
 
+  function handleToolbarZoomIn(): void {
+    if (viewMode === "3d") {
+      scene3DRef?.zoomIn?.();
+      return;
+    }
+    store.zoomIn();
+  }
+
+  function handleToolbarZoomOut(): void {
+    if (viewMode === "3d") {
+      scene3DRef?.zoomOut?.();
+      return;
+    }
+    store.zoomOut();
+  }
+
+  function handleToolbarResetView(): void {
+    if (viewMode === "3d") {
+      scene3DRef?.resetView?.();
+      return;
+    }
+    store.resetView();
+  }
+
+  function handleGenerateFromWizard(input: FloorPlanWizardInput): void {
+    if (!home) {
+      store.showStatusMessage("Wait for the floor plan to load before running the wizard.", "warning");
+      return;
+    }
+    store.generateDefaultPlanFromWizard(input);
+    wizardOpen = false;
+  }
+
   async function handleSave() {
+    // Snapshot the payload AND the live references behind it before
+    // awaiting the server. If the user mutates or creates nodes during
+    // the round-trip, those stay dirty instead of being silently
+    // baselined as "saved" by a post-await `markSaved()` call.
+    const captured = store.prepareSave();
     try {
       await saveMutation.mutateAsync({
         homeId,
         floorLevel: currentFloor,
-        nodes: store.getNodesForSave(),
-        deletedNodeIds: store.deletedNodeIds,
+        nodes: captured.nodes,
+        deletedNodeIds: captured.deletedNodeIds,
       });
-      store.markSaved();
+      store.markSaved(captured.sentRefs, captured.sentDeletedIds);
     } catch {
       // Error toast handled by defineMutation's errorMessage
     }
@@ -102,8 +164,32 @@
     confirmDeleteOpen = false;
   }
 
+  function setTool(tool: EditorTool) {
+    // Keyboard shortcut path — use the side-effecting variant so the
+    // user gets a toast if parents need to be created or a reason is
+    // required (matches clicking the toolbar button).
+    if (!store.tryActivateTool(tool)) return;
+    store.activeTool = tool;
+  }
+
+  function isTextEntryTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) return false;
+    const tag = target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+    if (target instanceof HTMLElement && target.isContentEditable) return true;
+    return false;
+  }
+
   function handleKeyDown(e: KeyboardEvent) {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.isComposing) return;
+    // Guard against focus being on a form element, including portalled
+    // inputs inside shadow DOM (bits-ui dialogs, select popovers), where
+    // `e.target` resolves to the shadow host rather than the input. Falling
+    // back to `document.activeElement` catches those cases so bare keys like
+    // `z`/`l`/`b`/`y` don't silently mutate the editor.
+    if (isTextEntryTarget(e.target) || isTextEntryTarget(document.activeElement)) return;
+    if (wizardOpen) return;
+    const hasModifier = e.metaKey || e.ctrlKey || e.altKey;
 
     if (e.key === "Delete" || e.key === "Backspace") {
       requestDeleteSelected();
@@ -122,20 +208,52 @@
     } else if (e.key === "Escape") {
       store.clearSelection();
       store.activeTool = "select";
-    } else if (e.key === "v" || e.key === "1") {
-      store.activeTool = "select";
-    } else if (e.key === "h" || e.key === "2") {
-      store.activeTool = "pan";
-    } else if (e.key === "w" || e.key === "3") {
-      store.activeTool = "wall";
-    } else if (e.key === "r" || e.key === "4") {
-      store.activeTool = "room";
-    } else if (e.key === "d" || e.key === "5") {
-      store.activeTool = "door";
-    } else if (e.key === "g" || e.key === "6") {
-      store.activeTool = "window";
-    } else if (e.key === "f" || e.key === "7") {
-      store.activeTool = "furniture";
+    } else if (!hasModifier && e.key === "c") {
+      store.selectionToolMode = "click";
+      setTool("select");
+    } else if (!hasModifier && e.key === "m") {
+      store.selectionToolMode = "marquee";
+      setTool("select");
+    } else if (!hasModifier && (e.key === "v" || e.key === "1")) {
+      setTool("select");
+    } else if (!hasModifier && (e.key === "h" || e.key === "2")) {
+      setTool("pan");
+    } else if (!hasModifier && (e.key === "w" || e.key === "3")) {
+      setTool("wall");
+    } else if (!hasModifier && (e.key === "e" || e.key === "8")) {
+      setTool("fence");
+    } else if (!hasModifier && (e.key === "r" || e.key === "4")) {
+      setTool("room");
+    } else if (!hasModifier && (e.key === "q" || e.key === "9")) {
+      setTool("zone");
+    } else if (!hasModifier && e.key === "u") {
+      setTool("site");
+    } else if (!hasModifier && e.key === "b") {
+      setTool("building");
+    } else if (!hasModifier && e.key === "l") {
+      setTool("level");
+    } else if (!hasModifier && e.key === "j") {
+      setTool("slab");
+    } else if (!hasModifier && e.key === "y") {
+      setTool("ceiling");
+    } else if (!hasModifier && e.key === "o") {
+      setTool("roof");
+    } else if (!hasModifier && e.key === "p") {
+      setTool("roof-segment");
+    } else if (!hasModifier && e.key === "x") {
+      setTool("stair");
+    } else if (!hasModifier && (e.key === "d" || e.key === "5")) {
+      setTool("door");
+    } else if (!hasModifier && (e.key === "g" || e.key === "6")) {
+      setTool("window");
+    } else if (!hasModifier && (e.key === "f" || e.key === "7")) {
+      setTool("furniture");
+    } else if (!hasModifier && (e.key === "i" || e.key === "0")) {
+      setTool("item");
+    } else if (!hasModifier && e.key === "n") {
+      setTool("scan");
+    } else if (!hasModifier && e.key === "t") {
+      setTool("guide");
     }
   }
 </script>
@@ -148,7 +266,19 @@
     {store}
     onsave={handleSave}
     {viewMode}
+    zoomPercent={viewMode === "3d" ? scene3DZoomPercent : undefined}
+    onzoomin={handleToolbarZoomIn}
+    onzoomout={handleToolbarZoomOut}
+    onresetview={handleToolbarResetView}
     onviewmodechange={(mode) => (viewMode = mode)}
+    onopenwizard={() => (wizardOpen = true)}
+  />
+
+  <FloorPlanDefaultWizard
+    open={wizardOpen}
+    hasExistingNodes={store.nodeList.length > 0}
+    oncancel={() => (wizardOpen = false)}
+    ongenerate={handleGenerateFromWizard}
   />
 
   <!-- Floor level selector -->
@@ -177,17 +307,33 @@
     </div>
   {/if}
 
+  <!--
+    Live region for editor status messages. Off-screen but announced by
+    screen readers when `store.statusMessage` changes — covers blocked
+    tool activations, auto-detect results, "ground level can't be
+    deleted", etc. Visually hidden (the toast-style surface is rendered
+    elsewhere); this is the a11y channel.
+  -->
+  <div role="status" aria-live="polite" aria-atomic="true" class="sr-only">
+    {store.statusMessage ?? ""}
+  </div>
+
   <!-- Canvas + Properties -->
   <div class="flex flex-1 overflow-hidden">
     <div class="flex-1">
       {#if viewMode === "3d" && Scene3D}
-        <Scene3D {store} />
+        <Scene3D {store} bind:this={scene3DRef} bind:zoomPercent={scene3DZoomPercent} />
       {:else}
         <FloorPlanCanvas {store} />
       {/if}
     </div>
     {#if viewMode === "2d"}
-      <PropertiesPanel {store} />
+      <div class="flex w-80 flex-col border-l bg-white dark:bg-zinc-900">
+        <HierarchyPanel {store} />
+        <div class="min-h-0 flex-1 overflow-y-auto">
+          <PropertiesPanel {store} />
+        </div>
+      </div>
     {/if}
   </div>
 

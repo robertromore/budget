@@ -6,6 +6,7 @@ import * as Popover from '$lib/components/ui/popover';
 import {
   listProducts,
   listAlerts,
+  listRetailers,
   getAllTags,
   getAllLists,
   getListProducts,
@@ -31,11 +32,13 @@ import ManageListsDialog from '../(components)/manage-lists-dialog.svelte';
 
 const productsQuery = listProducts().options();
 const alertsQuery = listAlerts().options();
+const retailersQuery = listRetailers().options();
 const tagsQuery = getAllTags().options();
 const listsQuery = getAllLists().options();
 
 const products = $derived(productsQuery.data ?? []);
 const alerts = $derived(alertsQuery.data ?? []);
+const retailerMap = $derived(new Map((retailersQuery.data ?? []).map((r) => [r.id, r])));
 const allTags = $derived(tagsQuery.data ?? []);
 const allLists = $derived(listsQuery.data ?? []);
 const isLoading = $derived(productsQuery.isLoading);
@@ -329,7 +332,7 @@ const gridPageProducts = $derived(
   {:else if viewMode === 'grid'}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {#each gridPageProducts as product (product.id)}
-        <ProductCard {product} alertCount={alertCountByProduct.get(product.id) ?? 0} />
+        <ProductCard {product} retailer={product.retailerId ? retailerMap.get(product.retailerId) : undefined} alertCount={alertCountByProduct.get(product.id) ?? 0} />
       {/each}
     </div>
     {#if gridTotalPages > 1}

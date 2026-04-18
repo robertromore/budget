@@ -16,6 +16,7 @@ import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 interface ProductPreviewData {
   url: string;
   retailer: string;
+  retailerLogoUrl: string | null;
   name: string | null;
   price: number | null;
   currency: string | null;
@@ -202,7 +203,12 @@ function handleUrlKeydown(e: KeyboardEvent) {
                   {preview.name || 'Unknown product'}
                 </p>
                 <div class="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" class="text-[10px]">{preview.retailer}</Badge>
+                  <Badge variant="outline" class="text-[10px]">
+                    {#if preview.retailerLogoUrl}
+                      <img src={preview.retailerLogoUrl} alt="" class="mr-1 inline h-3 w-3 rounded" />
+                    {/if}
+                    {preview.retailer}
+                  </Badge>
                   {#if preview.price !== null}
                     <span class="text-sm font-semibold">
                       {currencyFormatter.format(preview.price)}

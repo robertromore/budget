@@ -12,12 +12,14 @@
     node,
     openings = [],
     selected = false,
+    elevationOffset = 0,
     onclick,
     onpointerdown,
   }: {
     node: FloorPlanNode;
     openings?: FloorPlanNode[];
     selected?: boolean;
+    elevationOffset?: number;
     onclick?: PointerHandler;
     onpointerdown?: PointerHandler;
   } = $props();
@@ -26,7 +28,14 @@
 
   function createGeom() {
     return createWallGeometry(
-      { ...node, posX: node.posX * SCALE, posY: node.posY * SCALE, x2: (node.x2 ?? 0) * SCALE, y2: (node.y2 ?? 0) * SCALE },
+      {
+        ...node,
+        posX: node.posX * SCALE,
+        posY: node.posY * SCALE,
+        x2: (node.x2 ?? 0) * SCALE,
+        y2: (node.y2 ?? 0) * SCALE,
+        elevation: (node.elevation ?? 0) + elevationOffset,
+      },
       openings
     );
   }
@@ -47,6 +56,7 @@
       node.wallHeight,
       node.thickness,
       node.elevation,
+      elevationOffset,
       ...openings.map(
         (o) =>
           `${o.id}:${o.nodeType}:${o.posX}:${o.posY}:${o.width}:${o.height}:${o.rotation}:${o.wallHeight}`
@@ -67,7 +77,11 @@
    * first-effect can't silently miss a rebuild.
    */
   const REBUILD_DEBOUNCE_MS = 80;
-  let builtFingerprint = geometryFingerprint;
+  // Seed `builtFingerprint` with the fingerprint that corresponds to the
+  // initial synchronous geometry build. `untrack` makes it explicit that
+  // we only want the initial value here — subsequent updates happen
+  // inside the `$effect` below, which owns the reactive dependency.
+  let builtFingerprint = untrack(() => geometryFingerprint);
   let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {
@@ -92,29 +106,37 @@
     geometry?.dispose();
   });
 
+  // Unselected walls share the color-keyed preset directly — no clone,
+  // no per-render GPU churn when arrow-key nudges or unrelated state
+  // changes invalidate this derivation. Only pay for a clone when we
+  // need to paint a selection emissive on top of the base material.
   const material = $derived.by(() => {
-    const mat = wallMaterial(node.color ?? undefined).clone();
-    if (selected) {
-      mat.emissive = new THREE.Color("#3b82f6");
-      mat.emissiveIntensity = 0.3;
-    }
+    const base = wallMaterial(node.color ?? undefined);
+    if (!selected) return base;
+    const mat = base.clone();
+    mat.emissive = new THREE.Color("#3b82f6");
+    mat.emissiveIntensity = 0.3;
     return mat;
   });
 
-  // Dispose the prior material clone whenever the reactive derivation yields
-  // a new one. Without this the clones accumulated on every selection /
-  // color change, leaking GPU memory for the life of the scene.
+  // Only clones we created (selection highlight) need disposal; cached
+  // presets are long-lived and owned by `disposeMaterials()`.
   let prevMaterial: THREE.Material | null = null;
+  let prevMaterialOwned = false;
   $effect(() => {
     const current = material;
+    const currentOwned = selected;
     untrack(() => {
-      if (prevMaterial && prevMaterial !== current) {
+      if (prevMaterial && prevMaterialOwned && prevMaterial !== current) {
         prevMaterial.dispose();
       }
       prevMaterial = current;
+      prevMaterialOwned = currentOwned;
     });
   });
-  onDestroy(() => prevMaterial?.dispose());
+  onDestroy(() => {
+    if (prevMaterialOwned) prevMaterial?.dispose();
+  });
 </script>
 
 <T.Mesh
