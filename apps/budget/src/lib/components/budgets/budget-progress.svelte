@@ -45,6 +45,17 @@ const percentage = $derived.by(() => Math.max(0, ratio * 100));
 const clampedPercentage = $derived.by(() => Math.min(percentage, 100));
 const remaining = $derived.by(() => allocated - consumed);
 
+/**
+ * Readable percent for the top-right label. Values beyond 999 read as
+ * typos at a glance, so clamp display to `999+%`. The real magnitude
+ * lives in the `+$delta` badge to the right of the track and in
+ * `aria-valuetext` for screen readers.
+ */
+const displayPercent = $derived.by(() => {
+  const rounded = Math.round(percentage);
+  return rounded > 999 ? '999+%' : `${rounded}%`;
+});
+
 const statusLabel = $derived.by(() => {
   switch (status) {
     case 'approaching':
@@ -134,11 +145,20 @@ function handleStatusClick() {
 <div class={cn('bg-card rounded-lg border shadow-sm', enforcementClasses, sizeClasses, className)}>
   <div class="flex items-center justify-between gap-3">
     <div class="text-card-foreground font-medium">{label}</div>
-    <div class="text-muted-foreground text-xs">{Math.round(percentage)}%</div>
+    <div
+      class={cn('text-xs', percentage > 100 ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+      {displayPercent}
+    </div>
   </div>
 
   <div class="mt-3 flex flex-col gap-3">
-    <div class="bg-muted relative h-2 w-full overflow-hidden rounded-full">
+    <div
+      class="bg-muted relative h-2 w-full overflow-hidden rounded-full"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(clampedPercentage)}
+      aria-valuetext={`${Math.round(percentage)}% of budget`}>
       <div
         class={cn('h-full rounded-full transition-all duration-300', barClasses)}
         style={`width: ${clampedPercentage}%`}>

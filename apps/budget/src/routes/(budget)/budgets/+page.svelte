@@ -52,10 +52,7 @@ import {
   CircleCheck,
   DollarSign,
   FileText,
-  FolderTree,
   Grid3x3,
-  LayoutGrid,
-  List as ListIcon,
   Pin,
   Plus,
   Sparkles,
@@ -759,6 +756,24 @@ const topAtRiskBudget = $derived(
     return s === 'over' || s === 'approaching';
   }) ?? null
 );
+
+/**
+ * Clamp the displayed percent-used so extreme values (demo data can
+ * reach 1000%+) don't read as a typo or broken render. The underlying
+ * number is preserved in the bar logic and in the at-risk count; this
+ * is purely a display treatment for the scan-line and the Spent card.
+ */
+function formatPercentDisplay(value: number, decimals = 0): string {
+  if (!Number.isFinite(value)) return '0%';
+  if (value > 999) return '999+%';
+  return `${value.toFixed(decimals)}%`;
+}
+
+// Remaining/Overspent card values. Title carries the sign semantics
+// ("Overspent" vs "Remaining"); the value is always the unsigned
+// magnitude so users don't have to mentally parse a minus sign.
+const isOverspent = $derived(summaryMetrics.remaining < 0);
+const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
 </script>
 
 <svelte:head>
@@ -788,7 +803,7 @@ const topAtRiskBudget = $derived(
           <span class="text-muted-foreground/50" aria-hidden="true">·</span>
           <span>
             <span class="text-foreground font-medium tabular-nums">
-              {formatPercentRaw(summaryMetrics.percentUsed, 0)}
+              {formatPercentDisplay(summaryMetrics.percentUsed, 0)}
             </span>
             spent
           </span>
@@ -933,7 +948,7 @@ const topAtRiskBudget = $derived(
               class="text-[10px] sm:text-xs {summaryMetrics.percentUsed > 100
                 ? 'text-destructive'
                 : 'text-muted-foreground'}">
-              {formatPercentRaw(summaryMetrics.percentUsed, 1)} of allocated
+              {formatPercentDisplay(summaryMetrics.percentUsed, 1)} of allocated
             </p>
           {/if}
         </Card.Content>
@@ -942,19 +957,20 @@ const topAtRiskBudget = $derived(
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
           <Card.Title class="text-xs font-medium sm:text-sm">
-            {summaryMetrics.remaining < 0 ? 'Overspent' : 'Remaining'}
+            {isOverspent ? 'Overspent' : 'Remaining'}
           </Card.Title>
           <CircleCheck class="text-muted-foreground h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
         </Card.Header>
         <Card.Content>
           <div
-            class="truncate text-lg font-bold tabular-nums sm:text-2xl {summaryMetrics.remaining < 0
+            class="truncate text-lg font-bold tabular-nums sm:text-2xl {isOverspent
               ? 'text-destructive'
               : ''}"
-            title={formatCurrency(summaryMetrics.remaining)}>
-            {formatCurrency(summaryMetrics.remaining)}
+            title={formatCurrencyAbs(remainingMagnitude)}>
+            {formatCurrencyAbs(remainingMagnitude)}
           </div>
           <p class="text-muted-foreground text-[10px] sm:text-xs">
+            {isOverspent ? 'Over budget across' : 'Across'}
             {summaryMetrics.activeBudgets} active {summaryMetrics.activeBudgets === 1
               ? 'budget'
               : 'budgets'}
@@ -1093,12 +1109,10 @@ const topAtRiskBudget = $derived(
               }}
               aria-label="Overview layout"
               data-tour-id="budget-layout-toggle">
-              <ToggleGroup.Item value="flat" class="h-9 px-3">
-                <ListIcon class="mr-1.5 h-4 w-4" />
+              <ToggleGroup.Item value="flat" class="h-9 px-4">
                 Flat
               </ToggleGroup.Item>
-              <ToggleGroup.Item value="grouped" class="h-9 px-3">
-                <FolderTree class="mr-1.5 h-4 w-4" />
+              <ToggleGroup.Item value="grouped" class="h-9 px-4">
                 Grouped
               </ToggleGroup.Item>
             </ToggleGroup.Root>

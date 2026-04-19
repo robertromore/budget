@@ -1,15 +1,9 @@
 <script lang="ts">
-import {
-  AdvancedDataTable,
-  GenericDisplayInput,
-  GenericFilterInput,
-} from '$lib/components/data-table';
+import { AdvancedDataTable } from '$lib/components/data-table';
 import type { TableState } from '$lib/components/data-table/state/create-table-state.svelte';
 import type { BudgetWithRelations } from '$core/server/domains/budgets';
-import type { FilterInputOption } from '$lib/types';
 import type {
   ColumnDef,
-  ColumnFiltersState,
   RowSelectionState,
   Table as TTable,
 } from '@tanstack/table-core';
@@ -37,9 +31,6 @@ let {
   onToggleSelectId,
   table = $bindable(),
 }: Props = $props();
-
-// Column filters state (managed locally)
-let columnFilters = $state<ColumnFiltersState>([]);
 
 // Grab a handle on the inner TanStack state so we can drive the row-
 // selection map reactively from the page-level SvelteSet.
@@ -108,19 +99,15 @@ $effect(() => {
   }
   lastSyncedKeys = nextKeys;
 });
-
-// Extract available filters from columns that have facetedFilter meta
-function getAvailableFilters(tableInstance: TTable<BudgetWithRelations>) {
-  return tableInstance
-    .getAllColumns()
-    .map((column) => {
-      const facetedFilter = column.columnDef.meta?.facetedFilter;
-      return facetedFilter ? (facetedFilter(column) as FilterInputOption) : null;
-    })
-    .filter((filter): filter is FilterInputOption => filter !== null);
-}
 </script>
 
+<!--
+  No inline toolbar or footer slots are passed in — the page-level
+  `EntitySearchToolbar` is the single filter/sort entry point for
+  budgets, and the sticky `BudgetSelectionBar` handles bulk actions.
+  Column-visibility is deferred as a power-user affordance; can be
+  added back via a dedicated menu later if users ask for it.
+-->
 <AdvancedDataTable
   data={budgets}
   {columns}
@@ -136,28 +123,4 @@ function getAvailableFilters(tableInstance: TTable<BudgetWithRelations>) {
   pageSizeOptions={[10, 25, 50, 100]}
   emptyMessage="No budgets found."
   bind:table
-  bind:state={tableState}>
-  {#snippet toolbar(tableInstance)}
-    {@const availableFilters = getAvailableFilters(tableInstance)}
-    <div class="flex items-center justify-between gap-2">
-      <GenericFilterInput
-        table={tableInstance}
-        {availableFilters}
-        {columnFilters}
-        onColumnFiltersChange={(filters) => {
-          columnFilters = filters;
-          tableInstance.setColumnFilters(filters);
-        }} />
-      <GenericDisplayInput
-        table={tableInstance}
-        sorting={tableInstance.getState().sorting}
-        onSortingChange={(sorting) => tableInstance.setSorting(sorting)}
-        columnVisibility={tableInstance.getState().columnVisibility}
-        onVisibilityChange={(visibility) => tableInstance.setColumnVisibility(visibility)}
-        columnOrder={tableInstance.getState().columnOrder}
-        onColumnOrderChange={(order) => tableInstance.setColumnOrder(order)}
-        pageSize={tableInstance.getState().pagination.pageSize}
-        onPageSizeChange={(size) => tableInstance.setPageSize(size)} />
-    </div>
-  {/snippet}
-</AdvancedDataTable>
+  bind:state={tableState} />

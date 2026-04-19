@@ -167,9 +167,14 @@ const clearAllFilters = () => {
       <Popover.Root>
         <Popover.Trigger>
           {#snippet child({ props })}
-            <Button variant="outline" {...props} class="h-9 w-[180px] justify-start">
-              <ArrowUpDown class="mr-2 h-4 w-4" />
-              {getCurrentSortLabel}
+            <Button
+              variant="outline"
+              {...props}
+              class="h-9 w-45 justify-start overflow-hidden">
+              <ArrowUpDown class="mr-2 h-4 w-4 shrink-0" />
+              <span class="min-w-0 flex-1 truncate text-left">
+                {getCurrentSortLabel}
+              </span>
             </Button>
           {/snippet}
         </Popover.Trigger>
