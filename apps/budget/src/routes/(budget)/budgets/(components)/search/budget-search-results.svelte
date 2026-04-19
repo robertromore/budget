@@ -4,10 +4,10 @@ import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import type { BudgetProgressStatus } from '$core/schema/budgets';
 import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn, currencyFormatter } from '$lib/utils';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
+import { resolveBudgetProgressStatus } from '$lib/utils/budget-status';
 import { highlightMatches } from '$lib/utils/search';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Copy from '@lucide/svelte/icons/copy';
@@ -65,17 +65,7 @@ function getRemaining(budget: BudgetWithRelations): number {
   return getAllocated(budget) - getConsumed(budget);
 }
 
-function getBudgetStatus(budget: BudgetWithRelations): BudgetProgressStatus {
-  if (budget.status !== 'active') return 'paused';
-  const allocated = getAllocated(budget);
-  const consumed = getConsumed(budget);
-  if (!allocated) return 'paused';
-
-  const ratio = consumed / allocated;
-  if (ratio > 1) return 'over';
-  if (ratio >= 0.8) return 'approaching';
-  return 'on_track';
-}
+const getBudgetStatus = resolveBudgetProgressStatus;
 
 function getStatusDisplay(status: string) {
   switch (status) {

@@ -26,6 +26,15 @@ class PageTabsState {
     this.config = newConfig;
   }
 
+  /**
+   * Patch only the active tab without re-registering the whole config.
+   * Cheaper than `register` when only the selection changes (the common
+   * case) — tabs list and handler identities stay stable.
+   */
+  setActive(activeTab: string) {
+    if (this.config) this.config.activeTab = activeTab;
+  }
+
   clear() {
     this.config = null;
   }

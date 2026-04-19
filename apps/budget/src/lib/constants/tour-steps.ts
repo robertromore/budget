@@ -390,7 +390,8 @@ export const BUDGET_TOUR_STEP_IDS = {
   CREATE_BUDGET: "create-budget",
   OVERVIEW_TAB: "budget-overview-tab",
   RECOMMENDATIONS_TAB: "budget-recommendations-tab",
-  GROUPS_TAB: "budget-groups-tab",
+  // Formerly a standalone tab; now a layout toggle inside the Overview tab.
+  GROUPS_TAB: "budget-layout-toggle",
   FUND_TRANSFER_TAB: "budget-fund-transfer-tab",
   ROLLOVER_TAB: "budget-rollover-tab",
   ANALYTICS_TAB: "budget-analytics-tab",
@@ -1093,13 +1094,13 @@ export const BUDGET_PAGE_TOUR_STEPS: TourStep[] = [
     },
   },
 
-  // Groups Tab
+  // Groups — now accessed via the Flat/Grouped toggle inside Overview.
   {
     id: BUDGET_TOUR_STEP_IDS.GROUPS_TAB,
-    targetSelector: "[data-tour-id='budget-groups-tab']",
+    targetSelector: "[data-tour-id='budget-layout-toggle']",
     title: "Budget Groups",
     description:
-      "Organize related budgets into groups for easier tracking. For example, group all essential expenses or savings goals together.",
+      "Switch to Grouped layout to organize related budgets into named groups — essentials, savings goals, subscriptions. Flat layout gives you the full searchable list.",
     placement: "bottom",
     route: "/budgets",
     chapter: "budget-page",
