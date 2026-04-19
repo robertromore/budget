@@ -18,6 +18,7 @@ import type { Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
 import BudgetActionsCell from "../(components)/(cells)/budget-actions-cell.svelte";
 import BudgetNameCell from "../(components)/(cells)/budget-name-cell.svelte";
 import BudgetRemainingCell from "../(components)/(cells)/budget-remaining-cell.svelte";
+import BudgetSelectRowCell from "../(components)/(cells)/budget-select-row-cell.svelte";
 import BudgetStatusCell from "../(components)/(cells)/budget-status-cell.svelte";
 import BudgetTypeCell from "../(components)/(cells)/budget-type-cell.svelte";
 
@@ -89,6 +90,13 @@ interface BudgetColumnActions {
   onDuplicate: (budget: BudgetWithRelations) => void;
   onArchive: (budget: BudgetWithRelations) => void;
   onDelete: (budget: BudgetWithRelations) => void;
+  /**
+   * Optional shift-range select handler. When the user shift-clicks a
+   * row checkbox, the select-row cell short-circuits TanStack's normal
+   * toggle and calls this instead — which extends the page-level
+   * SvelteSet from the last-clicked anchor to the target budget.
+   */
+  onRangeSelectId?: (budgetId: number) => void;
 }
 
 function getAllocated(budget: BudgetWithRelations): number {
@@ -137,11 +145,14 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         });
       },
       cell: ({ row }) => {
-        return renderComponent(Checkbox, {
+        return renderComponent(BudgetSelectRowCell, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
-          "aria-label": "Select row",
+          onToggle: (value: boolean) => row.toggleSelected(!!value),
+          onRangeSelect: actions.onRangeSelectId
+            ? () => actions.onRangeSelectId!(row.original.id)
+            : undefined,
+          ariaLabel: "Select row",
         });
       },
       enableColumnFilter: false,

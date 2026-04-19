@@ -8,6 +8,7 @@ interface Props {
   isLoading: boolean;
   selectedIds?: Iterable<number>;
   onToggleSelectId?: (budgetId: number) => void;
+  onRangeSelectId?: (budgetId: number) => void;
   onView: (budget: BudgetWithRelations) => void;
   onEdit: (budget: BudgetWithRelations) => void;
   onDelete: (budget: BudgetWithRelations) => void;
@@ -21,6 +22,7 @@ let {
   isLoading,
   selectedIds,
   onToggleSelectId,
+  onRangeSelectId,
   onView,
   onEdit,
   onDelete,
@@ -29,7 +31,9 @@ let {
   table = $bindable(),
 }: Props = $props();
 
-// Create columns with action handlers
+// Create columns with action handlers. `onRangeSelectId` is forwarded
+// into the select-row cell so shift-click extends the page-level
+// selection along the current row ordering.
 const tableColumns = $derived(
   createColumns({
     onView,
@@ -37,6 +41,7 @@ const tableColumns = $derived(
     onDuplicate,
     onArchive,
     onDelete,
+    onRangeSelectId,
   })
 );
 </script>

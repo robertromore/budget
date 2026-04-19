@@ -48,6 +48,8 @@ interface Props {
   onSelect?: (budget: BudgetWithRelations, event: MouseEvent | KeyboardEvent) => void;
   /** List-view checkbox click handler — toggle by id (no shift data available). */
   onToggleSelectId?: (budgetId: number) => void;
+  /** List-view shift-range handler — extends selection from anchor to this id. */
+  onRangeSelectId?: (budgetId: number) => void;
 }
 
 let {
@@ -66,6 +68,7 @@ let {
   onTogglePin,
   onSelect,
   onToggleSelectId,
+  onRangeSelectId,
 }: Props = $props();
 
 const pinnedSet = $derived(new Set(pinnedIds));
@@ -363,6 +366,7 @@ function formatBudgetType(type: string) {
       {budgets}
       {selectedIds}
       {onToggleSelectId}
+      {onRangeSelectId}
       {onView}
       {onEdit}
       {onDelete}
