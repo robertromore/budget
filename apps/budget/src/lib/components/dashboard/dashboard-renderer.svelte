@@ -1,7 +1,11 @@
 <script lang="ts">
 import { rpc } from '$lib/query';
 import type { DashboardWithWidgets, DashboardWidget } from '$core/schema/dashboards';
-import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
+import {
+  findVariantByMetric,
+  getWidgetDefinition,
+  type WidgetStyle,
+} from '$lib/types/dashboard-widgets';
 import DashboardToolbar from './dashboard-toolbar.svelte';
 import GroupedDashboardGrid from './grouped-dashboard-grid.svelte';
 import WidgetCatalogSheet from './widget-catalog-sheet.svelte';
@@ -11,6 +15,7 @@ import ConfirmDialog from './confirm-dialog.svelte';
 import PickGroupDialog from './pick-group-dialog.svelte';
 import ReorderSlotsSheet from './reorder-slots-sheet.svelte';
 import SaveAsGroupDialog from './save-as-group-dialog.svelte';
+import StylePriorityDialog from './style-priority-dialog.svelte';
 
 let {
   dashboard,
@@ -30,6 +35,7 @@ let saveAsGroupOpen = $state(false);
 let removeGroupOpen = $state(false);
 let pendingRemoveGroupId = $state<number | null>(null);
 let reorderSheetOpen = $state(false);
+let priorityDialogOpen = $state(false);
 
 async function handleAddWidget(widgetType: string) {
   const definition = getWidgetDefinition(widgetType);
@@ -70,6 +76,75 @@ async function handleReorderSlots(
   });
 }
 
+function allDashboardWidgets(): DashboardWidget[] {
+  const grouped = dashboard.groupInstances.flatMap((g) => g.widgets);
+  return [...dashboard.widgets, ...grouped];
+}
+
+function computeRestyleUpdates(
+  priority: WidgetStyle[]
+): Array<{ id: number; widgetType: string }> {
+  const updates: Array<{ id: number; widgetType: string }> = [];
+  const pinnedInstanceIds = new Set(
+    dashboard.groupInstances.filter((g) => g.stylePinned).map((g) => g.id)
+  );
+
+  for (const widget of allDashboardWidgets()) {
+    if (widget.stylePinned) continue;
+    if (
+      widget.groupInstanceId !== null &&
+      widget.groupInstanceId !== undefined &&
+      pinnedInstanceIds.has(widget.groupInstanceId)
+    ) {
+      continue;
+    }
+
+    const def = getWidgetDefinition(widget.widgetType);
+    if (!def) continue;
+
+    for (const style of priority) {
+      if (def.style === style) break; // already in target — no swap
+      const variant = findVariantByMetric(def.metric, style);
+      if (variant && variant.type !== widget.widgetType) {
+        updates.push({ id: widget.id, widgetType: variant.type });
+        break;
+      }
+    }
+  }
+  return updates;
+}
+
+async function handleRestyle(style: WidgetStyle) {
+  const updates = computeRestyleUpdates([style]);
+  await rpc.dashboards.restyleDashboardWidgets.execute({
+    dashboardId: dashboard.id,
+    updates,
+  });
+}
+
+async function handleRestylePriority(priority: WidgetStyle[]) {
+  await rpc.dashboards.saveDashboard.execute({
+    id: dashboard.id,
+    name: dashboard.name,
+    slug: dashboard.slug,
+    stylePriority: priority.length > 0 ? priority : null,
+  });
+  const updates = computeRestyleUpdates(priority);
+  await rpc.dashboards.restyleDashboardWidgets.execute({
+    dashboardId: dashboard.id,
+    updates,
+  });
+}
+
+async function handleClearPriority() {
+  await rpc.dashboards.saveDashboard.execute({
+    id: dashboard.id,
+    name: dashboard.name,
+    slug: dashboard.slug,
+    stylePriority: null,
+  });
+}
+
 async function handleReorderInstance(instanceId: number, widgetIds: number[]) {
   await rpc.widgetGroups.reorderGroupInstanceWidgets.execute({
     instanceId,
@@ -79,6 +154,10 @@ async function handleReorderInstance(instanceId: number, widgetIds: number[]) {
 
 async function handleRenameInstance(instanceId: number, name: string) {
   await rpc.widgetGroups.renameGroupInstance.execute({ id: instanceId, name });
+}
+
+async function handleToggleInstancePin(instanceId: number, pinned: boolean) {
+  await rpc.widgetGroups.updateGroupInstance.execute({ id: instanceId, stylePinned: pinned });
 }
 
 function handleRemoveInstance(instanceId: number) {
@@ -101,6 +180,9 @@ async function confirmRemoveInstance() {
     onAddWidget={() => (catalogOpen = true)}
     onAddGroup={() => (pickGroupOpen = true)}
     onReorder={() => (reorderSheetOpen = true)}
+    onRestyle={handleRestyle}
+    onRestylePriority={() => (priorityDialogOpen = true)}
+    onClearPriority={handleClearPriority}
     onSaveAsGroup={() => (saveAsGroupOpen = true)}
     onSettings={() => (settingsOpen = true)} />
 
@@ -115,6 +197,7 @@ async function confirmRemoveInstance() {
     onReorderInstance={handleReorderInstance}
     onRenameInstance={handleRenameInstance}
     onRemoveInstance={handleRemoveInstance}
+    onToggleInstancePin={handleToggleInstancePin}
     onAddWidget={() => (catalogOpen = true)} />
 
   {#if dashboard.widgets.length === 0 && dashboard.groupInstances.length === 0}
@@ -156,4 +239,8 @@ async function confirmRemoveInstance() {
     dashboardId={dashboard.id}
     widgets={dashboard.widgets}
     groupInstances={dashboard.groupInstances} />
+  <StylePriorityDialog
+    bind:open={priorityDialogOpen}
+    currentPriority={dashboard.stylePriority}
+    onApply={handleRestylePriority} />
 </div>

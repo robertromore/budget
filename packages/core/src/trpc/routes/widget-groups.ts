@@ -685,6 +685,51 @@ export const widgetGroupRoutes = t.router({
       return updated!;
     }),
 
+  updateInstance: rateLimitedProcedure
+    .input(
+      z.object({
+        id: z.number().nonnegative(),
+        name: z.string().min(1).max(100).optional(),
+        stylePinned: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [instance] = await ctx.db
+        .select()
+        .from(dashboardGroupInstances)
+        .where(eq(dashboardGroupInstances.id, input.id))
+        .limit(1);
+      if (!instance) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+      }
+
+      const [dashboard] = await ctx.db
+        .select({ id: dashboards.id })
+        .from(dashboards)
+        .where(
+          and(
+            eq(dashboards.id, instance.dashboardId),
+            eq(dashboards.workspaceId, ctx.workspaceId)
+          )
+        )
+        .limit(1);
+      if (!dashboard) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+      }
+
+      const now = new Date().toISOString();
+      const patch: Record<string, unknown> = { updatedAt: now };
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.stylePinned !== undefined) patch.stylePinned = input.stylePinned;
+
+      const [updated] = await ctx.db
+        .update(dashboardGroupInstances)
+        .set(patch)
+        .where(eq(dashboardGroupInstances.id, input.id))
+        .returning();
+      return updated!;
+    }),
+
   reorderInstanceWidgets: rateLimitedProcedure
     .input(
       z.object({

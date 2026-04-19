@@ -56,6 +56,7 @@ function itemToWidget(item: DashboardWidgetGroupItem): DashboardWidget {
     sortOrder: item.sortOrder,
     columnSpan: item.columnSpan,
     settings: item.settings,
+    stylePinned: false,
     createdAt: '',
     updatedAt: '',
   };

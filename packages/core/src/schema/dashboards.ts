@@ -12,6 +12,15 @@ export type DashboardGap = (typeof dashboardGapEnum)[number];
 export const widgetSizeEnum = ["small", "medium", "large", "full"] as const;
 export type WidgetSize = (typeof widgetSizeEnum)[number];
 
+export const widgetStyleEnum = [
+  "classic",
+  "terminal",
+  "narrative",
+  "coach",
+  "copilot",
+] as const;
+export type WidgetStyleName = (typeof widgetStyleEnum)[number];
+
 export interface DashboardLayoutConfig {
   columns: 1 | 2 | 3 | 4;
   gap: DashboardGap;
@@ -24,6 +33,11 @@ export interface WidgetSettings {
   limit?: number;
   chartType?: string;
   showTrend?: boolean;
+  /**
+   * Optional gradient color for copilot-style widgets. Ignored by other
+   * styles. Keys match `CopilotColor` in `copilot-colors.ts`.
+   */
+  gradientColor?: "sky" | "emerald" | "violet" | "amber" | "rose" | "slate";
   [key: string]: unknown;
 }
 
@@ -44,6 +58,7 @@ export const dashboards = sqliteTable(
     isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
     isEnabled: integer("is_enabled", { mode: "boolean" }).notNull().default(true),
     layout: text("layout", { mode: "json" }).$type<DashboardLayoutConfig>(),
+    stylePriority: text("style_priority", { mode: "json" }).$type<WidgetStyleName[]>(),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -72,6 +87,7 @@ export const dashboardGroupInstances = sqliteTable(
     icon: text("icon"),
     description: text("description"),
     sortOrder: integer("sort_order").notNull().default(0),
+    stylePinned: integer("style_pinned", { mode: "boolean" }).notNull().default(false),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -102,6 +118,7 @@ export const dashboardWidgets = sqliteTable(
     sortOrder: integer("sort_order").notNull().default(0),
     columnSpan: integer("column_span").notNull().default(1),
     settings: text("settings", { mode: "json" }).$type<WidgetSettings>(),
+    stylePinned: integer("style_pinned", { mode: "boolean" }).notNull().default(false),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -181,6 +198,7 @@ export const insertDashboardSchema = createInsertSchema(dashboards, {
   isDefault: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
   layout: dashboardLayoutSchema.or(z.null()).optional(),
+  stylePriority: z.array(z.enum(widgetStyleEnum)).or(z.null()).optional(),
 }).omit({ workspaceId: true, createdAt: true, updatedAt: true, deletedAt: true });
 
 export const insertDashboardWidgetSchema = createInsertSchema(dashboardWidgets, {
@@ -190,6 +208,7 @@ export const insertDashboardWidgetSchema = createInsertSchema(dashboardWidgets, 
   sortOrder: z.number().int().nonnegative().optional(),
   columnSpan: z.number().int().min(1).max(4).optional(),
   settings: widgetSettingsSchema.or(z.null()).optional(),
+  stylePinned: z.boolean().optional(),
 }).omit({ createdAt: true, updatedAt: true });
 
 export const removeDashboardSchema = z.object({ id: z.number().nonnegative() });

@@ -23,6 +23,13 @@ export const workspaces = sqliteTable(
     // Workspace Preferences (stored as JSON)
     preferences: text("preferences"), // {locale, dateFormat, currency, theme, etc.}
 
+    // Default style priority applied to newly-created dashboards. Null
+    // means no default — new dashboards start without a style priority
+    // and follow the one-off quick actions until the user sets one.
+    defaultStylePriority: text("default_style_priority", { mode: "json" }).$type<
+      Array<"classic" | "terminal" | "narrative" | "coach" | "copilot">
+    >(),
+
     // Metadata
     createdAt: text("created_at")
       .notNull()

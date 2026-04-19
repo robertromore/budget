@@ -2,6 +2,29 @@ import type { WidgetSettings, WidgetSize } from "$core/schema/dashboards";
 
 export type WidgetCategory = "metrics" | "charts" | "lists" | "actions";
 
+export type WidgetStyle =
+  | "classic"
+  | "terminal"
+  | "narrative"
+  | "coach"
+  | "copilot";
+
+export const WIDGET_STYLE_LABELS: Record<WidgetStyle, string> = {
+  classic: "Classic",
+  terminal: "Terminal",
+  narrative: "Narrative",
+  coach: "Coach",
+  copilot: "Copilot",
+};
+
+export const WIDGET_STYLES: WidgetStyle[] = [
+  "classic",
+  "terminal",
+  "narrative",
+  "coach",
+  "copilot",
+];
+
 export interface WidgetDefinition {
   type: string;
   label: string;
@@ -12,6 +35,22 @@ export interface WidgetDefinition {
   defaultColumnSpan: number;
   defaultSettings: WidgetSettings;
   category: WidgetCategory;
+  style: WidgetStyle;
+  /**
+   * Stable identifier for the underlying data source. Widgets that share
+   * a `metric` are interchangeable across styles — the dashboard-level
+   * style picker uses this to swap a widget for its same-metric variant
+   * in the target style. Unique widgets (no stylistic siblings) use
+   * their own type as the metric id.
+   */
+  metric: string;
+  /**
+   * When true, the widget renders its own outer container (border,
+   * background, padding, and header). The dashboard shell skips its
+   * normal Card chrome so the widget's own design fills the slot
+   * without a doubled-up border + title row.
+   */
+  selfContained?: boolean;
 }
 
 export const WIDGET_CATALOG: WidgetDefinition[] = [
@@ -26,6 +65,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 1,
     defaultSettings: {},
     category: "metrics",
+    style: "classic",
+    metric: "total-balance",
   },
   {
     type: "active-accounts",
@@ -37,6 +78,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 1,
     defaultSettings: {},
     category: "metrics",
+    style: "classic",
+    metric: "active-accounts",
   },
   {
     type: "monthly-cashflow",
@@ -48,6 +91,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 1,
     defaultSettings: { period: "month" },
     category: "metrics",
+    style: "classic",
+    metric: "monthly-cashflow",
   },
   {
     type: "pending-balance",
@@ -59,6 +104,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 1,
     defaultSettings: {},
     category: "metrics",
+    style: "classic",
+    metric: "pending-balance",
   },
 
   // --- Charts ---
@@ -72,6 +119,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 2,
     defaultSettings: { period: "month", limit: 8 },
     category: "charts",
+    style: "classic",
+    metric: "spending-by-category",
   },
   {
     type: "spending-trend",
@@ -83,6 +132,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 3,
     defaultSettings: { period: "quarter", chartType: "line" },
     category: "charts",
+    style: "classic",
+    metric: "spending-trend",
   },
   {
     type: "net-worth-trend",
@@ -94,6 +145,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 3,
     defaultSettings: { period: "year", chartType: "area" },
     category: "charts",
+    style: "classic",
+    metric: "net-worth-trend",
   },
   {
     type: "budget-progress",
@@ -105,6 +158,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 2,
     defaultSettings: {},
     category: "charts",
+    style: "classic",
+    metric: "budget-progress",
   },
 
   // --- Lists ---
@@ -118,6 +173,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 2,
     defaultSettings: { limit: 10 },
     category: "lists",
+    style: "classic",
+    metric: "recent-transactions",
   },
   {
     type: "upcoming-schedules",
@@ -129,6 +186,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 2,
     defaultSettings: { limit: 5 },
     category: "lists",
+    style: "classic",
+    metric: "upcoming-schedules",
   },
   {
     type: "account-summary",
@@ -140,6 +199,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 2,
     defaultSettings: { limit: 5 },
     category: "lists",
+    style: "classic",
+    metric: "account-summary",
   },
 
   {
@@ -152,6 +213,8 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 2,
     defaultSettings: {},
     category: "lists",
+    style: "classic",
+    metric: "payee-analytics",
   },
 
   // --- Actions ---
@@ -165,6 +228,390 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     defaultColumnSpan: 1,
     defaultSettings: {},
     category: "actions",
+    style: "classic",
+    metric: "quick-actions",
+  },
+
+  // --- Terminal style ---
+  {
+    type: "total-balance-terminal",
+    label: "Total balance (terminal)",
+    description: "Mono balance ticker with delta indicator",
+    icon: "terminal",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "metrics",
+    style: "terminal",
+    selfContained: true,
+    metric: "total-balance",
+  },
+  {
+    type: "active-accounts-terminal",
+    label: "Active accounts (terminal)",
+    description: "Mono count with account-type breakdown",
+    icon: "terminal",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "metrics",
+    style: "terminal",
+    selfContained: true,
+    metric: "active-accounts",
+  },
+  {
+    type: "monthly-cashflow-terminal",
+    label: "Cash flow (terminal)",
+    description: "Mono IN/OUT/NET ticker with 30-day totals",
+    icon: "terminal",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: { period: "month" },
+    category: "metrics",
+    style: "terminal",
+    selfContained: true,
+    metric: "monthly-cashflow",
+  },
+  {
+    type: "pending-balance-terminal",
+    label: "Pending (terminal)",
+    description: "Mono pending tx count and net amount",
+    icon: "terminal",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "metrics",
+    style: "terminal",
+    selfContained: true,
+    metric: "pending-balance",
+  },
+  {
+    type: "net-worth-trend-terminal",
+    label: "Net worth (terminal)",
+    description: "Bloomberg-style dark panel with mono axis and dense stats",
+    icon: "terminal",
+    defaultSize: "large",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 3,
+    defaultSettings: { period: "year" },
+    category: "charts",
+    style: "terminal",
+    selfContained: true,
+    metric: "net-worth-trend",
+  },
+  {
+    type: "recent-transactions-terminal",
+    label: "Transaction tape (terminal)",
+    description: "Fixed-width mono transaction tape with green/red amounts",
+    icon: "terminal",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 12 },
+    category: "lists",
+    style: "terminal",
+    selfContained: true,
+    metric: "recent-transactions",
+  },
+  {
+    type: "spending-trend-terminal",
+    label: "Spend trend (terminal)",
+    description: "Mono 6-month spend bars with average and Δ-to-average",
+    icon: "terminal",
+    defaultSize: "large",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 3,
+    defaultSettings: { period: "quarter" },
+    category: "charts",
+    style: "terminal",
+    selfContained: true,
+    metric: "spending-trend",
+  },
+  {
+    type: "budget-progress-terminal",
+    label: "Budget status (terminal)",
+    description: "Fixed-width budget table with ASCII usage meters",
+    icon: "terminal",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: {},
+    category: "charts",
+    style: "terminal",
+    selfContained: true,
+    metric: "budget-progress",
+  },
+  {
+    type: "spending-by-category-terminal",
+    label: "Top categories (terminal)",
+    description: "Fixed-width category spend table with ASCII share bars",
+    icon: "terminal",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 8 },
+    category: "charts",
+    style: "terminal",
+    selfContained: true,
+    metric: "spending-by-category",
+  },
+  {
+    type: "upcoming-schedules-terminal",
+    label: "Upcoming (terminal)",
+    description: "Mono schedule queue with type tags and signed amounts",
+    icon: "terminal",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 6 },
+    category: "lists",
+    style: "terminal",
+    selfContained: true,
+    metric: "upcoming-schedules",
+  },
+  {
+    type: "account-summary-terminal",
+    label: "Accounts (terminal)",
+    description: "Mono account book with type tags and balances",
+    icon: "terminal",
+    defaultSize: "medium",
+    availableSizes: ["small", "medium", "large"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 6 },
+    category: "lists",
+    style: "terminal",
+    selfContained: true,
+    metric: "account-summary",
+  },
+
+  // --- Narrative style ---
+  {
+    type: "monthly-brief-narrative",
+    label: "Monthly brief (narrative)",
+    description: "Short plain-English summary of this month's spend and income",
+    icon: "file-text",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large"],
+    defaultColumnSpan: 2,
+    defaultSettings: {},
+    category: "lists",
+    style: "narrative",
+    metric: "monthly-brief",
+  },
+  {
+    type: "budget-progress-narrative",
+    label: "Budget rundown (narrative)",
+    description: "Prose recap of budget pacing with inline numbers",
+    icon: "file-text",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large"],
+    defaultColumnSpan: 2,
+    defaultSettings: {},
+    category: "lists",
+    style: "narrative",
+    metric: "budget-progress",
+  },
+
+  // --- Coach style ---
+  {
+    type: "budget-progress-coach",
+    label: "Budget coach",
+    description: "Budget rows with per-item suggestions and next actions",
+    icon: "lightbulb",
+    defaultSize: "large",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 3,
+    defaultSettings: {},
+    category: "charts",
+    style: "coach",
+    metric: "budget-progress",
+  },
+  {
+    type: "spending-insights-coach",
+    label: "Spending insights (coach)",
+    description: "Top spending leaks with capped-spend suggestions",
+    icon: "lightbulb",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 4 },
+    category: "lists",
+    style: "coach",
+    metric: "spending-insights",
+  },
+
+  // --- Copilot style ---
+  {
+    type: "total-balance-copilot",
+    label: "Total balance (copilot)",
+    description: "Polished balance tile with soft gradient",
+    icon: "sparkles",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "metrics",
+    style: "copilot",
+    selfContained: true,
+    metric: "total-balance",
+  },
+  {
+    type: "active-accounts-copilot",
+    label: "Active accounts (copilot)",
+    description: "Polished account count tile with soft gradient",
+    icon: "sparkles",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "metrics",
+    style: "copilot",
+    selfContained: true,
+    metric: "active-accounts",
+  },
+  {
+    type: "monthly-cashflow-copilot",
+    label: "Cash flow (copilot)",
+    description: "Polished cash flow tile with trend indicator",
+    icon: "sparkles",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: { period: "month" },
+    category: "metrics",
+    style: "copilot",
+    selfContained: true,
+    metric: "monthly-cashflow",
+  },
+  {
+    type: "pending-balance-copilot",
+    label: "Pending (copilot)",
+    description: "Polished pending balance tile with soft gradient",
+    icon: "sparkles",
+    defaultSize: "small",
+    availableSizes: ["small", "medium"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "metrics",
+    style: "copilot",
+    selfContained: true,
+    metric: "pending-balance",
+  },
+  {
+    type: "net-worth-hero-copilot",
+    label: "Net worth hero (copilot)",
+    description: "Single-chart hero: big number, sparkline, polished",
+    icon: "sparkles",
+    defaultSize: "large",
+    availableSizes: ["large", "full"],
+    defaultColumnSpan: 4,
+    defaultSettings: { period: "year" },
+    category: "charts",
+    style: "copilot",
+    selfContained: true,
+    metric: "net-worth-trend",
+  },
+  {
+    type: "cashflow-forecast-copilot",
+    label: "Cashflow forecast (copilot)",
+    description: "90-day balance trajectory with event markers",
+    icon: "sparkles",
+    defaultSize: "large",
+    availableSizes: ["large", "full"],
+    defaultColumnSpan: 4,
+    defaultSettings: {},
+    category: "charts",
+    style: "copilot",
+    selfContained: true,
+    metric: "cashflow-forecast",
+  },
+  {
+    type: "recent-transactions-copilot",
+    label: "Recent activity (copilot)",
+    description: "Polished transaction list with direction icons",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 8 },
+    category: "lists",
+    style: "copilot",
+    selfContained: true,
+    metric: "recent-transactions",
+  },
+  {
+    type: "account-summary-copilot",
+    label: "Accounts (copilot)",
+    description: "Polished account list with type-aware icons",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["small", "medium", "large"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 5 },
+    category: "lists",
+    style: "copilot",
+    selfContained: true,
+    metric: "account-summary",
+  },
+  {
+    type: "spending-by-category-copilot",
+    label: "Categories (copilot)",
+    description: "Polished top-category bars with share percentages",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 6 },
+    category: "charts",
+    style: "copilot",
+    selfContained: true,
+    metric: "spending-by-category",
+  },
+  {
+    type: "spending-trend-copilot",
+    label: "Spend trend (copilot)",
+    description: "Soft gradient area chart with month-over-month delta",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { period: "quarter" },
+    category: "charts",
+    style: "copilot",
+    selfContained: true,
+    metric: "spending-trend",
+  },
+  {
+    type: "upcoming-schedules-copilot",
+    label: "Upcoming (copilot)",
+    description: "Polished scheduled-transactions list",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: { limit: 5 },
+    category: "lists",
+    style: "copilot",
+    selfContained: true,
+    metric: "upcoming-schedules",
+  },
+  {
+    type: "budget-progress-copilot",
+    label: "Budget progress (copilot)",
+    description: "Polished per-budget gradient progress bars",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 2,
+    defaultSettings: {},
+    category: "charts",
+    style: "copilot",
+    selfContained: true,
+    metric: "budget-progress",
   },
 ];
 
@@ -174,4 +621,20 @@ export function getWidgetDefinition(type: string): WidgetDefinition | undefined 
 
 export function getWidgetsByCategory(category: WidgetCategory): WidgetDefinition[] {
   return WIDGET_CATALOG.filter((w) => w.category === category);
+}
+
+export function getWidgetsByStyle(style: WidgetStyle): WidgetDefinition[] {
+  return WIDGET_CATALOG.filter((w) => w.style === style);
+}
+
+/**
+ * Find a widget variant for a given metric in the target style. Returns
+ * `undefined` if no variant exists (e.g. there is no terminal-style
+ * version of `goals-progress`).
+ */
+export function findVariantByMetric(
+  metric: string,
+  style: WidgetStyle
+): WidgetDefinition | undefined {
+  return WIDGET_CATALOG.find((w) => w.metric === metric && w.style === style);
 }

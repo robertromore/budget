@@ -243,6 +243,117 @@ html {
   }
 }
 
+/* ---------------------------------------------------------------- */
+/* Terminal-style widget skin — shared palette + CRT atmosphere      */
+/* ---------------------------------------------------------------- */
+/*                                                                   */
+/* Used by every `*-terminal-widget.svelte`. Applying `widget-       */
+/* terminal` as the outer class gives the widget its mono typeface,  */
+/* green-tinted dark background, and phosphor-tinted foreground.     */
+/* All color knobs are CSS custom properties so the palette can be   */
+/* tuned from this one place.                                        */
+/*                                                                   */
+/* Intentionally dark in both light and dark modes — the terminal    */
+/* look is an affectation, not a dark-mode flip. The surrounding     */
+/* dashboard card chrome provides enough contrast in light mode.     */
+/*                                                                   */
+/* CRT scanlines are an opt-out (on by default on .widget-terminal). */
+/* They're kept subtle enough not to interfere with legibility.      */
+
+.widget-terminal {
+  /* Palette — green-tinted dark bg + phosphor emerald family */
+  --term-bg: oklch(0.17 0.035 158);
+  --term-bg-soft: oklch(0.22 0.035 158);
+  --term-border: oklch(0.55 0.14 158 / 0.3);
+  --term-fg: oklch(0.84 0.18 158);
+  --term-fg-bright: oklch(0.9 0.2 155);
+  --term-fg-dim: oklch(0.65 0.14 158);
+  --term-fg-muted: oklch(0.52 0.1 158);
+  --term-fg-faint: oklch(0.38 0.07 158);
+  --term-accent-pos: oklch(0.86 0.2 152);
+  --term-accent-neg: oklch(0.7 0.22 18);
+  --term-accent-warn: oklch(0.82 0.18 78);
+  --term-glow: 0 0 6px oklch(0.88 0.2 155 / 0.4);
+
+  position: relative;
+  overflow: hidden;
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  color: var(--term-fg);
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle CRT scanline overlay. 3px rows, faint dark bands. */
+.widget-terminal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 50%,
+    oklch(0 0 0 / 0.2) 50%,
+    oklch(0 0 0 / 0.2) 100%
+  );
+  background-size: 100% 3px;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+/* Disable scanlines per-widget if they interfere with a specific layout */
+.widget-terminal.no-scanlines::before {
+  display: none;
+}
+
+/* Everything the widget renders sits above the scanline overlay */
+.widget-terminal > * {
+  position: relative;
+  z-index: 2;
+}
+
+.widget-terminal-heading {
+  color: var(--term-fg-dim);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.widget-terminal-bright {
+  color: var(--term-fg-bright);
+  text-shadow: var(--term-glow);
+  font-weight: 700;
+}
+
+.widget-terminal-dim {
+  color: var(--term-fg-dim);
+}
+
+.widget-terminal-muted {
+  color: var(--term-fg-muted);
+}
+
+.widget-terminal-faint {
+  color: var(--term-fg-faint);
+}
+
+.widget-terminal-pos {
+  color: var(--term-accent-pos);
+}
+
+.widget-terminal-neg {
+  color: var(--term-accent-neg);
+}
+
+.widget-terminal-warn {
+  color: var(--term-accent-warn);
+}
+
+/* ---------------------------------------------------------------- */
 /* Connected Tabs - Browser/Folder tab style (used by analytics-chart-shell) */
 .tabs-connected {
   @apply flex flex-col;

@@ -14,6 +14,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit-svelte/sortable';
 import { getWidgetImport } from './widgets';
+import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 import WidgetCard from './widget-card.svelte';
 import SortableWidget from './sortable-widget.svelte';
 import Plus from '@lucide/svelte/icons/plus';
@@ -118,12 +119,14 @@ function handleDragEnd(event: DragEndEvent) {
         {#each widgets as widget (widget.id)}
           {@const WidgetComponent = loadedWidgets[widget.widgetType]}
           {@const spanClass = getSpanClass(widget.columnSpan)}
+          {@const bare = getWidgetDefinition(widget.widgetType)?.selfContained ?? false}
           <div class={spanClass}>
             <SortableWidget {widget}>
               {#snippet children({ dragHandleProps })}
                 <WidgetCard
                   {widget}
                   editMode={true}
+                  {bare}
                   {dragHandleProps}
                   onRemove={onRemoveWidget ? () => onRemoveWidget(widget.id) : undefined}
                   onSettings={onWidgetSettings ? () => onWidgetSettings(widget) : undefined}>
@@ -155,10 +158,12 @@ function handleDragEnd(event: DragEndEvent) {
     {#each widgets as widget (widget.id)}
       {@const WidgetComponent = loadedWidgets[widget.widgetType]}
       {@const spanClass = getSpanClass(widget.columnSpan)}
+      {@const bare = getWidgetDefinition(widget.widgetType)?.selfContained ?? false}
       <div class={spanClass}>
         <WidgetCard
           {widget}
           editMode={false}
+          {bare}
           onRemove={undefined}
           onSettings={undefined}>
           {#if WidgetComponent}

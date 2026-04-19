@@ -1,3 +1,4 @@
+import { widgetStyleEnum } from "$core/schema/dashboards";
 import { workspaceMembers } from "$core/schema/workspace-members";
 import { formInsertWorkspaceSchema, workspaces } from "$core/schema/workspaces";
 import { publicProcedure, t } from "$core/trpc";
@@ -230,6 +231,49 @@ export const workspaceRoutes = t.router({
         .update(workspaces)
         .set({
           preferences: JSON.stringify(input.preferences),
+          updatedAt: nowISOString(),
+        })
+        .where(eq(workspaces.id, input.workspaceId))
+        .returning();
+
+      return updated;
+    }),
+
+  /**
+   * Set the default style priority that newly-created dashboards in
+   * this workspace inherit. Null clears the default so new dashboards
+   * start with no priority (the existing single-style quick-action
+   * flow).
+   */
+  setDefaultStylePriority: publicProcedure
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        priority: z.array(z.enum(widgetStyleEnum)).or(z.null()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Sign-in required" });
+      }
+      const [membership] = await ctx.db
+        .select({ id: workspaceMembers.id })
+        .from(workspaceMembers)
+        .where(
+          and(
+            eq(workspaceMembers.userId, ctx.userId),
+            eq(workspaceMembers.workspaceId, input.workspaceId)
+          )
+        )
+        .limit(1);
+      if (!membership) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found" });
+      }
+
+      const [updated] = await ctx.db
+        .update(workspaces)
+        .set({
+          defaultStylePriority: input.priority,
           updatedAt: nowISOString(),
         })
         .where(eq(workspaces.id, input.workspaceId))

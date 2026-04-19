@@ -1,18 +1,47 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import StylePriorityDialog from '$lib/components/dashboard/style-priority-dialog.svelte';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Select from '$lib/components/ui/select';
 import { rpc } from '$lib/query';
+import { WIDGET_STYLE_LABELS, type WidgetStyle } from '$lib/types/dashboard-widgets';
 import Crown from '@lucide/svelte/icons/crown';
 import Loader from '@lucide/svelte/icons/loader';
 import LogOut from '@lucide/svelte/icons/log-out';
+import Palette from '@lucide/svelte/icons/palette';
 import User from '@lucide/svelte/icons/user';
+import X from '@lucide/svelte/icons/x';
 
 // Fetch data - options() already returns a query
 const membersQuery = rpc.workspaceMembers.listWorkspaceMembers().options();
 const myMembershipQuery = rpc.workspaceMembers.getMyMembership().options();
+const workspaceQuery = rpc.workspaces.getCurrentWorkspace().options();
+
+// Default-style-priority state
+const currentWorkspace = $derived(workspaceQuery.data);
+const defaultStylePriority = $derived<WidgetStyle[] | null>(
+  (currentWorkspace?.defaultStylePriority as WidgetStyle[] | null | undefined) ?? null
+);
+let priorityDialogOpen = $state(false);
+
+async function handleApplyPriority(priority: WidgetStyle[]) {
+  if (!currentWorkspace) return;
+  await rpc.workspaces.setWorkspaceDefaultStylePriority.execute({
+    workspaceId: currentWorkspace.id,
+    priority: priority.length > 0 ? priority : null,
+  });
+}
+
+async function handleClearPriority() {
+  if (!currentWorkspace) return;
+  await rpc.workspaces.setWorkspaceDefaultStylePriority.execute({
+    workspaceId: currentWorkspace.id,
+    priority: null,
+  });
+}
 
 // Use reactive mutations
 const transferOwnershipMutation = rpc.workspaceMembers.transferOwnership.options();
@@ -59,6 +88,48 @@ async function handleLeaveWorkspace() {
 </svelte:head>
 
 <div class="space-y-6">
+  <!-- Default dashboard style priority -->
+  <Card.Root>
+    <Card.Header>
+      <Card.Title class="flex items-center gap-2">
+        <Palette class="h-5 w-5" />
+        Default dashboard style priority
+      </Card.Title>
+      <Card.Description>
+        When someone creates a new dashboard in this workspace, its style priority starts from
+        this order. Existing dashboards are unaffected — each dashboard can override its own
+        priority independently.
+      </Card.Description>
+    </Card.Header>
+    <Card.Content class="space-y-3">
+      {#if defaultStylePriority && defaultStylePriority.length > 0}
+        <div class="flex flex-wrap items-center gap-1.5">
+          {#each defaultStylePriority as style, i (style)}
+            <Badge variant="secondary" class="gap-1">
+              <span class="text-muted-foreground text-[10px] tabular-nums">{i + 1}</span>
+              {WIDGET_STYLE_LABELS[style]}
+            </Badge>
+          {/each}
+        </div>
+      {:else}
+        <p class="text-muted-foreground text-sm">
+          No default set — new dashboards start without a priority.
+        </p>
+      {/if}
+      <div class="flex gap-2">
+        <Button variant="outline" size="sm" onclick={() => (priorityDialogOpen = true)}>
+          {defaultStylePriority && defaultStylePriority.length > 0 ? 'Change' : 'Set priority'}
+        </Button>
+        {#if defaultStylePriority && defaultStylePriority.length > 0}
+          <Button variant="ghost" size="sm" onclick={handleClearPriority}>
+            <X class="mr-1.5 h-3.5 w-3.5" />
+            Clear
+          </Button>
+        {/if}
+      </div>
+    </Card.Content>
+  </Card.Root>
+
   <!-- Transfer Ownership (Owner only) -->
   {#if isOwner}
     <Card.Root>
@@ -189,3 +260,8 @@ async function handleLeaveWorkspace() {
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
+
+<StylePriorityDialog
+  bind:open={priorityDialogOpen}
+  currentPriority={defaultStylePriority}
+  onApply={handleApplyPriority} />

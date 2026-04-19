@@ -1,0 +1,1 @@
+ALTER TABLE `workspace` ADD `default_style_priority` text;

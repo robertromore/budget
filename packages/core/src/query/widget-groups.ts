@@ -165,6 +165,14 @@ export const renameGroupInstance = defineMutation<any, DashboardGroupInstance>({
   errorMessage: "Failed to rename group",
 });
 
+export const updateGroupInstance = defineMutation<
+  { id: number; name?: string; stylePinned?: boolean },
+  DashboardGroupInstance
+>({
+  mutationFn: (variables) => trpc().widgetGroupRoutes.updateInstance.mutate(variables),
+  onSuccess: () => invalidateDashboards(),
+});
+
 export const reorderGroupInstanceWidgets = defineMutation<
   { instanceId: number; widgetIds: number[] },
   { success: boolean }

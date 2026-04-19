@@ -159,6 +159,23 @@ export const reorderDashboardSlots = defineMutation<
   onSuccess: () => invalidateAll(),
 });
 
+export const restyleDashboardWidgets = defineMutation<
+  {
+    dashboardId: number;
+    updates: Array<{ id: number; widgetType: string }>;
+  },
+  { success: boolean; swappedCount: number }
+>({
+  mutationFn: (variables) =>
+    trpc().dashboardRoutes.restyleWidgets.mutate(variables),
+  onSuccess: () => invalidateAll(),
+  successMessage: (result) =>
+    result.swappedCount === 0
+      ? "No widgets needed restyling"
+      : `Reskinned ${result.swappedCount} widget${result.swappedCount === 1 ? "" : "s"}`,
+  errorMessage: "Failed to restyle dashboard",
+});
+
 export const reorderDashboards = defineMutation<any, { success: boolean }>({
   mutationFn: (variables) => trpc().dashboardRoutes.reorderDashboards.mutate(variables),
   onSuccess: () => invalidateAll(),

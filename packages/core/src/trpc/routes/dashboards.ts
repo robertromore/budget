@@ -12,6 +12,7 @@ import {
   type DashboardWidget,
   type DashboardWithWidgets,
 } from "$core/schema/dashboards";
+import { workspaces } from "$core/schema/workspaces";
 import { getTemplate, DASHBOARD_TEMPLATES } from "$core/server/domains/dashboards";
 import { publicProcedure, rateLimitedProcedure, t } from "$core/trpc";
 import { slugify } from "$core/utils/string-utilities";
@@ -74,6 +75,18 @@ async function loadDashboardWithWidgets(
 
   const { widgets, groupInstances } = await loadWidgetsAndInstances(db, dashboardId);
   return { ...dashboard, widgets, groupInstances };
+}
+
+async function getWorkspaceDefaultPriority(
+  db: any,
+  workspaceId: number
+): Promise<DashboardWithWidgets["stylePriority"] | null> {
+  const [row] = await db
+    .select({ defaultStylePriority: workspaces.defaultStylePriority })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+  return (row?.defaultStylePriority as DashboardWithWidgets["stylePriority"]) ?? null;
 }
 
 async function generateUniqueSlug(db: any, baseSlug: string, workspaceId: number): Promise<string> {
@@ -202,6 +215,7 @@ export const dashboardRoutes = t.router({
           isDefault: input.isDefault,
           isEnabled: input.isEnabled,
           layout: input.layout,
+          stylePriority: input.stylePriority,
           updatedAt: now,
         })
         .where(
@@ -217,6 +231,10 @@ export const dashboardRoutes = t.router({
 
     // Create
     const slug = await generateUniqueSlug(ctx.db, slugify(input.name), ctx.workspaceId);
+    const seedPriority =
+      input.stylePriority !== undefined
+        ? input.stylePriority
+        : await getWorkspaceDefaultPriority(ctx.db, ctx.workspaceId);
 
     const [created] = await ctx.db
       .insert(dashboards)
@@ -229,6 +247,7 @@ export const dashboardRoutes = t.router({
         isDefault: input.isDefault ?? false,
         isEnabled: input.isEnabled ?? true,
         layout: input.layout ?? { columns: 4, gap: "normal" },
+        stylePriority: seedPriority,
         workspaceId: ctx.workspaceId,
       })
       .returning();
@@ -426,6 +445,7 @@ export const dashboardRoutes = t.router({
         .limit(1);
 
       const isFirst = existing.length === 0;
+      const seedPriority = await getWorkspaceDefaultPriority(ctx.db, ctx.workspaceId);
 
       const [created] = await ctx.db
         .insert(dashboards)
@@ -438,6 +458,7 @@ export const dashboardRoutes = t.router({
           isDefault: isFirst,
           isEnabled: true,
           layout: template.layout,
+          stylePriority: seedPriority,
           workspaceId: ctx.workspaceId,
         })
         .returning();
@@ -465,6 +486,62 @@ export const dashboardRoutes = t.router({
       }
 
       return await loadDashboardWithWidgets(ctx.db, created.id);
+    }),
+
+  restyleWidgets: rateLimitedProcedure
+    .input(
+      z.object({
+        dashboardId: z.number().nonnegative(),
+        updates: z.array(
+          z.object({
+            id: z.number().nonnegative(),
+            widgetType: z.string().min(1).max(100),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify dashboard belongs to workspace.
+      const [dashboard] = await ctx.db
+        .select({ id: dashboards.id })
+        .from(dashboards)
+        .where(
+          and(
+            eq(dashboards.id, input.dashboardId),
+            eq(dashboards.workspaceId, ctx.workspaceId),
+            isNull(dashboards.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (!dashboard) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
+      }
+
+      if (input.updates.length === 0) {
+        return { success: true, swappedCount: 0 };
+      }
+
+      // Tenancy defense-in-depth: every UPDATE is scoped via a subquery on
+      // dashboardId so an attacker can't flip widget_type on a foreign
+      // dashboard even by guessing widget ids.
+      const now = new Date().toISOString();
+      let swapped = 0;
+      for (const update of input.updates) {
+        const result = await ctx.db
+          .update(dashboardWidgets)
+          .set({ widgetType: update.widgetType, updatedAt: now })
+          .where(
+            and(
+              eq(dashboardWidgets.id, update.id),
+              eq(dashboardWidgets.dashboardId, input.dashboardId)
+            )
+          )
+          .returning({ id: dashboardWidgets.id });
+        if (result.length > 0) swapped += 1;
+      }
+
+      return { success: true, swappedCount: swapped };
     }),
 
   reorderSlots: rateLimitedProcedure
@@ -629,6 +706,7 @@ export const dashboardRoutes = t.router({
         size: z.enum(["small", "medium", "large", "full"]).optional(),
         columnSpan: z.number().int().min(1).max(4).optional(),
         settings: z.record(z.string(), z.unknown()).or(z.null()).optional(),
+        stylePinned: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -807,6 +885,7 @@ export const dashboardRoutes = t.router({
     // Create default "Home" dashboard from template
     const template = getTemplate("home")!;
     const slug = await generateUniqueSlug(ctx.db, "home", ctx.workspaceId);
+    const seedPriority = await getWorkspaceDefaultPriority(ctx.db, ctx.workspaceId);
 
     const [created] = await ctx.db
       .insert(dashboards)
@@ -819,6 +898,7 @@ export const dashboardRoutes = t.router({
         isDefault: true,
         isEnabled: true,
         layout: template.layout,
+        stylePriority: seedPriority,
         workspaceId: ctx.workspaceId,
       })
       .returning();

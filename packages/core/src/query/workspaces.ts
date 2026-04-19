@@ -89,6 +89,26 @@ export const updateWorkspacePreferences = () =>
   });
 
 /**
+ * Set the workspace-wide default style priority applied to newly-created
+ * dashboards. Pass `null` to clear.
+ */
+export const setWorkspaceDefaultStylePriority = defineMutation<
+  { workspaceId: number; priority: string[] | null },
+  unknown
+>({
+  mutationFn: (variables) =>
+    trpc().workspaceRoutes.setDefaultStylePriority.mutate(variables as any),
+  onSuccess: async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.current() }),
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.lists() }),
+    ]);
+  },
+  successMessage: "Default style priority updated",
+  errorMessage: "Failed to update default style priority",
+});
+
+/**
  * Delete workspace (soft delete)
  */
 export const deleteWorkspace = () =>

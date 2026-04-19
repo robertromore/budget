@@ -23,6 +23,8 @@ import { Input } from '$lib/components/ui/input';
 import Check from '@lucide/svelte/icons/check';
 import GripVertical from '@lucide/svelte/icons/grip-vertical';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
+import Lock from '@lucide/svelte/icons/lock';
+import LockOpen from '@lucide/svelte/icons/lock-open';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Plus from '@lucide/svelte/icons/plus';
 import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -32,6 +34,7 @@ import { buildDashboardSlots } from './slot-helpers';
 import WidgetCard from './widget-card.svelte';
 import WidgetGrid from './widget-grid.svelte';
 import { getWidgetImport } from './widgets';
+import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
 
 let {
   widgets,
@@ -44,6 +47,7 @@ let {
   onReorderInstance,
   onRenameInstance,
   onRemoveInstance,
+  onToggleInstancePin,
   onAddWidget,
 }: {
   widgets: DashboardWidget[];
@@ -58,6 +62,7 @@ let {
   onReorderInstance?: (instanceId: number, widgetIds: number[]) => void;
   onRenameInstance?: (instanceId: number, name: string) => void;
   onRemoveInstance?: (instanceId: number) => void;
+  onToggleInstancePin?: (instanceId: number, pinned: boolean) => void;
   onAddWidget?: () => void;
 } = $props();
 
@@ -206,10 +211,34 @@ function cancelEdit() {
           <Badge variant="outline" class="shrink-0 text-xs">
             {instance.widgets.length} widget{instance.widgets.length === 1 ? '' : 's'}
           </Badge>
+          {#if instance.stylePinned}
+            <Badge
+              variant="outline"
+              class="shrink-0 gap-1 border-primary/40 text-[10px] text-primary">
+              <Lock class="h-2.5 w-2.5" />
+              Pinned
+            </Badge>
+          {/if}
         {/if}
       </div>
       {#if editMode && editingInstanceId !== instance.id}
         <div class="flex shrink-0 gap-1">
+          {#if onToggleInstancePin}
+            <Button
+              size="icon"
+              variant="ghost"
+              class="h-7 w-7 {instance.stylePinned ? 'text-primary' : ''}"
+              title={instance.stylePinned
+                ? 'Unpin style — allow dashboard restyle'
+                : 'Pin style — exclude from dashboard restyle'}
+              onclick={() => onToggleInstancePin(instance.id, !instance.stylePinned)}>
+              {#if instance.stylePinned}
+                <Lock class="h-3.5 w-3.5" />
+              {:else}
+                <LockOpen class="h-3.5 w-3.5" />
+              {/if}
+            </Button>
+          {/if}
           <Button
             size="icon"
             variant="ghost"
@@ -257,11 +286,13 @@ function cancelEdit() {
           {#if slot.kind === 'widget'}
             {@const WidgetComponent = loadedWidgets[slot.widget.widgetType]}
             {@const spanClass = getSpanClass(slot.widget.columnSpan)}
+            {@const bare = getWidgetDefinition(slot.widget.widgetType)?.selfContained ?? false}
             <SortableSlot id={slot.domId} class={spanClass}>
               {#snippet children({ dragHandleProps })}
                 <WidgetCard
                   widget={slot.widget}
                   editMode={true}
+                  {bare}
                   {dragHandleProps}
                   onRemove={onRemoveWidget ? () => onRemoveWidget(slot.widget.id) : undefined}
                   onSettings={onWidgetSettings
@@ -302,8 +333,9 @@ function cancelEdit() {
       {#if slot.kind === 'widget'}
         {@const WidgetComponent = loadedWidgets[slot.widget.widgetType]}
         {@const spanClass = getSpanClass(slot.widget.columnSpan)}
+        {@const bare = getWidgetDefinition(slot.widget.widgetType)?.selfContained ?? false}
         <div class={spanClass}>
-          <WidgetCard widget={slot.widget} editMode={false}>
+          <WidgetCard widget={slot.widget} editMode={false} {bare}>
             {#if WidgetComponent}
               <WidgetComponent config={slot.widget} />
             {:else}

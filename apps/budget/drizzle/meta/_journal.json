@@ -141,6 +141,20 @@
       "when": 1776522491508,
       "tag": "0019_happy_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1776544745874,
+      "tag": "0020_lethal_franklin_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1776563576220,
+      "tag": "0021_dashing_living_mummy",
+      "breakpoints": true
     }
   ]
 }
