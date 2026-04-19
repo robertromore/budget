@@ -1198,7 +1198,7 @@ const topAtRiskBudget = $derived(
                   onDuplicate={handleDuplicateBudget}
                   onArchive={handleArchiveBudget}
                   onBulkDelete={handleBulkDeleteBudgets}
-                  onBulkArchive={handleBulkArchiveBudgets}
+                  onToggleSelectId={toggleSelect}
                   onTogglePin={isDemoView ? undefined : handleTogglePin}
                   selectedIds={selectedIdSet}
                   onSelect={handleSelect} />
@@ -1222,8 +1222,10 @@ const topAtRiskBudget = $derived(
                 onDuplicate={handleDuplicateBudget}
                 onArchive={handleArchiveBudget}
                 onBulkDelete={handleBulkDeleteBudgets}
-                onBulkArchive={handleBulkArchiveBudgets}
-                onTogglePin={isDemoView ? undefined : handleTogglePin} />
+                onToggleSelectId={toggleSelect}
+                onTogglePin={isDemoView ? undefined : handleTogglePin}
+                selectedIds={selectedIdSet}
+                onSelect={handleSelect} />
             {:else}
               <BudgetSearchResults
                 budgets={filteredBudgets}
@@ -1237,8 +1239,10 @@ const topAtRiskBudget = $derived(
                 onDuplicate={handleDuplicateBudget}
                 onArchive={handleArchiveBudget}
                 onBulkDelete={handleBulkDeleteBudgets}
-                onBulkArchive={handleBulkArchiveBudgets}
-                onTogglePin={isDemoView ? undefined : handleTogglePin} />
+                onToggleSelectId={toggleSelect}
+                onTogglePin={isDemoView ? undefined : handleTogglePin}
+                selectedIds={selectedIdSet}
+                onSelect={handleSelect} />
             {/if}
           {/if}
         </div>

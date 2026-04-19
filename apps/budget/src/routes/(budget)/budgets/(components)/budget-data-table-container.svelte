@@ -6,26 +6,26 @@ import BudgetDataTable from './budget-data-table.svelte';
 interface Props {
   budgets: BudgetWithRelations[];
   isLoading: boolean;
+  selectedIds?: Iterable<number>;
+  onToggleSelectId?: (budgetId: number) => void;
   onView: (budget: BudgetWithRelations) => void;
   onEdit: (budget: BudgetWithRelations) => void;
   onDelete: (budget: BudgetWithRelations) => void;
   onDuplicate: (budget: BudgetWithRelations) => void;
   onArchive: (budget: BudgetWithRelations) => void;
-  onBulkDelete: (budgets: BudgetWithRelations[]) => void;
-  onBulkArchive: (budgets: BudgetWithRelations[]) => void;
   table?: any;
 }
 
 let {
   budgets,
   isLoading,
+  selectedIds,
+  onToggleSelectId,
   onView,
   onEdit,
   onDelete,
   onDuplicate,
   onArchive,
-  onBulkDelete,
-  onBulkArchive,
   table = $bindable(),
 }: Props = $props();
 
@@ -41,4 +41,9 @@ const tableColumns = $derived(
 );
 </script>
 
-<BudgetDataTable columns={tableColumns} {budgets} {onBulkDelete} {onBulkArchive} bind:table />
+<BudgetDataTable
+  columns={tableColumns}
+  {budgets}
+  {selectedIds}
+  {onToggleSelectId}
+  bind:table />

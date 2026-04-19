@@ -37,10 +37,17 @@ interface Props {
   onDelete: (budget: BudgetWithRelations) => void;
   onDuplicate: (budget: BudgetWithRelations) => void;
   onArchive: (budget: BudgetWithRelations) => void;
+  /**
+   * Forwarded to `EntitySearchResults`. The sticky selection bar is the
+   * primary bulk-delete affordance for this page, but the shared shell
+   * still requires this prop, so we pass the same handler through.
+   */
   onBulkDelete: (budgets: BudgetWithRelations[]) => void;
-  onBulkArchive: (budgets: BudgetWithRelations[]) => void;
   onTogglePin?: (budget: BudgetWithRelations) => void;
+  /** Grid-view row click handler — routes shift-range via its event. */
   onSelect?: (budget: BudgetWithRelations, event: MouseEvent | KeyboardEvent) => void;
+  /** List-view checkbox click handler — toggle by id (no shift data available). */
+  onToggleSelectId?: (budgetId: number) => void;
 }
 
 let {
@@ -56,9 +63,9 @@ let {
   onDuplicate,
   onArchive,
   onBulkDelete,
-  onBulkArchive,
   onTogglePin,
   onSelect,
+  onToggleSelectId,
 }: Props = $props();
 
 const pinnedSet = $derived(new Set(pinnedIds));
@@ -347,23 +354,20 @@ function formatBudgetType(type: string) {
   {/snippet}
 
   {#snippet listView()}
-    <!-- List View with Data Table -->
-    <!--
-      List view keeps its own TanStack-based row selection and inline
-      bulk-actions footer. Grid view uses the page-level selection +
-      sticky bar. A follow-up can unify them once we have a clean
-      controlled-state path through AdvancedDataTable.
-    -->
+    <!-- List View with Data Table. Row selection is mirrored from the
+         page-level SvelteSet via `selectedIds`; checkbox clicks call
+         `onToggleSelectId` for the same page-state as grid-view clicks,
+         so grid↔list stays in sync. -->
     <BudgetDataTableContainer
       {isLoading}
       {budgets}
+      {selectedIds}
+      {onToggleSelectId}
       {onView}
       {onEdit}
       {onDelete}
       {onDuplicate}
       {onArchive}
-      {onBulkDelete}
-      {onBulkArchive}
       bind:table />
   {/snippet}
 </EntitySearchResults>
