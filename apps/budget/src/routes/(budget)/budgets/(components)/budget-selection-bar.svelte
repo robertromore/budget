@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import { Separator } from '$lib/components/ui/separator';
 import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import Archive from '@lucide/svelte/icons/archive';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -53,7 +54,7 @@ function handleKeydown(event: KeyboardEvent) {
     role="region"
     aria-label="Bulk actions for selected budgets">
     <div
-      class="bg-background/95 supports-[backdrop-filter]:bg-background/80 flex max-w-full items-center gap-2 rounded-full border px-3 py-2 shadow-lg backdrop-blur sm:gap-3 sm:px-4"
+      class="bg-background/95 supports-backdrop-filter:bg-background/80 flex max-w-full items-center gap-2 rounded-full border px-3 py-2 shadow-lg backdrop-blur sm:gap-3 sm:px-4"
       aria-live="polite">
       <div class="flex items-center gap-2 text-sm font-medium whitespace-nowrap">
         <span class="tabular-nums">
@@ -67,7 +68,7 @@ function handleKeydown(event: KeyboardEvent) {
         {/if}
       </div>
 
-      <div class="bg-border h-5 w-px" aria-hidden="true"></div>
+      <Separator orientation="vertical" class="h-5" />
 
       <div class="flex items-center gap-1">
         <DropdownMenu.Root>
@@ -111,7 +112,7 @@ function handleKeydown(event: KeyboardEvent) {
         </Button>
       </div>
 
-      <div class="bg-border h-5 w-px" aria-hidden="true"></div>
+      <Separator orientation="vertical" class="h-5" />
 
       <Button
         variant="ghost"

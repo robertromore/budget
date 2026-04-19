@@ -17,7 +17,9 @@ import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Empty from '$lib/components/ui/empty';
 import { Label } from '$lib/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '$lib/components/ui/radio-group';
+import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
+import * as ToggleGroup from '$lib/components/ui/toggle-group';
 import {
   bulkArchiveBudgets,
   bulkDeleteBudgets,
@@ -841,28 +843,23 @@ const topAtRiskBudget = $derived(
     <div
       class="flex flex-wrap items-center justify-between gap-2"
       aria-label="Summary period filter">
-      <div
-        class="inline-flex items-center rounded-md border"
-        role="group"
+      <ToggleGroup.Root
+        type="single"
+        variant="outline"
+        size="sm"
+        value={summaryPeriod}
+        onValueChange={(v) => {
+          // ToggleGroup emits '' when the active item is re-clicked —
+          // ignore that so the summary always has a concrete window.
+          if (v) summaryPeriod = v as SummaryPeriodKey;
+        }}
         aria-label="Summary window">
-        {#each SUMMARY_PERIOD_OPTIONS as option, i (option.value)}
-          <Button
-            variant={summaryPeriod === option.value ? 'default' : 'ghost'}
-            size="sm"
-            class={[
-              'h-8 px-3',
-              i === 0 && 'rounded-r-none border-r',
-              i > 0 && i < SUMMARY_PERIOD_OPTIONS.length - 1 && 'rounded-none border-r',
-              i === SUMMARY_PERIOD_OPTIONS.length - 1 && 'rounded-l-none',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            aria-pressed={summaryPeriod === option.value}
-            onclick={() => (summaryPeriod = option.value)}>
+        {#each SUMMARY_PERIOD_OPTIONS as option (option.value)}
+          <ToggleGroup.Item value={option.value} class="h-8 px-3">
             {option.label}
-          </Button>
+          </ToggleGroup.Item>
         {/each}
-      </div>
+      </ToggleGroup.Root>
       {#if periodWindow}
         <p class="text-muted-foreground text-[11px] sm:text-xs">
           Allocation reflects each budget's own cadence.
@@ -1086,30 +1083,25 @@ const topAtRiskBudget = $derived(
 
           <div class="flex flex-wrap items-center gap-2">
             <!-- Flat vs Grouped layout toggle — replaces the old Groups tab. -->
-            <div
-              class="inline-flex items-center rounded-md border"
-              role="group"
+            <ToggleGroup.Root
+              type="single"
+              variant="outline"
+              size="sm"
+              value={overviewLayout}
+              onValueChange={(v) => {
+                if (v) overviewLayout = v as 'flat' | 'grouped';
+              }}
               aria-label="Overview layout"
               data-tour-id="budget-layout-toggle">
-              <Button
-                variant={overviewLayout === 'flat' ? 'default' : 'ghost'}
-                size="sm"
-                class="h-9 rounded-r-none border-r"
-                aria-pressed={overviewLayout === 'flat'}
-                onclick={() => (overviewLayout = 'flat')}>
+              <ToggleGroup.Item value="flat" class="h-9 px-3">
                 <ListIcon class="mr-1.5 h-4 w-4" />
                 Flat
-              </Button>
-              <Button
-                variant={overviewLayout === 'grouped' ? 'default' : 'ghost'}
-                size="sm"
-                class="h-9 rounded-l-none"
-                aria-pressed={overviewLayout === 'grouped'}
-                onclick={() => (overviewLayout = 'grouped')}>
+              </ToggleGroup.Item>
+              <ToggleGroup.Item value="grouped" class="h-9 px-3">
                 <FolderTree class="mr-1.5 h-4 w-4" />
                 Grouped
-              </Button>
-            </div>
+              </ToggleGroup.Item>
+            </ToggleGroup.Root>
             <div class="flex-1"></div>
           </div>
 
@@ -1204,7 +1196,7 @@ const topAtRiskBudget = $derived(
                   selectedIds={selectedIdSet}
                   onSelect={handleSelect} />
               </section>
-              <hr class="border-border/60" />
+              <Separator />
               <div class="flex items-center gap-2">
                 <h2 class="text-sm font-semibold tracking-tight">All budgets</h2>
                 <span class="text-muted-foreground text-xs tabular-nums">
