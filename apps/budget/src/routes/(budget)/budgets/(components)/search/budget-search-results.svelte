@@ -4,6 +4,7 @@ import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { cn, currencyFormatter } from '$lib/utils';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
@@ -13,6 +14,8 @@ import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Copy from '@lucide/svelte/icons/copy';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Pencil from '@lucide/svelte/icons/pencil';
+import Pin from '@lucide/svelte/icons/pin';
+import PinOff from '@lucide/svelte/icons/pin-off';
 import Repeat from '@lucide/svelte/icons/repeat';
 import Target from '@lucide/svelte/icons/target';
 import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -27,6 +30,8 @@ interface Props {
   isLoading: boolean;
   searchQuery: string;
   viewMode?: ViewMode;
+  pinnedIds?: number[];
+  selectedIds?: Iterable<number>;
   onView: (budget: BudgetWithRelations) => void;
   onEdit: (budget: BudgetWithRelations) => void;
   onDelete: (budget: BudgetWithRelations) => void;
@@ -34,6 +39,8 @@ interface Props {
   onArchive: (budget: BudgetWithRelations) => void;
   onBulkDelete: (budgets: BudgetWithRelations[]) => void;
   onBulkArchive: (budgets: BudgetWithRelations[]) => void;
+  onTogglePin?: (budget: BudgetWithRelations) => void;
+  onSelect?: (budget: BudgetWithRelations, event: MouseEvent | KeyboardEvent) => void;
 }
 
 let {
@@ -41,6 +48,8 @@ let {
   isLoading,
   searchQuery,
   viewMode = 'grid',
+  pinnedIds = [],
+  selectedIds,
   onView,
   onEdit,
   onDelete,
@@ -48,7 +57,19 @@ let {
   onArchive,
   onBulkDelete,
   onBulkArchive,
+  onTogglePin,
+  onSelect,
 }: Props = $props();
+
+const pinnedSet = $derived(new Set(pinnedIds));
+function isPinned(budget: BudgetWithRelations): boolean {
+  return pinnedSet.has(budget.id);
+}
+
+const selectedSet = $derived(new Set(selectedIds ?? []));
+function isSelected(budget: BudgetWithRelations): boolean {
+  return selectedSet.has(budget.id);
+}
 
 // Table binding for list view
 let table = $state<any>();
@@ -147,6 +168,7 @@ function formatBudgetType(type: string) {
     {@const consumed = getConsumed(budget)}
     {@const remaining = getRemaining(budget)}
 
+    {@const selected = isSelected(budget)}
     <EntityCard
       entity={budget}
       {onView}
@@ -154,8 +176,38 @@ function formatBudgetType(type: string) {
       {onDelete}
       viewButtonLabel="View"
       showAnalyticsButton={false}
-      cardClass={cn(budget.status !== 'active' && 'opacity-75')}>
+      cardClass={cn(
+        'group',
+        budget.status !== 'active' && 'opacity-75',
+        selected && 'ring-primary ring-2 ring-offset-2 ring-offset-background'
+      )}>
       {#snippet header(b)}
+        <!-- Selection checkbox overlay — visible on hover OR when selected. -->
+        {#if onSelect}
+          <button
+            type="button"
+            class={cn(
+              'absolute top-3 left-3 rounded-sm bg-background/80 p-1 backdrop-blur transition-opacity',
+              selected
+                ? 'opacity-100'
+                : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100'
+            )}
+            aria-label={selected ? `Deselect budget ${b.name}` : `Select budget ${b.name}`}
+            onclick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelect?.(b, e);
+            }}
+            onkeydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelect?.(b, e);
+              }
+            }}>
+            <Checkbox checked={selected} tabindex={-1} aria-hidden="true" />
+          </button>
+        {/if}
+
         <!-- Status Badge -->
         <div class="absolute top-3 right-3">
           <Badge
@@ -167,7 +219,7 @@ function formatBudgetType(type: string) {
         </div>
 
         <!-- Name and Type -->
-        <Card.Title class="flex min-w-0 items-start gap-2 pr-24">
+        <Card.Title class="flex min-w-0 items-start gap-2 pr-24 {onSelect ? 'pl-10' : ''}">
           <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
           <div class="min-w-0 flex-1 overflow-hidden">
             <a href="/budgets/{b.slug}" class="block truncate font-medium hover:underline">
@@ -250,6 +302,22 @@ function formatBudgetType(type: string) {
           View
         </Button>
 
+        {#if onTogglePin}
+          {@const pinned = isPinned(b)}
+          <Button
+            onclick={() => onTogglePin?.(b)}
+            variant={pinned ? 'default' : 'outline'}
+            size="sm"
+            aria-label={pinned ? `Unpin budget ${b.name}` : `Pin budget ${b.name}`}
+            title={pinned ? 'Unpin from top' : 'Pin to top'}>
+            {#if pinned}
+              <PinOff class="h-3 w-3" />
+            {:else}
+              <Pin class="h-3 w-3" />
+            {/if}
+          </Button>
+        {/if}
+
         <Button
           onclick={() => onEdit(b)}
           variant="outline"
@@ -280,6 +348,12 @@ function formatBudgetType(type: string) {
 
   {#snippet listView()}
     <!-- List View with Data Table -->
+    <!--
+      List view keeps its own TanStack-based row selection and inline
+      bulk-actions footer. Grid view uses the page-level selection +
+      sticky bar. A follow-up can unify them once we have a clean
+      controlled-state path through AdvancedDataTable.
+    -->
     <BudgetDataTableContainer
       {isLoading}
       {budgets}

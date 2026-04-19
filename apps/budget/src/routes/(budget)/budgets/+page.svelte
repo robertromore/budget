@@ -21,10 +21,13 @@ import * as Tabs from '$lib/components/ui/tabs';
 import {
   bulkArchiveBudgets,
   bulkDeleteBudgets,
+  bulkUpdateBudgetStatus,
   deleteBudget,
   duplicateBudget,
   getPendingRecommendationsCount,
+  listBudgetPins,
   listBudgets,
+  toggleBudgetPin,
   updateBudget,
 } from '$lib/query/budgets';
 import type { BudgetGroup, BudgetMetadata } from '$core/schema/budgets';
@@ -36,6 +39,7 @@ import { getPageTabsContext, type PageTab } from '$lib/stores/page-tabs.svelte';
 import {
   calculateActualSpent,
   calculateAllocated,
+  calculatePeriodSpent,
   calculateUtilization,
 } from '$lib/utils/budget-calculations';
 import { resolveBudgetProgressStatus } from '$lib/utils/budget-status';
@@ -50,13 +54,18 @@ import {
   Grid3x3,
   LayoutGrid,
   List as ListIcon,
+  Pin,
   Plus,
   Sparkles,
+  TrendingDown,
   TrendingUp,
   TriangleAlert,
 } from '@lucide/svelte/icons';
 import { untrack } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import { createLocalStorageState } from '$lib/utils/local-storage.svelte';
 import BudgetAnalyticsDashboard from './(components)/analytics/budget-analytics-dashboard.svelte';
+import BudgetSelectionBar from './(components)/budget-selection-bar.svelte';
 import BudgetGroupDialog from './(components)/dialogs/budget-group-dialog.svelte';
 import BudgetManageDialog from './(components)/dialogs/budget-manage-dialog.svelte';
 import BudgetTemplatePicker from './(components)/dialogs/budget-template-picker.svelte';
@@ -142,6 +151,169 @@ const pendingCount = $derived(
     ? demoMode.demoBudgetRecommendations.length
     : (pendingCountQuery.data ?? 0)
 );
+
+// Pin state. Demo mode returns a static pre-pinned set that drives the
+// tour without mutating server state; real mode pulls the per-user
+// pin list from the server.
+const pinsQuery = listBudgetPins().options(() => ({ enabled: !isDemoView }));
+const pinnedIds = $derived<number[]>(
+  isDemoView
+    ? demoMode.demoBudgets.filter((b) => b.pinned).map((b) => b.id)
+    : (pinsQuery.data ?? [])
+);
+const togglePinMutation = toggleBudgetPin.options();
+function handleTogglePin(budget: BudgetWithRelations) {
+  if (isDemoView) return; // Demo pins are baked in; toggling is a no-op.
+  togglePinMutation.mutate({ budgetId: budget.id });
+}
+
+// ---- Bulk selection state ----
+// Persisted across reloads so a half-completed bulk workflow survives
+// an accidental refresh. We store the raw array of IDs and hydrate into
+// a SvelteSet on mount; all internal mutations go through the Set for
+// O(1) membership checks, and we mirror writes back to localStorage.
+const selectedIdsStore = createLocalStorageState<number[]>('budgets:selected-ids', []);
+const selectedIdSet = $state<SvelteSet<number>>(new SvelteSet(selectedIdsStore.value));
+
+// Last-clicked id keeps track of the anchor for shift-range selection.
+// Shared across grid + list so ranges continue correctly even when the
+// user switches view mode mid-selection.
+let lastClickedId = $state<number | null>(null);
+
+/**
+ * Persist the current selection set as a plain array. Kept in an
+ * `$effect` so any internal mutation (toggle, range-select, clear) is
+ * mirrored without the handlers having to remember to call it.
+ */
+$effect(() => {
+  selectedIdsStore.value = Array.from(selectedIdSet);
+});
+
+function toggleSelect(budgetId: number) {
+  if (selectedIdSet.has(budgetId)) {
+    selectedIdSet.delete(budgetId);
+  } else {
+    selectedIdSet.add(budgetId);
+  }
+  lastClickedId = budgetId;
+}
+
+/**
+ * Extend the selection from `lastClickedId` to `budgetId` along the
+ * currently-visible ordering (`filteredBudgets`). Falls back to a plain
+ * toggle when no anchor exists yet.
+ */
+function rangeSelect(budgetId: number) {
+  if (lastClickedId === null || lastClickedId === budgetId) {
+    toggleSelect(budgetId);
+    return;
+  }
+  const ids = filteredBudgets.map((b) => b.id);
+  const startIdx = ids.indexOf(lastClickedId);
+  const endIdx = ids.indexOf(budgetId);
+  if (startIdx === -1 || endIdx === -1) {
+    toggleSelect(budgetId);
+    return;
+  }
+  const [from, to] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+  // Union semantics — shift-click adds to, never removes from, existing
+  // selection. Matches the prevalent email-client behaviour.
+  for (let i = from; i <= to; i++) {
+    selectedIdSet.add(ids[i]);
+  }
+  lastClickedId = budgetId;
+}
+
+/**
+ * Grid-card / list-row handler. Routes to range-select on shift, plain
+ * toggle otherwise.
+ */
+function handleSelect(budget: BudgetWithRelations, event: MouseEvent | KeyboardEvent) {
+  if (event.shiftKey) rangeSelect(budget.id);
+  else toggleSelect(budget.id);
+}
+
+function clearSelection() {
+  selectedIdSet.clear();
+  lastClickedId = null;
+}
+
+// The IDs the user has selected that also match the current filter.
+// Anything selected but hidden by the filter sticks around in the raw
+// set but isn't surfaced to bulk handlers; the selection bar shows a
+// "N hidden by filter" hint so the user can still discover them.
+// `$derived.by` is used here (vs bare `$derived`) so TypeScript sees
+// the `filteredBudgets` reference as lazy — the const it refers to is
+// declared further down in the file.
+const selectedVisibleBudgets = $derived.by(() =>
+  filteredBudgets.filter((b) => selectedIdSet.has(b.id))
+);
+const selectedHiddenCount = $derived(selectedIdSet.size - selectedVisibleBudgets.length);
+
+// Bulk status mutation. Archive/delete use the pre-existing confirmation
+// dialogs; activate/pause skip confirmation since they're reversible.
+const bulkStatusMutation = bulkUpdateBudgetStatus.options();
+
+async function handleBulkChangeStatus(status: 'active' | 'inactive' | 'archived') {
+  const ids = selectedVisibleBudgets.map((b) => b.id);
+  if (ids.length === 0) return;
+  await bulkStatusMutation.mutateAsync({ ids, status });
+  clearSelection();
+}
+
+function handleSelectionBarArchive() {
+  handleBulkArchiveBudgets(selectedVisibleBudgets);
+}
+
+function handleSelectionBarDelete() {
+  handleBulkDeleteBudgets(selectedVisibleBudgets);
+}
+
+/**
+ * Client-side CSV export of the currently-selected (and visible)
+ * budgets. No server round-trip — the data is already in memory.
+ */
+function handleBulkExport() {
+  const rows = selectedVisibleBudgets;
+  if (rows.length === 0) return;
+
+  const header = ['id', 'name', 'type', 'scope', 'status', 'allocated', 'spent', 'remaining'];
+  const escape = (value: unknown): string => {
+    const str = value == null ? '' : String(value);
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  };
+
+  const lines = [header.join(',')];
+  for (const b of rows) {
+    const allocated = calculateAllocated(b);
+    const spent = calculateActualSpent(b);
+    lines.push(
+      [
+        b.id,
+        b.name ?? '',
+        b.type,
+        b.scope,
+        b.status,
+        allocated,
+        spent,
+        allocated - spent,
+      ]
+        .map(escape)
+        .join(',')
+    );
+  }
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.download = `budgets-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 let manageDialogOpen = $state(false);
 let selectedBudget = $state<BudgetWithRelations | null>(null);
@@ -300,6 +472,25 @@ const filteredBudgets = $derived.by(() => {
   return sorted;
 });
 
+// True when the user hasn't narrowed the list in any way — only then do
+// we surface the "Pinned" section as a separate block. Under any search
+// or filter, pins stay inline so the filtered set remains honest.
+const overviewIsUnfiltered = $derived(
+  searchQuery.trim() === '' && activeStatusFilter === 'all'
+);
+
+const pinnedFilteredBudgets = $derived.by(() => {
+  if (pinnedIds.length === 0) return [];
+  const set = new Set(pinnedIds);
+  return filteredBudgets.filter((b) => set.has(b.id));
+});
+
+const unpinnedFilteredBudgets = $derived.by(() => {
+  if (pinnedIds.length === 0) return filteredBudgets;
+  const set = new Set(pinnedIds);
+  return filteredBudgets.filter((b) => !set.has(b.id));
+});
+
 function clearAllSearch() {
   searchQuery = '';
   budgetFilters = { status: 'all' };
@@ -383,6 +574,7 @@ async function confirmBulkDelete() {
   bulkDeleteDialogOpen = false;
   budgetsToDelete = [];
   deleteLinkedSchedules = false;
+  clearSelection();
 }
 
 function handleBulkArchiveBudgets(budgets: BudgetWithRelations[]) {
@@ -395,6 +587,7 @@ async function confirmBulkArchive() {
   await bulkArchiveMutation.mutateAsync(ids);
   bulkArchiveDialogOpen = false;
   budgetsToArchive = [];
+  clearSelection();
 }
 
 // Active budgets (excludes paused/archived) — used by both the summary
@@ -408,8 +601,51 @@ const activeBudgets = $derived.by(() => {
   );
 });
 
+// ---- Summary-card period selector ----
+// Rolling window applied only to the "Spent" aggregate (and derived
+// remaining/percent). Allocated stays at each budget's stored allocation
+// because that reflects the budget's own cadence (monthly, weekly, etc.)
+// and changing it would misrepresent what the user committed to.
+type SummaryPeriodKey = 'all' | '30d' | '90d';
+
+const SUMMARY_PERIOD_OPTIONS: Array<{ value: SummaryPeriodKey; label: string; days: number | null }> = [
+  { value: 'all', label: 'All time', days: null },
+  { value: '90d', label: 'Last 90 days', days: 90 },
+  { value: '30d', label: 'Last 30 days', days: 30 },
+];
+
+let summaryPeriod = $state<SummaryPeriodKey>('all');
+
+const periodWindow = $derived.by(() => {
+  const option = SUMMARY_PERIOD_OPTIONS.find((o) => o.value === summaryPeriod);
+  if (!option?.days) return null;
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(start.getDate() - option.days);
+  return {
+    days: option.days,
+    startIso: start.toISOString().slice(0, 10),
+    endIso: now.toISOString().slice(0, 10),
+  };
+});
+
+const priorPeriodWindow = $derived.by(() => {
+  if (!periodWindow) return null;
+  const priorEnd = new Date(periodWindow.startIso);
+  priorEnd.setDate(priorEnd.getDate() - 1);
+  const priorStart = new Date(priorEnd);
+  priorStart.setDate(priorStart.getDate() - periodWindow.days);
+  return {
+    startIso: priorStart.toISOString().slice(0, 10),
+    endIso: priorEnd.toISOString().slice(0, 10),
+  };
+});
+
 const summaryMetrics = $derived.by(() => {
-  // Use demo budget data directly when in demo mode (pre-calculated values)
+  // Use demo budget data directly when in demo mode (pre-calculated values).
+  // Demo budgets don't model per-transaction dates, so the rolling-window
+  // selector is effectively hidden on demo; metrics match the "all time"
+  // shape today's demo set ships with.
   if (isDemoView) {
     const demoBudgets = demoMode.demoBudgets;
     let totalAllocated = 0;
@@ -421,7 +657,6 @@ const summaryMetrics = $derived.by(() => {
       totalAllocated += budget.allocatedAmount;
       totalConsumed += budget.spent;
 
-      // Match real branch's resolveStatus: only active budgets contribute to alerts.
       if (budget.status !== 'active') return;
       if (budget.progressStatus === 'over') atRiskCount++;
       else if (budget.progressStatus === 'approaching') approachingCount++;
@@ -439,23 +674,37 @@ const summaryMetrics = $derived.by(() => {
       approachingCount,
       totalBudgets: demoBudgets.length,
       activeBudgets: demoBudgets.filter((b) => b.status === 'active').length,
+      priorConsumed: null as number | null,
     };
   }
 
-  // Regular calculation for real budgets
   let totalAllocated = 0;
   let totalConsumed = 0;
+  let priorConsumed = 0;
   let atRiskCount = 0;
   let approachingCount = 0;
 
   budgets.forEach((budget) => {
     const allocated = calculateAllocated(budget);
-    const consumed = calculateActualSpent(budget);
+    const consumed = periodWindow
+      ? calculatePeriodSpent(budget, periodWindow.startIso, periodWindow.endIso)
+      : calculateActualSpent(budget);
     const status = resolveBudgetProgressStatus(budget);
 
     totalAllocated += allocated;
     totalConsumed += consumed;
 
+    if (priorPeriodWindow) {
+      priorConsumed += calculatePeriodSpent(
+        budget,
+        priorPeriodWindow.startIso,
+        priorPeriodWindow.endIso
+      );
+    }
+
+    // Alerts stay anchored to the budget's own cadence — we want the user
+    // to see a flag when *this budget's current period* is overspent,
+    // regardless of the summary card's rolling window.
     if (status === 'over') atRiskCount++;
     else if (status === 'approaching') approachingCount++;
   });
@@ -472,7 +721,23 @@ const summaryMetrics = $derived.by(() => {
     approachingCount,
     totalBudgets: budgets.length,
     activeBudgets: activeBudgets.length,
+    priorConsumed: priorPeriodWindow ? priorConsumed : null,
   };
+});
+
+// Burn rate — avg spent per day over the active rolling window.
+const avgDailyBurn = $derived(
+  periodWindow && summaryMetrics.totalConsumed > 0
+    ? summaryMetrics.totalConsumed / periodWindow.days
+    : null
+);
+
+// Signed trend vs previous window of the same length. Skipped when the
+// prior window is empty (returning 0 → Infinity% would be noise).
+const spentTrendPct = $derived.by(() => {
+  const prior = summaryMetrics.priorConsumed;
+  if (prior === null || prior <= 0) return null;
+  return ((summaryMetrics.totalConsumed - prior) / prior) * 100;
 });
 
 // Alerts summary-card click state — derived here because it depends on
@@ -572,6 +837,38 @@ const topAtRiskBudget = $derived(
 
   <!-- Summary Dashboard -->
   {#if !budgetsLoading && budgets.length > 0}
+    <div class="space-y-3" data-tour-id="budget-summary-section">
+    <div
+      class="flex flex-wrap items-center justify-between gap-2"
+      aria-label="Summary period filter">
+      <div
+        class="inline-flex items-center rounded-md border"
+        role="group"
+        aria-label="Summary window">
+        {#each SUMMARY_PERIOD_OPTIONS as option, i (option.value)}
+          <Button
+            variant={summaryPeriod === option.value ? 'default' : 'ghost'}
+            size="sm"
+            class={[
+              'h-8 px-3',
+              i === 0 && 'rounded-r-none border-r',
+              i > 0 && i < SUMMARY_PERIOD_OPTIONS.length - 1 && 'rounded-none border-r',
+              i === SUMMARY_PERIOD_OPTIONS.length - 1 && 'rounded-l-none',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            aria-pressed={summaryPeriod === option.value}
+            onclick={() => (summaryPeriod = option.value)}>
+            {option.label}
+          </Button>
+        {/each}
+      </div>
+      {#if periodWindow}
+        <p class="text-muted-foreground text-[11px] sm:text-xs">
+          Allocation reflects each budget's own cadence.
+        </p>
+      {/if}
+    </div>
     <div
       class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4"
       role="region"
@@ -599,7 +896,9 @@ const topAtRiskBudget = $derived(
 
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Card.Title class="text-xs font-medium sm:text-sm">Total Spent</Card.Title>
+          <Card.Title class="text-xs font-medium sm:text-sm">
+            {periodWindow ? `Spent (last ${periodWindow.days}d)` : 'Total Spent'}
+          </Card.Title>
           <TrendingUp class="text-muted-foreground h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
         </Card.Header>
         <Card.Content>
@@ -610,12 +909,36 @@ const topAtRiskBudget = $derived(
             title={formatCurrencyAbs(summaryMetrics.totalConsumed)}>
             {formatCurrencyAbs(summaryMetrics.totalConsumed)}
           </div>
-          <p
-            class="text-[10px] sm:text-xs {summaryMetrics.percentUsed > 100
-              ? 'text-destructive'
-              : 'text-muted-foreground'}">
-            {formatPercentRaw(summaryMetrics.percentUsed, 1)} of allocated
-          </p>
+          {#if periodWindow}
+            <div class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[10px] sm:text-xs">
+              {#if avgDailyBurn !== null}
+                <span class="tabular-nums">
+                  {formatCurrencyAbs(avgDailyBurn)}/day avg
+                </span>
+              {/if}
+              {#if spentTrendPct !== null}
+                <span class="text-muted-foreground/50" aria-hidden="true">·</span>
+                {#if spentTrendPct >= 0}
+                  <span class="text-destructive inline-flex items-center gap-0.5 tabular-nums">
+                    <TrendingUp class="h-3 w-3" />
+                    +{formatPercentRaw(spentTrendPct, 0)} vs prior
+                  </span>
+                {:else}
+                  <span class="inline-flex items-center gap-0.5 tabular-nums text-emerald-600 dark:text-emerald-500">
+                    <TrendingDown class="h-3 w-3" />
+                    {formatPercentRaw(spentTrendPct, 0)} vs prior
+                  </span>
+                {/if}
+              {/if}
+            </div>
+          {:else}
+            <p
+              class="text-[10px] sm:text-xs {summaryMetrics.percentUsed > 100
+                ? 'text-destructive'
+                : 'text-muted-foreground'}">
+              {formatPercentRaw(summaryMetrics.percentUsed, 1)} of allocated
+            </p>
+          {/if}
         </Card.Content>
       </Card.Root>
 
@@ -685,6 +1008,7 @@ const topAtRiskBudget = $derived(
           </p>
         </Card.Content>
       </Card.Root>
+    </div>
     </div>
   {/if}
 
@@ -849,18 +1173,73 @@ const topAtRiskBudget = $derived(
               Showing {filteredBudgets.length} of {budgets.length} budgets
             </div>
 
-            <BudgetSearchResults
-              budgets={filteredBudgets}
-              isLoading={budgetsLoading}
-              {searchQuery}
-              {viewMode}
-              onView={handleViewBudget}
-              onEdit={handleEditBudget}
-              onDelete={handleDeleteBudget}
-              onDuplicate={handleDuplicateBudget}
-              onArchive={handleArchiveBudget}
-              onBulkDelete={handleBulkDeleteBudgets}
-              onBulkArchive={handleBulkArchiveBudgets} />
+            {#if overviewIsUnfiltered && pinnedFilteredBudgets.length > 0}
+              <section class="space-y-3" aria-labelledby="pinned-budgets-heading">
+                <div class="flex items-center gap-2">
+                  <Pin class="text-muted-foreground h-4 w-4" />
+                  <h2
+                    id="pinned-budgets-heading"
+                    class="text-sm font-semibold tracking-tight">
+                    Pinned
+                  </h2>
+                  <span class="text-muted-foreground text-xs tabular-nums">
+                    · {pinnedFilteredBudgets.length}
+                  </span>
+                </div>
+                <BudgetSearchResults
+                  budgets={pinnedFilteredBudgets}
+                  isLoading={false}
+                  {searchQuery}
+                  {viewMode}
+                  {pinnedIds}
+                  onView={handleViewBudget}
+                  onEdit={handleEditBudget}
+                  onDelete={handleDeleteBudget}
+                  onDuplicate={handleDuplicateBudget}
+                  onArchive={handleArchiveBudget}
+                  onBulkDelete={handleBulkDeleteBudgets}
+                  onBulkArchive={handleBulkArchiveBudgets}
+                  onTogglePin={isDemoView ? undefined : handleTogglePin}
+                  selectedIds={selectedIdSet}
+                  onSelect={handleSelect} />
+              </section>
+              <hr class="border-border/60" />
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold tracking-tight">All budgets</h2>
+                <span class="text-muted-foreground text-xs tabular-nums">
+                  · {unpinnedFilteredBudgets.length}
+                </span>
+              </div>
+              <BudgetSearchResults
+                budgets={unpinnedFilteredBudgets}
+                isLoading={budgetsLoading}
+                {searchQuery}
+                {viewMode}
+                {pinnedIds}
+                onView={handleViewBudget}
+                onEdit={handleEditBudget}
+                onDelete={handleDeleteBudget}
+                onDuplicate={handleDuplicateBudget}
+                onArchive={handleArchiveBudget}
+                onBulkDelete={handleBulkDeleteBudgets}
+                onBulkArchive={handleBulkArchiveBudgets}
+                onTogglePin={isDemoView ? undefined : handleTogglePin} />
+            {:else}
+              <BudgetSearchResults
+                budgets={filteredBudgets}
+                isLoading={budgetsLoading}
+                {searchQuery}
+                {viewMode}
+                {pinnedIds}
+                onView={handleViewBudget}
+                onEdit={handleEditBudget}
+                onDelete={handleDeleteBudget}
+                onDuplicate={handleDuplicateBudget}
+                onArchive={handleArchiveBudget}
+                onBulkDelete={handleBulkDeleteBudgets}
+                onBulkArchive={handleBulkArchiveBudgets}
+                onTogglePin={isDemoView ? undefined : handleTogglePin} />
+            {/if}
           {/if}
         </div>
       {/if}
@@ -946,6 +1325,19 @@ const topAtRiskBudget = $derived(
     {/if}
   {/if}
 </div>
+
+<!-- Sticky bulk-actions bar — only visible when grid-view selection has
+     entries and we're not in the tour's view-only mode. -->
+{#if !isViewOnly}
+  <BudgetSelectionBar
+    selected={selectedVisibleBudgets}
+    hiddenCount={selectedHiddenCount}
+    onChangeStatus={handleBulkChangeStatus}
+    onArchive={handleSelectionBarArchive}
+    onDelete={handleSelectionBarDelete}
+    onExport={handleBulkExport}
+    onClear={clearSelection} />
+{/if}
 
 <!-- Template Picker Dialog -->
 <BudgetTemplatePicker bind:open={templatePickerOpen} />

@@ -13,6 +13,7 @@ import { scheduleDates } from "$core/schema/schedule-dates";
 import { schedules } from "$core/schema/schedules";
 import { transactions } from "$core/schema/transactions";
 import { db } from "$core/server/db";
+import { budgetPinsService } from "$core/server/domains/budgets/pins-service";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { lazyService } from "$core/server/shared/container/lazy-service";
 import { NotFoundError } from "$core/server/shared/types/errors";
@@ -736,6 +737,20 @@ export const budgetRoutes = t.router({
     .mutation(async ({ input, ctx }) => {
       try {
         return await budgetService.bulkArchive(input.ids, ctx.workspaceId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+  bulkUpdateStatus: publicProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number().int().positive()).min(1),
+        status: z.enum(["active", "inactive", "archived"]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        return await budgetService.bulkUpdateStatus(input.ids, input.status, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1977,6 +1992,24 @@ export const budgetRoutes = t.router({
 
         // Auto-apply it via automation service
         return await automationService.autoApplyGroupRecommendation(recommendation);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  listPins: publicProcedure.query(async ({ ctx }) => {
+    try {
+      return await budgetPinsService.listPinnedIds(ctx.workspaceId, ctx.userId);
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  togglePin: publicProcedure
+    .input(z.object({ budgetId: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        return await budgetPinsService.togglePin(ctx.workspaceId, ctx.userId, input.budgetId);
       } catch (error) {
         throw translateDomainError(error);
       }

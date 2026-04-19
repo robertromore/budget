@@ -520,13 +520,26 @@ export class BudgetService {
     ids: number[],
     workspaceId: number
   ): Promise<{ success: number; failed: number; errors: Array<{ id: number; error: string }> }> {
+    return this.bulkUpdateStatus(ids, "archived", workspaceId);
+  }
+
+  /**
+   * Apply a single status to a batch of budgets. Each update runs through
+   * `updateBudget` so downstream side effects (cache invalidation, linked
+   * schedule updates, etc.) match the single-budget path exactly.
+   */
+  async bulkUpdateStatus(
+    ids: number[],
+    status: "active" | "inactive" | "archived",
+    workspaceId: number
+  ): Promise<{ success: number; failed: number; errors: Array<{ id: number; error: string }> }> {
     let success = 0;
     let failed = 0;
     const errors: Array<{ id: number; error: string }> = [];
 
     for (const id of ids) {
       try {
-        await this.updateBudget(id, { status: "archived" }, workspaceId);
+        await this.updateBudget(id, { status }, workspaceId);
         success++;
       } catch (error) {
         failed++;

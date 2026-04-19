@@ -90,6 +90,10 @@ export interface DemoBudget {
   accounts: Array<{ id: number; name: string }>;
   categories: Array<{ id: number; name: string; color: string | null }>;
   envelopes: DemoBudgetEnvelope[];
+  // Whether this demo budget appears in the Pinned section. Baked into
+  // the demo dataset so the tour can narrate the feature without needing
+  // a live mutation.
+  pinned?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -694,6 +698,7 @@ function generateDemoBudgets(
           remaining: roundToCents(diningAllocated - diningSpent),
         },
       ],
+      pinned: true,
       createdAt: now,
       updatedAt: now,
     },

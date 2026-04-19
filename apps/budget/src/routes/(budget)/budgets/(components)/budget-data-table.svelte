@@ -44,6 +44,7 @@ function getAvailableFilters(tableInstance: TTable<BudgetWithRelations>) {
     rowSelection: true,
     columnVisibility: true,
   }}
+  getRowId={(row) => String(row.id)}
   showPagination={true}
   pageSizeOptions={[10, 25, 50, 100]}
   emptyMessage="No budgets found."

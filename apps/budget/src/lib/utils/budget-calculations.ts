@@ -12,6 +12,29 @@ export function calculateActualSpent(budget: BudgetWithRelations): number {
 }
 
 /**
+ * Sum allocated amounts for transactions whose date falls within the given
+ * window. Inclusive on both sides. Pass both bounds as `YYYY-MM-DD` strings;
+ * transaction dates may be either pure dates or full ISO timestamps — we
+ * normalize with `slice(0, 10)` before comparing.
+ */
+export function calculatePeriodSpent(
+  budget: BudgetWithRelations,
+  startIso?: string,
+  endIso?: string,
+): number {
+  if (!startIso && !endIso) return calculateActualSpent(budget);
+  const transactions = budget.transactions || [];
+  return transactions.reduce((total, bt) => {
+    const raw = bt.transaction?.date;
+    if (!raw) return total;
+    const day = raw.slice(0, 10);
+    if (startIso && day < startIso) return total;
+    if (endIso && day > endIso) return total;
+    return total + Math.abs(bt.allocatedAmount ?? 0);
+  }, 0);
+}
+
+/**
  * Calculate the allocated amount from budget metadata or period instance.
  * Tries metadata first, then falls back to the latest period instance.
  */

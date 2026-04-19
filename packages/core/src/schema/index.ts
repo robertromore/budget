@@ -1,6 +1,7 @@
 export * from "./accounts";
 export * from "./automation-rules";
 export * from "./budget-automation-settings";
+export * from "./budget-pins";
 export * from "./budgets";
 export * from "./categories";
 export * from "./dashboards";

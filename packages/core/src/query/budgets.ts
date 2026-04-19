@@ -80,6 +80,7 @@ export const budgetKeys = createQueryKeys("budgets", {
   automationSettings: () => ["budgets", "automation", "settings"] as const,
   automationActivity: (filters?: Record<string, unknown>) =>
     ["budgets", "automation", "activity", filters ?? "all"] as const,
+  pins: () => ["budgets", "pins"] as const,
 });
 
 /**
@@ -296,6 +297,25 @@ export const bulkArchiveBudgets = defineMutation<
   successMessage: (result) =>
     `${result.success} budget(s) archived${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
   errorMessage: "Failed to archive budgets",
+});
+
+export const bulkUpdateBudgetStatus = defineMutation<
+  { ids: number[]; status: "active" | "inactive" | "archived" },
+  { success: number; failed: number; errors: Array<{ id: number; error: string }> }
+>({
+  mutationFn: ({ ids, status }) => trpc().budgetRoutes.bulkUpdateStatus.mutate({ ids, status }),
+  onSuccess: (_result, { ids }) => {
+    cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+    cachePatterns.invalidatePrefix(["budgets", "related"]);
+    ids.forEach((id) => cachePatterns.invalidatePrefix(budgetKeys.detail(id)));
+  },
+  successMessage: (result, { status }) => {
+    const action =
+      status === "archived" ? "archived" : status === "inactive" ? "paused" : "reactivated";
+    return `${result.success} budget(s) ${action}${result.failed > 0 ? `, ${result.failed} failed` : ""}`;
+  },
+  errorMessage: "Failed to update budget statuses",
 });
 
 export const bulkDeleteBudgets = defineMutation<
@@ -1415,4 +1435,49 @@ export const autoApplyGroupRecommendation = defineMutation<
   },
   successMessage: "Group recommendation applied",
   errorMessage: "Failed to apply group recommendation",
+});
+
+/**
+ * List the budget IDs the current user has pinned.
+ */
+export const listBudgetPins = () =>
+  defineQuery<number[]>({
+    queryKey: budgetKeys.pins(),
+    queryFn: () => trpc().budgetRoutes.listPins.query(),
+    options: {
+      ...queryPresets.static,
+    },
+  });
+
+/**
+ * Toggle the pin state for one budget. Uses an optimistic update so the
+ * UI flips immediately — any failure rolls the cache back to the
+ * previous set and `onSettled` re-syncs with the server.
+ */
+export const toggleBudgetPin = defineMutation<
+  { budgetId: number },
+  { pinned: boolean },
+  Error,
+  { previous: number[] }
+>({
+  mutationFn: ({ budgetId }) => trpc().budgetRoutes.togglePin.mutate({ budgetId }),
+  onMutate: async ({ budgetId }) => {
+    await queryClient.cancelQueries({ queryKey: budgetKeys.pins() });
+    const previous = queryClient.getQueryData<number[]>(budgetKeys.pins()) ?? [];
+    const next = previous.includes(budgetId)
+      ? previous.filter((id) => id !== budgetId)
+      : [...previous, budgetId];
+    queryClient.setQueryData(budgetKeys.pins(), next);
+    return { previous };
+  },
+  onError: (_error, _variables, context) => {
+    if (context?.previous) {
+      queryClient.setQueryData(budgetKeys.pins(), context.previous);
+    }
+  },
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.pins());
+  },
+  // No success/error toast — pinning is high-frequency and low-risk;
+  // a toast on every click would be noise.
 });
