@@ -48,7 +48,6 @@ const featureModesSchema = z.object({
   transactionParsing: featureConfigSchema,
   categorySuggestion: featureConfigSchema,
   anomalyDetection: featureConfigSchema,
-  forecasting: featureConfigSchema,
   payeeMatching: featureConfigSchema,
   statementExtraction: featureConfigSchema,
 });
@@ -85,10 +84,6 @@ function normalizeFeatureModes(
     anomalyDetection: normalizeFeatureConfig(
       modes?.anomalyDetection,
       DEFAULT_LLM_PREFERENCES.featureModes.anomalyDetection
-    ),
-    forecasting: normalizeFeatureConfig(
-      modes?.forecasting,
-      DEFAULT_LLM_PREFERENCES.featureModes.forecasting
     ),
     payeeMatching: normalizeFeatureConfig(
       modes?.payeeMatching,
@@ -353,7 +348,6 @@ export const llmSettingsRoutes = t.router({
           transactionParsing: input.transactionParsing ?? currentModes.transactionParsing,
           categorySuggestion: input.categorySuggestion ?? currentModes.categorySuggestion,
           anomalyDetection: input.anomalyDetection ?? currentModes.anomalyDetection,
-          forecasting: input.forecasting ?? currentModes.forecasting,
           payeeMatching: input.payeeMatching ?? currentModes.payeeMatching,
           statementExtraction: input.statementExtraction ?? currentModes.statementExtraction,
         };
@@ -589,12 +583,12 @@ export const llmSettingsRoutes = t.router({
       const coordinator = createIntelligenceCoordinator(prefs);
       const summary = coordinator.getSummary();
 
-      // Get strategy for each feature
+      // Get strategy for each feature. `forecasting` is ML-only now,
+      // so it's no longer a coordinator-managed feature.
       const features = {
         transactionParsing: coordinator.getStrategy("transactionParsing"),
         categorySuggestion: coordinator.getStrategy("categorySuggestion"),
         anomalyDetection: coordinator.getStrategy("anomalyDetection"),
-        forecasting: coordinator.getStrategy("forecasting"),
         payeeMatching: coordinator.getStrategy("payeeMatching"),
       };
 

@@ -16,12 +16,15 @@ import type {
 import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$core/schema/workspaces";
 import { createProvider, getActiveProvider, type ProviderInstance } from "./providers";
 
-// Feature names that can use ML, LLM, or both
+// Feature names that can use ML, LLM, or both. Forecasting is
+// intentionally absent — it's a pure ML path (see
+// `TimeSeriesForecastingService`). Callers that previously asked the
+// coordinator about "forecasting" should check
+// `ml.features.forecasting` directly.
 export type IntelligenceFeature =
   | "transactionParsing"
   | "categorySuggestion"
   | "anomalyDetection"
-  | "forecasting"
   | "payeeMatching";
 
 // Execution strategy for a feature
@@ -69,7 +72,6 @@ const LLM_TO_ML_FEATURE_MAP: Record<keyof LLMFeatureModes, keyof MLPreferences["
     transactionParsing: null, // No direct ML equivalent
     categorySuggestion: "similarity", // Uses similarity service
     anomalyDetection: "anomalyDetection",
-    forecasting: "forecasting",
     payeeMatching: "similarity",
     statementExtraction: null, // PDF-statement parsing is LLM-only; no ML fallback.
   };
@@ -322,7 +324,6 @@ export class IntelligenceCoordinator {
       transactionParsing: getFeatureSummary("transactionParsing"),
       categorySuggestion: getFeatureSummary("categorySuggestion"),
       anomalyDetection: getFeatureSummary("anomalyDetection"),
-      forecasting: getFeatureSummary("forecasting"),
       payeeMatching: getFeatureSummary("payeeMatching"),
     };
 

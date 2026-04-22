@@ -15,7 +15,6 @@ import FolderSearch from '@lucide/svelte/icons/folder-search';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Tags from '@lucide/svelte/icons/tags';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
 
 // Queries
 const preferencesQuery = LLMSettings.getPreferences().options();
@@ -36,7 +35,6 @@ let featureModes = $state<Record<string, LLMFeatureConfig>>({
   transactionParsing: { mode: 'disabled', provider: null },
   categorySuggestion: { mode: 'disabled', provider: null },
   anomalyDetection: { mode: 'disabled', provider: null },
-  forecasting: { mode: 'disabled', provider: null },
   payeeMatching: { mode: 'disabled', provider: null },
 });
 
@@ -47,7 +45,7 @@ let providerConfigs = $state<
   openai: { enabled: false, model: 'gpt-4.1-mini' },
   anthropic: { enabled: false, model: 'claude-haiku-4-5-20251015' },
   google: { enabled: false, model: 'gemini-3-flash' },
-  ollama: { enabled: false, model: 'llama3.3', endpoint: 'http://localhost:11434' },
+  ollama: { enabled: false, model: 'gemma4', endpoint: 'http://localhost:11434' },
 });
 
 // Testing state per provider
@@ -302,11 +300,6 @@ const featureMeta = {
     title: 'Anomaly Detection',
     description: 'Detect unusual spending patterns',
     icon: AlertTriangle,
-  },
-  forecasting: {
-    title: 'Forecasting',
-    description: 'Predict future spending and cash flow',
-    icon: TrendingUp,
   },
   payeeMatching: {
     title: 'Payee Matching',

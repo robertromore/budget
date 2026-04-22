@@ -19,10 +19,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import {
-  createIntelligenceCoordinator,
-  type StrategyResult,
-} from "$core/server/ai/intelligence-coordinator";
+import type { StrategyResult } from "$core/server/ai/intelligence-coordinator";
 import type { ProviderInstance } from "$core/server/ai/providers";
 import { generateText } from "ai";
 
@@ -1045,7 +1042,12 @@ Keep the tone helpful and actionable.`;
   }
 
   /**
-   * Get prediction tier based on workspace preferences and per-payee override
+   * Get prediction tier based on workspace preferences and per-payee
+   * override. Forecasting is an ML-only path — the synthetic strategy
+   * here just captures whether ML forecasting is enabled so callers
+   * can decide between `statistical` and `ml` tiers. The `"ai"` tier
+   * survives only as an explicit per-payee override knob; it never
+   * fires from workspace-global settings.
    */
   determinePredictionTier(
     workspacePreferences: WorkspacePreferences,
@@ -1056,11 +1058,27 @@ Keep the tone helpful and actionable.`;
     useML: boolean;
     useAI: boolean;
   } {
+    const mlPrefs = workspacePreferences.ml;
+    const mlForecastingEnabled =
+      (mlPrefs?.enabled ?? false) && (mlPrefs?.features?.forecasting ?? false);
+
+    // Synthetic StrategyResult — the coordinator no longer has a
+    // `forecasting` feature, so we assemble the shape callers still
+    // read directly. No LLM path is populated because LLM forecasting
+    // was retired (numerical prediction belongs to ML).
+    const strategy: StrategyResult = {
+      strategy: mlForecastingEnabled ? "ml_only" : "none",
+      useML: mlForecastingEnabled,
+      useLLM: false,
+      llmProvider: null,
+      llmProviderType: null,
+      mlEnabled: mlForecastingEnabled,
+      llmEnabled: false,
+      featureMode: "disabled",
+    };
+
     // Check for per-payee override first
     if (profilePredictionMethod && profilePredictionMethod !== "default") {
-      const coordinator = createIntelligenceCoordinator(workspacePreferences);
-      const strategy = coordinator.getStrategy("forecasting");
-
       return {
         tier: profilePredictionMethod,
         strategy,
@@ -1069,23 +1087,11 @@ Keep the tone helpful and actionable.`;
       };
     }
 
-    // Use global workspace settings via intelligence coordinator
-    const coordinator = createIntelligenceCoordinator(workspacePreferences);
-    const strategy = coordinator.getStrategy("forecasting");
-
-    // Determine tier based on strategy
-    let tier: "statistical" | "ml" | "ai" = "statistical";
-    if (strategy.useLLM) {
-      tier = "ai";
-    } else if (strategy.useML) {
-      tier = "ml";
-    }
-
     return {
-      tier,
+      tier: mlForecastingEnabled ? "ml" : "statistical",
       strategy,
-      useML: strategy.useML,
-      useAI: strategy.useLLM,
+      useML: mlForecastingEnabled,
+      useAI: false,
     };
   }
 

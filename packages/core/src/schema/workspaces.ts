@@ -115,12 +115,16 @@ export interface LLMFeatureConfig {
   provider: LLMProvider | null; // null = use default provider
 }
 
-// Per-feature LLM settings
+// Per-feature LLM settings. Forecasting is intentionally absent —
+// numerical forecasting is ML's job (time-series math, see
+// `packages/core/src/server/domains/ml/time-series/forecasting.ts`).
+// If an LLM role is needed later it should *summarize* ML output
+// (e.g., "projected $420 shortfall by month-end") rather than
+// produce predictions itself.
 export interface LLMFeatureModes {
   transactionParsing: LLMFeatureConfig;
   categorySuggestion: LLMFeatureConfig;
   anomalyDetection: LLMFeatureConfig;
-  forecasting: LLMFeatureConfig;
   payeeMatching: LLMFeatureConfig;
   /**
    * Parse PDF bank / credit-card statements into structured
@@ -157,7 +161,6 @@ export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
     transactionParsing: { mode: "disabled", provider: null },
     categorySuggestion: { mode: "disabled", provider: null },
     anomalyDetection: { mode: "disabled", provider: null },
-    forecasting: { mode: "disabled", provider: null },
     payeeMatching: { mode: "disabled", provider: null },
     // Default to `enhance` — when a provider is configured, the AI
     // actually fires for PDF imports. Users can flip this to
