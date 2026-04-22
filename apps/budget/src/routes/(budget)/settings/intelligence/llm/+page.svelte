@@ -1,5 +1,5 @@
 <script lang="ts">
-import { LLMFeatureMode, LLMProviderCard } from '$lib/components/llm';
+import { LLMProviderCard } from '$lib/components/llm';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Skeleton } from '$lib/components/ui/skeleton';
@@ -10,6 +10,7 @@ import type { LLMFeatureConfig, LLMProvider } from '$core/schema/workspaces';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Bot from '@lucide/svelte/icons/bot';
 import BrainCircuit from '@lucide/svelte/icons/brain-circuit';
+import FileText from '@lucide/svelte/icons/file-text';
 import FolderSearch from '@lucide/svelte/icons/folder-search';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -34,6 +35,7 @@ let featureModes = $state<Record<string, LLMFeatureConfig>>({
   categorySuggestion: { mode: 'disabled', provider: null },
   anomalyDetection: { mode: 'disabled', provider: null },
   payeeMatching: { mode: 'disabled', provider: null },
+  statementExtraction: { mode: 'enhance', provider: null },
 });
 
 // Provider-specific state (defaults match recommended models)
@@ -260,7 +262,18 @@ function handleSetDefault(provider: LLMProvider) {
   defaultProvider = provider;
 }
 
-function handleFeatureConfigChange(feature: string, config: LLMFeatureConfig) {
+/**
+ * Simple on/off toggle for an AI feature. On writes `enhance`; off
+ * writes `disabled`. The `override` mode (LLM replaces ML) was
+ * retired in the ML/LLM de-duplication batches because ML is now
+ * always primary — LLM only fires on the ML-uncertain tail — so
+ * `enhance` is the only meaningful "on" state.
+ */
+function handleFeatureToggle(feature: string, on: boolean) {
+  const config: LLMFeatureConfig = {
+    mode: on ? 'enhance' : 'disabled',
+    provider: null,
+  };
   featureModes[feature] = config;
   updateFeatureModesMutation.mutate({ [feature]: config });
 }
@@ -273,31 +286,38 @@ const providerMeta = {
   ollama: { title: 'Ollama', description: 'Local open-source models', icon: Bot },
 };
 
-// Build provider options for feature mode dropdown
-const providerOptions = $derived(
-  (['openai', 'anthropic', 'google', 'ollama'] as LLMProvider[]).map((p) => ({
-    value: p,
-    label: providerMeta[p].title,
-    enabled: providerConfigs[p].enabled,
-  }))
-);
-
-// Feature metadata
-const featureMeta = {
+/**
+ * Feature metadata — user-centric copy that describes what
+ * enabling the feature actually does at a glance. These land next
+ * to a single on/off switch, not a mode selector.
+ */
+const featureMeta: Record<
+  string,
+  { title: string; description: string; icon: typeof Tags }
+> = {
   categorySuggestion: {
-    title: 'Category Suggestion',
-    description: 'Suggest categories for new transactions',
+    title: 'Smart category suggestions',
+    description:
+      "AI suggests a category when pattern matching isn't confident — mostly for new or unusual merchants.",
     icon: Tags,
   },
   anomalyDetection: {
-    title: 'Anomaly Detection',
-    description: 'Detect unusual spending patterns',
+    title: 'Unusual-transaction review',
+    description:
+      'AI double-checks transactions the statistical anomaly detector flagged as suspicious.',
     icon: AlertTriangle,
   },
   payeeMatching: {
-    title: 'Payee Matching',
-    description: 'Match and canonicalize merchant names',
+    title: 'Smart merchant matching',
+    description:
+      'AI merges similar merchant names when fuzzy matching lands in the "could go either way" band.',
     icon: FolderSearch,
+  },
+  statementExtraction: {
+    title: 'PDF statement import',
+    description:
+      'Extract transactions from bank / credit-card PDFs at upload time (Chase, Coinbase, etc.).',
+    icon: FileText,
   },
 };
 </script>
@@ -424,26 +444,35 @@ const featureMeta = {
       </Card.Content>
     </Card.Root>
 
-    <!-- Feature Modes -->
-    <Card.Root data-help-id="llm-feature-modes" data-help-title="LLM Feature Modes">
+    <!-- AI Enhancement — one switch per feature. ML runs on every
+         workspace; this card controls whether AI reviews the cases ML
+         isn't confident about. -->
+    <Card.Root data-help-id="llm-feature-modes" data-help-title="AI Enhancement">
       <Card.Header>
-        <Card.Title>Feature Modes</Card.Title>
+        <Card.Title>AI Enhancement</Card.Title>
         <Card.Description>
-          Choose how LLM should work with each feature. "Enhance" uses LLM alongside ML, "Override"
-          replaces ML entirely.
+          Pattern matching and statistical ML always run. These switches decide whether AI takes a
+          second look when ML isn't sure.
         </Card.Description>
       </Card.Header>
-      <Card.Content class="grid gap-4">
+      <Card.Content class="space-y-2">
         {#each Object.entries(featureMeta) as [feature, meta]}
-          <LLMFeatureMode
-            title={meta.title}
-            description={meta.description}
-            icon={meta.icon}
-            bind:config={featureModes[feature]}
-            {defaultProvider}
-            providers={providerOptions}
-            disabled={!enabled}
-            onConfigChange={(config) => handleFeatureConfigChange(feature, config)} />
+          {@const Icon = meta.icon}
+          {@const isOn = (featureModes[feature]?.mode ?? 'disabled') !== 'disabled'}
+          <div
+            class="flex items-start justify-between gap-4 rounded-md border px-3 py-3">
+            <div class="flex items-start gap-3">
+              <Icon class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+              <div class="min-w-0">
+                <p class="text-sm font-medium">{meta.title}</p>
+                <p class="text-muted-foreground text-xs">{meta.description}</p>
+              </div>
+            </div>
+            <Switch
+              checked={isOn}
+              disabled={!enabled || !defaultProvider}
+              onCheckedChange={(on) => handleFeatureToggle(feature, on)} />
+          </div>
         {/each}
       </Card.Content>
     </Card.Root>
