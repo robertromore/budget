@@ -1,6 +1,5 @@
 import { transactions as transactionTable } from "$core/schema/transactions";
-import { workspaces as workspacesTable } from "$core/schema/workspaces";
-import { DEFAULT_LLM_PREFERENCES, type LLMPreferences } from "$core/schema/workspaces";
+import type { LLMPreferences } from "$core/schema/workspaces";
 import { db } from "$core/server/db";
 import { CSVProcessor } from "$core/server/import/file-processors/csv-processor";
 import { ExcelProcessor } from "$core/server/import/file-processors/excel-processor";
@@ -12,6 +11,7 @@ import { QBOProcessor } from "$core/server/import/file-processors/qbo-processor"
 import { QIFProcessor } from "$core/server/import/file-processors/qif-processor";
 import { isQuickBooksCSV } from "$core/server/import/utils";
 import { TransactionValidator } from "$core/server/import/validators/transaction-validator";
+import { loadWorkspaceLlmPreferences } from "$core/server/shared/workspace-llm-preferences";
 import type { ParseResult } from "$core/types/import";
 import { json } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
@@ -23,38 +23,6 @@ import {
   requireImportUserId,
 } from "../auth";
 import type { RequestHandler } from "./$types";
-
-/**
- * Load `LLMPreferences` for a workspace, merged over
- * `DEFAULT_LLM_PREFERENCES` so missing keys (e.g. the
- * `statementExtraction` feature mode added later) always have a
- * sane default. Returns the defaults when the workspace row is
- * missing or has no `preferences` blob.
- */
-async function loadWorkspaceLlmPreferences(workspaceId: number): Promise<LLMPreferences> {
-  try {
-    const row = await db.query.workspaces.findFirst({
-      where: eq(workspacesTable.id, workspaceId),
-    });
-    if (!row?.preferences) return DEFAULT_LLM_PREFERENCES;
-    const parsed = JSON.parse(row.preferences) as { llm?: Partial<LLMPreferences> };
-    return {
-      ...DEFAULT_LLM_PREFERENCES,
-      ...(parsed.llm ?? {}),
-      featureModes: {
-        ...DEFAULT_LLM_PREFERENCES.featureModes,
-        ...(parsed.llm?.featureModes ?? {}),
-      },
-      providers: {
-        ...DEFAULT_LLM_PREFERENCES.providers,
-        ...(parsed.llm?.providers ?? {}),
-      },
-    };
-  } catch (error) {
-    console.error(`Failed to load LLM preferences for workspace ${workspaceId}:`, error);
-    return DEFAULT_LLM_PREFERENCES;
-  }
-}
 
 export const POST: RequestHandler = async ({ request, url }) => {
   try {

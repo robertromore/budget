@@ -6,6 +6,7 @@
 
 import { createPayeeGrouper, createCategorySuggester } from "$core/server/import/cleanup";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
+import { loadWorkspaceLlmPreferences } from "$core/server/shared/workspace-llm-preferences";
 import { publicProcedure, t } from "$core/trpc";
 import { translateDomainError } from "$core/trpc/shared/errors";
 import { z } from "zod/v4";
@@ -72,14 +73,22 @@ export const importCleanupRoutes = t.router({
     }),
 
   /**
-   * Get category suggestions for import rows
+   * Get category suggestions for import rows. Workspace LLM
+   * preferences are loaded lazily and passed into the suggester so
+   * uncertain rows can opt into a batched LLM refinement pass
+   * (coordinator-gated; no-op when LLM is disabled).
    */
   suggestCategories: publicProcedure
     .input(suggestCategoriesSchema.extend({ config: categorySuggesterConfigSchema }))
     .mutation(async ({ input, ctx }) => {
       try {
+        const llmPreferences = await loadWorkspaceLlmPreferences(ctx.workspaceId);
         const suggester = createCategorySuggester(input.config);
-        const result = await suggester.suggestCategories(ctx.workspaceId, input.rows);
+        const result = await suggester.suggestCategories(
+          ctx.workspaceId,
+          input.rows,
+          llmPreferences,
+        );
 
         return result;
       } catch (error) {
@@ -131,6 +140,8 @@ export const importCleanupRoutes = t.router({
             memo: row.memo,
           }));
 
+        const llmPreferences = await loadWorkspaceLlmPreferences(ctx.workspaceId);
+
         const [payeeResult, categoryResult] = await Promise.all([
           grouper.analyzePayees(
             input.rows.map((r) => ({
@@ -141,7 +152,11 @@ export const importCleanupRoutes = t.router({
             existingPayees,
             ctx.workspaceId // Pass workspace ID for saved alias/mapping lookup
           ),
-          suggester.suggestCategories(ctx.workspaceId, rowsForCategorySuggestion),
+          suggester.suggestCategories(
+            ctx.workspaceId,
+            rowsForCategorySuggestion,
+            llmPreferences,
+          ),
         ]);
 
         return {
