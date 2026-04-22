@@ -12,13 +12,14 @@ export interface PdfExtractionResult {
 }
 
 /**
- * Extract text from a PDF file using pdf-parse
- * Best for text-based PDFs (not scanned documents)
+ * Extract text from a PDF buffer using pdf-parse. Shared core used by
+ * both the filesystem-path helper (below) and any in-memory caller
+ * (e.g. the import pipeline, which receives uploaded `File` objects
+ * as buffers without ever touching disk).
  */
-export async function extractPdfText(filePath: string): Promise<PdfExtractionResult> {
-  const buffer = await readFile(filePath);
-
-  // pdf-parse v2 requires data in constructor
+export async function extractPdfTextFromBuffer(
+  buffer: Buffer | Uint8Array,
+): Promise<PdfExtractionResult> {
   const parser = new PDFParse({ data: buffer });
 
   try {
@@ -45,6 +46,15 @@ export async function extractPdfText(filePath: string): Promise<PdfExtractionRes
     // Clean up parser resources
     await parser.destroy().catch(() => {});
   }
+}
+
+/**
+ * Extract text from a PDF file using pdf-parse.
+ * Best for text-based PDFs (not scanned documents).
+ */
+export async function extractPdfText(filePath: string): Promise<PdfExtractionResult> {
+  const buffer = await readFile(filePath);
+  return extractPdfTextFromBuffer(buffer);
 }
 
 /**

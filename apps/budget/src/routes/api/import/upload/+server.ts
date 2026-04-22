@@ -1,9 +1,12 @@
 import { transactions as transactionTable } from "$core/schema/transactions";
+import { workspaces as workspacesTable } from "$core/schema/workspaces";
+import { DEFAULT_LLM_PREFERENCES, type LLMPreferences } from "$core/schema/workspaces";
 import { db } from "$core/server/db";
 import { CSVProcessor } from "$core/server/import/file-processors/csv-processor";
 import { ExcelProcessor } from "$core/server/import/file-processors/excel-processor";
 import { IIFProcessor } from "$core/server/import/file-processors/iif-processor";
 import { OFXProcessor } from "$core/server/import/file-processors/ofx-processor";
+import { PDFProcessor } from "$core/server/import/file-processors/pdf-processor";
 import { QBCSVProcessor } from "$core/server/import/file-processors/qb-csv-processor";
 import { QBOProcessor } from "$core/server/import/file-processors/qbo-processor";
 import { QIFProcessor } from "$core/server/import/file-processors/qif-processor";
@@ -20,6 +23,38 @@ import {
   requireImportUserId,
 } from "../auth";
 import type { RequestHandler } from "./$types";
+
+/**
+ * Load `LLMPreferences` for a workspace, merged over
+ * `DEFAULT_LLM_PREFERENCES` so missing keys (e.g. the
+ * `statementExtraction` feature mode added later) always have a
+ * sane default. Returns the defaults when the workspace row is
+ * missing or has no `preferences` blob.
+ */
+async function loadWorkspaceLlmPreferences(workspaceId: number): Promise<LLMPreferences> {
+  try {
+    const row = await db.query.workspaces.findFirst({
+      where: eq(workspacesTable.id, workspaceId),
+    });
+    if (!row?.preferences) return DEFAULT_LLM_PREFERENCES;
+    const parsed = JSON.parse(row.preferences) as { llm?: Partial<LLMPreferences> };
+    return {
+      ...DEFAULT_LLM_PREFERENCES,
+      ...(parsed.llm ?? {}),
+      featureModes: {
+        ...DEFAULT_LLM_PREFERENCES.featureModes,
+        ...(parsed.llm?.featureModes ?? {}),
+      },
+      providers: {
+        ...DEFAULT_LLM_PREFERENCES.providers,
+        ...(parsed.llm?.providers ?? {}),
+      },
+    };
+  } catch (error) {
+    console.error(`Failed to load LLM preferences for workspace ${workspaceId}:`, error);
+    return DEFAULT_LLM_PREFERENCES;
+  }
+}
 
 export const POST: RequestHandler = async ({ request, url }) => {
   try {
@@ -42,14 +77,25 @@ export const POST: RequestHandler = async ({ request, url }) => {
       fileContent = await file.text();
     }
 
-    // Determine file type and get appropriate processor
-    const processor = await getFileProcessor(file.name, fileContent);
+    // Determine file type and get appropriate processor. PDFs need
+    // workspace LLM preferences for the `pdf-ai-schema` executor;
+    // load lazily so CSV/OFX/etc. imports don't pay an extra query.
+    const extensionLower = `.${file.name.split(".").pop()?.toLowerCase()}`;
+    const workspaceId = authorizedAccount?.workspaceId ?? null;
+    const pdfContext =
+      extensionLower === ".pdf" && workspaceId
+        ? {
+            workspaceId,
+            llmPreferences: await loadWorkspaceLlmPreferences(workspaceId),
+          }
+        : undefined;
+    const processor = await getFileProcessor(file.name, fileContent, pdfContext);
 
     if (!processor) {
       return json(
         {
           error:
-            "Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx, .iif, .qbo",
+            "Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx, .iif, .qbo, .pdf",
         },
         { status: 400 }
       );
@@ -159,7 +205,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
   }
 };
 
-async function getFileProcessor(fileName: string, fileContent?: string) {
+async function getFileProcessor(
+  fileName: string,
+  fileContent?: string,
+  pdfContext?: { workspaceId?: number; llmPreferences?: LLMPreferences },
+) {
   const extension = `.${fileName.split(".").pop()?.toLowerCase()}`;
 
   switch (extension) {
@@ -194,6 +244,13 @@ async function getFileProcessor(fileName: string, fileContent?: string) {
         }
       }
       return new QBOProcessor();
+    case ".pdf":
+      // Default PDF processor uses the `pdf-ai-schema` executor with
+      // no overrides — Phase 2 swaps this for profile-matched
+      // deterministic executors once saved parsers exist. Workspace
+      // LLM preferences flow through so the executor can resolve a
+      // provider via `getProviderForFeature(prefs, "statementExtraction")`.
+      return new PDFProcessor(undefined, pdfContext ?? {});
     default:
       return null;
   }

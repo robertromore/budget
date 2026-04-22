@@ -3,7 +3,8 @@
  *
  * Available models for each LLM provider with descriptions.
  * These are hardcoded fallbacks - providers may offer additional models.
- * Last updated: December 2025
+ * Last updated: April 2026 — refreshed Ollama catalog for gpt-oss,
+ * Qwen 3.5/3.6, Gemma 4, GLM 5, Kimi K2, Nemotron 3, etc.
  */
 
 export interface ModelInfo {
@@ -33,8 +34,11 @@ export const OLLAMA_TOOL_MODELS = new Set([
   "qwen2.5-coder",
   "qwen3",
   "qwen3-coder",
+  "qwen3-coder-next",
   "qwq",
   "qwen3-vl",
+  "qwen3.5",
+  "qwen3.6",
   // Mistral family
   "mistral",
   "mistral-nemo",
@@ -44,6 +48,7 @@ export const OLLAMA_TOOL_MODELS = new Set([
   "mistral-small3.1",
   "mistral-small3.2",
   "magistral",
+  "ministral-3",
   // DeepSeek
   "deepseek-r1",
   "deepseek-v3.1",
@@ -52,6 +57,26 @@ export const OLLAMA_TOOL_MODELS = new Set([
   "command-r-plus",
   "command-r7b",
   "command-a",
+  // Gemma family
+  "gemma4",
+  // GLM family (ZhipuAI) — agentic-focused, state-of-the-art on SWE-Bench
+  "glm-4",
+  "glm-4.7-flash",
+  "glm-5",
+  "glm-5.1",
+  // Kimi family (Moonshot) — long-horizon agentic, multimodal
+  "kimi-k2",
+  "kimi-k2.5",
+  "kimi-k2.6",
+  // NVIDIA Nemotron 3 series (MoE + efficient variants)
+  "nemotron-3",
+  "nemotron-3-super",
+  "nemotron-3-nano",
+  "nemotron-cascade-2",
+  // OpenAI open-weight models
+  "gpt-oss",
+  // Liquid Foundation Models
+  "lfm2",
   // Others
   "hermes3",
   "nemotron",
@@ -194,43 +219,56 @@ export const LLM_MODELS = {
       supportsTools: true,
     },
   ],
-  // Ollama - only some models support tools
+  // Ollama - only some models support tools. Curated set ordered
+  // roughly by "best default" → "specialist" → "established".
   ollama: [
+    {
+      id: "gemma4",
+      name: "Gemma 4",
+      description: "Google's latest — 26B/31B, vision + tools + thinking + audio",
+      recommended: true,
+      supportsTools: true,
+    },
     {
       id: "llama3.3",
       name: "Llama 3.3",
-      description: "Great all-around model with 256k context",
-      recommended: true,
+      description: "Proven 70B workhorse if you prefer a battle-tested tool caller",
+      supportsTools: true,
+    },
+    {
+      id: "gpt-oss",
+      name: "GPT-OSS",
+      description: "OpenAI's open-weight model — strong tool calling (20B / 120B)",
+      supportsTools: true,
+    },
+    {
+      id: "qwen3.5",
+      name: "Qwen 3.5",
+      description: "Multimodal + thinking; sizes from 0.8B to 122B",
+      supportsTools: true,
+    },
+    {
+      id: "glm-5.1",
+      name: "GLM 5.1",
+      description: "State-of-the-art on SWE-Bench — best for agentic workflows",
+      supportsTools: true,
+    },
+    {
+      id: "deepseek-v3.1",
+      name: "DeepSeek V3.1",
+      description: "Hybrid thinking + standard inference; heavy reasoning",
       supportsTools: true,
     },
     {
       id: "llama4",
       name: "Llama 4",
-      description: "Latest with multimodal reasoning capabilities",
-      supportsTools: true,
-    },
-    {
-      id: "qwen3",
-      name: "Qwen 3",
-      description: "Excellent multilingual support",
+      description: "Meta's latest, multimodal reasoning",
       supportsTools: true,
     },
     {
       id: "mistral-small3.1",
       name: "Mistral Small 3.1",
       description: "Fast and efficient for quick tasks",
-      supportsTools: true,
-    },
-    {
-      id: "qwen2.5-vl",
-      name: "Qwen 2.5 VL",
-      description: "Best for document OCR and vision tasks",
-      supportsTools: false,
-    },
-    {
-      id: "mixtral",
-      name: "Mixtral 8x22B",
-      description: "Mixture of experts, good for complex tasks",
       supportsTools: true,
     },
   ],

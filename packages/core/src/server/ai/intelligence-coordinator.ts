@@ -71,6 +71,7 @@ const LLM_TO_ML_FEATURE_MAP: Record<keyof LLMFeatureModes, keyof MLPreferences["
     anomalyDetection: "anomalyDetection",
     forecasting: "forecasting",
     payeeMatching: "similarity",
+    statementExtraction: null, // PDF-statement parsing is LLM-only; no ML fallback.
   };
 
 /**

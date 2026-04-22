@@ -122,6 +122,12 @@ export interface LLMFeatureModes {
   anomalyDetection: LLMFeatureConfig;
   forecasting: LLMFeatureConfig;
   payeeMatching: LLMFeatureConfig;
+  /**
+   * Parse PDF bank / credit-card statements into structured
+   * transactions during import. Used by the `pdf-ai-schema` executor
+   * in `packages/core/src/server/import/parser-runtime/`.
+   */
+  statementExtraction: LLMFeatureConfig;
 }
 
 // Main LLM preferences interface
@@ -145,7 +151,7 @@ export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
     openai: { enabled: false, model: "gpt-4.1-mini" },
     anthropic: { enabled: false, model: "claude-haiku-4-5-20251015" },
     google: { enabled: false, model: "gemini-3-flash" },
-    ollama: { enabled: false, model: "llama3.3", endpoint: "http://localhost:11434" },
+    ollama: { enabled: false, model: "gemma4", endpoint: "http://localhost:11434" },
   },
   featureModes: {
     transactionParsing: { mode: "disabled", provider: null },
@@ -153,6 +159,11 @@ export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
     anomalyDetection: { mode: "disabled", provider: null },
     forecasting: { mode: "disabled", provider: null },
     payeeMatching: { mode: "disabled", provider: null },
+    // Default to `enhance` — when a provider is configured, the AI
+    // actually fires for PDF imports. Users can flip this to
+    // `disabled` to opt out, or `override` (same behavior as enhance
+    // for this feature since there's no non-AI baseline to override).
+    statementExtraction: { mode: "enhance", provider: null },
   },
 };
 
