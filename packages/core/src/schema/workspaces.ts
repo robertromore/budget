@@ -115,14 +115,17 @@ export interface LLMFeatureConfig {
   provider: LLMProvider | null; // null = use default provider
 }
 
-// Per-feature LLM settings. Forecasting is intentionally absent —
-// numerical forecasting is ML's job (time-series math, see
-// `packages/core/src/server/domains/ml/time-series/forecasting.ts`).
-// If an LLM role is needed later it should *summarize* ML output
-// (e.g., "projected $420 shortfall by month-end") rather than
-// produce predictions itself.
+// Per-feature LLM settings.
+//
+// Two features that used to live here were removed because they
+// duplicated the ML stack without adding value:
+//   - `forecasting` — numerical prediction belongs to ML
+//     (`TimeSeriesForecastingService`). If an LLM role returns,
+//     it should summarize ML output, not produce predictions.
+//   - `transactionParsing` — merchant canonicalization + category
+//     suggestion is covered by the ML similarity + smart-categories
+//     services, which also drive the UI today.
 export interface LLMFeatureModes {
-  transactionParsing: LLMFeatureConfig;
   categorySuggestion: LLMFeatureConfig;
   anomalyDetection: LLMFeatureConfig;
   payeeMatching: LLMFeatureConfig;
@@ -158,7 +161,6 @@ export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
     ollama: { enabled: false, model: "gemma4", endpoint: "http://localhost:11434" },
   },
   featureModes: {
-    transactionParsing: { mode: "disabled", provider: null },
     categorySuggestion: { mode: "disabled", provider: null },
     anomalyDetection: { mode: "disabled", provider: null },
     payeeMatching: { mode: "disabled", provider: null },

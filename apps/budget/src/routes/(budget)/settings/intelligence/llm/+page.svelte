@@ -10,7 +10,6 @@ import type { LLMFeatureConfig, LLMProvider } from '$core/schema/workspaces';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import Bot from '@lucide/svelte/icons/bot';
 import BrainCircuit from '@lucide/svelte/icons/brain-circuit';
-import FileText from '@lucide/svelte/icons/file-text';
 import FolderSearch from '@lucide/svelte/icons/folder-search';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -32,7 +31,6 @@ const testConnectionMutation = LLMSettings.testConnection().options();
 let enabled = $state(false);
 let defaultProvider = $state<LLMProvider | null>(null);
 let featureModes = $state<Record<string, LLMFeatureConfig>>({
-  transactionParsing: { mode: 'disabled', provider: null },
   categorySuggestion: { mode: 'disabled', provider: null },
   anomalyDetection: { mode: 'disabled', provider: null },
   payeeMatching: { mode: 'disabled', provider: null },
@@ -286,11 +284,6 @@ const providerOptions = $derived(
 
 // Feature metadata
 const featureMeta = {
-  transactionParsing: {
-    title: 'Transaction Parsing',
-    description: 'Parse and categorize transactions from imports',
-    icon: FileText,
-  },
   categorySuggestion: {
     title: 'Category Suggestion',
     description: 'Suggest categories for new transactions',

@@ -16,13 +16,17 @@ import type {
 import { DEFAULT_LLM_PREFERENCES, DEFAULT_ML_PREFERENCES } from "$core/schema/workspaces";
 import { createProvider, getActiveProvider, type ProviderInstance } from "./providers";
 
-// Feature names that can use ML, LLM, or both. Forecasting is
-// intentionally absent — it's a pure ML path (see
-// `TimeSeriesForecastingService`). Callers that previously asked the
-// coordinator about "forecasting" should check
-// `ml.features.forecasting` directly.
+// Feature names that can use ML, LLM, or both.
+//
+// `forecasting` is ML-only — numerical prediction belongs to
+// `TimeSeriesForecastingService`; callers that want to know whether
+// forecasting is on should check `ml.features.forecasting` directly.
+//
+// `transactionParsing` has been removed because the ML
+// similarity + smart-categories services cover merchant
+// canonicalization and category suggestion already, and the LLM
+// parser was dead code with no callers.
 export type IntelligenceFeature =
-  | "transactionParsing"
   | "categorySuggestion"
   | "anomalyDetection"
   | "payeeMatching";
@@ -69,7 +73,6 @@ function getFeatureConfig(
 // Mapping from LLM feature modes to ML feature names
 const LLM_TO_ML_FEATURE_MAP: Record<keyof LLMFeatureModes, keyof MLPreferences["features"] | null> =
   {
-    transactionParsing: null, // No direct ML equivalent
     categorySuggestion: "similarity", // Uses similarity service
     anomalyDetection: "anomalyDetection",
     payeeMatching: "similarity",
@@ -321,7 +324,6 @@ export class IntelligenceCoordinator {
       IntelligenceFeature,
       { ml: boolean; llm: boolean; mode: string; provider: string | null }
     > = {
-      transactionParsing: getFeatureSummary("transactionParsing"),
       categorySuggestion: getFeatureSummary("categorySuggestion"),
       anomalyDetection: getFeatureSummary("anomalyDetection"),
       payeeMatching: getFeatureSummary("payeeMatching"),
