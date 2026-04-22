@@ -184,6 +184,11 @@ export interface LLMLogEntry {
 export interface DuplicateDetectionResult {
   groups: DuplicateGroup[];
   llmLog?: LLMLogEntry[];
-  detectionMethod: "simple" | "ml" | "llm" | "llm_direct";
+  /** What the caller asked for (includes `auto`). */
+  detectionMethod: "auto" | "simple" | "ml" | "llm" | "llm_direct";
+  /** What the coordinator resolved `auto` to (or equal to
+   *  `detectionMethod` when the caller was explicit). Useful for UI
+   *  feedback: "Auto → LLM (fuzzy band)" vs "Auto → ML only". */
+  resolvedMethod?: "simple" | "ml" | "llm" | "llm_direct";
   totalPairsAnalyzed?: number;
 }

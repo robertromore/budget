@@ -4767,17 +4767,27 @@ export class PayeeService {
    * Find duplicate payees based on similarity
    *
    * Detection methods:
-   * - simple: Basic Levenshtein distance (fastest)
-   * - ml: Pattern-aware ML matching (recommended)
-   * - llm: ML pre-filter + LLM refinement (smart filter - uses threshold)
-   * - llm_direct: Direct LLM analysis of all pairs (bypasses threshold entirely)
+   * - auto:       Coordinator-gated. When the workspace's
+   *               `payeeMatching` feature has LLM available
+   *               (master toggle on + provider configured), behaves
+   *               like `llm` mode BUT narrows the LLM pass to pairs
+   *               whose ML score sits in the fuzzy band
+   *               [similarityThreshold, 0.75). Pairs at or above
+   *               0.75 are considered ML-confident and pass through
+   *               unchanged, avoiding unnecessary LLM calls.
+   *               When LLM isn't available, falls back to `ml`.
+   * - simple:     Basic Levenshtein distance (fastest)
+   * - ml:         Pattern-aware ML matching
+   * - llm:        ML pre-filter + LLM refinement on ALL ML candidates
+   *               (user explicitly wants LLM review across the board)
+   * - llm_direct: Direct LLM analysis of all pairs (bypasses threshold)
    */
   async findDuplicatePayees(
     similarityThreshold: number,
     includeInactive: boolean,
     groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive",
     workspaceId: number,
-    detectionMethod: "simple" | "ml" | "llm" | "llm_direct" = "ml"
+    detectionMethod: "auto" | "simple" | "ml" | "llm" | "llm_direct" = "auto"
   ): Promise<{
     groups: Array<{
       primaryPayeeId: number;
@@ -4804,7 +4814,8 @@ export class PayeeService {
       } | null;
       error?: string;
     }>;
-    detectionMethod: "simple" | "ml" | "llm" | "llm_direct";
+    detectionMethod: "auto" | "simple" | "ml" | "llm" | "llm_direct";
+    resolvedMethod?: "simple" | "ml" | "llm" | "llm_direct";
     totalPairsAnalyzed?: number;
   }> {
     logger.info("Finding duplicate payees", {
@@ -4814,6 +4825,36 @@ export class PayeeService {
       detectionMethod,
     });
 
+    // Resolve `auto` → concrete method based on the coordinator. We
+    // record the resolved method separately so callers / the UI can
+    // show "Auto → LLM (fuzzy band)" or "Auto → ML only" feedback.
+    let effectiveMethod: "simple" | "ml" | "llm" | "llm_direct";
+    let narrowLlmToFuzzyBand = false;
+    if (detectionMethod === "auto") {
+      const { loadWorkspaceLlmPreferences } = await import(
+        "$core/server/shared/workspace-llm-preferences"
+      );
+      const { createIntelligenceCoordinator } = await import(
+        "$core/server/ai"
+      );
+      const llmPreferences = await loadWorkspaceLlmPreferences(workspaceId);
+      const coordinator = createIntelligenceCoordinator({ llm: llmPreferences });
+      const strategy = coordinator.getStrategy("payeeMatching");
+      if (strategy.useLLM && strategy.llmProvider) {
+        effectiveMethod = "llm";
+        narrowLlmToFuzzyBand = true;
+      } else {
+        effectiveMethod = "ml";
+      }
+      logger.info("Auto detection resolved", {
+        effectiveMethod,
+        narrowLlmToFuzzyBand,
+        strategy: strategy.strategy,
+      });
+    } else {
+      effectiveMethod = detectionMethod;
+    }
+
     // Get all payees
     let payees = await this.repository.findAllPayees(workspaceId);
 
@@ -4822,7 +4863,7 @@ export class PayeeService {
     }
 
     // LLM Direct mode: bypass ML pre-filter entirely, send all pairs directly to LLM
-    if (detectionMethod === "llm_direct") {
+    if (effectiveMethod === "llm_direct") {
       const totalPairs = (payees.length * (payees.length - 1)) / 2;
       logger.info("LLM Direct mode: bypassing ML pre-filter", {
         payeeCount: payees.length,
@@ -4842,6 +4883,7 @@ export class PayeeService {
           groups,
           llmLog,
           detectionMethod,
+          resolvedMethod: effectiveMethod,
           totalPairsAnalyzed,
         };
       } catch (error) {
@@ -4860,6 +4902,7 @@ export class PayeeService {
             },
           ],
           detectionMethod,
+          resolvedMethod: effectiveMethod,
           totalPairsAnalyzed: 0,
         };
       }
@@ -4867,7 +4910,7 @@ export class PayeeService {
 
     // Simple/ML/LLM mode: use threshold-based pre-filtering
     // For "llm" mode, we use ML to find candidates, then refine with LLM
-    const mlMethod = detectionMethod === "llm" ? "ml" : detectionMethod;
+    const mlMethod = effectiveMethod === "llm" ? "ml" : effectiveMethod;
     const duplicateGroups: Array<{
       primaryPayeeId: number;
       duplicatePayeeIds: number[];
@@ -4931,7 +4974,7 @@ export class PayeeService {
     });
 
     // LLM mode: refine ML candidates with LLM
-    if (detectionMethod === "llm") {
+    if (effectiveMethod === "llm") {
       if (duplicateGroups.length === 0) {
         // No candidates found by ML pre-filter
         return {
@@ -4949,6 +4992,34 @@ export class PayeeService {
             },
           ],
           detectionMethod,
+          resolvedMethod: effectiveMethod,
+          totalPairsAnalyzed: 0,
+        };
+      }
+
+      // Auto mode narrows: pairs whose ML score is already >= 0.75
+      // are ML-confident merges and pass through; only the fuzzy
+      // band (threshold ≤ score < 0.75) goes to the LLM. Explicit
+      // `llm` mode keeps the full list so users who opted in see LLM
+      // review across the board.
+      const FUZZY_BAND_UPPER = 0.75;
+      const mlConfidentGroups = narrowLlmToFuzzyBand
+        ? duplicateGroups.filter((g) => g.similarityScore >= FUZZY_BAND_UPPER)
+        : [];
+      const llmCandidates = narrowLlmToFuzzyBand
+        ? duplicateGroups.filter((g) => g.similarityScore < FUZZY_BAND_UPPER)
+        : duplicateGroups;
+
+      if (llmCandidates.length === 0) {
+        // All ML candidates landed above the fuzzy band — ML is
+        // confident on every pair and we save the LLM call entirely.
+        logger.info("Auto mode: all candidates ML-confident, skipping LLM", {
+          confidentCount: mlConfidentGroups.length,
+        });
+        return {
+          groups: mlConfidentGroups,
+          detectionMethod,
+          resolvedMethod: effectiveMethod,
           totalPairsAnalyzed: 0,
         };
       }
@@ -4958,15 +5029,22 @@ export class PayeeService {
           groups: refinedGroups,
           llmLog,
           totalPairsAnalyzed,
-        } = await this.refineDuplicatesWithLLM(duplicateGroups, payees, workspaceId);
+        } = await this.refineDuplicatesWithLLM(llmCandidates, payees, workspaceId);
         logger.info("LLM refined duplicate groups", {
-          original: duplicateGroups.length,
+          originalCandidates: duplicateGroups.length,
+          mlConfident: mlConfidentGroups.length,
+          sentToLLM: llmCandidates.length,
           refined: refinedGroups.length,
+          narrowedToFuzzyBand: narrowLlmToFuzzyBand,
         });
         return {
-          groups: refinedGroups,
+          // Merge ML-confident groups with LLM-reviewed fuzzy groups.
+          // In explicit `llm` mode `mlConfidentGroups` is empty so
+          // this collapses to the prior behaviour.
+          groups: [...mlConfidentGroups, ...refinedGroups],
           llmLog,
           detectionMethod,
+          resolvedMethod: effectiveMethod,
           totalPairsAnalyzed,
         };
       } catch (error) {
@@ -4986,6 +5064,7 @@ export class PayeeService {
             },
           ],
           detectionMethod,
+          resolvedMethod: effectiveMethod,
           totalPairsAnalyzed: 0,
         };
       }
@@ -4994,6 +5073,7 @@ export class PayeeService {
     return {
       groups: duplicateGroups,
       detectionMethod,
+      resolvedMethod: effectiveMethod,
     };
   }
 

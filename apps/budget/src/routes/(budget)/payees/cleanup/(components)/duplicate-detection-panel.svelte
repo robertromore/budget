@@ -32,7 +32,7 @@ import Zap from '@lucide/svelte/icons/zap';
 
 // State
 let threshold = $state([0.8]);
-let detectionMethod = $state<'simple' | 'ml' | 'llm' | 'llm_direct'>('ml');
+let detectionMethod = $state<'auto' | 'simple' | 'ml' | 'llm' | 'llm_direct'>('auto');
 let strategy = $state<'name' | 'contact' | 'transaction_pattern' | 'comprehensive'>(
   'comprehensive'
 );
@@ -74,6 +74,14 @@ const estimatedLLMCalls = $derived(
 
 const allDetectionMethodOptions = [
   {
+    value: 'auto',
+    label: 'Auto',
+    icon: Sparkles,
+    description:
+      'ML handles confident matches; AI only reviews fuzzy ones when available (recommended)',
+    requiresLLM: false,
+  },
+  {
     value: 'simple',
     label: 'Simple',
     icon: Zap,
@@ -84,14 +92,14 @@ const allDetectionMethodOptions = [
     value: 'ml',
     label: 'Machine Learning',
     icon: Brain,
-    description: 'Pattern-aware matching (recommended)',
+    description: 'Pattern-aware matching only (no AI review)',
     requiresLLM: false,
   },
   {
     value: 'llm',
     label: 'AI + ML Filter',
     icon: Sparkles,
-    description: 'ML finds candidates, AI confirms',
+    description: 'ML finds candidates, AI reviews every pair',
     requiresLLM: true,
   },
   {
@@ -108,10 +116,12 @@ const detectionMethodOptions = $derived(
   allDetectionMethodOptions.filter((option) => !option.requiresLLM || isLLMEnabled)
 );
 
-// Reset to ML if current method requires LLM but LLM is disabled
+// Reset to Auto if current method requires LLM but LLM is disabled.
+// `auto` is safe either way — when LLM is off the coordinator resolves
+// it to ML automatically.
 $effect(() => {
   if (!isLLMEnabled && (detectionMethod === 'llm' || detectionMethod === 'llm_direct')) {
-    detectionMethod = 'ml';
+    detectionMethod = 'auto';
   }
 });
 
@@ -157,8 +167,13 @@ async function handleScan() {
       logPanelOpen = true;
     }
 
+    // When the caller asked for `auto`, the server tells us what it
+    // actually ran as via `resolvedMethod`. Use that for all downstream
+    // UI feedback so users see "Auto → ML" instead of a generic "Auto".
+    const resolvedMethod = result?.resolvedMethod ?? detectionMethod;
+
     // Check if LLM had issues
-    const isLlmMode = detectionMethod === 'llm' || detectionMethod === 'llm_direct';
+    const isLlmMode = resolvedMethod === 'llm' || resolvedMethod === 'llm_direct';
     const hasLlmError = isLlmMode && llmLog.length > 0 && !!llmLog[0]?.error;
     const llmNotConfigured =
       hasLlmError &&
@@ -167,12 +182,18 @@ async function handleScan() {
     const llmFailed = hasLlmError && llmLog[0]?.error?.includes('failed');
 
     const methodLabels: Record<string, string> = {
+      auto: 'Auto',
       simple: 'Simple',
       ml: 'ML',
       llm: 'AI + ML Filter',
       llm_direct: 'AI Direct',
     };
-    const methodLabel = methodLabels[detectionMethod] ?? detectionMethod;
+    // For auto, prefix with "Auto → " so users know the system
+    // chose the underlying method.
+    const methodLabel =
+      detectionMethod === 'auto'
+        ? `Auto → ${methodLabels[resolvedMethod] ?? resolvedMethod}`
+        : (methodLabels[detectionMethod] ?? detectionMethod);
     const actualMethod = llmNotConfigured
       ? 'ML (LLM not configured)'
       : llmFailed

@@ -1574,7 +1574,9 @@ export const payeeRoutes = t.router({
         groupingStrategy: z
           .enum(["name", "contact", "transaction_pattern", "comprehensive"])
           .default("comprehensive"),
-        detectionMethod: z.enum(["simple", "ml", "llm", "llm_direct"]).default("ml"),
+        detectionMethod: z
+          .enum(["auto", "simple", "ml", "llm", "llm_direct"])
+          .default("auto"),
       })
     )
     .query(

@@ -851,7 +851,7 @@ export const getDuplicates = (
   similarityThreshold = 0.8,
   includeInactive = false,
   groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive" = "comprehensive",
-  detectionMethod: "simple" | "ml" | "llm" | "llm_direct" = "ml"
+  detectionMethod: "auto" | "simple" | "ml" | "llm" | "llm_direct" = "auto"
 ) =>
   defineQuery<DuplicateDetectionResult>({
     queryKey: [
