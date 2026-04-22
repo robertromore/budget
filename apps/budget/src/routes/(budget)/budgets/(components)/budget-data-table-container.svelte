@@ -31,6 +31,10 @@ let {
   table = $bindable(),
 }: Props = $props();
 
+// Row-click navigation: reuse the existing `onView` action handler so
+// the row-click path and the action-menu "View" item share one
+// implementation (navigates to `/budgets/{slug}`).
+
 // Create columns with action handlers. `onRangeSelectId` is forwarded
 // into the select-row cell so shift-click extends the page-level
 // selection along the current row ordering.
@@ -51,4 +55,5 @@ const tableColumns = $derived(
   {budgets}
   {selectedIds}
   {onToggleSelectId}
+  onRowNavigate={onView}
   bind:table />

@@ -228,8 +228,11 @@ function formatBudgetType(type: string) {
           </Badge>
         </div>
 
-        <!-- Name and Type -->
-        <Card.Title class="flex min-w-0 items-start gap-2 pr-24 {onSelect ? 'pl-10' : ''}">
+        <!-- Name and Type. The selection checkbox, when wired, is
+             absolutely positioned with a `bg-background/80 backdrop-blur`
+             button that overlays this title area on hover/selected —
+             no permanent left padding needed. -->
+        <Card.Title class="flex min-w-0 items-start gap-2 pr-24">
           <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
           <div class="min-w-0 flex-1 overflow-hidden">
             <a href="/budgets/{b.slug}" class="block truncate font-medium hover:underline">

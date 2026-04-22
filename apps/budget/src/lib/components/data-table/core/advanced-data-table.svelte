@@ -231,7 +231,21 @@ const effectiveFeatures = $derived<DataTableFeatures>({
                   <Table.Row
                     data-state={row.getIsSelected() && 'selected'}
                     class={cn(onRowClick && 'cursor-pointer')}
-                    onclick={() => onRowClick?.(row)}>
+                    onclick={(e) => {
+                      // Skip when the click originated from an interactive
+                      // descendant (row checkbox, action menu, inline link,
+                      // etc.) — row-level navigation shouldn't hijack
+                      // those. Only "dead zone" clicks in the row
+                      // trigger `onRowClick`.
+                      const target = e.target as HTMLElement | null;
+                      if (
+                        target?.closest(
+                          'a, button, input, textarea, select, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="checkbox"], [role="switch"], [data-row-click-ignore]',
+                        )
+                      )
+                        return;
+                      onRowClick?.(row);
+                    }}>
                     {#each row.getVisibleCells() as cell (cell.id)}
                       <Table.Cell class={cell.column.columnDef.meta?.cellClass}>
                         {#if cell.column.columnDef.cell}

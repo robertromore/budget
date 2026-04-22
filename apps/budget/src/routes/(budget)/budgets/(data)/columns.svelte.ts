@@ -1,4 +1,4 @@
-import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
+import BudgetProgressCompact from "$lib/components/budgets/budget-progress-compact.svelte";
 import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
@@ -298,15 +298,11 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         const allocated = getAllocated(budget);
         const consumed = getConsumed(budget);
         const status = resolveStatus(budget);
-        const enforcement = resolveEnforcement(budget);
 
-        return renderComponent(BudgetProgress, {
+        return renderComponent(BudgetProgressCompact, {
           consumed,
           allocated,
           status,
-          enforcementLevel: enforcement,
-          consumedLabel: budget.type === "goal-based" ? "Saved" : "Spent",
-          label: "",
         });
       },
       enableColumnFilter: false,

@@ -21,6 +21,8 @@ interface Props {
    * single source of truth.
    */
   onToggleSelectId?: (budgetId: number) => void;
+  /** Navigate to the budget detail when a "dead zone" row click fires. */
+  onRowNavigate?: (budget: BudgetWithRelations) => void;
   table?: TTable<BudgetWithRelations> | undefined;
 }
 
@@ -29,6 +31,7 @@ let {
   budgets,
   selectedIds,
   onToggleSelectId,
+  onRowNavigate,
   table = $bindable(),
 }: Props = $props();
 
@@ -122,5 +125,6 @@ $effect(() => {
   showPagination={true}
   pageSizeOptions={[10, 25, 50, 100]}
   emptyMessage="No budgets found."
+  onRowClick={onRowNavigate ? (row) => onRowNavigate(row.original) : undefined}
   bind:table
   bind:state={tableState} />

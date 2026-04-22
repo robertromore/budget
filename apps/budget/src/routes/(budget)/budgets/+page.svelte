@@ -13,10 +13,10 @@ import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Checkbox } from '$lib/components/ui/checkbox';
+import * as Command from '$lib/components/ui/command';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Empty from '$lib/components/ui/empty';
 import { Label } from '$lib/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '$lib/components/ui/radio-group';
 import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as ToggleGroup from '$lib/components/ui/toggle-group';
@@ -48,17 +48,21 @@ import { resolveBudgetProgressStatus } from '$lib/utils/budget-status';
 import { formatCurrency, formatCurrencyAbs, formatPercentRaw } from '$lib/utils/formatters';
 import {
   ChartBar,
+  Check,
   ChevronDown,
   CircleCheck,
   DollarSign,
   FileText,
+  Filter,
   Grid3x3,
   Pin,
   Plus,
+  Search,
   Sparkles,
   TrendingDown,
   TrendingUp,
   TriangleAlert,
+  X,
 } from '@lucide/svelte/icons';
 import { untrack } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
@@ -496,11 +500,16 @@ function clearAllSearch() {
 }
 
 /**
- * Alerts summary-card handler. Filter the Overview list to at-risk
- * budgets (overspent + approaching cap) and jump to the Overview tab
- * so the user lands directly on the actionable set.
+ * Alerts summary-card handler. Toggles the at-risk status filter so
+ * the card acts as a switch — clicking a second time clears the
+ * filter and restores the full list. A `role="switch"` on the card
+ * communicates this to assistive tech.
  */
-function focusAtRiskBudgets() {
+function toggleAtRiskFilter() {
+  if (budgetFilters.status === 'at-risk') {
+    budgetFilters = { status: 'all' };
+    return;
+  }
   budgetFilters = { status: 'at-risk' };
   searchQuery = '';
   setActiveTab('overview');
@@ -746,17 +755,6 @@ const totalAlerts = $derived(
 );
 const alertsClickable = $derived(totalAlerts > 0);
 
-// The single most-at-risk budget (highest utilization among active
-// budgets whose status is `over` or `approaching`). Surfaced inline on
-// Overview so the user sees a concrete forecast without having to jump
-// to the Analytics tab. Null when nothing is at risk.
-const topAtRiskBudget = $derived(
-  activeBudgets.find((b) => {
-    const s = resolveBudgetProgressStatus(b);
-    return s === 'over' || s === 'approaching';
-  }) ?? null
-);
-
 /**
  * Clamp the displayed percent-used so extreme values (demo data can
  * reach 1000%+) don't read as a typo or broken render. The underlying
@@ -774,6 +772,11 @@ function formatPercentDisplay(value: number, decimals = 0): string {
 // magnitude so users don't have to mentally parse a minus sign.
 const isOverspent = $derived(summaryMetrics.remaining < 0);
 const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
+
+// Whether the Alerts card is currently driving the at-risk filter.
+// Used to style the card as a toggle (active vs idle) and to rewrite
+// its sub-copy accordingly.
+const alertsFilterActive = $derived(activeStatusFilter === 'at-risk');
 </script>
 
 <svelte:head>
@@ -812,7 +815,7 @@ const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
             <button
               type="button"
               class="text-destructive hover:text-destructive inline-flex items-center gap-1 font-medium underline-offset-2 hover:underline"
-              onclick={focusAtRiskBudgets}>
+              onclick={toggleAtRiskFilter}>
               <span class="tabular-nums">{totalAlerts}</span>
               flagged
             </button>
@@ -979,20 +982,30 @@ const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
       </Card.Root>
 
       <Card.Root
-        class={alertsClickable
-          ? 'group cursor-pointer transition-colors hover:border-destructive/40 hover:bg-destructive/5'
-          : ''}
-        role={alertsClickable ? 'button' : undefined}
+        class={[
+          alertsClickable ? 'group cursor-pointer transition-colors' : '',
+          alertsFilterActive
+            ? 'border-destructive/60 bg-destructive/10 ring-1 ring-destructive/30'
+            : alertsClickable
+              ? 'hover:border-destructive/40 hover:bg-destructive/5'
+              : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        role={alertsClickable ? 'switch' : undefined}
+        aria-checked={alertsClickable ? alertsFilterActive : undefined}
         tabindex={alertsClickable ? 0 : undefined}
         aria-label={alertsClickable
-          ? `Filter list to ${totalAlerts} at-risk budget${totalAlerts === 1 ? '' : 's'}`
+          ? alertsFilterActive
+            ? `Clear at-risk filter (showing ${totalAlerts} budget${totalAlerts === 1 ? '' : 's'})`
+            : `Filter list to ${totalAlerts} at-risk budget${totalAlerts === 1 ? '' : 's'}`
           : undefined}
-        onclick={alertsClickable ? focusAtRiskBudgets : undefined}
+        onclick={alertsClickable ? toggleAtRiskFilter : undefined}
         onkeydown={alertsClickable
           ? (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                focusAtRiskBudgets();
+                toggleAtRiskFilter();
               }
             }
           : undefined}>
@@ -1009,11 +1022,14 @@ const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
             {totalAlerts}
           </div>
           <p class="text-muted-foreground text-[10px] sm:text-xs">
-            {#if alertsClickable}
+            {#if alertsFilterActive}
+              <span class="text-destructive font-medium">Filter active</span>
+              <span class="text-muted-foreground/70"> · click to clear</span>
+            {:else if alertsClickable}
               {summaryMetrics.atRiskCount} over, {summaryMetrics.approachingCount} approaching
               <span
                 class="text-destructive ml-1 opacity-70 transition-opacity group-hover:opacity-100">
-                · review
+                · click to filter
               </span>
             {:else}
               0 over, 0 approaching
@@ -1075,28 +1091,6 @@ const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
         </Empty.Empty>
       {:else}
         <div class="space-y-4" data-tour-id="budget-list">
-          {#if topAtRiskBudget}
-            <section
-              class="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
-              <header class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2 text-sm font-semibold">
-                  <TriangleAlert class="text-destructive h-4 w-4 shrink-0" />
-                  <span>Forecast needs attention: {topAtRiskBudget.name}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => setActiveTab('analytics')}>
-                  View all forecasts →
-                </Button>
-              </header>
-              <BudgetForecastDisplay
-                budgetId={topAtRiskBudget.id}
-                daysAhead={30}
-                showAutoAllocate={false} />
-            </section>
-          {/if}
-
           <div class="flex flex-wrap items-center gap-2">
             <!-- Flat vs Grouped layout toggle — replaces the old Groups tab. -->
             <ToggleGroup.Root
@@ -1119,67 +1113,130 @@ const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
             <div class="flex-1"></div>
           </div>
 
-          {#if overviewLayout === 'grouped'}
-            <BudgetGroupsSection
-              onCreateGroup={handleCreateGroup}
-              onEditGroup={handleEditGroup} />
-          {:else}
-            <EntitySearchToolbar
-              bind:searchQuery
-              searchPlaceholder="Search budgets by name or description…"
-              bind:filters={budgetFilters}
-              {activeFilterCount}
-              {filterSummaries}
-              bind:viewMode
-              bind:sortBy
-              bind:sortOrder
-              sortOptions={SORT_OPTIONS}
-              onSearchChange={(q) => (searchQuery = q)}
-              onFiltersChange={(next) => (budgetFilters = next)}
-              onViewModeChange={(m) => (viewMode = m)}
-              onSortChange={(key, order) => {
-                sortBy = key;
-                sortOrder = order;
-              }}
-              onClearAll={clearAllSearch}>
-              {#snippet filterContent()}
-                <div class="space-y-3">
-                  <div class="space-y-2">
-                    <Label
-                      class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Status
-                    </Label>
-                    <RadioGroup
-                      value={budgetFilters.status}
-                      onValueChange={(value) =>
-                        (budgetFilters = {
-                          ...budgetFilters,
-                          status: value as BudgetStatusFilter,
-                        })}
-                      class="space-y-1.5">
-                      {#each STATUS_FILTER_OPTIONS as option (option.value)}
-                        <div class="flex items-center gap-2">
-                          <RadioGroupItem
-                            id="budget-status-{option.value}"
-                            value={option.value} />
-                          <Label
-                            for="budget-status-{option.value}"
-                            class="cursor-pointer text-sm font-normal">
-                            {option.label}
-                          </Label>
+          <!-- Search + filter + sort + view-mode toolbar — always
+               visible so filters apply to both flat and grouped views. -->
+          <EntitySearchToolbar
+            bind:searchQuery
+            searchPlaceholder="Search budgets by name or description…"
+            bind:filters={budgetFilters}
+            {activeFilterCount}
+            {filterSummaries}
+            bind:viewMode
+            bind:sortBy
+            bind:sortOrder
+            sortOptions={SORT_OPTIONS}
+            onSearchChange={(q) => (searchQuery = q)}
+            onFiltersChange={(next) => (budgetFilters = next)}
+            onViewModeChange={(m) => (viewMode = m)}
+            onSortChange={(key, order) => {
+              sortBy = key;
+              sortOrder = order;
+            }}
+            onClearAll={clearAllSearch}>
+            {#snippet filterContent()}
+              <Command.Root>
+                <Command.List>
+                  <Command.Group heading="Status">
+                    {#each STATUS_FILTER_OPTIONS as option (option.value)}
+                      {@const isSelected = budgetFilters.status === option.value}
+                      <Command.Item
+                        value={option.value}
+                        onSelect={() =>
+                          (budgetFilters = {
+                            ...budgetFilters,
+                            status: option.value,
+                          })}>
+                        <div
+                          class={[
+                            'border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                            isSelected
+                              ? 'bg-primary text-primary-foreground'
+                              : 'opacity-50 [&_svg]:invisible',
+                          ].join(' ')}>
+                          <Check class="h-4 w-4" />
                         </div>
-                      {/each}
-                    </RadioGroup>
-                  </div>
-                </div>
-              {/snippet}
-            </EntitySearchToolbar>
+                        <span>{option.label}</span>
+                      </Command.Item>
+                    {/each}
+                  </Command.Group>
+                </Command.List>
+              </Command.Root>
+            {/snippet}
+          </EntitySearchToolbar>
 
+          {#if overviewIsUnfiltered}
             <div class="text-muted-foreground text-xs">
               Showing {filteredBudgets.length} of {budgets.length} budgets
             </div>
+          {:else}
+            {@const statusLabel =
+              STATUS_FILTER_OPTIONS.find((o) => o.value === activeStatusFilter)?.short ?? ''}
+            {@const hasSearch = searchQuery.trim() !== ''}
+            {@const hasStatus = activeStatusFilter !== 'all'}
+            {@const bannerIsAtRisk = activeStatusFilter === 'at-risk'}
+            <div
+              class={[
+                'flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm',
+                bannerIsAtRisk
+                  ? 'border-destructive/30 bg-destructive/5'
+                  : 'border-border bg-muted/40',
+              ].join(' ')}
+              role="status"
+              aria-live="polite">
+              <div class="flex items-center gap-2">
+                {#if bannerIsAtRisk}
+                  <TriangleAlert class="text-destructive h-4 w-4 shrink-0" />
+                {:else if hasStatus}
+                  <Filter class="text-muted-foreground h-4 w-4 shrink-0" />
+                {:else}
+                  <Search class="text-muted-foreground h-4 w-4 shrink-0" />
+                {/if}
+                <span>
+                  Showing
+                  <span class="font-medium tabular-nums">{filteredBudgets.length}</span>
+                  of {budgets.length} {budgets.length === 1 ? 'budget' : 'budgets'}
+                  {#if hasStatus}
+                    — <span class={bannerIsAtRisk ? 'text-destructive font-medium' : 'font-medium'}
+                      >{statusLabel}</span>
+                  {/if}
+                  {#if hasSearch}
+                    {hasStatus ? 'matching' : '— matching'}
+                    <span class="font-medium">&ldquo;{searchQuery}&rdquo;</span>
+                  {/if}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="h-7"
+                onclick={clearAllSearch}>
+                <X class="mr-1 h-3 w-3" />
+                Clear {hasStatus && hasSearch ? 'all' : hasStatus ? 'filter' : 'search'}
+              </Button>
+            </div>
+          {/if}
 
-            {#if overviewIsUnfiltered && pinnedFilteredBudgets.length > 0}
+          {#if overviewLayout === 'grouped'}
+            <BudgetGroupsSection
+              budgets={filteredBudgets}
+              {viewMode}
+              {searchQuery}
+              {pinnedIds}
+              selectedIds={selectedIdSet}
+              isLoading={budgetsLoading}
+              onView={handleViewBudget}
+              onEdit={handleEditBudget}
+              onDelete={handleDeleteBudget}
+              onDuplicate={handleDuplicateBudget}
+              onArchive={handleArchiveBudget}
+              onBulkDelete={handleBulkDeleteBudgets}
+              onTogglePin={isDemoView ? undefined : handleTogglePin}
+              onSelect={handleSelect}
+              onToggleSelectId={toggleSelect}
+              onRangeSelectId={rangeSelect}
+              onCreateGroup={handleCreateGroup}
+              onEditGroup={handleEditGroup} />
+          {:else if overviewIsUnfiltered && pinnedFilteredBudgets.length > 0}
               <section class="space-y-3" aria-labelledby="pinned-budgets-heading">
                 <div class="flex items-center gap-2">
                   <Pin class="text-muted-foreground h-4 w-4" />
@@ -1253,7 +1310,6 @@ const remainingMagnitude = $derived(Math.abs(summaryMetrics.remaining));
                 selectedIds={selectedIdSet}
                 onSelect={handleSelect} />
             {/if}
-          {/if}
         </div>
       {/if}
     {/snippet}
