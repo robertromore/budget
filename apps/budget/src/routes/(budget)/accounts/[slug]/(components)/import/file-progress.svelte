@@ -30,10 +30,15 @@ function getStatusIcon(file: ImportFile, index: number) {
 </script>
 
 <div class={cn('space-y-2', className)}>
-  <!-- Progress indicator -->
-  <div class="text-muted-foreground mb-2 text-sm">
-    Processing file {currentIndex + 1} of {files.length}
-  </div>
+  <!-- Progress indicator. With a single file, "Processing file 1 of 1"
+       is noise — the filename chip below says the same thing. Also
+       drop the progress bar for the same reason: it's binary with
+       a single file. -->
+  {#if files.length > 1}
+    <div class="text-muted-foreground mb-2 text-sm">
+      Processing file {currentIndex + 1} of {files.length}
+    </div>
+  {/if}
 
   <!-- File pills -->
   <div class="flex flex-wrap items-center gap-2">
@@ -57,19 +62,23 @@ function getStatusIcon(file: ImportFile, index: number) {
           canClick && 'cursor-pointer hover:opacity-80',
           !canClick && 'cursor-default'
         )}
+        title={file.fileName}
         onclick={() => canClick && onFileClick?.(index)}
         disabled={!canClick}>
         <StatusIcon class={cn('h-3.5 w-3.5', isCurrent ? 'text-inherit' : status.class)} />
-        <span class="max-w-24 truncate">{file.fileName}</span>
+        <span class="max-w-40 truncate">{file.fileName}</span>
       </button>
     {/each}
   </div>
 
-  <!-- Progress bar -->
-  <div class="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-    <div
-      class="bg-primary h-full transition-all duration-300"
-      style:width="{(files.filter((f) => f.status === 'ready').length / files.length) * 100}%">
+  {#if files.length > 1}
+    <!-- Progress bar — counts files in the `ready` state. Irrelevant
+         in single-file mode (always 0% or 100%), so we skip it. -->
+    <div class="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+      <div
+        class="bg-primary h-full transition-all duration-300"
+        style:width="{(files.filter((f) => f.status === 'ready').length / files.length) * 100}%">
+      </div>
     </div>
-  </div>
+  {/if}
 </div>

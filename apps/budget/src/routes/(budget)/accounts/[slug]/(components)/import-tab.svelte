@@ -1142,22 +1142,18 @@ async function handleMultiFileColumnMapping(fileId: string, mapping: ColumnMappi
   multiFileProcessingMessage = 'Applying column mapping...';
 
   try {
-    // Convert file to base64 for the remap API
-    const fileBuffer = await file.file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+    // The /api/import/remap endpoint expects multipart/form-data — it
+    // reads `importFile`, `columnMapping`, and `accountId` via
+    // `request.formData()`. Passing JSON triggers
+    // ERR_FORMDATA_PARSE_ERROR server-side.
+    const remapForm = new FormData();
+    remapForm.append('importFile', file.file, file.fileName);
+    remapForm.append('columnMapping', JSON.stringify(mapping));
+    remapForm.append('accountId', accountId.toString());
 
     const response = await fetch('/api/import/remap', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        file: {
-          data: base64,
-          name: file.fileName,
-          type: file.file.type || 'text/csv',
-        },
-        columnMapping: mapping,
-        accountId: accountId.toString(),
-      }),
+      body: remapForm,
     });
 
     if (!response.ok) {
@@ -1945,13 +1941,16 @@ function closeSaveProfileDialog() {
   saveProfileDialog.open = false;
 }
 
+// The account import-tab only reaches upload → map-columns →
+// cleanup-payees → preview → complete. The workspace-level /import
+// flow adds review-schedules and review-entities, but those paths
+// aren't triggered here today — dropping them from this stepper so
+// users don't see two "ghost" steps they'll never visit.
 const steps = [
   { id: 'upload', label: 'Upload File' },
   { id: 'map-columns', label: 'Map Columns' },
-  { id: 'cleanup-payees', label: 'Cleanup Payees' },
+  { id: 'cleanup-payees', label: 'Review Payees' },
   { id: 'preview', label: 'Preview Data' },
-  { id: 'review-schedules', label: 'Review Schedules' },
-  { id: 'review-entities', label: 'Review Entities' },
   { id: 'complete', label: 'Complete' },
 ];
 
