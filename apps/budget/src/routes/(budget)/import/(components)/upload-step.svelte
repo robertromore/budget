@@ -66,7 +66,7 @@
 
 	<!-- File Upload -->
 	<FileUploadDropzone
-		acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo']}
+		acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo', '.pdf']}
 		maxFileSize={10 * 1024 * 1024}
 		onFileSelected={onFileSelected}
 		onFileRejected={onFileRejected}

@@ -47,7 +47,7 @@ const canContinue = $derived(importState.files.length > 0);
 <div class={cn('space-y-6', className)}>
   <!-- Dropzone -->
   <FileUploadDropzone
-    acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo']}
+    acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo', '.pdf']}
     maxFileSize={10 * 1024 * 1024}
     allowMultiple={true}
     onFilesSelected={handleFilesSelected}

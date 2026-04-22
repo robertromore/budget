@@ -37,6 +37,8 @@ export function detectFileType(file: File): ImportFileType {
       return "iif";
     case "qbo":
       return "qbo";
+    case "pdf":
+      return "pdf";
     default:
       return "csv"; // Default to CSV
   }
@@ -61,6 +63,8 @@ export function getFileTypeName(type: ImportFileType): string {
       return "IIF (Intuit Interchange)";
     case "qbo":
       return "QBO (QuickBooks Online)";
+    case "pdf":
+      return "PDF";
   }
 }
 

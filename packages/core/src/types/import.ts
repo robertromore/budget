@@ -546,7 +546,7 @@ export interface CleanupSummary {
 /**
  * Supported import file types
  */
-export type ImportFileType = "csv" | "excel" | "ofx" | "qif" | "qfx" | "iif" | "qbo";
+export type ImportFileType = "csv" | "excel" | "ofx" | "qif" | "qfx" | "iif" | "qbo" | "pdf";
 
 /**
  * Entity overrides for a single import row
