@@ -288,17 +288,14 @@ describe("TimeOfDayDetector", () => {
   const stats = calculateHistoricalStats(COFFEE_SPEND);
 
   it("does not trigger for daytime transactions", () => {
-    // 2025-01-15 14:00 local — very normal.
-    const result = detector.detect(5, stats, {
-      transactionDate: "2025-01-15T14:00:00",
-    });
+    // 2 PM — squarely in the normal band.
+    const result = detector.detect(5, stats, { hour: 14 });
     expect(result.triggered).toBe(false);
   });
 
   it("returns a score in [0,1]", () => {
-    const result = detector.detect(5, stats, {
-      transactionDate: "2025-01-15T03:00:00",
-    });
+    // 3 AM — inside the unusual-hours window.
+    const result = detector.detect(5, stats, { hour: 3 });
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(1);
   });
@@ -316,7 +313,6 @@ describe("RepeatedAmountDetector", () => {
   it("flags many identical recent amounts", () => {
     const result = detector.detect(99.99, stats, {
       recentAmounts: [99.99, 99.99, 99.99, 99.99, 99.99],
-      timeWindowHours: 24,
     });
     expect(result.score).toBeGreaterThan(0);
   });
@@ -324,7 +320,6 @@ describe("RepeatedAmountDetector", () => {
   it("does not flag a one-off amount", () => {
     const result = detector.detect(99.99, stats, {
       recentAmounts: [5, 6, 7, 8],
-      timeWindowHours: 24,
     });
     expect(result.triggered).toBe(false);
   });
