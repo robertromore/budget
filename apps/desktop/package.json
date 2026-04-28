@@ -15,7 +15,7 @@
     "@budget/core": "workspace:*",
     "@budget/ui": "workspace:*",
     "@lucide/svelte": "^0.526.0",
-    "@tanstack/svelte-query": "^6.1.18",
+    "@tanstack/svelte-query": "^6.1.24",
     "@trpc/client": "^11.16.0",
     "bits-ui": "2.15.5",
     "clsx": "^2.1.1",
@@ -24,11 +24,11 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
-    "@tailwindcss/vite": "^4.2.3",
+    "@tailwindcss/vite": "^4.2.4",
     "@types/bun": "latest",
     "concurrently": "^9.2.1",
-    "svelte": "^5.55.4",
-    "tailwindcss": "^4.2.3",
+    "svelte": "^5.55.5",
+    "tailwindcss": "^4.2.4",
     "typescript": "^5.9.3",
     "vite": "^6.4.2"
   }
