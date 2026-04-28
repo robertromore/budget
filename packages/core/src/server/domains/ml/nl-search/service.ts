@@ -244,7 +244,14 @@ function endOfDay(date: Date): string {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString().split("T")[0];
 }
 
-function parseAmount(str: string): number {
+/**
+ * Lenient amount parser for natural-language search input. Accepts
+ * thousands-separated numbers and returns NaN on garbage rather than
+ * throwing — the canonical strict parser is `$core/server/import/utils.parseAmount`,
+ * which handles currency symbols / parentheses / CR-DR but throws on
+ * invalid input. Renamed to avoid shadowing the canonical export.
+ */
+function parseAmountLoose(str: string): number {
   return parseFloat(str.replace(/,/g, ""));
 }
 
@@ -441,18 +448,18 @@ export class NaturalLanguageSearchService {
       const match = query.match(regex);
       if (match) {
         if (type === "min") {
-          result.minAmount = parseAmount(match[1]);
+          result.minAmount = parseAmountLoose(match[1]);
         } else if (type === "max") {
-          result.maxAmount = parseAmount(match[1]);
+          result.maxAmount = parseAmountLoose(match[1]);
         } else if (type === "range") {
-          result.minAmount = parseAmount(match[1]);
-          result.maxAmount = parseAmount(match[2]);
+          result.minAmount = parseAmountLoose(match[1]);
+          result.maxAmount = parseAmountLoose(match[2]);
         } else if (type === "around") {
-          const value = parseAmount(match[1]);
+          const value = parseAmountLoose(match[1]);
           result.minAmount = value * 0.8;
           result.maxAmount = value * 1.2;
         } else if (type === "exact") {
-          const value = parseAmount(match[1]);
+          const value = parseAmountLoose(match[1]);
           result.minAmount = value - 0.01;
           result.maxAmount = value + 0.01;
         }

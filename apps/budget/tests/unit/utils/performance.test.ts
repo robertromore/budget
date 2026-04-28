@@ -1,11 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import {
   perfMonitor,
-  measureRender,
   trackQuery,
   generatePerformanceReport,
-  WebVitalsMonitor,
-} from "../../../src/lib/utils/performance";
+} from "$core/utils/performance";
 
 describe("Performance Monitoring Tests", () => {
   beforeEach(() => {
@@ -156,33 +154,6 @@ describe("Performance Monitoring Tests", () => {
     });
   });
 
-  describe("Render Performance Measurement", () => {
-    test("should measure render times", () => {
-      const componentName = "TestComponent";
-      let renderExecuted = false;
-
-      const mockRender = () => {
-        // Simulate render work
-        const start = Date.now();
-        while (Date.now() - start < 5) {
-          // Busy wait for ~5ms
-        }
-        renderExecuted = true;
-      };
-
-      const duration = measureRender(componentName, mockRender);
-
-      expect(renderExecuted).toBe(true);
-      expect(duration).toBeGreaterThan(0);
-      expect(duration).toBeLessThan(1000);
-
-      const metrics = perfMonitor.getMetrics(`render.${componentName}`);
-      expect(metrics).toHaveLength(1);
-      expect(metrics[0].tags?.type).toBe("render");
-      expect(metrics[0].tags?.component).toBe(componentName);
-    });
-  });
-
   describe("Performance Report Generation", () => {
     test("should generate comprehensive performance report", () => {
       // Add various types of metrics
@@ -190,15 +161,12 @@ describe("Performance Monitoring Tests", () => {
       perfMonitor.recordMetric("db.query.accounts", 75);
       perfMonitor.recordMetric("render.UserList", 25);
       perfMonitor.recordMetric("render.AccountTable", 100);
-      perfMonitor.recordMetric("web-vitals.lcp", 1500);
-      perfMonitor.recordMetric("web-vitals.fid", 20);
 
       const report = generatePerformanceReport();
 
       expect(report.summary).toBeDefined();
       expect(report.queries).toBeDefined();
       expect(report.renders).toBeDefined();
-      expect(report.webVitals).toBeDefined();
 
       expect(report.queries.slowest).toHaveLength(2);
       expect(report.renders.slowest).toHaveLength(2);
@@ -215,26 +183,6 @@ describe("Performance Monitoring Tests", () => {
       expect(report.summary.count).toBe(0);
       expect(report.queries.slowest).toHaveLength(0);
       expect(report.renders.slowest).toHaveLength(0);
-    });
-  });
-
-  describe("Web Vitals Monitor", () => {
-    test("should initialize Web Vitals monitor", () => {
-      const monitor = new WebVitalsMonitor();
-
-      // Can't easily test PerformanceObserver in unit tests,
-      // but we can verify the class initializes
-      expect(monitor).toBeInstanceOf(WebVitalsMonitor);
-      expect(typeof monitor.measure).toBe("function");
-      expect(typeof monitor.getVitals).toBe("function");
-    });
-
-    test("should return empty vitals initially", () => {
-      const monitor = new WebVitalsMonitor();
-      const vitals = monitor.getVitals();
-
-      expect(typeof vitals).toBe("object");
-      expect(Object.keys(vitals)).toHaveLength(0);
     });
   });
 

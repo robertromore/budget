@@ -3,19 +3,7 @@
  * Shared utilities for search/filter functionality across entity pages
  */
 
-/**
- * Escape a string so it can be safely emitted inside HTML text content.
- * We cannot rely on Svelte's template auto-escaping when the consumer uses
- * `{@html}` — which is required to render the <mark> tags produced here.
- */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+import { escapeHtml } from "$lib/utils/string-utilities";
 
 /**
  * Highlights search query matches in text by wrapping them in <mark> tags.

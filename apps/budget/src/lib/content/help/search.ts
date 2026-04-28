@@ -175,9 +175,14 @@ function escapeRegex(str: string): string {
 }
 
 /**
- * Highlight matching terms in text
+ * Highlight matching terms in a help-content snippet — term-by-term.
+ *
+ * Local helper for `getSnippet`. Different semantics from
+ * `$lib/utils/search.highlightMatches` (which matches the full query
+ * literally with HTML escaping). Kept private to this module to avoid
+ * shadowing the canonical exported highlighter.
  */
-export function highlightMatches(text: string, query: string): string {
+function highlightSnippetTerms(text: string, query: string): string {
   if (!query.trim()) return text;
 
   const terms = query
@@ -243,7 +248,7 @@ export function getSnippet(content: string, query: string, maxLength = 150): str
   }
 
   // Apply highlighting
-  return highlightMatches(snippet, query);
+  return highlightSnippetTerms(snippet, query);
 }
 
 // =============================================================================

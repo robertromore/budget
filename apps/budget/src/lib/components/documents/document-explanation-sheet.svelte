@@ -5,6 +5,7 @@ import { Skeleton } from '$lib/components/ui/skeleton';
 import type { AccountDocument } from '$core/schema/account-documents';
 import { documentTypeEnum, type DocumentType } from '$core/schema/account-documents';
 import { trpc } from '$lib/trpc/client';
+import { escapeHtml } from '$lib/utils/string-utilities';
 import Brain from '@lucide/svelte/icons/brain';
 import FileText from '@lucide/svelte/icons/file-text';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
@@ -78,18 +79,6 @@ function handleRetry() {
 
 const docType = $derived(doc?.documentType as DocumentType | undefined);
 const docTypeLabel = $derived(docType ? documentTypeEnum[docType] : 'Document');
-
-// Escape HTML entities so LLM-generated text cannot inject live markup
-// (e.g. `<script>` or `<img onerror=...>`). The markdown rewrites below only
-// introduce tags we explicitly author; everything else is rendered as text.
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 // Simple markdown to HTML conversion for common patterns.
 // CRITICAL: the input is untrusted (LLM output). We HTML-escape first so the

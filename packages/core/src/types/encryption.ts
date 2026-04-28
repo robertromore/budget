@@ -306,26 +306,6 @@ export const ENCRYPTED_FIELDS_BY_LEVEL: Record<EncryptionLevel, string[]> = {
 };
 
 /**
- * Validate that a level change is allowed
- * Financial accounts can only INCREASE encryption level from workspace
- */
-export function validateLevelChange(
-  currentLevel: EncryptionLevel,
-  newLevel: EncryptionLevel,
-  scope: "user" | "workspace" | "account"
-): { valid: boolean; reason?: string } {
-  // Account level can only increase, not decrease
-  if (scope === "account" && newLevel < currentLevel) {
-    return {
-      valid: false,
-      reason: "Financial accounts can only increase encryption level, not decrease it.",
-    };
-  }
-
-  return { valid: true };
-}
-
-/**
  * Resolve effective encryption level considering inheritance
  */
 export function resolveEffectiveLevel(

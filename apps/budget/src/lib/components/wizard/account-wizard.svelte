@@ -8,7 +8,7 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
 import { Textarea } from '$lib/components/ui/textarea';
-import { accountTypeEnum, type Account } from '$core/schema';
+import { ACCOUNT_TYPE_LABELS, accountTypeEnum, type Account } from '$core/schema';
 import {
   accountWizardStore,
   type WizardStep as WizardStepType,
@@ -445,23 +445,10 @@ const placeholderText = $derived.by(() => {
   return 'e.g., Chase Checking, Wells Fargo Savings, Amex Credit Card';
 });
 
-// Account type labels
-const accountTypeLabels: Record<string, string> = {
-  checking: 'Checking',
-  savings: 'Savings',
-  investment: 'Investment',
-  credit_card: 'Credit Card',
-  loan: 'Loan',
-  cash: 'Cash',
-  hsa: 'Health Savings Account',
-  utility: 'Utility',
-  other: 'Other',
-};
-
 // Account type options for select
 const accountTypeOptions = accountTypeEnum.map((type) => ({
   value: type,
-  label: accountTypeLabels[type] || type,
+  label: ACCOUNT_TYPE_LABELS[type],
 }));
 
 // Handle account type changes with side effects

@@ -15,6 +15,9 @@ import { WizardFormWrapper } from '$lib/components/wizard';
 import AccountWizard from '$lib/components/wizard/account-wizard.svelte';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
 import {
+  ACCOUNT_TYPE_DEFAULTS,
+  ACCOUNT_TYPE_LABELS,
+  UTILITY_SUBTYPE_LABELS,
   accountTypeEnum,
   utilitySubtypeEnum,
   type Account,
@@ -230,53 +233,21 @@ function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
   }
 }
 
-// Account type labels
-const accountTypeLabels: Record<string, string> = {
-  checking: 'Checking',
-  savings: 'Savings',
-  investment: 'Investment',
-  credit_card: 'Credit Card',
-  loan: 'Loan',
-  cash: 'Cash',
-  hsa: 'Health Savings Account',
-  utility: 'Utility Account',
-  other: 'Other',
-};
-
-// Utility subtype labels
-const utilitySubtypeLabels: Record<string, string> = {
-  electric: 'Electric',
-  gas: 'Gas',
-  water: 'Water',
-  internet: 'Internet',
-  sewer: 'Sewer',
-  trash: 'Trash',
-  other: 'Other',
-};
-
 // Utility subtype options for the dropdown
 const utilitySubtypeOptions = utilitySubtypeEnum.map((type) => ({
   value: type,
-  label: utilitySubtypeLabels[type] || type,
+  label: UTILITY_SUBTYPE_LABELS[type],
 }));
 
 // Account type options for the dropdown
 const accountTypeOptions = accountTypeEnum.map((type) => ({
   value: type,
-  label: accountTypeLabels[type] || type,
+  label: ACCOUNT_TYPE_LABELS[type],
 }));
 
-// Default icons and colors for account types
-const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
-  checking: { icon: 'credit-card', color: '#3B82F6' }, // blue
-  savings: { icon: 'piggy-bank', color: '#10B981' }, // green
-  credit_card: { icon: 'credit-card', color: '#8B5CF6' }, // purple
-  investment: { icon: 'trending-up', color: '#F59E0B' }, // orange
-  loan: { icon: 'banknote', color: '#EF4444' }, // red
-  cash: { icon: 'wallet', color: '#6B7280' }, // gray
-  hsa: { icon: 'heart-pulse', color: '#14B8A6' }, // teal
-  utility: { icon: 'zap', color: '#f59e0b' }, // amber
-};
+// Default icons and colors per account type — shared with the
+// service-level fallback so every creation path stays in sync.
+const accountTypeDefaults = ACCOUNT_TYPE_DEFAULTS;
 
 // Default icons for utility subtypes
 const utilitySubtypeDefaults: Record<string, { icon: string; color: string }> = {
@@ -408,10 +379,12 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
   // Auto-update icon if:
   // 1. No icon is set yet, OR
   // 2. Current icon matches the default for the previous account type (user hasn't customized it)
-  const defaults = accountTypeDefaults[newAccountType];
+  const defaults = accountTypeDefaults[newAccountType as AccountType] ?? null;
   const currentIcon = $formData.accountIcon;
   const currentColor = $formData.accountColor;
-  const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
+  const previousDefaults = previousAccountType
+    ? (accountTypeDefaults[previousAccountType as AccountType] ?? null)
+    : null;
 
   const shouldUpdateIcon =
     defaults &&

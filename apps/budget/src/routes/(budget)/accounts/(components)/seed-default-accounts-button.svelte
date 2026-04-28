@@ -11,6 +11,7 @@ import PackagePlus from '@lucide/svelte/icons/package-plus';
 import Search from '@lucide/svelte/icons/search';
 import { seedDefaultAccounts } from '$lib/query/accounts';
 import { rpc } from '$lib/query';
+import { ACCOUNT_TYPE_LABELS } from '$core/schema/accounts';
 import { SvelteSet } from 'svelte/reactivity';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 
@@ -33,15 +34,6 @@ const handleSeed = async () => {
   statusQuery.refetch();
 };
 
-const accountTypeLabels: Record<string, string> = {
-  checking: 'Checking',
-  savings: 'Savings',
-  credit_card: 'Credit Card',
-  investment: 'Investment',
-  loan: 'Loan',
-  cash: 'Cash',
-  hsa: 'HSA',
-};
 
 const accountTypeColors: Record<string, string> = {
   checking: 'bg-info-bg text-info-fg',
@@ -205,7 +197,7 @@ const selectedCount = $derived(selectedSlugs.size);
                       for={`group-${type}`}
                       class="flex cursor-pointer items-center gap-2 font-semibold">
                       <Badge class={accountTypeColors[type]}>
-                        {accountTypeLabels[type] || type}
+                        {ACCOUNT_TYPE_LABELS[type as keyof typeof ACCOUNT_TYPE_LABELS] ?? type}
                       </Badge>
                       <span class="text-muted-foreground text-xs font-normal">
                         ({accounts.length})
