@@ -34,6 +34,7 @@ import LogOut from '@lucide/svelte/icons/log-out';
 import Plus from '@lucide/svelte/icons/plus';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Settings from '@lucide/svelte/icons/settings';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 import Tags from '@lucide/svelte/icons/tags';
 import User from '@lucide/svelte/icons/user';
 import Wallet from '@lucide/svelte/icons/wallet';
@@ -392,16 +393,40 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
       <Sidebar.GroupLabel>Data</Sidebar.GroupLabel>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
-              {#snippet child({ props })}
-                <a href="/import" {...props} class="flex items-center gap-3">
-                  <Download class="h-4 w-4"></Download>
-                  <span class="font-medium">Import</span>
-                </a>
-              {/snippet}
-            </Sidebar.MenuButton>
-          </Sidebar.MenuItem>
+          <Collapsible.Root class="group/import">
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({ props })}
+                  <a href="/import" {...props} class="flex items-center gap-3">
+                    <Download class="h-4 w-4"></Download>
+                    <span class="font-medium">Import</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              <Collapsible.Trigger>
+                {#snippet child({ props })}
+                  <Sidebar.MenuAction {...props} class="data-[state=open]:rotate-90">
+                    <ChevronRight class="h-4 w-4"></ChevronRight>
+                    <span class="sr-only">Toggle import options</span>
+                  </Sidebar.MenuAction>
+                {/snippet}
+              </Collapsible.Trigger>
+              <Collapsible.Content>
+                <Sidebar.MenuSub>
+                  <Sidebar.MenuSubItem>
+                    <Sidebar.MenuSubButton>
+                      {#snippet child({ props })}
+                        <a href="/import/bulk" {...props} class="flex items-center gap-2">
+                          <Sparkles class="h-3.5 w-3.5"></Sparkles>
+                          <span>AI Statement Import</span>
+                        </a>
+                      {/snippet}
+                    </Sidebar.MenuSubButton>
+                  </Sidebar.MenuSubItem>
+                </Sidebar.MenuSub>
+              </Collapsible.Content>
+            </Sidebar.MenuItem>
+          </Collapsible.Root>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}

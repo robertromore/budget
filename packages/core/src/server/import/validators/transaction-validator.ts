@@ -50,9 +50,23 @@ export class TransactionValidator {
     // Validate required fields
     errors.push(...this.validateRequiredFields(normalized, row.rowIndex));
 
-    // Validate date format and range
+    // Validate date format and range. We capture the canonical
+    // YYYY-MM-DD form here and write it back below so downstream
+    // consumers (orchestrator → DB insert, the account-detail page's
+    // @internationalized/date parser) always see ISO dates regardless
+    // of what the source produced — the LLM extractor occasionally
+    // emits MM/DD/YYYY despite the prompt saying otherwise.
+    let canonicalDate: string | null = null;
     if (normalized["date"]) {
-      errors.push(...this.validateDate(normalized["date"], row.rowIndex));
+      const dateErrors = this.validateDate(normalized["date"], row.rowIndex);
+      errors.push(...dateErrors);
+      if (dateErrors.length === 0 && typeof normalized["date"] === "string") {
+        try {
+          canonicalDate = parseDate(normalized["date"]);
+        } catch {
+          // validateDate would have produced an error already; leave canonicalDate null.
+        }
+      }
     }
 
     // Validate amount
@@ -66,6 +80,9 @@ export class TransactionValidator {
     // Update row with validation results
     const result: ImportRow = {
       ...row,
+      ...(canonicalDate && canonicalDate !== normalized["date"]
+        ? { normalizedData: { ...normalized, date: canonicalDate } }
+        : {}),
       validationStatus: errors.length === 0 ? "valid" : "invalid",
     };
 
