@@ -2,6 +2,7 @@ import {
   accounts,
   accountTypeEnum,
   investmentSubtypeEnum,
+  loanSubtypeEnum,
   removeAccountSchema,
   transactions,
   type Account,
@@ -112,15 +113,22 @@ const accountSaveSchema = z
     accountNumberLast4: z
       .string()
       .transform((val) => val?.trim())
-      .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
+      .pipe(z.string().min(1).max(32, "Account number reference must be 32 characters or fewer"))
       .optional()
       .nullable(),
     onBudget: z.coerce.boolean().optional(),
+    portalUrl: z.string().max(200, "Portal URL must be 200 characters or fewer").optional().nullable(),
+    statementCycleDay: z.number().int().min(1).max(31, "Statement cycle day must be 1-31").optional().nullable(),
     // Debt account-specific fields
     debtLimit: z.number().optional().nullable(),
     minimumPayment: z.number().optional().nullable(),
     paymentDueDay: z.number().min(1).max(31).optional().nullable(),
     interestRate: z.number().optional().nullable(),
+    // Loan-specific fields
+    loanSubtype: z.enum(loanSubtypeEnum).optional().nullable(),
+    originalPrincipal: z.number().positive("Original principal must be a positive number").optional().nullable(),
+    escrowBalance: z.number().min(0).optional().nullable(),
+    maturityDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Maturity date must be YYYY-MM-DD").optional().nullable(),
     // HSA-specific fields
     hsaContributionLimit: z.number().optional().nullable(),
     hsaType: z.enum(["individual", "family"]).optional().nullable(),
@@ -132,6 +140,7 @@ const accountSaveSchema = z
     annualContributionLimit: z.number().positive("Contribution limit must be a positive number").optional().nullable(),
     expenseRatio: z.number().min(0).max(100, "Expense ratio must be between 0 and 100").optional().nullable(),
     benchmarkSymbol: z.string().max(10).optional().nullable(),
+    vestedBalance: z.number().min(0).optional().nullable(),
     // Cash flow management fields
     targetBalance: z.number().min(0).max(100_000_000).optional().nullable(),
   })
@@ -421,6 +430,14 @@ export const accountRoutes = t.router({
         updateData.onBudget = input.onBudget;
       }
 
+      if (input.portalUrl !== undefined) {
+        updateData.portalUrl = input.portalUrl;
+      }
+
+      if (input.statementCycleDay !== undefined) {
+        updateData.statementCycleDay = input.statementCycleDay;
+      }
+
       // Debt account-specific fields
       if (input.debtLimit !== undefined) {
         updateData.debtLimit = input.debtLimit;
@@ -436,6 +453,31 @@ export const accountRoutes = t.router({
 
       if (input.interestRate !== undefined) {
         updateData.interestRate = input.interestRate;
+      }
+
+      // Loan-specific fields (only written for loan accounts; cleared if type changes away)
+      const effectiveAccountTypeForLoan = input.accountType ?? existingAccount.accountType;
+      if (effectiveAccountTypeForLoan === "loan") {
+        if (input.loanSubtype !== undefined) {
+          updateData.loanSubtype = input.loanSubtype;
+        }
+        if (input.originalPrincipal !== undefined) {
+          updateData.originalPrincipal = input.originalPrincipal;
+        }
+        if (input.escrowBalance !== undefined) {
+          updateData.escrowBalance = input.escrowBalance;
+        }
+        if (input.maturityDate !== undefined) {
+          updateData.maturityDate = input.maturityDate;
+        }
+      } else if (input.accountType !== undefined && input.accountType !== "loan") {
+        updateData.loanSubtype = null;
+        updateData.originalPrincipal = null;
+        updateData.escrowBalance = null;
+        // maturityDate also applies to term-deposit investments, so only clear for non-investment
+        if (input.accountType !== "investment") {
+          updateData.maturityDate = null;
+        }
       }
 
       // HSA-specific fields
@@ -474,12 +516,19 @@ export const accountRoutes = t.router({
         if (input.benchmarkSymbol !== undefined) {
           updateData.benchmarkSymbol = input.benchmarkSymbol;
         }
+        if (input.vestedBalance !== undefined) {
+          updateData.vestedBalance = input.vestedBalance;
+        }
+        if (input.maturityDate !== undefined) {
+          updateData.maturityDate = input.maturityDate;
+        }
       } else if (input.accountType !== undefined && input.accountType !== "investment") {
         // Account type is changing away from investment — clear investment-specific fields
         updateData.investmentSubtype = null;
         updateData.annualContributionLimit = null;
         updateData.expenseRatio = null;
         updateData.benchmarkSymbol = null;
+        updateData.vestedBalance = null;
       }
 
       // Cash flow management fields
@@ -548,10 +597,16 @@ export const accountRoutes = t.router({
         input.accountColor ||
         input.accountNumberLast4 ||
         input.onBudget !== undefined ||
+        input.portalUrl !== undefined ||
+        input.statementCycleDay !== undefined ||
         input.debtLimit !== undefined ||
         input.minimumPayment !== undefined ||
         input.paymentDueDay !== undefined ||
         input.interestRate !== undefined ||
+        input.loanSubtype ||
+        input.originalPrincipal !== undefined ||
+        input.escrowBalance !== undefined ||
+        input.maturityDate !== undefined ||
         input.hsaContributionLimit !== undefined ||
         input.hsaType ||
         input.hsaCurrentTaxYear !== undefined ||
@@ -561,6 +616,7 @@ export const accountRoutes = t.router({
         input.annualContributionLimit !== undefined ||
         input.expenseRatio !== undefined ||
         input.benchmarkSymbol !== undefined ||
+        input.vestedBalance !== undefined ||
         input.targetBalance !== undefined
       ) {
         const updateData: any = {};
@@ -570,6 +626,9 @@ export const accountRoutes = t.router({
         if (input.accountIcon) updateData.accountIcon = input.accountIcon;
         if (input.accountColor) updateData.accountColor = input.accountColor;
         if (input.accountNumberLast4) updateData.accountNumberLast4 = input.accountNumberLast4;
+        if (input.portalUrl !== undefined) updateData.portalUrl = input.portalUrl;
+        if (input.statementCycleDay !== undefined)
+          updateData.statementCycleDay = input.statementCycleDay;
 
         // Set onBudget - HSA accounts default to off-budget unless explicitly specified
         if (input.onBudget !== undefined) {
@@ -583,6 +642,15 @@ export const accountRoutes = t.router({
         if (input.minimumPayment !== undefined) updateData.minimumPayment = input.minimumPayment;
         if (input.paymentDueDay !== undefined) updateData.paymentDueDay = input.paymentDueDay;
         if (input.interestRate !== undefined) updateData.interestRate = input.interestRate;
+
+        // Loan-specific fields (only persisted when account type is loan)
+        if (input.accountType === "loan") {
+          if (input.loanSubtype) updateData.loanSubtype = input.loanSubtype;
+          if (input.originalPrincipal !== undefined)
+            updateData.originalPrincipal = input.originalPrincipal;
+          if (input.escrowBalance !== undefined) updateData.escrowBalance = input.escrowBalance;
+          if (input.maturityDate !== undefined) updateData.maturityDate = input.maturityDate;
+        }
 
         // HSA-specific fields
         if (input.hsaContributionLimit !== undefined)
@@ -604,6 +672,9 @@ export const accountRoutes = t.router({
             updateData.expenseRatio = input.expenseRatio;
           if (input.benchmarkSymbol !== undefined)
             updateData.benchmarkSymbol = input.benchmarkSymbol;
+          if (input.vestedBalance !== undefined)
+            updateData.vestedBalance = input.vestedBalance;
+          if (input.maturityDate !== undefined) updateData.maturityDate = input.maturityDate;
         }
 
         // Cash flow management fields

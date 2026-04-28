@@ -1,4 +1,7 @@
 // Validation configuration constants
+
+import { NAME_ALLOWED_PATTERN } from "$core/utils/string-utilities";
+
 export const VALIDATION_CONFIG = {
   ACCOUNT: {
     NAME: { MIN: 2, MAX: 50 },
@@ -48,8 +51,11 @@ export const SANITIZATION_PATTERNS = {
     "update",
   ],
 
-  // Safe characters for different field types
-  NAME_ALLOWED: /^[a-zA-Z0-9\s\-_.()&]+$/,
+  // Safe characters for different field types.
+  // NAME_ALLOWED references the shared `NAME_ALLOWED_PATTERN` in
+  // `$core/utils/string-utilities` — that constant is the single
+  // source of truth used by zod schemas too.
+  NAME_ALLOWED: NAME_ALLOWED_PATTERN,
   SLUG_ALLOWED: /^[a-z0-9\-_]+$/,
   DESCRIPTION_ALLOWED: /^[a-zA-Z0-9\s\-_.()&,!?:;'$/%]+$/,
 } as const;

@@ -165,7 +165,22 @@ function generateDemoAccount(): Account {
     annualContributionLimit: null,
     expenseRatio: null,
     benchmarkSymbol: null,
+    vestedBalance: null,
     targetBalance: null,
+    // Loan-specific fields
+    loanSubtype: null,
+    originalPrincipal: null,
+    escrowBalance: null,
+    maturityDate: null,
+    // Statement metadata
+    portalUrl: null,
+    statementCycleDay: null,
+    // HSA-specific fields
+    hsaContributionLimit: null,
+    hsaType: null,
+    hsaCurrentTaxYear: null,
+    hsaAdministrator: null,
+    hsaHighDeductiblePlan: null,
   };
 }
 

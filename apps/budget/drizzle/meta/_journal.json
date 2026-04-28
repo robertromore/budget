@@ -162,6 +162,20 @@
       "when": 1776568979174,
       "tag": "0022_dry_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1777181919514,
+      "tag": "0023_complex_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1777214598487,
+      "tag": "0024_grey_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

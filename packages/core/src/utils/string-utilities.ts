@@ -282,3 +282,18 @@ export function padEnd(str: string | number, length: number, char = " "): string
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
+
+/**
+ * Allowed characters for account / payee / category / generic "name"
+ * fields across the app. Single source of truth — every schema-level
+ * regex and the server-side `InputSanitizer` reference this constant
+ * so loosening (or tightening) the rule happens in one place.
+ *
+ * Permits: letters, digits, whitespace, and the punctuation that
+ * shows up in real-world institution and merchant names — periods
+ * ("Inc."), parens ("401(k)"), ampersands ("AT&T"), commas
+ * ("Stores, Inc."), apostrophes ("Macy's"), slashes ("Roth/Trad"),
+ * hyphens, underscores. Excludes anything that hints at markup,
+ * template strings, paths, or shell metacharacters.
+ */
+export const NAME_ALLOWED_PATTERN = /^[a-zA-Z0-9\s\-_.()&,'/]+$/;

@@ -1,3 +1,4 @@
+import { NAME_ALLOWED_PATTERN } from "$core/utils/string-utilities";
 import { z } from "zod";
 
 const accountTypeEnum = [
@@ -31,7 +32,7 @@ export const superformInsertAccountSchema = z.object({
     .min(1, "Account name is required")
     .min(2, "Account name must be at least 2 characters")
     .max(50, "Account name must be less than 50 characters")
-    .regex(/^[a-zA-Z0-9\s\-_.'&()]+$/, "Account name contains invalid characters"),
+    .regex(NAME_ALLOWED_PATTERN, "Account name contains invalid characters"),
   slug: z
     .string()
     .min(2, "Slug must be at least 2 characters")
@@ -107,7 +108,7 @@ export const superformUpdateAccountSchema = z.object({
         .string()
         .min(2, "Account name must be at least 2 characters")
         .max(50, "Account name must be less than 50 characters")
-        .regex(/^[a-zA-Z0-9\s\-_.'&()]+$/, "Account name contains invalid characters")
+        .regex(NAME_ALLOWED_PATTERN, "Account name contains invalid characters")
     )
     .optional(),
   slug: z

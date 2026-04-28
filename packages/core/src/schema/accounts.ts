@@ -3,6 +3,7 @@
 // that affect the account's balance.
 
 import { isValidIconName } from "../utils/icon-validation";
+import { NAME_ALLOWED_PATTERN } from "../utils/string-utilities";
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -26,6 +27,44 @@ export const accountTypeEnum = [
 ] as const;
 
 export type AccountType = (typeof accountTypeEnum)[number];
+
+/**
+ * Canonical user-facing labels for each account type. Imported by
+ * every place that surfaces account types to humans (forms, wizards,
+ * bulk-import review cards) so the wording stays in sync as the enum
+ * grows.
+ */
+export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  checking: "Checking",
+  savings: "Savings",
+  investment: "Investment",
+  credit_card: "Credit Card",
+  loan: "Loan",
+  cash: "Cash",
+  hsa: "Health Savings Account",
+  utility: "Utility",
+  other: "Other",
+};
+
+/**
+ * Per-type default Lucide icon name + brand-ish hex color used when
+ * an account is created without an explicit icon/color (e.g. via the
+ * bulk-import flow). Single source of truth — `AccountService.createAccount`
+ * applies these as fallbacks, and the per-account create form
+ * pre-populates from the same map so the wording / palette stays
+ * consistent across creation paths.
+ */
+export const ACCOUNT_TYPE_DEFAULTS: Record<AccountType, { icon: string; color: string }> = {
+  checking: { icon: "credit-card", color: "#3B82F6" },
+  savings: { icon: "piggy-bank", color: "#10B981" },
+  credit_card: { icon: "credit-card", color: "#8B5CF6" },
+  investment: { icon: "trending-up", color: "#F59E0B" },
+  loan: { icon: "banknote", color: "#EF4444" },
+  cash: { icon: "wallet", color: "#6B7280" },
+  hsa: { icon: "heart-pulse", color: "#14B8A6" },
+  utility: { icon: "zap", color: "#F59E0B" },
+  other: { icon: "circle", color: "#6B7280" },
+};
 
 // Investment subtype enum for investment accounts
 export const investmentSubtypeEnum = [
@@ -67,6 +106,51 @@ export const utilitySubtypeEnum = [
 
 export type UtilitySubtype = (typeof utilitySubtypeEnum)[number];
 
+export const UTILITY_SUBTYPE_LABELS: Record<UtilitySubtype, string> = {
+  electric: "Electric",
+  gas: "Gas",
+  water: "Water",
+  internet: "Internet",
+  sewer: "Sewer",
+  trash: "Trash",
+  other: "Other",
+};
+
+// Loan subtype enum for loan accounts. Mirrors the investmentSubtype /
+// utilitySubtype pattern so the UI can drive type-specific fields
+// (e.g. an auto loan probably wants a VIN, a mortgage wants an
+// escrow balance) without ever inferring from the account name.
+export const loanSubtypeEnum = [
+  "mortgage",
+  "auto",
+  "student",
+  "personal",
+  "heloc",
+  "other_loan",
+] as const;
+
+export type LoanSubtype = (typeof loanSubtypeEnum)[number];
+
+export const LOAN_SUBTYPE_LABELS: Record<LoanSubtype, string> = {
+  mortgage: "Mortgage",
+  auto: "Auto",
+  student: "Student",
+  personal: "Personal",
+  heloc: "HELOC",
+  other_loan: "Other",
+};
+
+// HSA coverage tier — currently only individual vs family is supported,
+// matching what `accountRoutes.save` already accepts in its zod input.
+export const hsaTypeEnum = ["individual", "family"] as const;
+
+export type HsaType = (typeof hsaTypeEnum)[number];
+
+export const HSA_TYPE_LABELS: Record<HsaType, string> = {
+  individual: "Individual",
+  family: "Family",
+};
+
 export const accounts = sqliteTable(
   "account",
   {
@@ -91,8 +175,10 @@ export const accounts = sqliteTable(
     accountIcon: text("account_icon"), // Lucide icon name
     accountColor: text("account_color"), // Hex color code
     initialBalance: real("initial_balance").default(0.0), // Starting balance
-    accountNumberLast4: text("account_number_last4"), // Last 4 digits for reference
+    accountNumberLast4: text("account_number_last4"), // Last 4 digits for reference (or fuller mask up to 32 chars)
     onBudget: integer("on_budget", { mode: "boolean" }).default(true).notNull(), // Include in budget calculations
+    portalUrl: text("portal_url"), // Web portal URL printed on the statement (e.g. https://www.chase.com/amazon)
+    statementCycleDay: integer("statement_cycle_day"), // Day of month statements close, 1-31
 
     // Debt account-specific fields (credit cards & loans)
     debtLimit: real("debt_limit"), // Credit limit (credit cards) or principal amount (loans)
@@ -100,11 +186,25 @@ export const accounts = sqliteTable(
     paymentDueDay: integer("payment_due_day"), // Day of month payment is due (1-31)
     interestRate: real("interest_rate"), // APR for credit cards or loan interest rate
 
+    // Loan-specific fields (mortgage, auto, student, etc.)
+    loanSubtype: text("loan_subtype", { enum: loanSubtypeEnum }), // mortgage, auto, student, personal, heloc, other_loan
+    originalPrincipal: real("original_principal"), // Original loan amount at origination — distinct from current outstanding balance
+    escrowBalance: real("escrow_balance"), // For mortgages: tax/insurance escrow held by servicer
+    maturityDate: text("maturity_date"), // ISO date string; loan payoff date or term-deposit maturity
+
     // Investment account-specific fields
     investmentSubtype: text("investment_subtype", { enum: investmentSubtypeEnum }), // roth_ira, 401k, brokerage, etc.
     annualContributionLimit: real("annual_contribution_limit"), // User-set annual contribution limit
     expenseRatio: real("expense_ratio"), // Annual expense ratio as a percentage (e.g., 0.03 for 0.03%)
     benchmarkSymbol: text("benchmark_symbol"), // Ticker symbol for benchmark comparison (e.g., "SPY")
+    vestedBalance: real("vested_balance"), // Employer-match-aware vested portion (401k etc.) — total balance lives in transactions
+
+    // HSA-specific fields
+    hsaContributionLimit: real("hsa_contribution_limit"), // Annual contribution limit set by the user (IRS limits change yearly)
+    hsaType: text("hsa_type", { enum: hsaTypeEnum }), // Coverage tier: individual or family
+    hsaCurrentTaxYear: integer("hsa_current_tax_year"), // Tax year the contributions are tracked against
+    hsaAdministrator: text("hsa_administrator"), // e.g. "HealthEquity", "Fidelity HSA"
+    hsaHighDeductiblePlan: text("hsa_high_deductible_plan"), // HDHP plan identifier the HSA is paired with
 
     // Cash flow management fields (checking, savings, cash)
     targetBalance: real("target_balance"), // Ideal buffer balance; surplus above this is considered idle
@@ -171,7 +271,7 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
           .min(1, "Account name is required")
           .min(2, "Account name must be at least 2 characters")
           .max(50, "Account name must be less than 50 characters")
-          .regex(/^[a-zA-Z0-9\s\-_.'&()]+$/, "Account name contains invalid characters")
+          .regex(NAME_ALLOWED_PATTERN, "Account name contains invalid characters")
       ),
   slug: (schema) =>
     schema
@@ -219,10 +319,21 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
   accountNumberLast4: (schema) =>
     schema
       .transform((val) => val?.trim())
-      .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
+      .pipe(z.string().min(1).max(32, "Account number reference must be 32 characters or fewer"))
       .optional()
       .nullable(),
   onBudget: (schema) => schema.pipe(z.boolean()).default(true),
+  portalUrl: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(200, "Portal URL must be 200 characters or fewer"))
+      .optional()
+      .nullable(),
+  statementCycleDay: (schema) =>
+    schema
+      .pipe(z.number().int().min(1).max(31, "Statement cycle day must be 1-31"))
+      .optional()
+      .nullable(),
   debtLimit: (schema) =>
     schema
       .pipe(z.number().positive("Credit limit must be a positive number"))
@@ -243,7 +354,54 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .pipe(z.number().min(0).max(100, "Interest rate must be between 0 and 100"))
       .optional()
       .nullable(),
+  // Loan-specific fields
+  loanSubtype: (schema) =>
+    schema
+      .pipe(
+        z.enum(loanSubtypeEnum, {
+          message: "Please select a valid loan type",
+        })
+      )
+      .optional()
+      .nullable(),
+  originalPrincipal: (schema) =>
+    schema
+      .pipe(z.number().positive("Original principal must be a positive number"))
+      .optional()
+      .nullable(),
+  escrowBalance: (schema) =>
+    schema.pipe(z.number().min(0)).optional().nullable(),
+  maturityDate: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Maturity date must be YYYY-MM-DD"))
+      .optional()
+      .nullable(),
+  // HSA-specific fields
+  hsaContributionLimit: (schema) =>
+    schema.pipe(z.number().min(0)).optional().nullable(),
+  hsaType: (schema) =>
+    schema
+      .pipe(z.enum(hsaTypeEnum, { message: "HSA type must be 'individual' or 'family'" }))
+      .optional()
+      .nullable(),
+  hsaCurrentTaxYear: (schema) =>
+    schema.pipe(z.number().int().min(2000).max(2100)).optional().nullable(),
+  hsaAdministrator: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(100, "HSA administrator must be 100 characters or fewer"))
+      .optional()
+      .nullable(),
+  hsaHighDeductiblePlan: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(200, "HDHP description must be 200 characters or fewer"))
+      .optional()
+      .nullable(),
   // Investment performance tracking fields
+  vestedBalance: (schema) =>
+    schema.pipe(z.number().min(0)).optional().nullable(),
   expenseRatio: (schema) =>
     schema
       .pipe(z.number().min(0).max(5, "Expense ratios above 5% are unusual — double-check your value"))
@@ -311,7 +469,7 @@ export const formUpdateAccountSchema = z.object({
         .string()
         .min(2, "Account name must be at least 2 characters")
         .max(50, "Account name must be less than 50 characters")
-        .regex(/^[a-zA-Z0-9\s\-_.'&()]+$/, "Account name contains invalid characters")
+        .regex(NAME_ALLOWED_PATTERN, "Account name contains invalid characters")
     )
     .optional(),
   slug: z
@@ -353,10 +511,23 @@ export const formUpdateAccountSchema = z.object({
   accountNumberLast4: z
     .string()
     .transform((val) => val?.trim())
-    .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
+    .pipe(z.string().min(1).max(32, "Account number reference must be 32 characters or fewer"))
     .optional()
     .nullable(),
   onBudget: z.boolean().optional(),
+  portalUrl: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(200, "Portal URL must be 200 characters or fewer"))
+    .optional()
+    .nullable(),
+  statementCycleDay: z
+    .number()
+    .int()
+    .min(1)
+    .max(31, "Statement cycle day must be 1-31")
+    .optional()
+    .nullable(),
   debtLimit: z.number().positive("Credit limit must be a positive number").optional().nullable(),
   minimumPayment: z
     .number()
@@ -376,11 +547,37 @@ export const formUpdateAccountSchema = z.object({
     .max(100, "Interest rate must be between 0 and 100")
     .optional()
     .nullable(),
+  // Loan-specific fields
+  loanSubtype: z.enum(loanSubtypeEnum).optional().nullable(),
+  originalPrincipal: z.number().positive("Original principal must be a positive number").optional().nullable(),
+  escrowBalance: z.number().min(0).optional().nullable(),
+  maturityDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Maturity date must be YYYY-MM-DD")
+    .optional()
+    .nullable(),
+  // HSA-specific fields
+  hsaContributionLimit: z.number().min(0).optional().nullable(),
+  hsaType: z.enum(hsaTypeEnum).optional().nullable(),
+  hsaCurrentTaxYear: z.number().int().min(2000).max(2100).optional().nullable(),
+  hsaAdministrator: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(100, "HSA administrator must be 100 characters or fewer"))
+    .optional()
+    .nullable(),
+  hsaHighDeductiblePlan: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(200, "HDHP description must be 200 characters or fewer"))
+    .optional()
+    .nullable(),
   // Investment account fields
   investmentSubtype: z.enum(investmentSubtypeEnum).optional().nullable(),
   annualContributionLimit: z.number().positive("Contribution limit must be a positive number").optional().nullable(),
   expenseRatio: z.number().min(0).max(5, "Expense ratios above 5% are unusual — double-check your value").optional().nullable(),
   benchmarkSymbol: z.string().max(10, "Benchmark symbol must be less than 10 characters").optional().nullable(),
+  vestedBalance: z.number().min(0).optional().nullable(),
   // Cash flow management fields
   targetBalance: z.number().min(0).max(100_000_000).optional().nullable(),
   // Utility account fields

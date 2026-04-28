@@ -1,5 +1,5 @@
 import type { Account, AccountType } from "$core/schema/accounts";
-import { accounts } from "$core/schema/accounts";
+import { ACCOUNT_TYPE_DEFAULTS, accounts } from "$core/schema/accounts";
 import { transactions } from "$core/schema/transactions";
 import { db } from "$core/server/db";
 import { ConflictError, ValidationError } from "$core/server/shared/types/errors";
@@ -72,6 +72,14 @@ export class AccountService {
     // Get next sequence number for this workspace
     const seq = await this.sequenceService.getNextSeq(workspaceId, "account");
 
+    // Fall back to per-type icon + color defaults when the caller
+    // doesn't supply them (e.g. bulk-import flow). Keeps every newly
+    // created account visually distinguishable in the sidebar.
+    const typeKey: AccountType = data.accountType ?? "checking";
+    const typeDefaults = ACCOUNT_TYPE_DEFAULTS[typeKey];
+    const accountIcon = data.accountIcon ?? typeDefaults.icon;
+    const accountColor = data.accountColor ?? typeDefaults.color;
+
     // Create account and initial balance transaction atomically
     const account = await db.transaction(async (tx) => {
       const [created] = await tx
@@ -83,8 +91,8 @@ export class AccountService {
           notes: sanitizedNotes,
           onBudget,
           accountType: data.accountType,
-          accountIcon: data.accountIcon,
-          accountColor: data.accountColor,
+          accountIcon,
+          accountColor,
           workspaceId,
         })
         .returning();
