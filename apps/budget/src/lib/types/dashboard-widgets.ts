@@ -403,6 +403,20 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     metric: "monthly-brief",
   },
   {
+    type: "period-brief-narrative",
+    label: "Period brief (narrative)",
+    description: "Editorial weekly/monthly brief with movers, projection, and attention items",
+    icon: "newspaper",
+    defaultSize: "full",
+    availableSizes: ["medium", "large", "full"],
+    defaultColumnSpan: 4,
+    defaultSettings: { period: "week" },
+    category: "lists",
+    style: "narrative",
+    metric: "period-brief",
+    selfContained: true,
+  },
+  {
     type: "budget-progress-narrative",
     label: "Budget rundown (narrative)",
     description: "Prose recap of budget pacing with inline numbers",
@@ -614,6 +628,20 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     metric: "budget-progress",
   },
 ];
+
+/**
+ * Default mapping from a widget's size label to the grid column span
+ * that label implies. `size` is the user-friendly token shown in the
+ * UI; `columnSpan` is what actually allocates grid tracks. Settings
+ * UIs that change `size` should propagate the corresponding span so
+ * the dashboard visibly reflows.
+ */
+export const SIZE_TO_COLUMN_SPAN: Record<WidgetSize, number> = {
+  small: 1,
+  medium: 2,
+  large: 3,
+  full: 4,
+};
 
 export function getWidgetDefinition(type: string): WidgetDefinition | undefined {
   return WIDGET_CATALOG.find((w) => w.type === type);

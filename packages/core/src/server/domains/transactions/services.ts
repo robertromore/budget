@@ -1118,6 +1118,17 @@ export class TransactionService {
       .select({
         totalPending: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' THEN ${transactions.amount} ELSE 0 END)`,
         pendingCount: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' THEN 1 ELSE 0 END)`,
+        // Inflow / outflow split among pending rows. The total above
+        // is the net; the splits power the larger pending-balance
+        // size variants.
+        pendingInflow: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' AND ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END)`,
+        pendingOutflow: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' AND ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END)`,
+        pendingInflowCount: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' AND ${transactions.amount} > 0 THEN 1 ELSE 0 END)`,
+        pendingOutflowCount: sql<number>`SUM(CASE WHEN ${transactions.status} = 'pending' AND ${transactions.amount} < 0 THEN 1 ELSE 0 END)`,
+        // Date range of pending rows — shown at "full" size so the
+        // user can see how stale their pending backlog is.
+        oldestPendingDate: sql<string | null>`MIN(CASE WHEN ${transactions.status} = 'pending' THEN ${transactions.date} ELSE NULL END)`,
+        newestPendingDate: sql<string | null>`MAX(CASE WHEN ${transactions.status} = 'pending' THEN ${transactions.date} ELSE NULL END)`,
         totalSpent30d: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 AND ${transactions.date} >= date('now', '-30 days') THEN ABS(${transactions.amount}) ELSE 0 END)`,
         totalReceived30d: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 AND ${transactions.date} >= date('now', '-30 days') THEN ${transactions.amount} ELSE 0 END)`,
         transactionCount30d: sql<number>`SUM(CASE WHEN ${transactions.date} >= date('now', '-30 days') THEN 1 ELSE 0 END)`,
@@ -1136,6 +1147,12 @@ export class TransactionService {
     return {
       totalPending: Number(row?.totalPending) || 0,
       pendingCount: Number(row?.pendingCount) || 0,
+      pendingInflow: Number(row?.pendingInflow) || 0,
+      pendingOutflow: Number(row?.pendingOutflow) || 0,
+      pendingInflowCount: Number(row?.pendingInflowCount) || 0,
+      pendingOutflowCount: Number(row?.pendingOutflowCount) || 0,
+      oldestPendingDate: row?.oldestPendingDate ?? null,
+      newestPendingDate: row?.newestPendingDate ?? null,
       totalSpent30d: Number(row?.totalSpent30d) || 0,
       totalReceived30d: Number(row?.totalReceived30d) || 0,
       transactionCount30d: Number(row?.transactionCount30d) || 0,

@@ -90,19 +90,40 @@ export class AccountsState {
     return this.filterBy((account) => account.onBudget === false);
   }
 
+  /**
+   * Number of accounts that should appear in net-worth-style summaries
+   * — i.e. excluding closed accounts. The total `accounts.size` includes
+   * closed entries because closed accounts are kept in the store for
+   * detail views; consumers showing "Across N accounts" want the
+   * active subset.
+   */
+  get activeCount(): number {
+    return this.getActiveAccounts().length;
+  }
+
+  /**
+   * Net worth across active accounts. Closed accounts are excluded so
+   * "what I have" reflects only what's currently in play. Debt
+   * accounts (credit cards / loans) carry an already-negated balance
+   * upstream, so a card with $1,000 owed reduces the total by $1,000.
+   */
   getTotalBalance(): number {
-    return this.all.reduce((total, account) => total + (account.balance || 0), 0);
-  }
-
-  getOnBudgetBalance(): number {
-    return this.getOnBudgetAccounts().reduce((total, account) => total + (account.balance || 0), 0);
-  }
-
-  getOffBudgetBalance(): number {
-    return this.getOffBudgetAccounts().reduce(
+    return this.getActiveAccounts().reduce(
       (total, account) => total + (account.balance || 0),
       0
     );
+  }
+
+  getOnBudgetBalance(): number {
+    return this.getOnBudgetAccounts()
+      .filter((account) => !account.closed)
+      .reduce((total, account) => total + (account.balance || 0), 0);
+  }
+
+  getOffBudgetBalance(): number {
+    return this.getOffBudgetAccounts()
+      .filter((account) => !account.closed)
+      .reduce((total, account) => total + (account.balance || 0), 0);
   }
 
   // CRUD operations

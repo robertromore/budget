@@ -117,6 +117,16 @@ export const createFromTemplate = defineMutation<any, DashboardWithWidgets | nul
   errorMessage: "Failed to create dashboard",
 });
 
+export const resetDashboardToTemplate = defineMutation<
+  { dashboardId: number; templateId?: string },
+  DashboardWithWidgets | null
+>({
+  mutationFn: (variables) => trpc().dashboardRoutes.resetToTemplate.mutate(variables),
+  onSuccess: () => invalidateAll(),
+  successMessage: "Dashboard reset to template",
+  errorMessage: "Failed to reset dashboard",
+});
+
 export const ensureDefaultDashboard = defineMutation<void, DashboardWithWidgets | null>({
   mutationFn: () => trpc().dashboardRoutes.ensureDefault.mutate(),
   onSuccess: () => invalidateAll(),

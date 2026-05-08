@@ -35,6 +35,7 @@ import { budgetRoutes } from "./routes/budgets";
 import { dashboardRoutes } from "./routes/dashboards";
 import { widgetGroupRoutes } from "./routes/widget-groups";
 import { forecastingRoutes } from "./routes/forecasting";
+import { insightsRoutes } from "./routes/insights";
 import { metricAlertRoutes } from "./routes/metric-alerts";
 import { importCleanupRoutes } from "./routes/import-cleanup";
 import { importProfileRoutes } from "./routes/import-profiles";
@@ -108,6 +109,7 @@ export const router = t.router({
   importCleanupRoutes,
   settingsRoutes,
   forecastingRoutes,
+  insightsRoutes,
   metricAlertRoutes,
   netWorthRoutes,
   financialGoalsRoutes,

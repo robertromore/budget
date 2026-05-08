@@ -16,6 +16,7 @@ import * as dashboards from "$core/query/dashboards";
 import * as widgetGroups from "$core/query/widget-groups";
 import * as documentExtraction from "$core/query/document-extraction";
 import * as importProfiles from "$core/query/import-profiles";
+import * as insights from "$core/query/insights";
 import * as llmSettings from "$core/query/llm-settings";
 import * as medicalExpenses from "$core/query/medical-expenses";
 import * as metricAlerts from "$core/query/metric-alerts";
@@ -64,6 +65,7 @@ export const rpc = {
   widgetGroups,
   documentExtraction,
   importProfiles,
+  insights,
   llmSettings,
   medicalExpenses,
   metricAlerts,
@@ -117,6 +119,7 @@ export { categoryGroupKeys } from "$core/query/category-groups";
 export { connectionKeys, providerSettingsKeys } from "$core/query/connections";
 export { DocumentExtraction, documentExtractionKeys } from "$core/query/document-extraction";
 export { importProfileKeys } from "$core/query/import-profiles";
+export { insightsKeys } from "$core/query/insights";
 export { LLMSettings, llmSettingsKeys } from "$core/query/llm-settings";
 export { medicalExpenseKeys } from "$core/query/medical-expenses";
 export { metricAlertKeys } from "$core/query/metric-alerts";

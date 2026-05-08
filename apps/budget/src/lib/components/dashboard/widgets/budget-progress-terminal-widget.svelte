@@ -17,7 +17,7 @@ type Row = {
   isOver: boolean;
 };
 
-const rows = $derived.by<Row[]>(() => {
+const allRows = $derived.by<Row[]>(() => {
   return budgets
     .filter((b: any) => b.metadata?.allocatedAmount && b.metadata.allocatedAmount > 0)
     .map((b: any) => {
@@ -30,9 +30,32 @@ const rows = $derived.by<Row[]>(() => {
       const pct = allocated > 0 ? (spent / allocated) * 100 : 0;
       return { name: b.name, spent, allocated, pct, isOver: spent > allocated };
     })
-    .sort((a, b) => b.pct - a.pct)
-    .slice(0, 6);
+    .sort((a, b) => b.pct - a.pct);
 });
+
+const customLimit = $derived(Number((config.settings as any)?.limit) || 0);
+const limit = $derived.by(() => {
+  if (customLimit > 0) return customLimit;
+  switch (config.size) {
+    case 'small':
+      return 0;
+    case 'medium':
+      return 5;
+    case 'large':
+      return 10;
+    default:
+      return 25;
+  }
+});
+
+const rows = $derived(allRows.slice(0, limit));
+const remaining = $derived(allRows.length - rows.length);
+
+const overCount = $derived(allRows.filter((r) => r.isOver).length);
+const totalActive = $derived(allRows.length);
+const biggest = $derived(allRows[0] ?? null);
+const totalSpent = $derived(allRows.reduce((s, r) => s + r.spent, 0));
+const totalAllocated = $derived(allRows.reduce((s, r) => s + r.allocated, 0));
 
 function compactCurrency(n: number): string {
   const abs = Math.abs(n);
@@ -55,20 +78,52 @@ function bar(pct: number): string {
 <div class="widget-terminal">
   <div class="mb-2 flex items-baseline justify-between border-b border-(--term-border) pb-1.5">
     <span class="widget-terminal-heading">{config.title || 'BUDGET.STATUS'}</span>
-    <span class="widget-terminal-faint text-[10px]">{rows.length} ACTIVE</span>
+    {#if config.size !== 'small'}
+      <span class="widget-terminal-faint text-[10px]">
+        {totalActive} ACTIVE{overCount > 0 ? ` · ${overCount} OVER` : ''}
+      </span>
+    {/if}
   </div>
 
   {#if isLoading}
     <div class="space-y-1.5">
-      {#each Array(3) as _}
+      {#each Array(Math.max(limit, 3)) as _}
         <div class="h-4 animate-pulse rounded bg-(--term-bg-soft)"></div>
       {/each}
     </div>
-  {:else if rows.length === 0}
+  {:else if allRows.length === 0}
     <div class="widget-terminal-muted py-6 text-center text-[10px]">
       &gt; no.active.budgets
     </div>
+  {:else if config.size === 'small'}
+    <div class="flex items-baseline gap-2">
+      <span class="widget-terminal-bright text-base tabular-nums">
+        {overCount}<span class="widget-terminal-muted">/{totalActive}</span>
+      </span>
+      {#if biggest}
+        <span
+          class="text-[10px] tabular-nums"
+          class:widget-terminal-bright={biggest.pct < 85}
+          class:widget-terminal-warn={biggest.pct >= 85 && !biggest.isOver}
+          class:widget-terminal-neg={biggest.isOver}>
+          TOP {biggest.pct.toFixed(0)}%
+        </span>
+      {/if}
+    </div>
+    <div class="widget-terminal-faint mt-0.5 text-[9px] uppercase">OVER · ACTIVE</div>
   {:else}
+    {#if config.size === 'full'}
+      <div class="mb-2 grid grid-cols-2 gap-2 text-[10px] tabular-nums">
+        <div>
+          <span class="widget-terminal-faint uppercase">SPEND</span>
+          <span class="widget-terminal-bright ml-1">{compactCurrency(totalSpent)}</span>
+        </div>
+        <div>
+          <span class="widget-terminal-faint uppercase">ALLOC</span>
+          <span class="widget-terminal-bright ml-1">{compactCurrency(totalAllocated)}</span>
+        </div>
+      </div>
+    {/if}
     <div class="space-y-1 text-[11px] leading-relaxed tabular-nums">
       <div class="widget-terminal-muted text-[10px] uppercase">
         {padRight('BUDGET', 18)}USE%&nbsp;&nbsp;[&nbsp;&nbsp;&nbsp;METER&nbsp;&nbsp;&nbsp;]&nbsp;&nbsp;SPEND
@@ -95,6 +150,11 @@ function bar(pct: number): string {
           </span>
         </div>
       {/each}
+      {#if remaining > 0}
+        <div class="widget-terminal-muted pt-1 text-[10px]">
+          &hellip; +{remaining} more
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

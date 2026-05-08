@@ -6,6 +6,7 @@ import { LayerCake, Svg } from 'layercake';
 import { HorizontalBar, AxisY } from '$lib/components/layercake';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import Target from '@lucide/svelte/icons/target';
+import AlertTriangle from '@lucide/svelte/icons/triangle-alert';
 
 let { config }: { config: DashboardWidget } = $props();
 
@@ -17,16 +18,27 @@ const budgetsQuery = rpc.budgets.listBudgets().options();
 const budgets = $derived(budgetsQuery.data ?? []);
 const isLoading = $derived(budgetsQuery.isLoading);
 
-const limit = $derived((config.settings as any)?.limit ?? 6);
+const customLimit = $derived(Number((config.settings as any)?.limit) || 0);
+const limit = $derived.by(() => {
+  if (customLimit > 0) return customLimit;
+  switch (config.size) {
+    case 'small':
+      return 0;
+    case 'medium':
+      return 4;
+    case 'large':
+      return 8;
+    default:
+      return 20;
+  }
+});
 
-const chartData = $derived.by(() => {
-  const items = budgets
-    .filter((b: any) => b.metadata?.allocatedAmount && b.metadata.allocatedAmount > 0)
-    .slice(0, limit);
-
+const allBudgetRows = $derived.by(() => {
+  const items = budgets.filter(
+    (b: any) => b.metadata?.allocatedAmount && b.metadata.allocatedAmount > 0
+  );
   return items.map((b: any) => {
     const allocated = Number(b.metadata?.allocatedAmount) || 0;
-    // Calculate spent from budget transactions relation
     const spent = (b.transactions ?? []).reduce(
       (sum: number, bt: any) => sum + Math.abs(Number(bt.allocatedAmount ?? bt.transaction?.amount ?? 0)),
       0
@@ -42,7 +54,22 @@ const chartData = $derived.by(() => {
   });
 });
 
-// Scale the x-axis to the max percentage so bars are visually distinct
+// Sort by % desc so the most-stressed budgets surface first.
+const chartData = $derived(
+  [...allBudgetRows].sort((a, b) => b.value - a.value).slice(0, limit)
+);
+const remaining = $derived(allBudgetRows.length - chartData.length);
+
+const overCount = $derived(allBudgetRows.filter((r) => r.isOver).length);
+const totalActive = $derived(allBudgetRows.length);
+const biggest = $derived(
+  allBudgetRows.length > 0
+    ? [...allBudgetRows].sort((a, b) => b.value - a.value)[0]!
+    : null
+);
+const totalSpent = $derived(allBudgetRows.reduce((s, r) => s + r.spent, 0));
+const totalAllocated = $derived(allBudgetRows.reduce((s, r) => s + r.allocated, 0));
+
 const xMax = $derived(
   chartData.length > 0 ? Math.max(100, ...chartData.map((d) => d.value)) : 100
 );
@@ -50,17 +77,43 @@ const xMax = $derived(
 
 {#if isLoading}
   <div class="space-y-3">
-    {#each Array(3) as _}
+    {#each Array(Math.max(limit, 3)) as _}
       <div class="bg-muted h-8 animate-pulse rounded"></div>
     {/each}
   </div>
-{:else if chartData.length === 0}
+{:else if allBudgetRows.length === 0}
   <div class="flex flex-col items-center justify-center gap-2 py-6">
-    <Target class="text-muted-foreground h-10 w-10" />
+    <Target class="text-muted-foreground h-10 w-10"></Target>
     <p class="text-muted-foreground text-sm">No active budgets</p>
     <a href="/budgets" class="text-primary text-xs hover:underline">Create a budget</a>
   </div>
+{:else if config.size === 'small'}
+  <div class="flex items-start gap-3">
+    <div class="rounded-lg p-2.5 shrink-0" class:bg-destructive-bg={overCount > 0} class:bg-primary={overCount === 0} class:bg-primary-foreground={overCount === 0}>
+      {#if overCount > 0}
+        <AlertTriangle class="text-destructive h-5 w-5"></AlertTriangle>
+      {:else}
+        <Target class="text-primary h-5 w-5"></Target>
+      {/if}
+    </div>
+    <div class="min-w-0 flex-1">
+      <div class="text-xl font-bold tabular-nums">
+        {overCount}<span class="text-muted-foreground">/{totalActive}</span>
+      </div>
+      <p class="text-muted-foreground text-xs">
+        over budget{biggest ? ` · top ${biggest.value}%` : ''}
+      </p>
+    </div>
+  </div>
 {:else}
+  {#if config.size === 'full'}
+    <div class="text-muted-foreground mb-2 flex items-baseline justify-between border-b pb-1.5 text-xs uppercase tracking-wider">
+      <span>{totalActive} budgets · {overCount} over</span>
+      <span class="tabular-nums">
+        {currencyFormatter.format(totalSpent)} / {currencyFormatter.format(totalAllocated)}
+      </span>
+    </div>
+  {/if}
   <div style="height: {Math.max(100, chartData.length * 36)}px;">
     <LayerCake
       data={chartData}
@@ -80,13 +133,13 @@ const xMax = $derived(
             y2="100%"
             stroke="var(--border)"
             stroke-width="1"
-            stroke-dasharray="4 3" />
+            stroke-dasharray="4 3"></line>
         {/if}
-        <AxisY gridlines={false} tickMarks={false} />
+        <AxisY gridlines={false} tickMarks={false}></AxisY>
         <HorizontalBar
           fill={(d) => (d.isOver ? 'var(--destructive)' : d.value >= 85 ? 'var(--chart-4)' : 'var(--chart-1)')}
           opacity={0.8}
-          radius={3} />
+          radius={3}></HorizontalBar>
       </Svg>
     </LayerCake>
   </div>
@@ -100,5 +153,8 @@ const xMax = $derived(
         </span>
       </div>
     {/each}
+    {#if remaining > 0}
+      <p class="text-muted-foreground pt-1 text-center text-xs">+{remaining} more</p>
+    {/if}
   </div>
 {/if}

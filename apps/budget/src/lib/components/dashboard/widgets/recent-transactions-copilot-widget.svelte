@@ -10,15 +10,26 @@ import { copilotPalette } from './copilot-colors';
 
 let { config }: { config: DashboardWidget } = $props();
 
-const limit = $derived((config.settings as any)?.limit ?? 8);
 const p = $derived(copilotPalette((config.settings as any)?.gradientColor));
+
+const customLimit = $derived(Number((config.settings as any)?.limit) || 0);
+const limit = $derived.by(() => {
+  if (customLimit > 0) return customLimit;
+  switch (config.size) {
+    case 'small':
+      return 1;
+    case 'large':
+      return 10;
+    case 'full':
+      return 15;
+    default:
+      return 5;
+  }
+});
 
 const txQuery = $derived(
   rpc.transactions
-    .getTransactionsList(
-      { sortBy: 'date', sortOrder: 'desc' },
-      { page: 0, pageSize: limit }
-    )
+    .getTransactionsList({ sortBy: 'date', sortOrder: 'desc' }, { page: 0, pageSize: limit })
     .options()
 );
 const transactions = $derived((txQuery.data as any)?.transactions ?? []);
@@ -28,7 +39,7 @@ const isLoading = $derived(txQuery.isLoading);
 <div class="overflow-hidden rounded-xl border p-4 shadow-sm {p.container}">
   <div class="mb-3 flex items-center gap-2">
     <div class="rounded-lg p-1.5 {p.iconBg}">
-      <Receipt class="h-3.5 w-3.5 {p.iconFg}" />
+      <Receipt class="h-3.5 w-3.5 {p.iconFg}"></Receipt>
     </div>
     <span class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
       {config.title || 'Recent activity'}
@@ -37,7 +48,7 @@ const isLoading = $derived(txQuery.isLoading);
 
   {#if isLoading}
     <div class="space-y-2">
-      {#each Array(4) as _}
+      {#each Array(Math.min(limit, 4)) as _}
         <div class="bg-muted h-10 animate-pulse rounded-lg"></div>
       {/each}
     </div>
@@ -55,11 +66,11 @@ const isLoading = $derived(txQuery.isLoading);
         <div class="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors {p.rowHover}">
           <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {iconBg}">
             {#if tx.amount > 0}
-              <ArrowDownRight class="h-4 w-4" />
+              <ArrowDownRight class="h-4 w-4"></ArrowDownRight>
             {:else if tx.amount < 0}
-              <ArrowUpRight class="h-4 w-4" />
+              <ArrowUpRight class="h-4 w-4"></ArrowUpRight>
             {:else}
-              <Receipt class="h-3.5 w-3.5" />
+              <Receipt class="h-3.5 w-3.5"></Receipt>
             {/if}
           </div>
           <div class="min-w-0 flex-1">
@@ -68,6 +79,12 @@ const isLoading = $derived(txQuery.isLoading);
             </div>
             <div class="text-muted-foreground text-xs">
               {formatShortDate(new Date(tx.date))}
+              {#if (config.size === 'large' || config.size === 'full') && tx.categoryName}
+                · {tx.categoryName}
+              {/if}
+              {#if config.size === 'full' && tx.accountName}
+                · {tx.accountName}
+              {/if}
             </div>
           </div>
           <span

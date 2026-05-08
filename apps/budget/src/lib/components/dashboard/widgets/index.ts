@@ -33,6 +33,7 @@ const registry: Record<string, WidgetImport> = {
   "net-worth-trend-terminal": () => import("./net-worth-trend-terminal-widget.svelte"),
   "recent-transactions-terminal": () => import("./recent-transactions-terminal-widget.svelte"),
   "monthly-brief-narrative": () => import("./monthly-brief-narrative-widget.svelte"),
+  "period-brief-narrative": () => import("./period-brief-narrative-widget.svelte"),
   "budget-progress-narrative": () => import("./budget-progress-narrative-widget.svelte"),
   "budget-progress-coach": () => import("./budget-progress-coach-widget.svelte"),
   "spending-insights-coach": () => import("./spending-insights-coach-widget.svelte"),

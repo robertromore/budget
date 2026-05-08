@@ -22,7 +22,7 @@ import { Button } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import { rpc } from '$lib/query';
-import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
+import { SIZE_TO_COLUMN_SPAN, getWidgetDefinition } from '$lib/types/dashboard-widgets';
 import ArrowDownToLine from '@lucide/svelte/icons/arrow-down-to-line';
 import ArrowUpToLine from '@lucide/svelte/icons/arrow-up-to-line';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -276,13 +276,6 @@ function widgetLabel(w: DashboardWidget): string {
 }
 
 const FALLBACK_SIZES: WidgetSize[] = ['small', 'medium', 'large', 'full'];
-
-const SIZE_TO_COLUMN_SPAN: Record<WidgetSize, number> = {
-  small: 1,
-  medium: 2,
-  large: 3,
-  full: 4,
-};
 
 function availableSizesFor(widget: DashboardWidget): WidgetSize[] {
   const def = getWidgetDefinition(widget.widgetType);

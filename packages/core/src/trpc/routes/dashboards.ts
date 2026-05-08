@@ -488,6 +488,79 @@ export const dashboardRoutes = t.router({
       return await loadDashboardWithWidgets(ctx.db, created.id);
     }),
 
+  resetToTemplate: rateLimitedProcedure
+    .input(
+      z.object({
+        dashboardId: z.number().nonnegative(),
+        templateId: z.string().min(1).max(60).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [dashboard] = await ctx.db
+        .select()
+        .from(dashboards)
+        .where(
+          and(
+            eq(dashboards.id, input.dashboardId),
+            eq(dashboards.workspaceId, ctx.workspaceId),
+            isNull(dashboards.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (!dashboard) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dashboard not found" });
+      }
+
+      // Resolve template: explicit input wins; otherwise match by slug (works
+      // when slug equals a template id, which is the case for seed dashboards).
+      const templateId = input.templateId ?? dashboard.slug;
+      const template = getTemplate(templateId);
+      if (!template) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `No template matches "${templateId}". Pass templateId explicitly.`,
+        });
+      }
+
+      // Wipe existing widgets (and any group instances on this dashboard).
+      await ctx.db
+        .delete(dashboardWidgets)
+        .where(eq(dashboardWidgets.dashboardId, dashboard.id));
+      await ctx.db
+        .delete(dashboardGroupInstances)
+        .where(eq(dashboardGroupInstances.dashboardId, dashboard.id));
+
+      // Refresh layout, description, icon — keep name/slug/isDefault/stylePriority
+      // since those reflect user choices.
+      const now = new Date().toISOString();
+      await ctx.db
+        .update(dashboards)
+        .set({
+          description: template.description,
+          icon: template.icon,
+          layout: template.layout,
+          updatedAt: now,
+        })
+        .where(eq(dashboards.id, dashboard.id));
+
+      if (template.widgets.length > 0) {
+        await ctx.db.insert(dashboardWidgets).values(
+          template.widgets.map((w) => ({
+            dashboardId: dashboard.id,
+            widgetType: w.widgetType,
+            title: w.title ?? null,
+            size: w.size,
+            sortOrder: w.sortOrder,
+            columnSpan: w.columnSpan,
+            settings: w.settings ?? null,
+          }))
+        );
+      }
+
+      return await loadDashboardWithWidgets(ctx.db, dashboard.id);
+    }),
+
   restyleWidgets: rateLimitedProcedure
     .input(
       z.object({

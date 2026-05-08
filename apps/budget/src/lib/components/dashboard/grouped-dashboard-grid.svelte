@@ -84,16 +84,20 @@ const gridClass = $derived(
 );
 
 function getSpanClass(span: number): string {
-  if (span >= columns) return `md:col-span-${columns}`;
+  // Tailwind v4 only compiles class strings that appear as literals
+  // in source — `col-span-${n}` interpolation produces no CSS, so
+  // every span we ship has to be hard-coded here. CSS Grid clamps
+  // col-span-N to the available track count, so spans larger than
+  // the current `columns` value still render as full-width without
+  // an extra responsive branch.
   switch (span) {
-    case 1:
-      return '';
     case 2:
       return 'md:col-span-2';
     case 3:
       return 'md:col-span-2 xl:col-span-3';
     case 4:
       return 'md:col-span-2 xl:col-span-4';
+    case 1:
     default:
       return '';
   }

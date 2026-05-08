@@ -26,6 +26,7 @@ import GripVertical from '@lucide/svelte/icons/grip-vertical';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import Plus from '@lucide/svelte/icons/plus';
+import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 import Star from '@lucide/svelte/icons/star';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 
@@ -39,6 +40,19 @@ const templates = $derived(templatesQuery.data ?? []);
 let showTemplates = $state(false);
 let deleteDialogOpen = $state(false);
 let pendingDeleteId = $state<number | null>(null);
+let resetDialogOpen = $state(false);
+let pendingResetId = $state<number | null>(null);
+let pendingResetTemplateId = $state<string | null>(null);
+let pendingResetName = $state<string>('');
+
+const templateIds = $derived(new Set(templates.map((t) => t.id)));
+
+function templateIdForDashboard(slug: string): string | null {
+  if (templateIds.has(slug)) return slug;
+  // Strip "-2", "-3" disambiguation suffix and try again.
+  const stripped = slug.replace(/-\d+$/, '');
+  return templateIds.has(stripped) ? stripped : null;
+}
 
 const sensors = useSensors(
   useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -77,6 +91,24 @@ async function confirmRemove() {
 
 async function handleClone(id: number) {
   await rpc.dashboards.cloneDashboard.execute({ id });
+}
+
+function handleReset(dashboard: DashboardWithWidgets, templateId: string) {
+  pendingResetId = dashboard.id;
+  pendingResetTemplateId = templateId;
+  pendingResetName = dashboard.name;
+  resetDialogOpen = true;
+}
+
+async function confirmReset() {
+  if (pendingResetId === null || pendingResetTemplateId === null) return;
+  await rpc.dashboards.resetDashboardToTemplate.execute({
+    dashboardId: pendingResetId,
+    templateId: pendingResetTemplateId,
+  });
+  pendingResetId = null;
+  pendingResetTemplateId = null;
+  pendingResetName = '';
 }
 
 async function handleCreateFromTemplate(templateId: string) {
@@ -219,6 +251,16 @@ async function handleCreateBlank() {
                       <Button variant="ghost" size="sm" onclick={() => handleClone(dashboard.id)}>
                         <Copy class="h-3.5 w-3.5" />
                       </Button>
+                      {#if templateIdForDashboard(dashboard.slug)}
+                        {@const tid = templateIdForDashboard(dashboard.slug)!}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Reset widgets to {tid} template"
+                          onclick={() => handleReset(dashboard, tid)}>
+                          <RotateCcw class="h-3.5 w-3.5" />
+                        </Button>
+                      {/if}
                     </div>
                     {#if !dashboard.isDefault}
                       <Button
@@ -246,3 +288,10 @@ async function handleCreateBlank() {
   description="This dashboard and all its widgets will be permanently removed."
   confirmLabel="Delete"
   onConfirm={confirmRemove} />
+
+<ConfirmDialog
+  bind:open={resetDialogOpen}
+  title="Reset to template"
+  description="Replace all widgets in “{pendingResetName}” with the {pendingResetTemplateId ?? ''} template's defaults. Custom widgets and layout tweaks on this dashboard will be lost."
+  confirmLabel="Reset"
+  onConfirm={confirmReset} />

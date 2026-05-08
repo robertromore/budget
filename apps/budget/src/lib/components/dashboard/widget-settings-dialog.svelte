@@ -7,7 +7,8 @@ import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
 import { rpc } from '$lib/query';
 import type { DashboardWidget } from '$core/schema/dashboards';
-import { getWidgetDefinition } from '$lib/types/dashboard-widgets';
+import { SIZE_TO_COLUMN_SPAN, getWidgetDefinition } from '$lib/types/dashboard-widgets';
+import type { WidgetSize } from '$core/schema/dashboards';
 import {
   COPILOT_COLOR_IDS,
   COPILOT_COLOR_LABELS,
@@ -56,6 +57,20 @@ $effect(() => {
     gradientColor = copilotColorOr((widget.settings as any)?.gradientColor);
   }
 });
+
+// `size` is the user-facing label; `columnSpan` is what actually
+// allocates grid space. Treat size as the source of truth — when the
+// user picks small/medium/large/full, propagate the matching span so
+// the dashboard reflows. Users can still override the span manually
+// after.
+const sizeAccessors = {
+  get: () => size,
+  set: (next: string) => {
+    size = next;
+    const span = SIZE_TO_COLUMN_SPAN[next as WidgetSize];
+    if (span != null) columnSpan = String(span);
+  },
+};
 
 async function handleSave() {
   if (!widget) return;
@@ -123,7 +138,7 @@ async function handleSave() {
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-2">
           <Label>Size</Label>
-          <Select.Root type="single" bind:value={size}>
+          <Select.Root type="single" bind:value={sizeAccessors.get, sizeAccessors.set}>
             <Select.Trigger class="capitalize">{size}</Select.Trigger>
             <Select.Content>
               {#each definition?.availableSizes ?? ['small', 'medium', 'large', 'full'] as s}

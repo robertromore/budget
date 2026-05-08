@@ -246,19 +246,6 @@ const enabledDashboards = $derived((dashboardsQuery.data ?? []) as DashboardWith
                           </div>
                         </div>
                       </div>
-                      <div class="text-muted-foreground flex items-center gap-1 truncate text-xs">
-                        {#if (account as any).accountNumber}
-                          <span class="font-mono">
-                            ••{(account as any).accountNumber.slice(-4)}
-                          </span>
-                        {/if}
-                        {#if (account as any).institution}
-                          {#if (account as any).accountNumber}
-                            <span>•</span>
-                          {/if}
-                          <span class="truncate">{(account as any).institution}</span>
-                        {/if}
-                      </div>
                       <div class="text-right text-xs font-medium">
                         {#if account.accountType === 'credit_card' && account.debtLimit}
                           {@const metrics = calculateDebtMetrics(account)}
