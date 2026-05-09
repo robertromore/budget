@@ -38,11 +38,27 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
-type ActiveApp = "budget" | "price-watcher" | "home";
+type ActiveApp =
+  | "budget"
+  | "budgets"
+  | "planning"
+  | "subscriptions"
+  | "documents"
+  | "intelligence"
+  | "automation"
+  | "price-watcher"
+  | "home";
 
 function getActiveApp(pathname: string): ActiveApp {
   if (pathname.startsWith("/price-watcher")) return "price-watcher";
   if (pathname.startsWith("/home")) return "home";
+  if (pathname.startsWith("/budgets")) return "budgets";
+  if (pathname.startsWith("/goals") || pathname.startsWith("/schedules")) return "planning";
+  if (pathname.startsWith("/subscriptions")) return "subscriptions";
+  if (pathname.startsWith("/documents")) return "documents";
+  if (pathname.startsWith("/intelligence") || pathname.startsWith("/patterns"))
+    return "intelligence";
+  if (pathname.startsWith("/automation")) return "automation";
   return "budget";
 }
 

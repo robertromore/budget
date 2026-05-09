@@ -64,7 +64,7 @@ const confirmDeleteSchedule = async () => {
     _deleteScheduleDialog.current = false;
 
     // Only redirect if we're currently viewing the schedule being deleted
-    if (page.route.id === '/(budget)/schedules/[slug]') {
+    if (page.route.id === '/(planning)/schedules/[slug]') {
       await goto('/schedules');
     }
   } catch (error) {

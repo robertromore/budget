@@ -10,13 +10,19 @@ import DeletePayeeDialog from '$lib/components/dialogs/delete-payee-dialog.svelt
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import EncryptionUnlockDialog from '$lib/components/dialogs/encryption-unlock-dialog.svelte';
 import SkipOccurrenceDialog from '$lib/components/dialogs/skip-occurrence-dialog.svelte';
-import { HelpButton, HelpOverlay } from '$lib/components/help';
+import { HelpOverlay } from '$lib/components/help';
 import {
   IntelligenceInputButton,
   IntelligenceInputOverlay,
 } from '$lib/components/intelligence-input';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import PriceWatcherSidebar from '$lib/components/layout/price-watcher-sidebar.svelte';
+import BudgetsSidebar from '$lib/components/layout/budgets-sidebar.svelte';
+import PlanningSidebar from '$lib/components/layout/planning-sidebar.svelte';
+import SubscriptionsSidebar from '$lib/components/layout/subscriptions-sidebar.svelte';
+import DocumentsSidebar from '$lib/components/layout/documents-sidebar.svelte';
+import IntelligenceSidebar from '$lib/components/layout/intelligence-sidebar.svelte';
+import AutomationSidebar from '$lib/components/layout/automation-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
 import HeaderPageTabs from '$lib/components/layout/header-page-tabs.svelte';
@@ -46,6 +52,7 @@ import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { setNotificationContext } from '$lib/stores/notifications.svelte';
 import { themePreferences } from '$lib/stores/theme-preferences.svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import { cn } from '$lib/utils';
 import { setQueryClientContext } from '@tanstack/svelte-query';
 import { mode, ModeWatcher } from 'mode-watcher';
 import { NuqsAdapter } from 'nuqs-svelte/adapters/svelte-kit';
@@ -58,6 +65,7 @@ import type { LayoutData } from './$types';
 let { data, children }: { data: LayoutData; children: Snippet } = $props();
 let headerControlsReady = $state(false);
 let hydrated = $state(false);
+let sidebarOpen = $state(true);
 
 const isPublicRoute = $derived(data.isPublicRoute ?? false);
 
@@ -181,16 +189,30 @@ onMount(() => {
   <EncryptionUnlockDialog />
 
   <NuqsAdapter>
-    <div class="bg-background md:pl-(--app-rail-width)">
-      <AppRail />
+    <Sidebar.Provider
+      bind:open={sidebarOpen}
+      class={cn(
+        'bg-background transition-[padding] duration-200 ease-linear',
+        sidebarOpen && 'md:pl-(--app-rail-width)'
+      )}>
       <AppRail activeAppId={activeApp} />
       {#if activeApp === 'home'}
         {@render children?.()}
       {:else}
-      <div class="grid">
-        <Sidebar.Provider>
-          {#if activeApp === 'price-watcher'}
+        {#if activeApp === 'price-watcher'}
             <PriceWatcherSidebar user={data.user} />
+          {:else if activeApp === 'budgets'}
+            <BudgetsSidebar user={data.user} />
+          {:else if activeApp === 'planning'}
+            <PlanningSidebar user={data.user} />
+          {:else if activeApp === 'subscriptions'}
+            <SubscriptionsSidebar user={data.user} />
+          {:else if activeApp === 'documents'}
+            <DocumentsSidebar user={data.user} />
+          {:else if activeApp === 'intelligence'}
+            <IntelligenceSidebar user={data.user} />
+          {:else if activeApp === 'automation'}
+            <AutomationSidebar user={data.user} />
           {:else}
             <AppSidebar user={data.user} />
           {/if}
@@ -232,7 +254,6 @@ onMount(() => {
                     <ChatTrigger />
                   {/if}
                   <IntelligenceInputButton />
-                  <HelpButton />
                   <NotificationPopover />
                   <SettingsButton />
                   <HeaderPageActions />
@@ -246,10 +267,8 @@ onMount(() => {
               </div>
             </div>
           </Sidebar.Inset>
-        </Sidebar.Provider>
-      </div>
       {/if}
-    </div>
+    </Sidebar.Provider>
   </NuqsAdapter>
 
   <!-- Help Overlay - placed outside NuqsAdapter for proper z-index stacking -->

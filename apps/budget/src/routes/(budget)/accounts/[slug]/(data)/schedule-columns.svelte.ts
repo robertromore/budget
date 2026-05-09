@@ -8,12 +8,12 @@ import CircleCheck from "@lucide/svelte/icons/circle-check";
 import Pause from "@lucide/svelte/icons/pause";
 import Repeat from "@lucide/svelte/icons/repeat";
 import type { Column, ColumnDef } from "@tanstack/table-core";
-import ScheduleActionsCell from "../../../schedules/(components)/(cells)/schedule-actions-cell.svelte";
-import ScheduleAmountCell from "../../../schedules/(components)/(cells)/schedule-amount-cell.svelte";
-import ScheduleNameCell from "../../../schedules/(components)/(cells)/schedule-name-cell.svelte";
-import SchedulePatternCell from "../../../schedules/(components)/(cells)/schedule-pattern-cell.svelte";
-import ScheduleStatusCell from "../../../schedules/(components)/(cells)/schedule-status-cell.svelte";
-import ScheduleColumnHeader from "../../../schedules/(components)/schedule-column-header.svelte";
+import ScheduleActionsCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-actions-cell.svelte";
+import ScheduleAmountCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-amount-cell.svelte";
+import ScheduleNameCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-name-cell.svelte";
+import SchedulePatternCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-pattern-cell.svelte";
+import ScheduleStatusCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-status-cell.svelte";
+import ScheduleColumnHeader from "../../../../(planning)/schedules/(components)/schedule-column-header.svelte";
 import SelectionCheckboxCell from "../(components)/(cells)/selection-checkbox-cell.svelte";
 import SelectAllCheckboxCell from "../(components)/(cells)/select-all-checkbox-cell.svelte";
 

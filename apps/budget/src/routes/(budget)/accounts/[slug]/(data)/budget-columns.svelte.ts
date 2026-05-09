@@ -5,11 +5,11 @@ import type { ColumnDef } from "@tanstack/table-core";
 import { formatCurrency } from "$lib/utils/formatters";
 import { calculateActualSpent } from "$lib/utils/budget-calculations";
 import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
-import BudgetTypeCell from "../../../budgets/(components)/(cells)/budget-type-cell.svelte";
-import BudgetStatusCell from "../../../budgets/(components)/(cells)/budget-status-cell.svelte";
-import BudgetNameCell from "../../../budgets/(components)/(cells)/budget-name-cell.svelte";
-import BudgetRemainingCell from "../../../budgets/(components)/(cells)/budget-remaining-cell.svelte";
-import BudgetActionsCell from "../../../budgets/(components)/(cells)/budget-actions-cell.svelte";
+import BudgetTypeCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-type-cell.svelte";
+import BudgetStatusCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-status-cell.svelte";
+import BudgetNameCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-name-cell.svelte";
+import BudgetRemainingCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-remaining-cell.svelte";
+import BudgetActionsCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-actions-cell.svelte";
 import BudgetSelectionCheckboxCell from "../(components)/(cells)/budget-selection-checkbox-cell.svelte";
 import SelectAllCheckboxCell from "../(components)/(cells)/select-all-checkbox-cell.svelte";
 

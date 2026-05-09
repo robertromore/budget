@@ -2,7 +2,7 @@
 import type { Schedule } from '$core/schema/schedules';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
 import { columns } from '../(data)/schedule-columns.svelte';
-import ScheduleDataTable from '../../../schedules/(components)/schedule-data-table.svelte';
+import ScheduleDataTable from '../../../../(planning)/schedules/(components)/schedule-data-table.svelte';
 import AccountSchedulesEmptyState from './account-schedules-empty-state.svelte';
 
 interface Props {
