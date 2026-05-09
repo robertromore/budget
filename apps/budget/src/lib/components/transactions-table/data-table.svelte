@@ -42,17 +42,17 @@ import { MediaQuery } from 'svelte/reactivity';
 import { untrack } from 'svelte';
 import type { ExtendedColumnMeta } from '$lib/components/data-table/state/types';
 import { DataTablePagination } from '.';
-import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
+import { columnOrder, setColumnOrder } from './state/column-order.svelte';
 import {
   filtering,
   filters,
   globalFilter,
   setFiltering,
   setGlobalFilter,
-} from '../(data)/filters.svelte';
-import { pagination, setPagination } from '../(data)/pagination.svelte';
-import { selection, setSelection } from '../(data)/selection.svelte';
-import { setVisibility, visibility } from '../(data)/visibility.svelte';
+} from './state/filters.svelte';
+import { pagination, setPagination } from './state/pagination.svelte';
+import { selection, setSelection } from './state/selection.svelte';
+import { setVisibility, visibility } from './state/visibility.svelte';
 import {
   expanded,
   setExpanded,

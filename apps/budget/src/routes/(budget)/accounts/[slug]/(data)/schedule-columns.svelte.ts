@@ -14,8 +14,8 @@ import ScheduleNameCell from "../../../../(planning)/schedules/(components)/(cel
 import SchedulePatternCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-pattern-cell.svelte";
 import ScheduleStatusCell from "../../../../(planning)/schedules/(components)/(cells)/schedule-status-cell.svelte";
 import ScheduleColumnHeader from "../../../../(planning)/schedules/(components)/schedule-column-header.svelte";
-import SelectionCheckboxCell from "../(components)/(cells)/selection-checkbox-cell.svelte";
-import SelectAllCheckboxCell from "../(components)/(cells)/select-all-checkbox-cell.svelte";
+import SelectionCheckboxCell from "$lib/components/transactions-table/cells/selection-checkbox-cell.svelte";
+import SelectAllCheckboxCell from "$lib/components/transactions-table/cells/select-all-checkbox-cell.svelte";
 
 // Filter options for schedule status
 const scheduleStatusOptions: FacetedFilterOption[] = [

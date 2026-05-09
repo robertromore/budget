@@ -11,7 +11,7 @@ import BudgetNameCell from "../../../../(budgets)/budgets/(components)/(cells)/b
 import BudgetRemainingCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-remaining-cell.svelte";
 import BudgetActionsCell from "../../../../(budgets)/budgets/(components)/(cells)/budget-actions-cell.svelte";
 import BudgetSelectionCheckboxCell from "../(components)/(cells)/budget-selection-checkbox-cell.svelte";
-import SelectAllCheckboxCell from "../(components)/(cells)/select-all-checkbox-cell.svelte";
+import SelectAllCheckboxCell from "$lib/components/transactions-table/cells/select-all-checkbox-cell.svelte";
 
 interface BudgetColumnActions {
   onView: (budget: BudgetWithRelations) => void;

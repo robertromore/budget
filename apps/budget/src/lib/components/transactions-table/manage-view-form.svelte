@@ -9,7 +9,7 @@ import { currentViews } from '$lib/states/views';
 import type { FilterInputOption, TransactionsFormat } from '$lib/types';
 import { zod4Client } from 'sveltekit-superforms/adapters';
 import { superForm } from 'sveltekit-superforms/client';
-import DeleteViewDialog from '../(dialogs)/delete-view-dialog.svelte';
+import DeleteViewDialog from './dialogs/delete-view-dialog.svelte';
 import { DisplayInput, FilterInput } from '$lib/components/input';
 import { Button, buttonVariants } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';

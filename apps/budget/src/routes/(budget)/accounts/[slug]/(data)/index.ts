@@ -1,9 +1,11 @@
 // Account data states barrel export
 export * from "./columns.svelte";
-export * from "./filters.svelte";
-export * from "./pagination.svelte";
-export * from "./selection.svelte";
-export * from "./visibility.svelte";
+
+// Transaction-table state (moved to shared lib)
+export * from "$lib/components/transactions-table/state/filters.svelte";
+export * from "$lib/components/transactions-table/state/pagination.svelte";
+export * from "$lib/components/transactions-table/state/selection.svelte";
+export * from "$lib/components/transactions-table/state/visibility.svelte";
 
 // Re-export shared state modules
 export {

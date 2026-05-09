@@ -75,7 +75,7 @@ import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
 import AccountSchedulesTable from './(components)/account-schedules-table.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
-import ConvertToTransferDialog from './(dialogs)/convert-to-transfer-dialog.svelte';
+import ConvertToTransferDialog from '$lib/components/transactions-table/dialogs/convert-to-transfer-dialog.svelte';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display

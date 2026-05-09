@@ -1,15 +1,19 @@
 // Account Components Barrel Export
 export { default as AddTransactionDialog } from "./add-transaction-dialog.svelte";
-export { default as TransactionTableContainer } from "./transaction-table-container.svelte";
-export { default as DataTable } from "./data-table.svelte";
-export { default as DataTableActions } from "./data-table-actions.svelte";
-export { default as DataTableCheckbox } from "./data-table-checkbox.svelte";
-export { default as DataTableColumnHeader } from "./data-table-column-header.svelte";
-export { default as DataTableFacetedFilter } from "./data-table-faceted-filter.svelte";
-export { default as DataTableFacetedFilterDateWithOperators } from "./(facets)/data-table-faceted-filter-date-with-operators.svelte";
-export { default as DataTablePagination } from "./data-table-pagination.svelte";
-export { default as DataTableToolbar } from "./data-table-toolbar.svelte";
-export { default as DataTableViewOptions } from "./data-table-view-options.svelte";
+
+// Transaction-table primitives (moved to shared lib)
+export {
+  DataTable,
+  DataTableActions,
+  DataTableCheckbox,
+  DataTableColumnHeader,
+  DataTableFacetedFilter,
+  DataTableFacetedFilterDateWithOperators,
+  DataTablePagination,
+  DataTableToolbar,
+  DataTableViewOptions,
+  TransactionTableContainer,
+} from "$lib/components/transactions-table";
 
 // HSA Components Barrel Export
 export { default as HsaDashboard } from "./hsa-dashboard.svelte";

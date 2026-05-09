@@ -3,7 +3,7 @@ import type { TopCategoryData } from "$lib/types";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { formatCurrency, formatPercentRaw } from "$lib/utils/formatters";
-import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
+import DataTableFacetedFilterAmount from "$lib/components/transactions-table/facets/data-table-faceted-filter-amount.svelte";
 import DollarSign from "@lucide/svelte/icons/dollar-sign";
 import Hash from "@lucide/svelte/icons/hash";
 import Percent from "@lucide/svelte/icons/percent";

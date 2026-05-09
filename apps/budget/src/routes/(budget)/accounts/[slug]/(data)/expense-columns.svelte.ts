@@ -18,15 +18,15 @@ import {
 } from "$lib/components/shared/data-table/cells";
 
 // Import route-specific cell components
-import EditableTextCell from "../(components)/(cells)/editable-text-cell.svelte";
+import EditableTextCell from "$lib/components/transactions-table/cells/editable-text-cell.svelte";
 import ClaimStatusCell from "../(components)/(cells)/claim-status-cell.svelte";
 import ExpenseActionsCell from "../(components)/(cells)/expense-actions-cell.svelte";
-import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
+import DataTableColumnHeader from "$lib/components/transactions-table/data-table-column-header.svelte";
 
 // Import faceted filter components
-import DataTableFacetedFilterDateWithOperators from "../(components)/(facets)/data-table-faceted-filter-date-with-operators.svelte";
-import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
-import DataTableFacetedFilter from "../(components)/data-table-faceted-filter.svelte";
+import DataTableFacetedFilterDateWithOperators from "$lib/components/transactions-table/facets/data-table-faceted-filter-date-with-operators.svelte";
+import DataTableFacetedFilterAmount from "$lib/components/transactions-table/facets/data-table-faceted-filter-amount.svelte";
+import DataTableFacetedFilter from "$lib/components/transactions-table/data-table-faceted-filter.svelte";
 
 // Import icons for filters
 import CalendarDays from "@lucide/svelte/icons/calendar-days";

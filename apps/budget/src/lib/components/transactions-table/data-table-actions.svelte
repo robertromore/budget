@@ -17,11 +17,11 @@ import StickyNote from '@lucide/svelte/icons/sticky-note';
 import Unlink from '@lucide/svelte/icons/unlink';
 import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import DeleteTransactionDialog from '../(dialogs)/delete-transaction-dialog.svelte';
-import SplitTransactionDialog from '../(dialogs)/split-transaction-dialog.svelte';
+import DeleteTransactionDialog from './dialogs/delete-transaction-dialog.svelte';
+import SplitTransactionDialog from './dialogs/split-transaction-dialog.svelte';
 import TransactionDetailSheet from './transaction-detail-sheet.svelte';
-import ConvertToTransferDialog from '../(dialogs)/convert-to-transfer-dialog.svelte';
-import UnlinkTransferDialog from '../(dialogs)/unlink-transfer-dialog.svelte';
+import ConvertToTransferDialog from './dialogs/convert-to-transfer-dialog.svelte';
+import UnlinkTransferDialog from './dialogs/unlink-transfer-dialog.svelte';
 
 let {
   id,

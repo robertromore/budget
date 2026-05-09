@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Checkbox } from '$lib/components/ui/checkbox';
 import type { Row, Table } from '@tanstack/table-core';
-import { lastSelectedRowId, setLastSelectedRowId } from '../../(data)/selection.svelte';
+import { lastSelectedRowId, setLastSelectedRowId } from '../state/selection.svelte';
 
 // Using 'any' for Row/Table types since this component only uses
 // methods that exist on all Row/Table instances (getIsSelected, toggleSelected, etc.)
