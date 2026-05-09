@@ -2,7 +2,7 @@ import type { TransactionsFormat } from "$lib/types";
 import { getSpecialDateValue } from "$lib/utils";
 import { dateDifference, isSamePeriod, parseISOString } from "$lib/utils/dates";
 import type { DateValue } from "@internationalized/date";
-import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
+import type { Row } from "@tanstack/table-core";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   // @todo? cache results so comparison is only done once
@@ -317,18 +317,5 @@ export const filters = {
   },
 };
 
-let _filtering = $state<ColumnFiltersState>([]);
-export let filtering = () => _filtering;
-export function setFiltering(updater: Updater<ColumnFiltersState>) {
-  if (updater instanceof Function) {
-    _filtering = updater(_filtering);
-  } else _filtering = updater;
-}
-
-let _globalFilter = $state("");
-export let globalFilter = () => _globalFilter;
-export function setGlobalFilter(updater: Updater<string>) {
-  if (updater instanceof Function) {
-    _globalFilter = updater(_globalFilter);
-  } else _globalFilter = updater;
-}
+// Reactive state (filtering, globalFilter) lives on TableInstanceState
+// in ./create-state.svelte — see `tableInstanceContext`.

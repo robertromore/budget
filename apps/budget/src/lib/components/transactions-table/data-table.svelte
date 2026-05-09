@@ -42,17 +42,28 @@ import { MediaQuery } from 'svelte/reactivity';
 import { untrack } from 'svelte';
 import type { ExtendedColumnMeta } from '$lib/components/data-table/state/types';
 import { DataTablePagination } from '.';
-import { columnOrder, setColumnOrder } from './state/column-order.svelte';
-import {
+import { filters } from './state/filters.svelte';
+import { createTableInstanceState } from './state/create-state.svelte';
+
+// Per-instance table state (replaces module-scoped state). Each mount of
+// this data-table gets its own filters/pagination/selection/etc., scoped
+// via runed Context so all child components (toolbar, cells, faceted
+// filters) read from the same instance.
+const tableState = createTableInstanceState();
+const {
+  pagination,
+  setPagination,
+  selection,
+  setSelection,
   filtering,
-  filters,
-  globalFilter,
   setFiltering,
+  globalFilter,
   setGlobalFilter,
-} from './state/filters.svelte';
-import { pagination, setPagination } from './state/pagination.svelte';
-import { selection, setSelection } from './state/selection.svelte';
-import { setVisibility, visibility } from './state/visibility.svelte';
+  visibility,
+  setVisibility,
+  columnOrder,
+  setColumnOrder,
+} = tableState;
 import {
   expanded,
   setExpanded,

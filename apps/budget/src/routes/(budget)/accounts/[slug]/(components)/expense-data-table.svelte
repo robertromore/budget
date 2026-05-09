@@ -23,8 +23,6 @@ import {
   setFiltering,
   setGlobalFilter,
 } from '../(data)/expense-filters.svelte';
-import { pagination, setPagination } from '$lib/components/transactions-table/state/pagination.svelte';
-import { selection, setSelection } from '$lib/components/transactions-table/state/selection.svelte';
 import { visibility, setVisibility } from '../(data)/expense-visibility.svelte';
 import {
   expanded,
@@ -36,7 +34,20 @@ import {
   sorting,
   setSorting,
 } from '$lib/components/shared/data-table/state';
-import { columnOrder, setColumnOrder } from '$lib/components/transactions-table/state/column-order.svelte';
+import { createTableInstanceState } from '$lib/components/transactions-table/state/create-state.svelte';
+
+// Per-instance pagination/selection/columnOrder for THIS expense table —
+// scoped via runed Context so it doesn't bleed into the sibling
+// transactions tab on the same account.
+const tableState = createTableInstanceState();
+const {
+  pagination,
+  setPagination,
+  selection,
+  setSelection,
+  columnOrder,
+  setColumnOrder,
+} = tableState;
 import { currentViews, CurrentViewsState, CurrentViewState } from '$lib/states/views';
 import type { View } from '$core/schema';
 import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';

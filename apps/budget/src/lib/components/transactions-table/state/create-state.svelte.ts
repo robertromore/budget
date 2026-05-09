@@ -8,19 +8,28 @@ import type {
   VisibilityState,
 } from "@tanstack/table-core";
 
-export interface TransactionTableStateOptions {
+export interface TableInstanceStateOptions {
   initialPagination?: PaginationState;
   initialVisibility?: VisibilityState;
   initialColumnOrder?: ColumnOrderState;
 }
 
 /**
- * Per-instance reactive state for the transactions data table. Keeps each
- * mounted instance (per-account tab, global /transactions page, schedule
- * detail, etc.) isolated from the others — module-scoped `$state` would let
- * filters bleed between routes.
+ * Per-instance reactive state for a TanStack-Table-backed surface.
+ *
+ * Each container (transaction tab, expense tab, HSA route, global
+ * /transactions page, etc.) mounts its own instance via
+ * `createTableInstanceState()` and then descendant components
+ * (data-table, toolbar, cells, faceted filters) read state from the
+ * shared `tableInstanceContext`. Module-scoped `$state` would let
+ * filters bleed between routes; this scopes them per mount.
+ *
+ * Out of scope for this class (still module-scoped at
+ * `$lib/components/shared/data-table/state/`):
+ * sorting, expanded, grouping, pinning. Those are shared across the
+ * entire app's tables today; future cleanup.
  */
-export class TransactionTableState {
+export class TableInstanceState {
   // Pagination
   #pagination: PaginationState = $state({ pageIndex: 0, pageSize: 25 });
   pagination = () => this.#pagination;
@@ -94,7 +103,7 @@ export class TransactionTableState {
     }
   };
 
-  constructor(options: TransactionTableStateOptions = {}) {
+  constructor(options: TableInstanceStateOptions = {}) {
     if (options.initialPagination) this.#pagination = options.initialPagination;
     if (options.initialVisibility) this.#visibility = options.initialVisibility;
     if (options.initialColumnOrder) this.#columnOrder = options.initialColumnOrder;
@@ -102,18 +111,18 @@ export class TransactionTableState {
 }
 
 /**
- * Context handle. Mount a `TransactionTableState` near the top of the
- * data-table tree and consumers (toolbar, column-headers, pagination, etc.)
- * pull from `transactionTableContext.get()`.
+ * Single context handle. Each container mounts its own
+ * `TableInstanceState` via `createTableInstanceState()`; descendants
+ * resolve to the nearest ancestor's instance.
  */
-export const transactionTableContext = new Context<TransactionTableState>(
-  "transaction-table-state"
+export const tableInstanceContext = new Context<TableInstanceState>(
+  "table-instance-state"
 );
 
-export function createTransactionTableState(
-  options: TransactionTableStateOptions = {}
-): TransactionTableState {
-  const state = new TransactionTableState(options);
-  transactionTableContext.set(state);
+export function createTableInstanceState(
+  options: TableInstanceStateOptions = {}
+): TableInstanceState {
+  const state = new TableInstanceState(options);
+  tableInstanceContext.set(state);
   return state;
 }
