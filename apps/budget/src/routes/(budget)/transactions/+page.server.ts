@@ -18,8 +18,35 @@ import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
   // Default views available for the cross-account transactions surface.
-  // Mirrors the account-page set; user-saved views are loaded on top.
+  // The first one is what loads on initial render — anchor it on the
+  // last 90 days so the page is responsive at scale; user can switch
+  // to "All Transactions" or save their own view.
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+
   const defaultTransactionViews = [
+    {
+      id: -5,
+      name: "Last 90 Days",
+      description: "Transactions across every account in the last 90 days",
+      filters: [
+        {
+          column: "date",
+          filter: "dateAfter",
+          value: [{ operator: "after", date: ninetyDaysAgo }],
+        },
+      ],
+      display: {
+        grouping: [],
+        sort: [{ id: "date", desc: true }],
+      },
+      icon: "",
+      dirty: false,
+      isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
+    },
     {
       id: -4,
       name: "All Transactions",

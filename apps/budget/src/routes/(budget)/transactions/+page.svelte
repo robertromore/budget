@@ -7,7 +7,14 @@ import { PayeesState } from '$lib/states/entities/payees.svelte';
 import type { Transaction } from '$core/schema';
 import type { TransactionsFormat } from '$lib/types';
 import type { Table as TTable } from '@tanstack/table-core';
-import { columns as accountColumns } from '../accounts/[slug]/(data)/columns.svelte';
+import { columns as columnBuilder } from '../accounts/[slug]/(data)/columns.svelte';
+
+// Pre-bind `includeAccountColumn=true` so the column-builder inserts
+// an Account column (after Date) and hides Balance by default. The
+// container calls this with its standard 7 args; we forward + append.
+const accountColumns = (
+  ...args: Parameters<typeof columnBuilder>
+) => columnBuilder(args[0], args[1], args[2], args[3], args[4], args[5], args[6], true);
 import { parseDate } from '@internationalized/date';
 
 interface Props {
@@ -19,27 +26,19 @@ let { data }: Props = $props();
 const categoriesState = $derived(CategoriesState.get());
 const payeesState = $derived(PayeesState.get());
 
-// Pagination state — server-paginated via getTransactionsList
+// Pagination state — server-paginated via getTransactionsList. The
+// toolbar's faceted-filter chips (date, status, etc.) are applied
+// client-side to the loaded page; the default "Last 90 Days" view
+// pre-populates the date chip so users see/edit it.
 let pageIndex = $state(0);
-let pageSize = $state(50);
-
-// Default 90-day date filter
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-const today = new Date();
-const ninetyDaysAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-
-const filters = $derived({
-  dateFrom: isoDate(ninetyDaysAgo),
-  dateTo: isoDate(today),
-  sortBy: 'date' as const,
-  sortOrder: 'desc' as const,
-});
+let pageSize = $state(100);
 
 const listQuery = $derived(
   rpc.transactions
-    .getTransactionsList(filters, { page: pageIndex, pageSize })
+    .getTransactionsList(
+      { sortBy: 'date', sortOrder: 'desc' },
+      { page: pageIndex, pageSize }
+    )
     .options()
 );
 

@@ -40,6 +40,8 @@ import EditableCategoryCell from "$lib/components/transactions-table/cells/edita
 import ReadOnlyCategoryCell from "$lib/components/transactions-table/cells/read-only-category-cell.svelte";
 import TransferPayeeCell from "$lib/components/transactions-table/cells/transfer-payee-cell.svelte";
 import NotesCellWithBadges from "$lib/components/transactions-table/cells/notes-cell-with-badges.svelte";
+import AccountCell from "$lib/components/transactions-table/cells/account-cell.svelte";
+import DataTableFacetedFilterAccount from "$lib/components/transactions-table/facets/data-table-faceted-filter-account.svelte";
 
 interface TransferAccount {
   id: number;
@@ -54,7 +56,14 @@ export const columns = (
   onScheduleClick?: (transaction: TransactionsFormat) => void,
   budgetCount: number = 0,
   transferAccounts: TransferAccount[] = [],
-  onTransferSelect?: (transactionId: number, targetAccountId: number) => void
+  onTransferSelect?: (transactionId: number, targetAccountId: number) => void,
+  /**
+   * When true, prepend an Account column (right after Date) and hide
+   * Balance by default — for the workspace-scoped /transactions surface
+   * where rows can come from any account and running balance is
+   * meaningless.
+   */
+  includeAccountColumn: boolean = false
 ): ColumnDef<TransactionsFormat>[] => {
   const updateHandler = (
     info: CellContext<TransactionsFormat, unknown>,
@@ -104,7 +113,7 @@ export const columns = (
     return renderComponent(component, props);
   };
 
-  return [
+  const columns: ColumnDef<TransactionsFormat>[] = [
     {
       id: "select-col",
       header: ({ table }) => {
@@ -735,4 +744,55 @@ export const columns = (
       },
     },
   ];
+
+  if (includeAccountColumn) {
+    // Account column: workspace-scoped surface only.
+    const accountColumn: ColumnDef<TransactionsFormat> = {
+      accessorKey: "accountId",
+      id: "account",
+      cell: (info) =>
+        renderComponent(AccountCell, { accountId: info.getValue() as number }),
+      header: ({ column, table }) =>
+        renderComponent(DataTableColumnHeader as any, {
+          title: "Account",
+          column,
+          table,
+        }),
+      sortingFn: (rowA, rowB) =>
+        (rowA.getValue("account") as number) - (rowB.getValue("account") as number),
+      enableGlobalFilter: false,
+      filterFn: "entityIsFilter" as FilterFnOption<TransactionsFormat>,
+      meta: {
+        label: "Account",
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => ({
+          name: "Account",
+          icon: SquareMousePointer,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(DataTableFacetedFilterAccount as any, {
+              column,
+              title: "Account",
+            }),
+        }),
+        availableFilters: [
+          { id: "entityIsFilter", label: "is" },
+          { id: "entityIsNotFilter", label: "is not" },
+        ],
+      },
+    };
+
+    // Insert account column right after the date column. The order today is
+    // [select, expand-contract, seq, date, payee, ...] so index 4 lands
+    // between date and payee.
+    columns.splice(4, 0, accountColumn);
+
+    // Hide the running-balance column by default — it's per-account-only.
+    const balanceCol = columns.find((c) => c.id === "balance");
+    if (balanceCol) {
+      balanceCol.meta = { ...(balanceCol.meta ?? {}), hiddenByDefault: true };
+    }
+  }
+
+  return columns;
 };
