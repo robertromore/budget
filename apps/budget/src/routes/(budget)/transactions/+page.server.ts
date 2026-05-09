@@ -16,11 +16,58 @@ import { superValidate } from "sveltekit-superforms";
 import { zod4 } from "sveltekit-superforms/adapters";
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async (event) => ({
-  addTransactionForm: await superValidate(zod4(superformInsertTransactionSchema)),
-  updateTransactionForm: await superValidate(zod4(superformUpdateTransactionSchema)),
-  deleteTransactionForm: await superValidate(zod4(superformDeleteTransactionSchema)),
-});
+export const load: PageServerLoad = async (event) => {
+  // Default views available for the cross-account transactions surface.
+  // Mirrors the account-page set; user-saved views are loaded on top.
+  const defaultTransactionViews = [
+    {
+      id: -4,
+      name: "All Transactions",
+      description: "All transactions across every account",
+      filters: [],
+      display: {
+        grouping: [],
+        sort: [{ id: "date", desc: true }],
+      },
+      icon: "",
+      dirty: false,
+      isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
+    },
+    {
+      id: -3,
+      name: "Cleared",
+      description: "Cleared transactions across every account",
+      filters: [
+        {
+          column: "status",
+          filter: "equalsString",
+          value: ["cleared"],
+        },
+      ],
+      display: {
+        grouping: [],
+        sort: [{ id: "date", desc: true }],
+      },
+      icon: "",
+      dirty: false,
+      isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
+    },
+  ] as const;
+
+  const caller = createCaller(await createContext(fromSvelteKit(event)));
+  const userViews = await caller.viewsRoutes.all({ entityType: "transactions" });
+
+  return {
+    addTransactionForm: await superValidate(zod4(superformInsertTransactionSchema)),
+    updateTransactionForm: await superValidate(zod4(superformUpdateTransactionSchema)),
+    deleteTransactionForm: await superValidate(zod4(superformDeleteTransactionSchema)),
+    views: defaultTransactionViews.concat(userViews as never),
+  };
+};
 
 export const actions: Actions = {
   "add-transaction": async (event) => {

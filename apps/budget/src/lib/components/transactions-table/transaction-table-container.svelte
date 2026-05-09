@@ -29,6 +29,8 @@ let {
   onBulkDelete,
   transferAccounts = [],
   onTransferSelect,
+  serverPagination,
+  updatePagination,
 }: {
   isLoading: boolean;
   transactions: any[];
@@ -50,6 +52,13 @@ let {
   onBulkDelete?: (transactions: any[]) => void;
   transferAccounts?: TransferAccount[];
   onTransferSelect?: (transactionId: number, targetAccountId: number) => void;
+  serverPagination?: {
+    page: number;
+    pageSize: number;
+    totalCount?: number;
+    totalPages?: number;
+  };
+  updatePagination?: (pageIndex: number, pageSize: number) => void;
 } = $props();
 
 const isMobile = new MediaQuery('(max-width: 767px)');
@@ -80,6 +89,8 @@ const showCardView = $derived(isMobile.current && displayPreferences.mobileTable
       {budgetCount}
       {accountId}
       {onBulkDelete}
+      {serverPagination}
+      {updatePagination}
       bind:table />
   </div>
 {:else}
