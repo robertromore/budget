@@ -34,8 +34,6 @@ import { page } from '$app/state';
 import { rpc } from '$lib/query';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
-import { arePayeesSimilar } from '$lib/utils/payee-matching';
-import { useQueryClient } from '@tanstack/svelte-query';
 import { onDestroy } from 'svelte';
 import {
   AutomationTab,
@@ -64,6 +62,7 @@ import {
   formatTransactions,
 } from '$lib/components/transactions-table/format-transactions';
 import { columns } from './(data)/columns.svelte';
+import { createUpdateTransactionDataHandler } from './(handlers)/update-transaction-data';
 
 // Convert demo schedules to Schedule type for display
 
@@ -239,8 +238,6 @@ const saveTransactionMutation = rpc.transactions.saveTransaction.options();
 const convertToTransferMutation = rpc.transactions.convertToTransfer.options();
 
 // Account balance management mutations
-
-const queryClient = useQueryClient();
 
 // Derived state from TanStack Query with proper reactivity
 // Use demo transactions when in demo mode
@@ -421,170 +418,18 @@ const handleScheduleClick = (transaction: TransactionsFormat) => {
   scheduleSheetTransaction = transaction;
 };
 
-const updateTransactionData = async (id: number, columnId: string, newValue?: unknown) => {
-  try {
-    const transaction = Array.isArray(transactions)
-      ? transactions.find((t: Transaction) => t.id === id)
-      : undefined;
-    if (!transaction) return;
-
-    const fieldMap: Record<string, string> = {
-      payee: 'payeeId',
-      category: 'categoryId',
-      date: 'date',
-      amount: 'amount',
-      notes: 'notes',
-      status: 'status',
-    };
-    const actualField = fieldMap[columnId] || columnId;
-
-    const updateData: any = {};
-
-    if (actualField === 'payeeId' || actualField === 'categoryId') {
-      updateData[actualField] = newValue ? Number(newValue) : null;
-    } else if (actualField === 'amount') {
-      updateData[actualField] = Number(newValue);
-    } else {
-      updateData[actualField] = newValue;
-    }
-
-    // Check for payee updates and find similar transactions
-    if (actualField === 'payeeId') {
-      const originalPayee = transaction.payee;
-      const newPayeeId = updateData.payeeId;
-      const newPayee = payees.find((p) => p.id === newPayeeId);
-
-      if (originalPayee?.name) {
-        // Find other transactions with similar payee names (handles amounts in names)
-        const similarTransactions = transactions.filter((t: Transaction) => {
-          if (t.id === id || !t.payee?.name) return false;
-          return arePayeesSimilar(t.payee.name, originalPayee.name);
-        });
-
-        if (similarTransactions.length > 0) {
-          // Update the transaction first
-          await updateTransactionMutation.mutateAsync({
-            id: id,
-            data: updateData,
-          });
-
-          // Get the new payee's default category if it has one
-          const newPayeeDefaultCategoryId = newPayee?.defaultCategoryId ?? null;
-          const newPayeeDefaultCategory = newPayeeDefaultCategoryId
-            ? categories.find((c) => c.id === newPayeeDefaultCategoryId)
-            : null;
-
-          // Show bulk update dialog
-          bulkPayeeUpdateDialog = {
-            open: true,
-            transactionId: id,
-            payeeId: newPayeeId,
-            payeeName: newPayee?.name || null,
-            originalPayeeName: originalPayee.name,
-            matchCount: similarTransactions.length,
-            newPayeeDefaultCategoryId,
-            newPayeeDefaultCategoryName: newPayeeDefaultCategory?.name ?? null,
-            updateCategories: false, // Reset checkbox state
-          };
-          return;
-        }
-      }
-    }
-
-    // Check for category updates and find similar transactions
-    if (actualField === 'categoryId') {
-      const originalCategory = transaction.category;
-      const newCategoryId = updateData.categoryId;
-      const newCategory = categories.find((c) => c.id === newCategoryId);
-      const payeeName = transaction.payee?.name;
-
-      // Find matches by payee (always check if there's a payee, handles amounts in names)
-      const matchesByPayee = payeeName
-        ? transactions.filter((t: Transaction) => {
-            if (t.id === id || !t.payee?.name) return false;
-            return arePayeesSimilar(t.payee.name, payeeName);
-          })
-        : [];
-
-      // Find matches by previous category (only if there was an original category)
-      const matchesByCategory = originalCategory
-        ? transactions.filter((t: Transaction) => {
-            return t.id !== id && t.category?.id === originalCategory.id;
-          })
-        : [];
-
-      // Show bulk update dialog if there are any matches
-      if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
-        // Update the transaction first
-        await updateTransactionMutation.mutateAsync({
-          id: id,
-          data: updateData,
-        });
-
-        // Show bulk update dialog
-        bulkCategoryUpdateDialog = {
-          open: true,
-          transactionId: id,
-          categoryId: newCategoryId,
-          categoryName: newCategory?.name || null,
-          originalPayeeName: payeeName || '',
-          matchCountByPayee: matchesByPayee.length,
-          matchCountByCategory: matchesByCategory.length,
-          previousCategoryId: originalCategory?.id ?? null,
-        };
-        return;
-      }
-    }
-
-    // Regular update (no bulk update needed)
-    const updatedTransactionsWithBalance = await updateTransactionMutation.mutateAsync({
-      id: id,
-      data: updateData,
-    });
-
-    if (
-      Array.isArray(updatedTransactionsWithBalance) &&
-      updatedTransactionsWithBalance.length > 0
-    ) {
-      const currentQueryParams = serverAccountState
-        ? {
-            sortBy: serverAccountState.filters.sortBy,
-            sortOrder: serverAccountState.filters.sortOrder,
-            ...(serverAccountState.filters.searchQuery && {
-              searchQuery: serverAccountState.filters.searchQuery,
-            }),
-            ...(serverAccountState.filters.dateFrom && {
-              dateFrom: serverAccountState.filters.dateFrom,
-            }),
-            ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
-          }
-        : undefined;
-
-      const currentQuery = rpc.transactions.getAllAccountTransactionsWithUpcoming(
-        Number(accountId),
-        currentQueryParams
-      );
-      const currentData = queryClient.getQueryData(currentQuery.queryKey);
-
-      if (Array.isArray(currentData)) {
-        const updatedTransactionsMap = new Map(
-          updatedTransactionsWithBalance.map((tx) => [tx.id, tx])
-        );
-
-        const newData = currentData.map((item) => {
-          if (typeof item.id === 'number' && updatedTransactionsMap.has(item.id)) {
-            return updatedTransactionsMap.get(item.id);
-          }
-          return item;
-        });
-
-        queryClient.setQueryData(currentQuery.queryKey, newData);
-      }
-    }
-  } catch {
-    // Error handled by mutation's error toast
-  }
-};
+const updateTransactionData = createUpdateTransactionDataHandler({
+  getTransactions: () => (Array.isArray(transactions) ? (transactions as Transaction[]) : []),
+  getPayees: () => payees,
+  getCategories: () => categories,
+  mutate: (input) => updateTransactionMutation.mutateAsync(input),
+  openPayeeBulkDialog: (config) => {
+    bulkPayeeUpdateDialog = { ...config, open: true, updateCategories: false };
+  },
+  openCategoryBulkDialog: (config) => {
+    bulkCategoryUpdateDialog = { ...config, open: true };
+  },
+});
 
 // Handle transfer conversion from payee selector - opens dialog for bulk conversion options
 const handleTransferSelect = (transactionId: number, targetAccountId: number) => {
