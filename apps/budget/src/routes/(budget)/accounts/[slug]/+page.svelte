@@ -12,7 +12,6 @@ import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
-import { parseDate } from '@internationalized/date';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Brain from '@lucide/svelte/icons/brain';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -61,6 +60,10 @@ import ConvertToTransferController from './(components)/convert-to-transfer-cont
 import BulkUpdateDialogs from './(components)/bulk-update-dialogs.svelte';
 import BulkDeleteTransactionsDialog from './(components)/bulk-delete-transactions-dialog.svelte';
 import HsaExpenseSheet from './(components)/hsa-expense-sheet.svelte';
+import {
+  formatTransaction,
+  formatTransactions,
+} from '$lib/components/transactions-table/format-transactions';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display
@@ -363,149 +366,14 @@ let scheduleSheetTransaction = $state<TransactionsFormat | null>(null);
 let convertToTransferTransaction = $state<TransactionsFormat | null>(null);
 let preselectedTransferAccountId = $state<number | undefined>(undefined);
 
-// Transform data for tables
-const formattedTransactions = $derived.by(() => {
-  const currentTransactions = transactions;
-  if (
-    !currentTransactions ||
-    !Array.isArray(currentTransactions) ||
-    currentTransactions.length === 0
-  ) {
-    return [];
-  }
-
-  const result: TransactionsFormat[] = currentTransactions.map((t: Transaction) => {
-    const formatted: TransactionsFormat = {
-      id: t.id ?? '',
-      seq: (t as any).seq ?? null,
-      date: parseDate(t.date),
-      amount: t.amount,
-      notes: t.notes,
-      status: t.status as 'cleared' | 'pending' | 'scheduled' | null,
-      accountId: Number(accountId),
-      payeeId: t.payee?.id || null,
-      payee: t.payee || null,
-      categoryId: t.category?.id || null,
-      category: t.category || null,
-      parentId: t.parentId ?? null,
-      balance: t.balance,
-      // Budget allocations
-      budgetAllocations: t.budgetAllocations || [],
-    };
-
-    // Only add schedule metadata if present
-    if (t.scheduleId !== undefined) formatted.scheduleId = t.scheduleId;
-    if (t.scheduleName) formatted.scheduleName = t.scheduleName;
-    if (t.scheduleSlug) formatted.scheduleSlug = t.scheduleSlug;
-    if (t.scheduleFrequency) formatted.scheduleFrequency = t.scheduleFrequency;
-    if (t.scheduleInterval !== undefined) formatted.scheduleInterval = t.scheduleInterval;
-    if (t.scheduleNextOccurrence) formatted.scheduleNextOccurrence = t.scheduleNextOccurrence;
-
-    // Add transfer metadata if present
-    const txn = t as any;
-    if (txn.isTransfer) formatted.isTransfer = txn.isTransfer;
-    if (txn.transferId) formatted.transferId = txn.transferId;
-    if (txn.transferAccountId) formatted.transferAccountId = txn.transferAccountId;
-    if (txn.transferTransactionId) formatted.transferTransactionId = txn.transferTransactionId;
-    // Transfer account name/slug come from the joined transferAccount relation
-    if (txn.transferAccount?.name) formatted.transferAccountName = txn.transferAccount.name;
-    if (txn.transferAccount?.slug) formatted.transferAccountSlug = txn.transferAccount.slug;
-
-    return formatted;
-  });
-
-  // Compute split metadata: mark parents and filter out children
-  const childParentIds = new Set(
-    result.filter((t) => t.parentId !== null).map((t) => t.parentId as number)
-  );
-  for (const t of result) {
-    if (typeof t.id === 'number' && childParentIds.has(t.id)) {
-      t.isSplit = true;
-      t.splitCount = result.filter((c) => c.parentId === t.id).length;
-    }
-  }
-  // Remove child transactions from the main list (they display via the split detail view)
-  const filtered = result.filter((t) => t.parentId === null || t.parentId === undefined);
-
-  // Inject reconciliation marker row if account has reconciliation checkpoint set
-  const account = accountData;
-  if (account?.reconciledDate && account.reconciledBalance != null) {
-    const reconciledDateValue = parseDate(account.reconciledDate);
-    const reconciledDateStr = account.reconciledDate;
-
-    // Create the reconciliation marker row
-    const reconciliationMarker: TransactionsFormat = {
-      id: 'reconciliation-marker',
-      seq: null,
-      date: reconciledDateValue,
-      amount: account.reconciledBalance,
-      notes: 'Reconciliation Checkpoint',
-      status: null,
-      accountId: Number(accountId),
-      payeeId: null,
-      payee: null,
-      categoryId: null,
-      category: null,
-      parentId: null,
-      balance: account.reconciledBalance,
-      isReconciliationMarker: true,
-      markerType: 'reconciliation',
-    };
-
-    // Find the correct position to insert the marker
-    // Transactions are sorted by date descending, so we find the first transaction
-    // that is ON or BEFORE the reconciled date
-    const insertIndex = filtered.findIndex((t) => {
-      const txnDateStr = t.date.toString();
-      return txnDateStr <= reconciledDateStr;
-    });
-
-    if (insertIndex === -1) {
-      // All transactions are after the reconciled date, add at end
-      filtered.push(reconciliationMarker);
-    } else {
-      // Insert before the first transaction that is on or before the reconciled date
-      filtered.splice(insertIndex, 0, reconciliationMarker);
-    }
-  }
-
-  // Inject balance reset marker row if account has balance reset date set (and no reconciliation)
-  if (!account?.reconciledDate && account?.balanceResetDate && account.balanceAtResetDate != null) {
-    const resetDateValue = parseDate(account.balanceResetDate);
-    const resetDateStr = account.balanceResetDate;
-
-    const resetMarker: TransactionsFormat = {
-      id: 'balance-reset-marker',
-      seq: null,
-      date: resetDateValue,
-      amount: account.balanceAtResetDate,
-      notes: 'Balance Reset Point',
-      status: null,
-      accountId: Number(accountId),
-      payeeId: null,
-      payee: null,
-      categoryId: null,
-      category: null,
-      parentId: null,
-      balance: account.balanceAtResetDate,
-      isReconciliationMarker: true,
-      markerType: 'balance-reset',
-    };
-
-    const insertIndex = filtered.findIndex((t) => {
-      const txnDateStr = t.date.toString();
-      return txnDateStr <= resetDateStr;
-    });
-
-    if (insertIndex === -1) {
-      filtered.push(resetMarker);
-    } else {
-      filtered.splice(insertIndex, 0, resetMarker);
-    }
-  }
-
-  return filtered;
-});
+// Formatted view for the analytics tab (the data-table container does its
+// own formatting internally — we still need it here for AnalyticsDashboard).
+const formattedTransactions = $derived(
+  formatTransactions(transactions, {
+    accountId: Number(accountId ?? 0),
+    account: accountData,
+  })
+);
 
 // Initialize server account state (skip in demo mode - no real API calls needed)
 $effect(() => {
@@ -721,12 +589,10 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
 
 // Handle transfer conversion from payee selector - opens dialog for bulk conversion options
 const handleTransferSelect = (transactionId: number, targetAccountId: number) => {
-  // Find the transaction from formattedTransactions
-  const transaction = formattedTransactions.find((t) => t.id === transactionId);
-  if (transaction) {
-    convertToTransferTransaction = transaction;
-    preselectedTransferAccountId = targetAccountId;
-  }
+  const raw = transactions?.find((t: Transaction) => t.id === transactionId);
+  if (!raw || !accountId) return;
+  convertToTransferTransaction = formatTransaction(raw, { accountId: Number(accountId) });
+  preselectedTransferAccountId = targetAccountId;
 };
 
 // Bulk delete transactions
@@ -864,11 +730,11 @@ $effect(() => {
           <TransactionTableContainer
             {isLoading}
             transactions={Array.isArray(transactions) ? transactions : []}
+            account={accountData}
             {categoriesState}
             {payeesState}
             views={data.views}
             {columns}
-            {formattedTransactions}
             {updateTransactionData}
             {searchTransactions}
             {budgetCount}
@@ -1051,11 +917,11 @@ $effect(() => {
           <TransactionTableContainer
             {isLoading}
             transactions={Array.isArray(transactions) ? transactions : []}
+            account={accountData}
             {categoriesState}
             {payeesState}
             views={data.views}
             {columns}
-            {formattedTransactions}
             {updateTransactionData}
             {searchTransactions}
             {budgetCount}

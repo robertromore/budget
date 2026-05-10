@@ -15,7 +15,6 @@ import { columns as columnBuilder } from '../accounts/[slug]/(data)/columns.svel
 const accountColumns = (
   ...args: Parameters<typeof columnBuilder>
 ) => columnBuilder(args[0], args[1], args[2], args[3], args[4], args[5], args[6], true);
-import { parseDate } from '@internationalized/date';
 
 interface Props {
   data: import('./$types').PageData;
@@ -45,39 +44,6 @@ const listQuery = $derived(
 const transactions = $derived((listQuery.data?.data ?? []) as Transaction[]);
 const paginationInfo = $derived(listQuery.data?.pagination);
 const isLoading = $derived(listQuery.isLoading);
-
-// Format raw transactions into TransactionsFormat for the data-table.
-// Workspace-scope: no running balance, no reconciliation markers — those are
-// per-account concepts.
-const formattedTransactions = $derived.by<TransactionsFormat[]>(() => {
-  return transactions.map((t) => {
-    const formatted: TransactionsFormat = {
-      id: t.id ?? '',
-      seq: (t as { seq?: number | null }).seq ?? null,
-      date: parseDate(t.date),
-      amount: t.amount,
-      notes: t.notes,
-      status: t.status as 'cleared' | 'pending' | 'scheduled' | null,
-      accountId: t.accountId,
-      payeeId: t.payee?.id ?? null,
-      payee: t.payee ?? null,
-      categoryId: t.category?.id ?? null,
-      category: t.category ?? null,
-      parentId: t.parentId ?? null,
-      balance: null,
-      budgetAllocations: t.budgetAllocations ?? [],
-    };
-    if (t.scheduleId !== undefined) formatted.scheduleId = t.scheduleId;
-    if (t.scheduleName) formatted.scheduleName = t.scheduleName;
-    if ((t as { isTransfer?: boolean | null }).isTransfer) {
-      formatted.isTransfer = (t as { isTransfer?: boolean | null }).isTransfer;
-    }
-    if ((t as { transferId?: string | null }).transferId) {
-      formatted.transferId = (t as { transferId?: string | null }).transferId;
-    }
-    return formatted;
-  });
-});
 
 // Inline-edit handler — calls the existing updateTransaction mutation
 const updateMutation = updateTransaction.options();
@@ -151,7 +117,7 @@ function onPaginationChange(newPage: number, newPageSize: number) {
   <TransactionTableContainer
     {isLoading}
     {transactions}
-    {formattedTransactions}
+    balanceMode="null"
     views={data.views ?? []}
     columns={accountColumns}
     {categoriesState}

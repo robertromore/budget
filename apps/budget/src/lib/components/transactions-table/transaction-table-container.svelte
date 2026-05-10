@@ -5,6 +5,11 @@ import TransactionSkeleton from './transaction-skeleton.svelte';
 import TransactionCardList from './transaction-card-list.svelte';
 import { displayPreferences } from '$lib/stores/display-preferences.svelte';
 import { DataTable } from '.';
+import {
+  formatTransactions,
+  type FormatTransactionsOptions,
+} from './format-transactions';
+import type { Account, Transaction } from '$core/schema';
 
 interface TransferAccount {
   id: number;
@@ -20,7 +25,12 @@ let {
   payeesState = null,
   views = [],
   columns,
-  formattedTransactions,
+  /**
+   * Optional account context for marker injection (per-account view).
+   * Cross-account contexts (global /transactions) leave this null.
+   */
+  account = null,
+  balanceMode = 'preserve',
   updateTransactionData,
   searchTransactions,
   onScheduleClick,
@@ -33,13 +43,14 @@ let {
   updatePagination,
 }: {
   isLoading: boolean;
-  transactions: any[];
+  transactions: Transaction[];
   table: any;
   categoriesState: any;
   payeesState: any;
   views: any[];
   columns: any;
-  formattedTransactions: any[];
+  account?: Account | null;
+  balanceMode?: FormatTransactionsOptions['balanceMode'];
   updateTransactionData?: (
     transactionId: number,
     columnId: string,
@@ -60,6 +71,11 @@ let {
   };
   updatePagination?: (pageIndex: number, pageSize: number) => void;
 } = $props();
+
+// Format raw -> TransactionsFormat once, with optional marker injection.
+const formattedTransactions = $derived(
+  formatTransactions(transactions, { accountId, account, balanceMode })
+);
 
 const isMobile = new MediaQuery('(max-width: 767px)');
 const showCardView = $derived(isMobile.current && displayPreferences.mobileTableView === 'cards');
