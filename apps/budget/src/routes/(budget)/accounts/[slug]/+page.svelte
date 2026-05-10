@@ -10,12 +10,6 @@ import type { Transaction } from '$core/schema';
 import type { Schedule } from '$core/schema/schedules';
 import type { BudgetWithRelations } from '$core/server/domains/budgets';
 import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
-import {
-  deleteBudgetDialog,
-  deleteBudgetId,
-  deleteScheduleDialog,
-  deleteScheduleId,
-} from '$lib/states/ui/global.svelte';
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
 import { parseDate } from '@internationalized/date';
@@ -40,15 +34,8 @@ import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import BudgetRecommendationsPanel from '$lib/components/budgets/budget-recommendations-panel.svelte';
-import ScheduleRecommendationsPanel from '$lib/components/schedules/schedule-recommendations-panel.svelte';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import { rpc } from '$lib/query';
-import { getByAccount as getBudgetsByAccount, getRelatedBudgets } from '$lib/query/budgets';
-import {
-  getByAccount as getSchedulesByAccount,
-  bulkRemove as bulkRemoveSchedules,
-} from '$lib/query/schedules';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { arePayeesSimilar } from '$lib/utils/payee-matching';
@@ -70,50 +57,15 @@ import {
 } from './(components)';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
 import UtilityDashboard from './(components)/utility-dashboard.svelte';
-import AccountBudgetsGrouped from './(components)/account-budgets-grouped.svelte';
 import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
-import AccountSchedulesTable from './(components)/account-schedules-table.svelte';
+import BudgetsTab from './(components)/budgets-tab.svelte';
+import SchedulesTab from './(components)/schedules-tab.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
 import ConvertToTransferDialog from '$lib/components/transactions-table/dialogs/convert-to-transfer-dialog.svelte';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display
-function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
-  const now = new Date().toISOString();
-  return {
-    id: demoSchedule.id,
-    workspaceId: -1,
-    seq: null,
-    name: demoSchedule.name,
-    slug: demoSchedule.slug,
-    status: 'active',
-    amount: demoSchedule.amount,
-    amount_2: null,
-    amount_type: 'exact',
-    recurring: true,
-    auto_add: false,
-    dateId: null,
-    payeeId: demoSchedule.payee?.id ?? null,
-    categoryId: demoSchedule.category?.id ?? null,
-    accountId: -1,
-    budgetId: null,
-    createdAt: now,
-    updatedAt: now,
-    payee: demoSchedule.payee
-      ? ({ id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any)
-      : null,
-    category: demoSchedule.category
-      ? ({ id: demoSchedule.category.id, name: demoSchedule.category.name } as any)
-      : null,
-    scheduleDate: {
-      id: demoSchedule.id,
-      frequency: demoSchedule.frequency,
-      interval: demoSchedule.interval,
-      nextOccurrence: demoSchedule.nextOccurrence,
-    } as any,
-  } as unknown as Schedule;
-}
 
 // Define valid tab values
 const tabValues = [
@@ -267,30 +219,6 @@ const summaryQuery = $derived(
     : undefined
 );
 const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
-const schedulesQuery = $derived(
-  accountId && !isDemoView ? getSchedulesByAccount(Number(accountId)).options() : undefined
-);
-const schedules = $derived.by(() => {
-  if (isDemoView) return demoMode.demoSchedules.map(demoScheduleToSchedule);
-  return schedulesQuery?.data ?? [];
-});
-const budgetsQuery = $derived(
-  accountId && !isDemoView ? getBudgetsByAccount(Number(accountId)).options() : undefined
-);
-const budgets = $derived(budgetsQuery?.data ?? []);
-
-// Grouped budgets query for the new grouped display
-const groupedBudgetsQuery = $derived(
-  accountId && !isDemoView ? getRelatedBudgets(Number(accountId)).options() : undefined
-);
-const groupedBudgets = $derived(
-  groupedBudgetsQuery?.data ?? {
-    spendingLimits: [],
-    savingsGoals: [],
-    recurringExpenses: [],
-    totalCount: 0,
-  }
-);
 
 // Query for all accounts (for transfer selection) - only on client
 const allAccountsQuery = $derived(
@@ -313,15 +241,6 @@ const deleteTransferMutation = rpc.transactions.deleteTransfer.options();
 const bulkUpdatePayeeMutation = rpc.transactions.bulkUpdatePayee.options();
 const bulkUpdateCategoryMutation = rpc.transactions.bulkUpdateCategory.options();
 const convertToTransferMutation = rpc.transactions.convertToTransfer.options();
-
-// Budget mutations
-const duplicateBudgetMutation = rpc.budgets.duplicateBudget.options();
-const updateBudgetMutation = rpc.budgets.updateBudget.options();
-const bulkDeleteBudgetsMutation = rpc.budgets.bulkDeleteBudgets.options();
-const bulkArchiveBudgetsMutation = rpc.budgets.bulkArchiveBudgets.options();
-
-// Schedule mutations
-const bulkDeleteSchedulesMutation = bulkRemoveSchedules.options();
 
 // Account balance management mutations
 const clearReconciledBalanceMutation = rpc.accounts.clearReconciledBalance.options();
@@ -460,14 +379,6 @@ let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
 let convertToTransferDialogOpen = $state(false);
 let convertToTransferTransaction = $state<TransactionsFormat | null>(null);
 let preselectedTransferAccountId = $state<number | undefined>(undefined);
-
-// Schedule bulk delete state
-let bulkDeleteSchedulesDialogOpen = $state(false);
-let schedulesToDelete = $state<Schedule[]>([]);
-
-// Recommendations state
-let budgetRecommendationsSheetOpen = $state(false);
-let scheduleRecommendationsSheetOpen = $state(false);
 
 // Transform data for tables
 const formattedTransactions = $derived.by(() => {
@@ -999,84 +910,6 @@ const cancelBulkCategoryUpdate = () => {
   bulkCategoryUpdateDialog.open = false;
 };
 
-// Schedule action handlers
-const viewSchedule = (schedule: Schedule) => {
-  goto(`/schedules/${schedule.slug}`);
-};
-
-const editSchedule = (schedule: Schedule) => {
-  goto(`/schedules/${schedule.slug}/edit`);
-};
-
-const deleteSchedule = (schedule: Schedule) => {
-  deleteScheduleId.current = schedule.id;
-  deleteScheduleDialog.setTrue();
-};
-
-const bulkDeleteSchedules = (schedulesList: Schedule[]) => {
-  if (schedulesList.length === 0) return;
-  schedulesToDelete = schedulesList;
-  bulkDeleteSchedulesDialogOpen = true;
-};
-
-const confirmBulkDeleteSchedules = async () => {
-  if (schedulesToDelete.length === 0) return;
-
-  try {
-    await bulkDeleteSchedulesMutation.mutateAsync(schedulesToDelete.map((s) => s.id));
-    bulkDeleteSchedulesDialogOpen = false;
-    schedulesToDelete = [];
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-// Budget action handlers
-const viewBudget = (budget: BudgetWithRelations) => {
-  goto(`/budgets/${budget.slug}`);
-};
-
-const editBudget = (budget: BudgetWithRelations) => {
-  goto(`/budgets/${budget.slug}/edit`);
-};
-
-const handleDuplicateBudget = async (budget: BudgetWithRelations) => {
-  try {
-    await duplicateBudgetMutation.mutateAsync({ id: budget.id });
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-const archiveBudget = async (budget: BudgetWithRelations) => {
-  try {
-    await updateBudgetMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-const handleDeleteBudget = (budget: BudgetWithRelations) => {
-  deleteBudgetId.current = budget.id;
-  deleteBudgetDialog.setTrue();
-};
-
-const bulkDeleteBudgets = async (budgetsList: BudgetWithRelations[]) => {
-  try {
-    await bulkDeleteBudgetsMutation.mutateAsync({ ids: budgetsList.map((b) => b.id) });
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-const bulkArchiveBudgets = async (budgetsList: BudgetWithRelations[]) => {
-  try {
-    await bulkArchiveBudgetsMutation.mutateAsync(budgetsList.map((b) => b.id));
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
 let previousAccountId = $state<string | undefined>();
 
 $effect(() => {
@@ -1299,33 +1132,11 @@ $effect(() => {
           data-help-id="schedules-tab"
           data-help-title="Schedules Tab"
           data-tour-id="schedules-tab">
-          {#if schedules && !isLoading && activeTab === 'schedules'}
-            <div class="flex items-center justify-between" data-tour-id="schedules-upcoming">
-              <div></div>
-              <Button
-                variant="outline"
-                onclick={() => (scheduleRecommendationsSheetOpen = true)}
-                data-tour-id="schedules-frequency">
-                <Sparkles class="mr-2 h-4 w-4" />
-                Recommendations
-              </Button>
-            </div>
-            <AccountSchedulesTable
-              {schedules}
+          {#if accountId && activeTab === 'schedules'}
+            <SchedulesTab
               accountId={Number(accountId)}
               accountSlug={accountSlug || ''}
-              onView={viewSchedule}
-              onEdit={editSchedule}
-              onDelete={deleteSchedule}
-              onBulkDelete={bulkDeleteSchedules} />
-          {:else if isLoading}
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
-              </div>
-              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-            </div>
+              {isDemoView} />
           {/if}
         </Tabs.Content>
 
@@ -1336,36 +1147,11 @@ $effect(() => {
           data-help-id="budgets-tab"
           data-help-title="Budgets Tab"
           data-tour-id="budgets-tab">
-          {#if groupedBudgets && !isLoading && activeTab === 'budgets'}
-            <div class="flex items-center justify-between" data-tour-id="budgets-progress">
-              <div></div>
-              <Button
-                variant="outline"
-                onclick={() => (budgetRecommendationsSheetOpen = true)}
-                data-tour-id="budgets-allocation">
-                <Sparkles class="mr-2 h-4 w-4" />
-                Recommendations
-              </Button>
-            </div>
-            <AccountBudgetsGrouped
-              {groupedBudgets}
+          {#if accountId && activeTab === 'budgets'}
+            <BudgetsTab
               accountId={Number(accountId)}
               accountSlug={accountSlug || ''}
-              onView={viewBudget}
-              onEdit={editBudget}
-              onDuplicate={handleDuplicateBudget}
-              onArchive={archiveBudget}
-              onDelete={handleDeleteBudget}
-              onBulkDelete={bulkDeleteBudgets}
-              onBulkArchive={bulkArchiveBudgets} />
-          {:else if isLoading}
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
-              </div>
-              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-            </div>
+              {isDemoView} />
           {/if}
         </Tabs.Content>
 
@@ -1490,59 +1276,18 @@ $effect(() => {
             <SubscriptionsTab accountId={Number(accountId)} {accountSlug} />
           {/if}
         {:else if activeTab === 'schedules'}
-          {#if schedules && !isLoading}
-            <div class="flex items-center justify-between">
-              <div></div>
-              <Button variant="outline" onclick={() => (scheduleRecommendationsSheetOpen = true)}>
-                <Sparkles class="mr-2 h-4 w-4" />
-                Recommendations
-              </Button>
-            </div>
-            <AccountSchedulesTable
-              {schedules}
+          {#if accountId}
+            <SchedulesTab
               accountId={Number(accountId)}
               accountSlug={accountSlug || ''}
-              onView={viewSchedule}
-              onEdit={editSchedule}
-              onDelete={deleteSchedule}
-              onBulkDelete={bulkDeleteSchedules} />
-          {:else if isLoading}
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
-              </div>
-              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-            </div>
+              {isDemoView} />
           {/if}
         {:else if activeTab === 'budgets'}
-          {#if groupedBudgets && !isLoading}
-            <div class="flex items-center justify-between">
-              <div></div>
-              <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)}>
-                <Sparkles class="mr-2 h-4 w-4" />
-                Recommendations
-              </Button>
-            </div>
-            <AccountBudgetsGrouped
-              {groupedBudgets}
+          {#if accountId}
+            <BudgetsTab
               accountId={Number(accountId)}
               accountSlug={accountSlug || ''}
-              onView={viewBudget}
-              onEdit={editBudget}
-              onDuplicate={handleDuplicateBudget}
-              onArchive={archiveBudget}
-              onDelete={handleDeleteBudget}
-              onBulkDelete={bulkDeleteBudgets}
-              onBulkArchive={bulkArchiveBudgets} />
-          {:else if isLoading}
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
-              </div>
-              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
-            </div>
+              {isDemoView} />
           {/if}
         {:else if activeTab === 'documents'}
           {#if accountId && accountData}
@@ -1616,33 +1361,6 @@ $effect(() => {
             disabled={isDeletingBulk}
             class={buttonVariants({ variant: 'destructive' })}>
             {isDeletingBulk ? 'Deleting...' : 'Delete'}
-          </AlertDialog.Action>
-        </AlertDialog.Footer>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
-
-    <!-- Bulk Delete Schedules Confirmation Dialog -->
-    <AlertDialog.Root bind:open={bulkDeleteSchedulesDialogOpen}>
-      <AlertDialog.Content>
-        <AlertDialog.Header>
-          <AlertDialog.Title>
-            Delete {schedulesToDelete.length} Schedule{schedulesToDelete.length > 1 ? 's' : ''}
-          </AlertDialog.Title>
-          <AlertDialog.Description>
-            Are you sure you want to delete {schedulesToDelete.length} schedule{schedulesToDelete.length >
-            1
-              ? 's'
-              : ''}? This action cannot be undone. Any transactions linked to these schedules will
-            have their schedule reference removed.
-          </AlertDialog.Description>
-        </AlertDialog.Header>
-        <AlertDialog.Footer>
-          <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-          <AlertDialog.Action
-            onclick={confirmBulkDeleteSchedules}
-            disabled={bulkDeleteSchedulesMutation.isPending}
-            class={buttonVariants({ variant: 'destructive' })}>
-            {bulkDeleteSchedulesMutation.isPending ? 'Deleting...' : 'Delete'}
           </AlertDialog.Action>
         </AlertDialog.Footer>
       </AlertDialog.Content>
@@ -1897,47 +1615,4 @@ $effect(() => {
     </AlertDialog.Root>
   {/if}
 
-  <!-- Budget Recommendations Sheet -->
-  <ResponsiveSheet
-    bind:open={budgetRecommendationsSheetOpen}
-    defaultWidth={800}
-    minWidth={600}
-    maxWidth={1200}>
-    {#snippet header()}
-      <div>
-        <h2 class="text-lg font-semibold">Budget Recommendations</h2>
-        <p class="text-muted-foreground text-sm">
-          Budget recommendations based on spending patterns in this account
-        </p>
-      </div>
-    {/snippet}
-
-    {#snippet content()}
-      {#if accountId}
-        <BudgetRecommendationsPanel accountId={Number(accountId)} />
-      {/if}
-    {/snippet}
-  </ResponsiveSheet>
-
-  <!-- Schedule Recommendations Sheet -->
-  <ResponsiveSheet
-    bind:open={scheduleRecommendationsSheetOpen}
-    defaultWidth={800}
-    minWidth={600}
-    maxWidth={1200}>
-    {#snippet header()}
-      <div>
-        <h2 class="text-lg font-semibold">Schedule Recommendations</h2>
-        <p class="text-muted-foreground text-sm">
-          Detected recurring transaction patterns that can become scheduled transactions
-        </p>
-      </div>
-    {/snippet}
-
-    {#snippet content()}
-      {#if accountId}
-        <ScheduleRecommendationsPanel accountId={Number(accountId)} />
-      {/if}
-    {/snippet}
-  </ResponsiveSheet>
 </div>
