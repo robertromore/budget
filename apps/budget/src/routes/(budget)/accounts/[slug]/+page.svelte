@@ -63,6 +63,7 @@ import SchedulesTab from './(components)/schedules-tab.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewController from './(components)/schedule-preview-controller.svelte';
 import ConvertToTransferController from './(components)/convert-to-transfer-controller.svelte';
+import BulkUpdateDialogs from './(components)/bulk-update-dialogs.svelte';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display
@@ -238,8 +239,6 @@ const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.
 const saveTransactionMutation = rpc.transactions.saveTransaction.options();
 const bulkDeleteTransactionsMutation = rpc.transactions.bulkDeleteTransactions.options();
 const deleteTransferMutation = rpc.transactions.deleteTransfer.options();
-const bulkUpdatePayeeMutation = rpc.transactions.bulkUpdatePayee.options();
-const bulkUpdateCategoryMutation = rpc.transactions.bulkUpdateCategory.options();
 const convertToTransferMutation = rpc.transactions.convertToTransfer.options();
 
 // Account balance management mutations
@@ -820,93 +819,6 @@ const confirmBulkDelete = async () => {
   }
 };
 
-// Bulk payee update handlers
-const confirmBulkPayeeUpdate = async () => {
-  if (!bulkPayeeUpdateDialog.transactionId || !accountId) return;
-
-  try {
-    // Update payees for similar transactions
-    await bulkUpdatePayeeMutation.mutateAsync({
-      accountId: Number(accountId),
-      transactionId: bulkPayeeUpdateDialog.transactionId,
-      newPayeeId: bulkPayeeUpdateDialog.payeeId,
-      originalPayeeName: bulkPayeeUpdateDialog.originalPayeeName,
-    });
-
-    // Also update categories if the user opted in and there's a default category
-    if (bulkPayeeUpdateDialog.updateCategories && bulkPayeeUpdateDialog.newPayeeDefaultCategoryId) {
-      // Update the original transaction's category first
-      await updateTransactionMutation.mutateAsync({
-        id: bulkPayeeUpdateDialog.transactionId,
-        data: { categoryId: bulkPayeeUpdateDialog.newPayeeDefaultCategoryId },
-      });
-
-      // Then update similar transactions' categories via bulk mutation
-      await bulkUpdateCategoryMutation.mutateAsync({
-        accountId: Number(accountId),
-        transactionId: bulkPayeeUpdateDialog.transactionId,
-        newCategoryId: bulkPayeeUpdateDialog.newPayeeDefaultCategoryId,
-        matchBy: 'payee',
-        // matchValue will use the payee from the transaction
-      });
-    }
-
-    bulkPayeeUpdateDialog.open = false;
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-const cancelBulkPayeeUpdate = () => {
-  bulkPayeeUpdateDialog.open = false;
-};
-
-// Bulk category update handlers
-const confirmBulkCategoryUpdateByPayee = async () => {
-  if (!bulkCategoryUpdateDialog.transactionId || !accountId) return;
-
-  try {
-    await bulkUpdateCategoryMutation.mutateAsync({
-      accountId: Number(accountId),
-      transactionId: bulkCategoryUpdateDialog.transactionId,
-      newCategoryId: bulkCategoryUpdateDialog.categoryId,
-      matchBy: 'payee',
-    });
-
-    bulkCategoryUpdateDialog.open = false;
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-const confirmBulkCategoryUpdateByCategory = async () => {
-  if (!bulkCategoryUpdateDialog.transactionId || !accountId) return;
-
-  try {
-    await bulkUpdateCategoryMutation.mutateAsync({
-      accountId: Number(accountId),
-      transactionId: bulkCategoryUpdateDialog.transactionId,
-      newCategoryId: bulkCategoryUpdateDialog.categoryId,
-      matchBy: 'category',
-      ...(bulkCategoryUpdateDialog.previousCategoryId && {
-        matchValue: bulkCategoryUpdateDialog.previousCategoryId,
-      }),
-    });
-
-    bulkCategoryUpdateDialog.open = false;
-  } catch (error) {
-    // Error handled by mutation's error toast
-  }
-};
-
-const confirmBulkCategoryUpdateJustOne = () => {
-  bulkCategoryUpdateDialog.open = false;
-};
-
-const cancelBulkCategoryUpdate = () => {
-  bulkCategoryUpdateDialog.open = false;
-};
-
 let previousAccountId = $state<string | undefined>();
 
 $effect(() => {
@@ -1468,134 +1380,10 @@ $effect(() => {
       </ResponsiveSheet>
     {/if}
 
-    <!-- Bulk Payee Update Dialog -->
-    <AlertDialog.Root bind:open={bulkPayeeUpdateDialog.open}>
-      <AlertDialog.Content>
-        <AlertDialog.Header>
-          <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-          <AlertDialog.Description>
-            Found {bulkPayeeUpdateDialog.matchCount} other transaction{bulkPayeeUpdateDialog.matchCount !==
-            1
-              ? 's'
-              : ''} with payee "{bulkPayeeUpdateDialog.originalPayeeName}".
-            <br /><br />
-            Would you like to update {bulkPayeeUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to payee
-            "{bulkPayeeUpdateDialog.payeeName || 'None'}" as well?
-          </AlertDialog.Description>
-        </AlertDialog.Header>
-
-        <!-- Category update option -->
-        {#if bulkPayeeUpdateDialog.newPayeeDefaultCategoryId}
-          <div class="bg-muted/50 flex items-start gap-3 rounded-lg border p-3">
-            <Checkbox
-              id="update-categories"
-              checked={bulkPayeeUpdateDialog.updateCategories}
-              onCheckedChange={(checked) => {
-                bulkPayeeUpdateDialog.updateCategories = checked === true;
-              }} />
-            <div class="grid gap-1.5 leading-none">
-              <Label
-                for="update-categories"
-                class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Also update category to "{bulkPayeeUpdateDialog.newPayeeDefaultCategoryName}"
-              </Label>
-              <p class="text-muted-foreground text-xs">
-                Apply the new payee's default category to these transactions
-              </p>
-            </div>
-          </div>
-        {/if}
-
-        <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
-          <AlertDialog.Action onclick={confirmBulkPayeeUpdate} class="w-full">
-            Yes, Update All Similar ({bulkPayeeUpdateDialog.matchCount + 1} transactions)
-          </AlertDialog.Action>
-          <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate} class="w-full">
-            No, Just This One
-          </AlertDialog.Cancel>
-        </AlertDialog.Footer>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
-
-    <!-- Bulk Category Update Dialog -->
-    <AlertDialog.Root bind:open={bulkCategoryUpdateDialog.open}>
-      <AlertDialog.Content class="max-w-2xl">
-        <AlertDialog.Header>
-          <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-          <AlertDialog.Description class="space-y-3">
-            {#if bulkCategoryUpdateDialog.categoryName}
-              <p>
-                You're changing the category to "<strong
-                  >{bulkCategoryUpdateDialog.categoryName}</strong
-                >". How would you like to apply this change?
-              </p>
-            {:else}
-              <p>
-                You're <strong>removing the category</strong> from this transaction. How would you like
-                to apply this change?
-              </p>
-            {/if}
-
-            {#if bulkCategoryUpdateDialog.matchCountByPayee > 0 && bulkCategoryUpdateDialog.matchCountByCategory > 0}
-              <div class="space-y-2 text-sm">
-                <p>
-                  • <strong>{bulkCategoryUpdateDialog.matchCountByPayee}</strong> other transaction{bulkCategoryUpdateDialog.matchCountByPayee !==
-                  1
-                    ? 's'
-                    : ''} with the same payee "<strong
-                    >{bulkCategoryUpdateDialog.originalPayeeName}</strong
-                  >"
-                </p>
-                <p>
-                  • <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other
-                  transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the
-                  same previous category
-                </p>
-              </div>
-            {:else if bulkCategoryUpdateDialog.matchCountByPayee > 0}
-              <p class="text-sm">
-                Found <strong>{bulkCategoryUpdateDialog.matchCountByPayee}</strong> other
-                transaction{bulkCategoryUpdateDialog.matchCountByPayee !== 1 ? 's' : ''} with the same
-                payee "<strong>{bulkCategoryUpdateDialog.originalPayeeName}</strong>".
-              </p>
-            {:else if bulkCategoryUpdateDialog.matchCountByCategory > 0}
-              <p class="text-sm">
-                Found <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other
-                transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the same
-                previous category.
-              </p>
-            {/if}
-          </AlertDialog.Description>
-        </AlertDialog.Header>
-        <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
-          {#if bulkCategoryUpdateDialog.matchCountByPayee > 0 && bulkCategoryUpdateDialog.matchCountByCategory > 0}
-            <AlertDialog.Action onclick={confirmBulkCategoryUpdateByPayee} class="w-full">
-              Update All Same Payee ({bulkCategoryUpdateDialog.matchCountByPayee + 1} transactions)
-            </AlertDialog.Action>
-            <AlertDialog.Action
-              onclick={confirmBulkCategoryUpdateByCategory}
-              class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
-              Update All Same Category ({bulkCategoryUpdateDialog.matchCountByCategory + 1} transactions)
-            </AlertDialog.Action>
-          {:else if bulkCategoryUpdateDialog.matchCountByPayee > 0}
-            <AlertDialog.Action onclick={confirmBulkCategoryUpdateByPayee} class="w-full">
-              Update All Same Payee ({bulkCategoryUpdateDialog.matchCountByPayee + 1} transactions)
-            </AlertDialog.Action>
-          {:else if bulkCategoryUpdateDialog.matchCountByCategory > 0}
-            <AlertDialog.Action onclick={confirmBulkCategoryUpdateByCategory} class="w-full">
-              Update All Same Category ({bulkCategoryUpdateDialog.matchCountByCategory + 1} transactions)
-            </AlertDialog.Action>
-          {/if}
-          <AlertDialog.Action
-            onclick={confirmBulkCategoryUpdateJustOne}
-            class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
-            Just This One
-          </AlertDialog.Action>
-          <AlertDialog.Cancel onclick={cancelBulkCategoryUpdate} class="w-full"
-            >Cancel</AlertDialog.Cancel>
-        </AlertDialog.Footer>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
+    <BulkUpdateDialogs
+      bind:payeeDialog={bulkPayeeUpdateDialog}
+      bind:categoryDialog={bulkCategoryUpdateDialog}
+      {accountId} />
   {/if}
 
 </div>
