@@ -46,7 +46,7 @@ export function formatTransaction(
     amount: t.amount,
     notes: t.notes,
     status: t.status as "cleared" | "pending" | "scheduled" | null,
-    accountId: options.accountId,
+    accountId: t.accountId ?? options.accountId,
     payeeId: t.payee?.id ?? null,
     payee: t.payee ?? null,
     categoryId: t.category?.id ?? null,
