@@ -49,7 +49,7 @@ const rawMax = $derived(yValues.length > 0 ? Math.max(...yValues) : 10);
 const yPad = $derived(Math.max(Math.abs(rawMax - rawMin) * 0.05, 0.1));
 const yDomain = $derived([rawMin - yPad, rawMax + yPad] as [number, number]);
 
-const settingsHref = $derived(account ? `/accounts/${account.slug}/settings?section=investment-snapshots` : '#');
+const settingsHref = $derived(account ? `/accounts/${account.slug}?tab=settings&section=investment-snapshots` : '#');
 </script>
 
 <AnalyticsChartShell

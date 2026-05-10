@@ -35,7 +35,7 @@ const subtypeLabel = $derived(
   account?.investmentSubtype ? (INVESTMENT_SUBTYPE_LABELS[account.investmentSubtype] ?? account.investmentSubtype) : null
 );
 
-const settingsHref = $derived(account ? `/accounts/${account.slug}/settings` : '#');
+const settingsHref = $derived(account ? `/accounts/${account.slug}?tab=settings` : '#');
 
 // Chart data for AnalyticsChartShell — a single-row progress dataset
 const chartData = $derived(summary ? [{ label: 'Contributions', value: summary.contributed }] : []);

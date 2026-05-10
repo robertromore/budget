@@ -94,7 +94,7 @@ const totalActive = $derived(investmentAccounts.length + investmentNoLimit.lengt
       {/if}
       {#each investmentNoLimit as account (account.id)}
         <a
-          href="/accounts/{account.slug}/settings"
+          href="/accounts/{account.slug}?tab=settings"
           class="hover:bg-muted flex items-center justify-between rounded-md p-2 transition-colors">
           <span class="truncate text-sm">{account.name}</span>
           <span class="text-muted-foreground text-xs hover:text-primary">Set limit →</span>

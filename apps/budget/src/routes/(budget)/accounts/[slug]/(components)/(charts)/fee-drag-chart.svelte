@@ -61,7 +61,7 @@ const projectedAnnualDrag = $derived(
 );
 
 const settingsHref = $derived(
-  account ? `/accounts/${account.slug}/settings` : '#'
+  account ? `/accounts/${account.slug}?tab=settings` : '#'
 );
 </script>
 
@@ -97,7 +97,7 @@ const settingsHref = $derived(
           {#if snapshots.length === 0}
             <p class="text-sm">No value snapshots yet.</p>
             <a
-              href="{account?.slug ? `/accounts/${account.slug}/settings?section=investment-snapshots` : '#'}"
+              href="{account?.slug ? `/accounts/${account.slug}?tab=settings&section=investment-snapshots` : '#'}"
               class="text-primary flex items-center gap-1 text-xs hover:underline">
               <Settings class="h-3 w-3" />
               Add snapshots in Account Settings
