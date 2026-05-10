@@ -61,8 +61,8 @@ import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
 import BudgetsTab from './(components)/budgets-tab.svelte';
 import SchedulesTab from './(components)/schedules-tab.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
-import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
-import ConvertToTransferDialog from '$lib/components/transactions-table/dialogs/convert-to-transfer-dialog.svelte';
+import SchedulePreviewController from './(components)/schedule-preview-controller.svelte';
+import ConvertToTransferController from './(components)/convert-to-transfer-controller.svelte';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display
@@ -372,11 +372,10 @@ function handleAddExpense() {
 }
 
 // Schedule preview state
-let schedulePreviewOpen = $state(false);
-let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
-
-// Convert to transfer dialog state (for payee selector transfer tab)
-let convertToTransferDialogOpen = $state(false);
+// Schedule preview + convert-to-transfer dialog state. Setting the
+// transaction non-null opens the corresponding controller component
+// at the bottom of the page.
+let scheduleSheetTransaction = $state<TransactionsFormat | null>(null);
 let convertToTransferTransaction = $state<TransactionsFormat | null>(null);
 let preselectedTransferAccountId = $state<number | undefined>(undefined);
 
@@ -568,8 +567,7 @@ const searchTransactions = (query: string) => {
 };
 
 const handleScheduleClick = (transaction: TransactionsFormat) => {
-  selectedScheduleTransaction = transaction;
-  schedulePreviewOpen = true;
+  scheduleSheetTransaction = transaction;
 };
 
 const updateTransactionData = async (id: number, columnId: string, newValue?: unknown) => {
@@ -744,7 +742,6 @@ const handleTransferSelect = (transactionId: number, targetAccountId: number) =>
   if (transaction) {
     convertToTransferTransaction = transaction;
     preselectedTransferAccountId = targetAccountId;
-    convertToTransferDialogOpen = true;
   }
 };
 
@@ -1366,29 +1363,15 @@ $effect(() => {
       </AlertDialog.Content>
     </AlertDialog.Root>
 
-    <!-- Schedule Preview Sheet -->
-    <SchedulePreviewSheet
-      bind:open={schedulePreviewOpen}
-      scheduleId={selectedScheduleTransaction?.scheduleId}
-      scheduleSlug={selectedScheduleTransaction?.scheduleSlug}
-      scheduleName={selectedScheduleTransaction?.scheduleName}
-      amount={selectedScheduleTransaction?.amount}
-      frequency={selectedScheduleTransaction?.scheduleFrequency}
-      interval={selectedScheduleTransaction?.scheduleInterval}
-      nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence}
-      occurrenceDate={selectedScheduleTransaction?.date instanceof Date
-        ? selectedScheduleTransaction.date.toISOString().split('T')[0]
-        : typeof selectedScheduleTransaction?.date === 'string'
-          ? selectedScheduleTransaction.date
-          : undefined} />
+    <SchedulePreviewController bind:transaction={scheduleSheetTransaction} />
 
-    <!-- Convert to Transfer Dialog (from payee selector transfer tab) -->
-    {#if convertToTransferTransaction}
-      <ConvertToTransferDialog
-        transaction={convertToTransferTransaction}
-        bind:dialogOpen={convertToTransferDialogOpen}
-        preselectedAccountId={preselectedTransferAccountId} />
-    {/if}
+    <ConvertToTransferController
+      transaction={convertToTransferTransaction}
+      preselectedAccountId={preselectedTransferAccountId}
+      onClose={() => {
+        convertToTransferTransaction = null;
+        preselectedTransferAccountId = undefined;
+      }} />
 
     <!-- HSA Add/Edit Expense Sheet -->
     {#if isHsaAccount && accountData}
