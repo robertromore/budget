@@ -17,7 +17,6 @@ import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Brain from '@lucide/svelte/icons/brain';
 import Calendar from '@lucide/svelte/icons/calendar';
 import ChartLine from '@lucide/svelte/icons/chart-line';
-import FileText from '@lucide/svelte/icons/file-text';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
 import List from '@lucide/svelte/icons/list';
 import Plus from '@lucide/svelte/icons/plus';
@@ -26,7 +25,6 @@ import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Upload from '@lucide/svelte/icons/upload';
 import Wallet from '@lucide/svelte/icons/wallet';
-import Wand from '@lucide/svelte/icons/wand';
 import Zap from '@lucide/svelte/icons/zap';
 import type { Table as TanStackTable } from '@tanstack/table-core';
 import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
@@ -34,7 +32,6 @@ import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import { rpc } from '$lib/query';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
@@ -46,11 +43,9 @@ import {
   AutomationTab,
   DocumentsTab,
   ExpenseTableContainer,
-  ExpenseWizard,
   HsaDashboard,
   ImportTab,
   IntelligenceTab,
-  MedicalExpenseForm,
   SettingsTab,
   SubscriptionsTab,
   TransactionTableContainer,
@@ -65,6 +60,7 @@ import SchedulePreviewController from './(components)/schedule-preview-controlle
 import ConvertToTransferController from './(components)/convert-to-transfer-controller.svelte';
 import BulkUpdateDialogs from './(components)/bulk-update-dialogs.svelte';
 import BulkDeleteTransactionsDialog from './(components)/bulk-delete-transactions-dialog.svelte';
+import HsaExpenseSheet from './(components)/hsa-expense-sheet.svelte';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display
@@ -344,20 +340,19 @@ const isHsaAccount = $derived(accountData?.accountType === 'hsa');
 
 // Utility account state
 const isUtilityAccount = $derived(accountData?.accountType === 'utility');
-let addExpenseOpen = $state(false);
-let useWizard = $state(true); // Default to wizard for new expenses
+
+// HSA expense sheet state — sheet is open when expenseSheetMode is non-null.
+let expenseSheetMode = $state<'add' | 'edit' | null>(null);
 let editingExpense = $state<any | null>(null);
 
 function handleEditExpense(expense: any) {
   editingExpense = expense;
-  useWizard = false; // Use regular form for editing
-  addExpenseOpen = true;
+  expenseSheetMode = 'edit';
 }
 
 function handleAddExpense() {
   editingExpense = null;
-  useWizard = true; // Use wizard for new expenses
-  addExpenseOpen = true;
+  expenseSheetMode = 'add';
 }
 
 // Schedule preview state
@@ -1161,99 +1156,11 @@ $effect(() => {
         preselectedTransferAccountId = undefined;
       }} />
 
-    <!-- HSA Add/Edit Expense Sheet -->
     {#if isHsaAccount && accountData}
-      <ResponsiveSheet bind:open={addExpenseOpen}>
-        {#snippet header()}
-          <div class="space-y-2">
-            <h2 class="text-lg font-semibold">
-              {editingExpense ? 'Edit Medical Expense' : 'Add Medical Expense'}
-            </h2>
-            <p class="text-muted-foreground text-sm">
-              {editingExpense
-                ? 'Update the medical expense details'
-                : useWizard
-                  ? 'Follow the guided wizard to add your expense'
-                  : 'Add a new medical expense to your HSA account'}
-            </p>
-          </div>
-        {/snippet}
-        {#snippet content()}
-          {#if editingExpense}
-            <!-- Editing uses regular form only -->
-            <MedicalExpenseForm
-              hsaAccountId={accountData.id}
-              accountId={accountData.id}
-              existingExpense={editingExpense}
-              onSuccess={() => {
-                addExpenseOpen = false;
-                editingExpense = null;
-              }}
-              onCancel={() => {
-                addExpenseOpen = false;
-                editingExpense = null;
-              }} />
-          {:else}
-            <!-- Adding new expense: tabs for wizard vs manual -->
-            <div class="space-y-6">
-              <Tabs.Root
-                value={useWizard ? 'wizard' : 'manual'}
-                onValueChange={(value) => {
-                  useWizard = value === 'wizard';
-                }}>
-                <Tabs.List class="grid w-full grid-cols-2">
-                  <Tabs.Trigger value="wizard" class="flex items-center gap-2">
-                    <Wand class="h-4 w-4" />
-                    Guided Setup
-                    <Badge variant="secondary" class="text-xs">Helpful</Badge>
-                  </Tabs.Trigger>
-                  <Tabs.Trigger value="manual" class="flex items-center gap-2">
-                    <FileText class="h-4 w-4" />
-                    Manual Form
-                    <Badge variant="secondary" class="text-xs">Quick</Badge>
-                  </Tabs.Trigger>
-                </Tabs.List>
-
-                <Tabs.Content value="wizard" class="mt-6">
-                  <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
-                    <p class="text-muted-foreground text-sm">
-                      Step-by-step guided setup. We'll walk you through each option with clear
-                      instructions.
-                    </p>
-                  </div>
-                  <ExpenseWizard
-                    hsaAccountId={accountData.id}
-                    accountId={accountData.id}
-                    onSuccess={() => {
-                      addExpenseOpen = false;
-                    }}
-                    onCancel={() => {
-                      addExpenseOpen = false;
-                    }} />
-                </Tabs.Content>
-
-                <Tabs.Content value="manual" class="mt-6">
-                  <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
-                    <p class="text-muted-foreground text-sm">
-                      Fill out the form directly if you're familiar with the options. Switch to <strong
-                        >Guided Setup</strong> for step-by-step help.
-                    </p>
-                  </div>
-                  <MedicalExpenseForm
-                    hsaAccountId={accountData.id}
-                    accountId={accountData.id}
-                    onSuccess={() => {
-                      addExpenseOpen = false;
-                    }}
-                    onCancel={() => {
-                      addExpenseOpen = false;
-                    }} />
-                </Tabs.Content>
-              </Tabs.Root>
-            </div>
-          {/if}
-        {/snippet}
-      </ResponsiveSheet>
+      <HsaExpenseSheet
+        hsaAccountId={accountData.id}
+        bind:expense={editingExpense}
+        bind:mode={expenseSheetMode} />
     {/if}
 
     <BulkUpdateDialogs
