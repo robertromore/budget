@@ -38,7 +38,6 @@ import { arePayeesSimilar } from '$lib/utils/payee-matching';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { onDestroy } from 'svelte';
 import {
-  AddTransactionDialog,
   AutomationTab,
   DocumentsTab,
   ExpenseTableContainer,
@@ -47,7 +46,7 @@ import {
   IntelligenceTab,
   SettingsTab,
   SubscriptionsTab,
-  TransactionTableContainer,
+  TransactionsTab,
 } from './(components)';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
 import UtilityDashboard from './(components)/utility-dashboard.svelte';
@@ -727,31 +726,28 @@ $effect(() => {
           data-help-id="account-tab-transactions"
           data-help-title="Transactions Tab"
           data-tour-id="transactions-tab">
-          <TransactionTableContainer
+          <TransactionsTab
             {isLoading}
             transactions={Array.isArray(transactions) ? transactions : []}
-            account={accountData}
+            {accountData}
+            {account}
+            {accountId}
             {categoriesState}
             {payeesState}
+            {payees}
+            {categories}
             views={data.views}
             {columns}
+            {budgetCount}
+            {transferAccounts}
+            bind:table
+            bind:addDialogOpen={addTransactionDialogOpen}
             {updateTransactionData}
             {searchTransactions}
-            {budgetCount}
-            accountId={accountId ?? 0}
             onScheduleClick={handleScheduleClick}
             onBulkDelete={handleBulkDelete}
-            {transferAccounts}
             onTransferSelect={handleTransferSelect}
-            bind:table />
-
-          <!-- Add Transaction Dialog -->
-          <AddTransactionDialog
-            bind:open={addTransactionDialogOpen}
-            account={account || null}
-            payees={payees.map((p) => ({ id: p.id, name: p.name || 'Unknown Payee' }))}
-            categories={categories.map((c) => ({ id: c.id, name: c.name || 'Unknown Category' }))}
-            onSubmit={submitTransaction} />
+            onSubmitTransaction={submitTransaction} />
         </Tabs.Content>
 
         <!-- HSA Medical Expenses Tab Content -->
@@ -914,30 +910,28 @@ $effect(() => {
       <!-- Content rendered directly when tabs are in header -->
       <div class="space-y-4">
         {#if activeTab === 'transactions'}
-          <TransactionTableContainer
+          <TransactionsTab
             {isLoading}
             transactions={Array.isArray(transactions) ? transactions : []}
-            account={accountData}
+            {accountData}
+            {account}
+            {accountId}
             {categoriesState}
             {payeesState}
+            {payees}
+            {categories}
             views={data.views}
             {columns}
+            {budgetCount}
+            {transferAccounts}
+            bind:table
+            bind:addDialogOpen={addTransactionDialogOpen}
             {updateTransactionData}
             {searchTransactions}
-            {budgetCount}
-            accountId={accountId ?? 0}
             onScheduleClick={handleScheduleClick}
             onBulkDelete={handleBulkDelete}
-            {transferAccounts}
             onTransferSelect={handleTransferSelect}
-            bind:table />
-
-          <AddTransactionDialog
-            bind:open={addTransactionDialogOpen}
-            account={account || null}
-            payees={payees.map((p) => ({ id: p.id, name: p.name || 'Unknown Payee' }))}
-            categories={categories.map((c) => ({ id: c.id, name: c.name || 'Unknown Category' }))}
-            onSubmit={submitTransaction} />
+            onSubmitTransaction={submitTransaction} />
         {:else if activeTab === 'hsa-expenses' && isHsaAccount && accountData}
           <ExpenseTableContainer
             hsaAccountId={accountData.id}

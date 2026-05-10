@@ -1,5 +1,6 @@
 // Account Components Barrel Export
 export { default as AddTransactionDialog } from "./add-transaction-dialog.svelte";
+export { default as TransactionsTab } from "./transactions-tab.svelte";
 
 // Transaction-table primitives (moved to shared lib)
 export {
