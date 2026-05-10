@@ -64,6 +64,7 @@ import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewController from './(components)/schedule-preview-controller.svelte';
 import ConvertToTransferController from './(components)/convert-to-transfer-controller.svelte';
 import BulkUpdateDialogs from './(components)/bulk-update-dialogs.svelte';
+import BulkDeleteTransactionsDialog from './(components)/bulk-delete-transactions-dialog.svelte';
 import { columns } from './(data)/columns.svelte';
 
 // Convert demo schedules to Schedule type for display
@@ -237,13 +238,9 @@ const transferAccounts = $derived.by(() => {
 // Create the mutations once
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
 const saveTransactionMutation = rpc.transactions.saveTransaction.options();
-const bulkDeleteTransactionsMutation = rpc.transactions.bulkDeleteTransactions.options();
-const deleteTransferMutation = rpc.transactions.deleteTransfer.options();
 const convertToTransferMutation = rpc.transactions.convertToTransfer.options();
 
 // Account balance management mutations
-const clearReconciledBalanceMutation = rpc.accounts.clearReconciledBalance.options();
-const clearBalanceResetDateMutation = rpc.accounts.clearBalanceResetDate.options();
 
 const queryClient = useQueryClient();
 
@@ -313,16 +310,9 @@ const payees = $derived(payeesState?.all || []);
 
 // Dialog state
 let addTransactionDialogOpen = $state(false);
-let bulkDeleteDialogOpen = $state(false);
+// Bulk-delete: setting non-empty opens the dialog, the controller
+// clears it on confirm/cancel.
 let transactionsToDelete = $state<TransactionsFormat[]>([]);
-let isDeletingBulk = $state(false);
-let alsoDeleteLinkedTransfers = $state(true);
-
-// Compute transfer transactions in the bulk delete selection
-const transferTransactionsToDelete = $derived(
-  transactionsToDelete.filter((t) => t.isTransfer && t.transferId)
-);
-const hasTransfersToDelete = $derived(transferTransactionsToDelete.length > 0);
 
 // Bulk update dialog state
 let bulkPayeeUpdateDialog = $state({
@@ -745,78 +735,10 @@ const handleTransferSelect = (transactionId: number, targetAccountId: number) =>
 };
 
 // Bulk delete transactions
-const handleBulkDelete = async (transactions: TransactionsFormat[]) => {
+// Bulk delete trigger — sets state which opens the dialog component.
+const handleBulkDelete = (transactions: TransactionsFormat[]) => {
   if (transactions.length === 0) return;
-
   transactionsToDelete = transactions;
-  bulkDeleteDialogOpen = true;
-};
-
-const confirmBulkDelete = async () => {
-  if (isDeletingBulk || transactionsToDelete.length === 0) return;
-
-  isDeletingBulk = true;
-  try {
-    // Handle reconciliation/balance reset markers first
-    const reconciliationMarkers = transactionsToDelete.filter(
-      (t) => t.isReconciliationMarker && t.markerType === 'reconciliation'
-    );
-    const balanceResetMarkers = transactionsToDelete.filter(
-      (t) => t.isReconciliationMarker && t.markerType === 'balance-reset'
-    );
-    const realTransactions = transactionsToDelete.filter((t) => !t.isReconciliationMarker);
-
-    // Clear reconciliation checkpoint if any reconciliation markers are selected
-    if (reconciliationMarkers.length > 0 && accountId) {
-      await clearReconciledBalanceMutation.mutateAsync({ accountId: Number(accountId) });
-    }
-
-    // Clear balance reset date if any balance reset markers are selected
-    if (balanceResetMarkers.length > 0 && accountId) {
-      await clearBalanceResetDateMutation.mutateAsync({ accountId: Number(accountId) });
-    }
-
-    // Only proceed with transaction deletion if there are real transactions
-    if (realTransactions.length > 0) {
-      // If user wants to delete linked transfers, handle them first
-      if (alsoDeleteLinkedTransfers && hasTransfersToDelete) {
-        // Get unique transfer IDs to delete
-        const transferIds = [...new Set(transferTransactionsToDelete.map((t) => t.transferId!))];
-
-        // Delete all transfers (this deletes both sides)
-        for (const transferId of transferIds) {
-          await deleteTransferMutation.mutateAsync({ transferId });
-        }
-
-        // Get remaining non-transfer transaction IDs
-        const nonTransferIds = realTransactions
-          .filter((t) => typeof t.id === 'number' && !t.isTransfer)
-          .map((t) => t.id as number);
-
-        if (nonTransferIds.length > 0) {
-          await bulkDeleteTransactionsMutation.mutateAsync(nonTransferIds);
-        }
-      } else {
-        // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
-        const idsToDelete = realTransactions
-          .filter((t) => typeof t.id === 'number')
-          .map((t) => t.id as number);
-
-        if (idsToDelete.length > 0) {
-          // Delete all transactions in a single batch request
-          await bulkDeleteTransactionsMutation.mutateAsync(idsToDelete);
-        }
-      }
-    }
-
-    bulkDeleteDialogOpen = false;
-    transactionsToDelete = [];
-    alsoDeleteLinkedTransfers = true; // Reset for next time
-  } catch (error) {
-    // Error handled by mutation's error toast
-  } finally {
-    isDeletingBulk = false;
-  }
 };
 
 let previousAccountId = $state<string | undefined>();
@@ -1227,53 +1149,7 @@ $effect(() => {
       </div>
     {/if}
 
-    <!-- Bulk Delete Transactions Confirmation Dialog -->
-    <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
-      <AlertDialog.Content>
-        <AlertDialog.Header>
-          <AlertDialog.Title
-            >Delete {transactionsToDelete.length} Transaction{transactionsToDelete.length > 1
-              ? 's'
-              : ''}</AlertDialog.Title>
-          <AlertDialog.Description>
-            Are you sure you want to delete {transactionsToDelete.length} transaction{transactionsToDelete.length >
-            1
-              ? 's'
-              : ''}? This action cannot be undone.
-          </AlertDialog.Description>
-        </AlertDialog.Header>
-
-        {#if hasTransfersToDelete}
-          <div class="bg-muted/50 flex items-start gap-3 rounded-lg border p-4">
-            <ArrowRightLeft class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
-            <div class="flex-1 space-y-3">
-              <p class="text-sm">
-                {transferTransactionsToDelete.length} of the selected transactions {transferTransactionsToDelete.length ===
-                1
-                  ? 'is a transfer'
-                  : 'are transfers'} linked to transactions in other accounts.
-              </p>
-              <div class="flex items-center gap-2">
-                <Checkbox id="bulk-delete-linked" bind:checked={alsoDeleteLinkedTransfers} />
-                <Label for="bulk-delete-linked" class="cursor-pointer text-sm font-medium">
-                  Also delete the linked transfer transactions
-                </Label>
-              </div>
-            </div>
-          </div>
-        {/if}
-
-        <AlertDialog.Footer>
-          <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-          <AlertDialog.Action
-            onclick={confirmBulkDelete}
-            disabled={isDeletingBulk}
-            class={buttonVariants({ variant: 'destructive' })}>
-            {isDeletingBulk ? 'Deleting...' : 'Delete'}
-          </AlertDialog.Action>
-        </AlertDialog.Footer>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
+    <BulkDeleteTransactionsDialog bind:transactions={transactionsToDelete} {accountId} />
 
     <SchedulePreviewController bind:transaction={scheduleSheetTransaction} />
 
