@@ -212,7 +212,8 @@ const updateColumnOrder = (newOrder: string[]) => {
         {/if}
         <ChevronDown class="size-4 opacity-50" />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content>
+      <DropdownMenu.Content
+        class="w-(--bits-dropdown-menu-anchor-width) min-w-(--bits-dropdown-menu-anchor-width)">
         <DropdownMenu.Group>
           {#each sortableColumns as column}
             <DropdownMenu.Item
@@ -245,13 +246,14 @@ const updateColumnOrder = (newOrder: string[]) => {
                 }
                 currentView.updateTableSorting(newState);
               }}
-              closeOnSelect={false}>
-              {column.columnDef.meta?.label}
+              closeOnSelect={false}
+              class="flex items-center justify-between gap-2">
+              <span>{column.columnDef.meta?.label}</span>
               {@const sorter = sorting.find((sort) => sort.id === column.id)}
               {#if sorter && sorter.desc}
-                <CircleChevronDown class="absolute right-0 mr-1" />
+                <CircleChevronDown class="size-4 shrink-0" />
               {:else if sorter && !sorter.desc}
-                <CircleChevronUp class="absolute right-0 mr-1" />
+                <CircleChevronUp class="size-4 shrink-0" />
               {/if}
             </DropdownMenu.Item>
           {/each}
