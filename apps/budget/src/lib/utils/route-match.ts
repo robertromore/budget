@@ -28,5 +28,27 @@ export function isRouteActive(
  * `data-[active=true]:before:...` chains stacked inside a tv() literal
  * proved to be detected unevenly, leaving the highlight invisible.
  */
-export const ACTIVE_NAV_CLASS =
-  "relative bg-primary/15 text-primary font-semibold !rounded-l-none border-l-2 border-primary";
+/**
+ * Active-item pill class per app. Each section sidebar imports its own
+ * accent so the highlight color matches the app-rail chip. Rounded-full
+ * gives the soft-pill shape; the bang on `rounded-full` overrides the
+ * sidebar-menu-button variant's default `rounded-md`.
+ */
+export const ACTIVE_NAV = {
+  budget:
+    "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold !rounded-full",
+  budgets:
+    "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold !rounded-full",
+  planning:
+    "bg-rose-500/15 text-rose-700 dark:text-rose-400 font-semibold !rounded-full",
+  subscriptions:
+    "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400 font-semibold !rounded-full",
+  documents:
+    "bg-teal-500/15 text-teal-700 dark:text-teal-400 font-semibold !rounded-full",
+  intelligence:
+    "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 font-semibold !rounded-full",
+  automation:
+    "bg-orange-500/15 text-orange-700 dark:text-orange-400 font-semibold !rounded-full",
+  priceWatcher:
+    "bg-violet-500/15 text-violet-700 dark:text-violet-400 font-semibold !rounded-full",
+} as const;

@@ -3,7 +3,7 @@ import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { listProducts, listAlerts } from '$lib/query/price-watcher';
-import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Package from '@lucide/svelte/icons/package';
 import Bell from '@lucide/svelte/icons/bell';
@@ -44,7 +44,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/price-watcher"
                   {...props}
-                  class={['flex items-center gap-3', dashActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', dashActive && ACTIVE_NAV.priceWatcher]}>
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
                   <span class="font-medium">Dashboard</span>
                 </a>
@@ -58,7 +58,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/price-watcher/products"
                   {...props}
-                  class={['flex items-center gap-3', prodActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', prodActive && ACTIVE_NAV.priceWatcher]}>
                   <Package class="h-4 w-4"></Package>
                   <span class="flex-1 font-medium">Products</span>
                   {#if productCount > 0}
@@ -77,7 +77,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/price-watcher/compare"
                   {...props}
-                  class={['flex items-center gap-3', cmpActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', cmpActive && ACTIVE_NAV.priceWatcher]}>
                   <ArrowLeftRight class="h-4 w-4"></ArrowLeftRight>
                   <span class="font-medium">Compare</span>
                 </a>
@@ -91,7 +91,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/price-watcher/alerts"
                   {...props}
-                  class={['flex items-center gap-3', alertsActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', alertsActive && ACTIVE_NAV.priceWatcher]}>
                   <Bell class="h-4 w-4"></Bell>
                   <span class="flex-1 font-medium">Alerts</span>
                   {#if alertCount > 0}
@@ -110,7 +110,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/price-watcher/history"
                   {...props}
-                  class={['flex items-center gap-3', histActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', histActive && ACTIVE_NAV.priceWatcher]}>
                   <TrendingUp class="h-4 w-4"></TrendingUp>
                   <span class="font-medium">Price History</span>
                 </a>
@@ -124,7 +124,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/price-watcher/settings"
                   {...props}
-                  class={['flex items-center gap-3', setActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', setActive && ACTIVE_NAV.priceWatcher]}>
                   <Settings class="h-4 w-4"></Settings>
                   <span class="font-medium">Settings</span>
                 </a>

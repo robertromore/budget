@@ -3,7 +3,7 @@ import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
-import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
 import FileText from '@lucide/svelte/icons/file-text';
 import SidebarUserFooter from './sidebar-user-footer.svelte';
 import WorkspaceSwitcher from '../../../routes/(budget)/workspaces/(components)/workspace-switcher.svelte';
@@ -40,7 +40,7 @@ const isDocumentsRoot = $derived(isRouteActive(pathname, '/documents') && !activ
                 <a
                   href="/documents"
                   {...props}
-                  class={['flex items-center gap-3', isDocumentsRoot && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', isDocumentsRoot && ACTIVE_NAV.documents]}>
                   <FileText class="h-4 w-4"></FileText>
                   <span class="flex-1 font-medium">All Documents</span>
                   {#if documents.length > 0}
@@ -69,7 +69,7 @@ const isDocumentsRoot = $derived(isRouteActive(pathname, '/documents') && !activ
                     <a
                       href="/documents?taxYear={year}"
                       {...props}
-                      class={['flex items-center gap-2', yearActive && ACTIVE_NAV_CLASS]}>
+                      class={['flex items-center gap-2', yearActive && ACTIVE_NAV.documents]}>
                       <span class="text-sm">{year}</span>
                     </a>
                   {/snippet}

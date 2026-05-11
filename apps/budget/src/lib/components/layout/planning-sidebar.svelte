@@ -4,7 +4,7 @@ import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
-import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
 import Target from '@lucide/svelte/icons/target';
 import CalendarSync from '@lucide/svelte/icons/calendar-sync';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -46,7 +46,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/goals"
                   {...props}
-                  class={['flex items-center gap-3', goalsActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', goalsActive && ACTIVE_NAV.planning]}>
                   <Target class="h-4 w-4"></Target>
                   <span class="flex-1 font-medium">All Goals</span>
                   {#if activeGoals.length > 0}
@@ -84,7 +84,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/schedules"
                   {...props}
-                  class={['flex items-center gap-3', schedActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', schedActive && ACTIVE_NAV.planning]}>
                   <CalendarSync class="h-4 w-4"></CalendarSync>
                   <span class="flex-1 font-medium">All Schedules</span>
                   {#if activeSchedules.length > 0}
@@ -103,7 +103,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/schedules/calendar"
                   {...props}
-                  class={['flex items-center gap-3', calActive && ACTIVE_NAV_CLASS]}>
+                  class={['flex items-center gap-3', calActive && ACTIVE_NAV.planning]}>
                   <Calendar class="h-4 w-4"></Calendar>
                   <span class="font-medium">Calendar</span>
                 </a>
