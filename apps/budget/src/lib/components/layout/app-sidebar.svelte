@@ -48,6 +48,12 @@ const assetTotal = $derived(assetAccounts.reduce((sum, a) => sum + (a.balance ??
 const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.balance ?? 0), 0));
 
 const pathname = $derived(page.url.pathname);
+
+// Active-state class added in addition to isActive — Tailwind variant
+// detection of `data-[active=true]:` classes inside the tv() string can
+// be fragile, so we also wear the highlight on a plain class.
+const ACTIVE_CLASS =
+  'relative bg-primary/10 text-primary font-medium before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-r before:bg-primary';
 </script>
 
 {#snippet accountRow(account: (typeof accounts)[number])}
@@ -113,8 +119,9 @@ const pathname = $derived(page.url.pathname);
     <Sidebar.Group data-tour-id="main-navigation">
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const dashActive = isRouteActive(pathname, '/')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/')}>
+            <Sidebar.MenuButton isActive={dashActive} class={dashActive ? ACTIVE_CLASS : ''}>
               {#snippet child({ props })}
                 <a href="/" {...props} class="flex items-center gap-3">
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
@@ -123,8 +130,9 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const txActive = isRouteActive(pathname, '/transactions', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/transactions', 'prefix')}>
+            <Sidebar.MenuButton isActive={txActive} class={txActive ? ACTIVE_CLASS : ''}>
               {#snippet child({ props })}
                 <a href="/transactions" {...props} class="flex items-center gap-3">
                   <Receipt class="h-4 w-4"></Receipt>
@@ -133,8 +141,9 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const catActive = isRouteActive(pathname, '/categories', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/categories', 'prefix')}>
+            <Sidebar.MenuButton isActive={catActive} class={catActive ? ACTIVE_CLASS : ''}>
               {#snippet child({ props })}
                 <a href="/categories" {...props} class="flex items-center gap-3">
                   <Tags class="h-4 w-4"></Tags>
@@ -143,8 +152,9 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const payeesActive = isRouteActive(pathname, '/payees', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/payees', 'prefix')}>
+            <Sidebar.MenuButton isActive={payeesActive} class={payeesActive ? ACTIVE_CLASS : ''}>
               {#snippet child({ props })}
                 <a href="/payees" {...props} class="flex items-center gap-3">
                   <HandCoins class="h-4 w-4"></HandCoins>
@@ -153,8 +163,9 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const importActive = isRouteActive(pathname, '/import', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/import', 'prefix')}>
+            <Sidebar.MenuButton isActive={importActive} class={importActive ? ACTIVE_CLASS : ''}>
               {#snippet child({ props })}
                 <a href="/import" {...props} class="flex items-center gap-3">
                   <Download class="h-4 w-4"></Download>
