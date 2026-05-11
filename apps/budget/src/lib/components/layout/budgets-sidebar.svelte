@@ -1,6 +1,8 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { BudgetState } from '$lib/states/budgets.svelte';
+import { isRouteActive } from '$lib/utils/route-match';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import Plus from '@lucide/svelte/icons/plus';
 import Wallet from '@lucide/svelte/icons/wallet';
@@ -16,6 +18,8 @@ let { user = null }: Props = $props();
 
 const budgetState = $derived(BudgetState.get());
 const activeBudgets = $derived(budgetState?.activeBudgets ?? []);
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 <Sidebar.Root>
@@ -27,7 +31,7 @@ const activeBudgets = $derived(budgetState?.activeBudgets ?? []);
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/budgets')}>
               {#snippet child({ props })}
                 <a href="/budgets" {...props} class="flex items-center gap-3">
                   <LayoutGrid class="h-4 w-4"></LayoutGrid>
@@ -37,7 +41,7 @@ const activeBudgets = $derived(budgetState?.activeBudgets ?? []);
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/budgets/new')}>
               {#snippet child({ props })}
                 <a href="/budgets/new" {...props} class="flex items-center gap-3">
                   <Plus class="h-4 w-4"></Plus>
@@ -57,7 +61,8 @@ const activeBudgets = $derived(budgetState?.activeBudgets ?? []);
           <Sidebar.Menu>
             {#each activeBudgets as budget (budget.id)}
               <Sidebar.MenuItem>
-                <Sidebar.MenuButton>
+                <Sidebar.MenuButton
+                  isActive={isRouteActive(pathname, `/budgets/${budget.slug}`, 'prefix')}>
                   {#snippet child({ props })}
                     <a
                       href="/budgets/{budget.slug}"

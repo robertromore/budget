@@ -1,7 +1,9 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
+import { isRouteActive } from '$lib/utils/route-match';
 import Zap from '@lucide/svelte/icons/zap';
 import ZapOff from '@lucide/svelte/icons/zap-off';
 import Plus from '@lucide/svelte/icons/plus';
@@ -19,6 +21,8 @@ const rulesQuery = rpc.automation.getAll().options();
 const rules = $derived(rulesQuery.data ?? []);
 const enabledRules = $derived(rules.filter((r) => r.isEnabled));
 const disabledRules = $derived(rules.filter((r) => !r.isEnabled));
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 <Sidebar.Root>
@@ -30,7 +34,7 @@ const disabledRules = $derived(rules.filter((r) => !r.isEnabled));
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/automation')}>
               {#snippet child({ props })}
                 <a href="/automation" {...props} class="flex items-center gap-3">
                   <Zap class="h-4 w-4"></Zap>
@@ -45,7 +49,7 @@ const disabledRules = $derived(rules.filter((r) => !r.isEnabled));
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/automation/new')}>
               {#snippet child({ props })}
                 <a href="/automation/new" {...props} class="flex items-center gap-3">
                   <Plus class="h-4 w-4"></Plus>
@@ -65,7 +69,7 @@ const disabledRules = $derived(rules.filter((r) => !r.isEnabled));
           <Sidebar.Menu>
             {#each enabledRules.slice(0, 8) as rule (rule.id)}
               <Sidebar.MenuItem>
-                <Sidebar.MenuButton>
+                <Sidebar.MenuButton isActive={isRouteActive(pathname, `/automation/${rule.id}`, 'prefix')}>
                   {#snippet child({ props })}
                     <a href="/automation/{rule.id}" {...props} class="flex items-center gap-2">
                       <Zap class="h-3.5 w-3.5 shrink-0 text-orange-500" />
@@ -87,7 +91,7 @@ const disabledRules = $derived(rules.filter((r) => !r.isEnabled));
           <Sidebar.Menu>
             {#each disabledRules.slice(0, 5) as rule (rule.id)}
               <Sidebar.MenuItem>
-                <Sidebar.MenuButton>
+                <Sidebar.MenuButton isActive={isRouteActive(pathname, `/automation/${rule.id}`, 'prefix')}>
                   {#snippet child({ props })}
                     <a href="/automation/{rule.id}" {...props} class="flex items-center gap-2">
                       <ZapOff class="text-muted-foreground h-3.5 w-3.5 shrink-0" />

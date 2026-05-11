@@ -1,7 +1,9 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { listProducts, listAlerts } from '$lib/query/price-watcher';
+import { isRouteActive } from '$lib/utils/route-match';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Package from '@lucide/svelte/icons/package';
 import Bell from '@lucide/svelte/icons/bell';
@@ -23,6 +25,8 @@ const alertsQuery = listAlerts().options();
 
 const productCount = $derived(productsQuery.data?.length ?? 0);
 const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ?? 0);
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 <Sidebar.Root>
@@ -34,7 +38,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher')}>
               {#snippet child({ props })}
                 <a href="/price-watcher" {...props} class="flex items-center gap-3">
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
@@ -44,7 +48,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/products', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/price-watcher/products" {...props} class="flex items-center gap-3">
                   <Package class="h-4 w-4"></Package>
@@ -59,7 +63,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/compare', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/price-watcher/compare" {...props} class="flex items-center gap-3">
                   <ArrowLeftRight class="h-4 w-4"></ArrowLeftRight>
@@ -69,7 +73,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/alerts', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/price-watcher/alerts" {...props} class="flex items-center gap-3">
                   <Bell class="h-4 w-4"></Bell>
@@ -84,7 +88,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/history', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/price-watcher/history" {...props} class="flex items-center gap-3">
                   <TrendingUp class="h-4 w-4"></TrendingUp>
@@ -94,7 +98,7 @@ const alertCount = $derived(alertsQuery.data?.filter((a) => a.enabled).length ??
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/settings', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/price-watcher/settings" {...props} class="flex items-center gap-3">
                   <Settings class="h-4 w-4"></Settings>

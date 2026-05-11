@@ -1,7 +1,9 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
+import { isRouteActive } from '$lib/utils/route-match';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import SidebarUserFooter from './sidebar-user-footer.svelte';
@@ -22,6 +24,8 @@ const activeSubscriptions = $derived(
   allSubscriptions.filter((s) => s.status === 'active')
 );
 const upcomingRenewals = $derived(renewalsQuery.data ?? []);
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 <Sidebar.Root>
@@ -33,7 +37,7 @@ const upcomingRenewals = $derived(renewalsQuery.data ?? []);
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/subscriptions', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/subscriptions" {...props} class="flex items-center gap-3">
                   <RefreshCw class="h-4 w-4"></RefreshCw>

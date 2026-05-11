@@ -1,5 +1,7 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import { isRouteActive } from '$lib/utils/route-match';
 import Brain from '@lucide/svelte/icons/brain';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -13,6 +15,8 @@ interface Props {
 }
 
 let { user = null }: Props = $props();
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 <Sidebar.Root>
@@ -24,7 +28,7 @@ let { user = null }: Props = $props();
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/intelligence')}>
               {#snippet child({ props })}
                 <a href="/intelligence" {...props} class="flex items-center gap-3">
                   <Brain class="h-4 w-4"></Brain>
@@ -34,7 +38,7 @@ let { user = null }: Props = $props();
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/intelligence/anomalies', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/intelligence/anomalies" {...props} class="flex items-center gap-3">
                   <AlertTriangle class="h-4 w-4"></AlertTriangle>
@@ -44,7 +48,7 @@ let { user = null }: Props = $props();
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/intelligence/forecasts', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/intelligence/forecasts" {...props} class="flex items-center gap-3">
                   <TrendingUp class="h-4 w-4"></TrendingUp>
@@ -54,7 +58,7 @@ let { user = null }: Props = $props();
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/patterns', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/patterns" {...props} class="flex items-center gap-3">
                   <Sparkles class="h-4 w-4"></Sparkles>

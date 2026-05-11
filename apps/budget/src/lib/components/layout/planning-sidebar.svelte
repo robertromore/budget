@@ -1,8 +1,10 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import { isRouteActive } from '$lib/utils/route-match';
 import Target from '@lucide/svelte/icons/target';
 import CalendarSync from '@lucide/svelte/icons/calendar-sync';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -24,6 +26,8 @@ const schedulesState = $derived(SchedulesState.get());
 const activeSchedules = $derived(
   schedulesState?.all?.filter((s) => s.status === 'active') ?? []
 );
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 <Sidebar.Root>
@@ -36,7 +40,7 @@ const activeSchedules = $derived(
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/goals', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/goals" {...props} class="flex items-center gap-3">
                   <Target class="h-4 w-4"></Target>
@@ -70,7 +74,7 @@ const activeSchedules = $derived(
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/schedules')}>
               {#snippet child({ props })}
                 <a href="/schedules" {...props} class="flex items-center gap-3">
                   <CalendarSync class="h-4 w-4"></CalendarSync>
@@ -85,7 +89,7 @@ const activeSchedules = $derived(
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/schedules/calendar', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/schedules/calendar" {...props} class="flex items-center gap-3">
                   <Calendar class="h-4 w-4"></Calendar>

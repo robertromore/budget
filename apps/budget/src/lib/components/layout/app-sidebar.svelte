@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import { Badge } from '$lib/components/ui/badge';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
@@ -8,6 +9,7 @@ import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { formatAccountBalance, getBalanceColorClass } from '$lib/utils/account-display';
 import { currencyFormatter } from '$lib/utils/formatters';
+import { isRouteActive } from '$lib/utils/route-match';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Download from '@lucide/svelte/icons/download';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
@@ -44,6 +46,8 @@ const liabilityAccounts = $derived(
 
 const assetTotal = $derived(assetAccounts.reduce((sum, a) => sum + (a.balance ?? 0), 0));
 const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.balance ?? 0), 0));
+
+const pathname = $derived(page.url.pathname);
 </script>
 
 {#snippet accountRow(account: (typeof accounts)[number])}
@@ -52,7 +56,9 @@ const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.ba
   {@const accountIcon = (account as { accountIcon?: string }).accountIcon}
   {@const iconData = accountIcon ? getIconByName(accountIcon) : null}
   <Sidebar.MenuItem>
-    <Sidebar.MenuButton class="h-auto! py-1.5">
+    <Sidebar.MenuButton
+      class="h-auto! py-1.5"
+      isActive={isRouteActive(pathname, `/accounts/${account.slug}`)}>
       {#snippet child({ props })}
         <a href="/accounts/{account.slug}" {...props} class="flex flex-col gap-0.5">
           <div class="flex items-center gap-2">
@@ -108,7 +114,7 @@ const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.ba
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/')}>
               {#snippet child({ props })}
                 <a href="/" {...props} class="flex items-center gap-3">
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
@@ -118,7 +124,7 @@ const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.ba
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/transactions', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/transactions" {...props} class="flex items-center gap-3">
                   <Receipt class="h-4 w-4"></Receipt>
@@ -128,7 +134,7 @@ const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.ba
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/categories', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/categories" {...props} class="flex items-center gap-3">
                   <Tags class="h-4 w-4"></Tags>
@@ -138,7 +144,7 @@ const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.ba
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/payees', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/payees" {...props} class="flex items-center gap-3">
                   <HandCoins class="h-4 w-4"></HandCoins>
@@ -148,7 +154,7 @@ const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.ba
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/import', 'prefix')}>
               {#snippet child({ props })}
                 <a href="/import" {...props} class="flex items-center gap-3">
                   <Download class="h-4 w-4"></Download>

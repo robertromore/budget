@@ -1,7 +1,9 @@
 <script lang="ts">
+import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
+import { isRouteActive } from '$lib/utils/route-match';
 import FileText from '@lucide/svelte/icons/file-text';
 import SidebarUserFooter from './sidebar-user-footer.svelte';
 import WorkspaceSwitcher from '../../../routes/(budget)/workspaces/(components)/workspace-switcher.svelte';
@@ -18,6 +20,10 @@ const taxYearsQuery = rpc.accountDocuments.getAvailableTaxYears().options();
 
 const documents = $derived(documentsQuery.data ?? []);
 const taxYears = $derived((taxYearsQuery.data ?? []).slice(0, 8));
+
+const pathname = $derived(page.url.pathname);
+const activeTaxYear = $derived(page.url.searchParams.get('taxYear'));
+const isDocumentsRoot = $derived(isRouteActive(pathname, '/documents') && !activeTaxYear);
 </script>
 
 <Sidebar.Root>
@@ -29,7 +35,7 @@ const taxYears = $derived((taxYearsQuery.data ?? []).slice(0, 8));
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
+            <Sidebar.MenuButton isActive={isDocumentsRoot}>
               {#snippet child({ props })}
                 <a href="/documents" {...props} class="flex items-center gap-3">
                   <FileText class="h-4 w-4"></FileText>
@@ -54,7 +60,7 @@ const taxYears = $derived((taxYearsQuery.data ?? []).slice(0, 8));
           <Sidebar.Menu>
             {#each taxYears as year}
               <Sidebar.MenuItem>
-                <Sidebar.MenuButton>
+                <Sidebar.MenuButton isActive={activeTaxYear === String(year)}>
                   {#snippet child({ props })}
                     <a href="/documents?taxYear={year}" {...props} class="flex items-center gap-2">
                       <span class="text-sm">{year}</span>
