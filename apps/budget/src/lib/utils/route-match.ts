@@ -34,21 +34,15 @@ export function isRouteActive(
  * gives the soft-pill shape; the bang on `rounded-full` overrides the
  * sidebar-menu-button variant's default `rounded-md`.
  */
+const PILL_BASE = "font-semibold";
+
 export const ACTIVE_NAV = {
-  budget:
-    "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold !rounded-full",
-  budgets:
-    "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold !rounded-full",
-  planning:
-    "bg-rose-500/15 text-rose-700 dark:text-rose-400 font-semibold !rounded-full",
-  subscriptions:
-    "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400 font-semibold !rounded-full",
-  documents:
-    "bg-teal-500/15 text-teal-700 dark:text-teal-400 font-semibold !rounded-full",
-  intelligence:
-    "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 font-semibold !rounded-full",
-  automation:
-    "bg-orange-500/15 text-orange-700 dark:text-orange-400 font-semibold !rounded-full",
-  priceWatcher:
-    "bg-violet-500/15 text-violet-700 dark:text-violet-400 font-semibold !rounded-full",
+  budget: `bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ${PILL_BASE}`,
+  budgets: `bg-amber-500/15 text-amber-700 dark:text-amber-400 ${PILL_BASE}`,
+  planning: `bg-rose-500/15 text-rose-700 dark:text-rose-400 ${PILL_BASE}`,
+  subscriptions: `bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400 ${PILL_BASE}`,
+  documents: `bg-teal-500/15 text-teal-700 dark:text-teal-400 ${PILL_BASE}`,
+  intelligence: `bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 ${PILL_BASE}`,
+  automation: `bg-orange-500/15 text-orange-700 dark:text-orange-400 ${PILL_BASE}`,
+  priceWatcher: `bg-violet-500/15 text-violet-700 dark:text-violet-400 ${PILL_BASE}`,
 } as const;
