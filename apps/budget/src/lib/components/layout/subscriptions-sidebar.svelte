@@ -3,7 +3,7 @@ import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
-import { isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import SidebarUserFooter from './sidebar-user-footer.svelte';
@@ -36,10 +36,14 @@ const pathname = $derived(page.url.pathname);
     <Sidebar.Group>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const subsActive = isRouteActive(pathname, '/subscriptions', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/subscriptions', 'prefix')}>
+            <Sidebar.MenuButton isActive={subsActive}>
               {#snippet child({ props })}
-                <a href="/subscriptions" {...props} class="flex items-center gap-3">
+                <a
+                  href="/subscriptions"
+                  {...props}
+                  class={['flex items-center gap-3', subsActive && ACTIVE_NAV_CLASS]}>
                   <RefreshCw class="h-4 w-4"></RefreshCw>
                   <span class="flex-1 font-medium">All Subscriptions</span>
                   {#if allSubscriptions.length > 0}

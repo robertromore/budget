@@ -1,7 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-import { isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
 import Brain from '@lucide/svelte/icons/brain';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -27,40 +27,56 @@ const pathname = $derived(page.url.pathname);
     <Sidebar.Group>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const ovActive = isRouteActive(pathname, '/intelligence')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/intelligence')}>
+            <Sidebar.MenuButton isActive={ovActive}>
               {#snippet child({ props })}
-                <a href="/intelligence" {...props} class="flex items-center gap-3">
+                <a
+                  href="/intelligence"
+                  {...props}
+                  class={['flex items-center gap-3', ovActive && ACTIVE_NAV_CLASS]}>
                   <Brain class="h-4 w-4"></Brain>
                   <span class="font-medium">Overview</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const anomActive = isRouteActive(pathname, '/intelligence/anomalies', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/intelligence/anomalies', 'prefix')}>
+            <Sidebar.MenuButton isActive={anomActive}>
               {#snippet child({ props })}
-                <a href="/intelligence/anomalies" {...props} class="flex items-center gap-3">
+                <a
+                  href="/intelligence/anomalies"
+                  {...props}
+                  class={['flex items-center gap-3', anomActive && ACTIVE_NAV_CLASS]}>
                   <AlertTriangle class="h-4 w-4"></AlertTriangle>
                   <span class="font-medium">Anomalies</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const fcActive = isRouteActive(pathname, '/intelligence/forecasts', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/intelligence/forecasts', 'prefix')}>
+            <Sidebar.MenuButton isActive={fcActive}>
               {#snippet child({ props })}
-                <a href="/intelligence/forecasts" {...props} class="flex items-center gap-3">
+                <a
+                  href="/intelligence/forecasts"
+                  {...props}
+                  class={['flex items-center gap-3', fcActive && ACTIVE_NAV_CLASS]}>
                   <TrendingUp class="h-4 w-4"></TrendingUp>
                   <span class="font-medium">Forecasts</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const patActive = isRouteActive(pathname, '/patterns', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/patterns', 'prefix')}>
+            <Sidebar.MenuButton isActive={patActive}>
               {#snippet child({ props })}
-                <a href="/patterns" {...props} class="flex items-center gap-3">
+                <a
+                  href="/patterns"
+                  {...props}
+                  class={['flex items-center gap-3', patActive && ACTIVE_NAV_CLASS]}>
                   <Sparkles class="h-4 w-4"></Sparkles>
                   <span class="font-medium">Patterns</span>
                 </a>

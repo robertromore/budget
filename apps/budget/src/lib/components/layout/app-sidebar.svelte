@@ -9,7 +9,7 @@ import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { formatAccountBalance, getBalanceColorClass } from '$lib/utils/account-display';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Download from '@lucide/svelte/icons/download';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
@@ -48,12 +48,6 @@ const assetTotal = $derived(assetAccounts.reduce((sum, a) => sum + (a.balance ??
 const liabilityTotal = $derived(liabilityAccounts.reduce((sum, a) => sum + (a.balance ?? 0), 0));
 
 const pathname = $derived(page.url.pathname);
-
-// Active-state class added in addition to isActive — Tailwind variant
-// detection of `data-[active=true]:` classes inside the tv() string can
-// be fragile, so we also wear the highlight on a plain class.
-const ACTIVE_CLASS =
-  'relative bg-primary/10 text-primary font-medium before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-r before:bg-primary';
 </script>
 
 {#snippet accountRow(account: (typeof accounts)[number])}
@@ -61,12 +55,14 @@ const ACTIVE_CLASS =
   {@const accountColor = (account as { accountColor?: string }).accountColor}
   {@const accountIcon = (account as { accountIcon?: string }).accountIcon}
   {@const iconData = accountIcon ? getIconByName(accountIcon) : null}
+  {@const acctActive = isRouteActive(pathname, `/accounts/${account.slug}`)}
   <Sidebar.MenuItem>
-    <Sidebar.MenuButton
-      class="h-auto! py-1.5"
-      isActive={isRouteActive(pathname, `/accounts/${account.slug}`)}>
+    <Sidebar.MenuButton class="h-auto! py-1.5" isActive={acctActive}>
       {#snippet child({ props })}
-        <a href="/accounts/{account.slug}" {...props} class="flex flex-col gap-0.5">
+        <a
+          href="/accounts/{account.slug}"
+          {...props}
+          class={['flex flex-col gap-0.5', acctActive && ACTIVE_NAV_CLASS]}>
           <div class="flex items-center gap-2">
             <div
               class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
@@ -121,9 +117,12 @@ const ACTIVE_CLASS =
         <Sidebar.Menu>
           {@const dashActive = isRouteActive(pathname, '/')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={dashActive} class={dashActive ? ACTIVE_CLASS : ''}>
+            <Sidebar.MenuButton isActive={dashActive}>
               {#snippet child({ props })}
-                <a href="/" {...props} class="flex items-center gap-3">
+                <a
+                  href="/"
+                  {...props}
+                  class={['flex items-center gap-3', dashActive && ACTIVE_NAV_CLASS]}>
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
                   <span class="font-medium">Dashboard</span>
                 </a>
@@ -132,9 +131,12 @@ const ACTIVE_CLASS =
           </Sidebar.MenuItem>
           {@const txActive = isRouteActive(pathname, '/transactions', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={txActive} class={txActive ? ACTIVE_CLASS : ''}>
+            <Sidebar.MenuButton isActive={txActive}>
               {#snippet child({ props })}
-                <a href="/transactions" {...props} class="flex items-center gap-3">
+                <a
+                  href="/transactions"
+                  {...props}
+                  class={['flex items-center gap-3', txActive && ACTIVE_NAV_CLASS]}>
                   <Receipt class="h-4 w-4"></Receipt>
                   <span class="font-medium">Transactions</span>
                 </a>
@@ -143,9 +145,12 @@ const ACTIVE_CLASS =
           </Sidebar.MenuItem>
           {@const catActive = isRouteActive(pathname, '/categories', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={catActive} class={catActive ? ACTIVE_CLASS : ''}>
+            <Sidebar.MenuButton isActive={catActive}>
               {#snippet child({ props })}
-                <a href="/categories" {...props} class="flex items-center gap-3">
+                <a
+                  href="/categories"
+                  {...props}
+                  class={['flex items-center gap-3', catActive && ACTIVE_NAV_CLASS]}>
                   <Tags class="h-4 w-4"></Tags>
                   <span class="font-medium">Categories</span>
                 </a>
@@ -154,9 +159,12 @@ const ACTIVE_CLASS =
           </Sidebar.MenuItem>
           {@const payeesActive = isRouteActive(pathname, '/payees', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={payeesActive} class={payeesActive ? ACTIVE_CLASS : ''}>
+            <Sidebar.MenuButton isActive={payeesActive}>
               {#snippet child({ props })}
-                <a href="/payees" {...props} class="flex items-center gap-3">
+                <a
+                  href="/payees"
+                  {...props}
+                  class={['flex items-center gap-3', payeesActive && ACTIVE_NAV_CLASS]}>
                   <HandCoins class="h-4 w-4"></HandCoins>
                   <span class="font-medium">Payees</span>
                 </a>
@@ -165,9 +173,12 @@ const ACTIVE_CLASS =
           </Sidebar.MenuItem>
           {@const importActive = isRouteActive(pathname, '/import', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={importActive} class={importActive ? ACTIVE_CLASS : ''}>
+            <Sidebar.MenuButton isActive={importActive}>
               {#snippet child({ props })}
-                <a href="/import" {...props} class="flex items-center gap-3">
+                <a
+                  href="/import"
+                  {...props}
+                  class={['flex items-center gap-3', importActive && ACTIVE_NAV_CLASS]}>
                   <Download class="h-4 w-4"></Download>
                   <span class="font-medium">Import</span>
                 </a>

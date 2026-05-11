@@ -2,7 +2,7 @@
 import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { BudgetState } from '$lib/states/budgets.svelte';
-import { isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import Plus from '@lucide/svelte/icons/plus';
 import Wallet from '@lucide/svelte/icons/wallet';
@@ -30,20 +30,28 @@ const pathname = $derived(page.url.pathname);
     <Sidebar.Group>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const allActive = isRouteActive(pathname, '/budgets')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/budgets')}>
+            <Sidebar.MenuButton isActive={allActive}>
               {#snippet child({ props })}
-                <a href="/budgets" {...props} class="flex items-center gap-3">
+                <a
+                  href="/budgets"
+                  {...props}
+                  class={['flex items-center gap-3', allActive && ACTIVE_NAV_CLASS]}>
                   <LayoutGrid class="h-4 w-4"></LayoutGrid>
                   <span class="font-medium">All Budgets</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const newActive = isRouteActive(pathname, '/budgets/new')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/budgets/new')}>
+            <Sidebar.MenuButton isActive={newActive}>
               {#snippet child({ props })}
-                <a href="/budgets/new" {...props} class="flex items-center gap-3">
+                <a
+                  href="/budgets/new"
+                  {...props}
+                  class={['flex items-center gap-3', newActive && ACTIVE_NAV_CLASS]}>
                   <Plus class="h-4 w-4"></Plus>
                   <span class="font-medium">New Budget</span>
                 </a>
@@ -60,14 +68,14 @@ const pathname = $derived(page.url.pathname);
         <Sidebar.GroupContent>
           <Sidebar.Menu>
             {#each activeBudgets as budget (budget.id)}
+              {@const budgetActive = isRouteActive(pathname, `/budgets/${budget.slug}`, 'prefix')}
               <Sidebar.MenuItem>
-                <Sidebar.MenuButton
-                  isActive={isRouteActive(pathname, `/budgets/${budget.slug}`, 'prefix')}>
+                <Sidebar.MenuButton isActive={budgetActive}>
                   {#snippet child({ props })}
                     <a
                       href="/budgets/{budget.slug}"
                       {...props}
-                      class="flex items-center gap-2">
+                      class={['flex items-center gap-2', budgetActive && ACTIVE_NAV_CLASS]}>
                       <Wallet class="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                       <span class="truncate text-sm">{budget.name}</span>
                     </a>

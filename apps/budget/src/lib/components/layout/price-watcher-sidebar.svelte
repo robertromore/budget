@@ -3,7 +3,7 @@ import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { listProducts, listAlerts } from '$lib/query/price-watcher';
-import { isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Package from '@lucide/svelte/icons/package';
 import Bell from '@lucide/svelte/icons/bell';
@@ -37,20 +37,28 @@ const pathname = $derived(page.url.pathname);
     <Sidebar.Group>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const dashActive = isRouteActive(pathname, '/price-watcher')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher')}>
+            <Sidebar.MenuButton isActive={dashActive}>
               {#snippet child({ props })}
-                <a href="/price-watcher" {...props} class="flex items-center gap-3">
+                <a
+                  href="/price-watcher"
+                  {...props}
+                  class={['flex items-center gap-3', dashActive && ACTIVE_NAV_CLASS]}>
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
                   <span class="font-medium">Dashboard</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const prodActive = isRouteActive(pathname, '/price-watcher/products', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/products', 'prefix')}>
+            <Sidebar.MenuButton isActive={prodActive}>
               {#snippet child({ props })}
-                <a href="/price-watcher/products" {...props} class="flex items-center gap-3">
+                <a
+                  href="/price-watcher/products"
+                  {...props}
+                  class={['flex items-center gap-3', prodActive && ACTIVE_NAV_CLASS]}>
                   <Package class="h-4 w-4"></Package>
                   <span class="flex-1 font-medium">Products</span>
                   {#if productCount > 0}
@@ -62,20 +70,28 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const cmpActive = isRouteActive(pathname, '/price-watcher/compare', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/compare', 'prefix')}>
+            <Sidebar.MenuButton isActive={cmpActive}>
               {#snippet child({ props })}
-                <a href="/price-watcher/compare" {...props} class="flex items-center gap-3">
+                <a
+                  href="/price-watcher/compare"
+                  {...props}
+                  class={['flex items-center gap-3', cmpActive && ACTIVE_NAV_CLASS]}>
                   <ArrowLeftRight class="h-4 w-4"></ArrowLeftRight>
                   <span class="font-medium">Compare</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const alertsActive = isRouteActive(pathname, '/price-watcher/alerts', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/alerts', 'prefix')}>
+            <Sidebar.MenuButton isActive={alertsActive}>
               {#snippet child({ props })}
-                <a href="/price-watcher/alerts" {...props} class="flex items-center gap-3">
+                <a
+                  href="/price-watcher/alerts"
+                  {...props}
+                  class={['flex items-center gap-3', alertsActive && ACTIVE_NAV_CLASS]}>
                   <Bell class="h-4 w-4"></Bell>
                   <span class="flex-1 font-medium">Alerts</span>
                   {#if alertCount > 0}
@@ -87,20 +103,28 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const histActive = isRouteActive(pathname, '/price-watcher/history', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/history', 'prefix')}>
+            <Sidebar.MenuButton isActive={histActive}>
               {#snippet child({ props })}
-                <a href="/price-watcher/history" {...props} class="flex items-center gap-3">
+                <a
+                  href="/price-watcher/history"
+                  {...props}
+                  class={['flex items-center gap-3', histActive && ACTIVE_NAV_CLASS]}>
                   <TrendingUp class="h-4 w-4"></TrendingUp>
                   <span class="font-medium">Price History</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const setActive = isRouteActive(pathname, '/price-watcher/settings', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/price-watcher/settings', 'prefix')}>
+            <Sidebar.MenuButton isActive={setActive}>
               {#snippet child({ props })}
-                <a href="/price-watcher/settings" {...props} class="flex items-center gap-3">
+                <a
+                  href="/price-watcher/settings"
+                  {...props}
+                  class={['flex items-center gap-3', setActive && ACTIVE_NAV_CLASS]}>
                   <Settings class="h-4 w-4"></Settings>
                   <span class="font-medium">Settings</span>
                 </a>

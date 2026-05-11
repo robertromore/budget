@@ -4,7 +4,7 @@ import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
-import { isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV_CLASS, isRouteActive } from '$lib/utils/route-match';
 import Target from '@lucide/svelte/icons/target';
 import CalendarSync from '@lucide/svelte/icons/calendar-sync';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -39,10 +39,14 @@ const pathname = $derived(page.url.pathname);
       <Sidebar.GroupLabel>Goals</Sidebar.GroupLabel>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const goalsActive = isRouteActive(pathname, '/goals', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/goals', 'prefix')}>
+            <Sidebar.MenuButton isActive={goalsActive}>
               {#snippet child({ props })}
-                <a href="/goals" {...props} class="flex items-center gap-3">
+                <a
+                  href="/goals"
+                  {...props}
+                  class={['flex items-center gap-3', goalsActive && ACTIVE_NAV_CLASS]}>
                   <Target class="h-4 w-4"></Target>
                   <span class="flex-1 font-medium">All Goals</span>
                   {#if activeGoals.length > 0}
@@ -73,10 +77,14 @@ const pathname = $derived(page.url.pathname);
       <Sidebar.GroupLabel>Schedules</Sidebar.GroupLabel>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
+          {@const schedActive = isRouteActive(pathname, '/schedules')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/schedules')}>
+            <Sidebar.MenuButton isActive={schedActive}>
               {#snippet child({ props })}
-                <a href="/schedules" {...props} class="flex items-center gap-3">
+                <a
+                  href="/schedules"
+                  {...props}
+                  class={['flex items-center gap-3', schedActive && ACTIVE_NAV_CLASS]}>
                   <CalendarSync class="h-4 w-4"></CalendarSync>
                   <span class="flex-1 font-medium">All Schedules</span>
                   {#if activeSchedules.length > 0}
@@ -88,10 +96,14 @@ const pathname = $derived(page.url.pathname);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          {@const calActive = isRouteActive(pathname, '/schedules/calendar', 'prefix')}
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton isActive={isRouteActive(pathname, '/schedules/calendar', 'prefix')}>
+            <Sidebar.MenuButton isActive={calActive}>
               {#snippet child({ props })}
-                <a href="/schedules/calendar" {...props} class="flex items-center gap-3">
+                <a
+                  href="/schedules/calendar"
+                  {...props}
+                  class={['flex items-center gap-3', calActive && ACTIVE_NAV_CLASS]}>
                   <Calendar class="h-4 w-4"></Calendar>
                   <span class="font-medium">Calendar</span>
                 </a>
