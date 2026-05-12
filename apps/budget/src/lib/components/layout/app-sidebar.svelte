@@ -9,7 +9,7 @@ import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { formatAccountBalance, getBalanceColorClass } from '$lib/utils/account-display';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, BASE_NAV, isRouteActive } from '$lib/utils/route-match';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Download from '@lucide/svelte/icons/download';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
@@ -62,7 +62,7 @@ const pathname = $derived(page.url.pathname);
         <a
           href="/accounts/{account.slug}"
           {...props}
-          class={['flex flex-col gap-0.5', acctActive && ACTIVE_NAV.budget]}>
+          class={['flex flex-col gap-0.5', BASE_NAV, acctActive && ACTIVE_NAV.budget]}>
           <div class="flex items-center gap-2">
             <div
               class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
@@ -122,7 +122,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/"
                   {...props}
-                  class={['flex items-center gap-3', dashActive && ACTIVE_NAV.budget]}>
+                  class={['flex items-center gap-3', BASE_NAV, dashActive && ACTIVE_NAV.budget]}>
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
                   <span class="font-medium">Dashboard</span>
                 </a>
@@ -136,7 +136,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/transactions"
                   {...props}
-                  class={['flex items-center gap-3', txActive && ACTIVE_NAV.budget]}>
+                  class={['flex items-center gap-3', BASE_NAV, txActive && ACTIVE_NAV.budget]}>
                   <Receipt class="h-4 w-4"></Receipt>
                   <span class="font-medium">Transactions</span>
                 </a>
@@ -150,7 +150,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/categories"
                   {...props}
-                  class={['flex items-center gap-3', catActive && ACTIVE_NAV.budget]}>
+                  class={['flex items-center gap-3', BASE_NAV, catActive && ACTIVE_NAV.budget]}>
                   <Tags class="h-4 w-4"></Tags>
                   <span class="font-medium">Categories</span>
                 </a>
@@ -164,7 +164,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/payees"
                   {...props}
-                  class={['flex items-center gap-3', payeesActive && ACTIVE_NAV.budget]}>
+                  class={['flex items-center gap-3', BASE_NAV, payeesActive && ACTIVE_NAV.budget]}>
                   <HandCoins class="h-4 w-4"></HandCoins>
                   <span class="font-medium">Payees</span>
                 </a>
@@ -178,7 +178,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/import"
                   {...props}
-                  class={['flex items-center gap-3', importActive && ACTIVE_NAV.budget]}>
+                  class={['flex items-center gap-3', BASE_NAV, importActive && ACTIVE_NAV.budget]}>
                   <Download class="h-4 w-4"></Download>
                   <span class="font-medium">Import</span>
                 </a>

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, BASE_NAV, isRouteActive } from '$lib/utils/route-match';
 import Brain from '@lucide/svelte/icons/brain';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -34,7 +34,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/intelligence"
                   {...props}
-                  class={['flex items-center gap-3', ovActive && ACTIVE_NAV.intelligence]}>
+                  class={['flex items-center gap-3', BASE_NAV, ovActive && ACTIVE_NAV.intelligence]}>
                   <Brain class="h-4 w-4"></Brain>
                   <span class="font-medium">Overview</span>
                 </a>
@@ -48,7 +48,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/intelligence/anomalies"
                   {...props}
-                  class={['flex items-center gap-3', anomActive && ACTIVE_NAV.intelligence]}>
+                  class={['flex items-center gap-3', BASE_NAV, anomActive && ACTIVE_NAV.intelligence]}>
                   <AlertTriangle class="h-4 w-4"></AlertTriangle>
                   <span class="font-medium">Anomalies</span>
                 </a>
@@ -62,7 +62,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/intelligence/forecasts"
                   {...props}
-                  class={['flex items-center gap-3', fcActive && ACTIVE_NAV.intelligence]}>
+                  class={['flex items-center gap-3', BASE_NAV, fcActive && ACTIVE_NAV.intelligence]}>
                   <TrendingUp class="h-4 w-4"></TrendingUp>
                   <span class="font-medium">Forecasts</span>
                 </a>
@@ -76,7 +76,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/patterns"
                   {...props}
-                  class={['flex items-center gap-3', patActive && ACTIVE_NAV.intelligence]}>
+                  class={['flex items-center gap-3', BASE_NAV, patActive && ACTIVE_NAV.intelligence]}>
                   <Sparkles class="h-4 w-4"></Sparkles>
                   <span class="font-medium">Patterns</span>
                 </a>

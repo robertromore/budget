@@ -2,7 +2,7 @@
 import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { BudgetState } from '$lib/states/budgets.svelte';
-import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, BASE_NAV, isRouteActive } from '$lib/utils/route-match';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import Plus from '@lucide/svelte/icons/plus';
 import Wallet from '@lucide/svelte/icons/wallet';
@@ -37,7 +37,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/budgets"
                   {...props}
-                  class={['flex items-center gap-3', allActive && ACTIVE_NAV.budgets]}>
+                  class={['flex items-center gap-3', BASE_NAV, allActive && ACTIVE_NAV.budgets]}>
                   <LayoutGrid class="h-4 w-4"></LayoutGrid>
                   <span class="font-medium">All Budgets</span>
                 </a>
@@ -51,7 +51,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/budgets/new"
                   {...props}
-                  class={['flex items-center gap-3', newActive && ACTIVE_NAV.budgets]}>
+                  class={['flex items-center gap-3', BASE_NAV, newActive && ACTIVE_NAV.budgets]}>
                   <Plus class="h-4 w-4"></Plus>
                   <span class="font-medium">New Budget</span>
                 </a>
@@ -75,7 +75,7 @@ const pathname = $derived(page.url.pathname);
                     <a
                       href="/budgets/{budget.slug}"
                       {...props}
-                      class={['flex items-center gap-2', budgetActive && ACTIVE_NAV.budgets]}>
+                      class={['flex items-center gap-2', BASE_NAV, budgetActive && ACTIVE_NAV.budgets]}>
                       <Wallet class="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                       <span class="truncate text-sm">{budget.name}</span>
                     </a>

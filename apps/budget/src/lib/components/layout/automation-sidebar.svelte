@@ -3,7 +3,7 @@ import { page } from '$app/state';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import { rpc } from '$lib/query';
-import { ACTIVE_NAV, isRouteActive } from '$lib/utils/route-match';
+import { ACTIVE_NAV, BASE_NAV, isRouteActive } from '$lib/utils/route-match';
 import Zap from '@lucide/svelte/icons/zap';
 import ZapOff from '@lucide/svelte/icons/zap-off';
 import Plus from '@lucide/svelte/icons/plus';
@@ -40,7 +40,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/automation"
                   {...props}
-                  class={['flex items-center gap-3', allActive && ACTIVE_NAV.automation]}>
+                  class={['flex items-center gap-3', BASE_NAV, allActive && ACTIVE_NAV.automation]}>
                   <Zap class="h-4 w-4"></Zap>
                   <span class="flex-1 font-medium">All Rules</span>
                   {#if rules.length > 0}
@@ -59,7 +59,7 @@ const pathname = $derived(page.url.pathname);
                 <a
                   href="/automation/new"
                   {...props}
-                  class={['flex items-center gap-3', newActive && ACTIVE_NAV.automation]}>
+                  class={['flex items-center gap-3', BASE_NAV, newActive && ACTIVE_NAV.automation]}>
                   <Plus class="h-4 w-4"></Plus>
                   <span class="font-medium">New Rule</span>
                 </a>
@@ -83,7 +83,7 @@ const pathname = $derived(page.url.pathname);
                     <a
                       href="/automation/{rule.id}"
                       {...props}
-                      class={['flex items-center gap-2', ruleActive && ACTIVE_NAV.automation]}>
+                      class={['flex items-center gap-2', BASE_NAV, ruleActive && ACTIVE_NAV.automation]}>
                       <Zap class="h-3.5 w-3.5 shrink-0 text-orange-500" />
                       <span class="truncate text-sm">{rule.name}</span>
                     </a>
@@ -109,7 +109,7 @@ const pathname = $derived(page.url.pathname);
                     <a
                       href="/automation/{rule.id}"
                       {...props}
-                      class={['flex items-center gap-2', ruleActive && ACTIVE_NAV.automation]}>
+                      class={['flex items-center gap-2', BASE_NAV, ruleActive && ACTIVE_NAV.automation]}>
                       <ZapOff class="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                       <span class="text-muted-foreground truncate text-sm">{rule.name}</span>
                     </a>

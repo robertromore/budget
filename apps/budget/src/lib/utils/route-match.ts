@@ -34,6 +34,13 @@ export function isRouteActive(
  * gives the soft-pill shape; the bang on `rounded-full` overrides the
  * sidebar-menu-button variant's default `rounded-md`.
  */
+/**
+ * Shared shape/padding applied to every sidebar nav anchor. Pulled out
+ * here so active and inactive items get the same spacing — apply it on
+ * the consumer's class array alongside the per-item layout classes.
+ */
+export const BASE_NAV = "!rounded-xl !px-3.5 !py-2";
+
 const PILL_BASE = "font-semibold";
 
 export const ACTIVE_NAV = {
