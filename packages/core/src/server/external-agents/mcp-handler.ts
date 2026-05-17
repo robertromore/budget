@@ -16,6 +16,9 @@ import type { AIToolName } from "$core/server/ai/tools";
 import { AI_TOOL_NAMES, AI_TOOL_SCOPES, createAITools } from "$core/server/ai/tools";
 import { AIToolCallCollector } from "$core/server/ai/telemetry";
 import type { ExternalApiKeyScope } from "$core/schema/external-api-keys";
+import { MCP_PDF_TOOLS } from "./mcp-pdf-tools";
+
+const PDF_TOOL_BY_NAME = new Map(MCP_PDF_TOOLS.map((t) => [t.name, t]));
 
 export const MCP_PROTOCOL_VERSION = "2024-11-05";
 export const MCP_SERVER_NAME = "budget-app";
@@ -168,6 +171,14 @@ function buildToolDescriptors(scope: ExternalApiKeyScope): MCPToolDescriptor[] {
         { type: "object", properties: {} },
     });
   }
+  for (const pdfTool of MCP_PDF_TOOLS) {
+    if (scope === "read_only" && pdfTool.scope !== "read") continue;
+    out.push({
+      name: pdfTool.name,
+      description: pdfTool.description,
+      inputSchema: pdfTool.inputSchema,
+    });
+  }
   return out;
 }
 
@@ -189,6 +200,48 @@ async function handleToolsCall(
   }
   const { name, arguments: args } = params as ToolsCallParams;
   if (!name) throw new MCPError(ERR_INVALID_PARAMS, "Missing tool name");
+
+  // PDF-specific tools live in mcp-pdf-tools.ts because they take a
+  // different shape from the AI-SDK chat tools (workspaceId-bound
+  // execute, no telemetry wrapper). Dispatch them here.
+  const pdfTool = PDF_TOOL_BY_NAME.get(name);
+  if (pdfTool) {
+    if (context.scope === "read_only" && pdfTool.scope !== "read") {
+      throw new MCPError(
+        ERR_SCOPE_DENIED,
+        `Tool "${pdfTool.name}" requires a read+write API key.`
+      );
+    }
+    const startedAt = Date.now();
+    const collector = new AIToolCallCollector();
+    let toolResult: unknown;
+    let isError = false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toolResult = await pdfTool.execute(args as any, context.workspaceId);
+    } catch (error) {
+      isError = true;
+      toolResult = {
+        success: false,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    } finally {
+      // PDF tools aren't wrapped by withTelemetry, so emit a single
+      // tool_call record directly so the Activity page surfaces them.
+      collector.record({
+        toolName: pdfTool.name,
+        inputShape: undefined,
+        outputShape: undefined,
+        latencyMs: Date.now() - startedAt,
+        success: !isError,
+      });
+      await collector.flush({ workspaceId: context.workspaceId, apiKeyId: context.apiKeyId });
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(toolResult) }],
+      ...(isError ? { isError: true } : {}),
+    };
+  }
 
   if (!(AI_TOOL_NAMES as readonly string[]).includes(name)) {
     throw new MCPError(ERR_TOOL_NOT_FOUND, `Unknown tool: ${name}`);
