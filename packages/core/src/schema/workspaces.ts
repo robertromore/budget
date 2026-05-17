@@ -135,6 +135,12 @@ export interface LLMFeatureModes {
    * in `packages/core/src/server/import/parser-runtime/`.
    */
   statementExtraction: LLMFeatureConfig;
+  /**
+   * Generate the daily monthly-brief narrative on the dashboard. When
+   * disabled the widget falls back to the hardcoded ratio-based phrase
+   * mapping it shipped with.
+   */
+  narrative: LLMFeatureConfig;
 }
 
 // Main LLM preferences interface
@@ -169,6 +175,10 @@ export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
     // `disabled` to opt out, or `override` (same behavior as enhance
     // for this feature since there's no non-AI baseline to override).
     statementExtraction: { mode: "enhance", provider: null },
+    // Default to `enhance` — when a provider is configured, the daily
+    // brief widget uses a real LLM. Disabled means fall back to the
+    // ratio-based heuristic the widget shipped with.
+    narrative: { mode: "enhance", provider: null },
   },
 };
 

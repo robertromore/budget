@@ -52,6 +52,7 @@ const featureModesSchema = z.object({
   anomalyDetection: featureConfigSchema,
   payeeMatching: featureConfigSchema,
   statementExtraction: featureConfigSchema,
+  narrative: featureConfigSchema,
 });
 
 // Helper to normalize feature config (handles old string format)
@@ -90,6 +91,10 @@ function normalizeFeatureModes(
     statementExtraction: normalizeFeatureConfig(
       modes?.statementExtraction,
       DEFAULT_LLM_PREFERENCES.featureModes.statementExtraction
+    ),
+    narrative: normalizeFeatureConfig(
+      modes?.narrative,
+      DEFAULT_LLM_PREFERENCES.featureModes.narrative
     ),
   };
 }
@@ -347,6 +352,7 @@ export const llmSettingsRoutes = t.router({
           anomalyDetection: input.anomalyDetection ?? currentModes.anomalyDetection,
           payeeMatching: input.payeeMatching ?? currentModes.payeeMatching,
           statementExtraction: input.statementExtraction ?? currentModes.statementExtraction,
+          narrative: input.narrative ?? currentModes.narrative,
         };
 
         const updatedLLM: LLMPreferences = {

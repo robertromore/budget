@@ -15,6 +15,11 @@ const pendingTotal = $derived(Number(summaryQuery.data?.totalPending) || 0);
 const netFlow = $derived(totalReceived - totalSpent);
 const isPositive = $derived(netFlow >= 0);
 
+// LLM-generated daily pacing phrase. Cached server-side per workspace
+// per day per model. Falls back to a hardcoded heuristic when the
+// narrative feature is disabled or the LLM call fails.
+const dailyBriefQuery = rpc.insights.getDailyBrief().options();
+
 // Only fetch the top category at large/full sizes — it's a separate
 // query and small/medium variants don't surface the data anyway.
 const wantsTopCategory = $derived(config.size === 'large' || config.size === 'full');
@@ -41,7 +46,7 @@ const netWorth = $derived(accountsState.getTotalBalance());
 const now = new Date();
 const monthName = now.toLocaleString('en-US', { month: 'long' });
 
-const pacing = $derived.by(() => {
+const heuristicPacing = $derived.by(() => {
   if (totalReceived === 0) return 'quiet';
   const ratio = totalSpent / totalReceived;
   if (ratio < 0.5) return 'light';
@@ -50,15 +55,20 @@ const pacing = $derived.by(() => {
   return 'over';
 });
 
-const pacingPhrase = $derived(
+const heuristicPhrase = $derived(
   {
     quiet: 'a quiet month so far',
     light: 'running light — plenty of room in the budget',
     'on-pace': 'pacing about where you usually land',
     heavy: 'spending a little heavier than usual',
     over: "outspending what's come in",
-  }[pacing]
+  }[heuristicPacing]
 );
+
+// Prefer the LLM-generated phrase when available; fall back to the
+// heuristic if the query hasn't loaded yet or the server returned the
+// heuristic itself (narrative feature disabled).
+const pacingPhrase = $derived(dailyBriefQuery.data?.phrase ?? heuristicPhrase);
 
 const savingsRate = $derived(
   totalReceived > 0 ? Math.max(0, netFlow / totalReceived) : 0
