@@ -6,6 +6,7 @@ import Activity from '@lucide/svelte/icons/activity';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Brain from '@lucide/svelte/icons/brain';
+import KeyRound from '@lucide/svelte/icons/key-round';
 import Building2 from '@lucide/svelte/icons/building-2';
 import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -60,6 +61,7 @@ const settingsNav = [
       { href: '/settings/intelligence', label: 'ML Settings', icon: Brain },
       { href: '/settings/intelligence/llm', label: 'LLM Providers', icon: Sparkles },
       { href: '/settings/intelligence/activity', label: 'AI Activity', icon: Activity },
+      { href: '/settings/external-agents', label: 'External Agents', icon: KeyRound },
     ],
   },
   {

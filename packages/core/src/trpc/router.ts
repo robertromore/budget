@@ -34,6 +34,7 @@ import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
 import { dashboardRoutes } from "./routes/dashboards";
 import { widgetGroupRoutes } from "./routes/widget-groups";
+import { externalApiKeysRoutes } from "./routes/external-api-keys";
 import { forecastingRoutes } from "./routes/forecasting";
 import { insightsRoutes } from "./routes/insights";
 import { metricAlertRoutes } from "./routes/metric-alerts";
@@ -139,6 +140,7 @@ export const router = t.router({
   nlSearchRoutes,
   mlHealthRoutes,
   llmSettingsRoutes,
+  externalApiKeysRoutes,
 });
 
 const createCallerFactory = t.createCallerFactory(router);

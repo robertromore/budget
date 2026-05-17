@@ -204,6 +204,13 @@
       "when": 1779040115149,
       "tag": "0028_bright_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1779042162916,
+      "tag": "0029_wet_speed_demon",
+      "breakpoints": true
     }
   ]
 }

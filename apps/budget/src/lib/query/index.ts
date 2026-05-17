@@ -26,6 +26,7 @@ import * as patterns from "$core/query/patterns";
 import * as payeeAliases from "$core/query/payee-aliases";
 import * as recurring from "$core/query/recurring";
 import * as aiTelemetry from "$core/query/ai-telemetry";
+import * as externalApiKeys from "$core/query/external-api-keys";
 import * as payeeCategories from "$core/query/payee-categories";
 import * as payees from "$core/query/payees";
 import * as schedules from "$core/query/schedules";
@@ -58,6 +59,7 @@ export const rpc = {
   aiTelemetry,
   auth,
   automation,
+  externalApiKeys,
   budgets,
   categories,
   categoryAliases,

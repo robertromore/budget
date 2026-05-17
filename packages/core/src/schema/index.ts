@@ -49,6 +49,7 @@ export * from "./ai-conversations";
 export * from "./ai-llm-calls";
 export * from "./ai-tool-calls";
 export * from "./cached-narratives";
+export * from "./external-api-keys";
 
 // HSA-related schemas
 export * from "./expense-receipts";
