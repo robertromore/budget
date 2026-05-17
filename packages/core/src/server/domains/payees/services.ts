@@ -5956,10 +5956,13 @@ Respond in JSON format only:
     input: RecordPredictionFeedbackInput,
     workspaceId: number
   ): Promise<PredictionFeedback> {
-    // Verify the payee belongs to this workspace
-    const payee = await this.repository.findById(input.payeeId, workspaceId);
-    if (!payee) {
-      throw new NotFoundError("Payee not found");
+    // Payee is optional now (anomaly + pdf_extraction feedback can be
+    // payee-less). Verify membership only when one is supplied.
+    if (input.payeeId !== undefined && input.payeeId !== null) {
+      const payee = await this.repository.findById(input.payeeId, workspaceId);
+      if (!payee) {
+        throw new NotFoundError("Payee not found");
+      }
     }
 
     // Insert the feedback record
@@ -5967,7 +5970,7 @@ Respond in JSON format only:
       .insert(predictionFeedback)
       .values({
         workspaceId,
-        payeeId: input.payeeId,
+        payeeId: input.payeeId ?? null,
         predictionType: input.predictionType,
         originalDate: input.originalDate ?? null,
         originalAmount: input.originalAmount ?? null,

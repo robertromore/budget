@@ -15,7 +15,12 @@ import { workspaces } from "./workspaces";
 /**
  * Prediction feedback types
  */
-export const feedbackTypes = ["next_transaction", "budget_suggestion"] as const;
+export const feedbackTypes = [
+  "next_transaction",
+  "budget_suggestion",
+  "anomaly",
+  "pdf_extraction_row",
+] as const;
 export const feedbackRatings = ["positive", "negative", "neutral"] as const;
 
 export type FeedbackType = (typeof feedbackTypes)[number];
@@ -31,9 +36,9 @@ export const predictionFeedback = sqliteTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    payeeId: integer("payee_id")
-      .notNull()
-      .references(() => payees.id, { onDelete: "cascade" }),
+    // Nullable: anomaly + pdf_extraction_row feedback often lacks a payee
+    // (e.g. dismissed anomaly on a still-uncategorized transaction).
+    payeeId: integer("payee_id").references(() => payees.id, { onDelete: "cascade" }),
 
     // Prediction identification
     predictionType: text("prediction_type", { enum: feedbackTypes }).notNull(),
@@ -93,7 +98,7 @@ export const insertPredictionFeedbackSchema = createInsertSchema(predictionFeedb
 
 // Input schema for recording feedback
 export const recordPredictionFeedbackSchema = z.object({
-  payeeId: z.number(),
+  payeeId: z.number().optional(),
   predictionType: z.enum(feedbackTypes),
 
   // Original prediction

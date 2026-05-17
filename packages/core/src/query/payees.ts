@@ -1119,8 +1119,11 @@ export const recordPredictionFeedback = () =>
   defineMutation<RecordPredictionFeedbackInput, PredictionFeedback>({
     mutationFn: (input) => trpc().payeeRoutes.recordPredictionFeedback.mutate(input),
     onSuccess: (_result, variables) => {
-      // Invalidate prediction feedback history for this payee
-      cachePatterns.invalidatePrefix(payeeKeys.predictionFeedback(variables.payeeId));
+      // Invalidate prediction feedback history for this payee (when one
+      // was supplied — anomaly/PDF feedback can be payee-less).
+      if (variables.payeeId !== undefined && variables.payeeId !== null) {
+        cachePatterns.invalidatePrefix(payeeKeys.predictionFeedback(variables.payeeId));
+      }
       // Also invalidate accuracy metrics
       cachePatterns.invalidatePrefix(payeeKeys.predictionAccuracy());
     },

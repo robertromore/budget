@@ -1,4 +1,5 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
 import { AnomalyAlertCard } from '$lib/components/ml';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
@@ -6,11 +7,14 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import { ML } from '$lib/query/ml';
+import { rpc } from '$lib/query';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
 import Scan from '@lucide/svelte/icons/scan';
 import ShieldAlert from '@lucide/svelte/icons/shield-alert';
+
+const feedbackMutation = rpc.payees.recordPredictionFeedback().options();
 
 // Filter state
 let minRiskLevel = $state<'low' | 'medium' | 'high' | 'critical'>('medium');
@@ -176,10 +180,21 @@ const limitOptions = [
           recommendedActions={alert.recommendedActions}
           dimensions={alert.dimensions}
           onViewTransaction={() => {
-            // TODO: Navigate to transaction details
+            // Navigate to the transaction's account view so the user
+            // can investigate. Tabs use ?tab=transactions on the
+            // account page.
+            goto(`/transactions?highlight=${alert.transactionId}`);
           }}
           onDismiss={() => {
-            // TODO: Implement dismiss functionality
+            // Negative feedback — user thinks this anomaly is a false
+            // positive. Recorded against the prediction_feedback
+            // table so the anomaly detection can eventually learn.
+            feedbackMutation.mutate({
+              predictionType: 'anomaly',
+              rating: 'negative',
+              originalConfidence: alert.overallScore,
+              predictionMethod: 'anomaly_detection',
+            });
           }} />
       {/each}
     </div>

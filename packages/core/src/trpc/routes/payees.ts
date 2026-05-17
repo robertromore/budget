@@ -297,7 +297,9 @@ export const payeeRoutes = t.router({
     .input(
       z.object({
         payeeId: z.number().positive(),
-        predictionType: z.enum(["next_transaction", "budget_suggestion"]).optional(),
+        predictionType: z
+          .enum(["next_transaction", "budget_suggestion", "anomaly", "pdf_extraction_row"])
+          .optional(),
         limit: z.number().positive().default(10),
       })
     )
@@ -316,7 +318,9 @@ export const payeeRoutes = t.router({
     .input(
       z.object({
         payeeId: z.number().positive().optional(),
-        predictionType: z.enum(["next_transaction", "budget_suggestion"]).optional(),
+        predictionType: z
+          .enum(["next_transaction", "budget_suggestion", "anomaly", "pdf_extraction_row"])
+          .optional(),
       })
     )
     .query(
