@@ -11,6 +11,7 @@ import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 export const aiTelemetryKeys = createQueryKeys("ai-telemetry", {
   recentActivity: (hours: number) => ["ai-telemetry", "recentActivity", hours] as const,
   recentFeedback: (hours: number) => ["ai-telemetry", "recentFeedback", hours] as const,
+  recentLLMCalls: (hours: number) => ["ai-telemetry", "recentLLMCalls", hours] as const,
 });
 
 export const getRecentToolActivity = (hours = 24) =>
@@ -39,6 +40,19 @@ export const getRecentFeedbackStats = (hours = 24) =>
   });
 
 /**
+ * Per-feature LLM call stats (counts + token usage + latency).
+ */
+export const getRecentLLMCallStats = (hours = 24) =>
+  defineQuery({
+    queryKey: aiTelemetryKeys.recentLLMCalls(hours),
+    queryFn: () => trpc().aiRoutes.getRecentLLMCallStats.query({ hours }),
+    options: {
+      staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
+    },
+  });
+
+/**
  * Prune old telemetry rows. Defaults to opportunistic (cooldown-gated);
  * pass `force: true` for an immediate cleanup button.
  */
@@ -49,6 +63,7 @@ export const pruneTelemetry = () =>
       ran: boolean;
       reason: "manual" | "scheduled" | "cooldown";
       toolCallsDeleted: number;
+      llmCallsDeleted: number;
       feedbackDeleted: number;
       toolCallRetentionDays?: number;
       feedbackRetentionDays?: number;
@@ -65,7 +80,7 @@ export const pruneTelemetry = () =>
     },
     successMessage: (data) =>
       data.ran
-        ? `Cleaned up ${data.toolCallsDeleted} tool-call rows and ${data.feedbackDeleted} feedback rows.`
+        ? `Cleaned up ${data.toolCallsDeleted} tool-call rows, ${data.llmCallsDeleted} LLM rows, and ${data.feedbackDeleted} feedback rows.`
         : "Telemetry cleanup already ran recently.",
     errorMessage: "Cleanup failed",
   });

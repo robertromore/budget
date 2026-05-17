@@ -6,6 +6,7 @@
  */
 
 import { aiConversations, aiConversationMessages } from "$core/schema/ai-conversations";
+import { aiLlmCalls } from "$core/schema/ai-llm-calls";
 import { aiToolCalls } from "$core/schema/ai-tool-calls";
 import { predictionFeedback } from "$core/schema/prediction-feedback";
 import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
@@ -13,7 +14,7 @@ import { fetchFinancialContext } from "$core/server/ai/financial-context";
 import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$core/server/ai/prompts/chat-assistant";
 import { getActiveProvider, type ProviderInstance } from "$core/server/ai/providers";
 import { createAITools } from "$core/server/ai/tools";
-import { AIToolCallCollector } from "$core/server/ai/telemetry";
+import { AIToolCallCollector, recordLLMCall } from "$core/server/ai/telemetry";
 import { db } from "$core/server/db";
 import { formatCurrency } from "$core/utils/formatters-core";
 import { publicProcedure, t } from "$core/trpc";
@@ -281,7 +282,8 @@ async function generateChatResponse(
   userMessage: string,
   history: Array<{ role: "user" | "assistant" | "system"; content: string }> = [],
   tools?: ReturnType<typeof createAITools>,
-  maxToolSteps = 5
+  maxToolSteps = 5,
+  workspaceId?: number
 ): Promise<{
   content: string;
   reasoning?: string;
@@ -296,16 +298,47 @@ async function generateChatResponse(
 
   // Use AI SDK with tool support. maxToolSteps comes from workspace
   // preferences so heavy users can bump it without code changes.
-  const result = await generateText({
-    model: provider.provider(provider.model),
-    system: systemPrompt,
-    messages: messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    })),
-    tools,
-    stopWhen: stepCountIs(maxToolSteps),
-  });
+  const startedAt = Date.now();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let result: any;
+  try {
+    result = await generateText({
+      model: provider.provider(provider.model),
+      system: systemPrompt,
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      tools,
+      stopWhen: stepCountIs(maxToolSteps),
+    });
+  } catch (error) {
+    if (workspaceId !== undefined) {
+      void recordLLMCall({
+        workspaceId,
+        feature: "chat",
+        provider: provider.providerType,
+        model: provider.model,
+        latencyMs: Date.now() - startedAt,
+        success: false,
+        errorCode: error instanceof Error ? error.name : "unknown",
+      });
+    }
+    throw error;
+  }
+  if (workspaceId !== undefined) {
+    void recordLLMCall({
+      workspaceId,
+      feature: "chat",
+      provider: provider.providerType,
+      model: provider.model,
+      inputTokens: result.usage?.inputTokens ?? null,
+      outputTokens: result.usage?.outputTokens ?? null,
+      reasoningTokens: result.usage?.reasoningTokens ?? null,
+      latencyMs: Date.now() - startedAt,
+      success: true,
+    });
+  }
 
   // Collect tool usage info — per-call telemetry (latency, success,
   // input/output shape) lands in ai_tool_call via the wrapper installed
@@ -448,7 +481,8 @@ export const aiRoutes = t.router({
         input.message,
         input.history,
         tools,
-        maxToolSteps
+        maxToolSteps,
+        ctx.workspaceId
       );
 
       // Save assistant response
@@ -962,6 +996,70 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
     }),
 
   /**
+   * Aggregate per-feature LLM call stats. Token counts come from the
+   * AI SDK's usage object when the provider reports them (Ollama
+   * often doesn't). Drives the "LLM usage" section on the Activity
+   * page so users can see what each feature costs in tokens.
+   */
+  getRecentLLMCallStats: publicProcedure
+    .input(
+      z
+        .object({
+          hours: z.number().min(1).max(24 * 30).default(24),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const hours = input?.hours ?? 24;
+      const sinceMs = Date.now() - hours * 60 * 60 * 1000;
+      const since = new Date(sinceMs).toISOString();
+
+      const rows = await db
+        .select({
+          feature: aiLlmCalls.feature,
+          callCount: sql<number>`COUNT(*)`,
+          successCount: sql<number>`SUM(CASE WHEN ${aiLlmCalls.success} = 1 THEN 1 ELSE 0 END)`,
+          inputTokens: sql<number>`COALESCE(SUM(${aiLlmCalls.inputTokens}), 0)`,
+          outputTokens: sql<number>`COALESCE(SUM(${aiLlmCalls.outputTokens}), 0)`,
+          avgLatencyMs: sql<number>`ROUND(AVG(${aiLlmCalls.latencyMs}))`,
+        })
+        .from(aiLlmCalls)
+        .where(
+          and(
+            eq(aiLlmCalls.workspaceId, ctx.workspaceId),
+            sql`${aiLlmCalls.createdAt} >= ${since}`
+          )
+        )
+        .groupBy(aiLlmCalls.feature)
+        .orderBy(desc(sql`COUNT(*)`));
+
+      const totals = rows.reduce(
+        (acc, row) => {
+          acc.callCount += Number(row.callCount) || 0;
+          acc.successCount += Number(row.successCount) || 0;
+          acc.inputTokens += Number(row.inputTokens) || 0;
+          acc.outputTokens += Number(row.outputTokens) || 0;
+          return acc;
+        },
+        { callCount: 0, successCount: 0, inputTokens: 0, outputTokens: 0 }
+      );
+
+      return {
+        windowHours: hours,
+        totals,
+        byFeature: rows.map((row) => ({
+          feature: row.feature,
+          callCount: Number(row.callCount) || 0,
+          successCount: Number(row.successCount) || 0,
+          failureCount: (Number(row.callCount) || 0) - (Number(row.successCount) || 0),
+          inputTokens: Number(row.inputTokens) || 0,
+          outputTokens: Number(row.outputTokens) || 0,
+          avgLatencyMs: Number(row.avgLatencyMs) || 0,
+        })),
+      };
+    }),
+
+  /**
    * Feedback signals from prediction_feedback. Surfaces what users
    * told us about anomalies, PDF extractions, etc. so the Activity
    * page can show acceptance / rejection / accuracy alongside the
@@ -1080,6 +1178,7 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
             ran: false,
             reason: "cooldown" as const,
             toolCallsDeleted: 0,
+            llmCallsDeleted: 0,
             feedbackDeleted: 0,
             nextEligibleAt: new Date(new Date(lastAt).getTime() + COOLDOWN_MS).toISOString(),
           };
@@ -1102,6 +1201,19 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
           )
         )
         .returning({ id: aiToolCalls.id });
+
+      // LLM-call rows share the tool-call retention horizon — both are
+      // debugging observability and don't need to outlive the same
+      // window.
+      const llmCallsDeleted = await db
+        .delete(aiLlmCalls)
+        .where(
+          and(
+            eq(aiLlmCalls.workspaceId, ctx.workspaceId),
+            lt(aiLlmCalls.createdAt, toolCallCutoff)
+          )
+        )
+        .returning({ id: aiLlmCalls.id });
 
       const feedbackDeleted = await db
         .delete(predictionFeedback)
@@ -1128,6 +1240,7 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
         ran: true,
         reason: (force ? "manual" : "scheduled") as "manual" | "scheduled",
         toolCallsDeleted: toolCallsDeleted.length,
+        llmCallsDeleted: llmCallsDeleted.length,
         feedbackDeleted: feedbackDeleted.length,
         toolCallRetentionDays,
         feedbackRetentionDays,

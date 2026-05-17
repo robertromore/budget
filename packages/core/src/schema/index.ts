@@ -46,6 +46,7 @@ export * from "./security";
 
 // AI-related schemas
 export * from "./ai-conversations";
+export * from "./ai-llm-calls";
 export * from "./ai-tool-calls";
 export * from "./cached-narratives";
 

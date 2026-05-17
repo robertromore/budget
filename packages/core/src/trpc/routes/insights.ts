@@ -2,6 +2,7 @@ import { cachedNarratives } from "$core/schema/cached-narratives";
 import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
 import { PeriodBriefService } from "$core/server/domains/insights";
 import { getProviderForFeature } from "$core/server/ai/providers";
+import { recordLLMCall } from "$core/server/ai/telemetry";
 import { db } from "$core/server/db";
 import { lazyService } from "$core/server/shared/container/lazy-service";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
@@ -169,6 +170,7 @@ export const insightsRoutes = t.router({
         .join("\n");
 
       let phrase: string;
+      const startedAt = Date.now();
       try {
         const result = await generateText({
           model: provider.provider(provider.model),
@@ -178,8 +180,27 @@ export const insightsRoutes = t.router({
         });
         phrase = result.text.trim().replace(/^["']|["']$/g, "").replace(/[.!?]$/g, "");
         if (!phrase) phrase = fallback.phrase;
+        void recordLLMCall({
+          workspaceId: ctx.workspaceId,
+          feature: "narrative",
+          provider: provider.providerType,
+          model: provider.model,
+          inputTokens: result.usage?.inputTokens ?? null,
+          outputTokens: result.usage?.outputTokens ?? null,
+          latencyMs: Date.now() - startedAt,
+          success: true,
+        });
       } catch (error) {
         console.error("[Daily Brief] LLM call failed:", error);
+        void recordLLMCall({
+          workspaceId: ctx.workspaceId,
+          feature: "narrative",
+          provider: provider.providerType,
+          model: provider.model,
+          latencyMs: Date.now() - startedAt,
+          success: false,
+          errorCode: error instanceof Error ? error.name : "unknown",
+        });
         return fallback;
       }
 

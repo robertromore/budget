@@ -14,6 +14,7 @@ let windowHours = $state<24 | 168 | 720>(24);
 
 const activityQuery = $derived(rpc.aiTelemetry.getRecentToolActivity(windowHours).options());
 const feedbackQuery = $derived(rpc.aiTelemetry.getRecentFeedbackStats(windowHours).options());
+const llmQuery = $derived(rpc.aiTelemetry.getRecentLLMCallStats(windowHours).options());
 
 const FEEDBACK_TYPE_LABELS: Record<string, string> = {
   next_transaction: 'Next transaction prediction',
@@ -21,6 +22,22 @@ const FEEDBACK_TYPE_LABELS: Record<string, string> = {
   anomaly: 'Anomaly detection',
   pdf_extraction_row: 'PDF row extraction',
 };
+
+const LLM_FEATURE_LABELS: Record<string, string> = {
+  chat: 'Chat',
+  narrative: 'Daily brief',
+  pdf_extraction: 'PDF extraction',
+  pdf_describe: 'PDF describe',
+  document_explain: 'Document explain',
+  test_connection: 'Connection test',
+  category_refinement: 'Category refinement',
+};
+
+function formatTokens(n: number): string {
+  if (n < 1000) return n.toString();
+  if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
+  return `${(n / 1_000_000).toFixed(2)}M`;
+}
 
 // Telemetry retention: opportunistic cleanup runs on mount (cooldown-
 // gated server-side, so it's a no-op when not eligible). The trash
@@ -220,6 +237,57 @@ function formatRelativeTime(iso: string): string {
         No failures in this window.
       </p>
     {/if}
+  {/if}
+
+  {#if llmQuery.data && llmQuery.data.byFeature.length > 0}
+    {@const llm = llmQuery.data}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title>LLM usage</Card.Title>
+        <Card.Description>
+          Calls to the configured LLM providers. Total:
+          <span class="tabular-nums">{formatTokens(llm.totals.inputTokens)}</span> in /
+          <span class="tabular-nums">{formatTokens(llm.totals.outputTokens)}</span> out across
+          <span class="tabular-nums">{llm.totals.callCount}</span>
+          call{llm.totals.callCount === 1 ? '' : 's'}.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <table class="w-full text-sm">
+          <thead class="text-muted-foreground border-b text-xs uppercase">
+            <tr>
+              <th class="py-2 text-left font-medium">Feature</th>
+              <th class="py-2 text-right font-medium">Calls</th>
+              <th class="py-2 text-right font-medium">Input tokens</th>
+              <th class="py-2 text-right font-medium">Output tokens</th>
+              <th class="py-2 text-right font-medium">Avg latency</th>
+              <th class="py-2 text-right font-medium">Failures</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each llm.byFeature as row (row.feature)}
+              <tr class="border-b last:border-0">
+                <td class="py-2 font-medium">
+                  {LLM_FEATURE_LABELS[row.feature] ?? row.feature}
+                </td>
+                <td class="py-2 text-right tabular-nums">{row.callCount}</td>
+                <td class="py-2 text-right tabular-nums">{formatTokens(row.inputTokens)}</td>
+                <td class="py-2 text-right tabular-nums">{formatTokens(row.outputTokens)}</td>
+                <td class="text-muted-foreground py-2 text-right tabular-nums">
+                  {formatLatency(row.avgLatencyMs)}
+                </td>
+                <td
+                  class="py-2 text-right tabular-nums {row.failureCount > 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-muted-foreground'}">
+                  {row.failureCount}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </Card.Content>
+    </Card.Root>
   {/if}
 
   {#if feedbackQuery.data && feedbackQuery.data.byType.length > 0}

@@ -9,6 +9,7 @@
  */
 
 import { db } from "$core/server/db";
+import { aiLlmCalls, type NewAILlmCall } from "$core/schema/ai-llm-calls";
 import {
   aiToolCalls,
   type AIToolCallShape,
@@ -61,6 +62,45 @@ export class AIToolCallCollector {
     } catch (error) {
       console.error("[AI Telemetry] Failed to flush tool-call records:", error);
     }
+  }
+}
+
+export interface LLMCallRecord {
+  workspaceId: number;
+  feature: string;
+  provider: string;
+  model: string;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  reasoningTokens?: number | null;
+  latencyMs: number;
+  success: boolean;
+  errorCode?: string;
+}
+
+/**
+ * Fire-and-forget LLM-call record. Used at every generateText /
+ * streamText call site so token usage and latency land in ai_llm_call
+ * for the Activity page. Failures are logged but never thrown — a
+ * telemetry write must never break the user-facing AI feature.
+ */
+export async function recordLLMCall(record: LLMCallRecord): Promise<void> {
+  const row: NewAILlmCall = {
+    workspaceId: record.workspaceId,
+    feature: record.feature,
+    provider: record.provider,
+    model: record.model,
+    inputTokens: record.inputTokens ?? null,
+    outputTokens: record.outputTokens ?? null,
+    reasoningTokens: record.reasoningTokens ?? null,
+    latencyMs: record.latencyMs,
+    success: record.success,
+    errorCode: record.errorCode ?? null,
+  };
+  try {
+    await db.insert(aiLlmCalls).values(row);
+  } catch (error) {
+    console.error("[AI Telemetry] Failed to record LLM call:", error);
   }
 }
 
