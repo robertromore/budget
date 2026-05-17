@@ -89,6 +89,30 @@ const retrainMutation = ML.retrainModels().options();
 // fine and retraining isn't necessary).
 const driftQuery = ML.getSmartCategoryDriftStats(30).options();
 
+// Opportunistic auto-retrain: ask the server to retrain in the
+// background if drift is stale and the cooldown has elapsed. Runs
+// once on mount; the server short-circuits if conditions aren't met.
+const autoRetrainMutation = ML.checkSmartCategoryAutoRetrain().options();
+let autoRetrainQueued = $state(false);
+
+$effect(() => {
+  // Fire once when this page mounts. Don't await — page load shouldn't
+  // wait for a retrain check. Result is consumed lazily via a refetch
+  // of the drift query after a few seconds.
+  autoRetrainMutation.mutate(undefined, {
+    onSuccess: async (result) => {
+      if (result.triggered) {
+        autoRetrainQueued = true;
+        // Give the retrain a moment, then refetch drift so the UI
+        // reflects the post-retrain state.
+        setTimeout(() => {
+          void driftQuery.refetch();
+        }, 5000);
+      }
+    },
+  });
+});
+
 async function handleRetrain() {
   await retrainMutation.mutateAsync(undefined);
   // Refresh drift stats after retrain so the recommendation goes away.
@@ -174,7 +198,11 @@ async function handlePatternDismiss() {
           </span>
           of the model's suggestions
           ({drift.totals.accepted} accepted of {drift.totals.total} graded).
-          Retrain to bake your recent corrections into the index.
+          {#if autoRetrainQueued}
+            Auto-retrain has been queued — refresh in a moment to see updated stats.
+          {:else}
+            Retrain to bake your recent corrections into the index.
+          {/if}
         </p>
       </div>
     {:else}

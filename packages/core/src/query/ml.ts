@@ -931,6 +931,25 @@ export const getSmartCategoryDriftStats = (days = 30) =>
     },
   });
 
+/**
+ * Opportunistic auto-retrain trigger. The server checks drift +
+ * cooldown and queues a retrain when warranted. The client just
+ * calls this on Intelligence page mount and ignores the response
+ * unless we want to surface "Auto-retrain queued".
+ */
+export const checkSmartCategoryAutoRetrain = () =>
+  defineMutation<
+    void,
+    {
+      triggered: boolean;
+      reason: "model not stale" | "cooldown" | "stale";
+      queuedAt?: string;
+    }
+  >({
+    mutationFn: () => trpc().smartCategoryRoutes.checkAutoRetrain.mutate(),
+    // Background-only — don't surface a toast either way.
+  });
+
 // =============================================================================
 // Natural Language Search Queries
 // =============================================================================
@@ -1056,6 +1075,7 @@ export const ML = {
   getSmartCategorySuggestions,
   getTopCategorySuggestion,
   getSmartCategoryDriftStats,
+  checkSmartCategoryAutoRetrain,
   analyzeTransactionType,
   detectSubscription,
 

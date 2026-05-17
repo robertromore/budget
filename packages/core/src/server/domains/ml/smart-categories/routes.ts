@@ -6,12 +6,14 @@
  */
 
 import { payeeCategoryCorrections } from "$core/schema/payee-category-corrections";
+import { workspaces } from "$core/schema/workspaces";
 import { db } from "$core/server/db";
 import { publicProcedure, rateLimitedProcedure, t } from "$core/trpc/t";
 import { TRPCError } from "@trpc/server";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createMLModelStore } from "../model-store";
+import { getUnifiedMLCoordinator } from "../unified-coordinator";
 import { createSmartCategoryService } from "./service";
 
 // Lazy initialization of services (singleton pattern)
@@ -288,6 +290,94 @@ export const smartCategoryRoutes = t.router({
         acceptThreshold: ACCEPT_THRESHOLD,
       };
     }),
+
+  /**
+   * Opportunistic auto-retrain check. Reads drift + the workspace's
+   * last-auto-retrain timestamp; when the model looks stale and the
+   * cooldown has elapsed, fires retrain in the background without
+   * blocking the caller. Returns a tiny status object the client can
+   * use to show "Auto-retrain queued" without polling.
+   *
+   * Cooldown is 7 days to avoid hammering the index on every visit
+   * to /intelligence. The user can always click the manual Retrain
+   * button to bypass.
+   */
+  checkAutoRetrain: rateLimitedProcedure.mutation(async ({ ctx }) => {
+    const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+    const MIN_SIGNAL = 25;
+    const ACCEPT_THRESHOLD = 0.5;
+    const WINDOW_DAYS = 30;
+
+    // Read drift stats inline (same query as getDriftStats; duplicated
+    // here so the mutation is self-contained).
+    const sinceMs = Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    const since = new Date(sinceMs).toISOString();
+    const rows = await db
+      .select({
+        trigger: payeeCategoryCorrections.correctionTrigger,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(payeeCategoryCorrections)
+      .where(
+        and(
+          eq(payeeCategoryCorrections.workspaceId, ctx.workspaceId),
+          gte(payeeCategoryCorrections.createdAt, since)
+        )
+      )
+      .groupBy(payeeCategoryCorrections.correctionTrigger);
+    const counts: Record<string, number> = {};
+    for (const row of rows) counts[row.trigger] = Number(row.count) || 0;
+    const accepted = counts["ai_suggestion_accepted"] ?? 0;
+    const overridden = counts["import_category_override"] ?? 0;
+    const dismissed = counts["import_dismissal"] ?? 0;
+    const total = accepted + overridden + dismissed;
+    const acceptRate = total > 0 ? accepted / total : null;
+    const shouldRetrain =
+      total >= MIN_SIGNAL && acceptRate !== null && acceptRate < ACCEPT_THRESHOLD;
+
+    if (!shouldRetrain) {
+      return { triggered: false, reason: "model not stale" as const };
+    }
+
+    // Check the cooldown via workspace preferences.
+    const [workspace] = await db
+      .select({ preferences: workspaces.preferences })
+      .from(workspaces)
+      .where(eq(workspaces.id, ctx.workspaceId))
+      .limit(1);
+    const parsed = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+    const lastAt: string | undefined = parsed?.smartCategory?.lastAutoRetrainAt;
+    if (lastAt) {
+      const elapsed = Date.now() - new Date(lastAt).getTime();
+      if (elapsed < COOLDOWN_MS) {
+        return { triggered: false, reason: "cooldown" as const };
+      }
+    }
+
+    // Update the timestamp first so a slow retrain can't be fired
+    // twice from concurrent requests. Subsequent calls within the
+    // cooldown window will short-circuit at the check above.
+    const nowIso = new Date().toISOString();
+    const nextPrefs = {
+      ...parsed,
+      smartCategory: { ...(parsed?.smartCategory ?? {}), lastAutoRetrainAt: nowIso },
+    };
+    await db
+      .update(workspaces)
+      .set({ preferences: JSON.stringify(nextPrefs) })
+      .where(eq(workspaces.id, ctx.workspaceId));
+
+    // Fire the retrain without awaiting — the caller doesn't need to
+    // block on it. Errors get logged so the cooldown still applies
+    // even if this retrain fails (better than hammering on every
+    // request).
+    const coordinator = getUnifiedMLCoordinator();
+    void coordinator.retrainModels(ctx.workspaceId).catch((error) => {
+      console.error("[SmartCategory] Auto-retrain failed:", error);
+    });
+
+    return { triggered: true, reason: "stale" as const, queuedAt: nowIso };
+  }),
 
   /**
    * Record user category selection for learning (future use)
