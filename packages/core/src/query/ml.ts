@@ -918,6 +918,19 @@ export const recordCategorySelection = () =>
     // No success message - this is background tracking
   });
 
+/**
+ * Smart-category drift statistics over a rolling window. Drives the
+ * "retrain recommended" CTA on the Intelligence page.
+ */
+export const getSmartCategoryDriftStats = (days = 30) =>
+  defineQuery({
+    queryKey: ["ml", "smartCategory", "driftStats", days] as const,
+    queryFn: () => trpc().smartCategoryRoutes.getDriftStats.query({ days }),
+    options: {
+      staleTime: 5 * 60 * 1000,
+    },
+  });
+
 // =============================================================================
 // Natural Language Search Queries
 // =============================================================================
@@ -1042,6 +1055,7 @@ export const ML = {
   // Smart Category Suggestions
   getSmartCategorySuggestions,
   getTopCategorySuggestion,
+  getSmartCategoryDriftStats,
   analyzeTransactionType,
   detectSubscription,
 

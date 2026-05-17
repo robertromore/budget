@@ -84,8 +84,15 @@ async function handleNLSearch(query: string) {
 // Mutations - use .options() for reactive interface
 const retrainMutation = ML.retrainModels().options();
 
-function handleRetrain() {
-  retrainMutation.mutate(undefined);
+// Smart-category drift signal — exposed alongside the retrain CTA so
+// users can see *why* a retrain is recommended (or that things are
+// fine and retraining isn't necessary).
+const driftQuery = ML.getSmartCategoryDriftStats(30).options();
+
+async function handleRetrain() {
+  await retrainMutation.mutateAsync(undefined);
+  // Refresh drift stats after retrain so the recommendation goes away.
+  await driftQuery.refetch();
 }
 
 // Schedule Pattern Detection
@@ -136,7 +143,10 @@ async function handlePatternDismiss() {
       <p class="text-muted-foreground">AI-powered insights and machine learning features</p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" onclick={handleRetrain} disabled={retrainMutation.isPending}>
+      <Button
+        variant={driftQuery.data?.shouldRetrain ? 'default' : 'outline'}
+        onclick={handleRetrain}
+        disabled={retrainMutation.isPending}>
         <RefreshCcw class="mr-2 h-4 w-4 {retrainMutation.isPending ? 'animate-spin' : ''}" />
         Retrain Models
       </Button>
@@ -146,6 +156,37 @@ async function handlePatternDismiss() {
       </Button>
     </div>
   </div>
+
+  {#if driftQuery.data}
+    {@const drift = driftQuery.data}
+    {#if drift.totals.total === 0}
+      <div class="bg-muted/40 text-muted-foreground rounded-md border px-4 py-3 text-sm">
+        Smart-category suggestions haven't seen any user feedback in the last {drift.windowDays} days.
+        Once you import or categorize transactions the model will start learning.
+      </div>
+    {:else if drift.shouldRetrain}
+      <div class="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+        <p class="font-medium">Category suggestions look stale.</p>
+        <p class="mt-1">
+          Over the last {drift.windowDays} days you accepted only
+          <span class="font-semibold tabular-nums">
+            {Math.round((drift.rates.acceptRate ?? 0) * 100)}%
+          </span>
+          of the model's suggestions
+          ({drift.totals.accepted} accepted of {drift.totals.total} graded).
+          Retrain to bake your recent corrections into the index.
+        </p>
+      </div>
+    {:else}
+      <div class="text-muted-foreground rounded-md border px-4 py-3 text-sm">
+        Category model acceptance over the last {drift.windowDays} days:
+        <span class="text-foreground font-semibold tabular-nums">
+          {Math.round((drift.rates.acceptRate ?? 0) * 100)}%
+        </span>
+        across {drift.totals.total} graded suggestions. Retrain is not needed yet.
+      </div>
+    {/if}
+  {/if}
 
   <!-- Natural Language Search -->
   <NLSearchCard
