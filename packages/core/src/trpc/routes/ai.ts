@@ -6,6 +6,7 @@
  */
 
 import { aiConversations, aiConversationMessages } from "$core/schema/ai-conversations";
+import { aiToolCalls } from "$core/schema/ai-tool-calls";
 import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
 import { fetchFinancialContext } from "$core/server/ai/financial-context";
 import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$core/server/ai/prompts/chat-assistant";
@@ -387,6 +388,30 @@ export const aiRoutes = t.router({
           })
           .returning();
         conversationId = newConversation!.id;
+      } else {
+        // Per-conversation rolling rate limit. A single chat() invocation
+        // can fan out through up to 5 tool-call steps (stopWhen above);
+        // a hostile or runaway client could chain many such invocations
+        // against the same conversation. Cap rolling 10-minute tool-call
+        // count per conversation as defense in depth.
+        const TOOL_CALL_WINDOW_MS = 10 * 60 * 1000;
+        const TOOL_CALL_LIMIT = 100;
+        const windowStart = new Date(Date.now() - TOOL_CALL_WINDOW_MS).toISOString();
+        const [{ count } = { count: 0 }] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(aiToolCalls)
+          .where(
+            and(
+              eq(aiToolCalls.conversationId, conversationId),
+              sql`${aiToolCalls.createdAt} >= ${windowStart}`
+            )
+          );
+        if (Number(count) >= TOOL_CALL_LIMIT) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: `Conversation has used ${count} tool calls in the last 10 minutes. Wait a few minutes or start a new conversation.`,
+          });
+        }
       }
 
       // Save user message
@@ -839,5 +864,92 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
 
         throw translateDomainError(error);
       }
+    }),
+
+  /**
+   * Recent tool-call activity for the AI assistant. Surfaces what the
+   * chat actually did in the last `hours` window (default 24): which
+   * tools fired, how long they took, what error rate they hit. Used
+   * by the Intelligence > Activity settings page.
+   */
+  getRecentToolActivity: publicProcedure
+    .input(
+      z
+        .object({
+          hours: z.number().min(1).max(24 * 30).default(24),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const hours = input?.hours ?? 24;
+      const sinceMs = Date.now() - hours * 60 * 60 * 1000;
+      const since = new Date(sinceMs).toISOString();
+
+      // Aggregate per tool — counts, average latency, error rate.
+      const summary = await db
+        .select({
+          toolName: aiToolCalls.toolName,
+          callCount: sql<number>`COUNT(*)`,
+          successCount: sql<number>`SUM(CASE WHEN ${aiToolCalls.success} = 1 THEN 1 ELSE 0 END)`,
+          avgLatencyMs: sql<number>`ROUND(AVG(${aiToolCalls.latencyMs}))`,
+          p95LatencyMs: sql<number>`MAX(${aiToolCalls.latencyMs})`,
+        })
+        .from(aiToolCalls)
+        .where(
+          and(
+            eq(aiToolCalls.workspaceId, ctx.workspaceId),
+            sql`${aiToolCalls.createdAt} >= ${since}`
+          )
+        )
+        .groupBy(aiToolCalls.toolName)
+        .orderBy(desc(sql`COUNT(*)`));
+
+      // Recent failures — drilldown for debugging without dumping the
+      // full table to the client.
+      const recentFailures = await db
+        .select({
+          id: aiToolCalls.id,
+          toolName: aiToolCalls.toolName,
+          latencyMs: aiToolCalls.latencyMs,
+          errorCode: aiToolCalls.errorCode,
+          createdAt: aiToolCalls.createdAt,
+        })
+        .from(aiToolCalls)
+        .where(
+          and(
+            eq(aiToolCalls.workspaceId, ctx.workspaceId),
+            sql`${aiToolCalls.success} = 0`,
+            sql`${aiToolCalls.createdAt} >= ${since}`
+          )
+        )
+        .orderBy(desc(aiToolCalls.createdAt))
+        .limit(20);
+
+      const totals = summary.reduce(
+        (acc, row) => {
+          acc.callCount += Number(row.callCount) || 0;
+          acc.successCount += Number(row.successCount) || 0;
+          return acc;
+        },
+        { callCount: 0, successCount: 0 }
+      );
+
+      return {
+        windowHours: hours,
+        totals: {
+          calls: totals.callCount,
+          successes: totals.successCount,
+          failures: totals.callCount - totals.successCount,
+        },
+        byTool: summary.map((row) => ({
+          toolName: row.toolName,
+          callCount: Number(row.callCount) || 0,
+          successCount: Number(row.successCount) || 0,
+          failureCount: (Number(row.callCount) || 0) - (Number(row.successCount) || 0),
+          avgLatencyMs: Number(row.avgLatencyMs) || 0,
+          maxLatencyMs: Number(row.p95LatencyMs) || 0,
+        })),
+        recentFailures,
+      };
     }),
 });

@@ -2,6 +2,7 @@
 import { page } from '$app/state';
 import { Button } from '$lib/components/ui/button';
 import { Separator } from '$lib/components/ui/separator';
+import Activity from '@lucide/svelte/icons/activity';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import Brain from '@lucide/svelte/icons/brain';
@@ -58,6 +59,7 @@ const settingsNav = [
     items: [
       { href: '/settings/intelligence', label: 'ML Settings', icon: Brain },
       { href: '/settings/intelligence/llm', label: 'LLM Providers', icon: Sparkles },
+      { href: '/settings/intelligence/activity', label: 'AI Activity', icon: Activity },
     ],
   },
   {

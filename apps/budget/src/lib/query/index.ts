@@ -25,6 +25,7 @@ import * as onboarding from "$core/query/onboarding";
 import * as patterns from "$core/query/patterns";
 import * as payeeAliases from "$core/query/payee-aliases";
 import * as recurring from "$core/query/recurring";
+import * as aiTelemetry from "$core/query/ai-telemetry";
 import * as payeeCategories from "$core/query/payee-categories";
 import * as payees from "$core/query/payees";
 import * as schedules from "$core/query/schedules";
@@ -54,6 +55,7 @@ import * as homeAttachments from "$core/query/home-attachments";
 export const rpc = {
   accountDocuments,
   accounts,
+  aiTelemetry,
   auth,
   automation,
   budgets,
