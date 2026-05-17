@@ -663,6 +663,31 @@ export const recordCategoryCorrection = () =>
     },
   });
 
+/**
+ * Record a category assignment from the import-preview flow. Fires on
+ * every category accept/override so the category-learning analytics
+ * see both positive (accept) and negative (override) signals. No
+ * success toast — this is background telemetry.
+ */
+export const recordImportCategoryAssignment = () =>
+  defineMutation({
+    mutationFn: (data: {
+      payeeId: number;
+      categoryId: number;
+      transactionAmount?: number;
+      transactionDate?: string;
+      wasAiSuggested: boolean;
+      aiSuggestedCategoryId?: number;
+      aiConfidence?: number;
+    }) => trpc().payeeRoutes.recordImportCategoryAssignment.mutate(data),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: payeeKeys.intelligence(variables.payeeId) }),
+        queryClient.invalidateQueries({ queryKey: payeeKeys.suggestions(variables.payeeId) }),
+      ]);
+    },
+  });
+
 // =====================================
 // Bulk Operations Mutations
 // NOTE: These tRPC routes are not yet implemented in PayeeService

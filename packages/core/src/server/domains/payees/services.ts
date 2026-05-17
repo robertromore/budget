@@ -2101,6 +2101,27 @@ export class PayeeService {
   }
 
   /**
+   * Record a category assignment captured during import preview. Wraps
+   * CategoryLearning.recordImportCategoryAssignment so it can be reached
+   * from the tRPC layer without exposing the private learningService.
+   */
+  async recordImportCategoryAssignment(
+    assignment: {
+      payeeId: number;
+      categoryId: number;
+      transactionAmount?: number;
+      transactionDate?: string;
+      wasAiSuggested: boolean;
+      aiSuggestedCategoryId?: number;
+      aiConfidence?: number;
+    },
+    workspaceId: number
+  ): Promise<void> {
+    await this.getPayeeById(assignment.payeeId, workspaceId);
+    return this.learningService.recordImportCategoryAssignment(assignment, workspaceId);
+  }
+
+  /**
    * Get smart category recommendation based on learning patterns
    */
   async getCategoryRecommendation(

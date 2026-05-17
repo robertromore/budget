@@ -387,6 +387,30 @@ export const payeeRoutes = t.router({
     )
   ),
 
+  /**
+   * Record a category assignment from the import preview. The server
+   * routes this to either positive reinforcement (AI suggestion
+   * accepted) or a correction row (user overrode), so the existing
+   * category-learning analytics see both signals.
+   */
+  recordImportCategoryAssignment: rateLimitedProcedure
+    .input(
+      z.object({
+        payeeId: z.number().positive(),
+        categoryId: z.number().positive(),
+        transactionAmount: z.number().optional(),
+        transactionDate: z.string().optional(),
+        wasAiSuggested: z.boolean(),
+        aiSuggestedCategoryId: z.number().positive().optional(),
+        aiConfidence: z.number().min(0).max(1).optional(),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.recordImportCategoryAssignment(input, ctx.workspaceId)
+      )
+    ),
+
   getCategoryRecommendation: publicProcedure
     .input(
       z.object({

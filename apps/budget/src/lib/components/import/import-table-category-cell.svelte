@@ -4,6 +4,7 @@ import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { rpc } from '$lib/query';
 import type { CategorySuggestion, CategorySuggestionReason, ImportRow } from '$core/types/import';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
@@ -13,6 +14,8 @@ import Tag from '@lucide/svelte/icons/tag';
 import X from '@lucide/svelte/icons/x';
 import type { Row } from '@tanstack/table-core';
 import Fuse from 'fuse.js';
+
+const recordAssignment = rpc.payees.recordImportCategoryAssignment().options();
 
 interface Props {
   row: Row<ImportRow>;
@@ -197,10 +200,40 @@ function handleSelect(categoryId: number, categoryName: string, fromSuggestion =
 
   if (hasChanged) {
     onUpdate?.(rowIndex, categoryId, categoryName);
+    recordSuggestionFeedback(categoryId);
   }
 
   searchValue = '';
   open = false;
+}
+
+/**
+ * Fire-and-forget feedback to the category-learning system when the
+ * user picks a category in the preview AND the row has a resolved
+ * payeeId. The server treats it as positive reinforcement when the
+ * chosen category matches the top AI suggestion, and as a correction
+ * (override) otherwise. We skip when payeeId isn't resolved yet —
+ * without it the row doesn't carry a learnable signal.
+ */
+function recordSuggestionFeedback(chosenCategoryId: number) {
+  const payeeId = row.original.normalizedData['payeeId'] as number | null | undefined;
+  if (!payeeId || typeof payeeId !== 'number') return;
+  if (!suggestion || suggestion.suggestions.length === 0) return;
+  const top = suggestion.suggestions[0];
+  if (!top || typeof top.categoryId !== 'number') return;
+
+  const amount = row.original.normalizedData['amount'] as number | undefined;
+  const date = row.original.normalizedData['date'] as string | undefined;
+
+  recordAssignment.mutate({
+    payeeId,
+    categoryId: chosenCategoryId,
+    transactionAmount: typeof amount === 'number' ? amount : undefined,
+    transactionDate: typeof date === 'string' ? date : undefined,
+    wasAiSuggested: true,
+    aiSuggestedCategoryId: top.categoryId,
+    aiConfidence: top.confidence,
+  });
 }
 
 function handleSuggestionSelect(opt: { categoryId: number; categoryName: string }) {
