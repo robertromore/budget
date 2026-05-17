@@ -15,8 +15,11 @@ import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Separator } from '$lib/components/ui/separator';
 import { formatCurrency } from '$lib/utils/formatters';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import FileText from '@lucide/svelte/icons/file-text';
+import Pencil from '@lucide/svelte/icons/pencil';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import type { BulkFile, BulkImportState } from './bulk-import-state.svelte';
@@ -26,10 +29,10 @@ type MatchConfidence = NonNullable<BulkFile['match']>['confidence'];
 interface Props {
   file: BulkFile;
   accounts: Account[];
-  state: BulkImportState;
+  bulkState: BulkImportState;
 }
 
-let { file, accounts, state }: Props = $props();
+let { file, accounts, bulkState }: Props = $props();
 
 const importableAccounts = $derived(accounts.filter((a) => !a.closed));
 
@@ -46,26 +49,63 @@ const hasConfidenceScores = $derived(
   file.transactions.some((t) => typeof t.confidence === 'number')
 );
 
+// Edit tracking — number of rows where the user has diverged from the
+// LLM's original extraction. Drives the "X edits" badge so users can
+// see at a glance how much they've changed.
+const editedRowCount = $derived.by(() => {
+  if (file.originalTransactions.length === 0) return 0;
+  let count = 0;
+  file.transactions.forEach((tx, idx) => {
+    const original = file.originalTransactions[idx];
+    if (!original) return;
+    if (
+      original.date !== tx.date ||
+      original.amount !== tx.amount ||
+      original.payee !== tx.payee ||
+      (original.notes ?? '') !== (tx.notes ?? '') ||
+      (original.category ?? '') !== (tx.category ?? '')
+    ) {
+      count++;
+    }
+  });
+  return count;
+});
+
+let rowsExpanded = $state(false);
+
+function rowEdited(idx: number): boolean {
+  const original = file.originalTransactions[idx];
+  const current = file.transactions[idx];
+  if (!original || !current) return false;
+  return (
+    original.date !== current.date ||
+    original.amount !== current.amount ||
+    original.payee !== current.payee ||
+    (original.notes ?? '') !== (current.notes ?? '') ||
+    (original.category ?? '') !== (current.category ?? '')
+  );
+}
+
 const targetKindAccessors = {
   get: () => file.targetKind,
-  set: (v: string) => state.updateFile(file.id, { targetKind: v as BulkFile['targetKind'] }),
+  set: (v: string) => bulkState.updateFile(file.id, { targetKind: v as BulkFile['targetKind'] }),
 };
 
 const existingAccountAccessors = {
   get: () => (file.existingAccountId != null ? String(file.existingAccountId) : ''),
-  set: (v: string) => state.updateFile(file.id, { existingAccountId: v ? Number(v) : null }),
+  set: (v: string) => bulkState.updateFile(file.id, { existingAccountId: v ? Number(v) : null }),
 };
 
 const accountTypeAccessors = {
   get: () => file.newAccountDraft.accountType,
   set: (v: string) =>
-    state.updateNewAccountDraft(file.id, { accountType: v as AccountType }),
+    bulkState.updateNewAccountDraft(file.id, { accountType: v as AccountType }),
 };
 
 const loanSubtypeAccessors = {
   get: () => file.newAccountDraft.loanSubtype ?? '',
   set: (v: string) =>
-    state.updateNewAccountDraft(file.id, {
+    bulkState.updateNewAccountDraft(file.id, {
       loanSubtype: v ? (v as LoanSubtype) : null,
     }),
 };
@@ -103,7 +143,7 @@ function confidenceBadge(confidence: MatchConfidence) {
       <Button
         variant="ghost"
         size="icon"
-        onclick={() => state.removeFile(file.id)}
+        onclick={() => bulkState.removeFile(file.id)}
         aria-label="Remove file"
       >
         <Trash2 class="h-4 w-4"></Trash2>
@@ -231,6 +271,114 @@ function confidenceBadge(confidence: MatchConfidence) {
       </div>
     {/if}
 
+    {#if file.transactions.length > 0}
+      <div class="rounded-md border">
+        <button
+          type="button"
+          class="hover:bg-muted/50 flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors"
+          onclick={() => (rowsExpanded = !rowsExpanded)}>
+          <div class="flex items-center gap-2">
+            {#if rowsExpanded}
+              <ChevronDown class="h-4 w-4"></ChevronDown>
+            {:else}
+              <ChevronRight class="h-4 w-4"></ChevronRight>
+            {/if}
+            <span class="text-sm font-medium">
+              {file.transactions.length} transaction{file.transactions.length === 1 ? '' : 's'}
+            </span>
+            {#if editedRowCount > 0}
+              <Badge variant="secondary" class="gap-1 px-1.5 py-0 text-[10px]">
+                <Pencil class="h-2.5 w-2.5" />
+                {editedRowCount} edited
+              </Badge>
+            {/if}
+          </div>
+          <span class="text-muted-foreground text-xs">
+            {rowsExpanded ? 'Hide' : 'Review'}
+          </span>
+        </button>
+
+        {#if rowsExpanded}
+          <div class="overflow-x-auto border-t">
+            <table class="w-full text-xs">
+              <thead class="text-muted-foreground bg-muted/30 text-[10px] uppercase tracking-wide">
+                <tr>
+                  <th class="w-24 px-2 py-1.5 text-left font-medium">Date</th>
+                  <th class="px-2 py-1.5 text-left font-medium">Payee</th>
+                  <th class="w-28 px-2 py-1.5 text-right font-medium">Amount</th>
+                  <th class="px-2 py-1.5 text-left font-medium">Notes</th>
+                  <th class="w-12 px-2 py-1.5 text-right font-medium">Conf.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each file.transactions as tx, idx (idx)}
+                  {@const edited = rowEdited(idx)}
+                  {@const low =
+                    typeof tx.confidence === 'number' &&
+                    tx.confidence < LOW_CONFIDENCE_THRESHOLD}
+                  <tr
+                    class="border-t {edited
+                      ? 'bg-amber-50/50 dark:bg-amber-950/20'
+                      : low
+                        ? 'bg-rose-50/30 dark:bg-rose-950/10'
+                        : ''}">
+                    <td class="px-2 py-1">
+                      <Input
+                        type="date"
+                        value={tx.date}
+                        oninput={(e) =>
+                          bulkState.updateTransaction(file.id, idx, {
+                            date: (e.currentTarget as HTMLInputElement).value,
+                          })}
+                        class="h-7 px-1.5 text-xs tabular-nums" />
+                    </td>
+                    <td class="px-2 py-1">
+                      <Input
+                        type="text"
+                        value={tx.payee}
+                        oninput={(e) =>
+                          bulkState.updateTransaction(file.id, idx, {
+                            payee: (e.currentTarget as HTMLInputElement).value,
+                          })}
+                        class="h-7 px-1.5 text-xs" />
+                    </td>
+                    <td class="px-2 py-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={tx.amount}
+                        oninput={(e) => {
+                          const v = Number((e.currentTarget as HTMLInputElement).value);
+                          if (!isNaN(v))
+                            bulkState.updateTransaction(file.id, idx, { amount: v });
+                        }}
+                        class="h-7 px-1.5 text-right text-xs tabular-nums" />
+                    </td>
+                    <td class="px-2 py-1">
+                      <Input
+                        type="text"
+                        value={tx.notes ?? ''}
+                        oninput={(e) =>
+                          bulkState.updateTransaction(file.id, idx, {
+                            notes: (e.currentTarget as HTMLInputElement).value || undefined,
+                          })}
+                        class="h-7 px-1.5 text-xs"
+                        placeholder="—" />
+                    </td>
+                    <td class="text-muted-foreground px-2 py-1 text-right text-[11px] tabular-nums">
+                      {typeof tx.confidence === 'number'
+                        ? `${Math.round(tx.confidence * 100)}%`
+                        : '—'}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
     {#if file.transactions.length === 0 && !file.fatalError}
       <div class="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
         <CircleAlert class="mt-0.5 h-4 w-4 shrink-0"></CircleAlert>
@@ -314,7 +462,7 @@ function confidenceBadge(confidence: MatchConfidence) {
               id="name-{file.id}"
               value={file.newAccountDraft.name}
               oninput={(e) =>
-                state.updateNewAccountDraft(file.id, {
+                bulkState.updateNewAccountDraft(file.id, {
                   name: (e.currentTarget as HTMLInputElement).value,
                 })}
               maxlength={50}
@@ -343,7 +491,7 @@ function confidenceBadge(confidence: MatchConfidence) {
               id="institution-{file.id}"
               value={file.newAccountDraft.institution ?? ''}
               oninput={(e) =>
-                state.updateNewAccountDraft(file.id, {
+                bulkState.updateNewAccountDraft(file.id, {
                   institution: (e.currentTarget as HTMLInputElement).value || null,
                 })}
               maxlength={100}
@@ -357,7 +505,7 @@ function confidenceBadge(confidence: MatchConfidence) {
               value={file.newAccountDraft.accountNumberLast4 ?? ''}
               oninput={(e) => {
                 const v = (e.currentTarget as HTMLInputElement).value.slice(0, 32);
-                state.updateNewAccountDraft(file.id, {
+                bulkState.updateNewAccountDraft(file.id, {
                   accountNumberLast4: v || null,
                 });
               }}
@@ -373,7 +521,7 @@ function confidenceBadge(confidence: MatchConfidence) {
               step="0.01"
               value={file.newAccountDraft.initialBalance}
               oninput={(e) =>
-                state.updateNewAccountDraft(file.id, {
+                bulkState.updateNewAccountDraft(file.id, {
                   initialBalance: Number((e.currentTarget as HTMLInputElement).value) || 0,
                 })}
             ></Input>
@@ -384,7 +532,7 @@ function confidenceBadge(confidence: MatchConfidence) {
               id="portal-{file.id}"
               value={file.newAccountDraft.portalUrl ?? ''}
               oninput={(e) =>
-                state.updateNewAccountDraft(file.id, {
+                bulkState.updateNewAccountDraft(file.id, {
                   portalUrl: (e.currentTarget as HTMLInputElement).value.trim() || null,
                 })}
               maxlength={200}
@@ -402,7 +550,7 @@ function confidenceBadge(confidence: MatchConfidence) {
               oninput={(e) => {
                 const raw = (e.currentTarget as HTMLInputElement).value;
                 const num = raw === '' ? null : Number(raw);
-                state.updateNewAccountDraft(file.id, {
+                bulkState.updateNewAccountDraft(file.id, {
                   statementCycleDay: num != null && Number.isInteger(num) && num >= 1 && num <= 31 ? num : null,
                 });
               }}
@@ -440,7 +588,7 @@ function confidenceBadge(confidence: MatchConfidence) {
                 type="date"
                 value={file.newAccountDraft.maturityDate ?? ''}
                 oninput={(e) =>
-                  state.updateNewAccountDraft(file.id, {
+                  bulkState.updateNewAccountDraft(file.id, {
                     maturityDate: (e.currentTarget as HTMLInputElement).value || null,
                   })}
               ></Input>
@@ -455,7 +603,7 @@ function confidenceBadge(confidence: MatchConfidence) {
                 oninput={(e) => {
                   const raw = (e.currentTarget as HTMLInputElement).value;
                   const num = raw === '' ? null : Number(raw);
-                  state.updateNewAccountDraft(file.id, {
+                  bulkState.updateNewAccountDraft(file.id, {
                     originalPrincipal: num != null && !Number.isNaN(num) ? num : null,
                   });
                 }}
@@ -471,7 +619,7 @@ function confidenceBadge(confidence: MatchConfidence) {
                 oninput={(e) => {
                   const raw = (e.currentTarget as HTMLInputElement).value;
                   const num = raw === '' ? null : Number(raw);
-                  state.updateNewAccountDraft(file.id, {
+                  bulkState.updateNewAccountDraft(file.id, {
                     escrowBalance: num != null && !Number.isNaN(num) ? num : null,
                   });
                 }}
@@ -492,7 +640,7 @@ function confidenceBadge(confidence: MatchConfidence) {
                 oninput={(e) => {
                   const raw = (e.currentTarget as HTMLInputElement).value;
                   const num = raw === '' ? null : Number(raw);
-                  state.updateNewAccountDraft(file.id, {
+                  bulkState.updateNewAccountDraft(file.id, {
                     vestedBalance: num != null && !Number.isNaN(num) ? num : null,
                   });
                 }}
@@ -510,7 +658,7 @@ function confidenceBadge(confidence: MatchConfidence) {
           id="reconcile-{file.id}"
           checked={file.applyReconciledBalance}
           onCheckedChange={(v) =>
-            state.updateFile(file.id, { applyReconciledBalance: Boolean(v) })}
+            bulkState.updateFile(file.id, { applyReconciledBalance: Boolean(v) })}
         ></Checkbox>
         <div class="-mt-0.5 space-y-0.5">
           <Label for="reconcile-{file.id}" class="text-sm font-medium">

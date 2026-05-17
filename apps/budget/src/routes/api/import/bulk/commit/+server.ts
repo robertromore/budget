@@ -76,6 +76,12 @@ const filePlanSchema = z.discriminatedUnion("action", [
       z.object({ kind: z.literal("new"), newAccount: newAccountSchema }),
     ]),
     transactions: z.array(extractedTxSchema),
+    /**
+     * Frozen LLM-extracted rows captured at extraction time. Optional
+     * for backwards compat; when supplied we diff against `transactions`
+     * row-by-row to set `wasAccurate` correctly in prediction_feedback.
+     */
+    originalTransactions: z.array(extractedTxSchema).optional(),
     closingBalance: z.number().nullable().optional(),
     statementPeriodEnd: z.string().nullable().optional(),
   }),
@@ -200,29 +206,49 @@ export const POST: RequestHandler = async (event) => {
         reconciledBalanceSet = true;
       }
 
-      // Record positive feedback for each accepted row that came with
-      // a self-rated confidence. Bulk import has no row-level edit UI
-      // today, so reaching commit equals acceptance — we capture the
-      // confidence → outcome correlation now and the feedback table is
-      // ready to record `wasAccurate` once edits land. Errors here are
-      // swallowed (logged only): telemetry must not break import.
-      const ratedRows = file.transactions.filter(
-        (t): t is typeof t & { confidence: number } => typeof t.confidence === "number"
-      );
+      // Record per-row feedback for each row that came with a
+      // self-rated confidence. When the client also sent the original
+      // LLM extraction, we diff field-by-field to detect user edits
+      // and flip wasAccurate to false on those rows. Errors are
+      // swallowed (logged only): telemetry must never break the
+      // user-facing import.
+      const ratedRows = file.transactions
+        .map((tx, idx) => ({ tx, idx }))
+        .filter(
+          (row): row is { tx: typeof row.tx & { confidence: number }; idx: number } =>
+            typeof row.tx.confidence === "number"
+        );
       if (ratedRows.length > 0) {
         try {
+          const originals = file.originalTransactions;
           await db.insert(predictionFeedback).values(
-            ratedRows.map((tx) => ({
-              workspaceId: ctx.workspaceId,
-              payeeId: null,
-              predictionType: "pdf_extraction_row" as const,
-              originalDate: tx.date,
-              originalAmount: tx.amount,
-              originalConfidence: tx.confidence,
-              predictionMethod: "pdf_statement_extraction",
-              rating: "positive" as const,
-              wasAccurate: true,
-            }))
+            ratedRows.map(({ tx, idx }) => {
+              const original = originals?.[idx];
+              // Edited = anything diverged. Compare only the fields the
+              // user can actually change in the review UI; missing
+              // optional fields ("" vs undefined) shouldn't count as
+              // an edit.
+              const wasEdited =
+                !!original &&
+                (original.date !== tx.date ||
+                  original.amount !== tx.amount ||
+                  original.payee !== tx.payee ||
+                  (original.notes ?? "") !== (tx.notes ?? "") ||
+                  (original.category ?? "") !== (tx.category ?? ""));
+              return {
+                workspaceId: ctx.workspaceId,
+                payeeId: null,
+                predictionType: "pdf_extraction_row" as const,
+                originalDate: original?.date ?? tx.date,
+                originalAmount: original?.amount ?? tx.amount,
+                originalConfidence: tx.confidence,
+                correctedDate: wasEdited && original?.date !== tx.date ? tx.date : null,
+                correctedAmount: wasEdited && original?.amount !== tx.amount ? tx.amount : null,
+                predictionMethod: "pdf_statement_extraction",
+                rating: (wasEdited ? "negative" : "positive") as "negative" | "positive",
+                wasAccurate: !wasEdited,
+              };
+            })
           );
         } catch (feedbackError) {
           console.error(

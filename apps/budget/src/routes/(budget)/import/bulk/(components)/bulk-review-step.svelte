@@ -36,7 +36,7 @@ let { state, accounts }: Props = $props();
 
   <div class="space-y-3">
     {#each state.readyFiles as file (file.id)}
-      <AccountMatchCard {file} {accounts} {state}></AccountMatchCard>
+      <AccountMatchCard {file} {accounts} bulkState={state}></AccountMatchCard>
     {/each}
   </div>
 

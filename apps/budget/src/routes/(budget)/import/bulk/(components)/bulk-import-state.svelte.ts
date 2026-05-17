@@ -81,7 +81,18 @@ export interface BulkFile {
   /** Non-fatal extraction warnings shown alongside the file. */
   chunkErrors: string[];
   header: StatementHeader | null;
+  /**
+   * Live editable transactions. The user can correct payee, date,
+   * amount, notes, or category in the review step before commit.
+   */
   transactions: ExtractedStatementTx[];
+  /**
+   * Frozen LLM-extracted rows captured at extraction time. Compared
+   * against `transactions` at commit so the commit endpoint can write
+   * `wasAccurate: false` to prediction_feedback for any row the user
+   * edited. Never mutated after extraction.
+   */
+  originalTransactions: ExtractedStatementTx[];
   /** AI's matched account proposal — drives the default for `targetKind`. */
   match: {
     confidence: "exact" | "high" | "medium" | "none";
@@ -177,6 +188,7 @@ export function createBulkImportState() {
       chunkErrors: [],
       header: null,
       transactions: [],
+      originalTransactions: [],
       match: null,
       targetKind: "skip",
       existingAccountId: null,
@@ -258,6 +270,7 @@ export function createBulkImportState() {
       chunkErrors: data.chunkErrors,
       header: data.header,
       transactions: data.transactions,
+      originalTransactions: data.transactions.map((tx) => ({ ...tx })),
       match: data.match,
       targetKind,
       existingAccountId: data.match.accountId,
@@ -283,6 +296,26 @@ export function createBulkImportState() {
     files = files.map((f) =>
       f.id === fileId ? { ...f, newAccountDraft: { ...f.newAccountDraft, ...patch } } : f,
     );
+  }
+
+  /**
+   * Patch a single extracted-transaction row inside a file. Keeps
+   * `originalTransactions` untouched so the commit endpoint can later
+   * diff against the model's original output.
+   */
+  function updateTransaction(
+    fileId: string,
+    rowIndex: number,
+    patch: Partial<ExtractedStatementTx>,
+  ) {
+    files = files.map((f) => {
+      if (f.id !== fileId) return f;
+      const next = f.transactions.slice();
+      const current = next[rowIndex];
+      if (!current) return f;
+      next[rowIndex] = { ...current, ...patch };
+      return { ...f, transactions: next };
+    });
   }
 
   async function extractFile(fileId: string) {
@@ -399,6 +432,7 @@ export function createBulkImportState() {
         phaseLabel: null,
         header: data.header,
         transactions: data.transactions,
+        originalTransactions: data.transactions.map((tx) => ({ ...tx })),
         chunkErrors: data.chunkErrors,
         match: data.match,
         targetKind,
@@ -422,6 +456,7 @@ export function createBulkImportState() {
       chunkErrors: [],
       header: null,
       transactions: [],
+      originalTransactions: [],
       match: null,
       result: null,
     });
@@ -469,6 +504,7 @@ export function createBulkImportState() {
                 },
               },
         transactions: f.transactions,
+        originalTransactions: f.originalTransactions,
         closingBalance: f.applyReconciledBalance ? f.header?.closingBalance ?? null : null,
         statementPeriodEnd: f.applyReconciledBalance ? f.header?.statementPeriodEnd ?? null : null,
       })),
@@ -561,6 +597,7 @@ export function createBulkImportState() {
     removeFile,
     updateFile,
     updateNewAccountDraft,
+    updateTransaction,
     retryFile,
     goToReview,
     goToUpload,
