@@ -176,6 +176,13 @@
       "when": 1777214598487,
       "tag": "0024_grey_lily_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1779029558116,
+      "tag": "0025_nifty_vision",
+      "breakpoints": true
     }
   ]
 }

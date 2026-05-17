@@ -11,6 +11,7 @@ import { fetchFinancialContext } from "$core/server/ai/financial-context";
 import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$core/server/ai/prompts/chat-assistant";
 import { getActiveProvider, type ProviderInstance } from "$core/server/ai/providers";
 import { createAITools } from "$core/server/ai/tools";
+import { AIToolCallCollector } from "$core/server/ai/telemetry";
 import { db } from "$core/server/db";
 import { formatCurrency } from "$core/utils/formatters-core";
 import { publicProcedure, t } from "$core/trpc";
@@ -290,8 +291,6 @@ async function generateChatResponse(
     { role: "user" as const, content: userMessage },
   ];
 
-  console.log("[AI Chat] Using provider:", provider.providerType, "model:", provider.model);
-
   // Use AI SDK with tool support
   const result = await generateText({
     model: provider.provider(provider.model),
@@ -304,33 +303,14 @@ async function generateChatResponse(
     stopWhen: stepCountIs(5), // Allow up to 5 tool call steps per request
   });
 
-  // Collect tool usage info
+  // Collect tool usage info — per-call telemetry (latency, success,
+  // input/output shape) lands in ai_tool_call via the wrapper installed
+  // in createAITools.
   const toolsUsed: string[] = [];
   const toolResults: Array<{ toolName: string; result: unknown }> = [];
 
-  console.log("[AI Chat] Steps count:", result.steps?.length ?? 0);
-  console.log("[AI Chat] Tool calls in response:", result.toolCalls?.length ?? 0);
-
   for (const step of result.steps || []) {
-    console.log(
-      "[AI Chat] Step - toolCalls:",
-      step.toolCalls?.length ?? 0,
-      "toolResults:",
-      step.toolResults?.length ?? 0
-    );
-    if (step.toolCalls?.length) {
-      for (const tc of step.toolCalls) {
-        console.log("[AI Chat] Tool call:", tc.toolName, "input:", JSON.stringify(tc.input));
-      }
-    }
-
     for (const toolResult of step.toolResults || []) {
-      console.log(
-        "[AI Chat] Tool result:",
-        toolResult.toolName,
-        "output:",
-        JSON.stringify(toolResult.output)
-      );
       toolsUsed.push(toolResult.toolName);
       toolResults.push({
         toolName: toolResult.toolName,
@@ -422,8 +402,12 @@ export const aiRoutes = t.router({
       // Build context-aware system prompt with real financial data
       const systemPrompt = buildContextualPrompt(financialContext, input.context);
 
-      // Create tools for this workspace
-      const tools = createAITools(ctx.workspaceId);
+      // Create tools for this workspace with telemetry wired up. The
+      // collector buffers tool-call observations and we flush once at
+      // the end of the request so the chat path takes only a single
+      // bulk insert hit.
+      const toolCallCollector = new AIToolCallCollector();
+      const tools = createAITools(ctx.workspaceId, toolCallCollector);
 
       // Generate response with tool support
       const response = await generateChatResponse(
@@ -451,6 +435,10 @@ export const aiRoutes = t.router({
           updatedAt: nowISOString(),
         })
         .where(eq(aiConversations.id, conversationId));
+
+      // Flush telemetry after the user-facing response is finalized so a
+      // telemetry write failure can't break the chat.
+      await toolCallCollector.flush({ workspaceId: ctx.workspaceId, conversationId });
 
       return { ...response, conversationId };
     } catch (error) {
@@ -553,9 +541,10 @@ export const aiRoutes = t.router({
         };
       }
 
+      const toolCallCollector = new AIToolCallCollector();
       try {
         // Create tools for this workspace and get the tool
-        const tools = createAITools(ctx.workspaceId);
+        const tools = createAITools(ctx.workspaceId, toolCallCollector);
         const toolFn = tools[command.tool as keyof typeof tools];
 
         if (!toolFn || typeof toolFn.execute !== "function") {
@@ -567,17 +556,17 @@ export const aiRoutes = t.router({
 
         // Execute the tool with parsed arguments
         // Type assertion needed because tool.execute expects specific types but we're invoking dynamically
-        console.log(`[Slash Command] Executing /${parsed.command} with args:`, parsed.parsedArgs);
         const result = await (
           toolFn.execute as (
             args: Record<string, unknown>,
             options: { abortSignal: undefined }
           ) => Promise<unknown>
         )(parsed.parsedArgs ?? {}, { abortSignal: undefined });
-        console.log(`[Slash Command] Result:`, JSON.stringify(result).slice(0, 200));
 
         // Format the result for display
         const formatted = formatCommandResult(parsed.command, result);
+
+        await toolCallCollector.flush({ workspaceId: ctx.workspaceId });
 
         return {
           isCommand: true as const,
@@ -586,6 +575,7 @@ export const aiRoutes = t.router({
           rawResult: result,
         };
       } catch (error) {
+        await toolCallCollector.flush({ workspaceId: ctx.workspaceId });
         console.error(`[Slash Command] Error executing /${parsed.command}:`, error);
         return {
           isCommand: true as const,

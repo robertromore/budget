@@ -46,6 +46,7 @@ export * from "./security";
 
 // AI-related schemas
 export * from "./ai-conversations";
+export * from "./ai-tool-calls";
 
 // HSA-related schemas
 export * from "./expense-receipts";

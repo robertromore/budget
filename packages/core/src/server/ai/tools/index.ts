@@ -27,11 +27,18 @@ import {
   createAnomalyDetectionService,
   createFeatureEngineeringService,
 } from "$core/server/domains/ml";
+import {
+  type AIToolCallCollector,
+  withTelemetry,
+} from "$core/server/ai/telemetry";
 
 /**
- * Create tool definitions for a specific workspace
+ * Create tool definitions for a specific workspace. When a telemetry
+ * collector is supplied each tool's `execute` is wrapped so latency,
+ * success state, and input/output shape land in the ai_tool_call table
+ * at flush time.
  */
-export function createAITools(workspaceId: number) {
+export function createAITools(workspaceId: number, collector?: AIToolCallCollector) {
   // Initialize ML services (lazy initialization via closures)
   const modelStore = createMLModelStore();
   const featureService = createFeatureEngineeringService();
@@ -40,7 +47,7 @@ export function createAITools(workspaceId: number) {
   const forecastingService = createTimeSeriesForecastingService(modelStore, featureService);
   const anomalyService = createAnomalyDetectionService(modelStore);
 
-  return {
+  const tools = {
     // ============================================
     // READ-ONLY TOOLS
     // ============================================
@@ -1219,6 +1226,24 @@ export function createAITools(workspaceId: number) {
       },
     }),
   };
+
+  if (!collector) return tools;
+
+  // Wrap each tool's execute so the per-call latency/shape lands in the
+  // collector. Spread the existing tool so description and inputSchema
+  // remain unchanged.
+  const wrapped: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(tools)) {
+    const original = value as unknown as {
+      execute: (input: unknown) => Promise<unknown>;
+      [k: string]: unknown;
+    };
+    wrapped[key] = {
+      ...original,
+      execute: withTelemetry(key, collector, original.execute),
+    };
+  }
+  return wrapped as typeof tools;
 }
 
 /**
