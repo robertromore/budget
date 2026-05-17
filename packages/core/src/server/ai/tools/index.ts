@@ -1270,3 +1270,29 @@ export const AI_TOOL_NAMES = [
 ] as const;
 
 export type AIToolName = (typeof AI_TOOL_NAMES)[number];
+
+/**
+ * Per-tool scope tag. The external MCP server filters tools/list by
+ * this so read-only API keys never see write tools, and tools/call
+ * rejects write attempts on a read-only key.
+ *
+ * Treat ML-insight tools as "read" — they don't mutate workspace data,
+ * they just inspect and forecast. listCategories is also read despite
+ * being grouped with write tools historically; it's a query.
+ */
+export const AI_TOOL_SCOPES: Record<AIToolName, "read" | "write"> = {
+  getAccountBalance: "read",
+  getRecentTransactions: "read",
+  searchTransactions: "read",
+  getBudgetStatus: "read",
+  getPayeeSpending: "read",
+  getCategorySpending: "read",
+  listCategories: "read",
+  findSavingsOpportunities: "read",
+  detectRecurringPatterns: "read",
+  predictCashFlow: "read",
+  checkForAnomalies: "read",
+  createBudget: "write",
+  createPayee: "write",
+  categorizeTransaction: "write",
+};

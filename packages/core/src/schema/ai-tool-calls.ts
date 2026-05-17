@@ -11,6 +11,7 @@ import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { aiConversations } from "./ai-conversations";
+import { externalApiKeys } from "./external-api-keys";
 import { workspaces } from "./workspaces";
 
 /** Recorded shape of an input/output object — string-typed values per key. */
@@ -24,6 +25,13 @@ export const aiToolCalls = sqliteTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     conversationId: integer("conversation_id").references(() => aiConversations.id, {
+      onDelete: "set null",
+    }),
+    /**
+     * Set when the call came in through the external MCP endpoint
+     * rather than the in-app chat. Null for in-app calls.
+     */
+    externalApiKeyId: integer("external_api_key_id").references(() => externalApiKeys.id, {
       onDelete: "set null",
     }),
 
@@ -42,6 +50,7 @@ export const aiToolCalls = sqliteTable(
   (table) => [
     index("ai_tool_call_workspace_idx").on(table.workspaceId),
     index("ai_tool_call_conversation_idx").on(table.conversationId),
+    index("ai_tool_call_external_api_key_idx").on(table.externalApiKeyId),
     index("ai_tool_call_tool_name_idx").on(table.toolName),
     index("ai_tool_call_created_at_idx").on(table.createdAt),
   ]
@@ -55,6 +64,10 @@ export const aiToolCallsRelations = relations(aiToolCalls, ({ one }) => ({
   conversation: one(aiConversations, {
     fields: [aiToolCalls.conversationId],
     references: [aiConversations.id],
+  }),
+  externalApiKey: one(externalApiKeys, {
+    fields: [aiToolCalls.externalApiKeyId],
+    references: [externalApiKeys.id],
   }),
 }));
 

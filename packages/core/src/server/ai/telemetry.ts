@@ -43,12 +43,19 @@ export class AIToolCallCollector {
   /**
    * Persist all buffered rows in a single insert. Errors are swallowed
    * (logged only): telemetry must never break the user-facing chat.
+   * `apiKeyId` attributes the call to a specific external MCP key when
+   * the source isn't the in-app chat.
    */
-  async flush(args: { workspaceId: number; conversationId?: number | null }): Promise<void> {
+  async flush(args: {
+    workspaceId: number;
+    conversationId?: number | null;
+    apiKeyId?: number | null;
+  }): Promise<void> {
     if (this.records.length === 0) return;
     const rows: NewAIToolCall[] = this.records.map((r) => ({
       workspaceId: args.workspaceId,
       conversationId: args.conversationId ?? null,
+      externalApiKeyId: args.apiKeyId ?? null,
       toolName: r.toolName,
       inputShape: r.inputShape ?? null,
       outputShape: r.outputShape ?? null,

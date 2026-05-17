@@ -1,0 +1,2 @@
+ALTER TABLE `ai_tool_call` ADD `external_api_key_id` integer REFERENCES external_api_key(id);--> statement-breakpoint
+CREATE INDEX `ai_tool_call_external_api_key_idx` ON `ai_tool_call` (`external_api_key_id`);
