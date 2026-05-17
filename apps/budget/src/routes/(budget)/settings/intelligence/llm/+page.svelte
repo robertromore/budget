@@ -2,7 +2,9 @@
 import { LLMProviderCard } from '$lib/components/llm';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import { Label } from '$lib/components/ui/label';
 import { Skeleton } from '$lib/components/ui/skeleton';
+import { Slider } from '$lib/components/ui/slider';
 import { Switch } from '$lib/components/ui/switch';
 import { LLMSettings } from '$lib/query/llm-settings';
 import { LLM_MODELS, ollamaModelSupportsTools } from '$core/schema/llm-models';
@@ -26,7 +28,12 @@ const updateProviderSilentMutation = LLMSettings.updateProviderSilent().options(
 const clearApiKeyMutation = LLMSettings.clearApiKey().options();
 const setDefaultMutation = LLMSettings.setDefaultProvider().options();
 const updateFeatureModesMutation = LLMSettings.updateFeatureModes().options();
+const updateChatPreferencesMutation = LLMSettings.updateChatPreferences().options();
 const testConnectionMutation = LLMSettings.testConnection().options();
+
+// Chat tunables — separate from feature modes because they don't have
+// the disabled/enhance/override shape.
+let maxToolSteps = $state(5);
 
 // Local state for form
 let enabled = $state(false);
@@ -104,6 +111,9 @@ $effect(() => {
   if (preferencesQuery.data) {
     enabled = preferencesQuery.data.enabled;
     defaultProvider = preferencesQuery.data.defaultProvider;
+    if (typeof preferencesQuery.data.chat?.maxToolSteps === 'number') {
+      maxToolSteps = preferencesQuery.data.chat.maxToolSteps;
+    }
 
     // Normalize feature modes (handle both old string format and new object format)
     for (const [key, value] of Object.entries(preferencesQuery.data.featureModes)) {
@@ -474,6 +484,40 @@ const featureMeta: Record<
               onCheckedChange={(on) => handleFeatureToggle(feature, on)} />
           </div>
         {/each}
+      </Card.Content>
+    </Card.Root>
+
+    <!-- Chat Tunables -->
+    <Card.Root>
+      <Card.Header>
+        <Card.Title>Chat tunables</Card.Title>
+        <Card.Description>
+          How many tool-call rounds the assistant can take in one message.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <Label for="max-tool-steps" class="text-sm font-medium">Max tool steps</Label>
+            <span class="text-muted-foreground text-sm tabular-nums">{maxToolSteps}</span>
+          </div>
+          <Slider
+            id="max-tool-steps"
+            min={1}
+            max={15}
+            step={1}
+            type="single"
+            value={maxToolSteps}
+            onValueChange={(v: number) => {
+              maxToolSteps = v;
+              updateChatPreferencesMutation.mutate({ maxToolSteps: v });
+            }} />
+          <p class="text-muted-foreground text-xs">
+            Lower values are cheaper and faster for simple questions.
+            Higher values let the assistant chain more tools for deep multi-step research.
+            Default is 5.
+          </p>
+        </div>
       </Card.Content>
     </Card.Root>
 

@@ -190,6 +190,9 @@ export const llmSettingsRoutes = t.router({
         defaultProvider: llm.defaultProvider ?? DEFAULT_LLM_PREFERENCES.defaultProvider,
         providers: maskedProviders,
         featureModes: normalizeFeatureModes(llm.featureModes),
+        chat: {
+          maxToolSteps: Number(llm.chat?.maxToolSteps) || 5,
+        },
       };
     } catch (error) {
       throw translateDomainError(error);
@@ -369,6 +372,42 @@ export const llmSettingsRoutes = t.router({
           .where(eq(workspaces.id, ctx.workspaceId));
 
         return updatedLLM.featureModes;
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  /**
+   * Update chat tunables (currently just maxToolSteps). Stored under
+   * llm.chat in the preferences JSON.
+   */
+  updateChatPreferences: publicProcedure
+    .input(
+      z.object({
+        maxToolSteps: z.number().int().min(1).max(15),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [workspace] = await db
+          .select({ preferences: workspaces.preferences })
+          .from(workspaces)
+          .where(eq(workspaces.id, ctx.workspaceId))
+          .limit(1);
+        const currentPrefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+        const currentLLM = currentPrefs.llm ?? DEFAULT_LLM_PREFERENCES;
+        const updatedLLM: LLMPreferences = {
+          ...currentLLM,
+          chat: { maxToolSteps: input.maxToolSteps },
+        };
+        await db
+          .update(workspaces)
+          .set({
+            preferences: JSON.stringify({ ...currentPrefs, llm: updatedLLM }),
+            updatedAt: nowISOString(),
+          })
+          .where(eq(workspaces.id, ctx.workspaceId));
+        return updatedLLM.chat!;
       } catch (error) {
         throw translateDomainError(error);
       }

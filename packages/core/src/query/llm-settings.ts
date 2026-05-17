@@ -96,6 +96,19 @@ export const updateFeatureModes = () =>
   });
 
 /**
+ * Update chat tunables (currently just maxToolSteps).
+ */
+export const updateChatPreferences = () =>
+  defineMutation<{ maxToolSteps: number }, { maxToolSteps: number }>({
+    mutationFn: (input) => trpc().llmSettingsRoutes.updateChatPreferences.mutate(input),
+    successMessage: "Chat preferences updated",
+    errorMessage: "Failed to update chat preferences",
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: llmSettingsKeys.preferences() });
+    },
+  });
+
+/**
  * Toggle master LLM switch
  */
 export const toggleLLM = () =>
@@ -170,6 +183,7 @@ export const LLMSettings = {
   updateProviderSilent,
   clearApiKey,
   updateFeatureModes,
+  updateChatPreferences,
   toggle: toggleLLM,
   setDefaultProvider,
   testConnection,

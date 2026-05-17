@@ -143,6 +143,26 @@ export interface LLMFeatureModes {
   narrative: LLMFeatureConfig;
 }
 
+/**
+ * Per-feature chat tuning. Currently just the tool-call step budget,
+ * but a natural home for future tunables (max tokens, etc.).
+ */
+export interface LLMChatPreferences {
+  /**
+   * Maximum number of tool-call steps the assistant can take per
+   * chat() invocation. The AI SDK uses this as `stopWhen` so the
+   * conversation can't loop indefinitely. Cheaper models / simple
+   * questions need 2–3; deep multi-tool research benefits from 7–10.
+   * Default 5 — the value that was hardcoded before this became
+   * tunable.
+   */
+  maxToolSteps: number;
+}
+
+export const DEFAULT_LLM_CHAT_PREFERENCES: LLMChatPreferences = {
+  maxToolSteps: 5,
+};
+
 // Main LLM preferences interface
 export interface LLMPreferences {
   enabled: boolean; // Master toggle for LLM features
@@ -154,6 +174,12 @@ export interface LLMPreferences {
     ollama: LLMProviderConfig;
   };
   featureModes: LLMFeatureModes;
+  /**
+   * Optional chat-specific tunables. Stored under llm.chat in the
+   * preferences JSON. Falls back to DEFAULT_LLM_CHAT_PREFERENCES when
+   * unset (older workspaces).
+   */
+  chat?: LLMChatPreferences;
 }
 
 // Default LLM preferences
@@ -180,6 +206,7 @@ export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
     // ratio-based heuristic the widget shipped with.
     narrative: { mode: "enhance", provider: null },
   },
+  chat: DEFAULT_LLM_CHAT_PREFERENCES,
 };
 
 // Web Search Provider types

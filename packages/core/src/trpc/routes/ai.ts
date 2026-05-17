@@ -280,7 +280,8 @@ async function generateChatResponse(
   systemPrompt: string,
   userMessage: string,
   history: Array<{ role: "user" | "assistant" | "system"; content: string }> = [],
-  tools?: ReturnType<typeof createAITools>
+  tools?: ReturnType<typeof createAITools>,
+  maxToolSteps = 5
 ): Promise<{
   content: string;
   reasoning?: string;
@@ -293,7 +294,8 @@ async function generateChatResponse(
     { role: "user" as const, content: userMessage },
   ];
 
-  // Use AI SDK with tool support
+  // Use AI SDK with tool support. maxToolSteps comes from workspace
+  // preferences so heavy users can bump it without code changes.
   const result = await generateText({
     model: provider.provider(provider.model),
     system: systemPrompt,
@@ -302,7 +304,7 @@ async function generateChatResponse(
       content: m.content,
     })),
     tools,
-    stopWhen: stepCountIs(5), // Allow up to 5 tool call steps per request
+    stopWhen: stepCountIs(maxToolSteps),
   });
 
   // Collect tool usage info — per-call telemetry (latency, success,
@@ -435,13 +437,18 @@ export const aiRoutes = t.router({
       const toolCallCollector = new AIToolCallCollector();
       const tools = createAITools(ctx.workspaceId, toolCallCollector);
 
+      // Workspace-configurable tool-call ceiling. Falls back to the
+      // historical default of 5 when unset.
+      const maxToolSteps = Number(llm.chat?.maxToolSteps) || 5;
+
       // Generate response with tool support
       const response = await generateChatResponse(
         provider,
         systemPrompt,
         input.message,
         input.history,
-        tools
+        tools,
+        maxToolSteps
       );
 
       // Save assistant response
@@ -951,6 +958,74 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
           maxLatencyMs: Number(row.p95LatencyMs) || 0,
         })),
         recentFailures,
+      };
+    }),
+
+  /**
+   * Feedback signals from prediction_feedback. Surfaces what users
+   * told us about anomalies, PDF extractions, etc. so the Activity
+   * page can show acceptance / rejection / accuracy alongside the
+   * tool-call timing data.
+   */
+  getRecentFeedbackStats: publicProcedure
+    .input(
+      z
+        .object({
+          hours: z.number().min(1).max(24 * 30).default(24),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const hours = input?.hours ?? 24;
+      const sinceMs = Date.now() - hours * 60 * 60 * 1000;
+      const since = new Date(sinceMs).toISOString();
+
+      // Aggregate by predictionType + rating. SQLite CASE-WHEN keeps
+      // this to one query instead of three.
+      const rows = await db
+        .select({
+          predictionType: predictionFeedback.predictionType,
+          total: sql<number>`COUNT(*)`,
+          positive: sql<number>`SUM(CASE WHEN ${predictionFeedback.rating} = 'positive' THEN 1 ELSE 0 END)`,
+          negative: sql<number>`SUM(CASE WHEN ${predictionFeedback.rating} = 'negative' THEN 1 ELSE 0 END)`,
+          accurate: sql<number>`SUM(CASE WHEN ${predictionFeedback.wasAccurate} = 1 THEN 1 ELSE 0 END)`,
+          accuracyJudged: sql<number>`SUM(CASE WHEN ${predictionFeedback.wasAccurate} IS NOT NULL THEN 1 ELSE 0 END)`,
+          avgConfidence: sql<number>`AVG(${predictionFeedback.originalConfidence})`,
+        })
+        .from(predictionFeedback)
+        .where(
+          and(
+            eq(predictionFeedback.workspaceId, ctx.workspaceId),
+            sql`${predictionFeedback.createdAt} >= ${since}`
+          )
+        )
+        .groupBy(predictionFeedback.predictionType)
+        .orderBy(desc(sql`COUNT(*)`));
+
+      return {
+        windowHours: hours,
+        byType: rows.map((row) => {
+          const total = Number(row.total) || 0;
+          const positive = Number(row.positive) || 0;
+          const negative = Number(row.negative) || 0;
+          const accurate = Number(row.accurate) || 0;
+          const accuracyJudged = Number(row.accuracyJudged) || 0;
+          return {
+            predictionType: row.predictionType,
+            total,
+            positive,
+            negative,
+            // Accuracy is "wasAccurate=true" / "wasAccurate set" — so a
+            // PDF row that wasn't edited counts as accurate, an edited
+            // row counts as inaccurate, and rows without a wasAccurate
+            // verdict (e.g. anomaly dismisses) are excluded from the
+            // ratio.
+            accuracyRate: accuracyJudged > 0 ? accurate / accuracyJudged : null,
+            accuracyJudgedCount: accuracyJudged,
+            avgConfidence:
+              row.avgConfidence !== null ? Number(row.avgConfidence) : null,
+          };
+        }),
       };
     }),
 

@@ -13,6 +13,14 @@ import Trash2 from '@lucide/svelte/icons/trash-2';
 let windowHours = $state<24 | 168 | 720>(24);
 
 const activityQuery = $derived(rpc.aiTelemetry.getRecentToolActivity(windowHours).options());
+const feedbackQuery = $derived(rpc.aiTelemetry.getRecentFeedbackStats(windowHours).options());
+
+const FEEDBACK_TYPE_LABELS: Record<string, string> = {
+  next_transaction: 'Next transaction prediction',
+  budget_suggestion: 'Budget suggestion',
+  anomaly: 'Anomaly detection',
+  pdf_extraction_row: 'PDF row extraction',
+};
 
 // Telemetry retention: opportunistic cleanup runs on mount (cooldown-
 // gated server-side, so it's a no-op when not eligible). The trash
@@ -212,5 +220,63 @@ function formatRelativeTime(iso: string): string {
         No failures in this window.
       </p>
     {/if}
+  {/if}
+
+  {#if feedbackQuery.data && feedbackQuery.data.byType.length > 0}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title>User feedback signals</Card.Title>
+        <Card.Description>
+          What users told us by accepting, dismissing, or editing AI suggestions.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <table class="w-full text-sm">
+          <thead class="text-muted-foreground border-b text-xs uppercase">
+            <tr>
+              <th class="py-2 text-left font-medium">Source</th>
+              <th class="py-2 text-right font-medium">Total</th>
+              <th class="py-2 text-right font-medium">Accepted</th>
+              <th class="py-2 text-right font-medium">Rejected / edited</th>
+              <th class="py-2 text-right font-medium">Accuracy</th>
+              <th class="py-2 text-right font-medium">Avg confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each feedbackQuery.data.byType as row (row.predictionType)}
+              <tr class="border-b last:border-0">
+                <td class="py-2">
+                  {FEEDBACK_TYPE_LABELS[row.predictionType] ?? row.predictionType}
+                </td>
+                <td class="py-2 text-right tabular-nums">{row.total}</td>
+                <td class="py-2 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {row.positive}
+                </td>
+                <td
+                  class="py-2 text-right tabular-nums {row.negative > 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-muted-foreground'}">
+                  {row.negative}
+                </td>
+                <td class="py-2 text-right tabular-nums">
+                  {#if row.accuracyRate !== null}
+                    {Math.round(row.accuracyRate * 100)}%
+                  {:else}
+                    <span class="text-muted-foreground">—</span>
+                  {/if}
+                </td>
+                <td class="text-muted-foreground py-2 text-right tabular-nums">
+                  {#if row.avgConfidence !== null}
+                    {Math.round(row.avgConfidence * 100)}%
+                  {:else}
+                    —
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </Card.Content>
+    </Card.Root>
   {/if}
 </div>

@@ -10,6 +10,7 @@ import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const aiTelemetryKeys = createQueryKeys("ai-telemetry", {
   recentActivity: (hours: number) => ["ai-telemetry", "recentActivity", hours] as const,
+  recentFeedback: (hours: number) => ["ai-telemetry", "recentFeedback", hours] as const,
 });
 
 export const getRecentToolActivity = (hours = 24) =>
@@ -18,6 +19,21 @@ export const getRecentToolActivity = (hours = 24) =>
     queryFn: () => trpc().aiRoutes.getRecentToolActivity.query({ hours }),
     options: {
       staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
+    },
+  });
+
+/**
+ * Aggregate counts and rates from prediction_feedback over a window.
+ * Used by the Activity page to surface accept/reject + accuracy
+ * alongside tool-call data.
+ */
+export const getRecentFeedbackStats = (hours = 24) =>
+  defineQuery({
+    queryKey: aiTelemetryKeys.recentFeedback(hours),
+    queryFn: () => trpc().aiRoutes.getRecentFeedbackStats.query({ hours }),
+    options: {
+      staleTime: 60 * 1000,
       gcTime: 5 * 60 * 1000,
     },
   });
