@@ -8,10 +8,26 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Activity from '@lucide/svelte/icons/activity';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import Trash2 from '@lucide/svelte/icons/trash-2';
 
 let windowHours = $state<24 | 168 | 720>(24);
 
 const activityQuery = $derived(rpc.aiTelemetry.getRecentToolActivity(windowHours).options());
+
+// Telemetry retention: opportunistic cleanup runs on mount (cooldown-
+// gated server-side, so it's a no-op when not eligible). The trash
+// button forces an immediate cleanup with the same default retention.
+const pruneMutation = rpc.aiTelemetry.pruneTelemetry().options();
+
+$effect(() => {
+  // Fire-and-forget. Server short-circuits if the cooldown hasn't
+  // elapsed, so visiting this page often is cheap.
+  pruneMutation.mutate(undefined);
+});
+
+function handleManualCleanup() {
+  pruneMutation.mutate({ force: true });
+}
 
 const windowOptions = [
   { value: 24, label: 'Last 24 hours' },
@@ -69,6 +85,17 @@ function formatRelativeTime(iso: string): string {
         {/each}
       </Select.Content>
     </Select.Root>
+    <div class="ml-auto flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onclick={handleManualCleanup}
+        disabled={pruneMutation.isPending}
+        title="Delete tool-call rows older than 90 days and feedback rows older than 365 days">
+        <Trash2 class="mr-2 h-4 w-4" />
+        Clean up now
+      </Button>
+    </div>
   </div>
 
   {#if activityQuery.isLoading}

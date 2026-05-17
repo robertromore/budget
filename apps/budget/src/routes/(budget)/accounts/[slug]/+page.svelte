@@ -418,6 +418,11 @@ const handleScheduleClick = (transaction: TransactionsFormat) => {
   scheduleSheetTransaction = transaction;
 };
 
+// Fire-and-forget feedback hook for inline category edits. Feeds the
+// smart-category drift signal on the Intelligence page so manual
+// edits — not just import corrections — count toward "model is stale".
+const recordCorrectionMutation = rpc.payees.recordCategoryCorrection().options();
+
 const updateTransactionData = createUpdateTransactionDataHandler({
   getTransactions: () => (Array.isArray(transactions) ? (transactions as Transaction[]) : []),
   getPayees: () => payees,
@@ -428,6 +433,12 @@ const updateTransactionData = createUpdateTransactionDataHandler({
   },
   openCategoryBulkDialog: (config) => {
     bulkCategoryUpdateDialog = { ...config, open: true };
+  },
+  recordCategoryCorrection: (correction) => {
+    recordCorrectionMutation.mutate({
+      ...correction,
+      correctionTrigger: 'manual_user_correction',
+    });
   },
 });
 

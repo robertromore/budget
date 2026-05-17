@@ -34,6 +34,19 @@ export interface UpdateTransactionDataDeps {
   openPayeeBulkDialog: (config: PayeeBulkDialogConfig) => void;
   /** Open the category bulk-update dialog after a category change with matches. */
   openCategoryBulkDialog: (config: CategoryBulkDialogConfig) => void;
+  /**
+   * Fire-and-forget feedback hook when the user changes a transaction's
+   * category inline. Feeds the smart-category drift signal so the
+   * Intelligence page knows when manual corrections are climbing.
+   */
+  recordCategoryCorrection?: (correction: {
+    payeeId: number;
+    transactionId: number;
+    fromCategoryId?: number;
+    toCategoryId: number;
+    transactionAmount?: number;
+    transactionDate?: string;
+  }) => void;
 }
 
 const FIELD_MAP: Record<string, string> = {
@@ -126,6 +139,8 @@ export function createUpdateTransactionDataHandler(deps: UpdateTransactionDataDe
         if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
           await deps.mutate({ id, data: updateData });
 
+          recordCategoryFeedback(deps, transaction, id, newCategoryId);
+
           deps.openCategoryBulkDialog({
             transactionId: id,
             categoryId: newCategoryId,
@@ -137,6 +152,13 @@ export function createUpdateTransactionDataHandler(deps: UpdateTransactionDataDe
           });
           return;
         }
+
+        // No bulk dialog path: still capture the single-row correction
+        // signal so the drift query sees manual edits, not just import
+        // accepts/rejects.
+        await deps.mutate({ id, data: updateData });
+        recordCategoryFeedback(deps, transaction, id, newCategoryId);
+        return;
       }
 
       await deps.mutate({ id, data: updateData });
@@ -144,4 +166,43 @@ export function createUpdateTransactionDataHandler(deps: UpdateTransactionDataDe
       // Surface via the mutation's error toast.
     }
   };
+}
+
+/**
+ * Fire-and-forget feedback record after an inline category edit on
+ * an existing transaction. Skips when the transaction has no payee
+ * (the corrections table requires payeeId).
+ */
+function recordCategoryFeedback(
+  deps: UpdateTransactionDataDeps,
+  transaction: Transaction,
+  transactionId: number,
+  newCategoryId: number | null
+): void {
+  if (!deps.recordCategoryCorrection) return;
+  if (newCategoryId === null) return;
+  const payeeId = transaction.payee?.id;
+  if (!payeeId) return;
+  const correction: {
+    payeeId: number;
+    transactionId: number;
+    fromCategoryId?: number;
+    toCategoryId: number;
+    transactionAmount?: number;
+    transactionDate?: string;
+  } = {
+    payeeId,
+    transactionId,
+    toCategoryId: newCategoryId,
+  };
+  if (transaction.category?.id !== undefined) {
+    correction.fromCategoryId = transaction.category.id;
+  }
+  if (typeof transaction.amount === "number") {
+    correction.transactionAmount = transaction.amount;
+  }
+  if (typeof transaction.date === "string") {
+    correction.transactionDate = transaction.date;
+  }
+  deps.recordCategoryCorrection(correction);
 }

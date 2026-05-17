@@ -244,8 +244,8 @@ export const smartCategoryRoutes = t.router({
       const since = new Date(sinceMs).toISOString();
 
       // Pull aggregate counts by correctionTrigger over the window.
-      // Limited to the three triggers that come from the import flow
-      // (the only ones the AI-suggestion pipeline currently emits).
+      // Includes both import-flow triggers and manual inline edits so
+      // the drift signal sees every correction the user makes.
       const rows = await db
         .select({
           trigger: payeeCategoryCorrections.correctionTrigger,
@@ -266,10 +266,14 @@ export const smartCategoryRoutes = t.router({
       const accepted = counts["ai_suggestion_accepted"] ?? 0;
       const overridden = counts["import_category_override"] ?? 0;
       const dismissed = counts["import_dismissal"] ?? 0;
-      const total = accepted + overridden + dismissed;
+      // Manual corrections on existing transactions count as negative
+      // signal — the model didn't catch what the user wanted, so they
+      // had to fix it themselves after the fact.
+      const manualCorrections = counts["manual_user_correction"] ?? 0;
+      const total = accepted + overridden + dismissed + manualCorrections;
 
       const acceptRate = total > 0 ? accepted / total : null;
-      const overrideRate = total > 0 ? overridden / total : null;
+      const overrideRate = total > 0 ? (overridden + manualCorrections) / total : null;
       const dismissRate = total > 0 ? dismissed / total : null;
 
       // Heuristic recommendation: ask for retrain if the model has
@@ -283,7 +287,7 @@ export const smartCategoryRoutes = t.router({
 
       return {
         windowDays: days,
-        totals: { accepted, overridden, dismissed, total },
+        totals: { accepted, overridden, dismissed, manualCorrections, total },
         rates: { acceptRate, overrideRate, dismissRate },
         shouldRetrain,
         minSignalRequired: MIN_SIGNAL,
@@ -330,7 +334,8 @@ export const smartCategoryRoutes = t.router({
     const accepted = counts["ai_suggestion_accepted"] ?? 0;
     const overridden = counts["import_category_override"] ?? 0;
     const dismissed = counts["import_dismissal"] ?? 0;
-    const total = accepted + overridden + dismissed;
+    const manualCorrections = counts["manual_user_correction"] ?? 0;
+    const total = accepted + overridden + dismissed + manualCorrections;
     const acceptRate = total > 0 ? accepted / total : null;
     const shouldRetrain =
       total >= MIN_SIGNAL && acceptRate !== null && acceptRate < ACCEPT_THRESHOLD;

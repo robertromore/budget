@@ -7,6 +7,7 @@
 
 import { aiConversations, aiConversationMessages } from "$core/schema/ai-conversations";
 import { aiToolCalls } from "$core/schema/ai-tool-calls";
+import { predictionFeedback } from "$core/schema/prediction-feedback";
 import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
 import { fetchFinancialContext } from "$core/server/ai/financial-context";
 import { buildContextualPrompt, QUICK_SUGGESTIONS } from "$core/server/ai/prompts/chat-assistant";
@@ -950,6 +951,111 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
           maxLatencyMs: Number(row.p95LatencyMs) || 0,
         })),
         recentFailures,
+      };
+    }),
+
+  /**
+   * Telemetry retention. ai_tool_call and prediction_feedback both
+   * grow without bound otherwise. Retention defaults match what's
+   * useful for debugging vs analytics:
+   *   - ai_tool_call: 90 days (debugging horizon)
+   *   - prediction_feedback: 365 days (long-term ML signal)
+   *
+   * Two modes:
+   *   - Pass `force: true` to run immediately (manual cleanup
+   *     button).
+   *   - Pass nothing for an opportunistic check — only runs if the
+   *     workspace's lastCleanupAt is older than 7 days, otherwise
+   *     short-circuits.
+   *
+   * Returns the row counts deleted from each table so the caller
+   * can show a toast or summary.
+   */
+  pruneTelemetry: publicProcedure
+    .input(
+      z
+        .object({
+          force: z.boolean().optional(),
+          toolCallRetentionDays: z.number().min(7).max(365).optional(),
+          feedbackRetentionDays: z.number().min(30).max(730).optional(),
+        })
+        .optional()
+    )
+    .mutation(async ({ ctx, input }) => {
+      const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+      const force = input?.force ?? false;
+      const toolCallRetentionDays = input?.toolCallRetentionDays ?? 90;
+      const feedbackRetentionDays = input?.feedbackRetentionDays ?? 365;
+
+      // Cooldown gate (skipped when force=true). Stored on workspace
+      // preferences so concurrent requests can't double-fire and so
+      // the cooldown survives server restarts.
+      const [workspace] = await db
+        .select({ preferences: workspaces.preferences })
+        .from(workspaces)
+        .where(eq(workspaces.id, ctx.workspaceId))
+        .limit(1);
+      const parsed = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+      const lastAt: string | undefined = parsed?.aiTelemetry?.lastCleanupAt;
+
+      if (!force && lastAt) {
+        const elapsed = Date.now() - new Date(lastAt).getTime();
+        if (elapsed < COOLDOWN_MS) {
+          return {
+            ran: false,
+            reason: "cooldown" as const,
+            toolCallsDeleted: 0,
+            feedbackDeleted: 0,
+            nextEligibleAt: new Date(new Date(lastAt).getTime() + COOLDOWN_MS).toISOString(),
+          };
+        }
+      }
+
+      const toolCallCutoff = new Date(
+        Date.now() - toolCallRetentionDays * 24 * 60 * 60 * 1000
+      ).toISOString();
+      const feedbackCutoff = new Date(
+        Date.now() - feedbackRetentionDays * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const toolCallsDeleted = await db
+        .delete(aiToolCalls)
+        .where(
+          and(
+            eq(aiToolCalls.workspaceId, ctx.workspaceId),
+            lt(aiToolCalls.createdAt, toolCallCutoff)
+          )
+        )
+        .returning({ id: aiToolCalls.id });
+
+      const feedbackDeleted = await db
+        .delete(predictionFeedback)
+        .where(
+          and(
+            eq(predictionFeedback.workspaceId, ctx.workspaceId),
+            lt(predictionFeedback.createdAt, feedbackCutoff)
+          )
+        )
+        .returning({ id: predictionFeedback.id });
+
+      // Persist the run time for the cooldown.
+      const nowIso = new Date().toISOString();
+      const nextPrefs = {
+        ...parsed,
+        aiTelemetry: { ...(parsed?.aiTelemetry ?? {}), lastCleanupAt: nowIso },
+      };
+      await db
+        .update(workspaces)
+        .set({ preferences: JSON.stringify(nextPrefs) })
+        .where(eq(workspaces.id, ctx.workspaceId));
+
+      return {
+        ran: true,
+        reason: (force ? "manual" : "scheduled") as "manual" | "scheduled",
+        toolCallsDeleted: toolCallsDeleted.length,
+        feedbackDeleted: feedbackDeleted.length,
+        toolCallRetentionDays,
+        feedbackRetentionDays,
       };
     }),
 });

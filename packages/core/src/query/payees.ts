@@ -637,8 +637,8 @@ export const recordCategoryCorrection = () =>
   defineMutation({
     mutationFn: (data: {
       payeeId: number;
-      transactionId: number;
-      fromCategoryId: number;
+      transactionId?: number;
+      fromCategoryId?: number;
       toCategoryId: number;
       correctionTrigger:
         | "manual_user_correction"

@@ -47,6 +47,9 @@ const isLoading = $derived(listQuery.isLoading);
 
 // Inline-edit handler — calls the existing updateTransaction mutation
 const updateMutation = updateTransaction.options();
+// Fire-and-forget feedback hook for inline category edits. Feeds the
+// smart-category drift signal so manual corrections count too.
+const recordCorrectionMutation = rpc.payees.recordCategoryCorrection().options();
 async function updateTransactionData(
   transactionId: number,
   columnId: string,
@@ -64,7 +67,44 @@ async function updateTransactionData(
   else if (columnId === 'status') data.status = newValue as 'cleared' | 'pending' | 'scheduled';
   else return;
 
+  // Capture the pre-edit state for feedback before the mutation fires.
+  const preEdit =
+    columnId === 'category'
+      ? transactions.find((t) => t.id === transactionId)
+      : undefined;
+
   await updateMutation.mutateAsync({ id: transactionId, data });
+
+  if (columnId === 'category' && preEdit) {
+    const newCategoryId = (newValue as { id?: number } | null)?.id;
+    const payeeId = preEdit.payee?.id;
+    if (typeof newCategoryId === 'number' && typeof payeeId === 'number') {
+      const correction: {
+        payeeId: number;
+        transactionId: number;
+        fromCategoryId?: number;
+        toCategoryId: number;
+        correctionTrigger: 'manual_user_correction';
+        transactionAmount?: number;
+        transactionDate?: string;
+      } = {
+        payeeId,
+        transactionId,
+        toCategoryId: newCategoryId,
+        correctionTrigger: 'manual_user_correction',
+      };
+      if (preEdit.category?.id !== undefined) {
+        correction.fromCategoryId = preEdit.category.id;
+      }
+      if (typeof preEdit.amount === 'number') {
+        correction.transactionAmount = preEdit.amount;
+      }
+      if (typeof preEdit.date === 'string') {
+        correction.transactionDate = preEdit.date;
+      }
+      recordCorrectionMutation.mutate(correction);
+    }
+  }
 }
 
 // Bulk delete via existing mutation
