@@ -1,6 +1,7 @@
 import "$lib/server/env-sveltekit";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { auth } from "$core/server/auth";
+import { startAIMaintenanceScheduler } from "$core/server/ai/maintenance-scheduler";
 import { startPriceCheckScheduler } from "$core/server/domains/price-watcher/auto-check";
 import { building } from "$app/environment";
 import { env } from "$env/dynamic/private";
@@ -50,8 +51,11 @@ function isLocalRequest(event: Parameters<Handle>[0]["event"]): boolean {
  * - Better Auth routes (/api/auth/*)
  */
 export const handle: Handle = async ({ event, resolve }) => {
-  // Start the price check scheduler (no-op after first call)
+  // Start the periodic background schedulers (no-ops after first call).
+  // Both have per-workspace cooldowns so they can run on every sweep
+  // safely.
   startPriceCheckScheduler();
+  startAIMaintenanceScheduler();
 
   // Desktop auto-login is ONLY safe for strictly-local requests. If the env
   // flag leaks to a networked deployment, or a remote client connects to an
