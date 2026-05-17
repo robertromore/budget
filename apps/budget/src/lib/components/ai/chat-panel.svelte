@@ -26,6 +26,7 @@ import {
 import RichResponse from './rich-response.svelte';
 import ConversationList from './conversation-list.svelte';
 import CommandAutocomplete from './command-autocomplete.svelte';
+import CommandSuggestionChips from './command-suggestion-chips.svelte';
 import { trpc } from '$lib/trpc/client';
 import { MessageSquare, Trash2, Bot, User, Sparkles, History, X, Info } from '@lucide/svelte/icons';
 import {
@@ -502,6 +503,9 @@ function formatTime(date: Date): string {
             <MessageSquare class="text-muted-foreground size-12" />
           {/snippet}
         </ConversationEmptyState>
+        <div class="px-4 pb-4">
+          <CommandSuggestionChips onSelect={handleSuggestionClick} />
+        </div>
       {/if}
     </Conversation>
   {/snippet}

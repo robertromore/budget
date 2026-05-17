@@ -11,10 +11,12 @@ import {
   type LLMFeatureConfig,
   type LLMFeatureModes,
   type LLMPreferences,
+  type LLMProvider,
   type LLMProviderConfig,
   workspaces,
 } from "$core/schema/workspaces";
 import { db } from "$core/server/db";
+import { createProvider } from "$core/server/ai/providers";
 import {
   decryptApiKey,
   encryptApiKey,
@@ -24,6 +26,7 @@ import {
 import { publicProcedure, secureOperationProcedure, t } from "$core/trpc";
 import { translateDomainError } from "$core/trpc/shared/errors";
 import { nowISOString } from "$core/utils/dates-core";
+import { generateText } from "ai";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
@@ -430,8 +433,11 @@ export const llmSettingsRoutes = t.router({
     }),
 
   /**
-   * Test API key connectivity.
-   * Returns success status and available models.
+   * Test API key connectivity by issuing a 1-token "ping" through the
+   * provider abstraction. If `apiKey` is supplied in the input we use it
+   * directly (so the user can verify a key before saving); otherwise we
+   * fall back to the encrypted key already stored on the workspace.
+   * Returns success, message, models, and latency for UI feedback.
    */
   testConnection: secureOperationProcedure
     .input(
@@ -441,27 +447,74 @@ export const llmSettingsRoutes = t.router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      try {
-        // For now, just validate format and return success
-        // Full connection testing will be added when provider abstraction is complete
-        if (input.apiKey && input.provider !== "ollama") {
-          if (!validateApiKeyFormat(input.provider, input.apiKey)) {
-            return {
-              success: false,
-              message: `Invalid API key format for ${input.provider}`,
-              models: [],
-            };
-          }
+      // Format-validate any key supplied directly. Avoids spending a
+      // network round-trip on something obviously malformed.
+      if (input.apiKey && input.provider !== "ollama") {
+        if (!validateApiKeyFormat(input.provider, input.apiKey)) {
+          throw new Error(`Invalid API key format for ${input.provider}`);
         }
-
-        return {
-          success: true,
-          message: `${input.provider} configuration valid`,
-          models: LLM_MODELS[input.provider],
-        };
-      } catch (error) {
-        throw translateDomainError(error);
       }
+
+      // Pull stored preferences so we know the chosen model and the
+      // stored encrypted key (used when input.apiKey is absent).
+      const [workspace] = await db
+        .select({ preferences: workspaces.preferences })
+        .from(workspaces)
+        .where(eq(workspaces.id, ctx.workspaceId))
+        .limit(1);
+      const parsed = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+      const stored: LLMProviderConfig =
+        parsed.llm?.providers?.[input.provider] ??
+        DEFAULT_LLM_PREFERENCES.providers[input.provider as LLMProvider];
+
+      // Build a temporary config for the test. A user-supplied apiKey
+      // gets encrypted in-flight so createProvider's decrypt path works
+      // uniformly; otherwise we reuse whatever's already stored.
+      const testConfig: LLMProviderConfig = {
+        enabled: true,
+        model: stored.model,
+        endpoint: stored.endpoint,
+        encryptedApiKey:
+          input.apiKey && input.provider !== "ollama"
+            ? encryptApiKey(input.apiKey)
+            : stored.encryptedApiKey,
+      };
+
+      if (input.provider !== "ollama" && !testConfig.encryptedApiKey) {
+        throw new Error("No API key configured. Enter a key above and try again.");
+      }
+
+      const provider = createProvider(input.provider, testConfig);
+      if (!provider) {
+        throw new Error(`Failed to initialise ${input.provider} client`);
+      }
+
+      // Cheapest possible round-trip: one user token in, one out.
+      // Wrap in a 10s timeout so a dead endpoint doesn't hang the UI.
+      const started = Date.now();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10_000);
+      try {
+        await generateText({
+          model: provider.provider(provider.model),
+          prompt: "ping",
+          maxOutputTokens: 1,
+          abortSignal: controller.signal,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Connection failed: ${message}`);
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      const latencyMs = Date.now() - started;
+      return {
+        success: true,
+        message: `${input.provider} responded in ${latencyMs}ms`,
+        models: LLM_MODELS[input.provider],
+        latencyMs,
+      };
     }),
 
   /**

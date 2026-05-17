@@ -16,6 +16,7 @@ const registry: Record<string, WidgetImport> = {
   "upcoming-schedules": () => import("./upcoming-schedules-widget.svelte"),
   "account-summary": () => import("./account-summary-widget.svelte"),
   "quick-actions": () => import("./quick-actions-widget.svelte"),
+  "ask-finances": () => import("./ask-finances-widget.svelte"),
   "payee-analytics": () => import("./payee-analytics-widget.svelte"),
   "retirement-contributions": () => import("./retirement-contributions-widget.svelte"),
   "goals-progress": () => import("./goals-progress-widget.svelte"),

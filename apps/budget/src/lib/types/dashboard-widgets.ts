@@ -231,6 +231,19 @@ export const WIDGET_CATALOG: WidgetDefinition[] = [
     style: "classic",
     metric: "quick-actions",
   },
+  {
+    type: "ask-finances",
+    label: "Ask Finances",
+    description: "Quick-launch the AI assistant with suggested prompts",
+    icon: "sparkles",
+    defaultSize: "medium",
+    availableSizes: ["small", "medium", "large", "full"],
+    defaultColumnSpan: 1,
+    defaultSettings: {},
+    category: "actions",
+    style: "classic",
+    metric: "ask-finances",
+  },
 
   // --- Terminal style ---
   {

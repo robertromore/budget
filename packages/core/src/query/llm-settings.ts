@@ -130,11 +130,11 @@ export const setDefaultProvider = () =>
 export const testConnection = () =>
   defineMutation<
     { provider: LLMProvider; apiKey?: string },
-    { success: boolean; message: string; models?: ModelInfo[] }
+    { success: boolean; message: string; models?: ModelInfo[]; latencyMs?: number }
   >({
     mutationFn: (input) => trpc().llmSettingsRoutes.testConnection.mutate(input),
     successMessage: (data) => data.message,
-    errorMessage: "Connection test failed",
+    errorMessage: (error) => (error instanceof Error ? error.message : "Connection test failed"),
   });
 
 /**
