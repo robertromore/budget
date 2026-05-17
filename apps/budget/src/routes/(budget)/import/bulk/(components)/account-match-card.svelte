@@ -33,6 +33,19 @@ let { file, accounts, state }: Props = $props();
 
 const importableAccounts = $derived(accounts.filter((a) => !a.closed));
 
+// Low-confidence rows surface the LLM's self-doubt so the user can
+// spot-check before committing. Threshold deliberately above 0.5 to
+// favour false positives — better to over-flag than miss a wrong row.
+const LOW_CONFIDENCE_THRESHOLD = 0.6;
+const lowConfidenceRows = $derived(
+  file.transactions.filter(
+    (t) => typeof t.confidence === 'number' && t.confidence < LOW_CONFIDENCE_THRESHOLD
+  )
+);
+const hasConfidenceScores = $derived(
+  file.transactions.some((t) => typeof t.confidence === 'number')
+);
+
 const targetKindAccessors = {
   get: () => file.targetKind,
   set: (v: string) => state.updateFile(file.id, { targetKind: v as BulkFile['targetKind'] }),
@@ -180,6 +193,39 @@ function confidenceBadge(confidence: MatchConfidence) {
             {#each file.chunkErrors as err}
               <li>{err}</li>
             {/each}
+          </ul>
+        </div>
+      </div>
+    {/if}
+
+    {#if hasConfidenceScores && lowConfidenceRows.length > 0}
+      <div class="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+        <CircleAlert class="mt-0.5 h-4 w-4 shrink-0"></CircleAlert>
+        <div class="min-w-0 flex-1">
+          <p class="font-medium">
+            {lowConfidenceRows.length} of {file.transactions.length}
+            row{file.transactions.length === 1 ? '' : 's'} flagged as low confidence — review before commit.
+          </p>
+          <ul class="mt-1 space-y-0.5">
+            {#each lowConfidenceRows.slice(0, 5) as row}
+              <li class="flex items-center justify-between gap-2 truncate tabular-nums">
+                <span class="truncate">
+                  <span class="text-amber-700/80 dark:text-amber-300/80">{row.date}</span>
+                  <span class="ml-1">{row.payee}</span>
+                  <span class="text-amber-700/80 dark:text-amber-300/80 ml-1">
+                    {formatCurrency(row.amount)}
+                  </span>
+                </span>
+                <span class="text-amber-700/80 dark:text-amber-300/80 shrink-0">
+                  {Math.round((row.confidence ?? 0) * 100)}%
+                </span>
+              </li>
+            {/each}
+            {#if lowConfidenceRows.length > 5}
+              <li class="text-amber-700/80 dark:text-amber-300/80 italic">
+                …and {lowConfidenceRows.length - 5} more.
+              </li>
+            {/if}
           </ul>
         </div>
       </div>

@@ -15,6 +15,7 @@
  */
 
 import { accounts as accountTable, accountTypeEnum, loanSubtypeEnum } from "$core/schema/accounts";
+import { predictionFeedback } from "$core/schema/prediction-feedback";
 import { db } from "$core/server/db";
 import { ImportOrchestrator } from "$core/server/import/import-orchestrator";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
@@ -56,6 +57,8 @@ const extractedTxSchema = z.object({
   payee: z.string(),
   notes: z.string().optional(),
   category: z.string().optional(),
+  /** LLM self-rated extraction confidence, 0..1. Surfaced in feedback. */
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 const filePlanSchema = z.discriminatedUnion("action", [
@@ -195,6 +198,38 @@ export const POST: RequestHandler = async (event) => {
             ),
           );
         reconciledBalanceSet = true;
+      }
+
+      // Record positive feedback for each accepted row that came with
+      // a self-rated confidence. Bulk import has no row-level edit UI
+      // today, so reaching commit equals acceptance — we capture the
+      // confidence → outcome correlation now and the feedback table is
+      // ready to record `wasAccurate` once edits land. Errors here are
+      // swallowed (logged only): telemetry must not break import.
+      const ratedRows = file.transactions.filter(
+        (t): t is typeof t & { confidence: number } => typeof t.confidence === "number"
+      );
+      if (ratedRows.length > 0) {
+        try {
+          await db.insert(predictionFeedback).values(
+            ratedRows.map((tx) => ({
+              workspaceId: ctx.workspaceId,
+              payeeId: null,
+              predictionType: "pdf_extraction_row" as const,
+              originalDate: tx.date,
+              originalAmount: tx.amount,
+              originalConfidence: tx.confidence,
+              predictionMethod: "pdf_statement_extraction",
+              rating: "positive" as const,
+              wasAccurate: true,
+            }))
+          );
+        } catch (feedbackError) {
+          console.error(
+            `bulk-import: failed to record pdf_extraction_row feedback for "${file.fileName}":`,
+            feedbackError
+          );
+        }
       }
 
       results.push({

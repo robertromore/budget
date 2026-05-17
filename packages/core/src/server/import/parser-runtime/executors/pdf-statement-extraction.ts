@@ -144,6 +144,14 @@ const ExtractedTxSchema = z.object({
     .string()
     .optional()
     .describe("Category the statement itself assigns, if any. Do not invent one."),
+  confidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe(
+      "Self-rated extraction confidence in [0, 1]. 1.0 = unambiguous (clean line, all fields present); 0.5 = uncertain (split across lines, abbreviated payee, ambiguous sign); below 0.4 = guesswork. Use this honestly — low-confidence rows get flagged in the import preview so a human can review.",
+    ),
 });
 
 export type ExtractedStatementTx = z.infer<typeof ExtractedTxSchema>;
@@ -175,7 +183,8 @@ Rules:
 - Preserve the statement's sign convention: charges/debits/withdrawals negative, payments/credits/deposits positive.
 - For credit-card statements, purchases are negative and payments toward the card are positive.
 - Last-4 must be exactly four digits with no other characters; if the statement only shows ****1234 use "1234"; if it shows fewer or more digits, use null.
-- Statement dates must be YYYY-MM-DD.`;
+- Statement dates must be YYYY-MM-DD.
+- For each transaction, self-rate your extraction confidence between 0 and 1 in the \`confidence\` field. Be honest: clean, fully-present rows are near 1.0; ambiguous payees, split lines, or unclear signs should be 0.4–0.6.`;
 
 export interface PdfStatementExtractionInput {
   /** Concatenated PDF text (form-feed-separated pages). */
