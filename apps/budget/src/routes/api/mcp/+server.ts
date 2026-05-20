@@ -13,6 +13,7 @@
 
 import { verifyApiKey } from "$core/server/external-agents/api-key-service";
 import { handleMcpRequest, type JsonRpcRequest } from "$core/server/external-agents/mcp-handler";
+import { checkMcpRateLimit } from "$core/server/external-agents/mcp-rate-limit";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -81,6 +82,35 @@ export const POST: RequestHandler = async ({ request }) => {
       "Invalid or revoked API key. Generate a new one at /settings/external-agents.",
       (body as JsonRpcRequest).id ?? null
     );
+  }
+
+  // Per-key rate limit. Keep `initialize` and `tools/list` cheap so a
+  // client's handshake never gets 429'd; the limit applies to actual
+  // tool dispatch (and other write-shaped methods).
+  const requestId = (body as JsonRpcRequest).id ?? null;
+  const method = (body as JsonRpcRequest).method;
+  const isCheap = method === "initialize" || method === "tools/list" || method === "ping" || method === "notifications/initialized";
+  if (!isCheap) {
+    const limit = checkMcpRateLimit(verified.apiKeyId);
+    if (!limit.allowed) {
+      return new Response(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: requestId,
+          error: {
+            code: -32002,
+            message: `Rate limit exceeded for this API key. Retry in ${limit.retryAfterSeconds}s.`,
+          },
+        }),
+        {
+          status: 429,
+          headers: {
+            "content-type": "application/json",
+            "retry-after": String(limit.retryAfterSeconds),
+          },
+        }
+      );
+    }
   }
 
   const response = await handleMcpRequest(body as JsonRpcRequest, {

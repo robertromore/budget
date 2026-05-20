@@ -17,6 +17,8 @@
  */
 
 import { accountTypeEnum, loanSubtypeEnum, accounts as accountTable } from "$core/schema/accounts";
+import { transactions as transactionTable } from "$core/schema/transactions";
+import { categories as categoryTable } from "$core/schema/categories";
 import type {
   ExtractedStatementTx,
   PdfStatementExtractionResult,
@@ -30,8 +32,9 @@ import { db } from "$core/server/db";
 import { loadWorkspaceLlmPreferences } from "$core/server/shared/workspace-llm-preferences";
 import { serviceFactory } from "$core/server/shared/container/service-factory";
 import { getCurrentTimestamp } from "$core/utils/dates-core";
+import { roundToCents } from "$core/utils/math-utilities";
 import type { ImportRow } from "$core/types/import";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, inArray } from "drizzle-orm";
 
 export interface ExtractStatementInput {
   fileName: string;
@@ -58,6 +61,17 @@ export interface CommitStatementInput {
   transactions: ExtractedStatementTx[];
   closingBalance?: number | null;
   statementPeriodEnd?: string | null;
+  /**
+   * "insert" (default) — append new rows, skip any (date+amount) match against
+   * existing transactions.
+   * "upsert" — append new rows AND update existing rows that match by
+   * (date+amount). Used for re-uploading a corrected statement or enriching
+   * thin transactions with payee/category data the agent has figured out.
+   * Match key is strict (same account, same date, same amount within $0.01).
+   * If amount or date drifted between uploads, the row will be treated as
+   * new — use the explicit updateTransaction tool for those cases.
+   */
+  strategy?: "insert" | "upsert";
 }
 
 export interface CommitStatementResult {
@@ -65,6 +79,11 @@ export interface CommitStatementResult {
   accountName: string;
   accountCreated: boolean;
   transactionsCreated: number;
+  /** Rows that matched existing transactions and were updated. Only set for strategy=upsert. */
+  transactionsUpdated: number;
+  /** Rows that matched existing transactions and didn't need changes. Only set for strategy=upsert. */
+  unchangedSkipped: number;
+  /** For strategy=insert: rows that matched existing transactions and were not posted. */
   duplicatesSkipped: number;
   errors: string[];
   reconciledBalanceSet: boolean;
@@ -142,8 +161,13 @@ export const commitStatementTool: MCPPdfTool<CommitStatementInput, CommitStateme
   description:
     "Persist a statement's transactions into a workspace account. " +
     "Target is either an existing accountId or a 'new' account draft. " +
-    "Dedupes against existing transactions; sets a reconciled checkpoint when " +
-    "closingBalance + statementPeriodEnd are supplied. Requires a read+write API key.",
+    "Strategy 'insert' (default) inserts new rows and skips date+amount duplicates. " +
+    "Strategy 'upsert' also updates payee/category/notes on existing matched rows " +
+    "(useful when re-uploading a corrected statement or enriching bare transactions). " +
+    "Match key is (account, date, amount within $0.01); rows whose amount or date " +
+    "drifted between uploads count as new — use the updateTransaction tool for those. " +
+    "Sets a reconciled checkpoint when closingBalance + statementPeriodEnd are supplied. " +
+    "Requires a read+write API key.",
   scope: "write",
   inputSchema: {
     type: "object",
@@ -180,6 +204,12 @@ export const commitStatementTool: MCPPdfTool<CommitStatementInput, CommitStateme
         type: "string",
         description: "Statement period end in YYYY-MM-DD.",
       },
+      strategy: {
+        type: "string",
+        enum: ["insert", "upsert"],
+        description:
+          "How to handle rows that match existing transactions by (date, amount). 'insert' (default) skips them. 'upsert' updates payee/category/notes on the existing row.",
+      },
     },
     required: ["target", "transactions"],
   },
@@ -189,6 +219,7 @@ export const commitStatementTool: MCPPdfTool<CommitStatementInput, CommitStateme
       throw new Error("transactions must be an array.");
     }
 
+    const strategy = input.strategy ?? "insert";
     const willReconcile =
       input.closingBalance != null &&
       !!input.statementPeriodEnd &&
@@ -200,7 +231,51 @@ export const commitStatementTool: MCPPdfTool<CommitStatementInput, CommitStateme
       willReconcile
     );
 
-    const rows: ImportRow[] = input.transactions.map((tx, index) => ({
+    // Partition input into "needs insert" vs "matches existing" when upserting.
+    let rowsForOrchestrator: ExtractedStatementTx[] = input.transactions;
+    let updatePairs: Array<{
+      input: ExtractedStatementTx;
+      existing: { id: number; payeeId: number | null; categoryId: number | null; notes: string | null };
+    }> = [];
+
+    if (strategy === "upsert" && input.transactions.length > 0) {
+      const dates = Array.from(new Set(input.transactions.map((t) => t.date)));
+      const existingRows = await db
+        .select({
+          id: transactionTable.id,
+          date: transactionTable.date,
+          amount: transactionTable.amount,
+          payeeId: transactionTable.payeeId,
+          categoryId: transactionTable.categoryId,
+          notes: transactionTable.notes,
+        })
+        .from(transactionTable)
+        .where(
+          and(
+            eq(transactionTable.accountId, accountId),
+            inArray(transactionTable.date, dates),
+            isNull(transactionTable.deletedAt)
+          )
+        );
+      const keyOf = (date: string, amount: number) => `${date}|${roundToCents(amount).toFixed(2)}`;
+      const existingByKey = new Map<string, (typeof existingRows)[number]>();
+      for (const row of existingRows) {
+        existingByKey.set(keyOf(row.date, row.amount), row);
+      }
+
+      const toInsert: ExtractedStatementTx[] = [];
+      for (const tx of input.transactions) {
+        const match = existingByKey.get(keyOf(tx.date, tx.amount));
+        if (match) updatePairs.push({ input: tx, existing: match });
+        else toInsert.push(tx);
+      }
+      rowsForOrchestrator = toInsert;
+    }
+
+    // Orchestrator handles the "new rows" part of both strategies. For insert,
+    // it sees all rows + skipDuplicates; for upsert, it sees only the unmatched
+    // rows so the per-row payee creation runs on inserts only.
+    const importRows: ImportRow[] = rowsForOrchestrator.map((tx, index) => ({
       rowIndex: index,
       rawData: { ...tx, source: "mcp-pdf-statement" },
       normalizedData: {
@@ -217,12 +292,101 @@ export const commitStatementTool: MCPPdfTool<CommitStatementInput, CommitStateme
     }));
 
     const orchestrator = new ImportOrchestrator();
-    const importResult = await orchestrator.processImport(accountId, rows, {
-      skipDuplicates: true,
-      createMissingPayees: true,
-      createMissingCategories: false,
-      fileName: "mcp-statement",
-    });
+    const importResult =
+      importRows.length > 0
+        ? await orchestrator.processImport(accountId, importRows, {
+            skipDuplicates: true,
+            createMissingPayees: true,
+            createMissingCategories: false,
+            fileName: "mcp-statement",
+          })
+        : { transactionsCreated: 0, duplicatesDetected: [] as unknown[], errors: [] as Array<{ row: number; message: string }> };
+
+    // Apply the update half of upsert. We don't reach into the orchestrator
+    // for this — we resolve payee/category by name here and call the
+    // TransactionService directly so the existing service-level validation
+    // and budget recalculation runs.
+    let transactionsUpdated = 0;
+    let unchangedSkipped = 0;
+    const upsertErrors: string[] = [];
+
+    if (updatePairs.length > 0) {
+      const payeeService = serviceFactory.getPayeeService();
+      const transactionService = serviceFactory.getTransactionService();
+
+      // Pre-resolve all category names in one query so we don't loop with DB hits.
+      const wantedCategories = Array.from(
+        new Set(updatePairs.map((p) => p.input.category).filter((c): c is string => !!c))
+      );
+      const categoryRows =
+        wantedCategories.length > 0
+          ? await db
+              .select({ id: categoryTable.id, name: categoryTable.name })
+              .from(categoryTable)
+              .where(
+                and(
+                  eq(categoryTable.workspaceId, workspaceId),
+                  inArray(categoryTable.name, wantedCategories),
+                  isNull(categoryTable.deletedAt)
+                )
+              )
+          : [];
+      const categoryByName = new Map<string, number>();
+      for (const c of categoryRows) {
+        if (c.name) categoryByName.set(c.name.toLowerCase(), c.id);
+      }
+
+      for (const { input: tx, existing } of updatePairs) {
+        try {
+          // Resolve payee: look up by name; create if missing (mirrors orchestrator behavior).
+          let payeeId: number | null = existing.payeeId;
+          if (tx.payee) {
+            const trimmed = tx.payee.trim();
+            const payeeRepo = (payeeService as unknown as { repository: { findByName(name: string, workspaceId: number): Promise<{ id: number } | null> } }).repository;
+            const existingPayee = await payeeRepo.findByName(trimmed, workspaceId);
+            if (existingPayee) {
+              payeeId = existingPayee.id;
+            } else {
+              const created = await payeeService.createPayee({ name: trimmed }, workspaceId);
+              payeeId = created.id;
+            }
+          }
+
+          // Resolve category by exact name (case-insensitive). Don't auto-create.
+          let categoryId: number | null = existing.categoryId;
+          if (tx.category) {
+            const resolved = categoryByName.get(tx.category.toLowerCase());
+            if (resolved !== undefined) categoryId = resolved;
+          }
+
+          const updates: {
+            payeeId?: number | null;
+            categoryId?: number | null;
+            notes?: string | null;
+          } = {};
+          if (payeeId !== existing.payeeId) updates.payeeId = payeeId;
+          if (categoryId !== existing.categoryId) updates.categoryId = categoryId;
+          const incomingNotes = tx.notes?.trim() || null;
+          if (incomingNotes !== null && incomingNotes !== existing.notes) {
+            updates.notes = incomingNotes;
+          }
+
+          if (Object.keys(updates).length === 0) {
+            unchangedSkipped++;
+            continue;
+          }
+
+          await transactionService.updateTransaction(existing.id, updates, workspaceId);
+          transactionsUpdated++;
+        } catch (error) {
+          upsertErrors.push(
+            `Update on transaction ${existing.id} failed: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      }
+    }
 
     let reconciledBalanceSet = false;
     if (willReconcile) {
@@ -248,8 +412,14 @@ export const commitStatementTool: MCPPdfTool<CommitStatementInput, CommitStateme
       accountName,
       accountCreated: created,
       transactionsCreated: importResult.transactionsCreated,
-      duplicatesSkipped: importResult.duplicatesDetected.length,
-      errors: importResult.errors.map((e) => `Row ${e.row}: ${e.message}`),
+      transactionsUpdated,
+      unchangedSkipped,
+      duplicatesSkipped:
+        strategy === "insert" ? importResult.duplicatesDetected.length : 0,
+      errors: [
+        ...importResult.errors.map((e) => `Row ${e.row}: ${e.message}`),
+        ...upsertErrors,
+      ],
       reconciledBalanceSet,
     };
   },
