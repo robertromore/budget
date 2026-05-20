@@ -361,7 +361,14 @@ export const ensurePeriodInstance = defineMutation<
   },
   onSuccess: (instance) => {
     stateCallbacks.recordPeriodInstance?.(instance);
+    // The narrow `periodInstances` key only refreshes the period list query.
+    // Creating a period also affects the budget detail (its periodTemplates
+    // relations carry the period list), the envelope allocations for the new
+    // period, and any list/summary queries that read period state. The
+    // mutation result only carries templateId — not budgetId — so we can't
+    // target the budget directly; widen to the full domain.
     cachePatterns.invalidatePrefix(budgetKeys.periodInstances(instance.templateId));
+    cachePatterns.invalidateDomain("budgets");
   },
   successMessage: "Period instance ensured",
   errorMessage: "Failed to create budget period",
@@ -982,9 +989,13 @@ export const schedulePeriodMaintenance = defineMutation<
   { created: number; rolledOver: number; cleaned: number }
 >({
   mutationFn: (budgetId) => trpc().budgetRoutes.schedulePeriodMaintenance.mutate({ budgetId }),
-  onSuccess: (_result, budgetId) => {
-    cachePatterns.invalidatePrefix(budgetKeys.detail(budgetId));
-    cachePatterns.invalidatePrefix(budgetKeys.periodTemplates());
+  onSuccess: (_result, _budgetId) => {
+    // This mutation creates/rolls over/cleans period instances, which feeds
+    // multiple cached views: the budget detail (periodTemplates relation),
+    // each per-template listPeriodInstances query, envelope allocations
+    // bound to those periods, and any budget list/summary that reads period
+    // state. Easier to sweep the whole domain than enumerate.
+    cachePatterns.invalidateDomain("budgets");
   },
   successMessage: (result) =>
     `Period maintenance complete: ${result.created} created, ${result.rolledOver} rolled over, ${result.cleaned} cleaned`,
