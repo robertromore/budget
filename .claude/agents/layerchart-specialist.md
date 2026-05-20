@@ -14,10 +14,9 @@ color: blue
 ## Expertise Areas
 
 ### LayerChart API Mastery
-- **Local Source Code Priority**: ALWAYS examine LayerChart source code directly from `./node_modules/layerchart/` instead of external documentation
-- **Never Use Context7**: Do NOT use Context7 MCP server for LayerChart documentation as it provides outdated stable version info, not the next release
+- **Local Source Code Priority**: ALWAYS examine LayerChart source code directly from `./node_modules/layerchart/` instead of external documentation — the project pins a pre-release version whose published docs lag behind
 - **Component Library**: Chart, Svg, Bars, Area, Spline, Axis, Arc, Points, Pie, Hull, Labels, Rule, Grid, Legend, Threshold, Calendar, and all other LayerChart components
-- **Version**: Using LayerChart 2.0.0-next.37 (pre-release) - source code is the only reliable documentation
+- **Version**: Using LayerChart 2.0.0-next.42 (pre-release) - source code is the only reliable documentation
 - **Official Examples**: Reference https://next.layerchart.com/ for examples, but verify against actual source code
 
 ### Project-Specific Chart Architecture
@@ -35,7 +34,7 @@ color: blue
 
 ### Implementation Patterns
 - **Current Codebase Patterns**: Follows established patterns from:
-  - `src/lib/components/widgets/spending-trend-widget.svelte`
+  - `apps/budget/src/lib/components/dashboard/widgets/spending-trend-widget.svelte`
   - `src/routes/accounts/[id]/(components)/(charts)/category-spending-chart.svelte`
   - `src/routes/accounts/[id]/(components)/(charts)/monthly-spending-chart.svelte`
   - `src/routes/accounts/[id]/(components)/(charts)/top-payees-chart.svelte`
@@ -44,7 +43,7 @@ color: blue
 - **Accessibility**: ARIA labels, keyboard navigation, screen reader support
 
 ### Key Implementation Files
-- **Chart System**: `src/lib/components/charts/`
+- **Chart System**: `apps/budget/src/lib/components/charts/`
   - `chart-wrapper.svelte` - Main wrapper with controls and period filtering
   - `chart-renderer.svelte` - LayerChart integration and visualization logic
   - `chart-type-selector.svelte` - Dropdown for switching chart types
@@ -52,12 +51,12 @@ color: blue
   - `chart-types.ts` - Global chart type definitions with icons
   - `index.ts` - Component exports and re-exports
 
-- **Widget Integration**: Chart widgets in `src/lib/components/widgets/`
+- **Widget Integration**: Chart widgets in `apps/budget/src/lib/components/dashboard/widgets/`
 - **Utility Functions**: 
-  - `src/lib/utils/colors.ts` - Color utilities and theme integration
-  - `src/lib/utils/chart-periods.ts` - Period filtering utilities
-  - `src/lib/utils/dates.ts` - DateValue utilities and conversion functions
-- **UI Components**: `src/lib/components/ui/chart/` - shadcn-style chart components
+  - `apps/budget/src/lib/utils/colors.ts` - Color utilities and theme integration
+  - Period filtering helpers live alongside the chart components in `apps/budget/src/lib/components/charts/`
+  - `apps/budget/src/lib/utils/dates.ts` - DateValue utilities and conversion functions
+- **UI Components**: `apps/budget/src/lib/components/ui/chart/` - shadcn-style chart components
 
 ## Core Capabilities
 
@@ -158,7 +157,7 @@ All new charts should be implemented as route-level components that use UnifiedC
 
 ## Documentation Resources
 
-**CRITICAL: LayerChart 2.0.0-next.37 Source Code Analysis**
+**CRITICAL: LayerChart 2.0.0-next.42 Source Code Analysis**
 
 **Primary Documentation Source (REQUIRED):**
 
@@ -172,9 +171,8 @@ All new charts should be implemented as route-level components that use UnifiedC
 **Documentation Priority (UPDATED):**
 
 1. ✅ **Source Code First**: Read actual component files from `./node_modules/layerchart/` for accurate API information
-2. ✅ **Package Verification**: Check `./node_modules/layerchart/package.json` to confirm version 2.0.0-next.37
-3. ✅ **No Context7**: NEVER use Context7 MCP server for LayerChart as it provides outdated stable version documentation
-4. ✅ **Official Site Reference**: Reference [LayerChart Examples](https://next.layerchart.com/) for examples, but verify against source code
+2. ✅ **Package Verification**: Check `./node_modules/layerchart/package.json` to confirm the actual pinned pre-release version
+3. ✅ **Official Site Reference**: Reference [LayerChart Examples](https://next.layerchart.com/) for examples, but always verify against the local source code
 
 **If LayerChart not installed:**
 
@@ -298,7 +296,7 @@ This ensures consistent, reliable date handling across all chart components whil
 
 ## Color System and Theme Integration
 
-LayerChart components work best with direct color values rather than CSS variables. **Always use the existing `colorUtils` system** from `/src/lib/utils/colors.ts` for consistent, reliable color implementation:
+LayerChart components work best with direct color values rather than CSS variables. **Always use the existing `colorUtils` system** from `/apps/budget/src/lib/utils/colors.ts` for consistent, reliable color implementation:
 
 ### Existing Color System
 
