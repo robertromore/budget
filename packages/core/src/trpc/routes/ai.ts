@@ -8,6 +8,7 @@
 import { aiConversations, aiConversationMessages } from "$core/schema/ai-conversations";
 import { aiLlmCalls } from "$core/schema/ai-llm-calls";
 import { aiToolCalls } from "$core/schema/ai-tool-calls";
+import { externalApiKeys } from "$core/schema/external-api-keys";
 import { predictionFeedback } from "$core/schema/prediction-feedback";
 import { DEFAULT_LLM_PREFERENCES, workspaces } from "$core/schema/workspaces";
 import { fetchFinancialContext } from "$core/server/ai/financial-context";
@@ -992,6 +993,72 @@ ${contentToAnalyze.slice(0, 10000)}${contentToAnalyze.length > 10000 ? "\n\n[Con
           maxLatencyMs: Number(row.p95LatencyMs) || 0,
         })),
         recentFailures,
+      };
+    }),
+
+  /**
+   * Per-key activity for external (MCP) agents. Joins ai_tool_call
+   * rows that carry an externalApiKeyId back to the key record so the
+   * Activity page can render "Claude Desktop — 47 calls, 2 failures,
+   * last seen 3m ago". Revoked keys are still surfaced (with their
+   * label) so users can see lingering activity attributed to keys
+   * they thought were turned off.
+   */
+  getRecentExternalAgentActivity: publicProcedure
+    .input(
+      z
+        .object({
+          hours: z.number().min(1).max(24 * 30).default(24),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const hours = input?.hours ?? 24;
+      const sinceMs = Date.now() - hours * 60 * 60 * 1000;
+      const since = new Date(sinceMs).toISOString();
+
+      const rows = await db
+        .select({
+          apiKeyId: aiToolCalls.externalApiKeyId,
+          keyName: externalApiKeys.name,
+          keyPrefix: externalApiKeys.keyPrefix,
+          keyScope: externalApiKeys.scope,
+          revokedAt: externalApiKeys.revokedAt,
+          callCount: sql<number>`COUNT(*)`,
+          successCount: sql<number>`SUM(CASE WHEN ${aiToolCalls.success} = 1 THEN 1 ELSE 0 END)`,
+          avgLatencyMs: sql<number>`ROUND(AVG(${aiToolCalls.latencyMs}))`,
+          lastCallAt: sql<string>`MAX(${aiToolCalls.createdAt})`,
+        })
+        .from(aiToolCalls)
+        .leftJoin(externalApiKeys, eq(aiToolCalls.externalApiKeyId, externalApiKeys.id))
+        .where(
+          and(
+            eq(aiToolCalls.workspaceId, ctx.workspaceId),
+            sql`${aiToolCalls.externalApiKeyId} IS NOT NULL`,
+            sql`${aiToolCalls.createdAt} >= ${since}`
+          )
+        )
+        .groupBy(aiToolCalls.externalApiKeyId)
+        .orderBy(desc(sql`COUNT(*)`));
+
+      return {
+        windowHours: hours,
+        byKey: rows.map((row) => {
+          const callCount = Number(row.callCount) || 0;
+          const successCount = Number(row.successCount) || 0;
+          return {
+            apiKeyId: row.apiKeyId,
+            keyName: row.keyName ?? "(deleted key)",
+            keyPrefix: row.keyPrefix ?? "—",
+            keyScope: row.keyScope ?? null,
+            revoked: row.revokedAt !== null,
+            callCount,
+            successCount,
+            failureCount: callCount - successCount,
+            avgLatencyMs: Number(row.avgLatencyMs) || 0,
+            lastCallAt: row.lastCallAt,
+          };
+        }),
       };
     }),
 

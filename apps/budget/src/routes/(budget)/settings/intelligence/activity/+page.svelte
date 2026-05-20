@@ -8,6 +8,7 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Activity from '@lucide/svelte/icons/activity';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import KeyRound from '@lucide/svelte/icons/key-round';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 
 let windowHours = $state<24 | 168 | 720>(24);
@@ -15,6 +16,9 @@ let windowHours = $state<24 | 168 | 720>(24);
 const activityQuery = $derived(rpc.aiTelemetry.getRecentToolActivity(windowHours).options());
 const feedbackQuery = $derived(rpc.aiTelemetry.getRecentFeedbackStats(windowHours).options());
 const llmQuery = $derived(rpc.aiTelemetry.getRecentLLMCallStats(windowHours).options());
+const externalAgentQuery = $derived(
+  rpc.aiTelemetry.getRecentExternalAgentActivity(windowHours).options()
+);
 
 const FEEDBACK_TYPE_LABELS: Record<string, string> = {
   next_transaction: 'Next transaction prediction',
@@ -281,6 +285,72 @@ function formatRelativeTime(iso: string): string {
                     ? 'text-rose-600 dark:text-rose-400'
                     : 'text-muted-foreground'}">
                   {row.failureCount}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </Card.Content>
+    </Card.Root>
+  {/if}
+
+  {#if externalAgentQuery.data && externalAgentQuery.data.byKey.length > 0}
+    {@const external = externalAgentQuery.data}
+    <Card.Root>
+      <Card.Header>
+        <div class="flex items-center gap-2">
+          <KeyRound class="h-4 w-4" />
+          <Card.Title>External agents</Card.Title>
+        </div>
+        <Card.Description>
+          Tool calls attributed to API keys used by Claude Desktop, Codex, or other MCP clients.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <table class="w-full text-sm">
+          <thead class="text-muted-foreground border-b text-xs uppercase">
+            <tr>
+              <th class="py-2 text-left font-medium">Key</th>
+              <th class="py-2 text-left font-medium">Scope</th>
+              <th class="py-2 text-right font-medium">Calls</th>
+              <th class="py-2 text-right font-medium">Failures</th>
+              <th class="py-2 text-right font-medium">Avg latency</th>
+              <th class="py-2 text-right font-medium">Last call</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each external.byKey as row (row.apiKeyId)}
+              <tr class="border-b last:border-0">
+                <td class="py-2">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium">{row.keyName}</span>
+                    {#if row.revoked}
+                      <span class="text-muted-foreground rounded border px-1 text-[10px] uppercase">
+                        revoked
+                      </span>
+                    {/if}
+                  </div>
+                  <div class="text-muted-foreground font-mono text-[10px]">{row.keyPrefix}…</div>
+                </td>
+                <td class="py-2 text-xs">
+                  {row.keyScope === 'read_write'
+                    ? 'Read + write'
+                    : row.keyScope === 'read_only'
+                      ? 'Read only'
+                      : '—'}
+                </td>
+                <td class="py-2 text-right tabular-nums">{row.callCount}</td>
+                <td
+                  class="py-2 text-right tabular-nums {row.failureCount > 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-muted-foreground'}">
+                  {row.failureCount}
+                </td>
+                <td class="text-muted-foreground py-2 text-right tabular-nums">
+                  {formatLatency(row.avgLatencyMs)}
+                </td>
+                <td class="text-muted-foreground py-2 text-right text-xs">
+                  {formatRelativeTime(row.lastCallAt)}
                 </td>
               </tr>
             {/each}

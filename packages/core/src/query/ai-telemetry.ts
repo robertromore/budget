@@ -12,6 +12,7 @@ export const aiTelemetryKeys = createQueryKeys("ai-telemetry", {
   recentActivity: (hours: number) => ["ai-telemetry", "recentActivity", hours] as const,
   recentFeedback: (hours: number) => ["ai-telemetry", "recentFeedback", hours] as const,
   recentLLMCalls: (hours: number) => ["ai-telemetry", "recentLLMCalls", hours] as const,
+  externalAgent: (hours: number) => ["ai-telemetry", "externalAgent", hours] as const,
 });
 
 export const getRecentToolActivity = (hours = 24) =>
@@ -35,6 +36,21 @@ export const getRecentFeedbackStats = (hours = 24) =>
     queryFn: () => trpc().aiRoutes.getRecentFeedbackStats.query({ hours }),
     options: {
       staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+    },
+  });
+
+/**
+ * Per-key activity for external (MCP) agents. Surfaces which API
+ * keys are calling tools, how often, and their success rate. Used by
+ * the Activity page's "External agents" section.
+ */
+export const getRecentExternalAgentActivity = (hours = 24) =>
+  defineQuery({
+    queryKey: aiTelemetryKeys.externalAgent(hours),
+    queryFn: () => trpc().aiRoutes.getRecentExternalAgentActivity.query({ hours }),
+    options: {
+      staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
     },
   });
