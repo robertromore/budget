@@ -52,4 +52,5 @@ export const ACTIVE_NAV = {
   intelligence: `bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 ${PILL_BASE}`,
   automation: `bg-orange-500/15 text-orange-700 dark:text-orange-400 ${PILL_BASE}`,
   priceWatcher: `bg-violet-500/15 text-violet-700 dark:text-violet-400 ${PILL_BASE}`,
+  home: `bg-sky-500/15 text-sky-700 dark:text-sky-400 ${PILL_BASE}`,
 } as const;

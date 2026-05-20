@@ -23,6 +23,7 @@ import SubscriptionsSidebar from '$lib/components/layout/subscriptions-sidebar.s
 import DocumentsSidebar from '$lib/components/layout/documents-sidebar.svelte';
 import IntelligenceSidebar from '$lib/components/layout/intelligence-sidebar.svelte';
 import AutomationSidebar from '$lib/components/layout/automation-sidebar.svelte';
+import HomesSidebar from '$lib/components/layout/homes-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
 import HeaderPageTabs from '$lib/components/layout/header-page-tabs.svelte';
@@ -31,6 +32,7 @@ import ThemeButton from '$lib/components/layout/theme-button.svelte';
 import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
 import GlobalSearch from '$lib/components/layout/global-search.svelte';
 import AppRail from '$lib/components/layout/app-rail.svelte';
+import SidebarResizeHandle from '$lib/components/layout/sidebar-resize-handle.svelte';
 import { SpotlightOverlay, TourContinuationDialog } from '$lib/components/onboarding';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import { LLMSettings, queryClient, rpc } from '$lib/query';
@@ -57,7 +59,7 @@ import { setQueryClientContext } from '@tanstack/svelte-query';
 import { mode, ModeWatcher } from 'mode-watcher';
 import { NuqsAdapter } from 'nuqs-svelte/adapters/svelte-kit';
 import type { Snippet } from 'svelte';
-import { onMount } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import { Toaster } from 'svelte-sonner';
 import '../app.css';
 import type { LayoutData } from './$types';
@@ -66,6 +68,44 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 let headerControlsReady = $state(false);
 let hydrated = $state(false);
 let sidebarOpen = $state(true);
+
+const DEFAULT_SIDEBAR_WIDTH = 256;
+const APP_RAIL_WIDTH = 48; // matches --app-rail-width (3rem)
+let sidebarWidth = $state(DEFAULT_SIDEBAR_WIDTH);
+let sidebarProviderEl = $state<HTMLDivElement | null>(null);
+const userPreferencesQuery = rpc.auth.getPreferences().options();
+const updatePreferencesMutation = rpc.auth.updatePreferences.options();
+
+// Sync local width from preferences when they load or change externally.
+// The local `sidebarWidth` read is wrapped in `untrack` so a drag (which
+// updates `sidebarWidth`) doesn't re-trigger this effect and snap the value
+// back to the saved preference — otherwise the effect ping-pongs against
+// the drag.
+$effect(() => {
+  const saved = userPreferencesQuery.data?.sidebarWidth;
+  if (typeof saved !== 'number') return;
+  untrack(() => {
+    if (saved !== sidebarWidth) {
+      sidebarWidth = saved;
+    }
+  });
+});
+
+// The Sidebar.Provider sets `--sidebar-width` inline. To override it without
+// relying on duplicate-declaration tie-breaking (which is robust in browsers
+// but easy to get wrong with framework string interpolation), set the CSS
+// variable directly on the same element with setProperty. This wins over the
+// component's hardcoded value because the API call writes to the same
+// CSSStyleDeclaration.
+$effect(() => {
+  if (!sidebarProviderEl) return;
+  sidebarProviderEl.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
+});
+
+function commitSidebarWidth(next: number) {
+  if (next === userPreferencesQuery.data?.sidebarWidth) return;
+  updatePreferencesMutation.mutate({ sidebarWidth: next });
+}
 
 const isPublicRoute = $derived(data.isPublicRoute ?? false);
 
@@ -191,31 +231,37 @@ onMount(() => {
   <NuqsAdapter>
     <Sidebar.Provider
       bind:open={sidebarOpen}
+      bind:ref={sidebarProviderEl}
       class={cn(
         'bg-background transition-[padding] duration-200 ease-linear',
         sidebarOpen && 'md:pl-(--app-rail-width)'
       )}>
       <AppRail activeAppId={activeApp} />
-      {#if activeApp === 'home'}
-        {@render children?.()}
+      {#if activeApp === 'price-watcher'}
+        <PriceWatcherSidebar user={data.user} />
+      {:else if activeApp === 'budgets'}
+        <BudgetsSidebar user={data.user} />
+      {:else if activeApp === 'planning'}
+        <PlanningSidebar user={data.user} />
+      {:else if activeApp === 'subscriptions'}
+        <SubscriptionsSidebar user={data.user} />
+      {:else if activeApp === 'documents'}
+        <DocumentsSidebar user={data.user} />
+      {:else if activeApp === 'intelligence'}
+        <IntelligenceSidebar user={data.user} />
+      {:else if activeApp === 'automation'}
+        <AutomationSidebar user={data.user} />
+      {:else if activeApp === 'home'}
+        <HomesSidebar user={data.user} />
       {:else}
-        {#if activeApp === 'price-watcher'}
-            <PriceWatcherSidebar user={data.user} />
-          {:else if activeApp === 'budgets'}
-            <BudgetsSidebar user={data.user} />
-          {:else if activeApp === 'planning'}
-            <PlanningSidebar user={data.user} />
-          {:else if activeApp === 'subscriptions'}
-            <SubscriptionsSidebar user={data.user} />
-          {:else if activeApp === 'documents'}
-            <DocumentsSidebar user={data.user} />
-          {:else if activeApp === 'intelligence'}
-            <IntelligenceSidebar user={data.user} />
-          {:else if activeApp === 'automation'}
-            <AutomationSidebar user={data.user} />
-          {:else}
-            <AppSidebar user={data.user} />
-          {/if}
+        <AppSidebar user={data.user} />
+      {/if}
+          <SidebarResizeHandle
+            width={sidebarWidth}
+            onResize={(n) => (sidebarWidth = n)}
+            onCommit={(n) => commitSidebarWidth(n)}
+            visible={sidebarOpen}
+            railOffset={APP_RAIL_WIDTH} />
           <Sidebar.Inset>
             <header
               class="bg-background sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-2">
@@ -267,7 +313,6 @@ onMount(() => {
               </div>
             </div>
           </Sidebar.Inset>
-      {/if}
     </Sidebar.Provider>
   </NuqsAdapter>
 

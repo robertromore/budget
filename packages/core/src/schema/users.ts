@@ -92,6 +92,24 @@ export interface UserPreferences {
   // Font size
   fontSize?: "small" | "normal" | "large";
 
+  // Sidebar — accounts list
+  /**
+   * Account IDs the user has pinned to the top of the sidebar. Pinned accounts
+   * always render inline and bypass the inactivity filter. Stored as a list so
+   * order matters (rendered in array order).
+   */
+  accountPins?: number[];
+  /**
+   * When true, the sidebar hides accounts with zero balance and no transactions
+   * in the last 90 days. Pinned accounts are exempt.
+   */
+  hideInactiveAccounts?: boolean;
+  /**
+   * Sidebar width in pixels. Persisted so resizing carries across sessions and
+   * devices. Bounded by the UI to [192, 448].
+   */
+  sidebarWidth?: number;
+
   // Legacy/future fields
   locale?: string;
   currency?: string;

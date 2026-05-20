@@ -166,6 +166,11 @@ export const authRoutes = t.router({
 
         // Font size
         fontSize: z.enum(["small", "normal", "large"]).optional(),
+
+        // Sidebar — accounts list
+        accountPins: z.array(z.number().int().positive()).max(50).optional(),
+        hideInactiveAccounts: z.boolean().optional(),
+        sidebarWidth: z.number().int().min(192).max(448).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
