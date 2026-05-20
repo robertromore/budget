@@ -15,20 +15,20 @@
     "@budget/core": "workspace:*",
     "@budget/ui": "workspace:*",
     "@lucide/svelte": "^0.526.0",
-    "@tanstack/svelte-query": "^6.1.24",
-    "@trpc/client": "^11.16.0",
+    "@tanstack/svelte-query": "^6.1.29",
+    "@trpc/client": "^11.17.0",
     "bits-ui": "2.15.5",
     "clsx": "^2.1.1",
     "electrobun": "1.16.0",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
-    "@tailwindcss/vite": "^4.2.4",
+    "@tailwindcss/vite": "^4.3.0",
     "@types/bun": "latest",
     "concurrently": "^9.2.1",
-    "svelte": "^5.55.5",
-    "tailwindcss": "^4.2.4",
+    "svelte": "^5.55.7",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
     "vite": "^6.4.2"
   }
